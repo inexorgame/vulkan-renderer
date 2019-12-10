@@ -21,13 +21,22 @@ namespace vulkan_renderer {
 			GLFWwindow* window;
 
 			// 
+			VkInstance instance;
+
+			// 
 			void init_vulkan();
+
+			// 
+			void shutdown_vulkan();
 
 			// 
 			void init_window(const int width, const int height, const std::string& window_name);
 			
 			// 
 			void close_window();
+
+			// 
+			void check_for_errors(const VkResult& result);
 
 
 		public:
