@@ -15,6 +15,21 @@ namespace vulkan_renderer {
 	// 
 	class InexorRenderer
 	{
+		private:
+
+			// 
+			GLFWwindow* window;
+
+			// 
+			void init_vulkan();
+
+			// 
+			void init_window(const int width, const int height, const std::string& window_name);
+			
+			// 
+			void close_window();
+
+
 		public:
 			
 			// 
@@ -23,6 +38,14 @@ namespace vulkan_renderer {
 			// 
 			~InexorRenderer();
 
+			// 
+			void init();
+
+			// 
+			void run();
+
+			// 
+			void cleanup();
 
 	};
 
