@@ -13,7 +13,8 @@ class InexorConan(ConanFile):
         "benchmark/1.5.0",
         "glm/0.9.9.5",
         "gtest/1.8.1",
-        "spdlog/1.4.2"
+        "spdlog/1.4.2",
+        "glfw/3.3@bincrafters/stable"
     )
 
     generators = "cmake"
