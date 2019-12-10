@@ -1,7 +1,7 @@
 # vulkan-renderer
 A new rendering engine based on Vulkan API 1.1
 
-![Vulkan API logo here..](https://www.khronos.org/assets/uploads/apis/vulkan2.svg")
+![Vulkan API logo here..](https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/500px-Vulkan.svg.png)
 
 ## What is Vulkan?
 Vulkan is a new API (application programming interface) for graphics programming. It is seen as the successor to OpenGL. Both Vulkan and OpenGL are being developed by the Khronos Group. Like DirectX 12, Vulkan is a low level API which allows for much deeper control over the graphics card and the driver. This offers better performance (higher FPS) due to reduction of overhead and driver guesswork during runtime. In general, Vulkan does a lot of work during the initialisation of the application but therefore reduces work during rendering.
@@ -29,7 +29,7 @@ For a full list of contributors, see [this link](https://www.khronos.org/members
 * Lower and more predictable CPU load which results in [better performance](https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot).
 * Support of a variety of platforms: Windows, Linux, mobile devices and much more!
 * [Validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers) and diagnostics can be independently activated during development, allowing better error handling and debugging compared with OpenGL or DirectX. Upon release builds, the validation layers can be deactivated easily.
-* Vulkan pre-compiles shaders to a standardised bytecode format.
+* Vulkan pre-compiles shaders to a standardised bytecode format. This again reduces driver guesswork during runtime.
 * Vulkan API and most of the drivers are open source! (unlike DirectX 12 for example)
 
 ## Which engines support Vulkan already?
@@ -50,9 +50,15 @@ https://vulkan-tutorial.com/
 
 ### Vulkan Examples
 Sascha Willems' Vulkan examples:
+
 https://github.com/SaschaWillems/Vulkan
+
 Khronos Vulkan samples:
+
 https://github.com/KhronosGroup/Vulkan-Samples
+
+## Vulkan Debuggers
+https://renderdoc.org/
 
 ### Advantages of Vulkan
 https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot
