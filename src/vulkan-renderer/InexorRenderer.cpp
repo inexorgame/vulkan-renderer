@@ -84,6 +84,38 @@ namespace vulkan_renderer {
 			cout << endl;
 		}
 
+		// Let's just use the first one in the array for now.
+		// TODO: Implement a mechanism to select a graphics card.
+		// TODO: In case multiple graphics cards are available let the user select one.
+		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
+
+		uint32_t number_of_queue_families = 0;
+
+		// Ask for the family queues.
+		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_queue_families, NULL);
+
+		cout << "Number of queue families: " << number_of_queue_families << endl;
+
+		std::vector<VkQueueFamilyProperties> queue_family_properties;
+
+		// Preallocate memory for the family queues.
+		queue_family_properties.resize(number_of_queue_families);
+
+		// Get information about physical device queue family properties.
+		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_queue_families, &queue_family_properties[0]);
+
+		// Loop through all available queue families.
+		for(std::size_t i=0; i< number_of_queue_families; i++)
+		{
+			cout << endl;
+			cout << "Queue family " << i << ": " << endl;
+			cout << "VK_QUEUE_GRAPHICS_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) << endl;
+			cout << "VK_QUEUE_COMPUTE_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) << endl;
+			cout << "VK_QUEUE_TRANSFER_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) << endl;
+			cout << "VK_QUEUE_SPARSE_BINDING_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) << endl;
+			cout << "VK_QUEUE_PROTECTED_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) << endl;
+		}
+
 		return true;
 	}
 
