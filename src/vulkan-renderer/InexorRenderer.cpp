@@ -1,5 +1,7 @@
 #include "InexorRenderer.hpp"
 
+using namespace std;
+
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -20,9 +22,10 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorRenderer::init_vulkan()
+	bool InexorRenderer::init_vulkan()
 	{
-		// First we need to create a Vulkan Instance.
+		cout << "Setting up Vulkan." << endl;
+
 		VkApplicationInfo appInfo = {};
 
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -33,6 +36,7 @@ namespace vulkan_renderer {
 
 		// TODO: Should we switch to VK_API_VERSION_1_1 ?
 		appInfo.apiVersion = VK_API_VERSION_1_0;
+
 
 		VkInstanceCreateInfo createInfo = {};
 
@@ -48,19 +52,30 @@ namespace vulkan_renderer {
 		createInfo.ppEnabledExtensionNames = glfwExtensions;
 		createInfo.enabledLayerCount = 0;
 
+
 		// Let's create an instance.
-		VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+		VkResult result = vkCreateInstance(&createInfo, nullptr, &vulkan_instance);
 
 		if(VK_SUCCESS != result)
 		{
-			spdlog::error("vkCreateInstance failed!");
+			cout << "vkCreateInstance failed!" << endl;
+			return false;
 		}
+
+		cout << "vkCreateInstance succeeded." << endl;
+
+		// Lets ask how many graphics cards are in thie machine.
+		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, NULL);
+
+		cout << "There are " << number_of_physical_devices << " graphics cards available." << endl;
+
+		return true;
 	}
 
 
 	void InexorRenderer::shutdown_vulkan()
 	{
-		vkDestroyInstance(instance, nullptr);
+		vkDestroyInstance(vulkan_instance, nullptr);
 	}
 
 

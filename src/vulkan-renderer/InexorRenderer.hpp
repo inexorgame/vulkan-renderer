@@ -6,7 +6,7 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
-#include <spdlog/spdlog.h>
+#include <iostream>
 
 
 namespace inexor {
@@ -21,10 +21,13 @@ namespace vulkan_renderer {
 			GLFWwindow* window;
 
 			// 
-			VkInstance instance;
+			VkInstance vulkan_instance;
+
+			// The number of graphics cards on the machine.
+			uint32_t number_of_physical_devices;
 
 			// 
-			void init_vulkan();
+			bool init_vulkan();
 
 			// 
 			void shutdown_vulkan();
@@ -34,9 +37,6 @@ namespace vulkan_renderer {
 			
 			// 
 			void close_window();
-
-			// 
-			void check_for_errors(const VkResult& result);
 
 
 		public:
