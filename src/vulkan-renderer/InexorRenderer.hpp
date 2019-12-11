@@ -24,6 +24,9 @@ namespace vulkan_renderer {
 			// 
 			VkInstance vulkan_instance;
 
+			// 
+			VkDevice device;
+
 			// The number of graphics cards on the machine.
 			uint32_t number_of_physical_devices;
 

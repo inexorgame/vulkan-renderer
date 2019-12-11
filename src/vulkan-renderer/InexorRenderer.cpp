@@ -126,8 +126,39 @@ namespace vulkan_renderer {
 			cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
 		}
 
-		// 
-		VkDeviceQueueCreateInfo device_create_info = {};
+
+		VkDeviceQueueCreateInfo device_queue_create_info = {};
+
+		device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		device_queue_create_info.pNext = NULL;
+		device_queue_create_info.flags = NULL;
+
+		// TODO: Look which queue family fits best for what we want to do.
+		device_queue_create_info.queueFamilyIndex = NULL;
+
+		// TODO: Check if 4 queues are even supported!
+		device_queue_create_info.queueCount = 4;
+		device_queue_create_info.pQueuePriorities = NULL;
+
+
+		VkDeviceCreateInfo device_create_info = {};
+		VkPhysicalDeviceFeatures used_features = {};
+
+		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		device_create_info.pNext = NULL;
+		device_create_info.flags = NULL;
+		device_create_info.queueCreateInfoCount = 1;
+		device_create_info.pQueueCreateInfos = &device_queue_create_info;
+		device_create_info.enabledLayerCount = NULL;
+		device_create_info.ppEnabledLayerNames = NULL;
+		device_create_info.enabledExtensionCount = NULL;
+		device_create_info.ppEnabledExtensionNames = NULL;
+		device_create_info.pEnabledFeatures = &used_features;
+
+		
+		// TODO: Lets pick the best device instead of the default device.
+		// TODO: Let the user choose which device to use.
+		result = vkCreateDevice(selected_graphics_card, &device_create_info, NULL, &device);
 
 		return true;
 	}
