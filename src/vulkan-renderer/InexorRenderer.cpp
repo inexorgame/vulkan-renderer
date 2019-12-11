@@ -38,23 +38,32 @@ namespace vulkan_renderer {
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
 
-		VkInstanceCreateInfo createInfo = {};
-
-		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		createInfo.pApplicationInfo = &appInfo;
+		// TODO: Make sure this validation layer is available!
+		const std::vector<const char*> validation_layers = {
+			"VK_LAYER_LUNARG_standard_validation",
+		};
 
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
 
 		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-		createInfo.enabledExtensionCount = glfwExtensionCount;
-		createInfo.ppEnabledExtensionNames = glfwExtensions;
-		createInfo.enabledLayerCount = 0;
+		
+		VkInstanceCreateInfo create_info = {};
+
+		create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		create_info.pNext = NULL;
+		create_info.flags = NULL;
+		create_info.pApplicationInfo = &appInfo;
+		create_info.enabledLayerCount = validation_layers.size();
+		create_info.ppEnabledLayerNames = validation_layers.data();
+		create_info.enabledExtensionCount = glfwExtensionCount;
+		create_info.ppEnabledExtensionNames = glfwExtensions;
+
 
 
 		// Let's create an instance.
-		VkResult result = vkCreateInstance(&createInfo, nullptr, &vulkan_instance);
+		VkResult result = vkCreateInstance(&create_info, nullptr, &vulkan_instance);
 
 		if(VK_SUCCESS != result)
 		{
@@ -160,6 +169,32 @@ namespace vulkan_renderer {
 		// TODO: Let the user choose which device to use.
 		result = vkCreateDevice(selected_graphics_card, &device_create_info, NULL, &device);
 
+
+		// The number of available Vulkan layers.
+		uint32_t number_of_layers = 0;
+
+		// Ask for the number of available Vulkan layers.
+		vkEnumerateInstanceLayerProperties(&number_of_layers, NULL);
+
+		cout << "Number of available layers: " << number_of_layers << endl;
+		cout << endl;
+
+		std::vector<VkLayerProperties> layer_properties;
+
+		layer_properties.resize(number_of_layers);
+
+		vkEnumerateInstanceLayerProperties(&number_of_layers, &layer_properties[0]);
+
+		// Loop through all available layers and print information about them.
+		for(std::size_t i=0; i< number_of_layers; i++)
+		{
+			cout << "Name: " << layer_properties[i].layerName << endl;
+			cout << "Spec Version: " << layer_properties[i].specVersion << endl;
+			cout << "Impl Version: " << layer_properties[i].implementationVersion << endl;
+			cout << "Description: " << layer_properties[i].description << endl;
+			cout << endl;
+		}
+
 		return true;
 	}
 
@@ -202,6 +237,7 @@ namespace vulkan_renderer {
 			"VK_PHYSICAL_DEVICE_TYPE_CPU",
 		};
 
+		// Check if array index is in bounds.
 		if(graphics_card_properties.deviceType <= 4)
 		{
 			cout << "Device type: " << graphics_card_types[graphics_card_properties.deviceType] << endl;
