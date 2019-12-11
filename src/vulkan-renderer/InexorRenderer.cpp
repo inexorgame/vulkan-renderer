@@ -26,16 +26,16 @@ namespace vulkan_renderer {
 	{
 		cout << "Setting up Vulkan." << endl;
 
-		VkApplicationInfo appInfo = {};
+		VkApplicationInfo app_info = {};
 
-		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "Inexor";
-		appInfo.applicationVersion = VK_MAKE_VERSION(1,0,0);
-		appInfo.pEngineName = "Inexor";
-		appInfo.engineVersion = VK_MAKE_VERSION(1,0,0);
+		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		app_info.pApplicationName = "Inexor";
+		app_info.applicationVersion = VK_MAKE_VERSION(1,0,0);
+		app_info.pEngineName = "Inexor";
+		app_info.engineVersion = VK_MAKE_VERSION(1,0,0);
 
 		// TODO: Should we switch to VK_API_VERSION_1_1 ?
-		appInfo.apiVersion = VK_API_VERSION_1_0;
+		app_info.apiVersion = VK_API_VERSION_1_0;
 
 
 		// TODO: Make sure this validation layer is available!
@@ -54,8 +54,8 @@ namespace vulkan_renderer {
 		create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		create_info.pNext = NULL;
 		create_info.flags = NULL;
-		create_info.pApplicationInfo = &appInfo;
-		create_info.enabledLayerCount = validation_layers.size();
+		create_info.pApplicationInfo = &app_info;
+		create_info.enabledLayerCount = static_cast<uint32_t>(validation_layers.size());
 		create_info.ppEnabledLayerNames = validation_layers.data();
 		create_info.enabledExtensionCount = glfwExtensionCount;
 		create_info.ppEnabledExtensionNames = glfwExtensions;
@@ -183,7 +183,7 @@ namespace vulkan_renderer {
 
 		layer_properties.resize(number_of_layers);
 
-		vkEnumerateInstanceLayerProperties(&number_of_layers, &layer_properties[0]);
+		vkEnumerateInstanceLayerProperties(&number_of_layers, layer_properties.data());
 
 		// Loop through all available layers and print information about them.
 		for(std::size_t i=0; i< number_of_layers; i++)
@@ -194,6 +194,28 @@ namespace vulkan_renderer {
 			cout << "Description: " << layer_properties[i].description << endl;
 			cout << endl;
 		}
+
+		uint32_t number_of_extensions = 0;
+
+		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
+
+		cout << "Number of extensions: " << number_of_extensions << endl;
+
+		std::vector<VkExtensionProperties> extensions;
+
+		// Preallocate memory for extension properties.
+		extensions.resize(number_of_extensions);
+
+		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, extensions.data());
+
+		for(std::size_t i=0; i<number_of_extensions; i++)
+		{
+			cout << "Name: " << extensions[i].extensionName << endl;
+			cout << "Spec: " << extensions[i].specVersion << endl;
+			cout << endl;
+		}
+
+		// TODO: Get Proc addr.
 
 		return true;
 	}
