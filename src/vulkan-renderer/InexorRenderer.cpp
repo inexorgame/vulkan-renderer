@@ -96,6 +96,7 @@ namespace vulkan_renderer {
 
 		cout << "Number of queue families: " << number_of_queue_families << endl;
 
+		// The queue families of the selected graphics card.
 		std::vector<VkQueueFamilyProperties> queue_family_properties;
 
 		// Preallocate memory for the family queues.
@@ -124,6 +125,9 @@ namespace vulkan_renderer {
 			
 			cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
 		}
+
+		// 
+		VkDeviceQueueCreateInfo device_create_info = {};
 
 		return true;
 	}
@@ -171,6 +175,12 @@ namespace vulkan_renderer {
 		{
 			cout << "Device type: " << graphics_card_types[graphics_card_properties.deviceType] << endl;
 		}
+
+		// From the Vulkan documentation:
+		// The number of discrete priorities that can be assigned to a queue based on the value of each member
+		// of VkDeviceQueueCreateInfo::pQueuePriorities.This must be at least 2, and levels must be spread evenly
+		// over the range, with at least one level at 1.0, and another at 0.0.
+		cout << "discreteQueuePriorities: " << graphics_card_properties.limits.discreteQueuePriorities << endl;
 
 
 		VkPhysicalDeviceFeatures graphics_card_features;
