@@ -131,6 +131,7 @@ namespace vulkan_renderer {
 			cout << "Device type: " << graphics_card_types[graphics_card_properties.deviceType] << endl;
 		}
 
+
 		VkPhysicalDeviceFeatures graphics_card_features;
 
 		// Check which features are supported by this graphics card.
@@ -143,6 +144,16 @@ namespace vulkan_renderer {
 		cout << "Geometry shader supported: " << ((graphics_card_features.geometryShader) ? "yes" : "no") << endl;
 
 		// TODO: Check for more features if neccesary.
+
+
+		// Check memory properties of this graphics card.
+		VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
+
+		vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
+
+		cout << "Getting memory properties of this graphics card." << endl;
+		
+		// TODO: Do something with the memory properties?
 	}
 
 
