@@ -7,6 +7,7 @@
 #include <glm/mat4x4.hpp>
 
 #include <iostream>
+#include <vector>
 
 
 namespace inexor {
@@ -26,6 +27,9 @@ namespace vulkan_renderer {
 			// The number of graphics cards on the machine.
 			uint32_t number_of_physical_devices;
 
+			// The graphics cards on this machine.
+			std::vector<VkPhysicalDevice> graphics_cards;
+
 			// 
 			bool init_vulkan();
 
@@ -37,6 +41,9 @@ namespace vulkan_renderer {
 			
 			// 
 			void close_window();
+
+			// Gets the information on the graphics card and prints it to the console.
+			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);
 
 
 		public:

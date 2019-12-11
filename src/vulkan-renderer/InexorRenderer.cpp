@@ -69,7 +69,65 @@ namespace vulkan_renderer {
 
 		cout << "There are " << number_of_physical_devices << " graphics cards available." << endl;
 
+		// Preallocate memory: resize the vector of graphics cards.
+		graphics_cards.resize(number_of_physical_devices);
+
+		cout << "Getting information about graphics cards" << endl;
+
+		// Fill out the information of the graphics cards.
+		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, &graphics_cards[0]);
+
+		// Loop through all available graphics card and print information about them to the console.
+		for(std::size_t i=0; i< number_of_physical_devices; i++)
+		{
+			print_graphics_card_info(graphics_cards[i]);
+			cout << endl;
+		}
+
 		return true;
+	}
+
+
+	void InexorRenderer::print_graphics_card_info(const VkPhysicalDevice& graphics_card)
+	{
+		// The properties of the graphics card.
+		VkPhysicalDeviceProperties graphics_card_properties;
+
+		// Get the information about that graphics card.
+		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
+
+		// Print the name of the device.
+		cout << "Graphics card: " << graphics_card_properties.deviceName << endl;
+
+		uint32_t VulkanAPIversion = graphics_card_properties.apiVersion;
+
+		// The Vulkan version which is supported by the graphics card.
+		cout << "Vulkan API supported version: " << VK_VERSION_MAJOR(VulkanAPIversion) << "." << VK_VERSION_MINOR(VulkanAPIversion) << "." << VK_VERSION_PATCH(VulkanAPIversion) << endl;
+
+		// The driver version.
+		// @note: The driver version format is NOT standardised!
+		cout << "Driver version: " << VK_VERSION_MAJOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_MINOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_PATCH(graphics_card_properties.driverVersion) << endl;
+
+		// Vendor ID.
+		cout << "Vender ID: " << graphics_card_properties.vendorID << endl;
+
+		// Device ID.
+		cout << "Device ID: " << graphics_card_properties.deviceID << endl;
+
+		// Graphics card types.
+		// TODO: Is there any other way to get the graphics card type name by id?
+		const std::string graphics_card_types[] = {
+			"VK_PHYSICAL_DEVICE_TYPE_OTHER",
+			"VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
+			"VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU",
+			"VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU",
+			"VK_PHYSICAL_DEVICE_TYPE_CPU",
+		};
+
+		if(graphics_card_properties.deviceType <= 4)
+		{
+			cout << "Device type: " << graphics_card_types[graphics_card_properties.deviceType] << endl;
+		}
 	}
 
 
@@ -82,6 +140,9 @@ namespace vulkan_renderer {
 	InexorRenderer::InexorRenderer()
 	{
 		window = nullptr;
+		number_of_physical_devices = 0;
+		graphics_cards.clear();
+		vulkan_instance = {};
 	}
 
 
