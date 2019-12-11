@@ -104,6 +104,8 @@ namespace vulkan_renderer {
 		// The Vulkan version which is supported by the graphics card.
 		cout << "Vulkan API supported version: " << VK_VERSION_MAJOR(VulkanAPIversion) << "." << VK_VERSION_MINOR(VulkanAPIversion) << "." << VK_VERSION_PATCH(VulkanAPIversion) << endl;
 
+		// Always keep your graphics drivers up to date!
+
 		// The driver version.
 		// @note: The driver version format is NOT standardised!
 		cout << "Driver version: " << VK_VERSION_MAJOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_MINOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_PATCH(graphics_card_properties.driverVersion) << endl;
@@ -128,6 +130,19 @@ namespace vulkan_renderer {
 		{
 			cout << "Device type: " << graphics_card_types[graphics_card_properties.deviceType] << endl;
 		}
+
+		VkPhysicalDeviceFeatures graphics_card_features;
+
+		// Check which features are supported by this graphics card.
+		vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
+
+		// We will only print some of the features in the structure.
+		// For more information check the Vulkan documentation.
+
+		// Check if geometry shader is supported.
+		cout << "Geometry shader supported: " << ((graphics_card_features.geometryShader) ? "yes" : "no") << endl;
+
+		// TODO: Check for more features if neccesary.
 	}
 
 
