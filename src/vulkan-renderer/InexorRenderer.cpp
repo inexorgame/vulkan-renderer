@@ -114,6 +114,15 @@ namespace vulkan_renderer {
 			cout << "VK_QUEUE_TRANSFER_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) << endl;
 			cout << "VK_QUEUE_SPARSE_BINDING_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) << endl;
 			cout << "VK_QUEUE_PROTECTED_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) << endl;
+
+			cout << "Queue Count: " << queue_family_properties[i].queueCount << endl;
+			cout << "Timestamp Valid Bits: " << queue_family_properties[i].timestampValidBits << endl;
+
+			uint32_t width = queue_family_properties[i].minImageTransferGranularity.width;
+			uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
+			uint32_t depth = queue_family_properties[i].minImageTransferGranularity.depth;
+			
+			cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
 		}
 
 		return true;
