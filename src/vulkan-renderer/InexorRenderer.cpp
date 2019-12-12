@@ -61,7 +61,6 @@ namespace vulkan_renderer {
 		create_info.ppEnabledExtensionNames = glfwExtensions;
 
 
-
 		// Let's create an instance.
 		VkResult result = vkCreateInstance(&create_info, nullptr, &vulkan_instance);
 
@@ -84,7 +83,7 @@ namespace vulkan_renderer {
 		cout << "Getting information about graphics cards" << endl;
 
 		// Fill out the information of the graphics cards.
-		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, &graphics_cards[0]);
+		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
 
 		// Loop through all available graphics card and print information about them to the console.
 		for(std::size_t i=0; i< number_of_physical_devices; i++)
@@ -112,7 +111,7 @@ namespace vulkan_renderer {
 		queue_family_properties.resize(number_of_queue_families);
 
 		// Get information about physical device queue family properties.
-		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_queue_families, &queue_family_properties[0]);
+		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_queue_families, queue_family_properties.data());
 
 		// Loop through all available queue families.
 		for(std::size_t i=0; i< number_of_queue_families; i++)
@@ -176,7 +175,7 @@ namespace vulkan_renderer {
 		// Ask for the number of available Vulkan layers.
 		vkEnumerateInstanceLayerProperties(&number_of_layers, NULL);
 
-		cout << "Number of available layers: " << number_of_layers << endl;
+		cout << "Number of instance layers: " << number_of_layers << endl;
 		cout << endl;
 
 		std::vector<VkLayerProperties> layer_properties;
@@ -215,7 +214,28 @@ namespace vulkan_renderer {
 			cout << endl;
 		}
 
-		// TODO: Get Proc addr.
+
+
+		uint32_t number_of_device_layers = 0;
+		vkEnumerateDeviceLayerProperties(selected_graphics_card, &number_of_device_layers, NULL);
+
+		cout << "Number of device layers: " << number_of_device_layers << endl;
+
+		std::vector<VkLayerProperties> device_layer_properties;
+
+		device_layer_properties.resize(number_of_device_layers);
+
+		vkEnumerateDeviceLayerProperties(selected_graphics_card, &number_of_device_layers, device_layer_properties.data());
+
+		for(std::size_t i=0; i<number_of_device_layers; i++)
+		{
+			cout << "Name: " << device_layer_properties[i].description << endl;
+			cout << "Spec Version: " << device_layer_properties[i].specVersion << endl;
+			cout << "Impl Version : " << device_layer_properties[i].implementationVersion << endl;
+			cout << "Description: " << device_layer_properties[i].description << endl;
+			cout << endl;
+		}
+
 
 		return true;
 	}
