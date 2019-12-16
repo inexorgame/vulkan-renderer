@@ -57,7 +57,11 @@ Khronos Vulkan samples:
 
 https://github.com/KhronosGroup/Vulkan-Samples
 
-## Vulkan Debuggers
+LunarG Vulkan samples:
+
+https://github.com/LunarG/VulkanSamples
+
+### Vulkan Debuggers
 https://renderdoc.org/
 
 ### Advantages of Vulkan
@@ -68,7 +72,16 @@ https://www.toptal.com/api-developers/a-brief-overview-of-vulkan-api
 https://developer.nvidia.com/Vulkan
 https://www.quora.com/What-advantages-does-Vulkan-have-over-already-established-graphics-APIs
 
-## Multithreading in Vulkan
+### Vulkan Tutorials
+https://devblogs.nvidia.com/vulkan-dos-donts/
+https://vulkan.lunarg.com/doc/sdk/1.0.26.0/linux/tutorial.html
+https://vulkan-tutorial.com/
+http://ogldev.atspace.co.uk/www/tutorial50/tutorial50.html
+http://jhenriques.net/development.html
+http://www.duskborn.com/posts/a-simple-vulkan-compute-example/
+https://software.intel.com/en-us/articles/api-without-secrets-introduction-to-vulkan-part-1
+
+### Multithreading in Vulkan
 https://www.reddit.com/r/vulkan/comments/52aodq/multithreading_in_vulkan_where_should_i_start/
 
 ### OpenGL
