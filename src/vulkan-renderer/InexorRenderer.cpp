@@ -70,7 +70,7 @@ namespace vulkan_renderer {
 		instance_create_info.pNext = NULL;
 		instance_create_info.flags = NULL;
 		instance_create_info.pApplicationInfo = &app_info;
-		instance_create_info.enabledExtensionCount = instance_extensions.size();
+		instance_create_info.enabledExtensionCount = static_cast<uint32_t>(instance_extensions.size());
 		instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
 
 		// Check if Khronos validation layer is available.
@@ -104,7 +104,7 @@ namespace vulkan_renderer {
 			}
 			else
 			{
-				cout << "Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled" << endl;
+				display_error_message("Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled.");
 			}
 		}
 
@@ -120,7 +120,8 @@ namespace vulkan_renderer {
 
 		if(VK_SUCCESS != result)
 		{
-			cout << "vkCreateInstance failed!" << endl;
+			// TODO: Interpret error?
+			display_error_message("Instance creation failed");
 			return false;
 		}
 

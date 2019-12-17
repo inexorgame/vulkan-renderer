@@ -16,6 +16,9 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
+// Custom error handling class for Inexor renderer.
+#include "error-handling/VulkanErrorHandling.hpp"
+
 // Change these definitions if you want to fork the renderer!
 // These definitions will be used in the create_vulkan_instance() method.
 #define INEXOR_ENGINE_VERSION VK_MAKE_VERSION(1,0,0)
@@ -28,7 +31,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	// 
-	class InexorRenderer
+	class InexorRenderer : public VulkanErrorHandling
 	{
 		private:
 
