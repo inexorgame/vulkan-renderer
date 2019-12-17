@@ -22,47 +22,101 @@ namespace vulkan_renderer {
 	}
 
 
-	bool InexorRenderer::init_vulkan()
+	VkResult InexorRenderer::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers)
 	{
-		cout << "Setting up Vulkan." << endl;
+		// Print some debug messages to the console.
+		cout << "Application name: " << application_name.c_str() << endl;
+		cout << "Application version: " << VK_VERSION_MAJOR(application_version) << "." << VK_VERSION_MINOR(application_version) << "." << VK_VERSION_PATCH(application_version) << endl;
+		cout << "Engine name: " << engine_name.c_str() << endl;
+		cout << "Engine version: " << VK_VERSION_MAJOR(engine_version) << "." << VK_VERSION_MINOR(engine_version) << "." << VK_VERSION_PATCH(engine_version) << endl;
+
+		// TODO: Check which version of Vulkan is available before trying to create an instance!
+		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
+		// "Because Vulkan 1.0 implementations may fail with VK_ERROR_INCOMPATIBLE_DRIVER,
+		// applications should determine the version of Vulkan available before calling vkCreateInstance.
+		// If the vkGetInstanceProcAddr returns NULL for vkEnumerateInstanceVersion, it is a Vulkan 1.0
+		// implementation. Otherwise, the application can call vkEnumerateInstanceVersion to determine the
+		// version of Vulkan."
 
 		VkApplicationInfo app_info = {};
-
 		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		app_info.pApplicationName = "Inexor";
-		app_info.applicationVersion = VK_MAKE_VERSION(1,0,0);
-		app_info.pEngineName = "Inexor";
-		app_info.engineVersion = VK_MAKE_VERSION(1,0,0);
-
-		// TODO: Should we switch to VK_API_VERSION_1_1 ?
+		app_info.pNext = NULL;
+		app_info.pApplicationName = application_name.c_str();
+		app_info.applicationVersion = application_version;
+		app_info.pEngineName = engine_name.c_str();
+		app_info.engineVersion = engine_version;
 		app_info.apiVersion = VK_API_VERSION_1_0;
 
+		// TODO: Should we switch to Vulkan 1.1?
 
-		// TODO: Make sure this validation layer is available!
-		const std::vector<const char*> validation_layers = {
-			"VK_LAYER_LUNARG_standard_validation",
+		const std::vector<const char*> instance_extensions = 
+		{
+			// We need this to render to window surfaces.
+			VK_KHR_SURFACE_EXTENSION_NAME,
+			// We need this for validation.
+			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+
+			// Add more extensions depending on the operating system.
+			// TODO: Add more operating systems!
+			#if defined(_WIN32)
+				VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+			#endif
 		};
 
-		uint32_t glfwExtensionCount = 0;
-		const char** glfwExtensions;
+		// TODO: Check if we need more device or instance extensions!
 
-		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+		VkInstanceCreateInfo instance_create_info = {};
+		instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		instance_create_info.pNext = NULL;
+		instance_create_info.flags = NULL;
+		instance_create_info.pApplicationInfo = &app_info;
+		instance_create_info.enabledExtensionCount = instance_extensions.size();
+		instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
 
-		
-		VkInstanceCreateInfo create_info = {};
+		// Check if Khronos validation layer is available.
+		if(enable_validation_layers)
+		{
+			const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
 
-		create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		create_info.pNext = NULL;
-		create_info.flags = NULL;
-		create_info.pApplicationInfo = &app_info;
-		create_info.enabledLayerCount = static_cast<uint32_t>(validation_layers.size());
-		create_info.ppEnabledLayerNames = validation_layers.data();
-		create_info.enabledExtensionCount = glfwExtensionCount;
-		create_info.ppEnabledExtensionNames = glfwExtensions;
+			// Check if this layer is available at instance leve..
+			uint32_t instance_layer_count = 0;
+			vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr);
+			
+			std::vector<VkLayerProperties> instance_layer_properties(instance_layer_count);
+			vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layer_properties.data());
+
+			bool validation_layer_available = false;
+
+			for(VkLayerProperties layer : instance_layer_properties)
+			{
+				if(0 == strcmp(validation_layer_name, layer.layerName))
+				{
+					// Yes, this validation layer is available!
+					validation_layer_available = true;
+					break;
+				}
+			}
+
+			if(validation_layer_available)
+			{
+				instance_create_info.ppEnabledLayerNames = &validation_layer_name;
+				instance_create_info.enabledLayerCount = 1;
+			}
+			else
+			{
+				cout << "Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled" << endl;
+			}
+		}
+
+		return vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
+	}
 
 
-		// Let's create an instance.
-		VkResult result = vkCreateInstance(&create_info, nullptr, &vulkan_instance);
+	bool InexorRenderer::init_vulkan()
+	{
+		cout << "Initialising Vulkan instance." << endl;
+
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
 
 		if(VK_SUCCESS != result)
 		{
@@ -235,7 +289,6 @@ namespace vulkan_renderer {
 			cout << "Description: " << device_layer_properties[i].description << endl;
 			cout << endl;
 		}
-
 
 		return true;
 	}

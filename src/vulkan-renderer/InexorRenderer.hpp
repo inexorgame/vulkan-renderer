@@ -9,6 +9,20 @@
 #include <iostream>
 #include <vector>
 
+#include <vulkan/vulkan.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <vulkan/vulkan_win32.h>
+#endif
+
+// Change these definitions if you want to fork the renderer!
+// These definitions will be used in the create_vulkan_instance() method.
+#define INEXOR_ENGINE_VERSION VK_MAKE_VERSION(1,0,0)
+#define INEXOR_APPLICATION_VERSION VK_MAKE_VERSION(1,0,0)
+#define INEXOR_APPLICATION_NAME "Inexor-Application"
+#define INEXOR_ENGINE_NAME "Inexor-Engine"
+
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -26,6 +40,13 @@ namespace vulkan_renderer {
 
 			// 
 			VkDevice device;
+
+			// 
+			VkResult create_vulkan_instance(const std::string& application_name,
+			                                const std::string& engine_name,
+											const uint32_t application_version,
+											const uint32_t engine_version,
+											bool enable_validation_layers = true);
 
 			// The number of graphics cards on the machine.
 			uint32_t number_of_physical_devices;
