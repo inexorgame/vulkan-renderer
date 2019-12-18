@@ -48,6 +48,9 @@ namespace vulkan_renderer {
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
 			// 
+			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
+
+			// 
 			void enumerate_physical_devices();
 
 			// The number of graphics cards on the machine.

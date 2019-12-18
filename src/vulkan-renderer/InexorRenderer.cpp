@@ -123,6 +123,11 @@ namespace vulkan_renderer {
 			display_error_message(error_message);
 		}
 
+		if(number_of_physical_devices <= 0)
+		{
+			display_error_message("Error: Could not find any GPU's!");
+		}
+
 		cout << "There are " << number_of_physical_devices << " available." << endl;
 
 		// Preallocate memory for the available graphics cards.
@@ -130,7 +135,15 @@ namespace vulkan_renderer {
 
 		cout << "Gathering information about graphics cards." << endl;
 
-		vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
+		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: Could not enumerate physical devices! " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		// TODO: Add GPU selection based on command line arguments.
 
 		for(std::size_t i=0; i<number_of_physical_devices; i++)
 		{
@@ -140,32 +153,12 @@ namespace vulkan_renderer {
 	}
 
 
-	bool InexorRenderer::init_vulkan()
+	VkResult InexorRenderer::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
-		cout << "Initialising Vulkan instance." << endl;
-
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-			return false;
-		}
-
-		cout << "vkCreateInstance succeeded." << endl;
-
-		enumerate_physical_devices();
-
-		// Let's just use the first one in the array for now.
-		// TODO: Implement a mechanism to select a graphics card.
-		// TODO: In case multiple graphics cards are available let the user select one.
-		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
-
 		uint32_t number_of_queue_families = 0;
 
 		// Ask for the family queues.
-		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_queue_families, NULL);
+		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, NULL);
 
 		cout << "Number of queue families: " << number_of_queue_families << endl;
 
@@ -176,7 +169,7 @@ namespace vulkan_renderer {
 		queue_family_properties.resize(number_of_queue_families);
 
 		// Get information about physical device queue family properties.
-		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_queue_families, queue_family_properties.data());
+		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, queue_family_properties.data());
 
 		// Loop through all available queue families.
 		for(std::size_t i=0; i< number_of_queue_families; i++)
@@ -233,8 +226,40 @@ namespace vulkan_renderer {
 		
 		// TODO: Lets pick the best device instead of the default device.
 		// TODO: Let the user choose which device to use.
-		result = vkCreateDevice(selected_graphics_card, &device_create_info, NULL, &device);
+		return vkCreateDevice(graphics_card, &device_create_info, NULL, &device);
+	}
 
+
+	bool InexorRenderer::init_vulkan()
+	{
+		cout << "Initialising Vulkan instance." << endl;
+
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+			return false;
+		}
+
+		cout << "vkCreateInstance succeeded." << endl;
+
+		enumerate_physical_devices();
+
+		// Let's just use the first one in the array for now.
+		// TODO: Implement a mechanism to select a graphics card.
+		// TODO: In case multiple graphics cards are available let the user select one.
+		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
+
+		result = create_physical_device(selected_graphics_card);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+			return false;
+		}
 
 		// The number of available Vulkan layers.
 		uint32_t number_of_layers = 0;
