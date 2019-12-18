@@ -113,6 +113,33 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::enumerate_physical_devices()
+	{
+		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, NULL);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		cout << "There are " << number_of_physical_devices << " available." << endl;
+
+		// Preallocate memory for the available graphics cards.
+		graphics_cards.resize(number_of_physical_devices);
+
+		cout << "Gathering information about graphics cards." << endl;
+
+		vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
+
+		for(std::size_t i=0; i<number_of_physical_devices; i++)
+		{
+			print_graphics_card_info(graphics_cards[i]);
+			cout << endl;
+		}
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -128,25 +155,7 @@ namespace vulkan_renderer {
 
 		cout << "vkCreateInstance succeeded." << endl;
 
-		// Lets ask how many graphics cards are in thie machine.
-		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, NULL);
-
-		cout << "There are " << number_of_physical_devices << " graphics cards available." << endl;
-
-		// Preallocate memory: resize the vector of graphics cards.
-		graphics_cards.resize(number_of_physical_devices);
-
-		cout << "Getting information about graphics cards" << endl;
-
-		// Fill out the information of the graphics cards.
-		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
-
-		// Loop through all available graphics card and print information about them to the console.
-		for(std::size_t i=0; i< number_of_physical_devices; i++)
-		{
-			print_graphics_card_info(graphics_cards[i]);
-			cout << endl;
-		}
+		enumerate_physical_devices();
 
 		// Let's just use the first one in the array for now.
 		// TODO: Implement a mechanism to select a graphics card.
