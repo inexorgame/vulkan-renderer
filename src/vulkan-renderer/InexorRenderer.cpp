@@ -53,6 +53,7 @@ namespace vulkan_renderer {
 		{
 			// We need this to render to window surfaces.
 			VK_KHR_SURFACE_EXTENSION_NAME,
+
 			// We need this for validation.
 			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 
@@ -120,8 +121,8 @@ namespace vulkan_renderer {
 
 		if(VK_SUCCESS != result)
 		{
-			// TODO: Interpret error?
-			display_error_message("Instance creation failed");
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
 			return false;
 		}
 
@@ -201,7 +202,9 @@ namespace vulkan_renderer {
 
 		// TODO: Check if 4 queues are even supported!
 		device_queue_create_info.queueCount = 4;
-		device_queue_create_info.pQueuePriorities = NULL;
+
+		const float queue_priorities[] = {1.0f, 1.0f, 1.0f, 1.0f};
+		device_queue_create_info.pQueuePriorities = queue_priorities;
 
 
 		VkDeviceCreateInfo device_create_info = {};
@@ -268,7 +271,6 @@ namespace vulkan_renderer {
 			cout << "Spec: " << extensions[i].specVersion << endl;
 			cout << endl;
 		}
-
 
 
 		uint32_t number_of_device_layers = 0;
@@ -409,6 +411,7 @@ namespace vulkan_renderer {
 
 	void InexorRenderer::cleanup()
 	{
+		// TODO: Cleanup in reverse order of initialisation.
 		close_window();
 	}
 
