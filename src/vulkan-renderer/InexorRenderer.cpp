@@ -245,8 +245,6 @@ namespace vulkan_renderer {
 			return false;
 		}
 
-		cout << "vkCreateInstance succeeded." << endl;
-
 		enumerate_physical_devices();
 
 		// Let's just use the first one in the array for now.
@@ -395,8 +393,7 @@ namespace vulkan_renderer {
 		// The number of discrete priorities that can be assigned to a queue based on the value of each member
 		// of VkDeviceQueueCreateInfo::pQueuePriorities.This must be at least 2, and levels must be spread evenly
 		// over the range, with at least one level at 1.0, and another at 0.0.
-		cout << "discreteQueuePriorities: " << graphics_card_properties.limits.discreteQueuePriorities << endl;
-
+		cout << "Discrete queue priorities: " << graphics_card_properties.limits.discreteQueuePriorities << endl;
 
 		VkPhysicalDeviceFeatures graphics_card_features;
 
@@ -405,21 +402,41 @@ namespace vulkan_renderer {
 
 		// We will only print some of the features in the structure.
 		// For more information check the Vulkan documentation.
-
 		// Check if geometry shader is supported.
 		cout << "Geometry shader supported: " << ((graphics_card_features.geometryShader) ? "yes" : "no") << endl;
 
 		// TODO: Check for more features if neccesary.
 
+		cout << endl;
+		cout << "Checking memory properties." << endl;
 
 		// Check memory properties of this graphics card.
 		VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
 
 		vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
 
-		cout << "Getting memory properties of this graphics card." << endl;
-		
-		// TODO: Display the memory properties?
+		cout << "Number of memory types: " << graphics_card_memory_properties.memoryTypeCount << endl;
+		cout << "Number of heap types: " << graphics_card_memory_properties.memoryHeapCount << endl;
+
+		// Loop through all memory types and list their features.
+		for(std::size_t i=0; i<graphics_card_memory_properties.memoryTypeCount; i++)
+		{
+			cout << "Heap index: "<< graphics_card_memory_properties.memoryTypes[i].heapIndex << endl;
+			
+			auto &propertyFlag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
+
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) cout << "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) cout << "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) cout << "VK_MEMORY_PROPERTY_HOST_CACHED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) cout << "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT) cout << "VK_MEMORY_PROPERTY_PROTECTED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
+
+			cout << endl;
+		}
 	}
 
 
