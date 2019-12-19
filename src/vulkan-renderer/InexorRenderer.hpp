@@ -74,6 +74,8 @@ namespace vulkan_renderer {
 			// Gets the information on the graphics card and prints it to the console.
 			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);
 
+			// 
+			void print_physical_device_queue_families(const VkPhysicalDevice& graphics_card);
 
 		public:
 			

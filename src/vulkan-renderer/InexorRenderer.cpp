@@ -149,12 +149,13 @@ namespace vulkan_renderer {
 		for(std::size_t i=0; i<number_of_physical_devices; i++)
 		{
 			print_graphics_card_info(graphics_cards[i]);
+			print_physical_device_queue_families(graphics_cards[i]);
 			cout << endl;
 		}
 	}
 
 
-	VkResult InexorRenderer::create_physical_device(const VkPhysicalDevice& graphics_card)
+	void InexorRenderer::print_physical_device_queue_families(const VkPhysicalDevice& graphics_card)
 	{
 		uint32_t number_of_queue_families = 0;
 
@@ -178,14 +179,15 @@ namespace vulkan_renderer {
 		for(std::size_t i=0; i< number_of_queue_families; i++)
 		{
 			cout << "Queue family " << i << ": " << endl;
-			cout << "VK_QUEUE_GRAPHICS_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) << endl;
-			cout << "VK_QUEUE_COMPUTE_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) << endl;
-			cout << "VK_QUEUE_TRANSFER_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) << endl;
-			cout << "VK_QUEUE_SPARSE_BINDING_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) << endl;
-			cout << "VK_QUEUE_PROTECTED_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) << endl;
-
 			cout << "Queue Count: " << queue_family_properties[i].queueCount << endl;
 			cout << "Timestamp Valid Bits: " << queue_family_properties[i].timestampValidBits << endl;
+
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) cout << "VK_QUEUE_GRAPHICS_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) cout << "VK_QUEUE_COMPUTE_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) cout << "VK_QUEUE_COMPUTE_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) cout << "VK_QUEUE_TRANSFER_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) cout << "VK_QUEUE_SPARSE_BINDING_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) cout << "VK_QUEUE_PROTECTED_BIT" << endl;
 
 			uint32_t width = queue_family_properties[i].minImageTransferGranularity.width;
 			uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
@@ -194,7 +196,11 @@ namespace vulkan_renderer {
 			cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
 			cout << endl;
 		}
+	}
 
+
+	VkResult InexorRenderer::create_physical_device(const VkPhysicalDevice& graphics_card)
+	{
 		VkDeviceQueueCreateInfo device_queue_create_info = {};
 
 		device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -210,7 +216,6 @@ namespace vulkan_renderer {
 		const float queue_priorities[] = {1.0f, 1.0f, 1.0f, 1.0f};
 		device_queue_create_info.pQueuePriorities = queue_priorities;
 
-
 		VkDeviceCreateInfo device_create_info = {};
 		VkPhysicalDeviceFeatures used_features = {};
 
@@ -225,7 +230,6 @@ namespace vulkan_renderer {
 		device_create_info.ppEnabledExtensionNames = NULL;
 		device_create_info.pEnabledFeatures = &used_features;
 
-		
 		// TODO: Lets pick the best device instead of the default device.
 		// TODO: Let the user choose which device to use.
 		return vkCreateDevice(graphics_card, &device_create_info, NULL, &device);
@@ -437,6 +441,8 @@ namespace vulkan_renderer {
 
 			cout << endl;
 		}
+
+		
 	}
 
 
