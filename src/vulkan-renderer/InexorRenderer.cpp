@@ -29,6 +29,7 @@ namespace vulkan_renderer {
 		cout << "Application version: " << VK_VERSION_MAJOR(application_version) << "." << VK_VERSION_MINOR(application_version) << "." << VK_VERSION_PATCH(application_version) << endl;
 		cout << "Engine name: " << engine_name.c_str() << endl;
 		cout << "Engine version: " << VK_VERSION_MAJOR(engine_version) << "." << VK_VERSION_MINOR(engine_version) << "." << VK_VERSION_PATCH(engine_version) << endl;
+		cout << endl;
 
 		// TODO: Check which version of Vulkan is available before trying to create an instance!
 		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
@@ -128,12 +129,12 @@ namespace vulkan_renderer {
 			display_error_message("Error: Could not find any GPU's!");
 		}
 
-		cout << "There are " << number_of_physical_devices << " available." << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "Number of available GPUs: " << number_of_physical_devices << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
 
 		// Preallocate memory for the available graphics cards.
 		graphics_cards.resize(number_of_physical_devices);
-
-		cout << "Gathering information about graphics cards." << endl;
 
 		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
 
@@ -160,7 +161,9 @@ namespace vulkan_renderer {
 		// Ask for the family queues.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, NULL);
 
+		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of queue families: " << number_of_queue_families << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
 
 		// The queue families of the selected graphics card.
 		std::vector<VkQueueFamilyProperties> queue_family_properties;
@@ -174,7 +177,6 @@ namespace vulkan_renderer {
 		// Loop through all available queue families.
 		for(std::size_t i=0; i< number_of_queue_families; i++)
 		{
-			cout << endl;
 			cout << "Queue family " << i << ": " << endl;
 			cout << "VK_QUEUE_GRAPHICS_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) << endl;
 			cout << "VK_QUEUE_COMPUTE_BIT " << (queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) << endl;
@@ -190,8 +192,8 @@ namespace vulkan_renderer {
 			uint32_t depth = queue_family_properties[i].minImageTransferGranularity.depth;
 			
 			cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
+			cout << endl;
 		}
-
 
 		VkDeviceQueueCreateInfo device_queue_create_info = {};
 
@@ -267,8 +269,9 @@ namespace vulkan_renderer {
 		// Ask for the number of available Vulkan layers.
 		vkEnumerateInstanceLayerProperties(&number_of_layers, NULL);
 
+		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of instance layers: " << number_of_layers << endl;
-		cout << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
 
 		std::vector<VkLayerProperties> layer_properties;
 
@@ -279,18 +282,27 @@ namespace vulkan_renderer {
 		// Loop through all available layers and print information about them.
 		for(std::size_t i=0; i< number_of_layers; i++)
 		{
-			cout << "Name: " << layer_properties[i].layerName << endl;
-			cout << "Spec Version: " << layer_properties[i].specVersion << endl;
+			// Extract major, minor and patch version of spec.
+			uint32_t spec_major = VK_VERSION_MAJOR(layer_properties[i].specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(layer_properties[i].specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(layer_properties[i].specVersion);
+
+			cout << "Name: "         << layer_properties[i].layerName << endl;
+			cout << "Spec Version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
 			cout << "Impl Version: " << layer_properties[i].implementationVersion << endl;
-			cout << "Description: " << layer_properties[i].description << endl;
+			cout << "Description: "  << layer_properties[i].description << endl;
 			cout << endl;
 		}
+		
+		cout << endl;
 
 		uint32_t number_of_extensions = 0;
 
 		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
 
+		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of extensions: " << number_of_extensions << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
 
 		std::vector<VkExtensionProperties> extensions;
 
@@ -306,11 +318,14 @@ namespace vulkan_renderer {
 			cout << endl;
 		}
 
+		cout << endl;
 
 		uint32_t number_of_device_layers = 0;
 		vkEnumerateDeviceLayerProperties(selected_graphics_card, &number_of_device_layers, NULL);
 
+		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of device layers: " << number_of_device_layers << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
 
 		std::vector<VkLayerProperties> device_layer_properties;
 
@@ -320,12 +335,18 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<number_of_device_layers; i++)
 		{
-			cout << "Name: " << device_layer_properties[i].description << endl;
-			cout << "Spec Version: " << device_layer_properties[i].specVersion << endl;
+			uint32_t spec_major = VK_VERSION_MAJOR(layer_properties[i].specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(layer_properties[i].specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(layer_properties[i].specVersion);
+
+			cout << "Name: "          << device_layer_properties[i].description << endl;
+			cout << "Spec Version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
 			cout << "Impl Version : " << device_layer_properties[i].implementationVersion << endl;
-			cout << "Description: " << device_layer_properties[i].description << endl;
+			cout << "Description: "   << device_layer_properties[i].description << endl;
 			cout << endl;
 		}
+		
+		cout << endl;
 
 		return true;
 	}
@@ -339,7 +360,7 @@ namespace vulkan_renderer {
 		// Get the information about that graphics card.
 		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
 
-		// Print the name of the device.
+		// Print the name of the graphics card.
 		cout << "Graphics card: " << graphics_card_properties.deviceName << endl;
 
 		uint32_t VulkanAPIversion = graphics_card_properties.apiVersion;
@@ -347,16 +368,11 @@ namespace vulkan_renderer {
 		// The Vulkan version which is supported by the graphics card.
 		cout << "Vulkan API supported version: " << VK_VERSION_MAJOR(VulkanAPIversion) << "." << VK_VERSION_MINOR(VulkanAPIversion) << "." << VK_VERSION_PATCH(VulkanAPIversion) << endl;
 
-		// Always keep your graphics drivers up to date!
-
 		// The driver version.
-		// @note: The driver version format is NOT standardised!
+		// Always keep your graphics drivers up to date!
+		// Note: The driver version format is NOT standardised!
 		cout << "Driver version: " << VK_VERSION_MAJOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_MINOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_PATCH(graphics_card_properties.driverVersion) << endl;
-
-		// Vendor ID.
-		cout << "Vender ID: " << graphics_card_properties.vendorID << endl;
-
-		// Device ID.
+		cout << "Vendor ID: " << graphics_card_properties.vendorID << endl;
 		cout << "Device ID: " << graphics_card_properties.deviceID << endl;
 
 		// Graphics card types.
@@ -403,7 +419,7 @@ namespace vulkan_renderer {
 
 		cout << "Getting memory properties of this graphics card." << endl;
 		
-		// TODO: Do something with the memory properties?
+		// TODO: Display the memory properties?
 	}
 
 
