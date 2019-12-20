@@ -80,6 +80,9 @@ namespace vulkan_renderer {
 			// 
 			void print_instance_layer_properties();
 
+			// 
+			void print_instance_extensions();
+
 
 		public:
 			

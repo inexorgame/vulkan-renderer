@@ -273,6 +273,35 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::print_instance_extensions()
+	{
+		uint32_t number_of_extensions = 0;
+
+		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
+
+		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "Number of extensions: " << number_of_extensions << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
+
+		std::vector<VkExtensionProperties> extensions;
+
+		// Preallocate memory for extension properties.
+		extensions.resize(number_of_extensions);
+
+		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, extensions.data());
+
+		for(std::size_t i=0; i<number_of_extensions; i++)
+		{
+			cout << "Name: " << extensions[i].extensionName << endl;
+			cout << "Spec: " << extensions[i].specVersion << endl;
+			cout << endl;
+		}
+
+		cout << endl;
+	}
+
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -304,29 +333,7 @@ namespace vulkan_renderer {
 
 		print_instance_layer_properties();
 
-		uint32_t number_of_extensions = 0;
-
-		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
-
-		cout << "--------------------------------------------------------------------------" << endl;
-		cout << "Number of extensions: " << number_of_extensions << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
-
-		std::vector<VkExtensionProperties> extensions;
-
-		// Preallocate memory for extension properties.
-		extensions.resize(number_of_extensions);
-
-		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, extensions.data());
-
-		for(std::size_t i=0; i<number_of_extensions; i++)
-		{
-			cout << "Name: " << extensions[i].extensionName << endl;
-			cout << "Spec: " << extensions[i].specVersion << endl;
-			cout << endl;
-		}
-
-		cout << endl;
+		print_instance_extensions();
 
 		uint32_t number_of_device_layers = 0;
 		vkEnumerateDeviceLayerProperties(selected_graphics_card, &number_of_device_layers, NULL);
