@@ -300,6 +300,37 @@ namespace vulkan_renderer {
 		cout << endl;
 	}
 
+	
+	void InexorRenderer::print_device_layers(const VkPhysicalDevice& graphics_card)
+	{
+		uint32_t number_of_device_layers = 0;
+		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, NULL);
+
+		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "Number of device layers: " << number_of_device_layers << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
+
+		std::vector<VkLayerProperties> device_layer_properties;
+
+		device_layer_properties.resize(number_of_device_layers);
+
+		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layer_properties.data());
+
+		for(std::size_t i=0; i<number_of_device_layers; i++)
+		{
+			uint32_t spec_major = VK_VERSION_MAJOR(device_layer_properties[i].specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(device_layer_properties[i].specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(device_layer_properties[i].specVersion);
+
+			cout << "Name: "          << device_layer_properties[i].description << endl;
+			cout << "Spec Version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
+			cout << "Impl Version : " << device_layer_properties[i].implementationVersion << endl;
+			cout << "Description: "   << device_layer_properties[i].description << endl;
+			cout << endl;
+		}
+		
+		cout << endl;
+	}
 
 
 	bool InexorRenderer::init_vulkan()
@@ -335,33 +366,7 @@ namespace vulkan_renderer {
 
 		print_instance_extensions();
 
-		uint32_t number_of_device_layers = 0;
-		vkEnumerateDeviceLayerProperties(selected_graphics_card, &number_of_device_layers, NULL);
-
-		cout << "--------------------------------------------------------------------------" << endl;
-		cout << "Number of device layers: " << number_of_device_layers << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
-
-		std::vector<VkLayerProperties> device_layer_properties;
-
-		device_layer_properties.resize(number_of_device_layers);
-
-		vkEnumerateDeviceLayerProperties(selected_graphics_card, &number_of_device_layers, device_layer_properties.data());
-
-		for(std::size_t i=0; i<number_of_device_layers; i++)
-		{
-			uint32_t spec_major = VK_VERSION_MAJOR(device_layer_properties[i].specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(device_layer_properties[i].specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(device_layer_properties[i].specVersion);
-
-			cout << "Name: "          << device_layer_properties[i].description << endl;
-			cout << "Spec Version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << "Impl Version : " << device_layer_properties[i].implementationVersion << endl;
-			cout << "Description: "   << device_layer_properties[i].description << endl;
-			cout << endl;
-		}
-		
-		cout << endl;
+		print_device_layers(selected_graphics_card);
 
 		return true;
 	}
