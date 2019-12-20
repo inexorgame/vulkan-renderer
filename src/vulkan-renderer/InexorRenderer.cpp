@@ -236,35 +236,8 @@ namespace vulkan_renderer {
 	}
 
 
-	bool InexorRenderer::init_vulkan()
+	void InexorRenderer::print_instance_layer_properties()
 	{
-		cout << "Initialising Vulkan instance." << endl;
-
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-			return false;
-		}
-
-		enumerate_physical_devices();
-
-		// Let's just use the first one in the array for now.
-		// TODO: Implement a mechanism to select a graphics card.
-		// TODO: In case multiple graphics cards are available let the user select one.
-		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
-
-		result = create_physical_device(selected_graphics_card);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-			return false;
-		}
-
 		// The number of available Vulkan layers.
 		uint32_t number_of_layers = 0;
 
@@ -297,6 +270,39 @@ namespace vulkan_renderer {
 		}
 		
 		cout << endl;
+	}
+
+
+	bool InexorRenderer::init_vulkan()
+	{
+		cout << "Initialising Vulkan instance." << endl;
+
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+			return false;
+		}
+
+		enumerate_physical_devices();
+
+		// Let's just use the first one in the array for now.
+		// TODO: Implement a mechanism to select a graphics card.
+		// TODO: In case multiple graphics cards are available let the user select one.
+		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
+
+		result = create_physical_device(selected_graphics_card);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+			return false;
+		}
+
+		print_instance_layer_properties();
 
 		uint32_t number_of_extensions = 0;
 

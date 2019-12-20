@@ -77,6 +77,10 @@ namespace vulkan_renderer {
 			// 
 			void print_physical_device_queue_families(const VkPhysicalDevice& graphics_card);
 
+			// 
+			void print_instance_layer_properties();
+
+
 		public:
 			
 			// 
