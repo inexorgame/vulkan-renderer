@@ -275,24 +275,24 @@ namespace vulkan_renderer {
 		cout << "Number of instance layers: " << number_of_layers << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
 
-		std::vector<VkLayerProperties> layer_properties;
+		std::vector<VkLayerProperties> instance_layer_properties;
 
-		layer_properties.resize(number_of_layers);
+		instance_layer_properties.resize(number_of_layers);
 
-		vkEnumerateInstanceLayerProperties(&number_of_layers, layer_properties.data());
+		vkEnumerateInstanceLayerProperties(&number_of_layers, instance_layer_properties.data());
 
 		// Loop through all available layers and print information about them.
 		for(std::size_t i=0; i< number_of_layers; i++)
 		{
 			// Extract major, minor and patch version of spec.
-			uint32_t spec_major = VK_VERSION_MAJOR(layer_properties[i].specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(layer_properties[i].specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(layer_properties[i].specVersion);
+			uint32_t spec_major = VK_VERSION_MAJOR(instance_layer_properties[i].specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(instance_layer_properties[i].specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(instance_layer_properties[i].specVersion);
 
-			cout << "Name: "         << layer_properties[i].layerName << endl;
+			cout << "Name: "         << instance_layer_properties[i].layerName << endl;
 			cout << "Spec Version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << "Impl Version: " << layer_properties[i].implementationVersion << endl;
-			cout << "Description: "  << layer_properties[i].description << endl;
+			cout << "Impl Version: " << instance_layer_properties[i].implementationVersion << endl;
+			cout << "Description: "  << instance_layer_properties[i].description << endl;
 			cout << endl;
 		}
 		
@@ -337,9 +337,9 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<number_of_device_layers; i++)
 		{
-			uint32_t spec_major = VK_VERSION_MAJOR(layer_properties[i].specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(layer_properties[i].specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(layer_properties[i].specVersion);
+			uint32_t spec_major = VK_VERSION_MAJOR(device_layer_properties[i].specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(device_layer_properties[i].specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(device_layer_properties[i].specVersion);
 
 			cout << "Name: "          << device_layer_properties[i].description << endl;
 			cout << "Spec Version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;

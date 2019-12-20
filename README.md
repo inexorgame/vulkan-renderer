@@ -1,7 +1,7 @@
 # vulkan-renderer
 ![Vulkan API logo here..](https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/500px-Vulkan.svg.png)
 
-A new rendering engine based on [Vulkan API 1.1](https://www.khronos.org/vulkan/)
+A new rendering engine based on [Vulkan API 1.0](https://www.khronos.org/vulkan/)
 
 ## What is Vulkan?
 Vulkan is a new API (application programming interface) for graphics programming. It is seen as the successor to OpenGL. Both Vulkan and OpenGL are being developed by the Khronos Group. Like DirectX 12, Vulkan is a low level API which allows for much deeper control over the graphics card and the driver. This offers better performance (higher FPS) due to reduction of overhead and driver guesswork during runtime. In general, Vulkan does a lot of work during the initialisation of the application but therefore reduces work during rendering.
