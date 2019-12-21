@@ -223,6 +223,8 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
+		cout << "Creating a physical device" << endl;
+
 		// TODO: Lets pick the best device instead of the default device.
 		// TODO: Let the user choose which device to use.
 		
@@ -471,7 +473,7 @@ namespace vulkan_renderer {
 		// When recreating the swap chain this is needed.
 		swap_chain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
-		VkResult result = vkCreateSwapchainKHR(vulkan_device, &swap_chain_create_info, nullptr, &swap_chain);
+		VkResult result = vkCreateSwapchainKHR(vulkan_device, &swap_chain_create_info, nullptr, &vulkan_swapchain);
 
 		if(VK_SUCCESS != result)
 		{
@@ -536,6 +538,24 @@ namespace vulkan_renderer {
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
 		setup_swap_chain();
+
+		// TODO: Pack this into a separated function!
+
+		uint32_t number_of_images_in_swap_chain = 0;
+
+		vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, nullptr);
+
+		cout << "Images in swap chain: " << number_of_images_in_swap_chain << endl;
+
+		std::vector<VkImage> swapchain_images(number_of_images_in_swap_chain);
+
+		result = vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, swapchain_images.data());
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
 
 		return true;
 	}

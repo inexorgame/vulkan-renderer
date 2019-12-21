@@ -58,7 +58,7 @@ namespace vulkan_renderer {
 			VkSurfaceKHR vulkan_surface;
 
 			// 
-			VkSwapchainKHR swap_chain;
+			VkSwapchainKHR vulkan_swapchain;
 
 			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
