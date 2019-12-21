@@ -258,24 +258,9 @@ namespace vulkan_renderer {
 		device_create_info.pQueueCreateInfos = &device_queue_create_info;
 		device_create_info.enabledLayerCount = NULL;
 		device_create_info.ppEnabledLayerNames = NULL;
-		device_create_info.enabledExtensionCount = device_extensions.size();
+		device_create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
 		device_create_info.ppEnabledExtensionNames = device_extensions.data();
 		device_create_info.pEnabledFeatures = &used_features;
-
-		// Check if this device supports a swap chain.
-		VkBool32 surface_support = false;
-		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, vulkan_surface, &surface_support);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
-
-		if(!surface_support)
-		{
-			display_error_message("Error: Surface not supported!");
-		}
 
 		return vkCreateDevice(graphics_card, &device_create_info, NULL, &vulkan_device);
 	}
@@ -530,6 +515,23 @@ namespace vulkan_renderer {
 		print_instance_extensions();
 		print_device_layers(selected_graphics_card);
 
+		// Query if presentation is supported.
+		VkBool32 surface_support = false;
+		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		if(!surface_support)
+		{
+			display_error_message("Error: Surface not supported!");
+		}
+
+		cout << "Presentation is supported." << endl;
+
 		VkQueue queue;
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
@@ -633,8 +635,8 @@ namespace vulkan_renderer {
 	{
 		// Important: destroy objects in reverse order of initialisation.
 		vkDeviceWaitIdle(vulkan_device);
-		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
 		vkDestroySwapchainKHR(vulkan_device, swap_chain, nullptr);
+		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
 		vkDestroyDevice(vulkan_device, nullptr);
 		vkDestroyInstance(vulkan_instance, nullptr);
 	}
