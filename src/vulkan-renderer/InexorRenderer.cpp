@@ -78,19 +78,24 @@ namespace vulkan_renderer {
 		instance_create_info.enabledExtensionCount = number_of_GLFW_extensions;
 		instance_create_info.ppEnabledExtensionNames = glfw_extensions;
 
+		// The layers that we want to enable.
+		std::vector<const char*> enabled_instance_layers ={
+			"VK_LAYER_VALVE_steam_overlay",
+			"VK_LAYER_RENDERDOC_Capture"
+		};
+	
+		const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
+		bool validation_layer_available = false;
+		
 		// Check if Khronos validation layer is available.
 		if(enable_validation_layers)
 		{
-			const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
-
 			// Check if this layer is available at instance leve..
 			uint32_t instance_layer_count = 0;
 			vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr);
 			
 			std::vector<VkLayerProperties> instance_layer_properties(instance_layer_count);
 			vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layer_properties.data());
-
-			bool validation_layer_available = false;
 
 			for(VkLayerProperties layer : instance_layer_properties)
 			{
@@ -101,17 +106,20 @@ namespace vulkan_renderer {
 					break;
 				}
 			}
-
-			if(validation_layer_available)
-			{
-				instance_create_info.ppEnabledLayerNames = &validation_layer_name;
-				instance_create_info.enabledLayerCount = 1;
-			}
-			else
-			{
-				display_error_message("Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled.");
-			}
 		}
+
+		if(validation_layer_available)
+		{
+			enabled_instance_layers.push_back(validation_layer_name);
+		}
+		else
+		{
+			display_error_message("Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled.");
+		}
+		
+		// Pass all the enabled layers to Vulkan.
+		instance_create_info.ppEnabledLayerNames = enabled_instance_layers.data();
+		instance_create_info.enabledLayerCount = static_cast<uint32_t>(enabled_instance_layers.size());
 
 		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
 
@@ -480,6 +488,62 @@ namespace vulkan_renderer {
 			std::string error_message = "Error: " + get_error_string(result);
 			display_error_message(error_message);
 		}
+
+		vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, nullptr);
+
+		cout << "Images in swap chain: " << number_of_images_in_swap_chain << endl;
+
+		std::vector<VkImage> swapchain_images(number_of_images_in_swap_chain);
+
+		result = vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, swapchain_images.data());
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		// Preallocate memory for the image views.
+		image_views.resize(number_of_images_in_swap_chain);
+	
+		VkImageViewCreateInfo image_view_create_info = {};
+		image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_create_info.pNext = nullptr;
+		image_view_create_info.flags = 0;
+		image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		
+		// TODO: Check if system supports this image format!
+		image_view_create_info.format = VK_FORMAT_B8G8R8A8_UNORM;
+
+		image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+		// TODO: Implement mip-mapping?
+		image_view_create_info.subresourceRange.baseMipLevel = 0;
+		image_view_create_info.subresourceRange.levelCount = 1;
+
+		image_view_create_info.subresourceRange.baseArrayLayer = 0;
+
+		// TODO: Implement awesome stereographic VR textures?
+		image_view_create_info.subresourceRange.layerCount = 1;
+
+
+		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		{
+			image_view_create_info.image = swapchain_images[i];
+
+			result = vkCreateImageView(vulkan_device, &image_view_create_info, nullptr, &image_views[i]);
+
+			if(VK_SUCCESS != result)
+			{
+				std::string error_message = "Error: " + get_error_string(result);
+				display_error_message(error_message);
+			}
+		}
 	}
 
 
@@ -538,64 +602,6 @@ namespace vulkan_renderer {
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
 		setup_swap_chain();
-
-		// TODO: Pack this into a separated function!
-
-		vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, nullptr);
-
-		cout << "Images in swap chain: " << number_of_images_in_swap_chain << endl;
-
-		std::vector<VkImage> swapchain_images(number_of_images_in_swap_chain);
-
-		result = vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, swapchain_images.data());
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
-
-		// Preallocate memory for the image views.
-		image_views.resize(number_of_images_in_swap_chain);
-	
-		VkImageViewCreateInfo image_view_create_info = {};
-		image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		image_view_create_info.pNext = nullptr;
-		image_view_create_info.flags = 0;
-		image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		
-		// TODO: Check if system supports this image format!
-		image_view_create_info.format = VK_FORMAT_B8G8R8A8_UNORM;
-
-		image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-
-		// TODO: Implement mip-mapping?
-		image_view_create_info.subresourceRange.baseMipLevel = 0;
-		image_view_create_info.subresourceRange.levelCount = 1;
-
-		image_view_create_info.subresourceRange.baseArrayLayer = 0;
-
-		// TODO: Implement awesome stereographic VR textures?
-		image_view_create_info.subresourceRange.layerCount = 1;
-
-
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
-		{
-			image_view_create_info.image = swapchain_images[i];
-
-			result = vkCreateImageView(vulkan_device, &image_view_create_info, nullptr, &image_views[i]);
-
-			if(VK_SUCCESS != result)
-			{
-				std::string error_message = "Error: " + get_error_string(result);
-				display_error_message(error_message);
-			}
-		}
 
 		return true;
 	}
