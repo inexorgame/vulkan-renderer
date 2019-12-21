@@ -47,7 +47,7 @@ namespace vulkan_renderer {
 
 			// 
 			VkDevice vulkan_device;
-			
+
 			// 
 			VkSurfaceKHR vulkan_surface;
 
@@ -72,11 +72,11 @@ namespace vulkan_renderer {
 			// 
 			void shutdown_vulkan();
 
-			// 
+			// Initialises a window using the GLFW library.
 			void init_window(const int width, const int height, const std::string& window_name);
 			
 			// 
-			void close_window();
+			void shutdown_window();
 
 			// Gets the information on the graphics card and prints it to the console.
 			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);

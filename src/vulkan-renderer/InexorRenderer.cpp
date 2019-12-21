@@ -10,12 +10,18 @@ namespace vulkan_renderer {
 	void InexorRenderer::init_window(const int width, const int height, const std::string& window_name)
 	{
 		glfwInit();
+
+		// We do not want to use the OpenGL API.
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+		// The window shall not be resizable for now.
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		
 		window = glfwCreateWindow(width, height, window_name.c_str(), nullptr, nullptr);
 	}
 
 
-	void InexorRenderer::close_window()
+	void InexorRenderer::shutdown_window()
 	{
 		glfwDestroyWindow(window);
 		glfwTerminate();
@@ -49,31 +55,25 @@ namespace vulkan_renderer {
 		app_info.apiVersion = VK_API_VERSION_1_0;
 
 		// TODO: Should we switch to Vulkan 1.1?
-
-		const std::vector<const char*> instance_extensions = 
-		{
-			// We need this to render to window surfaces.
-			VK_KHR_SURFACE_EXTENSION_NAME,
-
-			// We need this for validation.
-			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-
-			// Add more extensions depending on the operating system.
-			// TODO: Add more operating systems!
-			#if defined(_WIN32)
-				VK_KHR_WIN32_SURFACE_EXTENSION_NAME
-			#endif
-		};
-
 		// TODO: Check if we need more device or instance extensions!
+
+		uint32_t number_of_GLFW_extensions = 0;
+		auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_GLFW_extensions);
+
+		cout << "Required GLFW instance extensions: " << endl;
+
+		for(std::size_t i=0; i<number_of_GLFW_extensions; i++)
+		{
+			cout << glfw_extensions[i] << endl;
+		}
 
 		VkInstanceCreateInfo instance_create_info = {};
 		instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		instance_create_info.pNext = NULL;
 		instance_create_info.flags = NULL;
 		instance_create_info.pApplicationInfo = &app_info;
-		instance_create_info.enabledExtensionCount = static_cast<uint32_t>(instance_extensions.size());
-		instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
+		instance_create_info.enabledExtensionCount = number_of_GLFW_extensions;
+		instance_create_info.ppEnabledExtensionNames = glfw_extensions;
 
 		// Check if Khronos validation layer is available.
 		if(enable_validation_layers)
@@ -110,7 +110,23 @@ namespace vulkan_renderer {
 			}
 		}
 
-		return vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
+		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		result = glfwCreateWindowSurface(vulkan_instance, window, nullptr, &vulkan_surface);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		return result;
 	}
 
 
@@ -357,7 +373,6 @@ namespace vulkan_renderer {
 		// TODO: In case multiple graphics cards are available let the user select one.
 		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
 
-		// Create a context of the selected graphics card.
 		result = create_physical_device(selected_graphics_card);
 
 		if(VK_SUCCESS != result)
@@ -373,15 +388,6 @@ namespace vulkan_renderer {
 
 		VkQueue queue;
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
-
-		VkWin32SurfaceCreateInfoKHR surface_info = {};
-		surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		surface_info.pNext = nullptr;
-		surface_info.flags = 0;
-		surface_info.hinstance = nullptr;
-		surface_info.hwnd = nullptr;
-
-		result = vkCreateWin32SurfaceKHR(vulkan_instance, &surface_info, nullptr, &vulkan_surface);
 
 		return true;
 	}
@@ -501,6 +507,7 @@ namespace vulkan_renderer {
 
 	InexorRenderer::~InexorRenderer()
 	{
+		cleanup();
 	}
 
 
@@ -513,6 +520,7 @@ namespace vulkan_renderer {
 
 	void InexorRenderer::run()
 	{
+		// TODO: Run this in a separated thread?
 		while(!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
@@ -523,7 +531,7 @@ namespace vulkan_renderer {
 	void InexorRenderer::cleanup()
 	{
 		shutdown_vulkan();
-		close_window();
+		shutdown_window();
 	}
 
 
