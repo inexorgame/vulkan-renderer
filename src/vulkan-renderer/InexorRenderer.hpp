@@ -93,6 +93,8 @@ namespace vulkan_renderer {
 			// 
 			void print_device_layers(const VkPhysicalDevice& graphics_card);
 
+			// 
+			void print_surface_capabilities(const VkPhysicalDevice& graphics_card);
 
 		public:
 			

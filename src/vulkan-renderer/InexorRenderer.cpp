@@ -166,6 +166,7 @@ namespace vulkan_renderer {
 		{
 			print_graphics_card_info(graphics_cards[i]);
 			print_physical_device_queue_families(graphics_cards[i]);
+			print_surface_capabilities(graphics_cards[i]);
 			cout << endl;
 		}
 	}
@@ -353,6 +354,29 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::print_surface_capabilities(const VkPhysicalDevice& graphics_card)
+	{
+		VkSurfaceCapabilitiesKHR surface_capabilities;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
+
+		cout << "Printing surface capabilities" << endl;
+
+		cout << "minImageCount: "           << surface_capabilities.minImageCount << endl;
+		cout << "maxImageCount: "           << surface_capabilities.maxImageCount << endl;
+		cout << "currentExtent.width: "     << surface_capabilities.currentExtent.width << endl;
+		cout << "currentExtent.height: "    << surface_capabilities.currentExtent.height << endl;
+		cout << "minImageExtent.width: "    << surface_capabilities.minImageExtent.width << endl;
+		cout << "minImageExtent.height: "   << surface_capabilities.minImageExtent.height << endl;
+		cout << "maxImageExtent.width: "    << surface_capabilities.maxImageExtent.width << endl;
+		cout << "maxImageExtent.height: "   << surface_capabilities.maxImageExtent.height << endl;
+		cout << "maxImageArrayLayers: "     << surface_capabilities.maxImageArrayLayers << endl;
+		cout << "supportedTransforms: "     << surface_capabilities.supportedTransforms << endl;
+		cout << "currentTransform: "        << surface_capabilities.currentTransform << endl;
+		cout << "supportedCompositeAlpha: " << surface_capabilities.supportedCompositeAlpha << endl;
+		cout << "supportedUsageFlags: "     << surface_capabilities.supportedUsageFlags << endl;
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -480,8 +504,6 @@ namespace vulkan_renderer {
 
 			cout << endl;
 		}
-
-		
 	}
 
 
@@ -489,8 +511,8 @@ namespace vulkan_renderer {
 	{
 		// Important: destroy objects in reverse order of initialisation.
 		vkDeviceWaitIdle(vulkan_device);
-		vkDestroyDevice(vulkan_device, nullptr);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
+		vkDestroyDevice(vulkan_device, nullptr);
 		vkDestroyInstance(vulkan_instance, nullptr);
 	}
 
