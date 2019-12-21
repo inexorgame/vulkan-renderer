@@ -61,6 +61,12 @@ namespace vulkan_renderer {
 			VkSwapchainKHR vulkan_swapchain;
 
 			// 
+			std::vector<VkImageView> image_views;
+			
+			// 
+			uint32_t number_of_images_in_swap_chain;
+
+			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
 			// 
