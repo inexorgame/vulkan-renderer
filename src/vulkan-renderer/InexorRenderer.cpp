@@ -167,6 +167,8 @@ namespace vulkan_renderer {
 			print_graphics_card_info(graphics_cards[i]);
 			print_physical_device_queue_families(graphics_cards[i]);
 			print_surface_capabilities(graphics_cards[i]);
+			print_supported_surface_formats(graphics_cards[i]);
+			print_presentation_modes(graphics_cards[i]);
 			cout << endl;
 		}
 	}
@@ -375,8 +377,6 @@ namespace vulkan_renderer {
 		cout << "supportedCompositeAlpha: " << surface_capabilities.supportedCompositeAlpha << endl;
 		cout << "supportedUsageFlags: "     << surface_capabilities.supportedUsageFlags << endl;
 		cout << endl;
-
-		print_supported_surface_formats(graphics_card);
 	}
 
 
@@ -398,6 +398,26 @@ namespace vulkan_renderer {
 			// We will not print the text which corresponds to the format.
 			// You can look it up in the official Vulkan documentation.
 			cout << surface_formats[i].format << endl;
+		}
+	}
+
+	
+	void InexorRenderer::print_presentation_modes(const VkPhysicalDevice& graphics_card)
+	{
+		uint32_t number_of_present_modes = 0;
+		
+		// First check how many presentation modes are available.
+		vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
+	
+		cout << "Available present modes: " << number_of_present_modes << endl;
+
+		std::vector<VkPresentModeKHR> present_modes(number_of_present_modes);
+
+		vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
+
+		for(std::size_t i=0; i<number_of_present_modes; i++)
+		{
+			cout << present_modes[i] << endl;
 		}
 	}
 

@@ -99,6 +99,9 @@ namespace vulkan_renderer {
 			// 
 			void print_supported_surface_formats(const VkPhysicalDevice& graphics_card);
 
+			// 
+			void print_presentation_modes(const VkPhysicalDevice& graphics_card);
+
 		public:
 			
 			// 
