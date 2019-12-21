@@ -529,7 +529,6 @@ namespace vulkan_renderer {
 
 	InexorRenderer::~InexorRenderer()
 	{
-		cleanup();
 	}
 
 
