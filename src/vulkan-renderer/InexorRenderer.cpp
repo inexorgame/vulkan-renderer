@@ -374,6 +374,31 @@ namespace vulkan_renderer {
 		cout << "currentTransform: "        << surface_capabilities.currentTransform << endl;
 		cout << "supportedCompositeAlpha: " << surface_capabilities.supportedCompositeAlpha << endl;
 		cout << "supportedUsageFlags: "     << surface_capabilities.supportedUsageFlags << endl;
+		cout << endl;
+
+		print_supported_surface_formats(graphics_card);
+	}
+
+
+	void InexorRenderer::print_supported_surface_formats(const VkPhysicalDevice& graphics_card)
+	{
+		uint32_t number_of_supported_formats = 0;
+		
+		// First check how many formats are supported
+		vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+
+		cout << "Supported surface formats: " << number_of_supported_formats << endl;
+
+		std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
+
+		vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+
+		for(std::size_t i=0; i<number_of_supported_formats; i++)
+		{
+			// We will not print the text which corresponds to the format.
+			// You can look it up in the official Vulkan documentation.
+			cout << surface_formats[i].format << endl;
+		}
 	}
 
 
