@@ -16,6 +16,9 @@ namespace vulkan_renderer {
 
 		// The window shall not be resizable for now.
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+		window_width = width;
+		window_height = height;
 		
 		window = glfwCreateWindow(width, height, window_name.c_str(), nullptr, nullptr);
 	}
@@ -248,12 +251,31 @@ namespace vulkan_renderer {
 		// TODO: Maybe create multiple queues at once?
 		device_create_info.queueCreateInfoCount = 1;
 
+		const std::vector<const char*> device_extensions ={
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		};
+
 		device_create_info.pQueueCreateInfos = &device_queue_create_info;
 		device_create_info.enabledLayerCount = NULL;
 		device_create_info.ppEnabledLayerNames = NULL;
-		device_create_info.enabledExtensionCount = NULL;
-		device_create_info.ppEnabledExtensionNames = NULL;
+		device_create_info.enabledExtensionCount = device_extensions.size();
+		device_create_info.ppEnabledExtensionNames = device_extensions.data();
 		device_create_info.pEnabledFeatures = &used_features;
+
+		// Check if this device supports a swap chain.
+		VkBool32 surface_support = false;
+		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, vulkan_surface, &surface_support);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+
+		if(!surface_support)
+		{
+			display_error_message("Error: Surface not supported!");
+		}
 
 		return vkCreateDevice(graphics_card, &device_create_info, NULL, &vulkan_device);
 	}
@@ -420,6 +442,58 @@ namespace vulkan_renderer {
 			cout << present_modes[i] << endl;
 		}
 	}
+	
+
+	void InexorRenderer::setup_swap_chain()
+	{
+		cout << "Creating swap chain." << endl;
+
+		VkSwapchainCreateInfoKHR swap_chain_create_info = {};
+
+		swap_chain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swap_chain_create_info.pNext = nullptr;
+		swap_chain_create_info.flags = 0;
+		swap_chain_create_info.surface = vulkan_surface;
+
+		// TODO: Check if system supports the number specified here!
+		swap_chain_create_info.minImageCount = 3;
+
+		// TODO: Check if system supports this image format!
+		swap_chain_create_info.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+
+		// TODO: Check if system supports this image color space!
+		swap_chain_create_info.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+
+		swap_chain_create_info.imageExtent = VkExtent2D{window_width, window_height};
+		swap_chain_create_info.imageArrayLayers = 1;
+		swap_chain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+		// TODO: Check if system supports this image sharing mode!
+		swap_chain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swap_chain_create_info.queueFamilyIndexCount = 0;
+		swap_chain_create_info.pQueueFamilyIndices = nullptr;
+
+		swap_chain_create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		swap_chain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+		// TODO: Check if there is a better presentation mode available!
+		// An alternative would be VK_PRESENT_MODE_MAILBOX_KHR.
+		swap_chain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+		swap_chain_create_info.clipped = VK_TRUE;
+
+		// TODO: Make window resizable and recreate swap chain.
+		// When recreating the swap chain this is needed.
+		swap_chain_create_info.oldSwapchain = VK_NULL_HANDLE;
+
+		VkResult result = vkCreateSwapchainKHR(vulkan_device, &swap_chain_create_info, nullptr, &swap_chain);
+
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+	}
 
 
 	bool InexorRenderer::init_vulkan()
@@ -435,6 +509,7 @@ namespace vulkan_renderer {
 			return false;
 		}
 
+		// List up all GPUs that are available on this system and print their stats.
 		enumerate_physical_devices();
 
 		// Let's just use the first one in the array for now.
@@ -457,6 +532,8 @@ namespace vulkan_renderer {
 
 		VkQueue queue;
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
+
+		setup_swap_chain();
 
 		return true;
 	}
@@ -557,6 +634,7 @@ namespace vulkan_renderer {
 		// Important: destroy objects in reverse order of initialisation.
 		vkDeviceWaitIdle(vulkan_device);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
+		vkDestroySwapchainKHR(vulkan_device, swap_chain, nullptr);
 		vkDestroyDevice(vulkan_device, nullptr);
 		vkDestroyInstance(vulkan_instance, nullptr);
 	}
@@ -569,6 +647,8 @@ namespace vulkan_renderer {
 		vulkan_device = {};
 		number_of_physical_devices = 0;
 		graphics_cards.clear();
+		window_width = 0;
+		window_height = 0;
 	}
 
 
