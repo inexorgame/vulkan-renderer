@@ -201,28 +201,34 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
-		VkDeviceQueueCreateInfo device_queue_create_info = {};
+		// TODO: Lets pick the best device instead of the default device.
+		// TODO: Let the user choose which device to use.
+		
+		const float queue_priorities[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
+		VkDeviceQueueCreateInfo device_queue_create_info = {};
 		device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 		device_queue_create_info.pNext = NULL;
 		device_queue_create_info.flags = NULL;
 
 		// TODO: Look which queue family fits best for what we want to do.
-		device_queue_create_info.queueFamilyIndex = NULL;
-
+		// For now we will use index number 0.
+		device_queue_create_info.queueFamilyIndex = 0;
+		
 		// TODO: Check if 4 queues are even supported!
 		device_queue_create_info.queueCount = 4;
-
-		const float queue_priorities[] = {1.0f, 1.0f, 1.0f, 1.0f};
 		device_queue_create_info.pQueuePriorities = queue_priorities;
 
-		VkDeviceCreateInfo device_create_info = {};
 		VkPhysicalDeviceFeatures used_features = {};
-
+		
+		VkDeviceCreateInfo device_create_info = {};
 		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_create_info.pNext = NULL;
 		device_create_info.flags = NULL;
+
+		// TODO: Maybe create multiple queues at once?
 		device_create_info.queueCreateInfoCount = 1;
+
 		device_create_info.pQueueCreateInfos = &device_queue_create_info;
 		device_create_info.enabledLayerCount = NULL;
 		device_create_info.ppEnabledLayerNames = NULL;
@@ -230,9 +236,7 @@ namespace vulkan_renderer {
 		device_create_info.ppEnabledExtensionNames = NULL;
 		device_create_info.pEnabledFeatures = &used_features;
 
-		// TODO: Lets pick the best device instead of the default device.
-		// TODO: Let the user choose which device to use.
-		return vkCreateDevice(graphics_card, &device_create_info, NULL, &device);
+		return vkCreateDevice(graphics_card, &device_create_info, NULL, &vulkan_device);
 	}
 
 
@@ -353,6 +357,7 @@ namespace vulkan_renderer {
 		// TODO: In case multiple graphics cards are available let the user select one.
 		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
 
+		// Create a context of the selected graphics card.
 		result = create_physical_device(selected_graphics_card);
 
 		if(VK_SUCCESS != result)
@@ -363,10 +368,20 @@ namespace vulkan_renderer {
 		}
 
 		print_instance_layer_properties();
-
 		print_instance_extensions();
-
 		print_device_layers(selected_graphics_card);
+
+		VkQueue queue;
+		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
+
+		VkWin32SurfaceCreateInfoKHR surface_info = {};
+		surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		surface_info.pNext = nullptr;
+		surface_info.flags = 0;
+		surface_info.hinstance = nullptr;
+		surface_info.hwnd = nullptr;
+
+		result = vkCreateWin32SurfaceKHR(vulkan_instance, &surface_info, nullptr, &vulkan_surface);
 
 		return true;
 	}
@@ -466,6 +481,10 @@ namespace vulkan_renderer {
 
 	void InexorRenderer::shutdown_vulkan()
 	{
+		// Important: destroy objects in reverse order of initialisation.
+		vkDeviceWaitIdle(vulkan_device);
+		vkDestroyDevice(vulkan_device, nullptr);
+		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
 		vkDestroyInstance(vulkan_instance, nullptr);
 	}
 
@@ -473,9 +492,10 @@ namespace vulkan_renderer {
 	InexorRenderer::InexorRenderer()
 	{
 		window = nullptr;
+		vulkan_instance = {};
+		vulkan_device = {};
 		number_of_physical_devices = 0;
 		graphics_cards.clear();
-		vulkan_instance = {};
 	}
 
 
@@ -502,7 +522,7 @@ namespace vulkan_renderer {
 
 	void InexorRenderer::cleanup()
 	{
-		// TODO: Cleanup in reverse order of initialisation.
+		shutdown_vulkan();
 		close_window();
 	}
 

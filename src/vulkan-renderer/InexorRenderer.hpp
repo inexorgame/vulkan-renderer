@@ -9,6 +9,10 @@
 #include <iostream>
 #include <vector>
 
+#ifdef _WIN32
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
 #include <vulkan/vulkan.h>
 
 #ifdef _WIN32
@@ -42,7 +46,10 @@ namespace vulkan_renderer {
 			VkInstance vulkan_instance;
 
 			// 
-			VkDevice device;
+			VkDevice vulkan_device;
+			
+			// 
+			VkSurfaceKHR vulkan_surface;
 
 			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
