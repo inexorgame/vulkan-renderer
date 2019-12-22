@@ -80,10 +80,11 @@ namespace vulkan_renderer {
 
 		// The layers that we want to enable.
 		std::vector<const char*> enabled_instance_layers ={
-			"VK_LAYER_VALVE_steam_overlay",
-			"VK_LAYER_RENDERDOC_Capture"
+			//"VK_LAYER_VALVE_steam_overlay",
+			//"VK_LAYER_RENDERDOC_Capture"
 		};
 	
+		// TODO: Use VK_LAYER_LUNARG_standard_validation instead?
 		const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
 		bool validation_layer_available = false;
 		
