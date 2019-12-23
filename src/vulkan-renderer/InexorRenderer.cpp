@@ -123,20 +123,11 @@ namespace vulkan_renderer {
 		instance_create_info.enabledLayerCount = static_cast<uint32_t>(enabled_instance_layers.size());
 
 		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
+		vulkan_error_check(result);
 
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
 
 		result = glfwCreateWindowSurface(vulkan_instance, window, nullptr, &vulkan_surface);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 
 		return result;
 	}
@@ -145,12 +136,7 @@ namespace vulkan_renderer {
 	void InexorRenderer::enumerate_physical_devices()
 	{
 		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, NULL);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 
 		if(number_of_physical_devices <= 0)
 		{
@@ -165,12 +151,7 @@ namespace vulkan_renderer {
 		graphics_cards.resize(number_of_physical_devices);
 
 		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: Could not enumerate physical devices! " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 
 		// TODO: Add GPU selection based on command line arguments.
 
@@ -483,12 +464,7 @@ namespace vulkan_renderer {
 		swap_chain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
 		VkResult result = vkCreateSwapchainKHR(vulkan_device, &swap_chain_create_info, nullptr, &vulkan_swapchain);
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 
 		vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, nullptr);
 
@@ -497,12 +473,7 @@ namespace vulkan_renderer {
 		std::vector<VkImage> swapchain_images(number_of_images_in_swap_chain);
 
 		result = vkGetSwapchainImagesKHR(vulkan_device, vulkan_swapchain, &number_of_images_in_swap_chain, swapchain_images.data());
-
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 
 		// Preallocate memory for the image views.
 		image_views.resize(number_of_images_in_swap_chain);
@@ -538,12 +509,7 @@ namespace vulkan_renderer {
 			image_view_create_info.image = swapchain_images[i];
 
 			result = vkCreateImageView(vulkan_device, &image_view_create_info, nullptr, &image_views[i]);
-
-			if(VK_SUCCESS != result)
-			{
-				std::string error_message = "Error: " + get_error_string(result);
-				display_error_message(error_message);
-			}
+			vulkan_error_check(result);
 		}
 	}
 	
@@ -562,12 +528,7 @@ namespace vulkan_renderer {
 		// Create the shader module.
 		VkResult result = vkCreateShaderModule(vulkan_device, &shader_create_info, nullptr, shader_module);
 
-		// TODO: Generalize this error handling code.
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 	}
 
 
@@ -595,12 +556,7 @@ namespace vulkan_renderer {
 
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
 
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-			return false;
-		}
+		vulkan_error_check(result);
 
 		// List up all GPUs that are available on this system and print their stats.
 		enumerate_physical_devices();
@@ -612,12 +568,7 @@ namespace vulkan_renderer {
 
 		result = create_physical_device(selected_graphics_card);
 
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-			return false;
-		}
+		vulkan_error_check(result);
 
 		print_instance_layer_properties();
 		print_instance_extensions();
@@ -627,11 +578,7 @@ namespace vulkan_renderer {
 		VkBool32 surface_support = false;
 		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
 
-		if(VK_SUCCESS != result)
-		{
-			std::string error_message = "Error: " + get_error_string(result);
-			display_error_message(error_message);
-		}
+		vulkan_error_check(result);
 
 		if(!surface_support)
 		{

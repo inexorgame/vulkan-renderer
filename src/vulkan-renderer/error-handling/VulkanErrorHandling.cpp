@@ -133,5 +133,14 @@ namespace vulkan_renderer {
 	}
 
 
+	void VulkanErrorHandling::vulkan_error_check(const VkResult& result)
+	{
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+	}
+
 };
 };

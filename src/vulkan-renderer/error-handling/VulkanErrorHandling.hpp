@@ -29,6 +29,9 @@ namespace vulkan_renderer {
 			// Displays an error message.
 			void display_error_message(const std::string& error_message, const std::string& message_box_title = "Error") const;
 
+			// Generalise error handling.
+			void vulkan_error_check(const VkResult& result);
+
 	};
 
 };
