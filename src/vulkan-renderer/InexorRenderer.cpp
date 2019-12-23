@@ -546,6 +546,47 @@ namespace vulkan_renderer {
 			}
 		}
 	}
+	
+
+	void InexorRenderer::create_shader_module(const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
+	{
+		VkShaderModuleCreateInfo shader_create_info = {};
+		shader_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shader_create_info.pNext = nullptr;
+		shader_create_info.flags = 0;
+		shader_create_info.codeSize = SPIRV_shader_bytes.size();
+		
+		// TODO: Is this the right type of cast for this?
+		shader_create_info.pCode = reinterpret_cast<const uint32_t*>(SPIRV_shader_bytes.data());
+
+		// Create the shader module.
+		VkResult result = vkCreateShaderModule(vulkan_device, &shader_create_info, nullptr, shader_module);
+
+		// TODO: Generalize this error handling code.
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: " + get_error_string(result);
+			display_error_message(error_message);
+		}
+	}
+
+
+	void InexorRenderer::create_shader_module_from_file(const std::string& SPIRV_file_name, VkShaderModule* shader_module)
+	{
+		cout << "Creating shader module: " << SPIRV_file_name.c_str() << endl;
+
+		VulkanShader vulkan_shader;
+		vulkan_shader.load_file(SPIRV_file_name);
+		
+		if(vulkan_shader.file_size > 0)
+		{
+			create_shader_module(vulkan_shader.file_data, shader_module);
+		}
+		else
+		{
+			cout << "Error: Shader file is empty!" << endl;
+		}
+	}
 
 
 	bool InexorRenderer::init_vulkan()
@@ -603,6 +644,13 @@ namespace vulkan_renderer {
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
 		setup_swap_chain();
+
+		// TODO: Setup shaders from JSON file?
+		
+		// Load shaders from file.
+		// Make sure your debug directory contains these files!
+		create_shader_module_from_file("vertex_shader.spv", &vertex_shader);
+		create_shader_module_from_file("fragment_shader.spv", &fragment_shader);
 
 		return true;
 	}
@@ -707,6 +755,10 @@ namespace vulkan_renderer {
 		{
 			vkDestroyImageView(vulkan_device, image_views[i], nullptr);
 		}
+
+		// Destroy shader modules:
+		vkDestroyShaderModule(vulkan_device, vertex_shader, nullptr);
+		vkDestroyShaderModule(vulkan_device, fragment_shader, nullptr);
 
 		vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);

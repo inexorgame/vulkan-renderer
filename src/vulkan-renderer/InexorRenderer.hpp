@@ -30,6 +30,8 @@
 #define INEXOR_APPLICATION_NAME "Inexor-Application"
 #define INEXOR_ENGINE_NAME "Inexor-Engine"
 
+#include "shader-loading/VulkanShader.hpp"
+
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -65,6 +67,10 @@ namespace vulkan_renderer {
 			
 			// 
 			uint32_t number_of_images_in_swap_chain;
+
+			// TODO: Setup shaders from JSON file?			
+			VkShaderModule vertex_shader;
+			VkShaderModule fragment_shader;
 
 			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
@@ -119,6 +125,12 @@ namespace vulkan_renderer {
 			
 			// 
 			void setup_swap_chain();
+
+			// 
+			void create_shader_module(const std::vector<char>& shader_bytes, VkShaderModule* shader_module);
+			
+			// 
+			void create_shader_module_from_file(const std::string& SPIRV_file_name, VkShaderModule* shader_module);
 
 
 		public:
