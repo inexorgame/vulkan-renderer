@@ -92,6 +92,9 @@ namespace vulkan_renderer {
 			VkPipeline vulkan_pipeline;
 
 			// 
+			std::vector<VkFramebuffer> frame_buffers;
+
+			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
 			// 

@@ -783,6 +783,10 @@ namespace vulkan_renderer {
 		result = create_physical_device(selected_graphics_card);
 		vulkan_error_check(result);
 
+		// The device has been initialised.
+		// It is now okay to call all class methods which rely on vulkan_device!
+		vulkan_device_ready = true;
+
 		print_instance_layer_properties();
 		print_instance_extensions();
 		print_device_layers(selected_graphics_card);
@@ -806,6 +810,26 @@ namespace vulkan_renderer {
 		setup_swap_chain();
 		load_shaders();
 		setup_pipeline();
+
+		// Preallocate memory for frame buffers.
+		frame_buffers.resize(number_of_images_in_swap_chain);
+
+		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		{
+			VkFramebufferCreateInfo frame_buffer_create_info = {};
+			frame_buffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			frame_buffer_create_info.pNext = nullptr;
+			frame_buffer_create_info.flags = 0;
+			frame_buffer_create_info.renderPass = render_pass;
+			frame_buffer_create_info.attachmentCount = 1;
+			frame_buffer_create_info.pAttachments = &image_views[i];
+			frame_buffer_create_info.width = window_width;
+			frame_buffer_create_info.height = window_height;
+			frame_buffer_create_info.layers = 1;
+
+			result = vkCreateFramebuffer(vulkan_device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
+			vulkan_error_check(result);
+		}
 		
 		return true;
 	}
@@ -907,6 +931,11 @@ namespace vulkan_renderer {
 
 		// It is important to destroy the objects in reverse order of initialisation!
 		
+		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		{
+			vkDestroyFramebuffer(vulkan_device, frame_buffers[i], nullptr);
+		}
+
 		vkDestroyPipeline(vulkan_device, vulkan_pipeline, nullptr);
 		vkDestroyRenderPass(vulkan_device, render_pass, nullptr);
 
@@ -924,6 +953,7 @@ namespace vulkan_renderer {
 		vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
 		vkDestroyDevice(vulkan_device, nullptr);
+
 		vulkan_device_ready = false;
 		
 		vkDestroyInstance(vulkan_instance, nullptr);
@@ -942,6 +972,7 @@ namespace vulkan_renderer {
 		image_views.clear();
 		number_of_images_in_swap_chain = 0;
 		vulkan_device_ready = false;
+		frame_buffers.clear();
 	}
 
 
