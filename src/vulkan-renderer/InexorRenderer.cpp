@@ -555,8 +555,8 @@ namespace vulkan_renderer {
 		// TODO: Setup shaders from JSON file.
 		
 		// Important: Make sure your debug directory contains these files!
-		create_shader_module_from_file("vertex_shader.spv", &vertex_shader);
-		create_shader_module_from_file("fragment_shader.spv", &fragment_shader);
+		create_shader_module_from_file("vertex_shader.spv", &vertex_shader_module);
+		create_shader_module_from_file("fragment_shader.spv", &fragment_shader_module);
 	}
 
 
@@ -603,6 +603,133 @@ namespace vulkan_renderer {
 
 		load_shaders();
 
+		VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info = {};
+		vertex_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertex_shader_stage_create_info.pNext = nullptr;
+		vertex_shader_stage_create_info.flags = 0;
+		vertex_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertex_shader_stage_create_info.module = vertex_shader_module;
+		
+		// Usually shaders have a function called "main" as entry point.
+		vertex_shader_stage_create_info.pName = "main";
+		vertex_shader_stage_create_info.pSpecializationInfo = nullptr;
+
+		VkPipelineShaderStageCreateInfo fragment_shader_stage_create_info = {};
+		fragment_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragment_shader_stage_create_info.pNext = nullptr;
+		fragment_shader_stage_create_info.flags = 0;
+		fragment_shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragment_shader_stage_create_info.module = fragment_shader_module;
+		
+		// Usually shaders have a function called "main" as entry point.
+		fragment_shader_stage_create_info.pName = "main";
+		fragment_shader_stage_create_info.pSpecializationInfo = nullptr;
+		
+		// Put all the required shaders into one array.
+		VkPipelineShaderStageCreateInfo shader_stages[] ={
+			vertex_shader_stage_create_info,
+			fragment_shader_stage_create_info
+		};
+
+		// Now we set up fixed functions.
+		
+		VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
+		vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertex_input_create_info.pNext = nullptr;
+		vertex_input_create_info.flags = 0;
+		vertex_input_create_info.vertexBindingDescriptionCount = 0;
+		vertex_input_create_info.pVertexBindingDescriptions = nullptr;
+		vertex_input_create_info.vertexAttributeDescriptionCount = 0;
+		vertex_input_create_info.pVertexAttributeDescriptions = nullptr;
+
+		VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = {};
+		input_assembly_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		input_assembly_create_info.pNext = nullptr;
+		input_assembly_create_info.flags = 0;
+		input_assembly_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
+
+		// Setup viewport.
+		VkViewport view_port = {};
+		view_port.x = 0.0f;
+		view_port.y = 0.0f;
+		view_port.width = static_cast<float>(window_width);
+		view_port.height = static_cast<float>(window_height);
+		view_port.minDepth = 0.0f;
+		view_port.maxDepth = 1.0f;
+
+		VkRect2D scissor;
+		scissor.offset = {0, 0};
+		scissor.extent = {window_width, window_height};
+
+		// Setup rasterizer.
+		VkPipelineRasterizationStateCreateInfo rasterizer;
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.pNext = nullptr;
+		rasterizer.flags = 0;
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizer.depthBiasEnable = VK_FALSE;
+		rasterizer.depthBiasConstantFactor = 0.0f;
+		rasterizer.depthBiasClamp = 0.0f;
+		rasterizer.depthBiasSlopeFactor = 0.0f;
+		rasterizer.lineWidth = 1.0f;
+
+		// Multisampling.
+		VkPipelineMultisampleStateCreateInfo multisample_create_info = {};
+		multisample_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisample_create_info.pNext = nullptr;
+		multisample_create_info.flags = 0;
+		multisample_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		multisample_create_info.sampleShadingEnable = VK_FALSE;
+		multisample_create_info.minSampleShading = 1.0f;
+		multisample_create_info.pSampleMask = nullptr;
+		multisample_create_info.alphaToCoverageEnable = VK_FALSE;
+		multisample_create_info.alphaToOneEnable = VK_FALSE;
+
+		
+		VkPipelineColorBlendAttachmentState color_blend_attachment = {};
+		color_blend_attachment.blendEnable = VK_TRUE;
+		color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+		color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+
+		VkPipelineColorBlendStateCreateInfo color_blend_state_create_info = {};
+		color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		color_blend_state_create_info.pNext = nullptr;
+		color_blend_state_create_info.flags = 0;
+		color_blend_state_create_info.logicOpEnable = VK_FALSE;
+		color_blend_state_create_info.logicOp = VK_LOGIC_OP_NO_OP;
+		color_blend_state_create_info.attachmentCount = 1;
+		color_blend_state_create_info.pAttachments = &color_blend_attachment;
+		color_blend_state_create_info.blendConstants[0] = 0.0f;
+		color_blend_state_create_info.blendConstants[1] = 0.0f;
+		color_blend_state_create_info.blendConstants[2] = 0.0f;
+		color_blend_state_create_info.blendConstants[3] = 0.0f;
+
+
+		// TODO: Use uniform buffers.
+		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
+		pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipeline_layout_create_info.pNext = nullptr;
+		pipeline_layout_create_info.flags = 0;
+		pipeline_layout_create_info.setLayoutCount = 0;
+		pipeline_layout_create_info.pSetLayouts = nullptr;
+		pipeline_layout_create_info.pushConstantRangeCount = 0;
+		pipeline_layout_create_info.pPushConstantRanges = nullptr;
+
+
+		result = vkCreatePipelineLayout(vulkan_device, &pipeline_layout_create_info, nullptr, &vulkan_pipeline_layout);
+		vulkan_error_check(result);
+		
 		return true;
 	}
 
@@ -707,9 +834,11 @@ namespace vulkan_renderer {
 			vkDestroyImageView(vulkan_device, image_views[i], nullptr);
 		}
 
+		vkDestroyPipelineLayout(vulkan_device, vulkan_pipeline_layout, nullptr);
+
 		// Destroy shader modules:
-		vkDestroyShaderModule(vulkan_device, vertex_shader, nullptr);
-		vkDestroyShaderModule(vulkan_device, fragment_shader, nullptr);
+		vkDestroyShaderModule(vulkan_device, vertex_shader_module, nullptr);
+		vkDestroyShaderModule(vulkan_device, fragment_shader_module, nullptr);
 
 		vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
