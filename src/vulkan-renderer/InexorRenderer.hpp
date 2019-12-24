@@ -141,6 +141,9 @@ namespace vulkan_renderer {
 			// 
 			void load_shaders();
 
+			// 
+			void setup_pipeline_layout();
+
 		public:
 			
 			// 

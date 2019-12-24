@@ -560,49 +560,8 @@ namespace vulkan_renderer {
 	}
 
 
-	bool InexorRenderer::init_vulkan()
+	void InexorRenderer::setup_pipeline_layout()
 	{
-		cout << "Initialising Vulkan instance." << endl;
-
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
-
-		vulkan_error_check(result);
-
-		// List up all GPUs that are available on this system and print their stats.
-		enumerate_physical_devices();
-
-		// Let's just use the first one in the array for now.
-		// TODO: Implement a mechanism to select a graphics card.
-		// TODO: In case multiple graphics cards are available let the user select one.
-		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
-
-		result = create_physical_device(selected_graphics_card);
-		vulkan_error_check(result);
-
-		print_instance_layer_properties();
-		print_instance_extensions();
-		print_device_layers(selected_graphics_card);
-
-		// Query if presentation is supported.
-		VkBool32 surface_support = false;
-		
-		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
-		vulkan_error_check(result);
-
-		if(!surface_support)
-		{
-			display_error_message("Error: Surface not supported!");
-		}
-
-		cout << "Presentation is supported." << endl;
-
-		VkQueue queue;
-		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
-
-		setup_swap_chain();
-
-		load_shaders();
-
 		VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info = {};
 		vertex_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertex_shader_stage_create_info.pNext = nullptr;
@@ -727,8 +686,55 @@ namespace vulkan_renderer {
 		pipeline_layout_create_info.pPushConstantRanges = nullptr;
 
 
-		result = vkCreatePipelineLayout(vulkan_device, &pipeline_layout_create_info, nullptr, &vulkan_pipeline_layout);
+		VkResult result = vkCreatePipelineLayout(vulkan_device, &pipeline_layout_create_info, nullptr, &vulkan_pipeline_layout);
 		vulkan_error_check(result);
+	}
+
+
+	bool InexorRenderer::init_vulkan()
+	{
+		cout << "Initialising Vulkan instance." << endl;
+
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
+
+		vulkan_error_check(result);
+
+		// List up all GPUs that are available on this system and print their stats.
+		enumerate_physical_devices();
+
+		// Let's just use the first one in the array for now.
+		// TODO: Implement a mechanism to select a graphics card.
+		// TODO: In case multiple graphics cards are available let the user select one.
+		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
+
+		result = create_physical_device(selected_graphics_card);
+		vulkan_error_check(result);
+
+		print_instance_layer_properties();
+		print_instance_extensions();
+		print_device_layers(selected_graphics_card);
+
+		// Query if presentation is supported.
+		VkBool32 surface_support = false;
+		
+		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
+		vulkan_error_check(result);
+
+		if(!surface_support)
+		{
+			display_error_message("Error: Surface not supported!");
+		}
+
+		cout << "Presentation is supported." << endl;
+
+		VkQueue queue;
+		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
+
+		setup_swap_chain();
+
+		load_shaders();
+
+		setup_pipeline_layout();
 		
 		return true;
 	}
