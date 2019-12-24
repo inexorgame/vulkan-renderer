@@ -550,6 +550,16 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::load_shaders()
+	{
+		// TODO: Setup shaders from JSON file.
+		
+		// Important: Make sure your debug directory contains these files!
+		create_shader_module_from_file("vertex_shader.spv", &vertex_shader);
+		create_shader_module_from_file("fragment_shader.spv", &fragment_shader);
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -567,7 +577,6 @@ namespace vulkan_renderer {
 		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
 
 		result = create_physical_device(selected_graphics_card);
-
 		vulkan_error_check(result);
 
 		print_instance_layer_properties();
@@ -576,8 +585,8 @@ namespace vulkan_renderer {
 
 		// Query if presentation is supported.
 		VkBool32 surface_support = false;
+		
 		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
-
 		vulkan_error_check(result);
 
 		if(!surface_support)
@@ -592,12 +601,7 @@ namespace vulkan_renderer {
 
 		setup_swap_chain();
 
-		// TODO: Setup shaders from JSON file?
-		
-		// Load shaders from file.
-		// Make sure your debug directory contains these files!
-		create_shader_module_from_file("vertex_shader.spv", &vertex_shader);
-		create_shader_module_from_file("fragment_shader.spv", &fragment_shader);
+		load_shaders();
 
 		return true;
 	}
@@ -678,15 +682,15 @@ namespace vulkan_renderer {
 			
 			auto &propertyFlag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
 
-			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) cout << "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) cout << "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) cout << "VK_MEMORY_PROPERTY_HOST_CACHED_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) cout << "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT) cout << "VK_MEMORY_PROPERTY_PROTECTED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)        cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)        cout << "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)       cout << "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)         cout << "VK_MEMORY_PROPERTY_HOST_CACHED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)    cout << "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT)           cout << "VK_MEMORY_PROPERTY_PROTECTED_BIT" << endl;
 			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD" << endl;
 			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)        cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
 
 			cout << endl;
 		}
@@ -710,6 +714,8 @@ namespace vulkan_renderer {
 		vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
 		vkDestroyDevice(vulkan_device, nullptr);
+		vulkan_device_ready = false;
+		
 		vkDestroyInstance(vulkan_instance, nullptr);
 	}
 
@@ -725,6 +731,7 @@ namespace vulkan_renderer {
 		window_height = 0;
 		image_views.clear();
 		number_of_images_in_swap_chain = 0;
+		vulkan_device_ready = false;
 	}
 
 

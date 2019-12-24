@@ -57,6 +57,9 @@ namespace vulkan_renderer {
 			VkDevice vulkan_device;
 
 			// 
+			bool vulkan_device_ready;
+
+			// 
 			VkSurfaceKHR vulkan_surface;
 
 			// 
@@ -132,6 +135,8 @@ namespace vulkan_renderer {
 			// 
 			void create_shader_module_from_file(const std::string& SPIRV_file_name, VkShaderModule* shader_module);
 
+			// 
+			void load_shaders();
 
 		public:
 			
