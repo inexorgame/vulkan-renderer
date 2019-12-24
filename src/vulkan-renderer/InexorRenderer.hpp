@@ -160,6 +160,9 @@ namespace vulkan_renderer {
 			// 
 			void setup_pipeline();
 
+			// 
+			void setup_frame_buffers();
+
 		public:
 			
 			// 

@@ -764,6 +764,30 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::setup_frame_buffers()
+	{
+		// Preallocate memory for frame buffers.
+		frame_buffers.resize(number_of_images_in_swap_chain);
+
+		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		{
+			VkFramebufferCreateInfo frame_buffer_create_info = {};
+			frame_buffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			frame_buffer_create_info.pNext = nullptr;
+			frame_buffer_create_info.flags = 0;
+			frame_buffer_create_info.renderPass = render_pass;
+			frame_buffer_create_info.attachmentCount = 1;
+			frame_buffer_create_info.pAttachments = &image_views[i];
+			frame_buffer_create_info.width = window_width;
+			frame_buffer_create_info.height = window_height;
+			frame_buffer_create_info.layers = 1;
+
+			VkResult result = vkCreateFramebuffer(vulkan_device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
+			vulkan_error_check(result);
+		}
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -810,26 +834,7 @@ namespace vulkan_renderer {
 		setup_swap_chain();
 		load_shaders();
 		setup_pipeline();
-
-		// Preallocate memory for frame buffers.
-		frame_buffers.resize(number_of_images_in_swap_chain);
-
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
-		{
-			VkFramebufferCreateInfo frame_buffer_create_info = {};
-			frame_buffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			frame_buffer_create_info.pNext = nullptr;
-			frame_buffer_create_info.flags = 0;
-			frame_buffer_create_info.renderPass = render_pass;
-			frame_buffer_create_info.attachmentCount = 1;
-			frame_buffer_create_info.pAttachments = &image_views[i];
-			frame_buffer_create_info.width = window_width;
-			frame_buffer_create_info.height = window_height;
-			frame_buffer_create_info.layers = 1;
-
-			result = vkCreateFramebuffer(vulkan_device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
-			vulkan_error_check(result);
-		}
+		setup_frame_buffers();
 		
 		return true;
 	}
