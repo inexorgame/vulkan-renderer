@@ -78,6 +78,19 @@ namespace vulkan_renderer {
 			// 
 			VkPipelineLayout vulkan_pipeline_layout;
 
+			// TODO: Check if system supports this image format!
+			const VkFormat image_format = VK_FORMAT_B8G8R8A8_UNORM;
+
+			// 
+			std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+
+
+			// 
+			VkRenderPass render_pass;
+
+			// 
+			VkPipeline vulkan_pipeline;
+
 			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
@@ -142,7 +155,7 @@ namespace vulkan_renderer {
 			void load_shaders();
 
 			// 
-			void setup_pipeline_layout();
+			void setup_pipeline();
 
 		public:
 			
