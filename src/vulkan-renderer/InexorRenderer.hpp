@@ -15,6 +15,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <limits>
+
 #ifdef _WIN32
 #include <Windows.h>
 #include <vulkan/vulkan_win32.h>
@@ -101,6 +103,13 @@ namespace vulkan_renderer {
 			std::vector<VkCommandBuffer> command_buffers;
 
 			// 
+			VkSemaphore semaphore_image_available;
+			VkSemaphore semaphore_rendering_finished;
+
+			// 			
+			VkQueue queue;
+
+			// 
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
 			// 
@@ -168,6 +177,9 @@ namespace vulkan_renderer {
 
 			// 
 			void setup_frame_buffers();
+
+			// 
+			void draw_frame();
 
 		public:
 			

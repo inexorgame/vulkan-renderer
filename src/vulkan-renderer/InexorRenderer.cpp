@@ -723,6 +723,15 @@ namespace vulkan_renderer {
 		subpass_description.preserveAttachmentCount = 0;
 		subpass_description.pPreserveAttachments = nullptr;
 
+		VkSubpassDependency subpass_dependency = {};
+		subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		subpass_dependency.dstSubpass = 0;
+		subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpass_dependency.srcAccessMask = 0;
+		subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT|VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		subpass_dependency.dependencyFlags = 0;
+
 		VkRenderPassCreateInfo render_pass_create_info = {};
 		render_pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		render_pass_create_info.pNext = nullptr;
@@ -731,8 +740,8 @@ namespace vulkan_renderer {
 		render_pass_create_info.pAttachments = &attachment_description;
 		render_pass_create_info.subpassCount = 1;
 		render_pass_create_info.pSubpasses = &subpass_description;
-		render_pass_create_info.dependencyCount = 0;
-		render_pass_create_info.pDependencies = nullptr;
+		render_pass_create_info.dependencyCount = 1;
+		render_pass_create_info.pDependencies = &subpass_dependency;
 
 		result = vkCreateRenderPass(vulkan_device, &render_pass_create_info, nullptr, &render_pass);
 		vulkan_error_check(result);
@@ -788,6 +797,44 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::draw_frame()
+	{
+		uint32_t image_index = 0;
+
+		// TODO: Why is std::numeric_limits<uint64_t>::max() not working instead of UINT64_MAX?
+		vkAcquireNextImageKHR(vulkan_device, vulkan_swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
+
+		VkSubmitInfo submit_info = {};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.pNext = nullptr;
+		submit_info.waitSemaphoreCount = 1;
+		submit_info.pWaitSemaphores = &semaphore_image_available;
+
+		VkPipelineStageFlags wait_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+		submit_info.pWaitDstStageMask = wait_stage_mask;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &command_buffers[image_index];
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pSignalSemaphores = &semaphore_rendering_finished;
+
+		VkResult result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+		vulkan_error_check(result);
+
+		VkPresentInfoKHR present_info = {};
+		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.pNext = nullptr;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = &semaphore_rendering_finished;
+		present_info.swapchainCount = 1;
+		present_info.pSwapchains = &vulkan_swapchain;
+		present_info.pImageIndices = &image_index;
+		present_info.pResults = nullptr;
+
+		result = vkQueuePresentKHR(queue, &present_info);
+		vulkan_error_check(result);
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -828,7 +875,6 @@ namespace vulkan_renderer {
 
 		cout << "Presentation is supported." << endl;
 
-		VkQueue queue;
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
 		setup_swap_chain();
@@ -858,6 +904,56 @@ namespace vulkan_renderer {
 		command_buffers.resize(number_of_images_in_swap_chain);
 
 		result = vkAllocateCommandBuffers(vulkan_device, &command_buffer_allocate_info, command_buffers.data());
+		vulkan_error_check(result);
+
+		VkCommandBufferBeginInfo command_buffer_begin_info = {};
+		command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		command_buffer_begin_info.pNext = nullptr;
+		command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		command_buffer_begin_info.pInheritanceInfo = nullptr;
+
+		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		{
+			result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
+			vulkan_error_check(result);
+
+			VkRenderPassBeginInfo render_pass_begin_info = {};
+			render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			render_pass_begin_info.pNext = nullptr;
+			render_pass_begin_info.renderPass = render_pass;
+			render_pass_begin_info.framebuffer = frame_buffers[i];
+			render_pass_begin_info.renderArea.offset = {0, 0};
+			render_pass_begin_info.renderArea.extent = {window_width, window_height};
+
+			VkClearValue clear_value;
+			// TODO: Change color if you want another clear color.
+			clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+			render_pass_begin_info.clearValueCount = 1;
+			
+			render_pass_begin_info.pClearValues = &clear_value;
+
+			vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			
+			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkan_pipeline);
+
+			// TODO: Change number of vertices if neccesary!
+			vkCmdDraw(command_buffers[i], 3, 1, 0, 0);
+
+			vkCmdEndRenderPass(command_buffers[i]);
+
+			result = vkEndCommandBuffer(command_buffers[i]);
+			vulkan_error_check(result);
+		}
+
+		VkSemaphoreCreateInfo semaphore_create_info = {};
+		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphore_create_info.pNext = nullptr;
+		semaphore_create_info.flags = 0;
+
+		result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_image_available);
+		vulkan_error_check(result);
+
+		result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_rendering_finished);
 		vulkan_error_check(result);
 
 		return true;
@@ -960,6 +1056,9 @@ namespace vulkan_renderer {
 
 		// It is important to destroy the objects in reverse order of initialisation!
 		
+		vkDestroySemaphore(vulkan_device, semaphore_image_available, nullptr);
+		vkDestroySemaphore(vulkan_device, semaphore_rendering_finished, nullptr);
+
 		// We do not need to reset the command buffers explicitly,
 		// since it is covered by vkDestroyCommandPool.
 		vkFreeCommandBuffers(vulkan_device, command_pool, number_of_images_in_swap_chain, command_buffers.data());
@@ -1029,6 +1128,7 @@ namespace vulkan_renderer {
 		while(!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
+			draw_frame();
 		}
 	}
 
