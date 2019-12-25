@@ -847,6 +847,19 @@ namespace vulkan_renderer {
 		result = vkCreateCommandPool(vulkan_device, &command_pool_create_info, nullptr, &command_pool);
 		vulkan_error_check(result);
 
+		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
+		command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		command_buffer_allocate_info.pNext = nullptr;
+		command_buffer_allocate_info.commandPool = command_pool;
+		command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		command_buffer_allocate_info.commandBufferCount = number_of_images_in_swap_chain;
+
+		// Preallocate memory for command buffers.
+		command_buffers.resize(number_of_images_in_swap_chain);
+
+		result = vkAllocateCommandBuffers(vulkan_device, &command_buffer_allocate_info, command_buffers.data());
+		vulkan_error_check(result);
+
 		return true;
 	}
 
@@ -947,6 +960,10 @@ namespace vulkan_renderer {
 
 		// It is important to destroy the objects in reverse order of initialisation!
 		
+		// We do not need to reset the command buffers explicitly,
+		// since it is covered by vkDestroyCommandPool.
+		vkFreeCommandBuffers(vulkan_device, command_pool, number_of_images_in_swap_chain, command_buffers.data());
+
 		vkDestroyCommandPool(vulkan_device, command_pool, nullptr);
 
 		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
