@@ -181,6 +181,9 @@ namespace vulkan_renderer {
 			// 
 			void draw_frame();
 
+			// 
+			void create_command_buffers();
+
 		public:
 			
 			// 

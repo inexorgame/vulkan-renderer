@@ -833,55 +833,10 @@ namespace vulkan_renderer {
 		result = vkQueuePresentKHR(queue, &present_info);
 		vulkan_error_check(result);
 	}
-
-
-	bool InexorRenderer::init_vulkan()
+	
+	
+	void InexorRenderer::create_command_buffers()
 	{
-		cout << "Initialising Vulkan instance." << endl;
-
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
-
-		vulkan_error_check(result);
-
-		// List up all GPUs that are available on this system and print their stats.
-		enumerate_physical_devices();
-
-		// Let's just use the first graphics card in the array for now.
-		// TODO: Implement a mechanism to select the "best" graphics card?
-		// TODO: In case multiple graphics cards are available let the user select one.
-		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
-
-		result = create_physical_device(selected_graphics_card);
-		vulkan_error_check(result);
-
-		// The device has been initialised.
-		// It is now okay to call all class methods which rely on vulkan_device!
-		vulkan_device_ready = true;
-
-		print_instance_layer_properties();
-		print_instance_extensions();
-		print_device_layers(selected_graphics_card);
-
-		// Query if presentation is supported.
-		VkBool32 surface_support = false;
-		
-		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
-		vulkan_error_check(result);
-
-		if(!surface_support)
-		{
-			display_error_message("Error: Surface not supported!");
-		}
-
-		cout << "Presentation is supported." << endl;
-
-		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
-
-		setup_swap_chain();
-		load_shaders();
-		setup_pipeline();
-		setup_frame_buffers();
-		
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 		command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext = nullptr;
@@ -890,7 +845,7 @@ namespace vulkan_renderer {
 		// TODO: Get correct queue with VK_QUEUE_GRAPHICS_BIT!
 		command_pool_create_info.queueFamilyIndex = 0;
 
-		result = vkCreateCommandPool(vulkan_device, &command_pool_create_info, nullptr, &command_pool);
+		VkResult result = vkCreateCommandPool(vulkan_device, &command_pool_create_info, nullptr, &command_pool);
 		vulkan_error_check(result);
 
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
@@ -944,6 +899,56 @@ namespace vulkan_renderer {
 			result = vkEndCommandBuffer(command_buffers[i]);
 			vulkan_error_check(result);
 		}
+	}
+
+
+	bool InexorRenderer::init_vulkan()
+	{
+		cout << "Initialising Vulkan instance." << endl;
+
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
+
+		vulkan_error_check(result);
+
+		// List up all GPUs that are available on this system and print their stats.
+		enumerate_physical_devices();
+
+		// Let's just use the first graphics card in the array for now.
+		// TODO: Implement a mechanism to select the "best" graphics card?
+		// TODO: In case multiple graphics cards are available let the user select one.
+		VkPhysicalDevice selected_graphics_card = graphics_cards[0];
+
+		result = create_physical_device(selected_graphics_card);
+		vulkan_error_check(result);
+
+		// The device has been initialised.
+		// It is now okay to call all class methods which rely on vulkan_device!
+		vulkan_device_ready = true;
+
+		print_instance_layer_properties();
+		print_instance_extensions();
+		print_device_layers(selected_graphics_card);
+
+		// Query if presentation is supported.
+		VkBool32 surface_support = false;
+		
+		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
+		vulkan_error_check(result);
+
+		if(!surface_support)
+		{
+			display_error_message("Error: Surface not supported!");
+		}
+
+		cout << "Presentation is supported." << endl;
+
+		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
+
+		setup_swap_chain();
+		load_shaders();
+		setup_pipeline();
+		setup_frame_buffers();
+		create_command_buffers();
 
 		VkSemaphoreCreateInfo semaphore_create_info = {};
 		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
