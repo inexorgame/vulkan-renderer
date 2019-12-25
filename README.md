@@ -66,19 +66,30 @@ https://renderdoc.org/
 
 ### Advantages of Vulkan
 https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot
+
 https://gamedev.stackexchange.com/questions/96014/what-is-vulkan-and-how-does-it-differ-from-opengl
+
 https://www.imgtec.com/blog/stuck-on-opengl-es-time-to-move-on-why-vulkan-is-the-future-of-graphics/
+
 https://www.toptal.com/api-developers/a-brief-overview-of-vulkan-api
+
 https://developer.nvidia.com/Vulkan
+
 https://www.quora.com/What-advantages-does-Vulkan-have-over-already-established-graphics-APIs
 
 ### Vulkan Tutorials
 https://devblogs.nvidia.com/vulkan-dos-donts/
+
 https://vulkan.lunarg.com/doc/sdk/1.0.26.0/linux/tutorial.html
+
 https://vulkan-tutorial.com/
+
 http://ogldev.atspace.co.uk/www/tutorial50/tutorial50.html
+
 http://jhenriques.net/development.html
+
 http://www.duskborn.com/posts/a-simple-vulkan-compute-example/
+
 https://software.intel.com/en-us/articles/api-without-secrets-introduction-to-vulkan-part-1
 
 ### Multithreading in Vulkan
