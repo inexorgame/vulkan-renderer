@@ -86,7 +86,6 @@ namespace vulkan_renderer {
 			// 
 			std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
-
 			// 
 			VkRenderPass render_pass;
 
@@ -186,6 +185,9 @@ namespace vulkan_renderer {
 
 			// 
 			void create_semaphores();
+
+			// 
+			void check_support_of_presentation(const VkPhysicalDevice& graphics_card);
 
 		public:
 			

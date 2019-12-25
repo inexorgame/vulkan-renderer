@@ -917,12 +917,27 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::check_support_of_presentation(const VkPhysicalDevice& graphics_card)
+	{
+		VkBool32 surface_support = false;
+		
+		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, vulkan_surface, &surface_support);
+		vulkan_error_check(result);
+
+		if(!surface_support)
+		{
+			display_error_message("Error: Surface not supported!");
+		}
+
+		cout << "Presentation is supported." << endl;
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
 
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
-
 		vulkan_error_check(result);
 
 		// List up all GPUs that are available on this system and print their stats.
@@ -944,18 +959,7 @@ namespace vulkan_renderer {
 		print_instance_extensions();
 		print_device_layers(selected_graphics_card);
 
-		// Query if presentation is supported.
-		VkBool32 surface_support = false;
-		
-		result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, 0, vulkan_surface, &surface_support);
-		vulkan_error_check(result);
-
-		if(!surface_support)
-		{
-			display_error_message("Error: Surface not supported!");
-		}
-
-		cout << "Presentation is supported." << endl;
+		check_support_of_presentation(selected_graphics_card);
 
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
