@@ -836,6 +836,17 @@ namespace vulkan_renderer {
 		setup_pipeline();
 		setup_frame_buffers();
 		
+		VkCommandPoolCreateInfo command_pool_create_info = {};
+		command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		command_pool_create_info.pNext = nullptr;
+		command_pool_create_info.flags = 0;
+
+		// TODO: Get correct queue with VK_QUEUE_GRAPHICS_BIT!
+		command_pool_create_info.queueFamilyIndex = 0;
+
+		result = vkCreateCommandPool(vulkan_device, &command_pool_create_info, nullptr, &command_pool);
+		vulkan_error_check(result);
+
 		return true;
 	}
 
@@ -936,6 +947,8 @@ namespace vulkan_renderer {
 
 		// It is important to destroy the objects in reverse order of initialisation!
 		
+		vkDestroyCommandPool(vulkan_device, command_pool, nullptr);
+
 		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
 		{
 			vkDestroyFramebuffer(vulkan_device, frame_buffers[i], nullptr);
