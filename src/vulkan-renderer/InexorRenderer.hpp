@@ -22,8 +22,9 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
-// Custom error handling class for Inexor renderer.
 #include "error-handling/VulkanErrorHandling.hpp"
+#include "shader-loading/VulkanShader.hpp"
+#include "graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
 
 // Change these definitions if you want to fork the renderer!
 // These definitions will be used in the create_vulkan_instance() method.
@@ -32,14 +33,12 @@
 #define INEXOR_APPLICATION_NAME "Inexor-Application"
 #define INEXOR_ENGINE_NAME "Inexor-Engine"
 
-#include "shader-loading/VulkanShader.hpp"
-
 
 namespace inexor {
 namespace vulkan_renderer {
 
 	// 
-	class InexorRenderer : public VulkanErrorHandling
+	class InexorRenderer : public VulkanErrorHandling, public VulkanGraphicsCardInfoViewer
 	{
 		private:
 
@@ -135,30 +134,6 @@ namespace vulkan_renderer {
 			// 
 			void shutdown_window();
 
-			// Gets the information on the graphics card and prints it to the console.
-			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);
-
-			// 
-			void print_physical_device_queue_families(const VkPhysicalDevice& graphics_card);
-
-			// 
-			void print_instance_layer_properties();
-
-			// 
-			void print_instance_extensions();
-			
-			// 
-			void print_device_layers(const VkPhysicalDevice& graphics_card);
-
-			// 
-			void print_surface_capabilities(const VkPhysicalDevice& graphics_card);
-
-			// 
-			void print_supported_surface_formats(const VkPhysicalDevice& graphics_card);
-
-			// 
-			void print_presentation_modes(const VkPhysicalDevice& graphics_card);
-			
 			// 
 			void setup_swap_chain();
 
