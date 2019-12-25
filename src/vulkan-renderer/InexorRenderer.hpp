@@ -184,6 +184,9 @@ namespace vulkan_renderer {
 			// 
 			void create_command_buffers();
 
+			// 
+			void create_semaphores();
+
 		public:
 			
 			// 

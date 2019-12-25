@@ -902,6 +902,21 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorRenderer::create_semaphores()
+	{
+		VkSemaphoreCreateInfo semaphore_create_info = {};
+		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphore_create_info.pNext = nullptr;
+		semaphore_create_info.flags = 0;
+
+		VkResult result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_image_available);
+		vulkan_error_check(result);
+
+		result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_rendering_finished);
+		vulkan_error_check(result);
+	}
+
+
 	bool InexorRenderer::init_vulkan()
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -949,17 +964,7 @@ namespace vulkan_renderer {
 		setup_pipeline();
 		setup_frame_buffers();
 		create_command_buffers();
-
-		VkSemaphoreCreateInfo semaphore_create_info = {};
-		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		semaphore_create_info.pNext = nullptr;
-		semaphore_create_info.flags = 0;
-
-		result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_image_available);
-		vulkan_error_check(result);
-
-		result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_rendering_finished);
-		vulkan_error_check(result);
+		create_semaphores();
 
 		return true;
 	}
