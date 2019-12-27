@@ -7,13 +7,10 @@ namespace vulkan_renderer {
 	
 	InexorRenderer::InexorRenderer()
 	{
-		window = nullptr;
 		vulkan_instance = {};
 		vulkan_device = {};
 		number_of_physical_devices = 0;
 		graphics_cards.clear();
-		window_width = 0;
-		window_height = 0;
 		image_views.clear();
 		number_of_images_in_swap_chain = 0;
 		vulkan_device_ready = false;

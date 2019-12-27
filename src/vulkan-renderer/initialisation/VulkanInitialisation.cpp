@@ -702,30 +702,6 @@ namespace vulkan_renderer {
 		}
 	}
 
-	
-	void VulkanInitialisation::init_window(const int width, const int height, const std::string& window_name)
-	{
-		glfwInit();
-
-		// We do not want to use the OpenGL API.
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-		// The window shall not be resizable for now.
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-		window_width = width;
-		window_height = height;
-		
-		window = glfwCreateWindow(width, height, window_name.c_str(), nullptr, nullptr);
-	}
-
-
-	void VulkanInitialisation::shutdown_window()
-	{
-		glfwDestroyWindow(window);
-		glfwTerminate();
-	}
-
 
 };
 };

@@ -1,8 +1,5 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
@@ -15,19 +12,17 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
-#include <vulkan/vulkan.h>
-#ifdef _WIN32
-#include <Windows.h>
-#include <vulkan/vulkan_win32.h>
-#endif
-
 #include "../error-handling/VulkanErrorHandling.hpp"
 #include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
+#include "../window-manager/VulkanWindowManager.hpp"
 
 #include <string>
 #include <vector>
 #include <iostream>
 using namespace std;
+
+#include <vulkan/vulkan.h>
+
 
 // Change these definitions if you want to fork the renderer!
 // These definitions will be used in the create_vulkan_instance() method.
@@ -43,7 +38,8 @@ namespace vulkan_renderer {
 
 	// 
 	class VulkanInitialisation : public VulkanErrorHandling,
-	                             public VulkanGraphicsCardInfoViewer
+	                             public VulkanGraphicsCardInfoViewer,
+								 public VulkanWindowManager
 	{
 		public:
 
@@ -124,15 +120,6 @@ namespace vulkan_renderer {
 
 			// 			
 			VkQueue queue;
-			
-			// 
-			GLFWwindow* window;
-
-			// 
-			uint32_t window_width;
-
-			// 
-			uint32_t window_height;
 
 
 		protected:
@@ -169,12 +156,6 @@ namespace vulkan_renderer {
 
 			// 
 			void shutdown_vulkan();
-			
-			// Initialises a window using the GLFW library.
-			void init_window(const int width, const int height, const std::string& window_name);
-			
-			// 
-			void shutdown_window();
 
 
 	};
