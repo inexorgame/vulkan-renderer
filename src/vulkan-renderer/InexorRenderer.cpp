@@ -76,6 +76,8 @@ namespace vulkan_renderer {
 	
 	void InexorRenderer::init()
 	{
+		print_driver_vulkan_version();
+
 		init_window(800, 600, "Inexor Vulkan Renderer");
 		init_vulkan();
 

@@ -14,6 +14,20 @@ namespace vulkan_renderer {
 	{
 	}
 
+
+	void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version()
+	{
+		uint32_t api_version= 0;
+		
+		vkEnumerateInstanceVersion(&api_version);
+
+		uint16_t api_major_version = VK_VERSION_MAJOR(api_version);
+		uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
+		uint16_t api_version_patch = VK_VERSION_PATCH(api_version);
+
+		cout << "Supported Vulkan API version: " << api_major_version << "." << api_minor_version << "." << api_version_patch << endl;
+	}
+
 	
 	void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const VkPhysicalDevice& graphics_card)
 	{
