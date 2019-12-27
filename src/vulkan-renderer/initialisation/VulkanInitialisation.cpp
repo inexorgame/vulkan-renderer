@@ -39,9 +39,7 @@ namespace vulkan_renderer {
 		app_info.applicationVersion = application_version;
 		app_info.pEngineName = engine_name.c_str();
 		app_info.engineVersion = engine_version;
-		
-		// TODO: Should we switch to Vulkan 1.1?
-		app_info.apiVersion = VK_API_VERSION_1_0;
+		app_info.apiVersion = VK_API_VERSION_1_1;
 
 		// TODO: Check if we need more device or instance extensions!
 
@@ -235,7 +233,7 @@ namespace vulkan_renderer {
 	{
 		vkDeviceWaitIdle(vulkan_device);
 
-		// It is important to destroy the objects in reverse order of initialisation!
+		// It is important to destroy the objects in reversal of the order of creation.
 		
 		vkDestroySemaphore(vulkan_device, semaphore_image_available, nullptr);
 		vkDestroySemaphore(vulkan_device, semaphore_rendering_finished, nullptr);
