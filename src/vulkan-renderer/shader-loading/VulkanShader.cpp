@@ -7,17 +7,10 @@ namespace vulkan_renderer {
 
 	void VulkanShader::load_file(const std::string& file_name)
 	{
-		cout << "Opening file " << file_name.c_str() << endl;
-
-		// Try to open the shader file.
 		std::ifstream shader_file(file_name.c_str(), std::ios::in|std::ios::binary|std::ios::ate);
 
-		if(shader_file)
+		if(shader_file.is_open())
 		{
-			cout << "Opened shader successfully!" << endl;
-
-			cout << "File size: " << shader_file.tellg() << endl;
-
 			// Read the size of the file in bytes.
 			file_size = shader_file.tellg();
 

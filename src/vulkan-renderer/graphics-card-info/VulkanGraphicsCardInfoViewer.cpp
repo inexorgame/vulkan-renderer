@@ -19,7 +19,6 @@ namespace vulkan_renderer {
 	{
 		uint32_t number_of_queue_families = 0;
 
-		// Ask for the family queues.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, NULL);
 
 		cout << "--------------------------------------------------------------------------" << endl;
@@ -42,12 +41,12 @@ namespace vulkan_renderer {
 			cout << "Queue Count: " << queue_family_properties[i].queueCount << endl;
 			cout << "Timestamp Valid Bits: " << queue_family_properties[i].timestampValidBits << endl;
 
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) cout << "VK_QUEUE_GRAPHICS_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) cout << "VK_QUEUE_COMPUTE_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) cout << "VK_QUEUE_COMPUTE_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) cout << "VK_QUEUE_TRANSFER_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)       cout << "VK_QUEUE_GRAPHICS_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)        cout << "VK_QUEUE_COMPUTE_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)        cout << "VK_QUEUE_COMPUTE_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)       cout << "VK_QUEUE_TRANSFER_BIT" << endl;
 			if(queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) cout << "VK_QUEUE_SPARSE_BINDING_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) cout << "VK_QUEUE_PROTECTED_BIT" << endl;
+			if(queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT)      cout << "VK_QUEUE_PROTECTED_BIT" << endl;
 
 			uint32_t width = queue_family_properties[i].minImageTransferGranularity.width;
 			uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
@@ -184,7 +183,7 @@ namespace vulkan_renderer {
 	{
 		uint32_t number_of_supported_formats = 0;
 		
-		// First check how many formats are supported
+		// First check how many formats are supported.
 		vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
 
 		cout << "Supported surface formats: " << number_of_supported_formats << endl;
@@ -233,17 +232,26 @@ namespace vulkan_renderer {
 		// Print the name of the graphics card.
 		cout << "Graphics card: " << graphics_card_properties.deviceName << endl;
 
+		// Get the major, minor and patch version of the Vulkan API version.
 		uint32_t VulkanAPIversion = graphics_card_properties.apiVersion;
+		uint32_t vulkan_version_major = VK_VERSION_MAJOR(VulkanAPIversion);
+		uint32_t vulkan_version_minor = VK_VERSION_MINOR(VulkanAPIversion);
+		uint32_t vulkan_version_patch = VK_VERSION_MAJOR(VulkanAPIversion);
 
 		// The Vulkan version which is supported by the graphics card.
-		cout << "Vulkan API supported version: " << VK_VERSION_MAJOR(VulkanAPIversion) << "." << VK_VERSION_MINOR(VulkanAPIversion) << "." << VK_VERSION_PATCH(VulkanAPIversion) << endl;
+		cout << "Vulkan API supported version: " << vulkan_version_major << "." << vulkan_version_minor << "." << vulkan_version_patch << endl;
+
+		// Get the major, minor and patch version of the driver version.
+		uint32_t driver_version_major = VK_VERSION_MAJOR(graphics_card_properties.driverVersion);
+		uint32_t driver_version_minor = VK_VERSION_MINOR(graphics_card_properties.driverVersion);
+		uint32_t driver_version_patch = VK_VERSION_PATCH(graphics_card_properties.driverVersion);
 
 		// The driver version.
 		// Always keep your graphics drivers up to date!
 		// Note: The driver version format is NOT standardised!
-		cout << "Driver version: " << VK_VERSION_MAJOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_MINOR(graphics_card_properties.driverVersion) << "." << VK_VERSION_PATCH(graphics_card_properties.driverVersion) << endl;
-		cout << "Vendor ID: " << graphics_card_properties.vendorID << endl;
-		cout << "Device ID: " << graphics_card_properties.deviceID << endl;
+		cout << "Driver version: " << driver_version_major << "." << driver_version_minor << "." << driver_version_patch << endl;
+		cout << "Vendor ID: "      << graphics_card_properties.vendorID << endl;
+		cout << "Device ID: "      << graphics_card_properties.deviceID << endl;
 
 		// Graphics card types.
 		// TODO: Is there any other way to get the graphics card type name by id?
@@ -288,7 +296,7 @@ namespace vulkan_renderer {
 		vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
 
 		cout << "Number of memory types: " << graphics_card_memory_properties.memoryTypeCount << endl;
-		cout << "Number of heap types: " << graphics_card_memory_properties.memoryHeapCount << endl;
+		cout << "Number of heap types: "   << graphics_card_memory_properties.memoryHeapCount << endl;
 
 		// Loop through all memory types and list their features.
 		for(std::size_t i=0; i<graphics_card_memory_properties.memoryTypeCount; i++)
