@@ -143,13 +143,19 @@ namespace vulkan_renderer {
 			void check_support_of_presentation(const VkPhysicalDevice& graphics_card);
 
 			// 
-			void setup_swap_chain();
-
-			// 
-			void setup_frame_buffers();
+			void create_swap_chain();
 			
 			// 
-			void setup_pipeline();
+			void create_command_pool();
+
+			// 
+			void create_frame_buffers();
+			
+			// 
+			void create_pipeline();
+
+			// 
+			void create_image_views();
 
 			// 
 			void shutdown_vulkan();

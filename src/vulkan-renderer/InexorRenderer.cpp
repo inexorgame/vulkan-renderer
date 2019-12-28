@@ -92,19 +92,39 @@ namespace vulkan_renderer {
 		selected_image_format = decide_which_image_format_to_use();
 
 		print_instance_layer_properties();
+		
 		print_instance_extensions();
+
 		print_device_layers(selected_graphics_card);
 
 		check_support_of_presentation(selected_graphics_card);
 
 		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
-		setup_swap_chain();
+
+		create_swap_chain();
+		
+		create_image_views();
+
 		load_shaders();
-		setup_pipeline();
-		setup_frame_buffers();
+		
+		create_pipeline();
+		
+		create_frame_buffers();
+		
+		create_command_pool();
+
 		create_command_buffers();
+
 		create_semaphores();
+	}
+
+
+	void InexorRenderer::on_window_resized()
+	{
+		vkDeviceWaitIdle(vulkan_device);
+
+
 	}
 
 

@@ -48,6 +48,9 @@ namespace vulkan_renderer {
 
 			// 
 			void cleanup();
+			
+			// 
+			void on_window_resized();
 
 	};
 
