@@ -124,6 +124,12 @@ namespace vulkan_renderer {
 			// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#formats-compatibility
 			VkFormat decide_which_image_format_to_use();
 
+			// 
+			bool CheckInstanceExtensionSupport(const std::string& instance_extension_name);
+
+			// 
+			bool CheckInstanceLayerSupport(const std::string& instance_layer_name);
+
 			// Vulkan validation layers should be enabled during development!
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
@@ -132,9 +138,15 @@ namespace vulkan_renderer {
 
 			// 
 			void enumerate_physical_devices();
+			
+			// 
+			void create_device_queue();
 
 			// 
 			void create_command_buffers();
+
+			// 
+			void record_command_buffers();
 
 			// 
 			void create_semaphores();

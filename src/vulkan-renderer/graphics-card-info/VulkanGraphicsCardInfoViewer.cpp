@@ -148,7 +148,6 @@ namespace vulkan_renderer {
 		{
 			cout << "Name: " << extensions[i].extensionName << endl;
 			cout << "Spec: " << extensions[i].specVersion << endl;
-			cout << endl;
 		}
 
 		cout << endl;

@@ -74,7 +74,9 @@ namespace vulkan_renderer {
 	{
 		// Check which version of the Vulkan API is available.
 		print_driver_vulkan_version();
-
+		print_instance_layer_properties();
+		print_instance_extensions();
+		
 		// Create a window using GLFW library.
 		init_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, "Inexor Vulkan Renderer");
 
@@ -91,16 +93,20 @@ namespace vulkan_renderer {
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
 		selected_image_format = decide_which_image_format_to_use();
 
-		print_instance_layer_properties();
-		
-		print_instance_extensions();
-
 		print_device_layers(selected_graphics_card);
+
+		// In this section, we need to check if the setup that we want to make is supported by the system. 
+
+		// TODO: class VulkanBestPractices
+		//decide_how_many_images_in_swap_chain_to_use();
+		//decide_which_image_color_space_to_use();
+		//decide_which_image_sharing_mode_to_use();
+		//decide_which_present_mode_to_use();
 
 		check_support_of_presentation(selected_graphics_card);
 
-		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
 
+		create_device_queue();
 
 		create_swap_chain();
 		
@@ -115,6 +121,8 @@ namespace vulkan_renderer {
 		create_command_pool();
 
 		create_command_buffers();
+
+		record_command_buffers();
 
 		create_semaphores();
 	}

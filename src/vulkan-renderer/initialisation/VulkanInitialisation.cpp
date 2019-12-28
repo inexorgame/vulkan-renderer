@@ -15,6 +15,57 @@ namespace vulkan_renderer {
 	}
 
 
+	bool VulkanInitialisation::CheckInstanceExtensionSupport(const std::string& instance_extension_name)
+	{
+		uint32_t number_of_extensions = 0;
+		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
+		vulkan_error_check(result);
+
+		// Preallocate memory for extension properties.
+		std::vector<VkExtensionProperties> instance_extensions(number_of_extensions);
+		result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, instance_extensions.data());
+		vulkan_error_check(result);
+
+		// Loop through all available instance extensions and search for the requested one.
+		for(VkExtensionProperties extension : instance_extensions)
+		{
+			// Compare the name of the current instance extension with the requested one.
+			if(0 == strcmp(extension.extensionName, instance_extension_name.c_str()))
+			{
+				// Yes, this instance extension is supported!
+				return true;
+			}
+		}
+		
+		// No, this instance extension could not be found and thus is not supported!
+		return false;
+	}
+
+	
+	bool VulkanInitialisation::CheckInstanceLayerSupport(const std::string& instance_layer_name)
+	{
+		uint32_t number_of_instance_layers = 0;
+		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
+
+		// Preallocate memory for layer properties.
+		std::vector<VkLayerProperties> instance_layer_properties(number_of_instance_layers);
+		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layer_properties.data());
+		
+		// Loop through all available instance layers and search for the requested one.
+		for(VkLayerProperties layer : instance_layer_properties)
+		{
+			if(0 == strcmp(layer.layerName, instance_layer_name.c_str()))
+			{
+				// Yes, this instance layer is supported!
+				return true;
+			}
+		}
+		
+		// No, this instance layer could not be found and thus is not supported!
+		return false;
+	}
+
+
 	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers)
 	{
 		cout << "Initialising Vulkan instance." << endl;
@@ -55,6 +106,12 @@ namespace vulkan_renderer {
 		for(std::size_t i=0; i<number_of_GLFW_extensions; i++)
 		{
 			cout << glfw_extensions[i] << endl;
+
+			if(!CheckInstanceExtensionSupport(glfw_extensions[i]))
+			{
+				std::string error_message = "Error: GLFW required instance extension " + std::string(glfw_extensions[i]) + "not found!";
+				display_error_message(error_message);
+			}
 		}
 
 		cout << endl;
@@ -69,49 +126,28 @@ namespace vulkan_renderer {
 		instance_create_info.ppEnabledExtensionNames = glfw_extensions;
 
 		// The layers that we want to enable.
+		// TODO: Make this a "wishlist" and check if these layers are supported by using CheckInstanceExtensionSupport.
 		std::vector<const char*> enabled_instance_layers ={
 			//"VK_LAYER_VALVE_steam_overlay",
 			//"VK_LAYER_RENDERDOC_Capture"
 		};
-	
-		// TODO: Use "VK_LAYER_LUNARG_standard_validation" instead?
-		const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
 
-		bool validation_layer_available = false;
+		// TODO: Use "VK_LAYER_LUNARG_standard_validation" instead?
+		const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
 		
 		// Check if a validation layer is available.
 		if(enable_validation_layers)
 		{
-			// Check if this layer is available at instance level.
-			uint32_t instance_layer_count = 0;
-
-			// Returns up to requested number of global layer properties.
-			vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr);
-			
-			std::vector<VkLayerProperties> instance_layer_properties(instance_layer_count);
-
-			// Returns up to requested number of global layer properties.
-			vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layer_properties.data());
-
-			for(VkLayerProperties layer : instance_layer_properties)
+			if(CheckInstanceLayerSupport(validation_layer_name))
 			{
-				if(0 == strcmp(validation_layer_name, layer.layerName))
-				{
-					// Yes, this validation layer is available!
-					validation_layer_available = true;
-					break;
-				}
+				enabled_instance_layers.push_back(validation_layer_name);
+			}
+			else
+			{
+				display_error_message("Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled.");
 			}
 		}
 
-		if(validation_layer_available)
-		{
-			enabled_instance_layers.push_back(validation_layer_name);
-		}
-		else
-		{
-			display_error_message("Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled.");
-		}
 		
 		// Pass all the enabled layers to Vulkan.
 		instance_create_info.ppEnabledLayerNames = enabled_instance_layers.data();
@@ -121,6 +157,7 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
 		vulkan_error_check(result);
 
+		// Create a window surface using GLFW library.
 		result = glfwCreateWindowSurface(vulkan_instance, window, nullptr, &vulkan_surface);
 		vulkan_error_check(result);
 
@@ -277,7 +314,11 @@ namespace vulkan_renderer {
 
 		VkResult result = vkAllocateCommandBuffers(vulkan_device, &command_buffer_allocate_info, command_buffers.data());
 		vulkan_error_check(result);
+	}
 
+
+	void VulkanInitialisation::record_command_buffers()
+	{
 		VkCommandBufferBeginInfo command_buffer_begin_info = {};
 		command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		command_buffer_begin_info.pNext = nullptr;
@@ -286,7 +327,7 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
 		{
-			result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
+			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
 			vulkan_error_check(result);
 
 			VkRenderPassBeginInfo render_pass_begin_info = {};
@@ -350,10 +391,17 @@ namespace vulkan_renderer {
 	}
 
 	
+	void VulkanInitialisation::create_device_queue()
+	{
+		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
+	}
+
+
 	void VulkanInitialisation::create_swap_chain()
 	{
 		cout << "Creating swap chain." << endl;
 
+		// TODO: What else needs to be checked ?
 		VkSwapchainCreateInfoKHR swap_chain_create_info = {};
 
 		swap_chain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -378,7 +426,6 @@ namespace vulkan_renderer {
 		swap_chain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		swap_chain_create_info.queueFamilyIndexCount = 0;
 		swap_chain_create_info.pQueueFamilyIndices = nullptr;
-
 		swap_chain_create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swap_chain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
