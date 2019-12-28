@@ -6,6 +6,17 @@
 #include "initialisation/VulkanInitialisation.hpp"
 
 
+// Change these definitions if you want to fork the renderer!
+// These definitions will be used in the create_vulkan_instance() method.
+#define INEXOR_ENGINE_VERSION      VK_MAKE_VERSION(1,0,0)
+#define INEXOR_APPLICATION_VERSION VK_MAKE_VERSION(1,0,0)
+#define INEXOR_APPLICATION_NAME    "Inexor-Application"
+#define INEXOR_ENGINE_NAME         "Inexor-Engine"
+#define INEXOR_APP_WINDOW_TITLE    "Inexor-Vulkan-Renderer"
+#define INEXOR_WINDOW_WIDTH        800
+#define INEXOR_WINDOW_HEIGHT       600
+
+
 namespace inexor {
 namespace vulkan_renderer {
 

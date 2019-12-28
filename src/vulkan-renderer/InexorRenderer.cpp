@@ -9,11 +9,10 @@ namespace vulkan_renderer {
 	{
 		vulkan_instance = {};
 		vulkan_device = {};
-		number_of_physical_devices = 0;
+		number_of_graphics_cards = 0;
 		graphics_cards.clear();
 		image_views.clear();
 		number_of_images_in_swap_chain = 0;
-		vulkan_device_ready = false;
 		frame_buffers.clear();
 	}
 
@@ -37,8 +36,8 @@ namespace vulkan_renderer {
 	{
 		uint32_t image_index = 0;
 
-		// TODO: Why is std::numeric_limits<uint64_t>::max() not working instead of UINT64_MAX?
 		vkAcquireNextImageKHR(vulkan_device, vulkan_swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
+		// TODO: Error checking?
 
 		VkSubmitInfo submit_info = {};
 		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -73,10 +72,24 @@ namespace vulkan_renderer {
 	
 	void InexorRenderer::init()
 	{
+		// Check which version of the Vulkan API is available.
 		print_driver_vulkan_version();
 
-		init_window(800, 600, "Inexor Vulkan Renderer");
-		init_vulkan();
+		// Create a window using GLFW library.
+		init_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, "Inexor Vulkan Renderer");
+
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
+		vulkan_error_check(result);
+
+		// Let the user select a graphics card or select the "best" one automatically.
+		selected_graphics_card = decide_which_graphics_card_to_use();
+
+		// Create a physical device with the selected graphics card.
+		result = create_physical_device(selected_graphics_card);
+		vulkan_error_check(result);
+
+		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
+		selected_image_format = decide_which_image_format_to_use();
 
 		print_instance_layer_properties();
 		print_instance_extensions();

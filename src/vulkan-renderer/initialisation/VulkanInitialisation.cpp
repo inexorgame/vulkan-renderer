@@ -17,6 +17,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers)
 	{
+		cout << "Initialising Vulkan instance." << endl;
 		cout << "Application name: " << application_name.c_str() << endl;
 		cout << "Application version: " << VK_VERSION_MAJOR(application_version) << "." << VK_VERSION_MINOR(application_version) << "." << VK_VERSION_PATCH(application_version) << endl;
 		cout << "Engine name: " << engine_name.c_str() << endl;
@@ -43,7 +44,10 @@ namespace vulkan_renderer {
 
 		// TODO: Check if we need more device or instance extensions!
 
+
+		// Query which extensions are needed for GLFW.
 		uint32_t number_of_GLFW_extensions = 0;
+		
 		auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_GLFW_extensions);
 
 		cout << "Required GLFW instance extensions: " << endl;
@@ -52,6 +56,8 @@ namespace vulkan_renderer {
 		{
 			cout << glfw_extensions[i] << endl;
 		}
+
+		cout << endl;
 
 		// Structure specifying parameters of a newly created instance.
 		VkInstanceCreateInfo instance_create_info = {};
@@ -125,9 +131,6 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
 		cout << "Creating a physical device" << endl;
-
-		// TODO: Lets pick the best device instead of the default device.
-		// TODO: Let the user choose which device to use.
 		
 		const float queue_priorities[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -171,27 +174,28 @@ namespace vulkan_renderer {
 
 	void VulkanInitialisation::enumerate_physical_devices()
 	{
-		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, NULL);
+		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, NULL);
 		vulkan_error_check(result);
 
-		if(number_of_physical_devices <= 0)
+		if(number_of_graphics_cards <= 0)
 		{
 			display_error_message("Error: Could not find any GPU's!");
+			exit(-1);
 		}
 
 		cout << "--------------------------------------------------------------------------" << endl;
-		cout << "Number of available GPUs: " << number_of_physical_devices << endl;
+		cout << "Number of available graphics cards: " << number_of_graphics_cards << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
 
 		// Preallocate memory for the available graphics cards.
-		graphics_cards.resize(number_of_physical_devices);
+		graphics_cards.resize(number_of_graphics_cards);
 
-		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_physical_devices, graphics_cards.data());
+		// Query information about all the graphics cards available on the system.
+		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, graphics_cards.data());
 		vulkan_error_check(result);
 
-		// TODO: Add GPU selection based on command line arguments.
-
-		for(std::size_t i=0; i<number_of_physical_devices; i++)
+		// Loop through all graphics cards and print information about them.
+		for(std::size_t i=0; i<number_of_graphics_cards; i++)
 		{
 			print_graphics_card_info(graphics_cards[i]);
 			print_physical_device_queue_families(graphics_cards[i]);
@@ -200,32 +204,6 @@ namespace vulkan_renderer {
 			print_presentation_modes(graphics_cards[i], vulkan_surface);
 			cout << endl;
 		}
-	}
-
-
-	bool VulkanInitialisation::init_vulkan()
-	{
-		cout << "Initialising Vulkan instance." << endl;
-
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, true);
-		vulkan_error_check(result);
-
-		// List up all GPUs that are available on this system and print their stats.
-		enumerate_physical_devices();
-
-		// Let's just use the first graphics card in the array for now.
-		// TODO: Implement a mechanism to select the "best" graphics card?
-		// TODO: In case multiple graphics cards are available let the user select one.
-		selected_graphics_card = graphics_cards[0];
-
-		result = create_physical_device(selected_graphics_card);
-		vulkan_error_check(result);
-
-		// The device has been initialised.
-		// It is now okay to call all class methods which rely on vulkan_device!
-		vulkan_device_ready = true;
-
-		return true;
 	}
 
 
@@ -265,10 +243,7 @@ namespace vulkan_renderer {
 
 		vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
 		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
-		vkDestroyDevice(vulkan_device, nullptr);
-
-		vulkan_device_ready = false;
-		
+		vkDestroyDevice(vulkan_device, nullptr);		
 		vkDestroyInstance(vulkan_instance, nullptr);
 	}
 
@@ -386,7 +361,7 @@ namespace vulkan_renderer {
 		swap_chain_create_info.minImageCount = 3;
 
 		// TODO: Check if system supports this image format!
-		swap_chain_create_info.imageFormat = image_format;
+		swap_chain_create_info.imageFormat = selected_image_format;
 
 		// TODO: Check if system supports this image color space!
 		swap_chain_create_info.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -602,7 +577,7 @@ namespace vulkan_renderer {
 		
 		VkAttachmentDescription attachment_description = {};
 		attachment_description.flags = 0;
-		attachment_description.format = image_format;
+		attachment_description.format = selected_image_format;
 		attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		attachment_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; 
 		attachment_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE ;
@@ -698,6 +673,60 @@ namespace vulkan_renderer {
 			VkResult result = vkCreateFramebuffer(vulkan_device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
 			vulkan_error_check(result);
 		}
+	}
+
+
+	VkPhysicalDevice VulkanInitialisation::decide_which_graphics_card_to_use()
+	{
+		// List up all graphics cards that are available on this system.
+		enumerate_physical_devices();
+
+		// Let's just use the first graphics card in the array for now.
+		return graphics_cards[0];
+		
+		// TODO: Implement a mechanism to select the "best" graphics card automatically.
+		// TODO: In case multiple graphics cards are available let the user select one.
+		// TODO: Select graphic card by command line parameter "-gpu" <index>
+	}
+
+
+	VkFormat VulkanInitialisation::decide_which_image_format_to_use()
+	{
+		// A list of image formats that we can accept.
+		const std::vector<VkFormat> image_format_wishlist =
+		{
+			// This is the default format which should be available everywhere.
+			VK_FORMAT_B8G8R8A8_UNORM,
+
+			// TODO: Add more formats to the wishlist.
+			// The priority is decreasing from top to bottom
+		};
+		
+		// We will enumerate all available image formats and compare it with our wishlist.
+
+		uint32_t number_of_supported_formats = 0;
+		
+		// First check how many formats are supported.
+		vkGetPhysicalDeviceSurfaceFormatsKHR(selected_graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+
+		// Query information about all the supported surface formats.
+		std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(selected_graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+
+		for(std::size_t i=0; i<number_of_supported_formats; i++)
+		{
+			for(std::size_t j=0; i<image_format_wishlist.size(); j++)
+			{
+				// Is one of our selected formats supported?
+				if(image_format_wishlist[j] == surface_formats[i].format)
+				{
+					return surface_formats[i].format;
+				}
+			}
+		}
+
+		// This is the default format which should be available on every system.
+		return VK_FORMAT_B8G8R8A8_UNORM;
 	}
 
 

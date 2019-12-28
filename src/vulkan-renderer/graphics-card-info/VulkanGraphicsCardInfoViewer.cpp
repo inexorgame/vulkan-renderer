@@ -17,20 +17,30 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version()
 	{
+		// The version of the available Vulkan API is encoded as a 32 bit integer.
+		// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#extendingvulkan-coreversions-versionnumbers
 		uint32_t api_version= 0;
 		
+		// The Vulkan version number comprises three parts indicating the major, minor and patch version of the Vulkan API Specification.
+		// The major version indicates a significant change in the API, which will encompass a wholly new version of the specification.
+		// The minor version indicates the incorporation of new functionality into the core specification.
+		// The patch version indicates bug fixes, clarifications, and language improvements have been incorporated into the specification.
 		vkEnumerateInstanceVersion(&api_version);
-
+		
+		// Extract major, minor and patch version of the Vulkan API available.
 		uint16_t api_major_version = VK_VERSION_MAJOR(api_version);
 		uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
 		uint16_t api_version_patch = VK_VERSION_PATCH(api_version);
 
 		cout << "Supported Vulkan API version: " << api_major_version << "." << api_minor_version << "." << api_version_patch << endl;
 
+		// Is Vulkan 1.1 available on this system?
 		if(api_major_version > 1 || api_minor_version >= 1)
 		{
 			cout << "Vulkan 1.1 is supported." << endl;
 		}
+
+		cout << endl;
 	}
 
 	
@@ -177,8 +187,9 @@ namespace vulkan_renderer {
 	void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
 
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
+		
 		cout << "Printing surface capabilities" << endl;
 
 		cout << "minImageCount: "           << surface_capabilities.minImageCount << endl;

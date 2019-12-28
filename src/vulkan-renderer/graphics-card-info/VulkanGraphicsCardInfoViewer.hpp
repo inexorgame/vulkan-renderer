@@ -11,11 +11,23 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// This helper class prints information about a specific graphics card to the console.
+	// Prints information related to graphics card's capabilities and limits to the console.
 	class VulkanGraphicsCardInfoViewer
 	{
+		public:
+
+			// 
+			VulkanGraphicsCardInfoViewer();
+
+			// 
+			~VulkanGraphicsCardInfoViewer();
+
 		protected:
 
+			// Uses vkEnumerateInstanceVersion to query which version of the Vulkan API is supported on this system.
+			// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#vkEnumerateInstanceVersion
+			void print_driver_vulkan_version();
+			
 			// 
 			void print_physical_device_queue_families(const VkPhysicalDevice& graphics_card);
 
@@ -39,17 +51,6 @@ namespace vulkan_renderer {
 
 			// Gets the information on the graphics card and prints it to the console.
 			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);
-			
-			// 
-			void print_driver_vulkan_version();
-
-		public:
-
-			// 
-			VulkanGraphicsCardInfoViewer();
-
-			// 
-			~VulkanGraphicsCardInfoViewer();
 
 	};
 
