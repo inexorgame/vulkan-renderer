@@ -56,7 +56,7 @@ namespace vulkan_renderer {
 		{
 			cout << glfw_extensions[i] << endl;
 
-			if(!CheckInstanceExtensionSupport(glfw_extensions[i]))
+			if(!CheckInstanceExtensionAvailability(glfw_extensions[i]))
 			{
 				std::string error_message = "Error: GLFW required instance extension " + std::string(glfw_extensions[i]) + "not found!";
 				display_error_message(error_message);
@@ -86,7 +86,7 @@ namespace vulkan_renderer {
 		// We now have to check which instance layers of our wishlist are really supported on the current system!
 		for(auto current_layer : instance_layers_wishlist)
 		{
-			if(CheckInstanceLayerSupport(current_layer))
+			if(CheckInstanceLayerAvailability(current_layer))
 			{
 				// This instance layer is available!
 				// Add it to the list of enabled instance layers!
