@@ -865,6 +865,43 @@ namespace vulkan_renderer {
 		cout << endl;
 	}
 
+	
+	void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance& vulkan_instance, const VkSurfaceKHR& vulkan_surface)
+	{
+		uint32_t number_of_graphics_cards = 0;
+
+		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, NULL);
+		vulkan_error_check(result);
+
+		if(number_of_graphics_cards <= 0)
+		{
+			display_error_message("Error: Could not find any GPU's!");
+			// TODO: Shutdown Vulkan and application correctly.
+		}
+
+		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "Number of available graphics cards: " << number_of_graphics_cards << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
+
+		// Preallocate memory for the available graphics cards.
+		std::vector<VkPhysicalDevice> available_graphics_cards(number_of_graphics_cards);
+
+		// Query information about all the graphics cards available on the system.
+		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data());
+		vulkan_error_check(result);
+
+		// Loop through all graphics cards and print information about them.
+		for(auto graphics_cards : available_graphics_cards)
+		{
+			print_graphics_card_info(graphics_cards);
+			print_physical_device_queue_families(graphics_cards);
+			print_surface_capabilities(graphics_cards, vulkan_surface);
+			print_supported_surface_formats(graphics_cards, vulkan_surface);
+			print_presentation_modes(graphics_cards, vulkan_surface);
+			cout << endl;
+		}
+	}
+
 
 };
 };

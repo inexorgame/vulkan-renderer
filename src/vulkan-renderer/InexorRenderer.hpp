@@ -15,6 +15,7 @@
 #define INEXOR_APP_WINDOW_TITLE    "Inexor-Vulkan-Renderer"
 #define INEXOR_WINDOW_WIDTH        800
 #define INEXOR_WINDOW_HEIGHT       600
+// TODO: Define wanted image format as a macro here?
 
 
 namespace inexor {

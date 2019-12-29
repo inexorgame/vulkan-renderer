@@ -56,7 +56,7 @@ namespace vulkan_renderer {
 		{
 			cout << glfw_extensions[i] << endl;
 
-			if(!CheckInstanceExtensionAvailability(glfw_extensions[i]))
+			if(!check_instance_extension_availability(glfw_extensions[i]))
 			{
 				std::string error_message = "Error: GLFW required instance extension " + std::string(glfw_extensions[i]) + "not found!";
 				display_error_message(error_message);
@@ -86,7 +86,7 @@ namespace vulkan_renderer {
 		// We now have to check which instance layers of our wishlist are really supported on the current system!
 		for(auto current_layer : instance_layers_wishlist)
 		{
-			if(CheckInstanceLayerAvailability(current_layer))
+			if(check_instance_layer_availability(current_layer))
 			{
 				// This instance layer is available!
 				// Add it to the list of enabled instance layers!
@@ -116,11 +116,15 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vulkan_instance);
 		vulkan_error_check(result);
 
-		// Create a window surface using GLFW library.
-		result = glfwCreateWindowSurface(vulkan_instance, window, nullptr, &vulkan_surface);
-		vulkan_error_check(result);
-
 		return result;
+	}
+
+
+	void VulkanInitialisation::create_window_surface(const VkInstance& vulkan_instance, GLFWwindow* window, VkSurfaceKHR& vulkan_surface)
+	{
+		// Create a window surface using GLFW library.
+		VkResult result = glfwCreateWindowSurface(vulkan_instance, window, nullptr, &vulkan_surface);
+		vulkan_error_check(result);
 	}
 
 	
@@ -164,7 +168,7 @@ namespace vulkan_renderer {
 
 		for(auto layer_name : device_extensions_wishlist)
 		{
-			if(CheckDeviceExtensionAvailability(graphics_card, layer_name))
+			if(check_device_extension_availability(graphics_card, layer_name))
 			{
 				// This device layer is supported!
 				// Add it to the list of enabled device layers.
@@ -186,41 +190,6 @@ namespace vulkan_renderer {
 		device_create_info.pEnabledFeatures = &used_features;
 
 		return vkCreateDevice(graphics_card, &device_create_info, NULL, &vulkan_device);
-	}
-
-
-	void VulkanInitialisation::enumerate_physical_devices()
-	{
-		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, NULL);
-		vulkan_error_check(result);
-
-		if(number_of_graphics_cards <= 0)
-		{
-			display_error_message("Error: Could not find any GPU's!");
-			exit(-1);
-		}
-
-		cout << "--------------------------------------------------------------------------" << endl;
-		cout << "Number of available graphics cards: " << number_of_graphics_cards << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
-
-		// Preallocate memory for the available graphics cards.
-		graphics_cards.resize(number_of_graphics_cards);
-
-		// Query information about all the graphics cards available on the system.
-		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, graphics_cards.data());
-		vulkan_error_check(result);
-
-		// Loop through all graphics cards and print information about them.
-		for(std::size_t i=0; i<number_of_graphics_cards; i++)
-		{
-			print_graphics_card_info(graphics_cards[i]);
-			print_physical_device_queue_families(graphics_cards[i]);
-			print_surface_capabilities(graphics_cards[i], vulkan_surface);
-			print_supported_surface_formats(graphics_cards[i], vulkan_surface);
-			print_presentation_modes(graphics_cards[i], vulkan_surface);
-			cout << endl;
-		}
 	}
 
 
@@ -352,22 +321,6 @@ namespace vulkan_renderer {
 
 		result = vkCreateSemaphore(vulkan_device, &semaphore_create_info, nullptr, &semaphore_rendering_finished);
 		vulkan_error_check(result);
-	}
-
-
-	void VulkanInitialisation::check_support_of_presentation(const VkPhysicalDevice& graphics_card)
-	{
-		VkBool32 surface_support = false;
-		
-		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, vulkan_surface, &surface_support);
-		vulkan_error_check(result);
-
-		if(!surface_support)
-		{
-			display_error_message("Error: Surface not supported!");
-		}
-
-		cout << "Presentation is supported." << endl;
 	}
 
 	
@@ -707,60 +660,6 @@ namespace vulkan_renderer {
 			result = vkCreateImageView(vulkan_device, &image_view_create_info, nullptr, &image_views[i]);
 			vulkan_error_check(result);
 		}
-	}
-
-
-	VkPhysicalDevice VulkanInitialisation::decide_which_graphics_card_to_use()
-	{
-		// List up all graphics cards that are available on this system.
-		enumerate_physical_devices();
-
-		// Let's just use the first graphics card in the array for now.
-		return graphics_cards[0];
-		
-		// TODO: Implement a mechanism to select the "best" graphics card automatically.
-		// TODO: In case multiple graphics cards are available let the user select one.
-		// TODO: Select graphic card by command line parameter "-gpu" <index>
-	}
-
-
-	VkFormat VulkanInitialisation::decide_which_image_format_to_use()
-	{
-		// A list of image formats that we can accept.
-		const std::vector<VkFormat> image_format_wishlist =
-		{
-			// This is the default format which should be available everywhere.
-			VK_FORMAT_B8G8R8A8_UNORM,
-
-			// TODO: Add more formats to the wishlist.
-			// The priority is decreasing from top to bottom
-		};
-		
-		// We will enumerate all available image formats and compare it with our wishlist.
-
-		uint32_t number_of_supported_formats = 0;
-		
-		// First check how many formats are supported.
-		vkGetPhysicalDeviceSurfaceFormatsKHR(selected_graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
-
-		// Query information about all the supported surface formats.
-		std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(selected_graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
-
-		for(std::size_t i=0; i<number_of_supported_formats; i++)
-		{
-			for(std::size_t j=0; i<image_format_wishlist.size(); j++)
-			{
-				// Is one of our selected formats supported?
-				if(image_format_wishlist[j] == surface_formats[i].format)
-				{
-					return surface_formats[i].format;
-				}
-			}
-		}
-
-		// This is the default format which should be available on every system.
-		return VK_FORMAT_B8G8R8A8_UNORM;
 	}
 
 

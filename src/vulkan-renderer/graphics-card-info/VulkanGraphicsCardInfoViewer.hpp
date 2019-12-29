@@ -58,6 +58,10 @@ namespace vulkan_renderer {
 			// Gets the information on the graphics card and prints it to the console.
 			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);
 
+			// 
+			void print_all_physical_devices(const VkInstance& vulkan_instance, const VkSurfaceKHR& vulkan_surface);
+
+
 	};
 
 };

@@ -5,18 +5,11 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
-#include <iostream>
-#include <vector>
-
 #ifdef _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
-#include "../error-handling/VulkanErrorHandling.hpp"
-#include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
-#include "../window-manager/VulkanWindowManager.hpp"
-#include "../availability-checks/VulkanAvailabilityChecks.hpp"
-
+#include <vector>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -24,15 +17,22 @@ using namespace std;
 
 #include <vulkan/vulkan.h>
 
+#include "../error-handling/VulkanErrorHandling.hpp"
+#include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
+#include "../window-manager/VulkanWindowManager.hpp"
+#include "../availability-checks/VulkanAvailabilityChecks.hpp"
+#include "../settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
+
 
 namespace inexor {
 namespace vulkan_renderer {
 
 
-	// 
+	// A class for initialisation of Vulkan API.
 	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
 								 public VulkanWindowManager,
-								 public VulkanAvailabilityChecks
+								 public VulkanAvailabilityChecks,
+								 public VulkanSettingsDecisionMaker
 	{
 		public:
 
@@ -50,12 +50,6 @@ namespace vulkan_renderer {
 
 			// 
 			VkDevice vulkan_device;
-			
-			// The number of graphics cards available on the machine.
-			uint32_t number_of_graphics_cards;
-			
-			// The graphics cards available on the machine.
-			std::vector<VkPhysicalDevice> graphics_cards;
 			
 			// The selected graphics card.
 			// The graphics card could either be selected by the user
@@ -116,24 +110,16 @@ namespace vulkan_renderer {
 
 		protected:
 
-			// Option A: The graphics card can be chosen by the user manually.
-			// Option B: The "best" graphics card will be determined by the engine automatically.
-			VkPhysicalDevice decide_which_graphics_card_to_use();
-
-			// Select an image format which will be used.
-			// The selected image format must be supported by the system!
-			// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#formats-compatibility
-			VkFormat decide_which_image_format_to_use();
 
 			// Vulkan validation layers should be enabled during development!
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
-			// 
-			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
+			// TODO: Decice which return value to use
+			void create_window_surface(const VkInstance& vulkan_instance, GLFWwindow* window, VkSurfaceKHR& vulkan_surface);
 
 			// 
-			void enumerate_physical_devices();
-			
+			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
+						
 			// 
 			void create_device_queue();
 
@@ -145,9 +131,6 @@ namespace vulkan_renderer {
 
 			// 
 			void create_semaphores();
-
-			// 
-			void check_support_of_presentation(const VkPhysicalDevice& graphics_card);
 
 			// 
 			void create_swap_chain();

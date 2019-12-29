@@ -15,9 +15,10 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::CheckInstanceExtensionAvailability(const std::string& instance_extension_name)
+	bool VulkanAvailabilityChecks::check_instance_extension_availability(const std::string& instance_extension_name)
 	{
 		uint32_t number_of_instance_extensions = 0;
+
 		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_instance_extensions, NULL);
 		vulkan_error_check(result);
 
@@ -42,9 +43,10 @@ namespace vulkan_renderer {
 	}
 
 	
-	bool VulkanAvailabilityChecks::CheckInstanceLayerAvailability(const std::string& instance_layer_name)
+	bool VulkanAvailabilityChecks::check_instance_layer_availability(const std::string& instance_layer_name)
 	{
 		uint32_t number_of_instance_layers = 0;
+
 		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
 		vulkan_error_check(result);
 
@@ -69,9 +71,10 @@ namespace vulkan_renderer {
 	}
 	
 	
-	bool VulkanAvailabilityChecks::CheckDeviceLayerAvailability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name)
+	bool VulkanAvailabilityChecks::check_device_layer_availability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name)
 	{
 		uint32_t number_of_device_layers = 0;
+
 		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
 		vulkan_error_check(result);
 
@@ -95,7 +98,7 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::CheckDeviceExtensionAvailability(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name)
+	bool VulkanAvailabilityChecks::check_device_extension_availability(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name)
 	{
 		uint32_t number_of_device_extensions = 0;
 
@@ -121,11 +124,24 @@ namespace vulkan_renderer {
 		return false;
 	}
 
-	//check_swap_chain_support();
-	//decide_how_many_images_in_swap_chain_to_use();
-	//decide_which_image_color_space_to_use();
-	//decide_which_image_sharing_mode_to_use();
-	//decide_which_present_mode_to_use();
+
+	bool VulkanAvailabilityChecks::check_presentation_availability(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	{
+		VkBool32 presentation_available = false;
+		
+		// Query if presentation is supported.
+		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceSupportKHR.html
+		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
+		vulkan_error_check(result);
+
+		return presentation_available;
+	}
+
+
+	bool VulkanAvailabilityChecks::check_swapchain_availability(const VkPhysicalDevice& graphics_card)
+	{
+		return check_device_extension_availability(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	}
 
 };
 };

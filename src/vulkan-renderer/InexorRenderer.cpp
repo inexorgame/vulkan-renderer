@@ -9,8 +9,6 @@ namespace vulkan_renderer {
 	{
 		vulkan_instance = {};
 		vulkan_device = {};
-		number_of_graphics_cards = 0;
-		graphics_cards.clear();
 		image_views.clear();
 		number_of_images_in_swap_chain = 0;
 		frame_buffers.clear();
@@ -72,35 +70,57 @@ namespace vulkan_renderer {
 	
 	void InexorRenderer::init()
 	{
-		// Check which version of the Vulkan API is available.
-		print_driver_vulkan_version();
-		
-		print_instance_layers();
-		print_instance_extensions();
-
-		
 		// Create a window using GLFW library.
-		init_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, "Inexor Vulkan Renderer");
+		init_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_APP_WINDOW_TITLE);
 
+		// Create a vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
 		vulkan_error_check(result);
 
+		// TODO: Check if surface is available!
+
+		// Create a window surface using GLFW.
+		create_window_surface(vulkan_instance, window, vulkan_surface);
+
+		print_driver_vulkan_version();
+		print_instance_layers();
+		print_instance_extensions();
+		
+		// List up all available graphics cards.
+		print_all_physical_devices(vulkan_instance, vulkan_surface);
+
 		// Let the user select a graphics card or select the "best" one automatically.
-		selected_graphics_card = decide_which_graphics_card_to_use();
+		selected_graphics_card = decide_which_graphics_card_to_use(vulkan_instance);
+
+		if(!check_swapchain_availability(selected_graphics_card))
+		{
+			display_error_message("Error: Swapchain device extension is not supported on this system!");
+			// TODO: Shutdown Vulkan and application!
+		}
+
+		// TODO: Design consistent error handling strategy!
+		// TODO: Use nullptr instead of NULL consistently!
 
 		// Create a physical device with the selected graphics card.
 		result = create_physical_device(selected_graphics_card);
 		vulkan_error_check(result);
 
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
-		selected_image_format = decide_which_image_format_to_use();
-
+		selected_image_format = decide_which_surface_color_format_for_swap_chain_images_to_use(selected_graphics_card, vulkan_surface);
+		
 		print_device_layers(selected_graphics_card);
 		print_device_extensions(selected_graphics_card);
 
+
 		// In this section, we need to check if the setup that we want to make is supported by the system. 
 
-		check_support_of_presentation(selected_graphics_card);
+		// Query if presentation is supported.
+		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceSupportKHR.html
+		if(!check_presentation_availability(selected_graphics_card, vulkan_surface))
+		{
+			display_error_message("Error: Presentation is not supported on this system!");
+			// TODO: Shutdown Vulkan and application!
+		}
 
 
 		create_device_queue();
