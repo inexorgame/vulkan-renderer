@@ -116,6 +116,40 @@ namespace vulkan_renderer {
 
 		cout << endl;
 
+		// A vector of strings which represent the enabled instance layers.
+		std::vector<const char*> enabled_instance_layers;
+
+		// The layers that we would like to enable.
+		std::vector<const char*> instance_layers_wishlist = {
+			//"VK_LAYER_VALVE_steam_overlay",
+			//"VK_LAYER_RENDERDOC_Capture"
+		};
+
+		// If validation is requested, we need to add the validation layer as instance extension!
+		// For more information on Vulkan validation layers see:
+		// https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
+		if(enable_validation_layers)
+		{
+			const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
+			instance_layers_wishlist.push_back(validation_layer_name);
+		}
+
+		// We now have to check which instance layers of our wishlist are really supported on the current system!
+		for(auto current_layer : instance_layers_wishlist)
+		{
+			if(CheckInstanceLayerSupport(current_layer))
+			{
+				// This instance layer is available!
+				// Add it to the list of enabled instance layers!
+				enabled_instance_layers.push_back(current_layer);
+			}
+			else
+			{
+				std::string error_message = "Error: instance layer " + std::string(current_layer) + " not available!";
+				display_error_message(error_message);
+			}
+		}
+
 		// Structure specifying parameters of a newly created instance.
 		VkInstanceCreateInfo instance_create_info = {};
 		instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -125,30 +159,6 @@ namespace vulkan_renderer {
 		instance_create_info.enabledExtensionCount = number_of_GLFW_extensions;
 		instance_create_info.ppEnabledExtensionNames = glfw_extensions;
 
-		// The layers that we want to enable.
-		// TODO: Make this a "wishlist" and check if these layers are supported by using CheckInstanceExtensionSupport.
-		std::vector<const char*> enabled_instance_layers ={
-			//"VK_LAYER_VALVE_steam_overlay",
-			//"VK_LAYER_RENDERDOC_Capture"
-		};
-
-		// TODO: Use "VK_LAYER_LUNARG_standard_validation" instead?
-		const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
-		
-		// Check if a validation layer is available.
-		if(enable_validation_layers)
-		{
-			if(CheckInstanceLayerSupport(validation_layer_name))
-			{
-				enabled_instance_layers.push_back(validation_layer_name);
-			}
-			else
-			{
-				display_error_message("Error: Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled.");
-			}
-		}
-
-		
 		// Pass all the enabled layers to Vulkan.
 		instance_create_info.ppEnabledLayerNames = enabled_instance_layers.data();
 		instance_create_info.enabledLayerCount = static_cast<uint32_t>(enabled_instance_layers.size());
