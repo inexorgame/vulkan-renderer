@@ -149,7 +149,7 @@ namespace vulkan_renderer {
 	{
 		vkDeviceWaitIdle(vulkan_device);
 
-
+		// TODO: Implement!
 	}
 
 

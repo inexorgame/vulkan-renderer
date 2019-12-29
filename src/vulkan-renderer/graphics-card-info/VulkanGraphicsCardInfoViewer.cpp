@@ -25,8 +25,9 @@ namespace vulkan_renderer {
 		// The major version indicates a significant change in the API, which will encompass a wholly new version of the specification.
 		// The minor version indicates the incorporation of new functionality into the core specification.
 		// The patch version indicates bug fixes, clarifications, and language improvements have been incorporated into the specification.
-		vkEnumerateInstanceVersion(&api_version);
-		
+		VkResult result = vkEnumerateInstanceVersion(&api_version);
+		vulkan_error_check(result);
+
 		// Extract major, minor and patch version of the Vulkan API available.
 		uint16_t api_major_version = VK_VERSION_MAJOR(api_version);
 		uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
@@ -56,11 +57,8 @@ namespace vulkan_renderer {
 		cout << "Number of queue families: " << number_of_queue_families << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
 
-		// The queue families of the selected graphics card.
-		std::vector<VkQueueFamilyProperties> queue_family_properties;
-
 		// Preallocate memory for the family queues.
-		queue_family_properties.resize(number_of_queue_families);
+		std::vector<VkQueueFamilyProperties> queue_family_properties(number_of_queue_families);
 
 		// Get information about physical device queue family properties.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, queue_family_properties.data());
@@ -95,7 +93,8 @@ namespace vulkan_renderer {
 		uint32_t number_of_instance_layers = 0;
 
 		// First check how many instance layers are available.
-		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, NULL);
+		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, NULL);
+		vulkan_error_check(result);
 
 		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of instance layers: " << number_of_instance_layers << endl;
@@ -105,7 +104,8 @@ namespace vulkan_renderer {
 		std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
 		
 		// Get information about the available instance layers.
-		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
+		result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
+		vulkan_error_check(result);
 
 		// Loop through all available instance layers and print information about them.
 		for(auto instance_layer : instance_layers)
@@ -130,7 +130,8 @@ namespace vulkan_renderer {
 		uint32_t number_of_extensions = 0;
 
 		// First check how many instance extensions are available.
-		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
+		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
+		vulkan_error_check(result);
 
 		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of instance extensions: " << number_of_extensions << endl;
@@ -140,7 +141,8 @@ namespace vulkan_renderer {
 		std::vector<VkExtensionProperties> extensions(number_of_extensions);
 
 		// Get information about the available instance extensions.
-		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, extensions.data());
+		result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, extensions.data());
+		vulkan_error_check(result);
 
 		// Loop through all available instance extensions and print information about them.
 		for(auto extension : extensions)
@@ -163,7 +165,8 @@ namespace vulkan_renderer {
 		uint32_t number_of_device_layers = 0;
 
 		// First check how many device layers are available.
-		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, NULL);
+		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, NULL);
+		vulkan_error_check(result);
 
 		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of device layers: " << number_of_device_layers << endl;
@@ -173,7 +176,8 @@ namespace vulkan_renderer {
 		std::vector<VkLayerProperties> device_layers(number_of_device_layers);
 		
 		// Get information about the available device layers.
-		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data());
+		result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data());
+		vulkan_error_check(result);
 
 		// Loop through all available device layers and print information about them.
 		for(auto device_layer : device_layers)
@@ -232,8 +236,9 @@ namespace vulkan_renderer {
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
 
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
-		
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
+		vulkan_error_check(result);
+
 		cout << "Printing surface capabilities" << endl;
 
 		cout << "minImageCount: "           << surface_capabilities.minImageCount << endl;
@@ -258,7 +263,8 @@ namespace vulkan_renderer {
 		uint32_t number_of_supported_formats = 0;
 		
 		// First check how many formats are supported.
-		vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+		vulkan_error_check(result);
 
 		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Supported surface formats: " << number_of_supported_formats << endl;
@@ -266,7 +272,8 @@ namespace vulkan_renderer {
 
 		std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
 
-		vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+		vulkan_error_check(result);
 
 		// 
 		const std::unordered_map<int, std::string> surface_format_names =
@@ -543,8 +550,9 @@ namespace vulkan_renderer {
 		uint32_t number_of_present_modes = 0;
 		
 		// First check how many presentation modes are available.
-		vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
-	
+		VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
+		vulkan_error_check(result);
+
 		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Available present modes: " << number_of_present_modes << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
@@ -552,13 +560,15 @@ namespace vulkan_renderer {
 		// Preallocate memory for the presentation modes.
 		std::vector<VkPresentModeKHR> present_modes(number_of_present_modes);
 
-		vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
+		result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
+		vulkan_error_check(result);
 
-		const std::unordered_map<int, std::string> present_mode_names ={
-			{0, "VK_PRESENT_MODE_IMMEDIATE_KHR"},
-			{1, "VK_PRESENT_MODE_MAILBOX_KHR"},
-			{2, "VK_PRESENT_MODE_FIFO_KHR"},
-			{3, "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
+		// TODO: Is there a better way to do this?
+		const std::unordered_map<int, std::string> present_mode_names = {
+			{0,          "VK_PRESENT_MODE_IMMEDIATE_KHR"},
+			{1,          "VK_PRESENT_MODE_MAILBOX_KHR"},
+			{2,          "VK_PRESENT_MODE_FIFO_KHR"},
+			{3,          "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
 			{1000111000, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
 			{1000111001, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}
 		};
@@ -643,7 +653,6 @@ namespace vulkan_renderer {
 
 		// 
 		#define PRINT_GRAPHICS_CARD_LIMITS(x) cout << #x << ": " << (graphics_card_properties.limits.x) << endl;
-
 
 		PRINT_GRAPHICS_CARD_LIMITS(maxImageDimension1D);
 		PRINT_GRAPHICS_CARD_LIMITS(maxImageDimension2D);
