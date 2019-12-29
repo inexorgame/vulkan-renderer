@@ -12,27 +12,14 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// 
-	class VulkanErrorHandling
-	{
-		public:
+	// Returns an error text.
+	std::string get_error_string(const VkResult& result_code);
 
-			VulkanErrorHandling();
+	// Displays an error message.
+	void display_error_message(const std::string& error_message, const std::string& message_box_title = "Error");
 
-			~VulkanErrorHandling();
-
-		protected:
-
-			// Returns an error text.
-			std::string get_error_string(const VkResult& result_code) const;
-
-			// Displays an error message.
-			void display_error_message(const std::string& error_message, const std::string& message_box_title = "Error") const;
-
-			// Generalise error handling.
-			void vulkan_error_check(const VkResult& result);
-
-	};
+	// Generalise error handling.
+	void vulkan_error_check(const VkResult& result);
 
 };
 };

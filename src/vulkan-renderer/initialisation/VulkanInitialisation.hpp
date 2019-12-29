@@ -15,6 +15,7 @@
 #include "../error-handling/VulkanErrorHandling.hpp"
 #include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
 #include "../window-manager/VulkanWindowManager.hpp"
+#include "../availability-checks/VulkanAvailabilityChecks.hpp"
 
 #include <string>
 #include <vector>
@@ -29,9 +30,9 @@ namespace vulkan_renderer {
 
 
 	// 
-	class VulkanInitialisation : public VulkanErrorHandling,
-	                             public VulkanGraphicsCardInfoViewer,
-								 public VulkanWindowManager
+	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
+								 public VulkanWindowManager,
+								 public VulkanAvailabilityChecks
 	{
 		public:
 
@@ -123,12 +124,6 @@ namespace vulkan_renderer {
 			// The selected image format must be supported by the system!
 			// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#formats-compatibility
 			VkFormat decide_which_image_format_to_use();
-
-			// 
-			bool CheckInstanceExtensionSupport(const std::string& instance_extension_name);
-
-			// 
-			bool CheckInstanceLayerSupport(const std::string& instance_layer_name);
 
 			// Vulkan validation layers should be enabled during development!
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);

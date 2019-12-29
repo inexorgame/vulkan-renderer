@@ -5,17 +5,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VulkanErrorHandling::VulkanErrorHandling()
-	{
-	}
-
-
-	VulkanErrorHandling::~VulkanErrorHandling()
-	{
-	}
-
-	
-	std::string VulkanErrorHandling::get_error_string(const VkResult& result_code) const
+	std::string get_error_string(const VkResult& result_code)
 	{
 		std::string error_string = "";
 
@@ -121,7 +111,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanErrorHandling::display_error_message(const std::string& error_message, const std::string& message_box_title) const
+	void display_error_message(const std::string& error_message, const std::string& message_box_title)
 	{
 		#ifdef _WIN32
 			// Windows-specific message box.
@@ -133,7 +123,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanErrorHandling::vulkan_error_check(const VkResult& result)
+	void vulkan_error_check(const VkResult& result)
 	{
 		if(VK_SUCCESS != result)
 		{
