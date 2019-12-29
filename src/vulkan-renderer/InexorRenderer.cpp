@@ -36,8 +36,8 @@ namespace vulkan_renderer {
 	{
 		uint32_t image_index = 0;
 
-		vkAcquireNextImageKHR(vulkan_device, vulkan_swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
-		// TODO: Error checking?
+		VkResult result = vkAcquireNextImageKHR(vulkan_device, vulkan_swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
+		vulkan_error_check(result);
 
 		VkSubmitInfo submit_info = {};
 		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -52,7 +52,7 @@ namespace vulkan_renderer {
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores = &semaphore_rendering_finished;
 
-		VkResult result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+		result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
 		vulkan_error_check(result);
 
 		VkPresentInfoKHR present_info = {};
@@ -74,8 +74,10 @@ namespace vulkan_renderer {
 	{
 		// Check which version of the Vulkan API is available.
 		print_driver_vulkan_version();
-		print_instance_layer_properties();
+		
+		print_instance_layers();
 		print_instance_extensions();
+
 		
 		// Create a window using GLFW library.
 		init_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, "Inexor Vulkan Renderer");
@@ -94,14 +96,9 @@ namespace vulkan_renderer {
 		selected_image_format = decide_which_image_format_to_use();
 
 		print_device_layers(selected_graphics_card);
+		print_device_extensions(selected_graphics_card);
 
 		// In this section, we need to check if the setup that we want to make is supported by the system. 
-
-		// TODO: class VulkanBestPractices
-		//decide_how_many_images_in_swap_chain_to_use();
-		//decide_which_image_color_space_to_use();
-		//decide_which_image_sharing_mode_to_use();
-		//decide_which_present_mode_to_use();
 
 		check_support_of_presentation(selected_graphics_card);
 

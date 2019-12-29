@@ -90,36 +90,34 @@ namespace vulkan_renderer {
 	}
 
 	
-	void VulkanGraphicsCardInfoViewer::print_instance_layer_properties()
+	void VulkanGraphicsCardInfoViewer::print_instance_layers()
 	{
-		// The number of available Vulkan layers.
-		uint32_t number_of_layers = 0;
+		uint32_t number_of_instance_layers = 0;
 
-		// Ask for the number of available Vulkan layers.
-		vkEnumerateInstanceLayerProperties(&number_of_layers, NULL);
+		// First check how many instance layers are available.
+		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, NULL);
 
 		cout << "--------------------------------------------------------------------------" << endl;
-		cout << "Number of instance layers: " << number_of_layers << endl;
+		cout << "Number of instance layers: " << number_of_instance_layers << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
 
-		std::vector<VkLayerProperties> instance_layer_properties;
+		// Preallocate memory for instance layers.
+		std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
+		
+		// Get information about the available instance layers.
+		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
 
-		instance_layer_properties.resize(number_of_layers);
-
-		vkEnumerateInstanceLayerProperties(&number_of_layers, instance_layer_properties.data());
-
-		// Loop through all available layers and print information about them.
-		for(std::size_t i=0; i< number_of_layers; i++)
+		// Loop through all available instance layers and print information about them.
+		for(auto instance_layer : instance_layers)
 		{
-			// Extract major, minor and patch version of spec.
-			uint32_t spec_major = VK_VERSION_MAJOR(instance_layer_properties[i].specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(instance_layer_properties[i].specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(instance_layer_properties[i].specVersion);
+			uint32_t spec_major = VK_VERSION_MAJOR(instance_layer.specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(instance_layer.specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(instance_layer.specVersion);
 
-			cout << "Name: "         << instance_layer_properties[i].layerName << endl;
+			cout << "Name: "         << instance_layer.layerName << endl;
 			cout << "Spec Version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << "Impl Version: " << instance_layer_properties[i].implementationVersion << endl;
-			cout << "Description: "  << instance_layer_properties[i].description << endl;
+			cout << "Impl Version: " << instance_layer.implementationVersion << endl;
+			cout << "Description: "  << instance_layer.description << endl;
 			cout << endl;
 		}
 		
@@ -131,23 +129,29 @@ namespace vulkan_renderer {
 	{
 		uint32_t number_of_extensions = 0;
 
+		// First check how many instance extensions are available.
 		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
 
 		cout << "--------------------------------------------------------------------------" << endl;
-		cout << "Number of extensions: " << number_of_extensions << endl;
+		cout << "Number of instance extensions: " << number_of_extensions << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
 
-		std::vector<VkExtensionProperties> extensions;
+		// Preallocate memory for instance extensions.
+		std::vector<VkExtensionProperties> extensions(number_of_extensions);
 
-		// Preallocate memory for extension properties.
-		extensions.resize(number_of_extensions);
-
+		// Get information about the available instance extensions.
 		vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, extensions.data());
 
-		for(std::size_t i=0; i<number_of_extensions; i++)
+		// Loop through all available instance extensions and print information about them.
+		for(auto extension : extensions)
 		{
-			cout << "Name: " << extensions[i].extensionName << endl;
-			cout << "Spec: " << extensions[i].specVersion << endl;
+			uint32_t spec_major = VK_VERSION_MAJOR(extension.specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
+
+			cout << "Name: " << extension.extensionName << endl;
+			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
+			cout << endl;
 		}
 
 		cout << endl;
@@ -157,32 +161,70 @@ namespace vulkan_renderer {
 	void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice& graphics_card)
 	{
 		uint32_t number_of_device_layers = 0;
+
+		// First check how many device layers are available.
 		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, NULL);
 
 		cout << "--------------------------------------------------------------------------" << endl;
 		cout << "Number of device layers: " << number_of_device_layers << endl;
 		cout << "--------------------------------------------------------------------------" << endl;
+		
+		// Preallocate memory for device layers.
+		std::vector<VkLayerProperties> device_layers(number_of_device_layers);
+		
+		// Get information about the available device layers.
+		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data());
 
-		std::vector<VkLayerProperties> device_layer_properties;
-
-		device_layer_properties.resize(number_of_device_layers);
-
-		vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layer_properties.data());
-
-		for(std::size_t i=0; i<number_of_device_layers; i++)
+		// Loop through all available device layers and print information about them.
+		for(auto device_layer : device_layers)
 		{
-			uint32_t spec_major = VK_VERSION_MAJOR(device_layer_properties[i].specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(device_layer_properties[i].specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(device_layer_properties[i].specVersion);
+			uint32_t spec_major = VK_VERSION_MAJOR(device_layer.specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(device_layer.specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(device_layer.specVersion);
 
-			cout << "Name: "          << device_layer_properties[i].description << endl;
-			cout << "Spec Version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << "Impl Version : " << device_layer_properties[i].implementationVersion << endl;
-			cout << "Description: "   << device_layer_properties[i].description << endl;
+			cout << "Name: "          << device_layer.description << endl;
+			cout << "Spec version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
+			cout << "Impl version : " << device_layer.implementationVersion << endl;
+			cout << "Description: "   << device_layer.description << endl;
 			cout << endl;
 		}
 		
 		cout << endl;
+	}
+
+
+	void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevice& graphics_card)
+	{
+		uint32_t number_of_device_extensions = 0;
+		
+		// First check how many device extensions are available.
+		VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
+		vulkan_error_check(result);
+		
+		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "Number of device extensions: " << number_of_device_extensions << endl;
+		cout << "--------------------------------------------------------------------------" << endl;
+
+		// Preallocate memory for device extensions.
+		std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
+		
+		// Get information about the available device extensions.
+		result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
+		vulkan_error_check(result);
+
+		// Loop through all available device extensions and print information about them.
+		for(auto device_extension : device_extensions)
+		{
+			uint32_t spec_major = VK_VERSION_MAJOR(device_extension.specVersion);
+			uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
+			uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
+
+			cout << "Name: " << device_extension.extensionName << endl;
+			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
+			cout << endl;
+		}
+
+		cout << endl;		
 	}
 
 	

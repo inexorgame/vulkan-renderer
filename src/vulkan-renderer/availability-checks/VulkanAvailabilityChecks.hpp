@@ -28,6 +28,12 @@ namespace vulkan_renderer {
 			// 
 			bool CheckInstanceLayerAvailability(const std::string& instance_layer_name);
 
+			// 
+			bool CheckDeviceLayerAvailability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name);
+			
+			// 
+			bool CheckDeviceExtensionAvailability(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name);
+
 	};
 
 };

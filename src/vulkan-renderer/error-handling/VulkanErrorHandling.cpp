@@ -99,6 +99,7 @@ namespace vulkan_renderer {
 			case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
 			error_string = "A buffer creation failed because the requested address is not available.";
 			break;
+			// TODO: Why is this not working?
 			//case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR:
 			//error_string = "A buffer creation or memory allocation failed because the requested address is not available.";
 			//break;

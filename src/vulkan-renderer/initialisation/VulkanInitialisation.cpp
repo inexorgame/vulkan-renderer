@@ -143,6 +143,7 @@ namespace vulkan_renderer {
 		device_queue_create_info.queueCount = 4;
 		device_queue_create_info.pQueuePriorities = queue_priorities;
 
+		// TODO: Fill with required features!
 		VkPhysicalDeviceFeatures used_features = {};
 		
 		VkDeviceCreateInfo device_create_info = {};
@@ -153,15 +154,35 @@ namespace vulkan_renderer {
 		// TODO: Maybe create multiple queues at once?
 		device_create_info.queueCreateInfoCount = 1;
 
-		const std::vector<const char*> device_extensions ={
+		// Our wishlist of device extensions that we would like to enable.
+		const std::vector<const char*> device_extensions_wishlist = {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
+
+		// The actual list of enabled device extensions.
+		std::vector<const char*> enabled_device_extensions;
+
+		for(auto layer_name : device_extensions_wishlist)
+		{
+			if(CheckDeviceExtensionAvailability(graphics_card, layer_name))
+			{
+				// This device layer is supported!
+				// Add it to the list of enabled device layers.
+				enabled_device_extensions.push_back(layer_name);
+			}
+			else
+			{
+				// This device layer is not supported!
+				std::string error_message = "Error: Device extension " + std::string(layer_name) + " not supported!";
+				display_error_message(error_message);
+			}
+		}
 
 		device_create_info.pQueueCreateInfos = &device_queue_create_info;
 		device_create_info.enabledLayerCount = NULL;
 		device_create_info.ppEnabledLayerNames = NULL;
-		device_create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
-		device_create_info.ppEnabledExtensionNames = device_extensions.data();
+		device_create_info.enabledExtensionCount = static_cast<uint32_t>(enabled_device_extensions.size());
+		device_create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
 		device_create_info.pEnabledFeatures = &used_features;
 
 		return vkCreateDevice(graphics_card, &device_create_info, NULL, &vulkan_device);

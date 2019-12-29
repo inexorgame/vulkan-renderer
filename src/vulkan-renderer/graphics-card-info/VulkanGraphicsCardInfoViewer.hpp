@@ -7,6 +7,8 @@ using namespace std;
 
 #include <vulkan/vulkan.h>
 
+#include "../error-handling/VulkanErrorHandling.hpp"
+
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -33,13 +35,16 @@ namespace vulkan_renderer {
 			void print_physical_device_queue_families(const VkPhysicalDevice& graphics_card);
 
 			// 
-			void print_instance_layer_properties();
+			void print_instance_layers();
 
 			// 
 			void print_instance_extensions();
 
 			// 
 			void print_device_layers(const VkPhysicalDevice& graphics_card);
+
+			// 
+			void print_device_extensions(const VkPhysicalDevice& graphics_card);
 
 			// 
 			void print_surface_capabilities(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface);
