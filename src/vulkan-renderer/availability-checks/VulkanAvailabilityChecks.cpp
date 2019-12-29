@@ -26,15 +26,11 @@ namespace vulkan_renderer {
 		result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, instance_extensions.data());
 		vulkan_error_check(result);
 
-		// Loop through all available instance extensions and search for the requested one.
-		for(VkExtensionProperties extension : instance_extensions)
+		// Search for the requested instance extension.
+		if(std::find(instance_extensions.begin(), instance_extensions.end(), instance_extension_name) != instance_extensions.end())
 		{
-			// Compare the name of the current instance extension with the requested one.
-			if(0 == strcmp(extension.extensionName, instance_extension_name.c_str()))
-			{
-				// Yes, this instance extension is supported!
-				return true;
-			}
+			// Yes, this instance extension is supported!
+			return true;
 		}
 		
 		// No, this instance extension could not be found and thus is not supported!
@@ -51,16 +47,13 @@ namespace vulkan_renderer {
 		std::vector<VkLayerProperties> instance_layer_properties(number_of_instance_layers);
 		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layer_properties.data());
 		
-		// Loop through all available instance layers and search for the requested one.
-		for(VkLayerProperties layer : instance_layer_properties)
+		// Search for the requested instance layer.
+		if(std::find(instance_layer_properties.begin(), instance_layer_properties.end(), instance_layer_name) != instance_layer_properties.end())
 		{
-			if(0 == strcmp(layer.layerName, instance_layer_name.c_str()))
-			{
-				// Yes, this instance layer is supported!
-				return true;
-			}
+			// Yes, this instance layer is supported!
+			return true;
 		}
-		
+
 		// No, this instance layer could not be found and thus is not supported!
 		return false;
 	}
