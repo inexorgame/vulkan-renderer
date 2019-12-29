@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <algorithm>
 
 #include <vulkan/vulkan.h>
 
@@ -24,10 +23,10 @@ namespace vulkan_renderer {
 		protected:
 		
 			// 
-			bool CheckInstanceExtensionSupport(const std::string& instance_extension_name);
+			bool CheckInstanceExtensionAvailability(const std::string& instance_extension_name);
 
 			// 
-			bool CheckInstanceLayerSupport(const std::string& instance_layer_name);
+			bool CheckInstanceLayerAvailability(const std::string& instance_layer_name);
 
 	};
 

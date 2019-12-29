@@ -15,7 +15,7 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::CheckInstanceExtensionSupport(const std::string& instance_extension_name)
+	bool VulkanAvailabilityChecks::CheckInstanceExtensionAvailability(const std::string& instance_extension_name)
 	{
 		uint32_t number_of_extensions = 0;
 		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, NULL);
@@ -26,11 +26,15 @@ namespace vulkan_renderer {
 		result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_extensions, instance_extensions.data());
 		vulkan_error_check(result);
 
-		// Search for the requested instance extension.
-		if(std::find(instance_extensions.begin(), instance_extensions.end(), instance_extension_name) != instance_extensions.end())
+		// Loop through all available instance extensions and search for the requested one.
+		for(VkExtensionProperties extension : instance_extensions)
 		{
-			// Yes, this instance extension is supported!
-			return true;
+			// Compare the name of the current instance extension with the requested one.
+			if(0 == strcmp(extension.extensionName, instance_extension_name.c_str()))
+			{
+				// Yes, this instance extension is supported!
+				return true;
+			}
 		}
 		
 		// No, this instance extension could not be found and thus is not supported!
@@ -38,7 +42,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	bool VulkanAvailabilityChecks::CheckInstanceLayerSupport(const std::string& instance_layer_name)
+	bool VulkanAvailabilityChecks::CheckInstanceLayerAvailability(const std::string& instance_layer_name)
 	{
 		uint32_t number_of_instance_layers = 0;
 		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
@@ -47,11 +51,15 @@ namespace vulkan_renderer {
 		std::vector<VkLayerProperties> instance_layer_properties(number_of_instance_layers);
 		vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layer_properties.data());
 		
-		// Search for the requested instance layer.
-		if(std::find(instance_layer_properties.begin(), instance_layer_properties.end(), instance_layer_name) != instance_layer_properties.end())
+		// Loop through all available instance layers and search for the requested one.
+		for(VkLayerProperties layer : instance_layer_properties)
 		{
-			// Yes, this instance layer is supported!
-			return true;
+			// Compare the name of the current instance extension with the requested one.
+			if(0 == strcmp(layer.layerName, instance_layer_name.c_str()))
+			{
+				// Yes, this instance extension is supported!
+				return true;
+			}
 		}
 
 		// No, this instance layer could not be found and thus is not supported!
