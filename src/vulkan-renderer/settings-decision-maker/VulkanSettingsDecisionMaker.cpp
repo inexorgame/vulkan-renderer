@@ -17,8 +17,21 @@ namespace vulkan_renderer {
 
 	VkFormat VulkanSettingsDecisionMaker::decide_which_surface_color_format_for_swap_chain_images_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
 	{
+		uint32_t number_of_supported_formats = 0;
+		
+		// First check how many formats are supported.
+		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+		vulkan_error_check(result);
+
+		// Query information about all the supported surface formats.
+		std::vector<VkSurfaceFormatKHR> available_surface_formats(number_of_supported_formats);
+		
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, available_surface_formats.data());
+		vulkan_error_check(result);
+
+		
 		// A list of image formats that we can accept.
-		const std::vector<VkFormat> image_format_wishlist =
+		const std::vector<VkFormat> surface_format_wishlist =
 		{
 			// This is the default format which should be available everywhere.
 			VK_FORMAT_B8G8R8A8_UNORM,
@@ -29,26 +42,15 @@ namespace vulkan_renderer {
 		
 		// We will enumerate all available image formats and compare it with our wishlist.
 
-		uint32_t number_of_supported_formats = 0;
-		
-		// First check how many formats are supported.
-		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
-		vulkan_error_check(result);
-
-		// Query information about all the supported surface formats.
-		std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
-		
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
-		vulkan_error_check(result);
-
-		for(std::size_t i=0; i<number_of_supported_formats; i++)
+		// Is one of our selected formats supported?
+		// IMPORTANT: Wishlist priority depends on the NESTING of the for loops!
+		for(auto current_wished_surface_format : surface_format_wishlist)
 		{
-			for(std::size_t j=0; i<image_format_wishlist.size(); j++)
+			for(auto current_surface_format : available_surface_formats)
 			{
-				// Is one of our selected formats supported?
-				if(image_format_wishlist[j] == surface_formats[i].format)
+				if(current_wished_surface_format == current_surface_format.format)
 				{
-					return surface_formats[i].format;
+					return current_surface_format.format;
 				}
 			}
 		}
@@ -140,7 +142,7 @@ namespace vulkan_renderer {
 
 
 		// TODO: Refactor this into a wishlist!
-		// IMPORTANT: Wishlist priority depends on the nesting of the for loops!!
+		// IMPORTANT: Wishlist priority depends on the nesting of the for loops!
 
 		for(auto present_mode : available_present_modes)
 		{
