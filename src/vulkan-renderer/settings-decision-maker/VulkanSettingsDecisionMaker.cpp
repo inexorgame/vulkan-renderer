@@ -138,16 +138,34 @@ namespace vulkan_renderer {
 		result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, available_present_modes.data());
 		vulkan_error_check(result);
 
+
+		// TODO: Refactor this into a wishlist!
+		// IMPORTANT: Wishlist priority depends on the nesting of the for loops!!
+
 		for(auto present_mode : available_present_modes)
 		{
+			// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
+			// VK_PRESENT_MODE_MAILBOX_KHR specifies that the presentation engine waits for the next vertical blanking period
+			// to update the current image. Tearing cannot be observed. An internal single-entry queue is used to hold pending
+			// presentation requests. If the queue is full when a new presentation request is received, the new request replaces
+			// the existing entry, and any images associated with the prior entry become available for re-use by the application.
+			// One request is removed from the queue and processed during each vertical blanking period in which the queue is non-empty.
 			if(VK_PRESENT_MODE_MAILBOX_KHR == present_mode)
 			{
 				return present_mode;
 			}
 		}
 
+		cout << "Info: VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device." << endl;
+		cout << "Let's hope VK_PRESENT_MODE_FIFO_KHR is supported." << endl;
+
 		for(auto present_mode : available_present_modes)
 		{
+			// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
+			// VK_PRESENT_MODE_FIFO_KHR specifies that the presentation engine waits for the next vertical blanking period to update the current image.
+			// Tearing cannot be observed. An internal queue is used to hold pending presentation requests. New requests are appended to the end of the queue,
+			// and one request is removed from the beginning of the queue and processed during each vertical blanking period in which the queue is non-empty.
+			// This is the only value of presentMode that is required to be supported.
 			if(VK_PRESENT_MODE_FIFO_KHR == present_mode)
 			{
 				return present_mode;
@@ -155,8 +173,18 @@ namespace vulkan_renderer {
 		}
 
 		cout << "Error: FIFO present mode is not supported by the swap chain!" << endl;
+		// wait.. wtf
 
-		return static_cast<VkPresentModeKHR>(-1);
+		// Lets try with any present mode available!
+		if(available_present_modes.size() > 0)
+		{
+			// Let's just pick the first one.
+			return available_present_modes[0];
+		}
+
+		cout << "Error: The regarded graphics card does not support any presentation at all!" << endl;
+		
+		return VK_PRESENT_MODE_MAX_ENUM_KHR;
 	}
 
 

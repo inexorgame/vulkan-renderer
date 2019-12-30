@@ -57,6 +57,9 @@ namespace vulkan_renderer {
 			VkPhysicalDevice selected_graphics_card;
 
 			// 
+			VkPresentModeKHR selected_present_mode;
+
+			// 
 			VkSurfaceKHR vulkan_surface;
 
 			// 

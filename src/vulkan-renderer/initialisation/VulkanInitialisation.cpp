@@ -362,9 +362,11 @@ namespace vulkan_renderer {
 		swap_chain_create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swap_chain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-		// TODO: Check if there is a better presentation mode available!
-		// An alternative would be VK_PRESENT_MODE_MAILBOX_KHR.
-		swap_chain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		
+		// Select an appropriate presentation mode!
+		selected_present_mode = decide_which_presentation_mode_to_use(selected_graphics_card, vulkan_surface);
+
+		swap_chain_create_info.presentMode = selected_present_mode;
 
 		swap_chain_create_info.clipped = VK_TRUE;
 
