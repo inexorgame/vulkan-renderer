@@ -63,6 +63,7 @@ namespace vulkan_renderer {
 		present_info.pImageIndices = &image_index;
 		present_info.pResults = nullptr;
 
+		// TODO: Implement a base class VulkanPresentationEngine?
 		result = vkQueuePresentKHR(queue, &present_info);
 		vulkan_error_check(result);
 	}

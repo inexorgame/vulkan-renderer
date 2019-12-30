@@ -57,6 +57,19 @@ namespace vulkan_renderer {
 			// Checks if swapchain is available on this system.
 			bool check_swapchain_availability(const VkPhysicalDevice& graphics_card);
 
+
+			// Check if a graphics card's queue family supports graphics transfer.
+			bool check_graphics_card_queue_family_graphics_bit_availability(const VkPhysicalDevice graphics_card);
+
+
+			// Checks if a graphics card's queue family supports presentation.
+			bool check_graphics_card_queue_family_presentation_availability(const VkPhysicalDevice& graphics_card);
+
+
+			// Check if a graphics card's queue family supports both graphics transfer and presentation.
+			bool check_graphics_card_queue_family_graphics_bit_and_presentation_availability(const VkPhysicalDevice& graphics_card);
+
+
 	};
 
 };

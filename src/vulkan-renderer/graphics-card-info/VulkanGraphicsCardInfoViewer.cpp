@@ -151,9 +151,7 @@ namespace vulkan_renderer {
 			uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
 			uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
 
-			cout << "Name: " << extension.extensionName << endl;
-			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << endl;
+			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << " \tName: " << extension.extensionName << endl;
 		}
 
 		cout << endl;
@@ -223,9 +221,7 @@ namespace vulkan_renderer {
 			uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
 			uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
 
-			cout << "Name: " << device_extension.extensionName << endl;
-			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << endl;
+			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << " \tName: " << device_extension.extensionName << endl;
 		}
 
 		cout << endl;		
