@@ -14,11 +14,11 @@ namespace vulkan_renderer {
 
 	
 	// This class makes automatic decisions on e.g. the following topics:
-	// If more than 1 graphics card is available, which one should be used?
-	// Which one of the available surface color format should be used?
-	// Which one of the available graphics card's queue families should be used?
-	// Which one of the available presentation modes should be used?
-	// ...
+	// Which graphics card will be used if more than 1 is available?
+	// Which surface color format should be used?
+	// Which graphics card's queue families should be used?
+	// Which presentation modes should be used?
+	// The functions also verify that every selected option is available on the current system.
 	class VulkanSettingsDecisionMaker
 	{
 		public:
@@ -64,6 +64,9 @@ namespace vulkan_renderer {
 			void decide_which_pre_transformation_to_use();
 
 
+
+			// Decides which presentation mode the presentation engine will be using. We can only use presentation modes which are
+			// available in the current system. The preferred presentation mode is VK_PRESENT_MODE_MAILBOX_KHR.
 			// Just checking whether swap extension is supported is not enough because presentation support is a queue family property!
 			// A physical device may support swap chains, but that doesn't mean that all its queue families also support it.
 			// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html

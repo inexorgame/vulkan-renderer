@@ -26,6 +26,7 @@ namespace vulkan_renderer {
 		// Query information about all the supported surface formats.
 		std::vector<VkSurfaceFormatKHR> available_surface_formats(number_of_supported_formats);
 		
+		// Get information about all the available surface formats.
 		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, available_surface_formats.data());
 		vulkan_error_check(result);
 
@@ -37,7 +38,7 @@ namespace vulkan_renderer {
 			VK_FORMAT_B8G8R8A8_UNORM,
 
 			// TODO: Add more formats to the wishlist.
-			// The priority is decreasing from top to bottom
+			// The priority is decreasing with increasing array index.
 		};
 		
 		// We will enumerate all available image formats and compare it with our wishlist.
@@ -50,6 +51,7 @@ namespace vulkan_renderer {
 			{
 				if(current_wished_surface_format == current_surface_format.format)
 				{
+					// Yes, one of our wished formats is available!
 					return current_surface_format.format;
 				}
 			}
@@ -63,7 +65,7 @@ namespace vulkan_renderer {
 	VkPhysicalDevice VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const int& preferred_graphics_card_index)
 	{
 		cout << "Deciding automatically which graphics card to use." << endl;
-
+		
 		uint32_t number_of_available_graphics_cards = 0;
 
 		// First check how many graphics cards are available.
@@ -102,6 +104,8 @@ namespace vulkan_renderer {
 			{
 				cout << "Command line parameter -gpu_index specified. Using graphics card index " << preferred_graphics_card_index << "." << endl;
 	
+				// TODO: Check if the graphics card selected by the user meets all the criteria we need!
+
 				// We are done: Use the graphics card which was specified by the user's command line argument.
 				return available_graphics_cards[preferred_graphics_card_index];
 			}
@@ -114,12 +118,20 @@ namespace vulkan_renderer {
 			}
 		}
 
+		cout << "No command line argument for preferred graphics card given. Detecting best graphics card automatically." << endl;
+
 		uint32_t available_graphics_cards_array_index = 0;
 		
+		
+
 		// TODO: Implement!
 
 		// TODO: Check if the selected device supports swapchains.
 		// TODO: Check if the selected device supports queue families for graphics bits and presentation!
+		// TODO: Prefere VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU!
+
+
+
 
 		return available_graphics_cards[available_graphics_cards_array_index];
 	}
@@ -129,7 +141,7 @@ namespace vulkan_renderer {
 	{
 		uint32_t number_of_available_present_modes = 0;
 
-		// First check how many present modes are available for the selected combination of graphics card and surface.
+		// First check how many present modes are available for the selected combination of graphics card and window surface.
 		VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, nullptr);
 		vulkan_error_check(result);
 
@@ -175,7 +187,6 @@ namespace vulkan_renderer {
 		}
 
 		cout << "Error: FIFO present mode is not supported by the swap chain!" << endl;
-		// wait.. wtf
 
 		// Lets try with any present mode available!
 		if(available_present_modes.size() > 0)
@@ -186,6 +197,8 @@ namespace vulkan_renderer {
 
 		cout << "Error: The regarded graphics card does not support any presentation at all!" << endl;
 		
+		// TODO: Shutdown Vulkan and application.
+
 		return VK_PRESENT_MODE_MAX_ENUM_KHR;
 	}
 

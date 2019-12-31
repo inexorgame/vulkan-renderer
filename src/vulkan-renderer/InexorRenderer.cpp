@@ -37,6 +37,8 @@ namespace vulkan_renderer {
 		VkResult result = vkAcquireNextImageKHR(vulkan_device, vulkan_swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
 		vulkan_error_check(result);
 
+		// TODO: Do not fill these structures every call!
+
 		VkSubmitInfo submit_info = {};
 		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext = nullptr;
