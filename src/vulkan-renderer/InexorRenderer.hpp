@@ -15,7 +15,6 @@
 #define INEXOR_APP_WINDOW_TITLE    "Inexor-Vulkan-Renderer"
 #define INEXOR_WINDOW_WIDTH        800
 #define INEXOR_WINDOW_HEIGHT       600
-// TODO: Define desired surface image format as a macro here?
 
 
 namespace inexor {
@@ -32,6 +31,21 @@ namespace vulkan_renderer {
 
 			// 
 			void draw_frame();
+			
+			// 
+			void prepare_drawing();
+
+		private:
+
+			// 
+			VkSubmitInfo submit_info;
+			
+			// 
+			VkPipelineStageFlags wait_stage_mask[1];
+			
+			// 
+			VkPresentInfoKHR present_info = {};
+
 
 		public:
 			

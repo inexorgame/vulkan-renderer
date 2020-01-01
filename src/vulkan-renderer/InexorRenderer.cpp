@@ -7,11 +7,6 @@ namespace vulkan_renderer {
 	
 	InexorRenderer::InexorRenderer()
 	{
-		vulkan_instance = {};
-		vulkan_device = {};
-		image_views.clear();
-		number_of_images_in_swap_chain = 0;
-		frame_buffers.clear();
 	}
 
 
@@ -24,9 +19,41 @@ namespace vulkan_renderer {
 	{
 		// TODO: Setup shaders from JSON file.
 		
-		// Important: Make sure your debug directory contains these files!
+		// Important: Make sure your debug directory contains these shader files!
 		create_shader_module_from_file(vulkan_device, "vertex_shader.spv", &vertex_shader_module);
 		create_shader_module_from_file(vulkan_device, "fragment_shader.spv", &fragment_shader_module);
+	}
+
+
+	void InexorRenderer::prepare_drawing()
+	{
+		// Every member which is commented out will be filled out during draw_frame().
+
+		submit_info = {};
+		
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.pNext = nullptr;
+		submit_info.waitSemaphoreCount = 1;
+		//submit_info.pWaitSemaphores = &semaphore_image_available;
+
+		wait_stage_mask[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+		submit_info.pWaitDstStageMask = wait_stage_mask;
+		submit_info.commandBufferCount = 1;
+		//submit_info.pCommandBuffers = &command_buffers[image_index];
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pSignalSemaphores = &semaphore_rendering_finished;
+
+		present_info = {};
+
+		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.pNext = nullptr;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = &semaphore_rendering_finished;
+		present_info.swapchainCount = 1;
+		present_info.pSwapchains = &vulkan_swapchain;
+		//present_info.pImageIndices = &image_index;
+		present_info.pResults = nullptr;
 	}
 
 
@@ -37,35 +64,17 @@ namespace vulkan_renderer {
 		VkResult result = vkAcquireNextImageKHR(vulkan_device, vulkan_swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
 		vulkan_error_check(result);
 
-		// TODO: Do not fill these structures every call!
-
-		VkSubmitInfo submit_info = {};
-		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.pNext = nullptr;
-		submit_info.waitSemaphoreCount = 1;
-		submit_info.pWaitSemaphores = &semaphore_image_available;
-
-		VkPipelineStageFlags wait_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-		submit_info.pWaitDstStageMask = wait_stage_mask;
-		submit_info.commandBufferCount = 1;
+		// Only neccesary parts of the structure need to be updated.
 		submit_info.pCommandBuffers = &command_buffers[image_index];
-		submit_info.signalSemaphoreCount = 1;
-		submit_info.pSignalSemaphores = &semaphore_rendering_finished;
+		submit_info.pWaitSemaphores = &semaphore_image_available;
 
 		result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
 		vulkan_error_check(result);
 
-		VkPresentInfoKHR present_info = {};
-		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		present_info.pNext = nullptr;
-		present_info.waitSemaphoreCount = 1;
-		present_info.pWaitSemaphores = &semaphore_rendering_finished;
-		present_info.swapchainCount = 1;
-		present_info.pSwapchains = &vulkan_swapchain;
-		present_info.pImageIndices = &image_index;
-		present_info.pResults = nullptr;
 
-		// TODO: Implement a base class VulkanPresentationEngine?
+		// Only neccesary parts of the structure need to be updated.
+		present_info.pImageIndices = &image_index;
+
 		result = vkQueuePresentKHR(queue, &present_info);
 		vulkan_error_check(result);
 	}
@@ -145,6 +154,8 @@ namespace vulkan_renderer {
 		record_command_buffers();
 
 		create_semaphores();
+		
+		prepare_drawing();
 	}
 
 
