@@ -44,7 +44,7 @@ namespace vulkan_renderer {
 			VkPipelineStageFlags wait_stage_mask[1];
 			
 			// 
-			VkPresentInfoKHR present_info = {};
+			VkPresentInfoKHR present_info;
 
 
 		public:

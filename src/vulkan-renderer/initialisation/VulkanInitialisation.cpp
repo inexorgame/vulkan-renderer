@@ -7,6 +7,8 @@ namespace vulkan_renderer {
 
 	VulkanInitialisation::VulkanInitialisation()
 	{
+		selected_queue_index = -1;
+		selected_queue_family_index = -1;
 	}
 
 
@@ -18,10 +20,10 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers)
 	{
 		cout << "Initialising Vulkan instance." << endl;
-		cout << "Application name: " << application_name.c_str() << endl;
-		cout << "Application version: " << VK_VERSION_MAJOR(application_version) << "." << VK_VERSION_MINOR(application_version) << "." << VK_VERSION_PATCH(application_version) << endl;
-		cout << "Engine name: " << engine_name.c_str() << endl;
-		cout << "Engine version: " << VK_VERSION_MAJOR(engine_version) << "." << VK_VERSION_MINOR(engine_version) << "." << VK_VERSION_PATCH(engine_version) << endl;
+		cout << "Application name: "            << application_name.c_str() << endl;
+		cout << "Application version: "         << VK_VERSION_MAJOR(application_version) << "." << VK_VERSION_MINOR(application_version) << "." << VK_VERSION_PATCH(application_version) << endl;
+		cout << "Engine name: "                 << engine_name.c_str() << endl;
+		cout << "Engine version: "              << VK_VERSION_MAJOR(engine_version) << "." << VK_VERSION_MINOR(engine_version) << "." << VK_VERSION_PATCH(engine_version) << endl;
 		cout << endl;
 
 		// TODO: Check which version of Vulkan is available before trying to create an instance!
@@ -34,16 +36,15 @@ namespace vulkan_renderer {
 
 		// Structure specifying application's Vulkan API info.
 		VkApplicationInfo app_info = {};
-		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		app_info.pNext = nullptr;
-		app_info.pApplicationName = application_name.c_str();
+		app_info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		app_info.pNext              = nullptr;
+		app_info.pApplicationName   = application_name.c_str();
 		app_info.applicationVersion = application_version;
-		app_info.pEngineName = engine_name.c_str();
-		app_info.engineVersion = engine_version;
-		app_info.apiVersion = VK_API_VERSION_1_1;
+		app_info.pEngineName        = engine_name.c_str();
+		app_info.engineVersion      = engine_version;
+		app_info.apiVersion         = VK_API_VERSION_1_1;
 
 		// TODO: Check if we need more device or instance extensions!
-
 
 		// Query which extensions are needed for GLFW.
 		uint32_t number_of_GLFW_extensions = 0;
@@ -76,7 +77,7 @@ namespace vulkan_renderer {
 
 		// If validation is requested, we need to add the validation layer as instance extension!
 		// For more information on Vulkan validation layers see:
-		// https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
+		// 
 		if(enable_validation_layers)
 		{
 			const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
@@ -127,36 +128,108 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 	}
 
+
+	void VulkanInitialisation::create_device_queues()
+	{
+		device_queues.clear();
+		
+		uint32_t number_of_available_queue_families = 0;
+
+		// First check how many queue families are available.
+		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_available_queue_families, nullptr);
+
+		// Preallocate memory for the available queue families.
+		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
+
+		// Get information about the available queue families.
+		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_available_queue_families, available_queue_families.data());
+
+
+		// ATTEMPT 1: Try to use one queue family for both graphics and presentation.
+		bool use_one_queue_family_for_graphics_and_presentation = false;
+
+		for(std::size_t i=0; i<available_queue_families.size(); i++)
+		{
+			if(available_queue_families[i].queueCount > 0)
+			{
+				// Check if this queue family supports graphics.
+				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+				{
+					VkBool32 presentation_available = false;
+					uint32_t queue_family_index = static_cast<uint32_t>(i);
+
+					// Query if presentation is supported.
+					VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, queue_family_index, vulkan_surface, &presentation_available);
+					vulkan_error_check(result);
+
+					// Check if we can use this queue family for presentation as well.
+					if(presentation_available)
+					{
+						// Okay, great we can use one queue family for both graphics and presentation.
+						
+						// Now we must find out how many queues we want to use.
+						uint32_t number_of_queues_to_use_from_this_queue_family = 1; //available_queue_families[i].queueCount;
+
+						// Let's just use 1.0f as priority for every queue now.
+						const std::vector<float> queue_priorities(number_of_queues_to_use_from_this_queue_family, 1.0f);
+						
+						// TOOD: We might have to optimize queue priorities later.
+
+						VkDeviceQueueCreateInfo device_queue_create_info = {};
+
+						device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+						device_queue_create_info.pNext            = nullptr;
+						device_queue_create_info.flags            = 0;
+						device_queue_create_info.queueFamilyIndex = queue_family_index;
+						device_queue_create_info.queueCount       = number_of_queues_to_use_from_this_queue_family;
+						device_queue_create_info.pQueuePriorities = queue_priorities.data();
+
+						// TODO: Which queue index to use?
+						selected_queue_index = 0;
+						selected_queue_family_index = queue_family_index;
+
+						// Add queue.
+						device_queues.push_back(device_queue_create_info);
+
+						// Done!
+						use_one_queue_family_for_graphics_and_presentation = true;
+
+						cout << "Found one queue family for both graphics and presentation." << endl;
+					}
+				}
+			}
+		}
+
+		cout << "Could not find a queue family that supports both graphics and presentation." << endl;
+
+
+		// ATTEMPT 2: Try to use 2 queue families for graphics and presentation.
+		if(!use_one_queue_family_for_graphics_and_presentation)
+		{
+			bool queue_family_for_graphics_found = false;
+			bool queue_family_for_presentation_found = false;
+
+			// TODO: Implement!	
+
+			if(queue_family_for_graphics_found && queue_family_for_presentation_found)
+			{
+				// Done!
+			}
+			else
+			{
+				std::string error_message = "Error: Could not find suitable queue families!";
+				display_error_message(error_message);
+			}
+		}
+	}
+
 	
 	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
 		cout << "Creating a physical device" << endl;
 		
-		const float queue_priorities[] = {1.0f, 1.0f, 1.0f, 1.0f};
-
-		VkDeviceQueueCreateInfo device_queue_create_info = {};
-		device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		device_queue_create_info.pNext = NULL;
-		device_queue_create_info.flags = NULL;
-
-		// TODO: Look which queue family fits best for what we want to do.
-		// For now we will use index number 0.
-		device_queue_create_info.queueFamilyIndex = 0;
-		
-		// TODO: Check if 4 queues are even supported!
-		device_queue_create_info.queueCount = 4;
-		device_queue_create_info.pQueuePriorities = queue_priorities;
-
 		// TODO: Fill with required features!
 		VkPhysicalDeviceFeatures used_features = {};
-		
-		VkDeviceCreateInfo device_create_info = {};
-		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		device_create_info.pNext = NULL;
-		device_create_info.flags = NULL;
-
-		// TODO: Maybe create multiple queues at once?
-		device_create_info.queueCreateInfoCount = 1;
 
 		// Our wishlist of device extensions that we would like to enable.
 		const std::vector<const char*> device_extensions_wishlist = {
@@ -182,12 +255,18 @@ namespace vulkan_renderer {
 			}
 		}
 
-		device_create_info.pQueueCreateInfos = &device_queue_create_info;
-		device_create_info.enabledLayerCount = NULL;
-		device_create_info.ppEnabledLayerNames = NULL;
-		device_create_info.enabledExtensionCount = static_cast<uint32_t>(enabled_device_extensions.size());
+		VkDeviceCreateInfo device_create_info = {};
+		
+		device_create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		device_create_info.pNext                   = nullptr;
+		device_create_info.flags                   = 0;
+		device_create_info.queueCreateInfoCount    = static_cast<uint32_t>(device_queues.size());
+		device_create_info.pQueueCreateInfos       = device_queues.data();
+		device_create_info.enabledLayerCount       = 0;
+		device_create_info.ppEnabledLayerNames     = nullptr;
+		device_create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_device_extensions.size());
 		device_create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
-		device_create_info.pEnabledFeatures = &used_features;
+		device_create_info.pEnabledFeatures        = &used_features;
 
 		return vkCreateDevice(graphics_card, &device_create_info, NULL, &vulkan_device);
 	}
@@ -323,12 +402,6 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 	}
 
-	
-	void VulkanInitialisation::create_device_queue()
-	{
-		vkGetDeviceQueue(vulkan_device, 0, 0, &queue);
-	}
-
 
 	void VulkanInitialisation::create_swap_chain()
 	{
@@ -371,7 +444,6 @@ namespace vulkan_renderer {
 		swap_chain_create_info.clipped = VK_TRUE;
 
 		// TODO: Make window resizable and recreate swap chain.
-		// When recreating the swap chain this is needed.
 		swap_chain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
 		VkResult result = vkCreateSwapchainKHR(vulkan_device, &swap_chain_create_info, nullptr, &vulkan_swapchain);
@@ -381,6 +453,10 @@ namespace vulkan_renderer {
 	
 	void VulkanInitialisation::create_pipeline()
 	{
+		// TODO: Generalize shader setup.
+		// TODO: Load list of shaders from JSON file.
+		// TODO: Initialise Vulkan by loading JSON profiles.
+
 		VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info = {};
 		vertex_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertex_shader_stage_create_info.pNext = nullptr;

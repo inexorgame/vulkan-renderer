@@ -20,6 +20,7 @@ namespace vulkan_renderer {
 
 	void VulkanWindowManager::init_window(const int width, const int height, const std::string& window_name)
 	{
+		// Initialise GLFW library.
 		glfwInit();
 
 		// We do not want to use the OpenGL API.
@@ -28,9 +29,12 @@ namespace vulkan_renderer {
 		// The window shall not be resizable for now.
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
+		// Store the width and height. Classes which inherit from VulkanWindowManager
+		// maybe want to know width and height at some point after initialisation.
 		window_width = width;
 		window_height = height;
 		
+		// Create the window using GLFW library.
 		window = glfwCreateWindow(width, height, window_name.c_str(), nullptr, nullptr);
 	}
 

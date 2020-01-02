@@ -7,6 +7,8 @@ namespace vulkan_renderer {
 	
 	InexorRenderer::InexorRenderer()
 	{
+		submit_info = {};
+		present_info = {};
 	}
 
 
@@ -27,25 +29,25 @@ namespace vulkan_renderer {
 
 	void InexorRenderer::prepare_drawing()
 	{
-		// Every member which is commented out will be filled out during draw_frame().
-
 		submit_info = {};
 		
+		wait_stage_mask[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+		// Every member which is commented out will be filled out during draw_frame().
 		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext = nullptr;
 		submit_info.waitSemaphoreCount = 1;
 		//submit_info.pWaitSemaphores = &semaphore_image_available;
-
-		wait_stage_mask[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
 		submit_info.pWaitDstStageMask = wait_stage_mask;
 		submit_info.commandBufferCount = 1;
 		//submit_info.pCommandBuffers = &command_buffers[image_index];
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores = &semaphore_rendering_finished;
 
+		
 		present_info = {};
-
+		
+		// Every member which is commented out will be filled out during draw_frame().
 		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		present_info.pNext = nullptr;
 		present_info.waitSemaphoreCount = 1;
@@ -68,14 +70,13 @@ namespace vulkan_renderer {
 		submit_info.pCommandBuffers = &command_buffers[image_index];
 		submit_info.pWaitSemaphores = &semaphore_image_available;
 
-		result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+		result = vkQueueSubmit(device_queue, 1, &submit_info, VK_NULL_HANDLE);
 		vulkan_error_check(result);
-
-
+		
 		// Only neccesary parts of the structure need to be updated.
 		present_info.pImageIndices = &image_index;
 
-		result = vkQueuePresentKHR(queue, &present_info);
+		result = vkQueuePresentKHR(device_queue, &present_info);
 		vulkan_error_check(result);
 	}
 	
@@ -113,6 +114,8 @@ namespace vulkan_renderer {
 		// TODO: Design consistent error handling strategy!
 		// TODO: Use nullptr instead of NULL consistently!
 
+		create_device_queues();
+
 		// Create a physical device with the selected graphics card.
 		result = create_physical_device(selected_graphics_card);
 		vulkan_error_check(result);
@@ -135,7 +138,7 @@ namespace vulkan_renderer {
 		}
 
 
-		create_device_queue();
+		vkGetDeviceQueue(vulkan_device, selected_queue_family_index, selected_queue_index, &device_queue);
 
 		create_swap_chain();
 		

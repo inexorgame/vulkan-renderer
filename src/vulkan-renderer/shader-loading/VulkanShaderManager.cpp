@@ -15,7 +15,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanShaderManager::create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
+	void VulkanShaderManager::create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
 	{
 		VkShaderModuleCreateInfo shader_create_info = {};
 		
@@ -25,19 +25,25 @@ namespace vulkan_renderer {
 		shader_create_info.codeSize = SPIRV_shader_bytes.size();
 		shader_create_info.pCode = reinterpret_cast<const uint32_t*>(SPIRV_shader_bytes.data());
 
-		return vkCreateShaderModule(vulkan_device, &shader_create_info, nullptr, shader_module);
+		VkResult result = vkCreateShaderModule(vulkan_device, &shader_create_info, nullptr, shader_module);
+		vulkan_error_check(result);
 	}
 
 
-	VkResult VulkanShaderManager::create_shader_module_from_file(const VkDevice& vulkan_device, const std::string& SPIRV_file_name, VkShaderModule* shader_module)
+	void VulkanShaderManager::create_shader_module_from_file(const VkDevice& vulkan_device, const std::string& SPIRV_file_name, VkShaderModule* shader_module)
 	{
-		cout << "Creating shader module: " << SPIRV_file_name.c_str() << endl;
+		cout << "Creating shader from file: " << SPIRV_file_name.c_str() << endl;
 
 		VulkanShader vulkan_shader;
 
 		vulkan_shader.load_file(SPIRV_file_name);
 		
-		return create_shader_module(vulkan_device, vulkan_shader.file_data, shader_module);
+		if(0 == vulkan_shader.file_size)
+		{
+			std::string error_message = "Error: SPIR-V shader file " + SPIRV_file_name + "is empty!";
+			display_error_message(error_message);		}
+
+		create_shader_module(vulkan_device, vulkan_shader.file_data, shader_module);
 	}
 
 

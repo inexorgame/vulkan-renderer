@@ -8,6 +8,7 @@
 #ifdef _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
+// TODO: Add other operation systems here
 
 #include <vector>
 #include <string>
@@ -28,7 +29,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// A class for initialisation of Vulkan API.
+	// A class for initialisation of the Vulkan API.
 	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,
@@ -36,10 +37,8 @@ namespace vulkan_renderer {
 	{
 		public:
 
-			// 
 			VulkanInitialisation();
 
-			// 
 			~VulkanInitialisation();
 
 
@@ -108,7 +107,16 @@ namespace vulkan_renderer {
 			VkSemaphore semaphore_rendering_finished;
 
 			// 			
-			VkQueue queue;
+			VkQueue device_queue;
+
+			// 
+			std::vector<VkDeviceQueueCreateInfo> device_queues;
+
+			// 
+			uint32_t selected_queue_index;
+
+			// 
+			uint32_t selected_queue_family_index;
 
 
 		protected:
@@ -122,9 +130,7 @@ namespace vulkan_renderer {
 
 			// 
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
-						
-			// 
-			void create_device_queue();
+
 
 			// 
 			void create_command_buffers();
@@ -149,6 +155,10 @@ namespace vulkan_renderer {
 
 			// 
 			void create_image_views();
+
+			// 
+			void create_device_queues();
+
 
 			// 
 			void shutdown_vulkan();
