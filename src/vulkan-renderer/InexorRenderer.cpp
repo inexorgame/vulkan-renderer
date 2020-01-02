@@ -37,14 +37,12 @@ namespace vulkan_renderer {
 		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext = nullptr;
 		submit_info.waitSemaphoreCount = 1;
-		//submit_info.pWaitSemaphores = &semaphore_image_available;
 		submit_info.pWaitDstStageMask = wait_stage_mask;
 		submit_info.commandBufferCount = 1;
-		//submit_info.pCommandBuffers = &command_buffers[image_index];
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores = &semaphore_rendering_finished;
+		// submit_info.pWaitSemaphores and submit_info.pCommandBuffers will be filled by draw_frame().
 
-		
 		present_info = {};
 		
 		// Every member which is commented out will be filled out during draw_frame().
@@ -54,8 +52,8 @@ namespace vulkan_renderer {
 		present_info.pWaitSemaphores = &semaphore_rendering_finished;
 		present_info.swapchainCount = 1;
 		present_info.pSwapchains = &vulkan_swapchain;
-		//present_info.pImageIndices = &image_index;
 		present_info.pResults = nullptr;
+		// present_info.pImageIndices will be filled by draw_frame().
 	}
 
 

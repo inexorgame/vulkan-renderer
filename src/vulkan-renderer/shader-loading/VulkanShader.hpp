@@ -21,15 +21,15 @@ namespace vulkan_renderer {
 
 			// 
 			~VulkanShader();
-
-			// 
-			void load_file(const std::string& file_name);
 			
 			// 
 			std::vector<char> file_data;
 
 			// 
 			std::size_t file_size;
+
+			// 
+			void load_file(const std::string& file_name);
 
 	};
 

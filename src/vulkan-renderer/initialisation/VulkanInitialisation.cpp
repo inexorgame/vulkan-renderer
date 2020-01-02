@@ -170,6 +170,8 @@ namespace vulkan_renderer {
 						// Now we must find out how many queues we want to use.
 						uint32_t number_of_queues_to_use_from_this_queue_family = 1; //available_queue_families[i].queueCount;
 
+						// TODO: Do we even need more than 1 queue anyways?
+
 						// Let's just use 1.0f as priority for every queue now.
 						const std::vector<float> queue_priorities(number_of_queues_to_use_from_this_queue_family, 1.0f);
 						
@@ -274,42 +276,98 @@ namespace vulkan_renderer {
 
 	void VulkanInitialisation::shutdown_vulkan()
 	{
+		// Wait for a device to become idle.
 		vkDeviceWaitIdle(vulkan_device);
 
 		// It is important to destroy the objects in reversal of the order of creation.
+		// We do a "soft" shutdown here: Check if the objects are != VK_NULL_HANDLE first!
+
+		// TODO: Generalize semaphore shutdown!
+		if(VK_NULL_HANDLE != semaphore_image_available)
+		{
+			vkDestroySemaphore(vulkan_device, semaphore_image_available, nullptr);
+		}
+
+		if(VK_NULL_HANDLE != semaphore_rendering_finished)
+		{
+			vkDestroySemaphore(vulkan_device, semaphore_rendering_finished, nullptr);
+		}
+
+
+		// We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
+
+		if(command_buffers.size() > 0)
+		{
+			vkFreeCommandBuffers(vulkan_device, command_pool, number_of_images_in_swap_chain, command_buffers.data());
+		}
+
+		if(VK_NULL_HANDLE != command_pool)
+		{
+			vkDestroyCommandPool(vulkan_device, command_pool, nullptr);
+		}
+
+		for(auto frame_buffer : frame_buffers)
+		{
+			if(VK_NULL_HANDLE != frame_buffer)
+			{
+				vkDestroyFramebuffer(vulkan_device, frame_buffer, nullptr);
+			}
+		}
+
+		if(VK_NULL_HANDLE != vulkan_pipeline)
+		{
+			vkDestroyPipeline(vulkan_device, vulkan_pipeline, nullptr);
+		}
+
+		if(VK_NULL_HANDLE != render_pass)
+		{
+			vkDestroyRenderPass(vulkan_device, render_pass, nullptr);
+		}
+
+		for(auto image_view : image_views)
+		{
+			if(VK_NULL_HANDLE != image_view)
+			{
+				vkDestroyImageView(vulkan_device, image_view, nullptr);
+			}
+		}
+
+		if(VK_NULL_HANDLE != vulkan_pipeline_layout)
+		{
+			vkDestroyPipelineLayout(vulkan_device, vulkan_pipeline_layout, nullptr);
+		}
+
+
+		// TODO: Generalize shader module shutdown!
+		if(VK_NULL_HANDLE != vertex_shader_module)
+		{
+			vkDestroyShaderModule(vulkan_device, vertex_shader_module, nullptr);
+		}
+
+		if(VK_NULL_HANDLE != fragment_shader_module)
+		{
+			vkDestroyShaderModule(vulkan_device, fragment_shader_module, nullptr);
+		}
+
+		if(VK_NULL_HANDLE != vulkan_swapchain)
+		{
+			vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
+		}
+
+		if(VK_NULL_HANDLE != vulkan_surface)
+		{
+			vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
+		}
 		
-		vkDestroySemaphore(vulkan_device, semaphore_image_available, nullptr);
-		vkDestroySemaphore(vulkan_device, semaphore_rendering_finished, nullptr);
-
-		// We do not need to reset the command buffers explicitly,
-		// since it is covered by vkDestroyCommandPool.
-		vkFreeCommandBuffers(vulkan_device, command_pool, number_of_images_in_swap_chain, command_buffers.data());
-
-		vkDestroyCommandPool(vulkan_device, command_pool, nullptr);
-
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		if(VK_NULL_HANDLE != vulkan_device)
 		{
-			vkDestroyFramebuffer(vulkan_device, frame_buffers[i], nullptr);
+			vkDestroyDevice(vulkan_device, nullptr);
 		}
 
-		vkDestroyPipeline(vulkan_device, vulkan_pipeline, nullptr);
-		vkDestroyRenderPass(vulkan_device, render_pass, nullptr);
-
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		if(VK_NULL_HANDLE != vulkan_instance)
 		{
-			vkDestroyImageView(vulkan_device, image_views[i], nullptr);
+			vkDestroyInstance(vulkan_instance, nullptr);
 		}
-
-		vkDestroyPipelineLayout(vulkan_device, vulkan_pipeline_layout, nullptr);
-
-		// Destroy shader modules:
-		vkDestroyShaderModule(vulkan_device, vertex_shader_module, nullptr);
-		vkDestroyShaderModule(vulkan_device, fragment_shader_module, nullptr);
-
-		vkDestroySwapchainKHR(vulkan_device, vulkan_swapchain, nullptr);
-		vkDestroySurfaceKHR(vulkan_instance, vulkan_surface, nullptr);
-		vkDestroyDevice(vulkan_device, nullptr);		
-		vkDestroyInstance(vulkan_instance, nullptr);
 	}
 
 

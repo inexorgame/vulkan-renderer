@@ -9,6 +9,8 @@ int main(int argc, char* argv[])
 {
     InexorRenderer renderer;
 
+    // TODO: Pass on command line arguments.
+
     renderer.init();
     renderer.run();
     renderer.cleanup();

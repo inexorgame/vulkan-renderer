@@ -14,24 +14,22 @@ using namespace std;
 namespace inexor {
 namespace vulkan_renderer {
 
-	// 
+	// A class for managing SPIR-V shaders.
 	class VulkanShaderManager
 	{
 		public:
 
-			// 
 			VulkanShaderManager();
 			
-			// 
 			~VulkanShaderManager();
 
 		protected:
 
 			// 
-			VkResult create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
+			void create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
 
 			// 
-			VkResult create_shader_module_from_file(const VkDevice& vulkan_device, const std::string& SPIRV_file_name, VkShaderModule* shader_module);
+			void create_shader_module_from_file(const VkDevice& vulkan_device, const std::string& SPIRV_file_name, VkShaderModule* shader_module);
 
 	};
 
