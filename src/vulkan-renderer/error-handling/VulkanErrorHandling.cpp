@@ -5,7 +5,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	std::string get_error_string(const VkResult& result_code)
+	std::string get_error_description_text(const VkResult& result_code)
 	{
 		std::string error_string = "";
 
@@ -128,7 +128,7 @@ namespace vulkan_renderer {
 	{
 		if(VK_SUCCESS != result)
 		{
-			std::string error_message = "Error: " + get_error_string(result);
+			std::string error_message = "Error: " + get_error_description_text(result);
 			display_error_message(error_message);
 		}
 	}

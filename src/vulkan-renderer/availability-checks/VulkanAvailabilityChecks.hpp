@@ -3,23 +3,22 @@
 #include <string>
 #include <vector>
 
-#include <vulkan/vulkan.h>
-
 #include "../error-handling/VulkanErrorHandling.hpp"
 
 
 namespace inexor {
 namespace vulkan_renderer {
 
-	// 
+
+	// In Vulkan we always need to check if the features that
+	// we will be using is available on the current system.
+	// This class bundles various availability checks.
 	class VulkanAvailabilityChecks
 	{
 		public:
 
-			// 
 			VulkanAvailabilityChecks();
 
-			// 
 			~VulkanAvailabilityChecks();
 
 

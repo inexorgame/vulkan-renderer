@@ -33,9 +33,9 @@ namespace vulkan_renderer {
 		uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
 		uint16_t api_version_patch = VK_VERSION_PATCH(api_version);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Supported Vulkan API version: " << api_major_version << "." << api_minor_version << "." << api_version_patch << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		// Is Vulkan 1.1 available on this system?
 		if(api_major_version > 1 || api_minor_version >= 1)
@@ -53,9 +53,9 @@ namespace vulkan_renderer {
 
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, nullptr);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Number of queue families: " << number_of_queue_families << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		
 		if(number_of_queue_families <= 0)
 		{
@@ -73,7 +73,7 @@ namespace vulkan_renderer {
 		for(std::size_t i=0; i< number_of_queue_families; i++)
 		{
 			cout << "Queue family " << i << ": " << endl;
-			cout << "--------------------------------------------------------------------------" << endl;
+			cout << "------------------------------------------------------------------------------------------------------------" << endl;
 			cout << "Queue Count: "          << queue_family_properties[i].queueCount << endl;
 			cout << "Timestamp Valid Bits: " << queue_family_properties[i].timestampValidBits << endl;
 
@@ -102,9 +102,9 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
 		vulkan_error_check(result);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Number of instance layers: " << number_of_instance_layers << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		if(number_of_instance_layers <= 0)
 		{
@@ -145,9 +145,9 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, nullptr);
 		vulkan_error_check(result);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Number of instance extensions: " << number_of_instance_extensions << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		if(number_of_instance_extensions <= 0)
 		{
@@ -184,9 +184,9 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
 		vulkan_error_check(result);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Number of device layers: " << number_of_device_layers << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		
 		if(number_of_device_layers <= 0)
 		{
@@ -227,9 +227,9 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
 		vulkan_error_check(result);
 		
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Number of device extensions: " << number_of_device_extensions << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		
 		if(number_of_device_extensions <= 0)
 		{
@@ -292,9 +292,9 @@ namespace vulkan_renderer {
 		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
 		vulkan_error_check(result);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Supported surface formats: " << number_of_supported_formats << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		
 		if(number_of_supported_formats <= 0)
 		{
@@ -335,9 +335,9 @@ namespace vulkan_renderer {
 		VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
 		vulkan_error_check(result);
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Available present modes: " << number_of_present_modes << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		if(number_of_present_modes <= 0)
 		{
@@ -436,7 +436,7 @@ namespace vulkan_renderer {
 		cout << endl;
 
 		cout << "Physical device limits:" << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		// This little helper macro prints the regarded information about graphics card limits to the console.
 		#define PRINT_GRAPHICS_CARD_LIMITS(x) cout << #x << ": " << (graphics_card_properties.limits.x) << endl;
@@ -565,7 +565,7 @@ namespace vulkan_renderer {
 		vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
 
 		cout << "Physical device features:" << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		
 		// This little helper macro prints the regarded information about graphics card features to the console.
 		#define PRINT_GRAPHICS_CARD_FEATURE(x) cout << #x << ": " << ((graphics_card_features.x) ? "yes" : "no") << endl;
@@ -631,7 +631,7 @@ namespace vulkan_renderer {
 
 		cout << endl;
 		cout << "Checking memory properties." << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		// Check memory properties of this graphics card.
 		VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
@@ -677,9 +677,9 @@ namespace vulkan_renderer {
 			// TODO: Shutdown Vulkan and application correctly.
 		}
 
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Number of available graphics cards: " << number_of_graphics_cards << endl;
-		cout << "--------------------------------------------------------------------------" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		// Preallocate memory for the available graphics cards.
 		std::vector<VkPhysicalDevice> available_graphics_cards(number_of_graphics_cards);

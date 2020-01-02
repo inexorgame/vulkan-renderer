@@ -5,6 +5,18 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
+	VulkanShader::VulkanShader()
+	{
+		file_size = 0;
+		file_data.clear();
+	}
+
+	
+	VulkanShader::~VulkanShader()
+	{
+	}
+
+
 	void VulkanShader::load_file(const std::string& file_name)
 	{
 		// Open file stream to the shader file at the end of the file to read file size.
@@ -31,18 +43,6 @@ namespace vulkan_renderer {
 		{
 			cout << "Could not open shader!" << endl;
 		}
-	}
-
-
-	VulkanShader::VulkanShader()
-	{
-		file_size = 0;
-		file_data.clear();
-	}
-
-	
-	VulkanShader::~VulkanShader()
-	{
 	}
 
 
