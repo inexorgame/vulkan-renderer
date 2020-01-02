@@ -18,7 +18,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanWindowManager::init_window(const int width, const int height, const std::string& window_name)
+	void VulkanWindowManager::create_window(const int width, const int height, const std::string& window_name)
 	{
 		// Initialise GLFW library.
 		glfwInit();
@@ -39,7 +39,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanWindowManager::shutdown_window()
+	void VulkanWindowManager::destroy_window()
 	{
 		glfwDestroyWindow(window);
 		glfwTerminate();
