@@ -61,6 +61,26 @@ LunarG Vulkan samples:
 
 https://github.com/LunarG/VulkanSamples
 
+Intel Vulkan introduction:
+
+https://github.com/GameTechDev/IntroductionToVulkan
+
+Minimal Vulkan compute shader:
+
+https://github.com/Erkaman/vulkan_minimal_compute
+
+Vulkan Tutorial Github page:
+
+https://github.com/Overv/VulkanTutorial
+
+Niko Kauppi's Github page:
+
+https://github.com/Niko40/Vulkan-API-Tutorials
+
+Shabi's Vulkan Tutorials:
+
+https://github.com/ShabbyX/vktut
+
 ### Vulkan Debuggers
 https://renderdoc.org/
 
@@ -82,6 +102,8 @@ https://devblogs.nvidia.com/vulkan-dos-donts/
 
 https://vulkan.lunarg.com/doc/sdk/1.0.26.0/linux/tutorial.html
 
+https://www.toptal.com/api-developers/a-brief-overview-of-vulkan-api
+
 https://vulkan-tutorial.com/
 
 http://ogldev.atspace.co.uk/www/tutorial50/tutorial50.html
@@ -89,6 +111,9 @@ http://ogldev.atspace.co.uk/www/tutorial50/tutorial50.html
 http://jhenriques.net/development.html
 
 http://www.duskborn.com/posts/a-simple-vulkan-compute-example/
+
+
+https://www.fasterthan.life/blog/2017/7/11/i-am-graphics-and-so-can-you-part-1
 
 https://software.intel.com/en-us/articles/api-without-secrets-introduction-to-vulkan-part-1
 

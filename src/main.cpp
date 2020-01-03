@@ -14,6 +14,8 @@ int main(int argc, char* argv[])
     renderer.init();
     renderer.run();
     renderer.cleanup();
+    
+    cin.get();
 
     return 0;
 }
