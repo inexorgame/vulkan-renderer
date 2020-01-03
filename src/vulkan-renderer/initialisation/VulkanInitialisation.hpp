@@ -8,6 +8,7 @@
 #ifdef _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
+
 // TODO: Add other operation systems here
 
 #include <vector>
@@ -15,8 +16,6 @@
 #include <vector>
 #include <iostream>
 using namespace std;
-
-#include <vulkan/vulkan.h>
 
 #include "../error-handling/VulkanErrorHandling.hpp"
 #include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
@@ -44,29 +43,34 @@ namespace vulkan_renderer {
 
 		protected:
 		
-			// 
-			VkInstance vulkan_instance;
+			// The Vulkan instance handle.
+			VkInstance instance;
 
-			// 
-			VkDevice vulkan_device;
+			// The device handle.
+			VkDevice device;
+
+			// Opaque handle to a surface object.
+			VkSurfaceKHR surface;
 			
-			// The selected graphics card.
-			// The graphics card could either be selected by the user
-			// or it could be determined automatically by the engine.
+			// The graphics card which was selected either by the user or automatically.
+			// Opaque handle to a physical device object.
 			VkPhysicalDevice selected_graphics_card;
 
-			// 
+			// Presentation mode supported for a surface.
 			VkPresentModeKHR selected_present_mode;
 
-			// 
-			VkSurfaceKHR vulkan_surface;
+			// Opaque handle to a swapchain object.
+			VkSwapchainKHR swapchain;
 
-			// 
-			VkSwapchainKHR vulkan_swapchain;
-							
-			// 
+			// The number of images in the swapchain.
 			uint32_t number_of_images_in_swap_chain;
+
+			// Structure specifying a queue submit operation.
+			VkSubmitInfo submit_info;
 			
+			// Structure describing parameters of a queue presentation.
+			VkPresentInfoKHR present_info;
+
 			// 
 			std::vector<VkImageView> image_views;
 
@@ -74,25 +78,28 @@ namespace vulkan_renderer {
 			VkShaderModule vertex_shader_module;
 			VkShaderModule fragment_shader_module;
 
-			// 
-			VkPipelineLayout vulkan_pipeline_layout;
+			// Opaque handle to a pipeline layout object.
+			VkPipelineLayout pipeline_layout;
 
 			// The image format which is used.
 			VkFormat selected_image_format;
 
+			// Supported color space of the presentation engine. 
+			VkColorSpaceKHR selected_color_space;
+
 			// 
 			std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
-			// 
+			// Opaque handle to a render pass object.
 			VkRenderPass render_pass;
 
-			// 
-			VkPipeline vulkan_pipeline;
+			// Opaque handle to a pipeline object.
+			VkPipeline pipeline;
 
 			// 
 			std::vector<VkFramebuffer> frame_buffers;
 
-			// 
+			// Opaque handle to a command pool object.
 			VkCommandPool command_pool;
 
 			// 
@@ -100,16 +107,16 @@ namespace vulkan_renderer {
 
 			// TODO: Generalise setup of semaphores?
 
-			// 
+			// Opaque handle to a semaphore object.
 			VkSemaphore semaphore_image_available;
 
-			// 
+			// Opaque handle to a semaphore object.
 			VkSemaphore semaphore_rendering_finished;
 
-			// 			
+			// Opaque handle to a queue object.
 			VkQueue device_queue;
 
-			// 
+			// The device queues.
 			std::vector<VkDeviceQueueCreateInfo> device_queues;
 
 			// 
@@ -122,45 +129,64 @@ namespace vulkan_renderer {
 		protected:
 
 
-			// Vulkan validation layers should be enabled during development!
+			// Creates a Vulkan instance.
+			// @param application_name The name of the application
+			// @param engine_name The name of the engine.
+			// @param application_version The version of the application encoded as an unsigned 32 bit integer.
+			// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
+			// @param enable_validation_layers True if validation is enabled.
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
-			// TODO: Decice which return value to use
-			void create_window_surface(const VkInstance& vulkan_instance, GLFWwindow* window, VkSurfaceKHR& vulkan_surface);
 
-			// 
+			// Create a window surface.
+			// @param vulkan_instance The instance of Vulkan.
+			// @param window The GLFW window.
+			// @param vulkan_surface The Vulkan (window) surface.
+			VkResult create_window_surface(const VkInstance& vulkan_instance, GLFWwindow* window, VkSurfaceKHR& vulkan_surface);
+
+
+			// Create a physical device handle.
+			// @param graphics_card The regarded graphics card.
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
 
 
-			// 
-			void create_command_buffers();
+			// Creates the command buffers.
+			VkResult create_command_buffers();
 
-			// 
-			void record_command_buffers();
 
-			// 
-			void create_semaphores();
+			// Records the command buffers.
+			VkResult record_command_buffers();
 
-			// 
-			void create_swap_chain();
+
+			// Creates the semaphores neccesary for synchronisation.
+			VkResult create_semaphores();
+
+
+			// Creates the swapchain.
+			VkResult create_swap_chain();
 			
-			// 
-			void create_command_pool();
 
-			// 
-			void create_frame_buffers();
+			// Creates the command pool.
+			VkResult create_command_pool();
+
+
+			// Creates the frame buffers.
+			VkResult create_frame_buffers();
 			
-			// 
-			void create_pipeline();
 
-			// 
-			void create_image_views();
-
-			// 
-			void create_device_queues();
+			// Creates the rendering pipeline.
+			VkResult create_pipeline();
 
 
-			// 
+			// Creates the image views.
+			VkResult create_image_views();
+
+
+			// Creates the device queues.
+			VkResult create_device_queues();
+
+
+			// Destroys all Vulkan objects.
 			void shutdown_vulkan();
 
 	};

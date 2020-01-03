@@ -20,40 +20,33 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-	// 
+	// TODO: VulkanTextureManager
+	// TODO: VulkanGLTFModelManager
+
+	// Now I am become renderer, the drawer of worlds.
 	class InexorRenderer : public VulkanInitialisation,
 						   public VulkanShaderManager
 	{
-		private:
+		public:
 
-			// 
-			void load_shaders();
-
-			// 
-			void draw_frame();
+			InexorRenderer();
 			
-			// 
-			void prepare_drawing();
+			~InexorRenderer();
+
 
 		private:
 
-			// 
-			VkSubmitInfo submit_info;
+			// Load all required shaders.
+			VkResult load_shaders();
+
+			// This method fills structures
+			VkResult prepare_drawing();
 			
-			// 
-			VkPipelineStageFlags wait_stage_mask[1];
-			
-			// 
-			VkPresentInfoKHR present_info;
+			// The actual rendering method which is called every frame.
+			VkResult draw_frame();
 
 
 		public:
-			
-			// 
-			InexorRenderer();
-			
-			// 
-			~InexorRenderer();
 
 			// 
 			void init();

@@ -14,51 +14,85 @@ namespace vulkan_renderer {
 	{
 	}
 	
-
-	VkFormat VulkanSettingsDecisionMaker::decide_which_surface_color_format_for_swap_chain_images_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
+	
+	uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
-		uint32_t number_of_supported_formats = 0;
-		
-		// First check how many formats are supported.
-		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+		uint32_t number_of_images_in_swapchain = 0;
+
+		VkSurfaceCapabilitiesKHR surface_capabilities = {};
+
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
 		vulkan_error_check(result);
 
-		// Query information about all the supported surface formats.
-		std::vector<VkSurfaceFormatKHR> available_surface_formats(number_of_supported_formats);
+		// Determine how many images in swapchain to use.
+		number_of_images_in_swapchain = surface_capabilities.minImageCount + 1;
+
+		// If the maximum number of images available in swapchain is greater than our current number, chose it
+		if((surface_capabilities.maxImageCount > 0) && (surface_capabilities.maxImageCount < number_of_images_in_swapchain))
+		{
+			number_of_images_in_swapchain = surface_capabilities.maxImageCount;
+		}
+
+		return number_of_images_in_swapchain;
+	}
+
+
+	VkResult VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, VkFormat& color_format, VkColorSpaceKHR& color_space)
+	{
+		uint32_t number_of_surface_formats = 0;
+
+		// First check how many surface formats are available.
+		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_surface_formats, nullptr);
+		if(VK_SUCCESS != result) return result;
+
+		if(!(number_of_surface_formats > 0))
+		{
+			std::string error_message = "Error: No surface formats could be found by fpGetPhysicalDeviceSurfaceFormatsKHR!";
+			display_error_message(error_message);
+		}
 		
-		// Get information about all the available surface formats.
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, available_surface_formats.data());
+		// Preallocate memory for available surface formats.
+		std::vector<VkSurfaceFormatKHR> available_surface_formats(number_of_surface_formats);
+		
+		// Get information about all surface formats available.
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_surface_formats, available_surface_formats.data());
 		vulkan_error_check(result);
 
 		
-		// A list of image formats that we can accept.
-		const std::vector<VkFormat> surface_format_wishlist =
+		// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
+		// there is no preferred format, so we assume VK_FORMAT_B8G8R8A8_UNORM.
+		if(1 == number_of_surface_formats && VK_FORMAT_UNDEFINED == available_surface_formats[0].format)
 		{
-			// This is the default format which should be available everywhere.
-			VK_FORMAT_B8G8R8A8_UNORM,
-
-			// TODO: Add more formats to the wishlist.
-			// The priority is decreasing with increasing array index.
-		};
-		
-		// We will enumerate all available image formats and compare it with our wishlist.
-
-		// Is one of our selected formats supported?
-		// IMPORTANT: Wishlist priority depends on the NESTING of the for loops!
-		for(auto current_wished_surface_format : surface_format_wishlist)
+			color_format = VK_FORMAT_B8G8R8A8_UNORM;
+			color_space = available_surface_formats[0].colorSpace;
+		}
+		else
 		{
-			for(auto current_surface_format : available_surface_formats)
+			// Loop through the list of available surface formats and
+			// check for the presence of VK_FORMAT_B8G8R8A8_UNORM.
+			bool found_B8G8R8A8_UNORM = false;
+
+			for(auto&& surface_format : available_surface_formats)
 			{
-				if(current_wished_surface_format == current_surface_format.format)
+				if(VK_FORMAT_B8G8R8A8_UNORM == surface_format.format)
 				{
-					// Yes, one of our wished formats is available!
-					return current_surface_format.format;
+					color_format = surface_format.format;
+					color_space = surface_format.colorSpace;
+
+					found_B8G8R8A8_UNORM = true;
+					break;
 				}
+			}
+			
+			// In case VK_FORMAT_B8G8R8A8_UNORM is not available select the first available color format.
+			if(!found_B8G8R8A8_UNORM)
+			{
+				color_format = available_surface_formats[0].format;
+				color_space  = available_surface_formats[0].colorSpace;
 			}
 		}
 
-		// This is the default format which should be available on every system.
-		return VK_FORMAT_B8G8R8A8_UNORM;
+		return VK_SUCCESS;
 	}
 
 	
@@ -137,6 +171,30 @@ namespace vulkan_renderer {
 	}
 
 	
+	VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	{
+		// Bitmask of VkSurfaceTransformFlagBitsKHR.
+		VkSurfaceTransformFlagsKHR pre_transform = {};
+
+		VkSurfaceCapabilitiesKHR surface_capabilities = {};
+
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
+		vulkan_error_check(result);
+
+		if(surface_capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+		{
+			// We prefer a non-rotated transform.
+			pre_transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		}
+		else
+		{
+			pre_transform = surface_capabilities.currentTransform;
+		}
+
+		return pre_transform;
+	}
+
+
 	VkPresentModeKHR VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		uint32_t number_of_available_present_modes = 0;
@@ -151,10 +209,6 @@ namespace vulkan_renderer {
 		// Get information about the available present modes.
 		result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, available_present_modes.data());
 		vulkan_error_check(result);
-
-
-		// TODO: Refactor this into a wishlist!
-		// IMPORTANT: Wishlist priority depends on the nesting of the for loops!
 
 		for(auto present_mode : available_present_modes)
 		{
@@ -200,6 +254,31 @@ namespace vulkan_renderer {
 		// TODO: Shutdown Vulkan and application.
 
 		return VK_PRESENT_MODE_MAX_ENUM_KHR;
+	}
+
+
+	void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, uint32_t& window_width, uint32_t& window_height, VkExtent2D& swapchain_extent)
+	{
+		// Bitmask of VkSurfaceTransformFlagBitsKHR.
+		VkSurfaceCapabilitiesKHR surface_capabilities = {};
+
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
+		vulkan_error_check(result);
+
+		if(surface_capabilities.currentExtent.width == UINT32_MAX && surface_capabilities.currentExtent.height == UINT32_MAX)
+		{
+			// The size of the window dictates the swapchain's extent.
+			swapchain_extent.width  = window_width;
+			swapchain_extent.height = window_height;
+		}
+		else
+		{
+			// If the surface size is defined, the swap chain size must match.
+			swapchain_extent = surface_capabilities.currentExtent;
+			window_width     = surface_capabilities.currentExtent.width;
+			window_height    = surface_capabilities.currentExtent.height;
+
+		}
 	}
 
 
