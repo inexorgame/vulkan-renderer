@@ -134,7 +134,10 @@ namespace vulkan_renderer {
 		print_instance_extensions();
 		print_device_layers(selected_graphics_card);
 		print_device_extensions(selected_graphics_card);
-
+		print_graphics_card_limits(selected_graphics_card);
+	    print_graphics_cards_sparse_properties(selected_graphics_card);
+	    print_graphics_card_features(selected_graphics_card);
+	    print_graphics_card_memory_properties(selected_graphics_card);
 
 		// In this section, we need to check if the setup that we want to make is supported by the system. 
 

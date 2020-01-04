@@ -79,6 +79,26 @@ namespace vulkan_renderer {
 			void print_graphics_card_info(const VkPhysicalDevice& graphics_card);
 
 
+			// Prints information about the limits of the graphics card.
+			// @param graphics_card The regarded graphics card.
+			void print_graphics_card_limits(const VkPhysicalDevice& graphics_card);
+
+
+			// Prints information about the sparse properties of the graphics card.
+			// @param graphics_card The regarded graphics card.
+			void print_graphics_cards_sparse_properties(const VkPhysicalDevice& graphics_card);
+			
+			
+			// Prints information about the features of the graphics card.
+			// @param graphics_card The regarded graphics card.
+			void print_graphics_card_features(const VkPhysicalDevice& graphics_card);
+
+
+			// Prints information about the graphics card's memory properties.
+			// @param graphics_card The regarded graphics card.
+			void print_graphics_card_memory_properties(const VkPhysicalDevice& graphics_card);
+
+
 			// Lists up all available physical devices.
 			// @param vulkan_instance The instance of Vulkan.
 			// @param vulkan_surface The regarded Vulkan (window) surface.

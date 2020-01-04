@@ -431,10 +431,166 @@ namespace vulkan_renderer {
 		// The number of discrete priorities that can be assigned to a queue based on the value of each member of VkDeviceQueueCreateInfo::pQueuePriorities.
 		// This must be at least 2, and levels must be spread evenly over the range, with at least one level at 1.0, and another at 0.0.
 		//cout << "Discrete queue priorities: " << graphics_card_properties.limits.discreteQueuePriorities << endl;
+		
+		cout << endl;
+	}
+
+
+	void VulkanGraphicsCardInfoViewer::print_graphics_card_memory_properties(const VkPhysicalDevice& graphics_card)
+	{
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+		cout << "Graphics card's memory properties:" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+
+		// Check memory properties of this graphics card.
+		VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
+
+		vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
+
+		cout << "Number of memory types: " << graphics_card_memory_properties.memoryTypeCount << endl;
+		cout << "Number of heap types: "   << graphics_card_memory_properties.memoryHeapCount << endl;
 
 		cout << endl;
 
-		cout << "Physical device limits:" << endl;
+
+		// Loop through all memory types and list their features.
+		for(std::size_t i=0; i<graphics_card_memory_properties.memoryTypeCount; i++)
+		{
+			cout << "[" << i << "] Heap index: "<< graphics_card_memory_properties.memoryTypes[i].heapIndex << endl;
+
+			auto &propertyFlag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
+
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)        cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)        cout << "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)       cout << "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)         cout << "VK_MEMORY_PROPERTY_HOST_CACHED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)    cout << "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT)           cout << "VK_MEMORY_PROPERTY_PROTECTED_BIT" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD" << endl;
+			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD" << endl;
+		}
+
+		cout << endl;
+
+		// Loop through all memory heaps.
+		for(std::size_t i=0; i<graphics_card_memory_properties.memoryHeapCount; i++)
+		{
+			cout << "Heap memory [" << i << "]" << ", memory size: " << graphics_card_memory_properties.memoryHeaps[i].size << " bytes." << endl;
+
+			auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
+
+			if(propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)   cout << "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT (GPU MEMORY)" << endl;
+			if(propertyFlag & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT) cout << "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT" << endl;
+		}
+	}
+
+
+	void VulkanGraphicsCardInfoViewer::print_graphics_card_features(const VkPhysicalDevice& graphics_card)
+	{
+		VkPhysicalDeviceFeatures graphics_card_features;
+
+		// Check which features are supported by this graphics card.
+		vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
+		
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+		cout << "Graphics card's features:" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+		
+		// This little helper macro prints the regarded information about graphics card features to the console.
+		#define PRINT_GRAPHICS_CARD_FEATURE(x) cout << #x << ": " << ((graphics_card_features.x) ? "yes" : "no") << endl;
+
+		PRINT_GRAPHICS_CARD_FEATURE(robustBufferAccess)
+		PRINT_GRAPHICS_CARD_FEATURE(fullDrawIndexUint32)
+		PRINT_GRAPHICS_CARD_FEATURE(imageCubeArray)
+		PRINT_GRAPHICS_CARD_FEATURE(independentBlend)
+		PRINT_GRAPHICS_CARD_FEATURE(geometryShader)
+		PRINT_GRAPHICS_CARD_FEATURE(tessellationShader)
+		PRINT_GRAPHICS_CARD_FEATURE(sampleRateShading)
+		PRINT_GRAPHICS_CARD_FEATURE(dualSrcBlend)
+		PRINT_GRAPHICS_CARD_FEATURE(logicOp)
+		PRINT_GRAPHICS_CARD_FEATURE(multiDrawIndirect)
+		PRINT_GRAPHICS_CARD_FEATURE(drawIndirectFirstInstance)
+		PRINT_GRAPHICS_CARD_FEATURE(depthClamp)
+		PRINT_GRAPHICS_CARD_FEATURE(depthBiasClamp)
+		PRINT_GRAPHICS_CARD_FEATURE(fillModeNonSolid)
+		PRINT_GRAPHICS_CARD_FEATURE(depthBounds)
+		PRINT_GRAPHICS_CARD_FEATURE(wideLines)
+		PRINT_GRAPHICS_CARD_FEATURE(largePoints)
+		PRINT_GRAPHICS_CARD_FEATURE(alphaToOne)
+		PRINT_GRAPHICS_CARD_FEATURE(multiViewport)
+		PRINT_GRAPHICS_CARD_FEATURE(samplerAnisotropy)
+		PRINT_GRAPHICS_CARD_FEATURE(textureCompressionETC2)
+		PRINT_GRAPHICS_CARD_FEATURE(textureCompressionASTC_LDR)
+		PRINT_GRAPHICS_CARD_FEATURE(textureCompressionBC)
+		PRINT_GRAPHICS_CARD_FEATURE(occlusionQueryPrecise)
+		PRINT_GRAPHICS_CARD_FEATURE(pipelineStatisticsQuery)
+		PRINT_GRAPHICS_CARD_FEATURE(vertexPipelineStoresAndAtomics)
+		PRINT_GRAPHICS_CARD_FEATURE(fragmentStoresAndAtomics)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderTessellationAndGeometryPointSize)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderImageGatherExtended)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageExtendedFormats)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageMultisample)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageReadWithoutFormat)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageWriteWithoutFormat)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderUniformBufferArrayDynamicIndexing)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderSampledImageArrayDynamicIndexing)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageBufferArrayDynamicIndexing)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageArrayDynamicIndexing)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderClipDistance)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderCullDistance)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderFloat64)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderInt64)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderInt16)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderResourceResidency)
+		PRINT_GRAPHICS_CARD_FEATURE(shaderResourceMinLod)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseBinding)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyBuffer)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyImage2D)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyImage3D)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency2Samples)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency4Samples)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency8Samples)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency16Samples)
+		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyAliased)
+		PRINT_GRAPHICS_CARD_FEATURE(variableMultisampleRate)
+		PRINT_GRAPHICS_CARD_FEATURE(inheritedQueries)
+
+		cout << endl;
+	}
+
+
+	void VulkanGraphicsCardInfoViewer::print_graphics_cards_sparse_properties(const VkPhysicalDevice& graphics_card)
+	{
+		VkPhysicalDeviceProperties graphics_card_properties;
+
+		// Get the information about that graphics card.
+		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
+		
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+		cout << "Graphics card's sparse properties:" << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+
+		#define PRINT_SPARSE_PROPERTIES(x) cout << #x << ": " << (graphics_card_properties.sparseProperties.x) << endl;
+
+		PRINT_SPARSE_PROPERTIES(residencyStandard2DBlockShape);
+		PRINT_SPARSE_PROPERTIES(residencyStandard2DMultisampleBlockShape);
+		PRINT_SPARSE_PROPERTIES(residencyStandard3DBlockShape);
+		PRINT_SPARSE_PROPERTIES(residencyAlignedMipSize);
+		PRINT_SPARSE_PROPERTIES(residencyNonResidentStrict);
+
+		cout << endl;
+	}
+
+	
+	void VulkanGraphicsCardInfoViewer::print_graphics_card_limits(const VkPhysicalDevice& graphics_card)
+	{
+		VkPhysicalDeviceProperties graphics_card_properties;
+
+		// Get the information about that graphics card.
+		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
+		
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+		cout << "Graphics card's limits:" << endl;
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
 		// This little helper macro prints the regarded information about graphics card limits to the console.
@@ -556,120 +712,9 @@ namespace vulkan_renderer {
 		PRINT_GRAPHICS_CARD_LIMITS(nonCoherentAtomSize);
 
 		cout << endl;
-		
-		
-		#define PRINT_SPARSE_PROPERTIES(x) cout << #x << ": " << (graphics_card_properties.sparseProperties.x) << endl;
-
-		PRINT_SPARSE_PROPERTIES(residencyStandard2DBlockShape);
-		PRINT_SPARSE_PROPERTIES(residencyStandard2DMultisampleBlockShape);
-		PRINT_SPARSE_PROPERTIES(residencyStandard3DBlockShape);
-		PRINT_SPARSE_PROPERTIES(residencyAlignedMipSize);
-		PRINT_SPARSE_PROPERTIES(residencyNonResidentStrict);
-
-
-		VkPhysicalDeviceFeatures graphics_card_features;
-
-		// Check which features are supported by this graphics card.
-		vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
-
-		cout << "Physical device features:" << endl;
-		cout << "------------------------------------------------------------------------------------------------------------" << endl;
-		
-		// This little helper macro prints the regarded information about graphics card features to the console.
-		#define PRINT_GRAPHICS_CARD_FEATURE(x) cout << #x << ": " << ((graphics_card_features.x) ? "yes" : "no") << endl;
-
-		PRINT_GRAPHICS_CARD_FEATURE(robustBufferAccess)
-		PRINT_GRAPHICS_CARD_FEATURE(fullDrawIndexUint32)
-		PRINT_GRAPHICS_CARD_FEATURE(imageCubeArray)
-		PRINT_GRAPHICS_CARD_FEATURE(independentBlend)
-		PRINT_GRAPHICS_CARD_FEATURE(geometryShader)
-		PRINT_GRAPHICS_CARD_FEATURE(tessellationShader)
-		PRINT_GRAPHICS_CARD_FEATURE(sampleRateShading)
-		PRINT_GRAPHICS_CARD_FEATURE(dualSrcBlend)
-		PRINT_GRAPHICS_CARD_FEATURE(logicOp)
-		PRINT_GRAPHICS_CARD_FEATURE(multiDrawIndirect)
-		PRINT_GRAPHICS_CARD_FEATURE(drawIndirectFirstInstance)
-		PRINT_GRAPHICS_CARD_FEATURE(depthClamp)
-		PRINT_GRAPHICS_CARD_FEATURE(depthBiasClamp)
-		PRINT_GRAPHICS_CARD_FEATURE(fillModeNonSolid)
-		PRINT_GRAPHICS_CARD_FEATURE(depthBounds)
-		PRINT_GRAPHICS_CARD_FEATURE(wideLines)
-		PRINT_GRAPHICS_CARD_FEATURE(largePoints)
-		PRINT_GRAPHICS_CARD_FEATURE(alphaToOne)
-		PRINT_GRAPHICS_CARD_FEATURE(multiViewport)
-		PRINT_GRAPHICS_CARD_FEATURE(samplerAnisotropy)
-		PRINT_GRAPHICS_CARD_FEATURE(textureCompressionETC2)
-		PRINT_GRAPHICS_CARD_FEATURE(textureCompressionASTC_LDR)
-		PRINT_GRAPHICS_CARD_FEATURE(textureCompressionBC)
-		PRINT_GRAPHICS_CARD_FEATURE(occlusionQueryPrecise)
-		PRINT_GRAPHICS_CARD_FEATURE(pipelineStatisticsQuery)
-		PRINT_GRAPHICS_CARD_FEATURE(vertexPipelineStoresAndAtomics)
-		PRINT_GRAPHICS_CARD_FEATURE(fragmentStoresAndAtomics)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderTessellationAndGeometryPointSize)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderImageGatherExtended)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageExtendedFormats)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageMultisample)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageReadWithoutFormat)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageWriteWithoutFormat)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderUniformBufferArrayDynamicIndexing)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderSampledImageArrayDynamicIndexing)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageBufferArrayDynamicIndexing)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderStorageImageArrayDynamicIndexing)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderClipDistance)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderCullDistance)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderFloat64)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderInt64)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderInt16)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderResourceResidency)
-		PRINT_GRAPHICS_CARD_FEATURE(shaderResourceMinLod)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseBinding)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyBuffer)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyImage2D)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyImage3D)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency2Samples)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency4Samples)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency8Samples)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidency16Samples)
-		PRINT_GRAPHICS_CARD_FEATURE(sparseResidencyAliased)
-		PRINT_GRAPHICS_CARD_FEATURE(variableMultisampleRate)
-		PRINT_GRAPHICS_CARD_FEATURE(inheritedQueries)
-
-
-		cout << endl;
-		cout << "Checking memory properties." << endl;
-		cout << "------------------------------------------------------------------------------------------------------------" << endl;
-
-		// Check memory properties of this graphics card.
-		VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
-
-		vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
-
-		cout << "Number of memory types: " << graphics_card_memory_properties.memoryTypeCount << endl;
-		cout << "Number of heap types: "   << graphics_card_memory_properties.memoryHeapCount << endl;
-
-		cout << endl;
-
-		// Loop through all memory types and list their features.
-		for(std::size_t i=0; i<graphics_card_memory_properties.memoryTypeCount; i++)
-		{
-			cout << "[" << i << "] Heap index: "<< graphics_card_memory_properties.memoryTypes[i].heapIndex << endl;
-			
-			auto &propertyFlag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
-
-			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)        cout << "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)        cout << "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)       cout << "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)         cout << "VK_MEMORY_PROPERTY_HOST_CACHED_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)    cout << "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT)           cout << "VK_MEMORY_PROPERTY_PROTECTED_BIT" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD" << endl;
-			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD" << endl;
-		}
-		
-		cout << endl;
 	}
 
-	
+
 	void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance& vulkan_instance, const VkSurfaceKHR& vulkan_surface)
 	{
 		uint32_t number_of_graphics_cards = 0;
