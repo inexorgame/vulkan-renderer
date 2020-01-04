@@ -48,6 +48,7 @@ namespace vulkan_renderer {
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores    = &semaphore_rendering_finished;
 
+
 		present_info = {};
 		
 		// Every member which is commented out will be filled out during draw_frame().
@@ -127,6 +128,7 @@ namespace vulkan_renderer {
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
 		decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface, selected_image_format, selected_color_space);
 		
+		// Print some detailed information about the available Vulkan driver.
 		print_driver_vulkan_version();
 		print_instance_layers();
 		print_instance_extensions();

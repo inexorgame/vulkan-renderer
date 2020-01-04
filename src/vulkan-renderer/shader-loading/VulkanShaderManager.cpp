@@ -19,11 +19,11 @@ namespace vulkan_renderer {
 	{
 		VkShaderModuleCreateInfo shader_create_info = {};
 		
-		shader_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		shader_create_info.pNext = nullptr;
-		shader_create_info.flags = 0;
+		shader_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shader_create_info.pNext    = nullptr;
+		shader_create_info.flags    = 0;
 		shader_create_info.codeSize = SPIRV_shader_bytes.size();
-		shader_create_info.pCode = reinterpret_cast<const uint32_t*>(SPIRV_shader_bytes.data());
+		shader_create_info.pCode    = reinterpret_cast<const uint32_t*>(SPIRV_shader_bytes.data());
 
 		return vkCreateShaderModule(vulkan_device, &shader_create_info, nullptr, shader_module);
 	}

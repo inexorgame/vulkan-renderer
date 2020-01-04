@@ -48,16 +48,16 @@ namespace vulkan_renderer {
 
 		public:
 
-			// 
+			// Initialise the Vulkan renderer.
 			void init();
 
-			// 
+			// Run the event loop of the Vulkan renderer.
 			void run();
 
-			// 
+			// Destroy the window and shutdown Vulkan.
 			void cleanup();
 			
-			// 
+			// React to window resize.
 			void on_window_resized();
 
 	};

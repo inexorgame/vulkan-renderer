@@ -28,7 +28,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Loop through all available instance extensions and search for the requested one.
-		for(VkExtensionProperties instance_extension : instance_extensions)
+		for(const VkExtensionProperties& instance_extension : instance_extensions)
 		{
 			// Compare the name of the current instance extension with the requested one.
 			if(0 == strcmp(instance_extension.extensionName, instance_extension_name.c_str()))
@@ -56,7 +56,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		// Loop through all available instance layers and search for the requested one.
-		for(VkLayerProperties instance_layer : instance_layers)
+		for(const VkLayerProperties& instance_layer : instance_layers)
 		{
 			// Compare the name of the current instance extension with the requested one.
 			if(0 == strcmp(instance_layer.layerName, instance_layer_name.c_str()))
@@ -84,7 +84,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		// Loop through all available device layers and search for the requested one.
-		for(VkLayerProperties device_layer : device_layer_properties)
+		for(const VkLayerProperties& device_layer : device_layer_properties)
 		{
 			if(0 == strcmp(device_layer.layerName, device_layer_name.c_str()))
 			{
@@ -111,7 +111,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Loop through all available device extensions and search for the requested one.
-		for(VkExtensionProperties device_extension : device_extensions)
+		for(const VkExtensionProperties& device_extension : device_extensions)
 		{
 			if(0 == strcmp(device_extension.extensionName, device_extension_name.c_str()))
 			{
