@@ -163,10 +163,8 @@ namespace vulkan_renderer {
 					{
 						// Okay, great we can use one queue family for both graphics and presentation.
 						
-						// Now we must find out how many queues we want to use.
-						uint32_t number_of_queues_to_use_from_this_queue_family = 1; //available_queue_families[i].queueCount;
-
-						// TODO: Do we even need more than 1 queue anyways?
+						// We only need one queue for now.
+						uint32_t number_of_queues_to_use_from_this_queue_family = 1;
 
 						// Let's just use 1.0f as priority for every queue now.
 						const std::vector<float> queue_priorities(number_of_queues_to_use_from_this_queue_family, 1.0f);
@@ -182,7 +180,6 @@ namespace vulkan_renderer {
 						device_queue_create_info.queueCount       = number_of_queues_to_use_from_this_queue_family;
 						device_queue_create_info.pQueuePriorities = queue_priorities.data();
 
-						// TODO: Which queue index to use?
 						selected_queue_index = 0;
 						selected_queue_family_index = queue_family_index;
 
@@ -200,20 +197,24 @@ namespace vulkan_renderer {
 			}
 		}
 
-		cout << "Could not find a queue family that supports both graphics and presentation." << endl;
-
 
 		// ATTEMPT 2: Try to use 2 queue families for graphics and presentation.
 		if(!use_one_queue_family_for_graphics_and_presentation)
 		{
+			cout << "Could not find a queue family that supports both graphics and presentation." << endl;
+			
 			bool queue_family_for_graphics_found = false;
 			bool queue_family_for_presentation_found = false;
 
+			
 			// TODO: Implement!	
 
+			display_error_message("Error: Separate queues for graphics and presentation not supporte yet.");
+			
 			if(queue_family_for_graphics_found && queue_family_for_presentation_found)
 			{
-				// Done!
+				cout << "Found 2 separate queues for graphics and presentation." << endl;
+				return VK_SUCCESS;
 			}
 			else
 			{
