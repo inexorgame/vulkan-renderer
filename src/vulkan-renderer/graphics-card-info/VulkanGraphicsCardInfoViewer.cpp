@@ -558,6 +558,15 @@ namespace vulkan_renderer {
 
 		cout << endl;
 		
+		
+		#define PRINT_SPARSE_PROPERTIES(x) cout << #x << ": " << (graphics_card_properties.sparseProperties.x) << endl;
+
+		PRINT_SPARSE_PROPERTIES(residencyStandard2DBlockShape);
+		PRINT_SPARSE_PROPERTIES(residencyStandard2DMultisampleBlockShape);
+		PRINT_SPARSE_PROPERTIES(residencyStandard3DBlockShape);
+		PRINT_SPARSE_PROPERTIES(residencyAlignedMipSize);
+		PRINT_SPARSE_PROPERTIES(residencyNonResidentStrict);
+
 
 		VkPhysicalDeviceFeatures graphics_card_features;
 
@@ -626,8 +635,6 @@ namespace vulkan_renderer {
 		PRINT_GRAPHICS_CARD_FEATURE(variableMultisampleRate)
 		PRINT_GRAPHICS_CARD_FEATURE(inheritedQueries)
 
-
-		// TODO: Print graphics card's sparse properties as well.
 
 		cout << endl;
 		cout << "Checking memory properties." << endl;
