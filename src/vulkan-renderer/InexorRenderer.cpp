@@ -32,54 +32,38 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorRenderer::prepare_drawing()
-	{
-		submit_info = {};
-		
-		// Bitmask of VkPipelineStageFlagBits.
-		VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-		// Every member which is commented out will be filled out during draw_frame().
-		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.pNext                = nullptr;
-		submit_info.waitSemaphoreCount   = 1;
-		submit_info.pWaitDstStageMask    = &wait_stage_mask;
-		submit_info.commandBufferCount   = 1;
-		submit_info.signalSemaphoreCount = 1;
-		submit_info.pSignalSemaphores    = &semaphore_rendering_finished;
-
-
-		present_info = {};
-		
-		// Every member which is commented out will be filled out during draw_frame().
-		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		present_info.pNext              = nullptr;
-		present_info.waitSemaphoreCount = 1;
-		present_info.pWaitSemaphores    = &semaphore_rendering_finished;
-		present_info.swapchainCount     = 1;
-		present_info.pSwapchains        = &swapchain;
-		present_info.pResults           = nullptr;
-
-		return VK_SUCCESS;
-	}
-
-
 	VkResult InexorRenderer::draw_frame()
 	{
 		uint32_t image_index = 0;
 
 		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
 		if(VK_SUCCESS != result) return result;
+		
+		const VkPipelineStageFlags wait_stage_mask[] = {
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+		};
 
-		// Only neccesary parts of the structure need to be updated.
+		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.pNext                = nullptr;
+		submit_info.waitSemaphoreCount   = 1;
+		submit_info.pWaitDstStageMask    = wait_stage_mask;
+		submit_info.commandBufferCount   = 1;
 		submit_info.pCommandBuffers = &command_buffers[image_index];
-		submit_info.pWaitSemaphores = &semaphore_image_available;
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pWaitSemaphores      = &semaphore_image_available;
+		submit_info.pSignalSemaphores    = &semaphore_rendering_finished;
 
 		result = vkQueueSubmit(device_queue, 1, &submit_info, VK_NULL_HANDLE);
 		if(VK_SUCCESS != result) return result;
 
-		// Only neccesary parts of the structure need to be updated.
+		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.pNext              = nullptr;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores    = &semaphore_rendering_finished;
+		present_info.swapchainCount     = 1;
+		present_info.pSwapchains        = &swapchain;
 		present_info.pImageIndices = &image_index;
+		present_info.pResults           = nullptr;
 
 		result = vkQueuePresentKHR(device_queue, &present_info);
 		if(VK_SUCCESS != result) return result;
@@ -178,9 +162,6 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		result = create_semaphores();
-		vulkan_error_check(result);
-		
-		result = prepare_drawing();
 		vulkan_error_check(result);
 	}
 

@@ -38,9 +38,6 @@ namespace vulkan_renderer {
 
 			// Load all required shaders.
 			VkResult load_shaders();
-
-			// This method fills structures
-			VkResult prepare_drawing();
 			
 			// The actual rendering method which is called every frame.
 			VkResult draw_frame();
