@@ -22,19 +22,29 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_instance_extensions, NULL);
 		vulkan_error_check(result);
 
-		// Preallocate memory for extension properties.
-		std::vector<VkExtensionProperties> instance_extensions(number_of_instance_extensions);
-		result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_instance_extensions, instance_extensions.data());
-		vulkan_error_check(result);
-
-		// Loop through all available instance extensions and search for the requested one.
-		for(const VkExtensionProperties& instance_extension : instance_extensions)
+		if(0 == number_of_instance_extensions)
 		{
-			// Compare the name of the current instance extension with the requested one.
-			if(0 == strcmp(instance_extension.extensionName, instance_extension_name.c_str()))
+			display_error_message("Error: No Vulkan instance extensions available!");
+
+			// Since there are no instance extensions at all, the regarded one is not supported either.
+			return false;
+		}
+		else
+		{
+			// Preallocate memory for extension properties.
+			std::vector<VkExtensionProperties> instance_extensions(number_of_instance_extensions);
+			result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_instance_extensions, instance_extensions.data());
+			vulkan_error_check(result);
+
+			// Loop through all available instance extensions and search for the requested one.
+			for(const VkExtensionProperties& instance_extension : instance_extensions)
 			{
-				// Yes, this instance extension is supported!
-				return true;
+				// Compare the name of the current instance extension with the requested one.
+				if(0 == strcmp(instance_extension.extensionName, instance_extension_name.c_str()))
+				{
+					// Yes, this instance extension is supported!
+					return true;
+				}
 			}
 		}
 		
@@ -50,19 +60,29 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
 		vulkan_error_check(result);
 
-		// Preallocate memory for layer properties.
-		std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
-		result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
-		vulkan_error_check(result);
-		
-		// Loop through all available instance layers and search for the requested one.
-		for(const VkLayerProperties& instance_layer : instance_layers)
+		if(0 == number_of_instance_layers)
 		{
-			// Compare the name of the current instance extension with the requested one.
-			if(0 == strcmp(instance_layer.layerName, instance_layer_name.c_str()))
+			display_error_message("Error: No Vulkan instance layers available!");
+
+			// Since there are no instance layers at all, the regarded one is not supported either.
+			return false;
+		}
+		else
+		{
+			// Preallocate memory for layer properties.
+			std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
+			result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
+			vulkan_error_check(result);
+		
+			// Loop through all available instance layers and search for the requested one.
+			for(const VkLayerProperties& instance_layer : instance_layers)
 			{
-				// Yes, this instance extension is supported!
-				return true;
+				// Compare the name of the current instance extension with the requested one.
+				if(0 == strcmp(instance_layer.layerName, instance_layer_name.c_str()))
+				{
+					// Yes, this instance extension is supported!
+					return true;
+				}
 			}
 		}
 
@@ -78,18 +98,28 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
 		vulkan_error_check(result);
 
-		// Preallocate memory for device layers.
-		std::vector<VkLayerProperties> device_layer_properties(number_of_device_layers);
-		result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layer_properties.data());
-		vulkan_error_check(result);
-		
-		// Loop through all available device layers and search for the requested one.
-		for(const VkLayerProperties& device_layer : device_layer_properties)
+		if(0 == number_of_device_layers)
 		{
-			if(0 == strcmp(device_layer.layerName, device_layer_name.c_str()))
+			display_error_message("Error: No Vulkan device layers available!");
+
+			// Since there are no device layers at all, the regarded one is not supported either.
+			return false;
+		}
+		else
+		{
+			// Preallocate memory for device layers.
+			std::vector<VkLayerProperties> device_layer_properties(number_of_device_layers);
+			result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layer_properties.data());
+			vulkan_error_check(result);
+		
+			// Loop through all available device layers and search for the requested one.
+			for(const VkLayerProperties& device_layer : device_layer_properties)
 			{
-				// Yes, this device layer is supported!
-				return true;
+				if(0 == strcmp(device_layer.layerName, device_layer_name.c_str()))
+				{
+					// Yes, this device layer is supported!
+					return true;
+				}
 			}
 		}
 
@@ -105,18 +135,28 @@ namespace vulkan_renderer {
 		VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
 		vulkan_error_check(result);
 
-		// Preallocate memory for device extensions.
-		std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
-		result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
-		vulkan_error_check(result);
-
-		// Loop through all available device extensions and search for the requested one.
-		for(const VkExtensionProperties& device_extension : device_extensions)
+		if(0 == number_of_device_extensions)
 		{
-			if(0 == strcmp(device_extension.extensionName, device_extension_name.c_str()))
+			display_error_message("Error: No Vulkan device extensions available!");
+
+			// Since there are no device extensions at all, the regarded one is not supported either.
+			return false;
+		}
+		else
+		{
+			// Preallocate memory for device extensions.
+			std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
+			result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
+			vulkan_error_check(result);
+
+			// Loop through all available device extensions and search for the requested one.
+			for(const VkExtensionProperties& device_extension : device_extensions)
 			{
-				// Yes, this device extension is supported!
-				return true;
+				if(0 == strcmp(device_extension.extensionName, device_extension_name.c_str()))
+				{
+					// Yes, this device extension is supported!
+					return true;
+				}
 			}
 		}
 

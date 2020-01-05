@@ -20,20 +20,30 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers)
 	{
+		// Get the major, minor and patch version of the application.
+		uint32_t app_major = VK_VERSION_MAJOR(application_version);
+		uint32_t app_minor = VK_VERSION_MINOR(application_version);
+		uint32_t app_patch = VK_VERSION_PATCH(application_version);
+
+		// Get the major, minor and patch version of the engine.
+		uint32_t engine_major = VK_VERSION_MAJOR(engine_version);
+		uint32_t engine_minor = VK_VERSION_MINOR(engine_version);
+		uint32_t engine_patch = VK_VERSION_PATCH(engine_version);
+
 		cout << "Initialising Vulkan instance." << endl;
 		cout << "Application name: "            << application_name.c_str() << endl;
-		cout << "Application version: "         << VK_VERSION_MAJOR(application_version) << "." << VK_VERSION_MINOR(application_version) << "." << VK_VERSION_PATCH(application_version) << endl;
+		cout << "Application version: "         << app_major << "." << app_minor << "." << app_patch << endl;
 		cout << "Engine name: "                 << engine_name.c_str() << endl;
-		cout << "Engine version: "              << VK_VERSION_MAJOR(engine_version) << "." << VK_VERSION_MINOR(engine_version) << "." << VK_VERSION_PATCH(engine_version) << endl;
+		cout << "Engine version: "              << engine_major << "." << engine_minor << "." << engine_patch << endl;
 		cout << endl;
 
 		// TODO: Check which version of Vulkan is available before trying to create an instance!
+		
 		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
 		// "Because Vulkan 1.0 implementations may fail with VK_ERROR_INCOMPATIBLE_DRIVER,
 		// applications should determine the version of Vulkan available before calling vkCreateInstance.
-		// If the vkGetInstanceProcAddr returns NULL for vkEnumerateInstanceVersion, it is a Vulkan 1.0
-		// implementation. Otherwise, the application can call vkEnumerateInstanceVersion to determine the
-		// version of Vulkan."
+		// If the vkGetInstanceProcAddr returns NULL for vkEnumerateInstanceVersion, it is a Vulkan 1.0 implementation.
+		// Otherwise, the application can call vkEnumerateInstanceVersion to determine the version of Vulkan."
 
 		// Structure specifying application's Vulkan API info.
 		VkApplicationInfo app_info = {};
@@ -66,6 +76,7 @@ namespace vulkan_renderer {
 		}
 
 		cout << endl;
+
 
 		// A vector of strings which represent the enabled instance layers.
 		std::vector<const char*> enabled_instance_layers;
