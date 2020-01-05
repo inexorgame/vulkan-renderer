@@ -119,6 +119,8 @@ namespace vulkan_renderer {
 			// The device queues.
 			std::vector<VkDeviceQueueCreateInfo> device_queues;
 
+			// TODO: Make std::optional out of this!
+
 			// 
 			uint32_t selected_queue_index;
 
