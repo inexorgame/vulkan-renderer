@@ -49,6 +49,7 @@ namespace vulkan_renderer {
 	
 	void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const VkPhysicalDevice& graphics_card)
 	{
+		// The number of available queue families.
 		uint32_t number_of_queue_families = 0;
 
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, nullptr);
@@ -60,35 +61,36 @@ namespace vulkan_renderer {
 		if(number_of_queue_families <= 0)
 		{
 			display_error_message("Error: Could not find any queue families!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		// Preallocate memory for the family queues.
-		std::vector<VkQueueFamilyProperties> queue_family_properties(number_of_queue_families);
-
-		// Get information about physical device queue family properties.
-		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, queue_family_properties.data());
-
-		// Loop through all available queue families.
-		for(std::size_t i=0; i< number_of_queue_families; i++)
+		else
 		{
-			cout << "Queue family " << i << ": " << endl;
-			cout << "------------------------------------------------------------------------------------------------------------" << endl;
-			cout << "Queue Count: "          << queue_family_properties[i].queueCount << endl;
-			cout << "Timestamp Valid Bits: " << queue_family_properties[i].timestampValidBits << endl;
+			// Preallocate memory for the family queues.
+			std::vector<VkQueueFamilyProperties> queue_family_properties(number_of_queue_families);
 
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)       cout << "VK_QUEUE_GRAPHICS_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)        cout << "VK_QUEUE_COMPUTE_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)       cout << "VK_QUEUE_TRANSFER_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) cout << "VK_QUEUE_SPARSE_BINDING_BIT" << endl;
-			if(queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT)      cout << "VK_QUEUE_PROTECTED_BIT" << endl;
+			// Get information about physical device queue family properties.
+			vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, queue_family_properties.data());
 
-			uint32_t width  = queue_family_properties[i].minImageTransferGranularity.width;
-			uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
-			uint32_t depth  = queue_family_properties[i].minImageTransferGranularity.depth;
+			// Loop through all available queue families.
+			for(std::size_t i=0; i< number_of_queue_families; i++)
+			{
+				cout << "Queue family " << i << ": " << endl;
+				cout << "------------------------------------------------------------------------------------------------------------" << endl;
+				cout << "Queue Count: "          << queue_family_properties[i].queueCount << endl;
+				cout << "Timestamp Valid Bits: " << queue_family_properties[i].timestampValidBits << endl;
+
+				if(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)       cout << "VK_QUEUE_GRAPHICS_BIT" << endl;
+				if(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)        cout << "VK_QUEUE_COMPUTE_BIT" << endl;
+				if(queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)       cout << "VK_QUEUE_TRANSFER_BIT" << endl;
+				if(queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) cout << "VK_QUEUE_SPARSE_BINDING_BIT" << endl;
+				if(queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT)      cout << "VK_QUEUE_PROTECTED_BIT" << endl;
+
+				uint32_t width  = queue_family_properties[i].minImageTransferGranularity.width;
+				uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
+				uint32_t depth  = queue_family_properties[i].minImageTransferGranularity.depth;
 			
-			cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
-			cout << endl;
+				cout << "Min Image Timestamp Granularity: " << width << ", " << height << ", " << depth << endl;
+				cout << endl;
+			}
 		}
 	}
 
@@ -108,31 +110,32 @@ namespace vulkan_renderer {
 		if(number_of_instance_layers <= 0)
 		{
 			display_error_message("Error: Could not find any instance layers!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		// Preallocate memory for instance layers.
-		std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
-		
-		// Get information about the available instance layers.
-		result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
-		vulkan_error_check(result);
-
-		// Loop through all available instance layers and print information about them.
-		for(auto instance_layer : instance_layers)
+		else
 		{
-			uint32_t spec_major = VK_VERSION_MAJOR(instance_layer.specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(instance_layer.specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(instance_layer.specVersion);
+			// Preallocate memory for instance layers.
+			std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
+		
+			// Get information about the available instance layers.
+			result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
+			vulkan_error_check(result);
 
-			cout << "Name: "         << instance_layer.layerName << endl;
-			cout << "Spec Version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << "Impl Version: " << instance_layer.implementationVersion << endl;
-			cout << "Description: "  << instance_layer.description << endl;
+			// Loop through all available instance layers and print information about them.
+			for(auto instance_layer : instance_layers)
+			{
+				uint32_t spec_major = VK_VERSION_MAJOR(instance_layer.specVersion);
+				uint32_t spec_minor = VK_VERSION_MINOR(instance_layer.specVersion);
+				uint32_t spec_patch = VK_VERSION_PATCH(instance_layer.specVersion);
+
+				cout << "Name: "         << instance_layer.layerName << endl;
+				cout << "Spec Version: " << spec_major << "." << spec_minor << "." << spec_patch << endl;
+				cout << "Impl Version: " << instance_layer.implementationVersion << endl;
+				cout << "Description: "  << instance_layer.description << endl;
+				cout << endl;
+			}
+		
 			cout << endl;
 		}
-		
-		cout << endl;
 	}
 
 
@@ -151,27 +154,28 @@ namespace vulkan_renderer {
 		if(number_of_instance_extensions <= 0)
 		{
 			display_error_message("Error: Could not find any instance extensions!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		// Preallocate memory for instance extensions.
-		std::vector<VkExtensionProperties> extensions(number_of_instance_extensions);
-
-		// Get information about the available instance extensions.
-		result = vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, extensions.data());
-		vulkan_error_check(result);
-
-		// Loop through all available instance extensions and print information about them.
-		for(auto extension : extensions)
+		else
 		{
-			uint32_t spec_major = VK_VERSION_MAJOR(extension.specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
+			// Preallocate memory for instance extensions.
+			std::vector<VkExtensionProperties> extensions(number_of_instance_extensions);
 
-			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << " \tName: " << extension.extensionName << endl;
+			// Get information about the available instance extensions.
+			result = vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, extensions.data());
+			vulkan_error_check(result);
+
+			// Loop through all available instance extensions and print information about them.
+			for(auto extension : extensions)
+			{
+				uint32_t spec_major = VK_VERSION_MAJOR(extension.specVersion);
+				uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
+				uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
+
+				cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << " \tName: " << extension.extensionName << endl;
+			}
+
+			cout << endl;
 		}
-
-		cout << endl;
 	}
 
 
@@ -190,31 +194,32 @@ namespace vulkan_renderer {
 		if(number_of_device_layers <= 0)
 		{
 			display_error_message("Error: Could not find any device layers!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-		
-		// Preallocate memory for device layers.
-		std::vector<VkLayerProperties> device_layers(number_of_device_layers);
-		
-		// Get information about the available device layers.
-		result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data());
-		vulkan_error_check(result);
-
-		// Loop through all available device layers and print information about them.
-		for(auto device_layer : device_layers)
+		else
 		{
-			uint32_t spec_major = VK_VERSION_MAJOR(device_layer.specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(device_layer.specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(device_layer.specVersion);
+			// Preallocate memory for device layers.
+			std::vector<VkLayerProperties> device_layers(number_of_device_layers);
+		
+			// Get information about the available device layers.
+			result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data());
+			vulkan_error_check(result);
 
-			cout << "Name: "          << device_layer.description << endl;
-			cout << "Spec version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
-			cout << "Impl version : " << device_layer.implementationVersion << endl;
-			cout << "Description: "   << device_layer.description << endl;
+			// Loop through all available device layers and print information about them.
+			for(auto device_layer : device_layers)
+			{
+				uint32_t spec_major = VK_VERSION_MAJOR(device_layer.specVersion);
+				uint32_t spec_minor = VK_VERSION_MINOR(device_layer.specVersion);
+				uint32_t spec_patch = VK_VERSION_PATCH(device_layer.specVersion);
+
+				cout << "Name: "          << device_layer.description << endl;
+				cout << "Spec version: "  << spec_major << "." << spec_minor << "." << spec_patch << endl;
+				cout << "Impl version : " << device_layer.implementationVersion << endl;
+				cout << "Description: "   << device_layer.description << endl;
+				cout << endl;
+			}
+			
 			cout << endl;
 		}
-		
-		cout << endl;
 	}
 
 
@@ -233,27 +238,28 @@ namespace vulkan_renderer {
 		if(number_of_device_extensions <= 0)
 		{
 			display_error_message("Error: Could not find any device extensions!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		// Preallocate memory for device extensions.
-		std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
-		
-		// Get information about the available device extensions.
-		result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
-		vulkan_error_check(result);
-
-		// Loop through all available device extensions and print information about them.
-		for(auto device_extension : device_extensions)
+		else
 		{
-			uint32_t spec_major = VK_VERSION_MAJOR(device_extension.specVersion);
-			uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
-			uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
+			// Preallocate memory for device extensions.
+			std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
+		
+			// Get information about the available device extensions.
+			result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
+			vulkan_error_check(result);
 
-			cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << " \tName: " << device_extension.extensionName << endl;
+			// Loop through all available device extensions and print information about them.
+			for(auto device_extension : device_extensions)
+			{
+				uint32_t spec_major = VK_VERSION_MAJOR(device_extension.specVersion);
+				uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
+				uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
+
+				cout << "Spec version: " << spec_major << "." << spec_minor << "." << spec_patch << " \tName: " << device_extension.extensionName << endl;
+			}
+
+			cout << endl;		
 		}
-
-		cout << endl;		
 	}
 
 	
@@ -298,31 +304,32 @@ namespace vulkan_renderer {
 		if(number_of_supported_formats <= 0)
 		{
 			display_error_message("Error: Could not find any supported formats!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
-
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
-		vulkan_error_check(result);
-
-		for(std::size_t i=0; i<number_of_supported_formats; i++)
+		else
 		{
-			std::unordered_map<int, std::string>::const_iterator surface_format_lookup = surface_format_names.find(surface_formats[i].format);
-			
-			if(surface_format_lookup == surface_format_names.end())
-			{
-				// Name not found, print number instead.
-				cout << surface_formats[i].format << endl;
-			}
-			else
-			{
-				// We found a text description for this in surface_format_names.
-				cout << surface_format_names.at(surface_formats[i].format) << endl;
-			}
-		}
+			std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
 
-		cout << endl;
+			result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+			vulkan_error_check(result);
+
+			for(std::size_t i=0; i<number_of_supported_formats; i++)
+			{
+				std::unordered_map<int, std::string>::const_iterator surface_format_lookup = surface_format_names.find(surface_formats[i].format);
+			
+				if(surface_format_lookup == surface_format_names.end())
+				{
+					// Name not found, print number instead.
+					cout << surface_formats[i].format << endl;
+				}
+				else
+				{
+					// We found a text description for this in surface_format_names.
+					cout << surface_format_names.at(surface_formats[i].format) << endl;
+				}
+			}
+
+			cout << endl;
+		}
 	}
 
 
@@ -341,41 +348,42 @@ namespace vulkan_renderer {
 		if(number_of_present_modes <= 0)
 		{
 			display_error_message("Error: Could not find any presentation modes!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		// Preallocate memory for the presentation modes.
-		std::vector<VkPresentModeKHR> present_modes(number_of_present_modes);
-
-		result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
-		vulkan_error_check(result);
-
-		const std::unordered_map<int, std::string> present_mode_names = {
-			{0,          "VK_PRESENT_MODE_IMMEDIATE_KHR"},
-			{1,          "VK_PRESENT_MODE_MAILBOX_KHR"},
-			{2,          "VK_PRESENT_MODE_FIFO_KHR"},
-			{3,          "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
-			{1000111000, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
-			{1000111001, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}
-		};
-
-		for(std::size_t i=0; i<number_of_present_modes; i++)
+		else
 		{
-			std::unordered_map<int, std::string>::const_iterator present_mode_lookup = present_mode_names.find(present_modes[i]);
-			
-			if(present_mode_lookup == present_mode_names.end())
-			{
-				// Name not found, print number instead.
-				cout << present_modes[i] << endl;
-			}
-			else
-			{
-				// We found a text description for this in surface_format_names.
-				cout << present_mode_names.at(present_modes[i]) << endl;
-			}
-		}
+			// Preallocate memory for the presentation modes.
+			std::vector<VkPresentModeKHR> present_modes(number_of_present_modes);
 
-		cout << endl;
+			result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
+			vulkan_error_check(result);
+
+			const std::unordered_map<int, std::string> present_mode_names = {
+				{0,          "VK_PRESENT_MODE_IMMEDIATE_KHR"},
+				{1,          "VK_PRESENT_MODE_MAILBOX_KHR"},
+				{2,          "VK_PRESENT_MODE_FIFO_KHR"},
+				{3,          "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
+				{1000111000, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
+				{1000111001, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}
+			};
+
+			for(std::size_t i=0; i<number_of_present_modes; i++)
+			{
+				std::unordered_map<int, std::string>::const_iterator present_mode_lookup = present_mode_names.find(present_modes[i]);
+			
+				if(present_mode_lookup == present_mode_names.end())
+				{
+					// Name not found, print number instead.
+					cout << present_modes[i] << endl;
+				}
+				else
+				{
+					// We found a text description for this in surface_format_names.
+					cout << present_mode_names.at(present_modes[i]) << endl;
+				}
+			}
+
+			cout << endl;
+		}
 	}
 
 
@@ -725,29 +733,30 @@ namespace vulkan_renderer {
 		if(number_of_graphics_cards <= 0)
 		{
 			display_error_message("Error: Could not find any GPU's!");
-			// TODO: Shutdown Vulkan and application correctly.
 		}
-
-		cout << "------------------------------------------------------------------------------------------------------------" << endl;
-		cout << "Number of available graphics cards: " << number_of_graphics_cards << endl;
-		cout << "------------------------------------------------------------------------------------------------------------" << endl;
-
-		// Preallocate memory for the available graphics cards.
-		std::vector<VkPhysicalDevice> available_graphics_cards(number_of_graphics_cards);
-
-		// Query information about all the graphics cards available on the system.
-		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data());
-		vulkan_error_check(result);
-
-		// Loop through all graphics cards and print information about them.
-		for(auto graphics_cards : available_graphics_cards)
+		else
 		{
-			print_graphics_card_info(graphics_cards);
-			print_physical_device_queue_families(graphics_cards);
-			print_surface_capabilities(graphics_cards, vulkan_surface);
-			print_supported_surface_formats(graphics_cards, vulkan_surface);
-			print_presentation_modes(graphics_cards, vulkan_surface);
-			cout << endl;
+			cout << "------------------------------------------------------------------------------------------------------------" << endl;
+			cout << "Number of available graphics cards: " << number_of_graphics_cards << endl;
+			cout << "------------------------------------------------------------------------------------------------------------" << endl;
+
+			// Preallocate memory for the available graphics cards.
+			std::vector<VkPhysicalDevice> available_graphics_cards(number_of_graphics_cards);
+
+			// Query information about all the graphics cards available on the system.
+			result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data());
+			vulkan_error_check(result);
+
+			// Loop through all graphics cards and print information about them.
+			for(auto graphics_cards : available_graphics_cards)
+			{
+				print_graphics_card_info(graphics_cards);
+				print_physical_device_queue_families(graphics_cards);
+				print_surface_capabilities(graphics_cards, vulkan_surface);
+				print_supported_surface_formats(graphics_cards, vulkan_surface);
+				print_presentation_modes(graphics_cards, vulkan_surface);
+				cout << endl;
+			}
 		}
 	}
 
