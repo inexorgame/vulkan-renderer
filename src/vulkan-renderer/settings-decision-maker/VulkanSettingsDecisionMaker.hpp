@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../error-handling/VulkanErrorHandling.hpp"
-
 #include <vector>
 #include <iostream>
 using namespace std;
+
+#include "../error-handling/VulkanErrorHandling.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -12,7 +12,8 @@ using namespace std;
 namespace inexor {
 namespace vulkan_renderer {
 
-	
+
+	// @class VulkanSettingsDecisionMaker
 	// This class makes automatic decisions on e.g. the following topics:
 	// Which graphics card will be used if more than 1 is available?
 	// Which surface color format should be used?
@@ -69,13 +70,14 @@ namespace vulkan_renderer {
 			//decide_which_image_sharing_mode_to_use();
 
 
-			// Find the transform, relative to the presentation engine’s natural orientation, applied to the image content prior to presentation.
+			// Find the transform, relative to the presentation engine's natural orientation, applied to the image content prior to presentation.
 			VkSurfaceTransformFlagsKHR decide_which_image_transformation_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 
 
-			// Decides which presentation mode the presentation engine will be using. We can only use presentation modes which are
-			// available in the current system. The preferred presentation mode is VK_PRESENT_MODE_MAILBOX_KHR.
-			// Just checking whether swap extension is supported is not enough because presentation support is a queue family property!
+			// @brief Decides which presentation mode the presentation engine will be using.
+			// We can only use presentation modes that are available in the current system.
+			// The preferred presentation mode is VK_PRESENT_MODE_MAILBOX_KHR.
+			// @warning Just checking whether swap extension is supported is not enough because presentation support is a queue family property!
 			// A physical device may support swap chains, but that doesn't mean that all its queue families also support it.
 			VkPresentModeKHR decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 

@@ -14,9 +14,9 @@ using namespace std;
 namespace inexor {
 namespace vulkan_renderer {
 
-
-	// Prints information related to graphics card's capabilities and limits.
-	// This class does nothing else than to display informations to std::cout.
+	
+	// @class VulkanGraphicsCardInfoViewer
+	// @brief Prints information related to graphics card's capabilities and limits.
 	class VulkanGraphicsCardInfoViewer
 	{
 		public:

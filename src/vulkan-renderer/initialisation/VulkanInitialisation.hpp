@@ -28,7 +28,8 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// A class for initialisation of the Vulkan API.
+	// @class VulkanInitialisation
+	// @brief A class for initialisation of the Vulkan API.
 	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,

@@ -14,7 +14,9 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-	// A class for managing windows.
+	
+	// @class VulkanWindowManager
+	// @brief A class for managing windows.
 	class VulkanWindowManager
 	{
 		public:

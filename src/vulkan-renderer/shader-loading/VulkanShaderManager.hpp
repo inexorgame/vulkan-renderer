@@ -13,7 +13,8 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// A class for managing SPIR-V shaders.
+	// @class VulkanShaderManager
+	// @brief A class for managing SPIR-V shaders.
 	class VulkanShaderManager
 	{
 		public:
@@ -29,6 +30,7 @@ namespace vulkan_renderer {
 			// @param vulkan_device The Vulkan device handle.
 			// @param SPIRV_shader_bytes The binary data of the shader.
 			// @param shader_module The shader module.
+			// @note The buffer with the SPIR-V code can be freed immediately after creating the shader module.
 			VkResult create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
 
 			
@@ -36,6 +38,7 @@ namespace vulkan_renderer {
 			// @param vulkan_device The Vulkan device handle.
 			// @param SPIRV_file_name The name of the SPIR-V shader file.
 			// @param shader_module The shader module.
+			// @note The buffer with the SPIR-V code can be freed immediately after creating the shader module.
 			VkResult create_shader_module_from_file(const VkDevice& vulkan_device, const std::string& SPIRV_file_name, VkShaderModule* shader_module);
 
 	};
