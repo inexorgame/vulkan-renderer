@@ -17,6 +17,18 @@ namespace vulkan_renderer {
 	}
 
 
+	const std::size_t VulkanShader::get_file_size() const
+	{
+		return file_size;
+	}
+
+	
+	const std::vector<char>& VulkanShader::get_file_data() const
+	{
+		return file_data;
+	}
+
+
 	void VulkanShader::load_file(const std::string& file_name)
 	{
 		// Open file stream to the shader file at the end of the file to read file size.

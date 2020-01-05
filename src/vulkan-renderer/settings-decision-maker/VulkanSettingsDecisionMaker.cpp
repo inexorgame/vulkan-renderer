@@ -77,6 +77,8 @@ namespace vulkan_renderer {
 				if(VK_FORMAT_B8G8R8A8_UNORM == surface_format.format)
 				{
 					color_format = surface_format.format;
+
+					// TODO: Check if VK_COLOR_SPACE_SRGB_NONLINEAR_KHR is available.
 					color_space = surface_format.colorSpace;
 
 					found_B8G8R8A8_UNORM = true;
@@ -220,7 +222,7 @@ namespace vulkan_renderer {
 			// One request is removed from the queue and processed during each vertical blanking period in which the queue is non-empty.
 			if(VK_PRESENT_MODE_MAILBOX_KHR == present_mode)
 			{
-				return present_mode;
+				return VK_PRESENT_MODE_MAILBOX_KHR;
 			}
 		}
 
@@ -236,7 +238,7 @@ namespace vulkan_renderer {
 			// This is the only value of presentMode that is required to be supported.
 			if(VK_PRESENT_MODE_FIFO_KHR == present_mode)
 			{
-				return present_mode;
+				return VK_PRESENT_MODE_FIFO_KHR;
 			}
 		}
 
@@ -264,6 +266,8 @@ namespace vulkan_renderer {
 
 		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
 		vulkan_error_check(result);
+
+		// TODO: Use std::clamp from Vulkan Tutorial.
 
 		if(surface_capabilities.currentExtent.width == UINT32_MAX && surface_capabilities.currentExtent.height == UINT32_MAX)
 		{

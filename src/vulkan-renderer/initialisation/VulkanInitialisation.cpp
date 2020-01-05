@@ -208,6 +208,7 @@ namespace vulkan_renderer {
 
 			
 			// TODO: Implement!	
+			
 
 			display_error_message("Error: Separate queues for graphics and presentation not supporte yet.");
 			
@@ -408,6 +409,9 @@ namespace vulkan_renderer {
 		swap_chain_create_info.imageExtent           = VkExtent2D{window_width, window_height};
 		swap_chain_create_info.imageArrayLayers      = 1;
 		swap_chain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+		// TODO: We have to use VK_SHARING_MODE_CONCURRENT when using multiple queues?
+
 		swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 		swap_chain_create_info.queueFamilyIndexCount = 0;
 		swap_chain_create_info.pQueueFamilyIndices   = nullptr;
@@ -749,8 +753,7 @@ namespace vulkan_renderer {
 		vkDeviceWaitIdle(device);
 
 		// It is important to destroy the objects in reversal of the order of creation.
-		// We do a "soft" shutdown here: Check if the objects are != VK_NULL_HANDLE first!
-
+		// Device queues are implicitly cleaned up when the device is destroyed, so we don't need to do anything in cleanup
 
 		// TODO: Generalize semaphore shutdown!
 		if(VK_NULL_HANDLE != semaphore_image_available)

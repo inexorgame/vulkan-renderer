@@ -31,6 +31,7 @@ namespace vulkan_renderer {
 			// @param shader_module The shader module.
 			VkResult create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
 
+			
 			// Creates a shader module from a SPIR-V shader file.
 			// @param vulkan_device The Vulkan device handle.
 			// @param SPIRV_file_name The name of the SPIR-V shader file.

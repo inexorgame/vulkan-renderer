@@ -23,6 +23,9 @@ namespace vulkan_renderer {
 		shader_create_info.pNext    = nullptr;
 		shader_create_info.flags    = 0;
 		shader_create_info.codeSize = SPIRV_shader_bytes.size();
+
+		// When you perform a cast like this, you also need to ensure that the data satisfies the alignment requirements of uint32_t.
+		// Lucky for us, the data is stored in an std::vector where the default allocator already ensures that the data satisfies the worst case alignment requirements.
 		shader_create_info.pCode    = reinterpret_cast<const uint32_t*>(SPIRV_shader_bytes.data());
 
 		return vkCreateShaderModule(vulkan_device, &shader_create_info, nullptr, shader_module);
@@ -33,17 +36,19 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating shader from file: " << SPIRV_file_name.c_str() << endl;
 
-		// Load the SPIR-V shader file.
 		VulkanShader vulkan_shader;
+
 		vulkan_shader.load_file(SPIRV_file_name);
 		
-		if(0 == vulkan_shader.file_size)
+		if(0 == vulkan_shader.get_file_size())
 		{
 			std::string error_message = "Error: SPIR-V shader file " + SPIRV_file_name + "is empty!";
 			display_error_message(error_message);
-		}
 
-		return create_shader_module(vulkan_device, vulkan_shader.file_data, shader_module);
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+		
+		return create_shader_module(vulkan_device, vulkan_shader.get_file_data(), shader_module);
 	}
 
 

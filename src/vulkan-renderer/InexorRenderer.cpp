@@ -96,13 +96,14 @@ namespace vulkan_renderer {
 		// Create a vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
 		vulkan_error_check(result);
-
-		// TODO: Check if surface is available!
+		
+		// The window surface needs to be created right after the instance creation,
+		// because it can actually influence the physical device selection.
 
 		// Create a window surface using GLFW library.
 		result = create_window_surface(instance, window, surface);
 		vulkan_error_check(result);
-		
+
 		// List up all available graphics cards.
 		print_all_physical_devices(instance, surface);
 
@@ -135,9 +136,9 @@ namespace vulkan_renderer {
 		print_device_layers(selected_graphics_card);
 		print_device_extensions(selected_graphics_card);
 		print_graphics_card_limits(selected_graphics_card);
-	    print_graphics_cards_sparse_properties(selected_graphics_card);
-	    print_graphics_card_features(selected_graphics_card);
-	    print_graphics_card_memory_properties(selected_graphics_card);
+		print_graphics_cards_sparse_properties(selected_graphics_card);
+		print_graphics_card_features(selected_graphics_card);
+		print_graphics_card_memory_properties(selected_graphics_card);
 
 		// In this section, we need to check if the setup that we want to make is supported by the system. 
 
