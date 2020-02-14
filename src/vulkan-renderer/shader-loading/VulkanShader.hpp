@@ -11,7 +11,8 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// A SPIR-V Vulkan shader.
+	/// @class VulkanShader
+	/// @brief A SPIR-V Vulkan shader.
 	class VulkanShader
 	{
 		private:

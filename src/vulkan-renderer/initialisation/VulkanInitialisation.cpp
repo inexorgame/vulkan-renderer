@@ -38,6 +38,7 @@ namespace vulkan_renderer {
 		cout << endl;
 
 		// TODO: Check which version of Vulkan is available before trying to create an instance!
+		// TODO: Switch to VOLK one day? This would allow for dynamic initialisation during runtime without linking vulkan libraries.
 		
 		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
 		// "Because Vulkan 1.0 implementations may fail with VK_ERROR_INCOMPATIBLE_DRIVER,
@@ -70,20 +71,19 @@ namespace vulkan_renderer {
 
 			if(!check_instance_extension_availability(glfw_extensions[i]))
 			{
-				std::string error_message = "Error: GLFW required instance extension " + std::string(glfw_extensions[i]) + "not found!";
+				std::string error_message = "Error: GLFW required instance extension " + std::string(glfw_extensions[i]) + " not available!";
 				display_error_message(error_message);
+				exit(-1);
 			}
 		}
 
 		cout << endl;
-
 
 		// A vector of strings which represent the enabled instance layers.
 		std::vector<const char*> enabled_instance_layers;
 
 		// The layers that we would like to enable.
 		std::vector<const char*> instance_layers_wishlist = {
-			//"VK_LAYER_VALVE_steam_overlay",
 			"VK_LAYER_RENDERDOC_Capture"
 		};
 
@@ -97,20 +97,27 @@ namespace vulkan_renderer {
 		}
 
 		// We now have to check which instance layers of our wishlist are really supported on the current system!
+		// Loop through the wishlist and check for availabiliy.
 		for(auto current_layer : instance_layers_wishlist)
 		{
 			if(check_instance_layer_availability(current_layer))
 			{
+				cout << "Instance layer " << current_layer << " is supported!" << endl;
+				
 				// This instance layer is available!
 				// Add it to the list of enabled instance layers!
 				enabled_instance_layers.push_back(current_layer);
 			}
 			else
 			{
+				cout << "Instance layer " << current_layer << " is NOT supported!" << endl;
+
 				std::string error_message = "Error: instance layer " + std::string(current_layer) + " not available!";
 				display_error_message(error_message);
 			}
 		}
+
+		cout << endl;
 
 		// Structure specifying parameters of a newly created instance.
 		VkInstanceCreateInfo instance_create_info = {};
@@ -138,6 +145,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_device_queues()
 	{
+		cout << "Creating device queues." << endl;
+
 		device_queues.clear();
 		
 		uint32_t number_of_available_queue_families = 0;
@@ -191,18 +200,18 @@ namespace vulkan_renderer {
 						device_queue_create_info.queueCount       = number_of_queues_to_use_from_this_queue_family;
 						device_queue_create_info.pQueuePriorities = queue_priorities.data();
 
+						// TODO: Do we have to pick the first one?
 						selected_queue_index = 0;
 						selected_queue_family_index = queue_family_index;
 
 						// Add queue.
 						device_queues.push_back(device_queue_create_info);
-
-						// Done!
 						use_one_queue_family_for_graphics_and_presentation = true;
 
 						cout << "Found one queue family for both graphics and presentation." << endl;
-
-						break;
+						
+						// We're done!
+						return VK_SUCCESS;
 					}
 				}
 			}
@@ -214,11 +223,17 @@ namespace vulkan_renderer {
 		{
 			cout << "Could not find a queue family that supports both graphics and presentation." << endl;
 			
+			// TODO: Remove this and implement feature!
+			display_error_message("Could not find a queue family that supports both graphics and presentation.");
+			exit(-1);
+
+
 			bool queue_family_for_graphics_found = false;
 			bool queue_family_for_presentation_found = false;
 
 			
-			// TODO: Implement!	
+			// TODO: Implement!
+			// We need to check some reference implementations first.
 			
 
 			display_error_message("Error: Separate queues for graphics and presentation not supporte yet.");
@@ -232,43 +247,51 @@ namespace vulkan_renderer {
 			{
 				std::string error_message = "Error: Could not find suitable queue families!";
 				display_error_message(error_message);
+				return VK_ERROR_INITIALIZATION_FAILED;
 			}
 		}
 
-		return VK_SUCCESS;
+		return VK_ERROR_INITIALIZATION_FAILED;
 	}
 
 	
 	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
-		cout << "Creating a physical device" << endl;
+		cout << "Creating a physical device." << endl;
 		
 		// TODO: Fill with required features!
 		VkPhysicalDeviceFeatures used_features = {};
 
 		// Our wishlist of device extensions that we would like to enable.
 		const std::vector<const char*> device_extensions_wishlist = {
+			// Since we actually want a window to draw on, we need this swapchain extension.
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
 
 		// The actual list of enabled device extensions.
 		std::vector<const char*> enabled_device_extensions;
 
-		for(auto layer_name : device_extensions_wishlist)
+		for(auto device_extension_name : device_extensions_wishlist)
 		{
-			if(check_device_extension_availability(graphics_card, layer_name))
+			if(check_device_extension_availability(graphics_card, device_extension_name))
 			{
+				cout << "Device extension " << device_extension_name << " is supported!" << endl;
+
 				// This device layer is supported!
 				// Add it to the list of enabled device layers.
-				enabled_device_extensions.push_back(layer_name);
+				enabled_device_extensions.push_back(device_extension_name);
 			}
 			else
 			{
+				cout << "Device extension " << device_extension_name << " is supported!" << endl;
+
 				// This device layer is not supported!
-				std::string error_message = "Error: Device extension " + std::string(layer_name) + " not supported!";
+				std::string error_message = "Error: Device extension " + std::string(device_extension_name) + " not supported!";
 				display_error_message(error_message);
 			}
 		}
+
+		cout << endl;
 
 		VkDeviceCreateInfo device_create_info = {};
 		
@@ -289,15 +312,14 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_command_pool()
 	{
+		cout << "Creating command pool." << endl;
+
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
 		command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext            = nullptr;
 		command_pool_create_info.flags            = 0;
-		
-		// IMPORTANT!
-		// TODO: Get correct queue with VK_QUEUE_GRAPHICS_BIT!
-		command_pool_create_info.queueFamilyIndex = 0;
+		command_pool_create_info.queueFamilyIndex = selected_queue_family_index;
 
 		return vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
 	}
@@ -305,6 +327,8 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_command_buffers()
 	{
+		cout << "Creating command buffers." << endl;
+
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 		
 		command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -322,6 +346,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::record_command_buffers()
 	{
+		cout << "Recording command buffers." << endl;
+
 		VkCommandBufferBeginInfo command_buffer_begin_info = {};
 
 		command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -331,13 +357,16 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
 		{
+			// Begin recording of command buffer.
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
 			if(VK_SUCCESS != result) return result;
 
-			// TODO: Change color if you want another clear color.
+			// Change color if you want another clear color.
+			// Format: rgba (red, green, blue, alpha).
+			// TODO: Setup clear color by configuration.
 			VkClearValue clear_value;
 			clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
-			
+
 			VkRenderPassBeginInfo render_pass_begin_info = {};
 			
 			render_pass_begin_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -349,15 +378,13 @@ namespace vulkan_renderer {
 			render_pass_begin_info.clearValueCount   = 1;
 			render_pass_begin_info.pClearValues      = &clear_value;
 
+			// Renderpass configuration.
 			vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-			
 			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-			// TODO: Change number of vertices if neccesary!
 			vkCmdDraw(command_buffers[i], 3, 1, 0, 0);
-
 			vkCmdEndRenderPass(command_buffers[i]);
 
+			// End recording of command buffer.
 			result = vkEndCommandBuffer(command_buffers[i]);
 			if(VK_SUCCESS != result) return result;
 		}
@@ -368,12 +395,15 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_semaphores()
 	{
+		cout << "Creating semaphores." << endl;
+
 		VkSemaphoreCreateInfo semaphore_create_info = {};
 
 		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		semaphore_create_info.pNext = nullptr;
 		semaphore_create_info.flags = 0;
 
+		// TODO: Add more semaphores here..
 		// TODO: Generalize semaphore initialisation.
 
 		VkResult result = vkCreateSemaphore(device, &semaphore_create_info, nullptr, &semaphore_image_available);
@@ -382,8 +412,6 @@ namespace vulkan_renderer {
 		result = vkCreateSemaphore(device, &semaphore_create_info, nullptr, &semaphore_rendering_finished);
 		if(VK_SUCCESS != result) return result;
 
-		// TODO: Add more semaphores here..
-
 		return VK_SUCCESS;
 	}
 
@@ -391,8 +419,6 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_swap_chain()
 	{
 		cout << "Creating swap chain." << endl;
-
-		VkSwapchainCreateInfoKHR swap_chain_create_info = {};
 
 		// TODO: Check if system supports the number of images specified here!
 		// TODO: Check if system supports this image format!
@@ -410,6 +436,8 @@ namespace vulkan_renderer {
 
 		number_of_images_in_swap_chain = decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
 
+		VkSwapchainCreateInfoKHR swap_chain_create_info = {};
+		
 		swap_chain_create_info.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swap_chain_create_info.pNext                 = nullptr;
 		swap_chain_create_info.flags                 = 0;
@@ -421,7 +449,7 @@ namespace vulkan_renderer {
 		swap_chain_create_info.imageArrayLayers      = 1;
 		swap_chain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		// TODO: We have to use VK_SHARING_MODE_CONCURRENT when using multiple queues?
+		// TODO: Do we have to use VK_SHARING_MODE_CONCURRENT when using multiple queues?
 
 		swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 		swap_chain_create_info.queueFamilyIndexCount = 0;
@@ -438,9 +466,11 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_pipeline()
 	{
+		cout << "Creating pipeline." << endl;
+
 		// TODO: Generalize shader setup.
-		// TODO: Load list of shaders from JSON file.
-		// TODO: Initialise Vulkan by loading JSON profiles.
+		// TODO: Load list of shaders from JSON or TOML file.
+		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles.
 		
 		VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info = {};
 		
@@ -487,6 +517,7 @@ namespace vulkan_renderer {
 		input_assembly_create_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
 
+		// TODO: Setup viewport by JSON or TOML file.
 		
 		VkViewport view_port = {};
 
@@ -496,7 +527,8 @@ namespace vulkan_renderer {
 		view_port.height   = static_cast<float>(window_height);
 		view_port.minDepth = 0.0f;
 		view_port.maxDepth = 1.0f;
-
+		
+		// TODO: Setup scissor by JSON or TOML file.
 
 		VkRect2D scissor = {};
 		
@@ -652,7 +684,7 @@ namespace vulkan_renderer {
 		graphics_pipeline_create_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		graphics_pipeline_create_info.pNext               = nullptr;
 		graphics_pipeline_create_info.flags               = 0;
-		graphics_pipeline_create_info.stageCount          = 2;
+		graphics_pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
 		graphics_pipeline_create_info.pStages             = shader_stages.data();
 		graphics_pipeline_create_info.pVertexInputState   = &vertex_input_create_info;
 		graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_create_info;
@@ -678,10 +710,11 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_frame_buffers()
 	{
+		cout << "Creating frame buffers." << endl;
+
 		// Preallocate memory for frame buffers.
 		frame_buffers.resize(number_of_images_in_swap_chain);
 
-		// Create the frame buffers.
 		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
 		{
 			VkFramebufferCreateInfo frame_buffer_create_info = {};
@@ -706,6 +739,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_image_views()
 	{
+		cout << "Creating image views." << endl;
+
 		VkResult result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swap_chain, nullptr);
 		if(VK_SUCCESS != result) return result;
 
@@ -716,6 +751,7 @@ namespace vulkan_renderer {
 			display_error_message("Error: Invalid number of images in swapchain!");
 		}
 
+		// TODO: Make this a class member?
 		// Preallocate memory for the images in swapchain.
 		std::vector<VkImage> swapchain_images(number_of_images_in_swap_chain);
 
@@ -764,7 +800,7 @@ namespace vulkan_renderer {
 		vkDeviceWaitIdle(device);
 
 		// It is important to destroy the objects in reversal of the order of creation.
-		// Device queues are implicitly cleaned up when the device is destroyed, so we don't need to do anything in cleanup
+		// Device queues are implicitly cleaned up when the device is destroyed.
 
 		// TODO: Generalize semaphore shutdown!
 		if(VK_NULL_HANDLE != semaphore_image_available)
@@ -783,6 +819,9 @@ namespace vulkan_renderer {
 		if(command_buffers.size() > 0)
 		{
 			vkFreeCommandBuffers(device, command_pool, number_of_images_in_swap_chain, command_buffers.data());
+
+			// Don't forget to free the memory.
+			command_buffers.clear();
 		}
 
 		if(VK_NULL_HANDLE != command_pool)
@@ -797,6 +836,8 @@ namespace vulkan_renderer {
 				vkDestroyFramebuffer(device, frame_buffer, nullptr);
 			}
 		}
+
+		frame_buffers.clear();
 
 		if(VK_NULL_HANDLE != pipeline)
 		{
@@ -815,6 +856,8 @@ namespace vulkan_renderer {
 				vkDestroyImageView(device, image_view, nullptr);
 			}
 		}
+
+		image_views.clear();
 
 		if(VK_NULL_HANDLE != pipeline_layout)
 		{

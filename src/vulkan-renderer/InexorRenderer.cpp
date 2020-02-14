@@ -17,15 +17,17 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::load_shaders()
 	{
-		// TODO: Setup shaders from JSON file.
+		// It is important to make sure that you debugging folder contains the required shader files!
 		
-		// Important: Make sure your debug directory contains these shader files!
-		VkResult result = create_shader_module_from_file(device, "vertex_shader.spv", &vertex_shader_module);
+		VkResult result;
+		
+		result = create_shader_module_from_file(device, "vertex_shader.spv", &vertex_shader_module);
 		if(VK_SUCCESS != result) return result;
 		
 		result = create_shader_module_from_file(device, "fragment_shader.spv", &fragment_shader_module);
 		if(VK_SUCCESS != result) return result;
 
+		// TODO: Setup shaders from JSON or TOML file.
 		// TODO: Add more shaders here..
 
 		return VK_SUCCESS;
@@ -37,8 +39,14 @@ namespace vulkan_renderer {
 		uint32_t image_index = 0;
 
 		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
-		if(VK_SUCCESS != result) return result;
 		
+		// It is possible for the window surface to change such that the swap chain is no longer compatible with it.
+		// One of the reasons that could cause this to happen is the size of the window changing.
+		// We have to catch these events and recreate the swap chain.
+		// TODO!
+
+		vulkan_error_check(result);
+
 		const VkPipelineStageFlags wait_stage_mask[] = {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
@@ -48,7 +56,7 @@ namespace vulkan_renderer {
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitDstStageMask    = wait_stage_mask;
 		submit_info.commandBufferCount   = 1;
-		submit_info.pCommandBuffers = &command_buffers[image_index];
+		submit_info.pCommandBuffers      = &command_buffers[image_index];
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pWaitSemaphores      = &semaphore_image_available;
 		submit_info.pSignalSemaphores    = &semaphore_rendering_finished;
@@ -62,20 +70,20 @@ namespace vulkan_renderer {
 		present_info.pWaitSemaphores    = &semaphore_rendering_finished;
 		present_info.swapchainCount     = 1;
 		present_info.pSwapchains        = &swapchain;
-		present_info.pImageIndices = &image_index;
+		present_info.pImageIndices      = &image_index;
 		present_info.pResults           = nullptr;
 
 		result = vkQueuePresentKHR(device_queue, &present_info);
-		if(VK_SUCCESS != result) return result;
+		vulkan_error_check(result);
 
 		return VK_SUCCESS;
 	}
 	
-	
+
 	void InexorRenderer::init()
 	{
 		// Create a window using GLFW library.
-		create_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_APP_WINDOW_TITLE);
+		create_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_WINDOW_TITLE, true);
 
 		// Create a vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
@@ -134,7 +142,6 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-
 		vkGetDeviceQueue(device, selected_queue_family_index, selected_queue_index, &device_queue);
 
 		result = create_swap_chain();
@@ -163,14 +170,6 @@ namespace vulkan_renderer {
 
 		result = create_semaphores();
 		vulkan_error_check(result);
-	}
-
-
-	void InexorRenderer::on_window_resized()
-	{
-		vkDeviceWaitIdle(device);
-
-		// TODO: Implement!
 	}
 
 

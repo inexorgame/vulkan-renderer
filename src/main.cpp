@@ -10,6 +10,7 @@ int main(int argc, char* argv[])
     InexorRenderer renderer;
 
     // TODO: Pass on command line arguments.
+    // TODO: Initialise an empty octree-world.
 
     renderer.init();
     renderer.run();

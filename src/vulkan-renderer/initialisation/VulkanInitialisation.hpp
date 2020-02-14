@@ -9,19 +9,19 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
-// TODO: Add other operation systems here
-
-#include <vector>
-#include <string>
-#include <vector>
-#include <iostream>
-using namespace std;
+// TODO: Add support for other operation systems here.
 
 #include "../error-handling/VulkanErrorHandling.hpp"
 #include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
 #include "../window-manager/VulkanWindowManager.hpp"
 #include "../availability-checks/VulkanAvailabilityChecks.hpp"
 #include "../settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
+
+#include <vector>
+#include <string>
+#include <vector>
+#include <iostream>
+using namespace std;
 
 
 namespace inexor {
@@ -34,6 +34,8 @@ namespace vulkan_renderer {
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,
 								 public VulkanSettingsDecisionMaker
+								 // TODO: VulkanTextureManager
+								 // TODO: VulkanConfigurationFileManager
 	{
 		public:
 
@@ -53,8 +55,7 @@ namespace vulkan_renderer {
 			// Opaque handle to a surface object.
 			VkSurfaceKHR surface;
 			
-			// The graphics card which was selected either by the user or automatically.
-			// Opaque handle to a physical device object.
+			// The graphics card which was selected either automatically or manually by the user.
 			VkPhysicalDevice selected_graphics_card;
 
 			// Presentation mode supported for a surface.
@@ -72,10 +73,10 @@ namespace vulkan_renderer {
 			// Structure describing parameters of a queue presentation.
 			VkPresentInfoKHR present_info;
 
-			// 
+			// The images in the swap chain.
 			std::vector<VkImageView> image_views;
 
-			// TODO: Setup shaders from JSON file?			
+			// TODO: Setup shaders from JSON or TOML file?			
 			VkShaderModule vertex_shader_module;
 			VkShaderModule fragment_shader_module;
 

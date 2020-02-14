@@ -37,7 +37,7 @@ namespace vulkan_renderer {
 			// The height of the window.
 			uint32_t window_height;
 
-			// Create a window of with a specific width, height and name.
+			// Creates a window of with a specific width, height and name.
 			// @param width The width of the window.
 			// @param height The height of the window.
 			// @param window_name The name of the window.

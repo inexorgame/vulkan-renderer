@@ -38,11 +38,12 @@ namespace vulkan_renderer {
 
 		VulkanShader vulkan_shader;
 
+		// Load the shader file into memory.
 		vulkan_shader.load_file(SPIRV_file_name);
 		
 		if(0 == vulkan_shader.get_file_size())
 		{
-			std::string error_message = "Error: SPIR-V shader file " + SPIRV_file_name + "is empty!";
+			std::string error_message = "Error: SPIR-V shader file " + SPIRV_file_name + " is empty!";
 			display_error_message(error_message);
 
 			return VK_ERROR_INITIALIZATION_FAILED;

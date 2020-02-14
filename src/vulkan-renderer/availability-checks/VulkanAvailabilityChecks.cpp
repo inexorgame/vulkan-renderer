@@ -17,23 +17,23 @@ namespace vulkan_renderer {
 
 	bool VulkanAvailabilityChecks::check_instance_extension_availability(const std::string& instance_extension_name)
 	{
-		uint32_t number_of_instance_extensions = 0;
+		uint32_t number_of_available_instance_extensions = 0;
 
-		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_instance_extensions, NULL);
+		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_available_instance_extensions, NULL);
 		vulkan_error_check(result);
 
-		if(0 == number_of_instance_extensions)
+		if(0 == number_of_available_instance_extensions)
 		{
 			display_error_message("Error: No Vulkan instance extensions available!");
 
-			// Since there are no instance extensions at all, the regarded one is not supported either.
+			// Since there are no instance extensions available at all, the desired one is not supported either.
 			return false;
 		}
 		else
 		{
 			// Preallocate memory for extension properties.
-			std::vector<VkExtensionProperties> instance_extensions(number_of_instance_extensions);
-			result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_instance_extensions, instance_extensions.data());
+			std::vector<VkExtensionProperties> instance_extensions(number_of_available_instance_extensions);
+			result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_available_instance_extensions, instance_extensions.data());
 			vulkan_error_check(result);
 
 			// Loop through all available instance extensions and search for the requested one.
@@ -55,23 +55,23 @@ namespace vulkan_renderer {
 	
 	bool VulkanAvailabilityChecks::check_instance_layer_availability(const std::string& instance_layer_name)
 	{
-		uint32_t number_of_instance_layers = 0;
+		uint32_t number_of_available_instance_layers = 0;
 
-		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
+		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_available_instance_layers, nullptr);
 		vulkan_error_check(result);
 
-		if(0 == number_of_instance_layers)
+		if(0 == number_of_available_instance_layers)
 		{
 			display_error_message("Error: No Vulkan instance layers available!");
 
-			// Since there are no instance layers at all, the regarded one is not supported either.
+			// Since there are no instance layers available at all, the desired one is not supported either.
 			return false;
 		}
 		else
 		{
 			// Preallocate memory for layer properties.
-			std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
-			result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
+			std::vector<VkLayerProperties> instance_layers(number_of_available_instance_layers);
+			result = vkEnumerateInstanceLayerProperties(&number_of_available_instance_layers, instance_layers.data());
 			vulkan_error_check(result);
 		
 			// Loop through all available instance layers and search for the requested one.
@@ -93,23 +93,23 @@ namespace vulkan_renderer {
 	
 	bool VulkanAvailabilityChecks::check_device_layer_availability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name)
 	{
-		uint32_t number_of_device_layers = 0;
+		uint32_t number_of_available_device_layers = 0;
 
-		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
+		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_available_device_layers, nullptr);
 		vulkan_error_check(result);
 
-		if(0 == number_of_device_layers)
+		if(0 == number_of_available_device_layers)
 		{
 			display_error_message("Error: No Vulkan device layers available!");
 
-			// Since there are no device layers at all, the regarded one is not supported either.
+			// Since there are no device layers available at all, the desired one is not supported either.
 			return false;
 		}
 		else
 		{
 			// Preallocate memory for device layers.
-			std::vector<VkLayerProperties> device_layer_properties(number_of_device_layers);
-			result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layer_properties.data());
+			std::vector<VkLayerProperties> device_layer_properties(number_of_available_device_layers);
+			result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_available_device_layers, device_layer_properties.data());
 			vulkan_error_check(result);
 		
 			// Loop through all available device layers and search for the requested one.
@@ -130,23 +130,23 @@ namespace vulkan_renderer {
 
 	bool VulkanAvailabilityChecks::check_device_extension_availability(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name)
 	{
-		uint32_t number_of_device_extensions = 0;
+		uint32_t number_of_available_device_extensions = 0;
 
-		VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
+		VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr);
 		vulkan_error_check(result);
 
-		if(0 == number_of_device_extensions)
+		if(0 == number_of_available_device_extensions)
 		{
 			display_error_message("Error: No Vulkan device extensions available!");
 
-			// Since there are no device extensions at all, the regarded one is not supported either.
+			// Since there are no device extensions available at all, the desired one is not supported either.
 			return false;
 		}
 		else
 		{
 			// Preallocate memory for device extensions.
-			std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
-			result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
+			std::vector<VkExtensionProperties> device_extensions(number_of_available_device_extensions);
+			result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, device_extensions.data());
 			vulkan_error_check(result);
 
 			// Loop through all available device extensions and search for the requested one.

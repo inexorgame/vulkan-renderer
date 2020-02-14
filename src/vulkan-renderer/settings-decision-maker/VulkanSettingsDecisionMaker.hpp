@@ -14,12 +14,12 @@ namespace vulkan_renderer {
 
 
 	// @class VulkanSettingsDecisionMaker
-	// This class makes automatic decisions on e.g. the following topics:
-	// Which graphics card will be used if more than 1 is available?
-	// Which surface color format should be used?
-	// Which graphics card's queue families should be used?
-	// Which presentation modes should be used?
-	// The functions also verify that every selected option is available on the current system.
+	// @brief This class makes automatic decisions on e.g. the following topics:
+	// - Which graphics card will be used if more than 1 is available?
+	// - Which surface color format should be used?
+	// - Which graphics card's queue families should be used?
+	// - Which presentation modes should be used?
+	// @note The methods also verify that every selected option is available on the current system.
 	class VulkanSettingsDecisionMaker
 	{
 		public:

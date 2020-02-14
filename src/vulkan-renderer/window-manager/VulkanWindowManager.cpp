@@ -20,12 +20,15 @@ namespace vulkan_renderer {
 
 	void VulkanWindowManager::create_window(const int width, const int height, const std::string& window_name, const bool window_resizable)
 	{
+		// TODO: What if window has already been initialised?
+
 		// Initialise GLFW library.
 		glfwInit();
 
 		// We do not want to use the OpenGL API.
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+		// Give the window a fixed size, if resize is not desired.
 		if(!window_resizable)
 		{
 			glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);

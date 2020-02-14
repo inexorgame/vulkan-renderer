@@ -31,15 +31,17 @@ namespace vulkan_renderer {
 
 	void VulkanShader::load_file(const std::string& file_name)
 	{
-		// Open file stream to the shader file at the end of the file to read file size.
+		// Open stream at the end of the file to read it's size.
 		std::ifstream shader_file(file_name.c_str(), std::ios::in|std::ios::binary|std::ios::ate);
 
 		if(shader_file.is_open())
 		{
-			// Read the size of the file in bytes.
+			cout << "File " << file_name.c_str() << " has been opened." << endl;
+
+			// Read the size of the file.
 			file_size = shader_file.tellg();
 
-			// Preallocate memory for file buffer.
+			// Preallocate memory for the file buffer.
 			file_data.resize(file_size);
 
 			// Reset the file read position to the beginning of the file.
@@ -50,6 +52,8 @@ namespace vulkan_renderer {
 
 			// Close the file stream.
 			shader_file.close();
+
+			cout << "File " << file_name.c_str() << " has been closed." << endl;
 		}
 		else
 		{
