@@ -77,7 +77,7 @@ namespace vulkan_renderer {
 			/// @param surface The window surface.
 			/// @param color_format The chosen color format.
 			/// @param color_space The chosen color space.
-			VkResult decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, VkFormat& color_format, VkColorSpaceKHR& color_space);
+			std::optional<VkSurfaceFormatKHR> decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 
 
 			/// @brief Automatically decides which surface color format to use in swapchain.

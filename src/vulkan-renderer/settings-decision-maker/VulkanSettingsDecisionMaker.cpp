@@ -42,7 +42,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, VkFormat& color_format, VkColorSpaceKHR& color_space)
+	std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		cout << "Deciding automatically which surface color format in swapchain to use." << endl;
 
@@ -50,12 +50,18 @@ namespace vulkan_renderer {
 
 		// First check how many surface formats are available.
 		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr);
-		if(VK_SUCCESS != result) return result;
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = get_error_description_text(result);
+			display_error_message(error_message);
+			return std::nullopt;
+		}
 
 		if(0 == number_of_available_surface_formats)
 		{
 			std::string error_message = "Error: No surface formats could be found by fpGetPhysicalDeviceSurfaceFormatsKHR!";
 			display_error_message(error_message);
+			return std::nullopt;
 		}
 		
 		// Preallocate memory for available surface formats.
@@ -64,42 +70,65 @@ namespace vulkan_renderer {
 		// Get information about all surface formats available.
 		result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, available_surface_formats.data());
 		vulkan_error_check(result);
+		
+		
+		VkSurfaceFormatKHR accepted_color_format = {};
 
 		
 		// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
 		// there is no preferred format, so we assume VK_FORMAT_B8G8R8A8_UNORM.
 		if(1 == number_of_available_surface_formats && VK_FORMAT_UNDEFINED == available_surface_formats[0].format)
 		{
-			color_format = VK_FORMAT_B8G8R8A8_UNORM;
-			color_space = available_surface_formats[0].colorSpace;
+			accepted_color_format.format = VK_FORMAT_B8G8R8A8_UNORM;
+			accepted_color_format.colorSpace = available_surface_formats[0].colorSpace;
 		}
 		else
 		{
-			// Loop through the list of available surface formats and
-			// check for the presence of VK_FORMAT_B8G8R8A8_UNORM.
-			bool found_B8G8R8A8_UNORM = false;
+			// This vector contais all the formats that we can accept.
+			// Currently we use VK_FORMAT_B8G8R8A8_UNORM only, since it's the norm.
+			std::vector<VkFormat> accepted_formats = 
+			{
+				VK_FORMAT_B8G8R8A8_UNORM
+				// Add more accepted formats here..
+			};
 
+			bool found_acceptable_format = false;
+
+			// Loop through the list of available surface formats and compare with the list of acceptable formats.
 			for(auto&& surface_format : available_surface_formats)
 			{
-				if(VK_FORMAT_B8G8R8A8_UNORM == surface_format.format)
+				for(std::size_t i=0; i<accepted_formats.size(); i++)
 				{
-					color_format = surface_format.format;
-					color_space = surface_format.colorSpace;
+					if(accepted_formats[i] == surface_format.format)
+					{
+						accepted_color_format.format = surface_format.format;
+						accepted_color_format.colorSpace = surface_format.colorSpace;
 
-					found_B8G8R8A8_UNORM = true;
-					break;
+						found_acceptable_format = true;
+
+						return accepted_color_format;
+					}
 				}
 			}
 			
 			// In case VK_FORMAT_B8G8R8A8_UNORM is not available select the first available color format.
-			if(!found_B8G8R8A8_UNORM)
+			if(!found_acceptable_format)
 			{
-				color_format = available_surface_formats[0].format;
-				color_space  = available_surface_formats[0].colorSpace;
+				if(available_surface_formats.size() > 0)
+				{
+					accepted_color_format.format = available_surface_formats[0].format;
+					accepted_color_format.colorSpace  = available_surface_formats[0].colorSpace;
+
+					return accepted_color_format;
+				}
+				else
+				{
+					return std::nullopt;
+				}
 			}
 		}
 
-		return VK_SUCCESS;
+		return accepted_color_format;
 	}
 
 

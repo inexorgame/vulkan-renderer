@@ -426,12 +426,25 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating swap chain." << endl;
 
-		// TODO: Check if system supports this image format!
-		// TODO: Check if system supports this image color space!
 		// TODO: Check if system supports this image sharing mode!
 		// TODO: Make window resizable and recreate swap chain.
+
+		// Decide which surface color format is used.
+		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
+		std::optional<VkSurfaceFormatKHR> selected_surface_format = decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
 		
-		decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface, selected_image_format, selected_color_space);
+		if(selected_surface_format.has_value())
+		{
+			selected_color_space = selected_surface_format.value().colorSpace;
+			selected_image_format = selected_surface_format.value().format;
+		}
+		else
+		{
+			std::string error_message = "Error: Could not find a acceptable surface format!";
+			display_error_message(error_message);
+			exit(-1);
+		}
+
 		
 		VkExtent2D selected_swapchain_image_extent = {};
 
@@ -463,6 +476,7 @@ namespace vulkan_renderer {
 		swap_chain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 		// TODO: Do we have to use VK_SHARING_MODE_CONCURRENT when using multiple queues?
+		// Update: YES WE MUST!
 
 		swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 		swap_chain_create_info.queueFamilyIndexCount = 0;

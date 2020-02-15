@@ -1,4 +1,5 @@
 #include "VulkanErrorHandling.hpp"
+using namespace std;
 
 
 namespace inexor {
@@ -114,6 +115,9 @@ namespace vulkan_renderer {
 
 	void display_error_message(const std::string& error_message, const std::string& message_box_title)
 	{
+		// Also print error message to console.
+		cout << error_message.c_str() << endl;
+
 		#ifdef _WIN32
 			// Windows-specific message box.
 			MessageBox(NULL, error_message.c_str(), message_box_title.c_str(), MB_OK|MB_ICONERROR);
