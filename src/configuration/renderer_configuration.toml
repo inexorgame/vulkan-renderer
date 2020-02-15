@@ -8,14 +8,15 @@ title = "Inexor-Vulkan-Renderer"
 [pipeline]
 [pipeline.shaders]
 
+# This is just a test. This file is not being parsed yet!
 vertexshaders = [
-	"test1.vert"
-	"test2.vert"
+	"test1.vert",
+	"test2.vert",
 	"test3.vert"
 ]
 
 fragmentshaders = [
-	"test4.frag"
-	"test5.frag"
+	"test4.frag",
+	"test5.frag",
 	"test6.frag"
 ]
