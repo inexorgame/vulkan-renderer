@@ -1,7 +1,6 @@
 #pragma once
 
-#include "shader-loading/VulkanShader.hpp"
-#include "shader-loading/VulkanShaderManager.hpp"
+#include "shader-manager/VulkanShaderManager.hpp"
 #include "error-handling/VulkanErrorHandling.hpp"
 #include "initialisation/VulkanInitialisation.hpp"
 
@@ -21,9 +20,7 @@ namespace vulkan_renderer {
 
 
 	// Now I am become renderer, the drawer of worlds.
-	class InexorRenderer : public VulkanInitialisation,
-						   public VulkanShaderManager
-						   // TODO: VulkanConfigurationManager
+	class InexorRenderer : public VulkanInitialisation
 	{
 		public:
 

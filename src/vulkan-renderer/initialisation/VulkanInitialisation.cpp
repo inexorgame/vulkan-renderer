@@ -504,36 +504,29 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_pipeline()
 	{
-		cout << "Creating pipeline." << endl;
+		cout << "Creating graphics pipeline." << endl;
 
-		// TODO: Generalize shader setup.
 		// TODO: Load list of shaders from JSON or TOML file.
-		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles.
-		
-		VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info = {};
-		
-		vertex_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertex_shader_stage_create_info.pNext = nullptr;
-		vertex_shader_stage_create_info.flags = 0;
-		vertex_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertex_shader_stage_create_info.module = vertex_shader_module;
-		vertex_shader_stage_create_info.pName = "main";
-		vertex_shader_stage_create_info.pSpecializationInfo = nullptr;
+		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles	
+		// TODO: Generalise vertex shader setup using VulkanShaderManager
 
+		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
+		auto list_of_shaders = VulkanShaderManager::get_shaders();
 
-		VkPipelineShaderStageCreateInfo fragment_shader_stage_create_info = {};
+		for(const auto& current_shader : list_of_shaders)
+		{
+			VkPipelineShaderStageCreateInfo shader_stage_create_info = {};
 
-		fragment_shader_stage_create_info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragment_shader_stage_create_info.pNext  = nullptr;
-		fragment_shader_stage_create_info.flags  = 0;
-		fragment_shader_stage_create_info.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragment_shader_stage_create_info.module = fragment_shader_module;
-		fragment_shader_stage_create_info.pName = "main";
-		fragment_shader_stage_create_info.pSpecializationInfo = nullptr;
-		
-		// Put all the required shaders into one array.
-		shader_stages.push_back(vertex_shader_stage_create_info);
-		shader_stages.push_back(fragment_shader_stage_create_info);
+			shader_stage_create_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shader_stage_create_info.pNext               = nullptr;
+			shader_stage_create_info.flags               = 0;
+			shader_stage_create_info.stage               = current_shader.get_shader_type();
+			shader_stage_create_info.module              = current_shader.get_shader_module();
+			shader_stage_create_info.pName               = "main";
+			shader_stage_create_info.pSpecializationInfo = nullptr;
+			
+			shader_stages.push_back(shader_stage_create_info);
+		}
 
 
 		VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
@@ -569,7 +562,7 @@ namespace vulkan_renderer {
 		// TODO: Setup scissor by JSON or TOML file.
 
 		VkRect2D scissor = {};
-		
+
 		scissor.offset = {0, 0};
 		scissor.extent = {window_width, window_height};
 
@@ -762,7 +755,7 @@ namespace vulkan_renderer {
 			frame_buffer_create_info.flags           = 0;
 			frame_buffer_create_info.renderPass      = render_pass;
 			frame_buffer_create_info.attachmentCount = 1;
-			frame_buffer_create_info.pAttachments    = &image_views[i];
+			frame_buffer_create_info.pAttachments    = &swapchain_image_views[i];
 			frame_buffer_create_info.width           = window_width;
 			frame_buffer_create_info.height          = window_height;
 			frame_buffer_create_info.layers          = 1;
@@ -797,7 +790,7 @@ namespace vulkan_renderer {
 		if(VK_SUCCESS != result) return result;
 
 		// Preallocate memory for the image views.
-		image_views.resize(number_of_images_in_swapchain);
+		swapchain_image_views.resize(number_of_images_in_swapchain);
 	
 		VkImageViewCreateInfo image_view_create_info = {};
 
@@ -824,7 +817,7 @@ namespace vulkan_renderer {
 		{
 			image_view_create_info.image = swapchain_images[i];
 
-			result = vkCreateImageView(device, &image_view_create_info, nullptr, &image_views[i]);
+			result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
 			if(VK_SUCCESS != result) return result;
 		}
 
@@ -834,11 +827,19 @@ namespace vulkan_renderer {
 	
 	void VulkanInitialisation::shutdown_vulkan()
 	{
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+		cout << "Shutting down Vulkan API." << endl;
+		cout << "Waiting for Vulkan device to be idle." << endl;
+
 		// Wait for a device to become idle.
 		vkDeviceWaitIdle(device);
 
+		cout << "Vulkan device is idle.." << endl;
+		
 		// It is important to destroy the objects in reversal of the order of creation.
 		// Device queues are implicitly cleaned up when the device is destroyed.
+
+		cout << "Destroying semaphores." << endl;
 
 		// TODO: Generalize semaphore shutdown!
 		if(VK_NULL_HANDLE != semaphore_image_available)
@@ -851,6 +852,7 @@ namespace vulkan_renderer {
 			vkDestroySemaphore(device, semaphore_rendering_finished, nullptr);
 		}
 
+		cout << "Destroying command buffers." << endl;
 
 		// We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
 
@@ -862,11 +864,15 @@ namespace vulkan_renderer {
 			command_buffers.clear();
 		}
 
+		cout << "Destroying command pool." << endl;
+		
 		if(VK_NULL_HANDLE != command_pool)
 		{
 			vkDestroyCommandPool(device, command_pool, nullptr);
 		}
 
+		cout << "Destroying frame buffer." << endl;
+		
 		for(auto frame_buffer : frame_buffers)
 		{
 			if(VK_NULL_HANDLE != frame_buffer)
@@ -877,17 +883,23 @@ namespace vulkan_renderer {
 
 		frame_buffers.clear();
 
+		cout << "Destroying pipeline." << endl;
+		
 		if(VK_NULL_HANDLE != pipeline)
 		{
 			vkDestroyPipeline(device, pipeline, nullptr);
 		}
 
+		cout << "Destroying render pass." << endl;
+		
 		if(VK_NULL_HANDLE != render_pass)
 		{
 			vkDestroyRenderPass(device, render_pass, nullptr);
 		}
 
-		for(auto image_view : image_views)
+		cout << "Destroying image views." << endl;
+		
+		for(auto image_view : swapchain_image_views)
 		{
 			if(VK_NULL_HANDLE != image_view)
 			{
@@ -895,40 +907,44 @@ namespace vulkan_renderer {
 			}
 		}
 
-		image_views.clear();
+		swapchain_image_views.clear();
+		
+		cout << "Destroying pipeline layout." << endl;
 
 		if(VK_NULL_HANDLE != pipeline_layout)
 		{
 			vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 		}
 
+		cout << "Destroying shader objects." << endl;
+		
+		// Destroy all shader objects we created.
+		VulkanShaderManager::shutdown_shaders(device);
 
-		// TODO: Generalize shader module shutdown!
-		if(VK_NULL_HANDLE != vertex_shader_module)
-		{
-			vkDestroyShaderModule(device, vertex_shader_module, nullptr);
-		}
 
-		if(VK_NULL_HANDLE != fragment_shader_module)
-		{
-			vkDestroyShaderModule(device, fragment_shader_module, nullptr);
-		}
-
+		cout << "Destroying swapchain." << endl;
+		
 		if(VK_NULL_HANDLE != swapchain)
 		{
 			vkDestroySwapchainKHR(device, swapchain, nullptr);
 		}
+		
+		cout << "Destroying surface." << endl;
 
 		if(VK_NULL_HANDLE != surface)
 		{
 			vkDestroySurfaceKHR(instance, surface, nullptr);
 		}
 		
+		cout << "Destroying device." << endl;
+		
 		if(VK_NULL_HANDLE != device)
 		{
 			// Device queues are implicitly cleaned up when the device is destroyed, so we don’t need to do anything in cleanup.
 			vkDestroyDevice(device, nullptr);
 		}
+		
+		cout << "Destroying instance." << endl;
 
 		if(VK_NULL_HANDLE != instance)
 		{

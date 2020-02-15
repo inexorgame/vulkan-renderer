@@ -16,6 +16,7 @@
 #include "../window-manager/VulkanWindowManager.hpp"
 #include "../availability-checks/VulkanAvailabilityChecks.hpp"
 #include "../settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
+#include "../shader-manager/VulkanShaderManager.hpp"
 
 #include <vector>
 #include <string>
@@ -32,9 +33,8 @@ namespace vulkan_renderer {
 	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,
-								 public VulkanSettingsDecisionMaker
-								 // TODO: VulkanTextureManager
-								 // TODO: VulkanConfigurationFileManager
+								 public VulkanSettingsDecisionMaker,
+								 public VulkanShaderManager
 	{
 		public:
 
@@ -72,8 +72,8 @@ namespace vulkan_renderer {
 			// Structure describing parameters of a queue presentation.
 			VkPresentInfoKHR present_info;
 
-			// The images in the swap chain.
-			std::vector<VkImageView> image_views;
+			// The images in the swapchain.
+			std::vector<VkImageView> swapchain_image_views;
 
 			// Opaque handle to a pipeline layout object.
 			VkPipelineLayout pipeline_layout;
@@ -123,13 +123,6 @@ namespace vulkan_renderer {
 
 			// 
 			std::vector<VkDeviceQueueCreateInfo> device_queues;
-
-
-
-			// TODO: Setup shaders from JSON or TOML file?			
-			VkShaderModule vertex_shader_module;
-
-			VkShaderModule fragment_shader_module;
 
 
 		protected:

@@ -19,17 +19,10 @@ namespace vulkan_renderer {
 	{
 		// It is important to make sure that you debugging folder contains the required shader files!
 		
-		VkResult result;
-		
-		result = create_shader_module_from_file(device, "vertex_shader.spv", &vertex_shader_module);
-		if(VK_SUCCESS != result) return result;
-		
-		result = create_shader_module_from_file(device, "fragment_shader.spv", &fragment_shader_module);
-		if(VK_SUCCESS != result) return result;
+		create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, "vertex_shader.spv");
+		create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, "fragment_shader.spv");
 
-		// TODO: Setup shaders from JSON or TOML file.
-		// TODO: Add more shaders here..
-
+		// TODO: Setup shaders JSON or TOML list file.
 		return VK_SUCCESS;
 	}
 
