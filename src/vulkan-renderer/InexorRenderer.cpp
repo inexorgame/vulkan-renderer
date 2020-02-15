@@ -160,6 +160,7 @@ namespace vulkan_renderer {
 		}
 
 		// Setup the queues for presentation and graphics.
+		// Since we only have one queue per queue family, we acquire index 0.
 		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
 		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
 

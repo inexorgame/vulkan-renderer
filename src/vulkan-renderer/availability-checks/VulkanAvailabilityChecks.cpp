@@ -1,4 +1,5 @@
 #include "VulkanAvailabilityChecks.hpp"
+using namespace std;
 
 
 namespace inexor {
@@ -182,6 +183,55 @@ namespace vulkan_renderer {
 	{
 		return check_device_extension_availability(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
+
+
+	std::optional<uint32_t> VulkanAvailabilityChecks::check_existence_of_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	{
+		uint32_t number_of_available_queue_families = 0;
+
+		// First check how many queue families are available.
+		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
+
+		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+
+		// Preallocate memory for the available queue families.
+		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
+		
+		// Get information about the available queue families.
+		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+
+
+		// Loop through all available queue families and look for a suitable one.
+		for(std::size_t i=0; i<available_queue_families.size(); i++)
+		{
+			if(available_queue_families[i].queueCount > 0)
+			{
+				// Check if this queue family supports graphics.
+				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+				{
+					// Ok this queue family supports graphics!
+					// Now let's check if it supports presentation.
+					VkBool32 presentation_available = false;
+
+					uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+
+					// Query if presentation is supported.
+					VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface, &presentation_available);
+					vulkan_error_check(result);
+
+					// Check if we can use this queue family for presentation as well.
+					if(presentation_available)
+					{
+						cout << "Found one queue family for both graphics and presentation." << endl;
+						return this_queue_family_index;
+					}
+				}
+			}
+		}
+
+		return std::nullopt;
+	}
+
 
 };
 };

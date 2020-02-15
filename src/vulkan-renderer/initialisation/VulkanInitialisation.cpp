@@ -148,86 +148,99 @@ namespace vulkan_renderer {
 
 		// This is neccesary since device queues might be recreated as swapchain becomes invalid.
 		device_queues.clear();
+
+		// Check if there is one queue family which can be used for both graphics and presentation.
+		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = check_existence_of_queue_family_for_both_graphics_and_presentation(selected_graphics_card, surface);
 		
-		uint32_t number_of_available_queue_families = 0;
-
-		// First check how many queue families are available.
-		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_available_queue_families, nullptr);
-
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
-
-		// Preallocate memory for the available queue families.
-		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
-
-		// Get information about the available queue families.
-		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_available_queue_families, available_queue_families.data());
-
-		// Loop through all available queue families and look for a suitable one.
-		for(std::size_t i=0; i<available_queue_families.size(); i++)
+		if(queue_family_index_for_both_graphics_and_presentation.has_value())
 		{
-			if(available_queue_families[i].queueCount > 0)
-			{
-				// Check if this queue family supports graphics.
-				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-				{
-					// Ok this queue family supports graphics!
-					// Now let's check if it supports presentation.
-					VkBool32 presentation_available = false;
+			graphics_queue_family_index = queue_family_index_for_both_graphics_and_presentation.value();
+			present_queue_family_index = graphics_queue_family_index;
+			use_one_queue_family_for_graphics_and_presentation = true;
 
-					uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+			// In this case, there is one queue family which can be used for both graphics and presentation.
+			VkDeviceQueueCreateInfo device_queue_create_info = {};
 
-					// Query if presentation is supported.
-					VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, this_queue_family_index, surface, &presentation_available);
-					vulkan_error_check(result);
+			// For now, we only need one queue family.
+			uint32_t number_of_queues_to_use = 1;
 
-					// Check if we can use this queue family for presentation as well.
-					if(presentation_available)
-					{
-						// Okay, great we can use one queue family for both graphics and presentation.
-						// We only need one queue for now.
-						uint32_t number_of_queues_to_use_from_this_queue_family = 1;
+			// Since we only use one queue, priorities are of no importance.
+			const std::vector<float> queue_priorities(number_of_queues_to_use, 1.0f);
 
-						// Let's just use 1.0f as priority for every queue now.
-						// TOOD: We might have to optimize queue priorities later.
-						const std::vector<float> queue_priorities(number_of_queues_to_use_from_this_queue_family, 1.0f);
+			device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			device_queue_create_info.pNext            = nullptr;
+			device_queue_create_info.flags            = 0;
+			device_queue_create_info.queueFamilyIndex = queue_family_index_for_both_graphics_and_presentation.value();
+			device_queue_create_info.queueCount       = number_of_queues_to_use;
+			device_queue_create_info.pQueuePriorities = queue_priorities.data();
 
-						VkDeviceQueueCreateInfo device_queue_create_info = {};
-
-						device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-						device_queue_create_info.pNext            = nullptr;
-						device_queue_create_info.flags            = 0;
-						device_queue_create_info.queueFamilyIndex = this_queue_family_index;
-						device_queue_create_info.queueCount       = number_of_queues_to_use_from_this_queue_family;
-						device_queue_create_info.pQueuePriorities = queue_priorities.data();
-						
-						// We can use this queue family for both graphics and presentation.
-						graphics_queue_family_index = this_queue_family_index;
-						present_queue_family_index = this_queue_family_index;
-						use_one_queue_family_for_graphics_and_presentation = true;
-
-						device_queues.push_back(device_queue_create_info);
-
-						cout << "Found one queue family for both graphics and presentation." << endl;
-						
-						return VK_SUCCESS;
-					}
-				}
-			}
-			else
-			{
-				cout << "Queue family " << i << " does not contain any queues!" << endl;
-			}
+			device_queues.push_back(device_queue_create_info);
 		}
-
-		// Try to use 2 queue families for graphics and presentation.
-		if(!use_one_queue_family_for_graphics_and_presentation)
+		else
 		{
-			cout << "Could not find a queue family that supports both graphics and presentation." << endl;
+			// We have to use 2 different queue families.
+			// One for graphics and another one for presentation.
 			
-			// TODO: Implement!
+			// Check which queue family index can be used for graphics.
+			graphics_queue_family_index = decide_which_graphics_queue_family_to_use(selected_graphics_card);
+			
+			if(!graphics_queue_family_index.has_value())
+			{
+				std::string error_message = "Error: Could not find suitable queue family indices for graphics!";
+				display_error_message(error_message);
+				return VK_ERROR_INITIALIZATION_FAILED;
+			}
+
+			// Check which queue family index can be used for presentation.
+			present_queue_family_index = decide_which_presentation_queue_family_to_use(selected_graphics_card, surface);
+
+			if(!present_queue_family_index.has_value())
+			{
+				std::string error_message = "Error: Could not find suitable queue family indices for presentation!";
+				display_error_message(error_message);
+				return VK_ERROR_INITIALIZATION_FAILED;
+			}
+
+
+			// Set up one queue for graphics.
+			VkDeviceQueueCreateInfo device_queue_create_info_for_graphics_queue = {};
+			
+			// For now, we only need one queue family.
+			uint32_t number_of_graphics_queues_to_use = 1;
+
+			// Since we only use one queue, priorities are of no importance.
+			const std::vector<float> graphics_queue_priorities(number_of_graphics_queues_to_use, 1.0f);
+
+			device_queue_create_info_for_graphics_queue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			device_queue_create_info_for_graphics_queue.pNext            = nullptr;
+			device_queue_create_info_for_graphics_queue.flags            = 0;
+			device_queue_create_info_for_graphics_queue.queueFamilyIndex = graphics_queue_family_index.value();
+			device_queue_create_info_for_graphics_queue.queueCount       = number_of_graphics_queues_to_use;
+			device_queue_create_info_for_graphics_queue.pQueuePriorities = graphics_queue_priorities.data();
+
+			device_queues.push_back(device_queue_create_info_for_graphics_queue);
+
+
+			// Set up one queue for presentation.
+			VkDeviceQueueCreateInfo device_queue_create_info_for_presentation_queue = {};
+			
+			// For now, we only need one queue family.
+			uint32_t number_of_present_queues_to_use = 1;
+
+			// Since we only use one queue, priorities are of no importance.
+			const std::vector<float> present_queue_priorities(number_of_present_queues_to_use, 1.0f);
+
+			device_queue_create_info_for_presentation_queue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			device_queue_create_info_for_presentation_queue.pNext            = nullptr;
+			device_queue_create_info_for_presentation_queue.flags            = 0;
+			device_queue_create_info_for_presentation_queue.queueFamilyIndex = present_queue_family_index.value();
+			device_queue_create_info_for_presentation_queue.queueCount       = number_of_present_queues_to_use;
+			device_queue_create_info_for_presentation_queue.pQueuePriorities = present_queue_priorities.data();
+
+			device_queues.push_back(device_queue_create_info_for_presentation_queue);
 		}
 
-		return VK_ERROR_INITIALIZATION_FAILED;
+		return VK_SUCCESS;
 	}
 
 	
@@ -472,7 +485,7 @@ namespace vulkan_renderer {
 				present_queue_family_index.value()
 			};
 			
-			// It is important to note, that we can't use VK_SHARING_MODE_EXCLUSIVE in this case.
+			// It is important to note that we can't use VK_SHARING_MODE_EXCLUSIVE in this case.
 			// VK_SHARING_MODE_CONCURRENT may result in lower performance access to the buffer or image than VK_SHARING_MODE_EXCLUSIVE.
 			swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
 			swapchain_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
