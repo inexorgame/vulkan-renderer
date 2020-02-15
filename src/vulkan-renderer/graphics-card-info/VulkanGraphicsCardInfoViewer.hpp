@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-using namespace std;
 
 #include <vulkan/vulkan.h>
 
@@ -15,8 +14,8 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	// @class VulkanGraphicsCardInfoViewer
-	// @brief Prints information related to graphics card's capabilities and limits.
+	/// @class VulkanGraphicsCardInfoViewer
+	/// @brief Prints information related to graphics card's capabilities and limits.
 	class VulkanGraphicsCardInfoViewer
 	{
 		public:

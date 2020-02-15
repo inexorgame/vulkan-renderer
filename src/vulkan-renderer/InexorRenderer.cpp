@@ -85,7 +85,7 @@ namespace vulkan_renderer {
 		// Create a window using GLFW library.
 		create_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_WINDOW_TITLE, true);
 
-		// Create a vulkan instance.
+		// Create a Vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
 		vulkan_error_check(result);
 		
@@ -100,7 +100,19 @@ namespace vulkan_renderer {
 		print_all_physical_devices(instance, surface);
 
 		// Let the user select a graphics card or select the "best" one automatically.
-		selected_graphics_card = decide_which_graphics_card_to_use(instance);
+		std::optional<VkPhysicalDevice> graphics_card = decide_which_graphics_card_to_use(instance);
+		
+		if(graphics_card.has_value())
+		{
+			selected_graphics_card = graphics_card.value();
+		}
+		else
+		{
+			std::string error_message = "Error: Could not find a suitable graphics card!";
+			display_error_message(error_message);
+			exit(-1);
+		}
+
 
 		if(!check_swapchain_availability(selected_graphics_card))
 		{

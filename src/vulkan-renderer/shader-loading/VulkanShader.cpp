@@ -1,4 +1,5 @@
 #include "VulkanShader.hpp"
+using namespace std;
 
 
 namespace inexor {

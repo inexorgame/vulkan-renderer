@@ -21,15 +21,14 @@
 #include <string>
 #include <vector>
 #include <iostream>
-using namespace std;
 
 
 namespace inexor {
 namespace vulkan_renderer {
 
 
-	// @class VulkanInitialisation
-	// @brief A class for initialisation of the Vulkan API.
+	/// @class VulkanInitialisation
+	/// @brief A class for initialisation of the Vulkan API.
 	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,
@@ -114,6 +113,11 @@ namespace vulkan_renderer {
 
 			// Opaque handle to a semaphore object.
 			VkSemaphore semaphore_rendering_finished;
+
+			// Try to use one queue family for both graphics and presentation.
+			bool use_one_queue_family_for_graphics_and_presentation = false;
+
+			// TODO: Use multiple queues if both in one are not supported?
 
 			// Opaque handle to a queue object.
 			VkQueue device_queue;

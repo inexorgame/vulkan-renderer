@@ -1,4 +1,5 @@
 #include "VulkanInitialisation.hpp"
+using namespace std;
 
 
 namespace inexor {
@@ -147,6 +148,7 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating device queues." << endl;
 
+		// This is neccesary since device queues might be recreated as swapchain becomes invalid.
 		device_queues.clear();
 		
 		uint32_t number_of_available_queue_families = 0;
@@ -154,16 +156,15 @@ namespace vulkan_renderer {
 		// First check how many queue families are available.
 		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_available_queue_families, nullptr);
 
+		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+
 		// Preallocate memory for the available queue families.
 		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
 
 		// Get information about the available queue families.
 		vkGetPhysicalDeviceQueueFamilyProperties(selected_graphics_card, &number_of_available_queue_families, available_queue_families.data());
 
-
-		// ATTEMPT 1: Try to use one queue family for both graphics and presentation.
-		bool use_one_queue_family_for_graphics_and_presentation = false;
-
+		// Loop through all available queue families and look for a suitable one.
 		for(std::size_t i=0; i<available_queue_families.size(); i++)
 		{
 			if(available_queue_families[i].queueCount > 0)
@@ -172,6 +173,7 @@ namespace vulkan_renderer {
 				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 				{
 					VkBool32 presentation_available = false;
+
 					uint32_t queue_family_index = static_cast<uint32_t>(i);
 
 					// Query if presentation is supported.
@@ -204,21 +206,23 @@ namespace vulkan_renderer {
 						selected_queue_index = 0;
 						selected_queue_family_index = queue_family_index;
 
-						// Add queue.
 						device_queues.push_back(device_queue_create_info);
 						use_one_queue_family_for_graphics_and_presentation = true;
 
 						cout << "Found one queue family for both graphics and presentation." << endl;
 						
-						// We're done!
 						return VK_SUCCESS;
 					}
 				}
 			}
+			else
+			{
+				cout << "Queue family " << i << " does not contain any queues!" << endl;
+			}
 		}
 
 
-		// ATTEMPT 2: Try to use 2 queue families for graphics and presentation.
+		// Try to use 2 queue families for graphics and presentation.
 		if(!use_one_queue_family_for_graphics_and_presentation)
 		{
 			cout << "Could not find a queue family that supports both graphics and presentation." << endl;
@@ -230,12 +234,9 @@ namespace vulkan_renderer {
 
 			bool queue_family_for_graphics_found = false;
 			bool queue_family_for_presentation_found = false;
-
 			
+
 			// TODO: Implement!
-			// We need to check some reference implementations first.
-			
-
 			display_error_message("Error: Separate queues for graphics and presentation not supporte yet.");
 			
 			if(queue_family_for_graphics_found && queue_family_for_presentation_found)
@@ -259,14 +260,19 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating a physical device." << endl;
 		
-		// TODO: Fill with required features!
+		// Currently, we don't need any special features at all.
+		// Fill this with required features if neccesary.
 		VkPhysicalDeviceFeatures used_features = {};
 
 		// Our wishlist of device extensions that we would like to enable.
-		const std::vector<const char*> device_extensions_wishlist = {
+		const std::vector<const char*> device_extensions_wishlist =
+		{
 			// Since we actually want a window to draw on, we need this swapchain extension.
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			
+			// Add more device extensions here if neccesary.
 		};
+
 
 		// The actual list of enabled device extensions.
 		std::vector<const char*> enabled_device_extensions;
@@ -420,7 +426,6 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating swap chain." << endl;
 
-		// TODO: Check if system supports the number of images specified here!
 		// TODO: Check if system supports this image format!
 		// TODO: Check if system supports this image color space!
 		// TODO: Check if system supports this image sharing mode!
@@ -428,13 +433,21 @@ namespace vulkan_renderer {
 		
 		decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface, selected_image_format, selected_color_space);
 		
-		VkExtent2D swapchain_extent = {};
+		VkExtent2D selected_swapchain_image_extent = {};
 
-		decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, swapchain_extent);
+		decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
 
-		selected_present_mode = decide_which_presentation_mode_to_use(selected_graphics_card, surface);
+		std::optional<VkPresentModeKHR> selected_present_mode = decide_which_presentation_mode_to_use(selected_graphics_card, surface);
+
+		if(!selected_present_mode.has_value())
+		{
+			std::string error_message = "Error: Could not select a presentation mode for the presentation engine. This is strange, since VK_PRESENT_MODE_FIFO_KHR should be available on all systems!";
+			display_error_message(error_message);
+			exit(-1);
+		}
 
 		number_of_images_in_swap_chain = decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+
 
 		VkSwapchainCreateInfoKHR swap_chain_create_info = {};
 		
@@ -445,7 +458,7 @@ namespace vulkan_renderer {
 		swap_chain_create_info.minImageCount         = number_of_images_in_swap_chain;
 		swap_chain_create_info.imageFormat           = selected_image_format;
 		swap_chain_create_info.imageColorSpace       = selected_color_space;
-		swap_chain_create_info.imageExtent           = VkExtent2D{window_width, window_height};
+		swap_chain_create_info.imageExtent           = selected_swapchain_image_extent;
 		swap_chain_create_info.imageArrayLayers      = 1;
 		swap_chain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -456,7 +469,7 @@ namespace vulkan_renderer {
 		swap_chain_create_info.pQueueFamilyIndices   = nullptr;
 		swap_chain_create_info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swap_chain_create_info.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swap_chain_create_info.presentMode           = selected_present_mode;
+		swap_chain_create_info.presentMode           = selected_present_mode.value();
 		swap_chain_create_info.clipped               = VK_TRUE;
 		swap_chain_create_info.oldSwapchain          = VK_NULL_HANDLE;
 
@@ -888,6 +901,7 @@ namespace vulkan_renderer {
 		
 		if(VK_NULL_HANDLE != device)
 		{
+			// Device queues are implicitly cleaned up when the device is destroyed, so we don’t need to do anything in cleanup.
 			vkDestroyDevice(device, nullptr);
 		}
 

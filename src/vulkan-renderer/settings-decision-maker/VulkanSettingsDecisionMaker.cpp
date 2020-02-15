@@ -1,4 +1,5 @@
 #include "VulkanSettingsDecisionMaker.hpp"
+using namespace std;
 
 
 namespace inexor {
@@ -83,8 +84,6 @@ namespace vulkan_renderer {
 				if(VK_FORMAT_B8G8R8A8_UNORM == surface_format.format)
 				{
 					color_format = surface_format.format;
-
-					// TODO: Check if VK_COLOR_SPACE_SRGB_NONLINEAR_KHR is available.
 					color_space = surface_format.colorSpace;
 
 					found_B8G8R8A8_UNORM = true;
@@ -181,7 +180,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkPhysicalDevice VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const uint32_t& preferred_graphics_card_index)
+	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const uint32_t& preferred_graphics_card_index)
 	{
 		cout << "Deciding automatically which graphics card to use." << endl;
 		
@@ -194,7 +193,7 @@ namespace vulkan_renderer {
 		if(0 == number_of_available_graphics_cards)
 		{
 			display_error_message("Error: Could not find any graphics cards!");
-			// TODO: Return std::nullopt.
+			return std::nullopt;
 		}
 		
 		cout << "There are " << number_of_available_graphics_cards << " graphics cards available." << endl;
@@ -272,7 +271,7 @@ namespace vulkan_renderer {
 		cout << "Detecting best graphics card automatically." << endl;
 		cout << "Phase 1: Sort out all graphics cards which are unsuitable." << endl;
 
-		uint32_t available_graphics_cards_array_index = UINT32_MAX;
+		std::size_t available_graphics_cards_array_index = UINT32_MAX;
 		
 		// The suitable graphics cards (by array index).
 		std::vector<std::size_t> suitable_graphics_cards;
@@ -305,7 +304,7 @@ namespace vulkan_renderer {
 		if(0 == suitable_graphics_cards.size())
 		{
 			cout << "Error: Could not find suitable graphics card automatically." << endl;
-			//return std::nullopt;
+			return std::nullopt;
 		}
 
 		// Only 1 graphics card is suitable, let's choose that one.
@@ -324,17 +323,13 @@ namespace vulkan_renderer {
 		cout << "Phase 2: We have multiple suitable graphics card." << endl;
 		cout << "Starting to rank them by score." << endl;
 
-		
 		// ----------------------------------------
 		// TODO: Implement score ranking mechanism!
 		// ----------------------------------------
 
-
 		// For now, let's just use the first index of the suitable graphics cards.
 		// This might be not the best choice after all, but it simplifies the situation for now.
 		available_graphics_cards_array_index = suitable_graphics_cards[0];
-
-
 
 		return available_graphics_cards[available_graphics_cards_array_index];
 	}
@@ -364,7 +359,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkPresentModeKHR VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		uint32_t number_of_available_present_modes = 0;
 
@@ -378,6 +373,7 @@ namespace vulkan_renderer {
 		// Get information about the available present modes.
 		result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, available_present_modes.data());
 		vulkan_error_check(result);
+
 
 		for(auto present_mode : available_present_modes)
 		{
@@ -408,8 +404,8 @@ namespace vulkan_renderer {
 				return VK_PRESENT_MODE_FIFO_KHR;
 			}
 		}
-
-		cout << "Error: FIFO present mode is not supported by the swap chain!" << endl;
+		
+		cout << "Info: VK_PRESENT_MODE_FIFO_KHR is not supported by the regarded device." << endl;
 
 		// Lets try with any present mode available!
 		if(available_present_modes.size() > 0)
@@ -418,23 +414,19 @@ namespace vulkan_renderer {
 			return available_present_modes[0];
 		}
 
-		cout << "Error: The regarded graphics card does not support any presentation at all!" << endl;
+		cout << "Error: The selected graphics card does not support any presentation at all!" << endl;
 		
-		// TODO: Shutdown Vulkan and application.
-
-		return VK_PRESENT_MODE_MAX_ENUM_KHR;
+		return std::nullopt;
 	}
 
 
 	void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, uint32_t& window_width, uint32_t& window_height, VkExtent2D& swapchain_extent)
 	{
-		// Bitmask of VkSurfaceTransformFlagBitsKHR.
 		VkSurfaceCapabilitiesKHR surface_capabilities = {};
 
 		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
 		vulkan_error_check(result);
 
-		// TODO: Use std::clamp from Vulkan Tutorial.
 
 		if(surface_capabilities.currentExtent.width == UINT32_MAX && surface_capabilities.currentExtent.height == UINT32_MAX)
 		{
@@ -444,11 +436,12 @@ namespace vulkan_renderer {
 		}
 		else
 		{
+			// TODO: Refactor! Do it the way the Vulkan Tutorial is doing it.
+			
 			// If the surface size is defined, the swap chain size must match.
 			swapchain_extent = surface_capabilities.currentExtent;
 			window_width     = surface_capabilities.currentExtent.width;
 			window_height    = surface_capabilities.currentExtent.height;
-
 		}
 	}
 

@@ -1,4 +1,5 @@
 #include "VulkanGraphicsCardInfoViewer.hpp"
+using namespace std;
 
 
 namespace inexor {
