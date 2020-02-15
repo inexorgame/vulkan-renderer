@@ -39,17 +39,18 @@ namespace vulkan_renderer {
 		uint32_t image_index = 0;
 
 		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
+		vulkan_error_check(result);
 		
+		// TODO!
 		// It is possible for the window surface to change such that the swap chain is no longer compatible with it.
 		// One of the reasons that could cause this to happen is the size of the window changing.
 		// We have to catch these events and recreate the swap chain.
-		// TODO!
 
-		vulkan_error_check(result);
-
-		const VkPipelineStageFlags wait_stage_mask[] = {
+		const VkPipelineStageFlags wait_stage_mask[] =
+		{
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
+
 
 		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext                = nullptr;
@@ -61,7 +62,7 @@ namespace vulkan_renderer {
 		submit_info.pWaitSemaphores      = &semaphore_image_available;
 		submit_info.pSignalSemaphores    = &semaphore_rendering_finished;
 
-		result = vkQueueSubmit(device_queue, 1, &submit_info, VK_NULL_HANDLE);
+		result = vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
 		if(VK_SUCCESS != result) return result;
 
 		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -73,7 +74,7 @@ namespace vulkan_renderer {
 		present_info.pImageIndices      = &image_index;
 		present_info.pResults           = nullptr;
 
-		result = vkQueuePresentKHR(device_queue, &present_info);
+		result = vkQueuePresentKHR(present_queue, &present_info);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -150,9 +151,19 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		vkGetDeviceQueue(device, selected_queue_family_index, selected_queue_index, &device_queue);
+		// Check if suitable queues were found.
+		if(!present_queue_family_index.has_value() || (!graphics_queue_family_index.has_value()))
+		{
+			display_error_message("Error: Could not find suitable queues!");
+			shutdown_vulkan();
+			exit(-1);
+		}
 
-		result = create_swap_chain();
+		// Setup the queues for presentation and graphics.
+		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
+		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
+
+		result = create_swapchain();
 		vulkan_error_check(result);
 		
 		result = create_image_views();

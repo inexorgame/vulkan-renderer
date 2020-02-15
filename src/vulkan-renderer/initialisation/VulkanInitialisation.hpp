@@ -64,7 +64,7 @@ namespace vulkan_renderer {
 			VkSwapchainKHR swapchain;
 
 			// The number of images in the swapchain.
-			uint32_t number_of_images_in_swap_chain;
+			uint32_t number_of_images_in_swapchain;
 
 			// Structure specifying a queue submit operation.
 			VkSubmitInfo submit_info;
@@ -74,10 +74,6 @@ namespace vulkan_renderer {
 
 			// The images in the swap chain.
 			std::vector<VkImageView> image_views;
-
-			// TODO: Setup shaders from JSON or TOML file?			
-			VkShaderModule vertex_shader_module;
-			VkShaderModule fragment_shader_module;
 
 			// Opaque handle to a pipeline layout object.
 			VkPipelineLayout pipeline_layout;
@@ -91,16 +87,16 @@ namespace vulkan_renderer {
 			// 
 			std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
-			// Opaque handle to a render pass object.
+			// 
 			VkRenderPass render_pass;
 
-			// Opaque handle to a pipeline object.
+			// 
 			VkPipeline pipeline;
 
 			// 
 			std::vector<VkFramebuffer> frame_buffers;
 
-			// Opaque handle to a command pool object.
+			// 
 			VkCommandPool command_pool;
 
 			// 
@@ -117,84 +113,86 @@ namespace vulkan_renderer {
 			// Try to use one queue family for both graphics and presentation.
 			bool use_one_queue_family_for_graphics_and_presentation = false;
 
-			// TODO: Use multiple queues if both in one are not supported?
+			// 
+			std::optional<uint32_t> graphics_queue_family_index;
+			VkQueue graphics_queue;
+			
+			// 
+			std::optional<uint32_t> present_queue_family_index;
+			VkQueue present_queue;
 
-			// Opaque handle to a queue object.
-			VkQueue device_queue;
-
-			// The device queues.
+			// 
 			std::vector<VkDeviceQueueCreateInfo> device_queues;
 
-			// TODO: Make std::optional out of this!
 
-			// 
-			uint32_t selected_queue_index;
 
-			// 
-			uint32_t selected_queue_family_index;
+			// TODO: Setup shaders from JSON or TOML file?			
+			VkShaderModule vertex_shader_module;
+
+			VkShaderModule fragment_shader_module;
 
 
 		protected:
 
 
-			// Creates a Vulkan instance.
-			// @param application_name The name of the application
-			// @param engine_name The name of the engine.
-			// @param application_version The version of the application encoded as an unsigned 32 bit integer.
-			// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
-			// @param enable_validation_layers True if validation is enabled.
+			/// @brief Creates a Vulkan instance.
+			/// @param application_name The name of the application
+			/// @param engine_name The name of the engine.
+			/// @param application_version The version of the application encoded as an unsigned 32 bit integer.
+			/// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
+			/// @param enable_validation_layers True if validation is enabled.
 			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
 
 
-			// Create a window surface.
-			// @param vulkan_instance The instance of Vulkan.
-			// @param window The GLFW window.
-			// @param vulkan_surface The Vulkan (window) surface.
+			/// @brief Create a window surface.
+			/// @param vulkan_instance The instance of Vulkan.
+			/// @param window The GLFW window.
+			/// @param vulkan_surface The Vulkan (window) surface.
 			VkResult create_window_surface(const VkInstance& vulkan_instance, GLFWwindow* window, VkSurfaceKHR& vulkan_surface);
 
 
-			// Create a physical device handle.
-			// @param graphics_card The regarded graphics card.
+			/// @brief Create a physical device handle.
+			/// @param graphics_card The regarded graphics card.
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
 
 
-			// Creates the command buffers.
+			/// @brief Creates the command buffers.
 			VkResult create_command_buffers();
 
 
-			// Records the command buffers.
+			/// @brief Records the command buffers.
 			VkResult record_command_buffers();
 
 
-			// Creates the semaphores neccesary for synchronisation.
+			/// @brief Creates the semaphores neccesary for synchronisation.
 			VkResult create_semaphores();
 
 
-			// Creates the swapchain.
-			VkResult create_swap_chain();
+			/// @brief Creates the swapchain.
+			VkResult create_swapchain();
 			
 
-			// Creates the command pool.
+			/// @brief Creates the command pool.
 			VkResult create_command_pool();
 
 
-			// Creates the frame buffers.
+			/// @brief Creates the frame buffers.
 			VkResult create_frame_buffers();
 			
 
-			// Creates the rendering pipeline.
+			/// @brief Creates the rendering pipeline.
 			VkResult create_pipeline();
 
 
-			// Creates the image views.
+			/// @brief Creates the image views.
 			VkResult create_image_views();
 
 
-			// Creates the device queues.
+			/// @brief Creates the device queues.
 			VkResult create_device_queues();
 
 
-			// Destroys all Vulkan objects.
+			/// @brief Destroys all Vulkan objects.
 			void shutdown_vulkan();
 
 	};

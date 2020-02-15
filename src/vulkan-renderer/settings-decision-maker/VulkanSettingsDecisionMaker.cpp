@@ -202,7 +202,6 @@ namespace vulkan_renderer {
 		}
 
 		// TODO: Check if the selected device supports queue families for graphics bits and presentation!
-		
 		// Add more suitability checks here if desired.
 
 		return true;
@@ -396,6 +395,13 @@ namespace vulkan_renderer {
 		VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, nullptr);
 		vulkan_error_check(result);
 
+		if(0 == number_of_available_present_modes)
+		{
+			std::string error_message("Error: No presentation modes available!");
+			display_error_message(error_message);
+			return std::nullopt;
+		}
+
 		// Preallocate memory for the available present modes.
 		std::vector<VkPresentModeKHR> available_present_modes(number_of_available_present_modes);
 		
@@ -419,7 +425,7 @@ namespace vulkan_renderer {
 		}
 
 		cout << "Info: VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device." << endl;
-		cout << "Let's hope VK_PRESENT_MODE_FIFO_KHR is supported." << endl;
+		cout << "Let's see if VK_PRESENT_MODE_FIFO_KHR is supported." << endl;
 
 		for(auto present_mode : available_present_modes)
 		{

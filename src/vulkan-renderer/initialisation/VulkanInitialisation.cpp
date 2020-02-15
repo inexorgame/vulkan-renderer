@@ -8,9 +8,7 @@ namespace vulkan_renderer {
 
 	VulkanInitialisation::VulkanInitialisation()
 	{
-		selected_queue_index = UINT32_MAX;
-		selected_queue_family_index = UINT32_MAX;
-		number_of_images_in_swap_chain = UINT32_MAX;
+		number_of_images_in_swapchain = 0;
 	}
 
 
@@ -172,42 +170,42 @@ namespace vulkan_renderer {
 				// Check if this queue family supports graphics.
 				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 				{
+					// Ok this queue family supports graphics!
+					// Now let's check if it supports presentation.
 					VkBool32 presentation_available = false;
 
-					uint32_t queue_family_index = static_cast<uint32_t>(i);
+					uint32_t this_queue_family_index = static_cast<uint32_t>(i);
 
 					// Query if presentation is supported.
-					VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, queue_family_index, surface, &presentation_available);
+					VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(selected_graphics_card, this_queue_family_index, surface, &presentation_available);
 					vulkan_error_check(result);
 
 					// Check if we can use this queue family for presentation as well.
 					if(presentation_available)
 					{
 						// Okay, great we can use one queue family for both graphics and presentation.
-						
 						// We only need one queue for now.
 						uint32_t number_of_queues_to_use_from_this_queue_family = 1;
 
 						// Let's just use 1.0f as priority for every queue now.
-						const std::vector<float> queue_priorities(number_of_queues_to_use_from_this_queue_family, 1.0f);
-						
 						// TOOD: We might have to optimize queue priorities later.
+						const std::vector<float> queue_priorities(number_of_queues_to_use_from_this_queue_family, 1.0f);
 
 						VkDeviceQueueCreateInfo device_queue_create_info = {};
 
 						device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 						device_queue_create_info.pNext            = nullptr;
 						device_queue_create_info.flags            = 0;
-						device_queue_create_info.queueFamilyIndex = queue_family_index;
+						device_queue_create_info.queueFamilyIndex = this_queue_family_index;
 						device_queue_create_info.queueCount       = number_of_queues_to_use_from_this_queue_family;
 						device_queue_create_info.pQueuePriorities = queue_priorities.data();
-
-						// TODO: Do we have to pick the first one?
-						selected_queue_index = 0;
-						selected_queue_family_index = queue_family_index;
+						
+						// We can use this queue family for both graphics and presentation.
+						graphics_queue_family_index = this_queue_family_index;
+						present_queue_family_index = this_queue_family_index;
+						use_one_queue_family_for_graphics_and_presentation = true;
 
 						device_queues.push_back(device_queue_create_info);
-						use_one_queue_family_for_graphics_and_presentation = true;
 
 						cout << "Found one queue family for both graphics and presentation." << endl;
 						
@@ -221,35 +219,12 @@ namespace vulkan_renderer {
 			}
 		}
 
-
 		// Try to use 2 queue families for graphics and presentation.
 		if(!use_one_queue_family_for_graphics_and_presentation)
 		{
 			cout << "Could not find a queue family that supports both graphics and presentation." << endl;
 			
-			// TODO: Remove this and implement feature!
-			display_error_message("Could not find a queue family that supports both graphics and presentation.");
-			exit(-1);
-
-
-			bool queue_family_for_graphics_found = false;
-			bool queue_family_for_presentation_found = false;
-			
-
 			// TODO: Implement!
-			display_error_message("Error: Separate queues for graphics and presentation not supporte yet.");
-			
-			if(queue_family_for_graphics_found && queue_family_for_presentation_found)
-			{
-				cout << "Found 2 separate queues for graphics and presentation." << endl;
-				return VK_SUCCESS;
-			}
-			else
-			{
-				std::string error_message = "Error: Could not find suitable queue families!";
-				display_error_message(error_message);
-				return VK_ERROR_INITIALIZATION_FAILED;
-			}
 		}
 
 		return VK_ERROR_INITIALIZATION_FAILED;
@@ -320,12 +295,17 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating command pool." << endl;
 
+		if(!graphics_queue_family_index.has_value())
+		{
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
 		command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext            = nullptr;
 		command_pool_create_info.flags            = 0;
-		command_pool_create_info.queueFamilyIndex = selected_queue_family_index;
+		command_pool_create_info.queueFamilyIndex = graphics_queue_family_index.value();
 
 		return vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
 	}
@@ -341,10 +321,10 @@ namespace vulkan_renderer {
 		command_buffer_allocate_info.pNext              = nullptr;
 		command_buffer_allocate_info.commandPool        = command_pool;
 		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		command_buffer_allocate_info.commandBufferCount = number_of_images_in_swap_chain;
+		command_buffer_allocate_info.commandBufferCount = number_of_images_in_swapchain;
 
 		// Preallocate memory for command buffers.
-		command_buffers.resize(number_of_images_in_swap_chain);
+		command_buffers.resize(number_of_images_in_swapchain);
 
 		return vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
 	}
@@ -361,7 +341,7 @@ namespace vulkan_renderer {
 		command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		command_buffer_begin_info.pInheritanceInfo = nullptr;
 
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			// Begin recording of command buffer.
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
@@ -422,7 +402,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_swap_chain()
+	VkResult VulkanInitialisation::create_swapchain()
 	{
 		cout << "Creating swap chain." << endl;
 
@@ -459,35 +439,53 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		number_of_images_in_swap_chain = decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+		number_of_images_in_swapchain = decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
 
 
-		VkSwapchainCreateInfoKHR swap_chain_create_info = {};
+		VkSwapchainCreateInfoKHR swapchain_create_info = {};
 		
-		swap_chain_create_info.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swap_chain_create_info.pNext                 = nullptr;
-		swap_chain_create_info.flags                 = 0;
-		swap_chain_create_info.surface               = surface;
-		swap_chain_create_info.minImageCount         = number_of_images_in_swap_chain;
-		swap_chain_create_info.imageFormat           = selected_image_format;
-		swap_chain_create_info.imageColorSpace       = selected_color_space;
-		swap_chain_create_info.imageExtent           = selected_swapchain_image_extent;
-		swap_chain_create_info.imageArrayLayers      = 1;
-		swap_chain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchain_create_info.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchain_create_info.pNext                 = nullptr;
+		swapchain_create_info.flags                 = 0;
+		swapchain_create_info.surface               = surface;
+		swapchain_create_info.minImageCount         = number_of_images_in_swapchain;
+		swapchain_create_info.imageFormat           = selected_image_format;
+		swapchain_create_info.imageColorSpace       = selected_color_space;
+		swapchain_create_info.imageExtent           = selected_swapchain_image_extent;
+		swapchain_create_info.imageArrayLayers      = 1;
+		swapchain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		// TODO: Do we have to use VK_SHARING_MODE_CONCURRENT when using multiple queues?
-		// Update: YES WE MUST!
+		if(use_one_queue_family_for_graphics_and_presentation)
+		{
+			// In this case, we can use one queue family for both graphics and presentation.
+			swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+			swapchain_create_info.queueFamilyIndexCount = 0;
+			swapchain_create_info.pQueueFamilyIndices   = nullptr;
+		}
+		else
+		{
+			// In this case, we can't use the same queue family for both graphics and presentation.
+			// We must use 2 separate queue families!
+			const std::vector<uint32_t> queue_family_indices =
+			{
+				graphics_queue_family_index.value(),
+				present_queue_family_index.value()
+			};
+			
+			// It is important to note, that we can't use VK_SHARING_MODE_EXCLUSIVE in this case.
+			// VK_SHARING_MODE_CONCURRENT may result in lower performance access to the buffer or image than VK_SHARING_MODE_EXCLUSIVE.
+			swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+			swapchain_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
+			swapchain_create_info.pQueueFamilyIndices   = queue_family_indices.data();
+		}
 
-		swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
-		swap_chain_create_info.queueFamilyIndexCount = 0;
-		swap_chain_create_info.pQueueFamilyIndices   = nullptr;
-		swap_chain_create_info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		swap_chain_create_info.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swap_chain_create_info.presentMode           = selected_present_mode.value();
-		swap_chain_create_info.clipped               = VK_TRUE;
-		swap_chain_create_info.oldSwapchain          = VK_NULL_HANDLE;
+		swapchain_create_info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		swapchain_create_info.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapchain_create_info.presentMode           = selected_present_mode.value();
+		swapchain_create_info.clipped               = VK_TRUE;
+		swapchain_create_info.oldSwapchain          = VK_NULL_HANDLE;
 
-		return vkCreateSwapchainKHR(device, &swap_chain_create_info, nullptr, &swapchain);
+		return vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
 	}
 
 	
@@ -740,9 +738,9 @@ namespace vulkan_renderer {
 		cout << "Creating frame buffers." << endl;
 
 		// Preallocate memory for frame buffers.
-		frame_buffers.resize(number_of_images_in_swap_chain);
+		frame_buffers.resize(number_of_images_in_swapchain);
 
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			VkFramebufferCreateInfo frame_buffer_create_info = {};
 
@@ -768,25 +766,25 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating image views." << endl;
 
-		VkResult result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swap_chain, nullptr);
+		VkResult result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
 		if(VK_SUCCESS != result) return result;
 
-		cout << "Images in swap chain: " << number_of_images_in_swap_chain << endl;
+		cout << "Images in swap chain: " << number_of_images_in_swapchain << endl;
 
-		if(number_of_images_in_swap_chain <= 0)
+		if(number_of_images_in_swapchain <= 0)
 		{
 			display_error_message("Error: Invalid number of images in swapchain!");
 		}
 
 		// TODO: Make this a class member?
 		// Preallocate memory for the images in swapchain.
-		std::vector<VkImage> swapchain_images(number_of_images_in_swap_chain);
+		std::vector<VkImage> swapchain_images(number_of_images_in_swapchain);
 
-		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swap_chain, swapchain_images.data());
+		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, swapchain_images.data());
 		if(VK_SUCCESS != result) return result;
 
 		// Preallocate memory for the image views.
-		image_views.resize(number_of_images_in_swap_chain);
+		image_views.resize(number_of_images_in_swapchain);
 	
 		VkImageViewCreateInfo image_view_create_info = {};
 
@@ -809,7 +807,7 @@ namespace vulkan_renderer {
 		image_view_create_info.subresourceRange.baseArrayLayer = 0;
 		image_view_create_info.subresourceRange.layerCount     = 1;
 
-		for(std::size_t i=0; i<number_of_images_in_swap_chain; i++)
+		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			image_view_create_info.image = swapchain_images[i];
 
@@ -845,7 +843,7 @@ namespace vulkan_renderer {
 
 		if(command_buffers.size() > 0)
 		{
-			vkFreeCommandBuffers(device, command_pool, number_of_images_in_swap_chain, command_buffers.data());
+			vkFreeCommandBuffers(device, command_pool, number_of_images_in_swapchain, command_buffers.data());
 
 			// Don't forget to free the memory.
 			command_buffers.clear();

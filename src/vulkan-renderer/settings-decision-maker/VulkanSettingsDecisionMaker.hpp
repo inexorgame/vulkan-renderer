@@ -39,7 +39,7 @@ namespace vulkan_renderer {
 			// TODO
 			//uint32_t decide_which_graphics_card_queue_family_index_to_use(const VkPhysicalDevice& graphics_card);
 			//uint32_t decide_which_graphics_card_queue_family_index_to_use();
-			//uint32_t decide_size_of_swap_chain_images();
+			//uint32_t decide_size_of_swapchain_images();
 			//void decide_which_pre_transformation_to_use();
 			//decide_which_image_color_space_to_use();
 			//decide_which_image_sharing_mode_to_use();
