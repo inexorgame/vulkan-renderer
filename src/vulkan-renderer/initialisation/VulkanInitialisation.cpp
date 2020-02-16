@@ -598,6 +598,8 @@ namespace vulkan_renderer {
 			glfwWaitEvents();
 		}
 
+		vkDeviceWaitIdle(device);
+		
 		cout << "Recreating the swapchain." << endl;
 
 		// Cleanup only neccesary parts.
@@ -617,36 +619,9 @@ namespace vulkan_renderer {
 		
 		result = create_command_buffers();
 		if(VK_SUCCESS != result) return result;
-
-		/*
 		
-				result = create_swapchain();
-		vulkan_error_check(result);
-		
-		result = create_image_views();
-		vulkan_error_check(result);
-		
-		result = load_shaders();
-		vulkan_error_check(result);
-		
-		result = create_pipeline();
-		vulkan_error_check(result);
-		
-		result = create_frame_buffers();
-		vulkan_error_check(result);
-		
-		result = create_command_pool();
-		vulkan_error_check(result);
-
-		result = create_command_buffers();
-		vulkan_error_check(result);
-
 		result = record_command_buffers();
-		vulkan_error_check(result);
-
-		result = create_synchronisation_objects();
-		
-		*/
+		if(VK_SUCCESS != result) return result;
 
 		return VK_SUCCESS;
 	}
@@ -656,6 +631,8 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating graphics pipeline." << endl;
 
+		shader_stages.clear();
+		
 		// TODO: Load list of shaders from JSON or TOML file.
 		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles.
 
