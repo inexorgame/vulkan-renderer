@@ -402,21 +402,10 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_semaphores()
 	{
 		cout << "Creating semaphores." << endl;
-
-		VkSemaphoreCreateInfo semaphore_create_info = {};
-
-		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		semaphore_create_info.pNext = nullptr;
-		semaphore_create_info.flags = 0;
-
-		// TODO: Add more semaphores here..
-		// TODO: Generalize semaphore initialisation.
-
-		VkResult result = vkCreateSemaphore(device, &semaphore_create_info, nullptr, &semaphore_image_available);
-		if(VK_SUCCESS != result) return result;
-
-		result = vkCreateSemaphore(device, &semaphore_create_info, nullptr, &semaphore_rendering_finished);
-		if(VK_SUCCESS != result) return result;
+		
+		// Our Vulkan Synchronisation manager will take care of Semaphore creation.
+		VulkanSynchronisationManager::create_semaphore(device, "rendering_finished");
+		VulkanSynchronisationManager::create_semaphore(device, "next_image_available");
 
 		return VK_SUCCESS;
 	}
@@ -845,23 +834,15 @@ namespace vulkan_renderer {
 		// Wait for a device to become idle.
 		vkDeviceWaitIdle(device);
 
-		cout << "Vulkan device is idle.." << endl;
+		cout << "Vulkan device is idle." << endl;
 		
 		// It is important to destroy the objects in reversal of the order of creation.
 		// Device queues are implicitly cleaned up when the device is destroyed.
 
 		cout << "Destroying semaphores." << endl;
 
-		// TODO: Generalize semaphore shutdown!
-		if(VK_NULL_HANDLE != semaphore_image_available)
-		{
-			vkDestroySemaphore(device, semaphore_image_available, nullptr);
-		}
-
-		if(VK_NULL_HANDLE != semaphore_rendering_finished)
-		{
-			vkDestroySemaphore(device, semaphore_rendering_finished, nullptr);
-		}
+		// Destroy all existing Vulkan semaphores and Vulkan fences.
+		VulkanSynchronisationManager::shutdown_semaphores(device);
 
 		cout << "Destroying command buffers." << endl;
 
@@ -932,6 +913,7 @@ namespace vulkan_renderer {
 		// Destroy all shader objects we created.
 		VulkanShaderManager::shutdown_shaders(device);
 
+		// VulkanSynchronisationManager::shutdown_semaphores();
 
 		cout << "Destroying swapchain." << endl;
 		

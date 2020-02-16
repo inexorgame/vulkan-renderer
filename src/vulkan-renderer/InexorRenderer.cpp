@@ -31,8 +31,26 @@ namespace vulkan_renderer {
 	{
 		uint32_t image_index = 0;
 
-		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore_image_available, VK_NULL_HANDLE, &image_index);
+		std::optional<VkSemaphore> semaphore_image_available = VulkanSynchronisationManager::get_semaphore("next_image_available");
+
+		if(!semaphore_image_available.has_value())
+		{
+			std::string error_message = "Error: Semaphore next_image_available does not exist!";
+			display_error_message(error_message);
+			exit(-1);
+		}
+
+		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore_image_available.value(), VK_NULL_HANDLE, &image_index);
 		vulkan_error_check(result);
+		
+		std::optional<VkSemaphore> semaphore_rendering_finished = VulkanSynchronisationManager::get_semaphore("rendering_finished");
+
+		if(!semaphore_rendering_finished.has_value())
+		{
+			std::string error_message = "Error: Semaphore rendering_finished does not exist!";
+			display_error_message(error_message);
+			exit(-1);
+		}
 		
 		// TODO!
 		// It is possible for the window surface to change such that the swap chain is no longer compatible with it.
@@ -44,6 +62,7 @@ namespace vulkan_renderer {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
 
+
 		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext                = nullptr;
 		submit_info.waitSemaphoreCount   = 1;
@@ -51,8 +70,8 @@ namespace vulkan_renderer {
 		submit_info.commandBufferCount   = 1;
 		submit_info.pCommandBuffers      = &command_buffers[image_index];
 		submit_info.signalSemaphoreCount = 1;
-		submit_info.pWaitSemaphores      = &semaphore_image_available;
-		submit_info.pSignalSemaphores    = &semaphore_rendering_finished;
+		submit_info.pWaitSemaphores      = &semaphore_image_available.value();
+		submit_info.pSignalSemaphores    = &semaphore_rendering_finished.value();
 
 		result = vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
 		if(VK_SUCCESS != result) return result;
@@ -60,7 +79,7 @@ namespace vulkan_renderer {
 		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		present_info.pNext              = nullptr;
 		present_info.waitSemaphoreCount = 1;
-		present_info.pWaitSemaphores    = &semaphore_rendering_finished;
+		present_info.pWaitSemaphores    = &semaphore_rendering_finished.value();
 		present_info.swapchainCount     = 1;
 		present_info.pSwapchains        = &swapchain;
 		present_info.pImageIndices      = &image_index;

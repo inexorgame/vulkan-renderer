@@ -17,6 +17,7 @@
 #include "../availability-checks/VulkanAvailabilityChecks.hpp"
 #include "../settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
 #include "../shader-manager/VulkanShaderManager.hpp"
+#include "../synchronisation-manager/VulkanSynchronisationManager.hpp"
 
 #include <vector>
 #include <string>
@@ -34,7 +35,8 @@ namespace vulkan_renderer {
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,
 								 public VulkanSettingsDecisionMaker,
-								 public VulkanShaderManager
+								 public VulkanShaderManager,
+								 public VulkanSynchronisationManager
 								 // TODO: VulkanSwapchain, VulkanPipeline, VulkanRenderPassEngine?
 	{
 		public:
@@ -102,15 +104,7 @@ namespace vulkan_renderer {
 
 			// 
 			std::vector<VkCommandBuffer> command_buffers;
-
-			// TODO: Generalise setup of semaphores?
-
-			// Opaque handle to a semaphore object.
-			VkSemaphore semaphore_image_available;
-
-			// Opaque handle to a semaphore object.
-			VkSemaphore semaphore_rendering_finished;
-
+			
 			// Try to use one queue family for both graphics and presentation.
 			bool use_one_queue_family_for_graphics_and_presentation = false;
 
