@@ -117,11 +117,11 @@ namespace vulkan_renderer {
 
 		VkFenceCreateInfo fence_create_info = {};
 	
-		// So far, there is nothing to fill into this structure.
-		// This may change in the future!
-		// https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkFenceCreateInfo.html
 		fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		
+		fence_create_info.pNext = nullptr;
+
+		// Create this fence in a signaled state!
+		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		// The new Vulkan fence which will be created.
 		VkFence new_fence;

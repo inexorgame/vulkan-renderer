@@ -83,7 +83,7 @@ namespace vulkan_renderer {
 
 		// The layers that we would like to enable.
 		std::vector<const char*> instance_layers_wishlist = {
-			"VK_LAYER_RENDERDOC_Capture"
+			//"VK_LAYER_RENDERDOC_Capture"
 		};
 
 		// If validation is requested, we need to add the validation layer as instance extension!
@@ -164,15 +164,12 @@ namespace vulkan_renderer {
 			// For now, we only need one queue family.
 			uint32_t number_of_queues_to_use = 1;
 
-			// Since we only use one queue, priorities are of no importance.
-			const std::vector<float> queue_priorities(number_of_queues_to_use, 1.0f);
-
 			device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			device_queue_create_info.pNext            = nullptr;
 			device_queue_create_info.flags            = 0;
 			device_queue_create_info.queueFamilyIndex = queue_family_index_for_both_graphics_and_presentation.value();
 			device_queue_create_info.queueCount       = number_of_queues_to_use;
-			device_queue_create_info.pQueuePriorities = queue_priorities.data();
+			device_queue_create_info.pQueuePriorities = &global_queue_priority;
 
 			device_queues.push_back(device_queue_create_info);
 		}
@@ -208,15 +205,12 @@ namespace vulkan_renderer {
 			// For now, we only need one queue family.
 			uint32_t number_of_graphics_queues_to_use = 1;
 
-			// Since we only use one queue, priorities are of no importance.
-			const std::vector<float> graphics_queue_priorities(number_of_graphics_queues_to_use, 1.0f);
-
 			device_queue_create_info_for_graphics_queue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			device_queue_create_info_for_graphics_queue.pNext            = nullptr;
 			device_queue_create_info_for_graphics_queue.flags            = 0;
 			device_queue_create_info_for_graphics_queue.queueFamilyIndex = graphics_queue_family_index.value();
 			device_queue_create_info_for_graphics_queue.queueCount       = number_of_graphics_queues_to_use;
-			device_queue_create_info_for_graphics_queue.pQueuePriorities = graphics_queue_priorities.data();
+			device_queue_create_info_for_graphics_queue.pQueuePriorities = &global_queue_priority;
 
 			device_queues.push_back(device_queue_create_info_for_graphics_queue);
 
@@ -227,15 +221,12 @@ namespace vulkan_renderer {
 			// For now, we only need one queue family.
 			uint32_t number_of_present_queues_to_use = 1;
 
-			// Since we only use one queue, priorities are of no importance.
-			const std::vector<float> present_queue_priorities(number_of_present_queues_to_use, 1.0f);
-
 			device_queue_create_info_for_presentation_queue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			device_queue_create_info_for_presentation_queue.pNext            = nullptr;
 			device_queue_create_info_for_presentation_queue.flags            = 0;
 			device_queue_create_info_for_presentation_queue.queueFamilyIndex = present_queue_family_index.value();
 			device_queue_create_info_for_presentation_queue.queueCount       = number_of_present_queues_to_use;
-			device_queue_create_info_for_presentation_queue.pQueuePriorities = present_queue_priorities.data();
+			device_queue_create_info_for_presentation_queue.pQueuePriorities = &global_queue_priority;
 
 			device_queues.push_back(device_queue_create_info_for_presentation_queue);
 		}
@@ -332,7 +323,8 @@ namespace vulkan_renderer {
 
 		command_buffers.clear();
 
-		// TODO: Migrate to VMA!
+		// TODO: Migrate to Vulkan Memory Allocator (VMA)!
+		// Hopefully there will be a conan package for that some day.
 
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 		
@@ -399,13 +391,28 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_semaphores()
+	VkResult VulkanInitialisation::create_synchronisation_objects()
 	{
-		cout << "Creating semaphores." << endl;
+		cout << "Creating semaphores and fences." << endl;
 		
-		// Our Vulkan Synchronisation manager will take care of Semaphore creation.
-		VulkanSynchronisationManager::create_semaphore(device, "rendering_finished");
-		VulkanSynchronisationManager::create_semaphore(device, "next_image_available");
+		in_flight_fences.clear();
+		image_available_semaphores.clear();
+		rendering_finished_semaphores.clear();
+
+		for(std::size_t i=0; i<INEXOR_MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			// TODO: Refactor this into something like create_multiple_semaphores()?
+			// Here we create the semaphores and fences which are neccesary for synchronisation.
+			// Cleanup will be handled by VulkanSynchronisationManager.
+			image_available_semaphores.push_back(create_semaphore(device, "image_available_semaphores_"+std::to_string(i)).value());
+			rendering_finished_semaphores.push_back(create_semaphore(device, "rendering_finished_semaphores_"+std::to_string(i)).value());
+			in_flight_fences.push_back(create_fence(device, "in_flight_fences_"+std::to_string(i)).value());
+		}
+	
+		images_in_flight.clear();
+		
+		// Note: Images in flight do not need to be initialised!
+		images_in_flight.resize(number_of_images_in_swapchain, VK_NULL_HANDLE);
 
 		return VK_SUCCESS;
 	}
@@ -416,7 +423,6 @@ namespace vulkan_renderer {
 		cout << "Creating swap chain." << endl;
 
 		// TODO: Check if system supports this image sharing mode!
-		// TODO: Make window resizable and recreate swap chain.
 
 		// Decide which surface color format is used.
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
@@ -434,8 +440,6 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		
-		VkExtent2D selected_swapchain_image_extent = {};
 
 		decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
 
@@ -450,6 +454,12 @@ namespace vulkan_renderer {
 
 		number_of_images_in_swapchain = decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
 
+		if(0 == number_of_images_in_swapchain)
+		{
+			std::string error_message = "Error: Invalid number of images in swapchain!";
+			display_error_message(error_message);
+			exit(-1);
+		}
 
 		VkSwapchainCreateInfoKHR swapchain_create_info = {};
 		
@@ -484,8 +494,8 @@ namespace vulkan_renderer {
 			// It is important to note that we can't use VK_SHARING_MODE_EXCLUSIVE in this case.
 			// VK_SHARING_MODE_CONCURRENT may result in lower performance access to the buffer or image than VK_SHARING_MODE_EXCLUSIVE.
 			swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-			swapchain_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
 			swapchain_create_info.pQueueFamilyIndices   = queue_family_indices.data();
+			swapchain_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
 		}
 
 		swapchain_create_info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
@@ -494,17 +504,160 @@ namespace vulkan_renderer {
 		swapchain_create_info.clipped               = VK_TRUE;
 		swapchain_create_info.oldSwapchain          = VK_NULL_HANDLE;
 
-		return vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
+
+		VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
+		if(VK_SUCCESS != result) return result;
+
+		swapchain_image_views.clear();
+
+		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
+		if(VK_SUCCESS != result) return result;
+
+		cout << "Images in swap chain: " << number_of_images_in_swapchain << endl;
+
+		if(number_of_images_in_swapchain <= 0)
+		{
+			display_error_message("Error: Invalid number of images in swapchain!");
+		}
+
+		swapchain_images.clear();
+
+		// Preallocate memory for the images in swapchain.
+		swapchain_images.resize(number_of_images_in_swapchain);
+
+		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, swapchain_images.data());
+		if(VK_SUCCESS != result) return result;
+
+		return VK_SUCCESS;
 	}
 
-	
+
+	void VulkanInitialisation::cleanup_swapchain()
+	{
+		cout << "Cleaning up swapchain." << endl;
+		cout << "Waiting for device to be idle." << endl;
+		
+		vkDeviceWaitIdle(device);
+
+		cout << "Device is idle." << endl;
+		cout << "Destroying frame buffer." << endl;
+		
+		for(auto frame_buffer : frame_buffers)
+		{
+			vkDestroyFramebuffer(device, frame_buffer, nullptr);
+		}
+
+		frame_buffers.clear();
+
+
+		cout << "Destroying command buffers." << endl;
+
+		// We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
+		if(command_buffers.size() > 0)
+		{
+			// The size of the command buffer is equal to the number of image in swapchain.
+			vkFreeCommandBuffers(device, command_pool, static_cast<uint32_t>(command_buffers.size()), command_buffers.data());
+
+			// Don't forget to free the memory.
+			command_buffers.clear();
+		}
+
+		cout << "Destroying pipeline." << endl;
+		vkDestroyPipeline(device, pipeline, nullptr);
+		
+		cout << "Destroying pipeline layout." << endl;
+		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+		
+		cout << "Destroying render pass." << endl;
+		vkDestroyRenderPass(device, render_pass, nullptr);
+
+		cout << "Destroying image views." << endl;
+		
+		for(auto image_view : swapchain_image_views)
+		{
+			vkDestroyImageView(device, image_view, nullptr);
+		}
+
+		swapchain_image_views.clear();
+		swapchain_images.clear();
+
+		cout << "Destroying swapchain." << endl;
+		vkDestroySwapchainKHR(device, swapchain, nullptr);
+	}
+
+
+	VkResult VulkanInitialisation::recreate_swapchain()
+	{
+		int current_window_width = 0;
+		int current_window_height = 0;
+
+		// If window is minimized, wait until it is visible again.
+		while(current_window_width == 0 || current_window_height == 0)
+		{
+			glfwGetFramebufferSize(window, &current_window_width, &current_window_height);
+			glfwWaitEvents();
+		}
+
+		cout << "Recreating the swapchain." << endl;
+
+		// Cleanup only neccesary parts.
+		cleanup_swapchain();
+
+		VkResult result = create_swapchain();
+		if(VK_SUCCESS != result) return result;
+
+		result = create_image_views();
+		if(VK_SUCCESS != result) return result;
+		
+		result = create_pipeline();
+		if(VK_SUCCESS != result) return result;
+		
+		result = create_frame_buffers();
+		if(VK_SUCCESS != result) return result;
+		
+		result = create_command_buffers();
+		if(VK_SUCCESS != result) return result;
+
+		/*
+		
+				result = create_swapchain();
+		vulkan_error_check(result);
+		
+		result = create_image_views();
+		vulkan_error_check(result);
+		
+		result = load_shaders();
+		vulkan_error_check(result);
+		
+		result = create_pipeline();
+		vulkan_error_check(result);
+		
+		result = create_frame_buffers();
+		vulkan_error_check(result);
+		
+		result = create_command_pool();
+		vulkan_error_check(result);
+
+		result = create_command_buffers();
+		vulkan_error_check(result);
+
+		result = record_command_buffers();
+		vulkan_error_check(result);
+
+		result = create_synchronisation_objects();
+		
+		*/
+
+		return VK_SUCCESS;
+	}
+
+
 	VkResult VulkanInitialisation::create_pipeline()
 	{
 		cout << "Creating graphics pipeline." << endl;
 
 		// TODO: Load list of shaders from JSON or TOML file.
-		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles	
-		// TODO: Generalise vertex shader setup using VulkanShaderManager
+		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles.
 
 		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
 		auto list_of_shaders = VulkanShaderManager::get_shaders();
@@ -646,8 +799,6 @@ namespace vulkan_renderer {
 		if(VK_SUCCESS != result) return result;
 		
 
-
-
 		// TODO: Generalize renderpass description.
 
 		VkAttachmentDescription attachment_description = {};
@@ -772,52 +923,31 @@ namespace vulkan_renderer {
 	{
 		cout << "Creating image views." << endl;
 
-		VkResult result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
-		if(VK_SUCCESS != result) return result;
-
-		cout << "Images in swap chain: " << number_of_images_in_swapchain << endl;
-
-		if(number_of_images_in_swapchain <= 0)
-		{
-			display_error_message("Error: Invalid number of images in swapchain!");
-		}
-
-		// TODO: Make this a class member?
-		// Preallocate memory for the images in swapchain.
-		std::vector<VkImage> swapchain_images(number_of_images_in_swapchain);
-
-		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, swapchain_images.data());
-		if(VK_SUCCESS != result) return result;
-
 		// Preallocate memory for the image views.
+		swapchain_image_views.clear();
 		swapchain_image_views.resize(number_of_images_in_swapchain);
 	
-		VkImageViewCreateInfo image_view_create_info = {};
-
-		// TODO: Check if system supports this image format!
-		
-		image_view_create_info.sType        = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		image_view_create_info.pNext        = nullptr;
-		image_view_create_info.flags        = 0;
-		image_view_create_info.viewType     = VK_IMAGE_VIEW_TYPE_2D;
-		image_view_create_info.format       = VK_FORMAT_B8G8R8A8_UNORM;
-
-		image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_view_create_info.subresourceRange.baseMipLevel   = 0;
-		image_view_create_info.subresourceRange.levelCount     = 1;
-		image_view_create_info.subresourceRange.baseArrayLayer = 0;
-		image_view_create_info.subresourceRange.layerCount     = 1;
-
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			VkImageViewCreateInfo image_view_create_info = {};
+		
+			image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			image_view_create_info.pNext                           = nullptr;
+			image_view_create_info.flags                           = 0;
+			image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+			image_view_create_info.format                          = selected_image_format;
+			image_view_create_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			image_view_create_info.subresourceRange.baseMipLevel   = 0;
+			image_view_create_info.subresourceRange.levelCount     = 1;
+			image_view_create_info.subresourceRange.baseArrayLayer = 0;
+			image_view_create_info.subresourceRange.layerCount     = 1;
 			image_view_create_info.image = swapchain_images[i];
 
-			result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
+			VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
 			if(VK_SUCCESS != result) return result;
 		}
 
@@ -827,126 +957,38 @@ namespace vulkan_renderer {
 	
 	void VulkanInitialisation::shutdown_vulkan()
 	{
+		// It is important to destroy the objects in reversal of the order of creation.
+		
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Shutting down Vulkan API." << endl;
-		cout << "Waiting for Vulkan device to be idle." << endl;
-
-		// Wait for a device to become idle.
-		vkDeviceWaitIdle(device);
-
-		cout << "Vulkan device is idle." << endl;
 		
-		// It is important to destroy the objects in reversal of the order of creation.
-		// Device queues are implicitly cleaned up when the device is destroyed.
+		// This functions calls vkDeviceWaitIdle for us.
+		cleanup_swapchain();
 
-		// Destroy all existing Vulkan semaphores.
 		cout << "Destroying semaphores." << endl;
 		VulkanSynchronisationManager::shutdown_semaphores(device);
 
-		// Destroy all existing Vulkan fences.
 		cout << "Destroying fences." << endl;
 		VulkanSynchronisationManager::shutdown_fences(device);
 
-
-		cout << "Destroying command buffers." << endl;
-
-		// We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
-
-		if(command_buffers.size() > 0)
-		{
-			vkFreeCommandBuffers(device, command_pool, number_of_images_in_swapchain, command_buffers.data());
-
-			// Don't forget to free the memory.
-			command_buffers.clear();
-		}
-
 		cout << "Destroying command pool." << endl;
-		
-		if(VK_NULL_HANDLE != command_pool)
-		{
-			vkDestroyCommandPool(device, command_pool, nullptr);
-		}
-
-		cout << "Destroying frame buffer." << endl;
-		
-		for(auto frame_buffer : frame_buffers)
-		{
-			if(VK_NULL_HANDLE != frame_buffer)
-			{
-				vkDestroyFramebuffer(device, frame_buffer, nullptr);
-			}
-		}
-
-		frame_buffers.clear();
-
-		cout << "Destroying pipeline." << endl;
-		
-		if(VK_NULL_HANDLE != pipeline)
-		{
-			vkDestroyPipeline(device, pipeline, nullptr);
-		}
-
-		cout << "Destroying render pass." << endl;
-		
-		if(VK_NULL_HANDLE != render_pass)
-		{
-			vkDestroyRenderPass(device, render_pass, nullptr);
-		}
-
-		cout << "Destroying image views." << endl;
-		
-		for(auto image_view : swapchain_image_views)
-		{
-			if(VK_NULL_HANDLE != image_view)
-			{
-				vkDestroyImageView(device, image_view, nullptr);
-			}
-		}
-
-		swapchain_image_views.clear();
-		
-		cout << "Destroying pipeline layout." << endl;
-
-		if(VK_NULL_HANDLE != pipeline_layout)
-		{
-			vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
-		}
+		vkDestroyCommandPool(device, command_pool, nullptr);
 
 		cout << "Destroying shader objects." << endl;
-		
-		// Destroy all shader objects we created.
 		VulkanShaderManager::shutdown_shaders(device);
-
-		// VulkanSynchronisationManager::shutdown_semaphores();
-
-		cout << "Destroying swapchain." << endl;
-		
-		if(VK_NULL_HANDLE != swapchain)
-		{
-			vkDestroySwapchainKHR(device, swapchain, nullptr);
-		}
 		
 		cout << "Destroying surface." << endl;
-
-		if(VK_NULL_HANDLE != surface)
-		{
-			vkDestroySurfaceKHR(instance, surface, nullptr);
-		}
+		vkDestroySurfaceKHR(instance, surface, nullptr);
 		
+		// Device queues are implicitly cleaned up when the device is destroyed, so we don’t need to do anything in cleanup.
 		cout << "Destroying device." << endl;
-		
-		if(VK_NULL_HANDLE != device)
-		{
-			// Device queues are implicitly cleaned up when the device is destroyed, so we don’t need to do anything in cleanup.
-			vkDestroyDevice(device, nullptr);
-		}
+		vkDestroyDevice(device, nullptr);
 		
 		cout << "Destroying instance." << endl;
-
-		if(VK_NULL_HANDLE != instance)
-		{
-			vkDestroyInstance(instance, nullptr);
-		}
+		vkDestroyInstance(instance, nullptr);
+		
+		cout << "Shutdown finished." << endl;
+		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 	}
 
 

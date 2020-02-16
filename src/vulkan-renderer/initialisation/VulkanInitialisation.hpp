@@ -24,6 +24,9 @@
 #include <vector>
 #include <iostream>
 
+// The maximum number of images to process simultaneously.
+#define INEXOR_MAX_FRAMES_IN_FLIGHT 2
+
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -44,6 +47,12 @@ namespace vulkan_renderer {
 			VulkanInitialisation();
 
 			~VulkanInitialisation();
+
+		public:
+			
+			// Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
+			// it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
+			bool frame_buffer_resized = false;
 
 
 		protected:
@@ -75,6 +84,9 @@ namespace vulkan_renderer {
 			// Structure describing parameters of a queue presentation.
 			VkPresentInfoKHR present_info;
 
+			// 
+			std::vector<VkImage> swapchain_images;
+			
 			// The images in the swapchain.
 			std::vector<VkImageView> swapchain_image_views;
 
@@ -83,6 +95,9 @@ namespace vulkan_renderer {
 
 			// The image format which is used.
 			VkFormat selected_image_format;
+			
+			// 
+			VkExtent2D selected_swapchain_image_extent = {};
 
 			// Supported color space of the presentation engine. 
 			VkColorSpaceKHR selected_color_space;
@@ -119,6 +134,14 @@ namespace vulkan_renderer {
 			// 
 			std::vector<VkDeviceQueueCreateInfo> device_queues;
 
+			// Neccesary for synchronisation!
+			std::vector<VkSemaphore> image_available_semaphores;
+			std::vector<VkSemaphore> rendering_finished_semaphores;
+			std::vector<VkFence> in_flight_fences;
+			std::vector<VkFence> images_in_flight;
+
+			// TODO: Refactor!
+			const float global_queue_priority = 1.0f;
 
 		protected:
 
@@ -153,12 +176,20 @@ namespace vulkan_renderer {
 
 
 			/// @brief Creates the semaphores neccesary for synchronisation.
-			VkResult create_semaphores();
+			VkResult create_synchronisation_objects();
 
 
 			/// @brief Creates the swapchain.
 			VkResult create_swapchain();
 			
+			
+			/// @brief Cleans the swapchain.
+			void cleanup_swapchain();
+			
+
+			/// @brief Recreates the swapchain.
+			VkResult recreate_swapchain();
+
 
 			/// @brief Creates the command pool.
 			VkResult create_command_pool();

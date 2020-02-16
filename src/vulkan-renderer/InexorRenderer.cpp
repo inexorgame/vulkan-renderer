@@ -5,6 +5,19 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
+	/// @brief Static callback for window resize events.
+	/// @note Because GLFW is a C-style API, we can't pass a poiner to a class method, so we have to do it this way!
+	/// @param window The GLFW window.
+	/// @param height The width of the window.
+	/// @param height The height of the window.
+	static void frame_buffer_resize_callback(GLFWwindow* window, int width, int height)
+	{
+		// This is actually the way it is handled by the official Vulkan samples.
+		auto app = reinterpret_cast<VulkanInitialisation*>(glfwGetWindowUserPointer(window));
+		app->frame_buffer_resized = true;
+	}
+
+
 	InexorRenderer::InexorRenderer()
 	{
 	}
@@ -29,40 +42,41 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::draw_frame()
 	{
+		vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
+
 		uint32_t image_index = 0;
-
-		// TODO: Is accessing this a bottleneck? If so, we could call get_semaphore and setup before drawing.
-		std::optional<VkSemaphore> semaphore_image_available = VulkanSynchronisationManager::get_semaphore("next_image_available");
-
-		if(!semaphore_image_available.has_value())
+		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
+		
+		if(VK_NULL_HANDLE != images_in_flight[image_index])
 		{
-			std::string error_message = "Error: Semaphore next_image_available does not exist!";
+			vkWaitForFences(device, 1, &images_in_flight[image_index], VK_TRUE, UINT64_MAX);
+		}
+		
+		// Mark the image as now being in use by this frame
+		images_in_flight[image_index] = in_flight_fences[current_frame];
+
+		// Is it time to regenerate the swapchain because window has been resized or minimized?
+		if(VK_ERROR_OUT_OF_DATE_KHR == result)
+		{
+			// VK_ERROR_OUT_OF_DATE_KHR: The swap chain has become incompatible with the surface
+			// and can no longer be used for rendering. Usually happens after a window resize.
+			return recreate_swapchain();
+		}
+
+		// Did something else fail?
+		// VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
+		// to the surface, but the surface properties are no longer matched exactly.
+		if(VK_SUCCESS != result && VK_SUBOPTIMAL_KHR != result)
+		{
+			std::string error_message = "Error: Failed to acquire swapchain image!";
 			display_error_message(error_message);
 			exit(-1);
 		}
-
-		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore_image_available.value(), VK_NULL_HANDLE, &image_index);
-		vulkan_error_check(result);
-		
-		std::optional<VkSemaphore> semaphore_rendering_finished = VulkanSynchronisationManager::get_semaphore("rendering_finished");
-
-		if(!semaphore_rendering_finished.has_value())
-		{
-			std::string error_message = "Error: Semaphore rendering_finished does not exist!";
-			display_error_message(error_message);
-			exit(-1);
-		}
-		
-		// TODO!
-		// It is possible for the window surface to change such that the swap chain is no longer compatible with it.
-		// One of the reasons that could cause this to happen is the size of the window changing.
-		// We have to catch these events and recreate the swap chain.
 
 		const VkPipelineStageFlags wait_stage_mask[] =
 		{
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
-
 
 		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext                = nullptr;
@@ -71,23 +85,35 @@ namespace vulkan_renderer {
 		submit_info.commandBufferCount   = 1;
 		submit_info.pCommandBuffers      = &command_buffers[image_index];
 		submit_info.signalSemaphoreCount = 1;
-		submit_info.pWaitSemaphores      = &semaphore_image_available.value();
-		submit_info.pSignalSemaphores    = &semaphore_rendering_finished.value();
+		submit_info.pWaitSemaphores      = &image_available_semaphores[current_frame];
+		submit_info.pSignalSemaphores    = &rendering_finished_semaphores[current_frame];
 
-		result = vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+		vkResetFences(device, 1, &in_flight_fences[current_frame]);
+		
+		result = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fences[current_frame]);
 		if(VK_SUCCESS != result) return result;
 
 		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		present_info.pNext              = nullptr;
 		present_info.waitSemaphoreCount = 1;
-		present_info.pWaitSemaphores    = &semaphore_rendering_finished.value();
+		present_info.pWaitSemaphores    = &rendering_finished_semaphores[current_frame];
 		present_info.swapchainCount     = 1;
 		present_info.pSwapchains        = &swapchain;
 		present_info.pImageIndices      = &image_index;
 		present_info.pResults           = nullptr;
 
 		result = vkQueuePresentKHR(present_queue, &present_info);
-		vulkan_error_check(result);
+
+		// Some notes on frame_buffer_resized:
+		// It is important to do this after vkQueuePresentKHR to ensure that the semaphores are
+		// in a consistent state, otherwise a signalled semaphore may never be properly waited upon.
+		if(VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result || frame_buffer_resized)
+		{
+			frame_buffer_resized = false;
+			recreate_swapchain();
+		}
+		
+        current_frame = (current_frame + 1) % INEXOR_MAX_FRAMES_IN_FLIGHT;
 
 		return VK_SUCCESS;
 	}
@@ -97,6 +123,13 @@ namespace vulkan_renderer {
 	{
 		// Create a window using GLFW library.
 		create_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_WINDOW_TITLE, true);
+
+		// Store the current InexorRenderer instance in the window user pointer.
+		// Since GLFW is a C API, we can't pass pointers to member functions and have to do it this way!
+		glfwSetWindowUserPointer(window, this);
+
+		// Setup callback for window resize
+		glfwSetFramebufferSizeCallback(window, frame_buffer_resize_callback);
 
 		// Create a Vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
@@ -208,7 +241,7 @@ namespace vulkan_renderer {
 		result = record_command_buffers();
 		vulkan_error_check(result);
 
-		result = create_semaphores();
+		result = create_synchronisation_objects();
 		vulkan_error_check(result);
 	}
 

@@ -477,19 +477,21 @@ namespace vulkan_renderer {
 			if(propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT)           cout << "VK_MEMORY_PROPERTY_PROTECTED_BIT" << endl;
 			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD" << endl;
 			if(propertyFlag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) cout << "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD" << endl;
-		}
 
-		cout << endl;
+			cout << endl;
+		}
 
 		// Loop through all memory heaps.
 		for(std::size_t i=0; i<graphics_card_memory_properties.memoryHeapCount; i++)
 		{
-			cout << "Heap memory [" << i << "]" << ", memory size: " << graphics_card_memory_properties.memoryHeaps[i].size << " bytes." << endl;
+			cout << "Heap memory [" << i << "]" << ", memory size: " << graphics_card_memory_properties.memoryHeaps[i].size/(1000*1000) << " MB." << endl;
 
 			auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
 
 			if(propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)   cout << "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT (GPU MEMORY)" << endl;
 			if(propertyFlag & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT) cout << "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT" << endl;
+
+			cout << endl;
 		}
 	}
 

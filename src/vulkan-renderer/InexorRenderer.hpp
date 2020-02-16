@@ -14,8 +14,6 @@
 #define INEXOR_WINDOW_WIDTH         800
 #define INEXOR_WINDOW_HEIGHT        600
 
-// The maximum number of images to process simultaneously.
-#define INEXOR_MAX_FRAMES_IN_FLIGHT 2
 
 
 namespace inexor {
@@ -33,12 +31,17 @@ namespace vulkan_renderer {
 
 
 		private:
+			
+			std::size_t current_frame = 0;
+
+		private:
 
 			// Load all required shaders.
 			VkResult load_shaders();
-			
+
 			// The actual rendering method which is called every frame.
 			VkResult draw_frame();
+
 
 		public:
 			

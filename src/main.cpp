@@ -17,6 +17,8 @@ int main(int argc, char* argv[])
     renderer.run();
     renderer.cleanup();
     
+    cout << "Window closed." << endl;
+
     std::cin.get();
 
     return 0;
