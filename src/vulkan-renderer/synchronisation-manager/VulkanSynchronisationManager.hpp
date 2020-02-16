@@ -26,6 +26,9 @@ namespace vulkan_renderer {
 			// The stored semaphores.
 			std::unordered_map<std::string, VkSemaphore> semaphores;
 			
+			// The stored fences.
+			std::unordered_map<std::string, VkFence> fences;
+
 			// The mutex of this class.
 			std::mutex vulkan_synchronisation_manager_mutex;
 
@@ -47,6 +50,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Creates a new Vulkan semaphore.
+			/// @param vulkan_device The Vulkan device handle.
 			/// @param semaphore_name The unique name of the semaphore.
 			const std::optional<VkSemaphore> create_semaphore(const VkDevice& vulkan_device, const std::string& semaphore_name);
 
@@ -62,7 +66,29 @@ namespace vulkan_renderer {
 			void shutdown_semaphores(const VkDevice& vulkan_device);
 
 
-			// TODO: Implement Vulkan fences as well.
+
+			
+			/// @brief Checks if a fence with this name already exists.
+			/// @param fence_name The name of the fence.
+			/// @return True if a Vulkan fence with this name already exists, false otherwise.
+			bool does_fence_exist(const std::string& fence_name) const;
+
+			
+			/// @brief Creates a new Vulkan fence.
+			/// @param vulkan_device The Vulkan device handle.
+			/// @param fence_name The unique name of the fence.
+			const std::optional<VkFence> create_fence(const VkDevice& vulkan_device, const std::string& fence_name);
+
+			
+			/// @brief Gets a certain fence by name.
+			/// @param fence_name The name of the fence.
+			/// @return The acquired fence (if existent), std::nullopt otherwise.
+			const std::optional<VkFence> get_fence(const std::string& fence_name) const;
+
+			
+			/// @brief Destroys all existing fences.
+			/// @param vulkan_device The Vulkan device handle.
+			void shutdown_fences(const VkDevice& vulkan_device);
 
 	};
 

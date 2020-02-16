@@ -6,13 +6,16 @@
 
 
 // Change these definitions if you want to fork the renderer!
-#define INEXOR_ENGINE_VERSION      VK_MAKE_VERSION(1,0,0)
-#define INEXOR_APPLICATION_VERSION VK_MAKE_VERSION(1,0,0)
-#define INEXOR_APPLICATION_NAME    "Inexor-Application"
-#define INEXOR_ENGINE_NAME         "Inexor-Engine"
-#define INEXOR_WINDOW_TITLE        "Inexor-Vulkan-Renderer"
-#define INEXOR_WINDOW_WIDTH        800
-#define INEXOR_WINDOW_HEIGHT       600
+#define INEXOR_ENGINE_VERSION       VK_MAKE_VERSION(1,0,0)
+#define INEXOR_APPLICATION_VERSION  VK_MAKE_VERSION(1,0,0)
+#define INEXOR_APPLICATION_NAME     "Inexor-Application"
+#define INEXOR_ENGINE_NAME          "Inexor-Engine"
+#define INEXOR_WINDOW_TITLE         "Inexor-Vulkan-Renderer"
+#define INEXOR_WINDOW_WIDTH         800
+#define INEXOR_WINDOW_HEIGHT        600
+
+// The maximum number of images to process simultaneously.
+#define INEXOR_MAX_FRAMES_IN_FLIGHT 2
 
 
 namespace inexor {

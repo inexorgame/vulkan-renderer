@@ -839,10 +839,14 @@ namespace vulkan_renderer {
 		// It is important to destroy the objects in reversal of the order of creation.
 		// Device queues are implicitly cleaned up when the device is destroyed.
 
+		// Destroy all existing Vulkan semaphores.
 		cout << "Destroying semaphores." << endl;
-
-		// Destroy all existing Vulkan semaphores and Vulkan fences.
 		VulkanSynchronisationManager::shutdown_semaphores(device);
+
+		// Destroy all existing Vulkan fences.
+		cout << "Destroying fences." << endl;
+		VulkanSynchronisationManager::shutdown_fences(device);
+
 
 		cout << "Destroying command buffers." << endl;
 

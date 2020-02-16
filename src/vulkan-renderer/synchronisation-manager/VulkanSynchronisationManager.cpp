@@ -18,7 +18,6 @@ namespace vulkan_renderer {
 	bool VulkanSynchronisationManager::does_semaphore_exist(const std::string&semaphore_name) const
 	{
 		std::unordered_map<std::string, VkSemaphore>::const_iterator semaphore_lookup = semaphores.find(semaphore_name);
-
 		return semaphore_lookup != semaphores.end();
 	}
 
@@ -95,6 +94,88 @@ namespace vulkan_renderer {
 
 		// Clear the unordered map!
 		semaphores.clear();
+	}
+
+	
+	bool VulkanSynchronisationManager::does_fence_exist(const std::string& fence_name) const
+	{
+		std::unordered_map<std::string, VkFence>::const_iterator fence_lookup = fences.find(fence_name);
+		return fence_lookup != fences.end();
+
+	}
+
+
+	const std::optional<VkFence> VulkanSynchronisationManager::create_fence(const VkDevice& vulkan_device, const std::string& fence_name)
+	{
+		// First check if a Vulkan fence with this name already exists!
+		if(does_fence_exist(fence_name))
+		{
+			std::string error_message = "Error: Vulkan fence with the name " + fence_name + " does already exist!";
+			display_error_message(error_message);
+			return std::nullopt;
+		}
+
+		VkFenceCreateInfo fence_create_info = {};
+	
+		// So far, there is nothing to fill into this structure.
+		// This may change in the future!
+		// https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkFenceCreateInfo.html
+		fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		
+
+		// The new Vulkan fence which will be created.
+		VkFence new_fence;
+
+		VkResult result = vkCreateFence(vulkan_device, &fence_create_info, nullptr, &new_fence);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return std::nullopt;
+		}
+		
+        // Use lock guard to ensure thread safety during write operations!
+        std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
+
+		fences.insert({fence_name, new_fence});
+
+		return new_fence;
+	}
+
+			
+	const std::optional<VkFence> VulkanSynchronisationManager::get_fence(const std::string& fence_name) const
+	{
+		if(!does_fence_exist(fence_name))
+		{
+			std::string error_message = "Error: Vulkan fence with the name " + fence_name + " does not exists!";
+			display_error_message(error_message);
+			return std::nullopt;
+		}
+
+		// Return the requested semaphore.
+		return fences.at(fence_name);
+	}
+
+			
+	void VulkanSynchronisationManager::shutdown_fences(const VkDevice& vulkan_device)
+	{
+        // Use lock guard to ensure thread safety during write operations!
+        std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
+
+		// Create an iterator for the unordered map.
+		std::unordered_map<std::string, VkFence>::const_iterator fence_iterator = fences.begin();
+ 
+		// Iterate over the unordered map.
+		while(fence_iterator != fences.end())
+		{
+			// Destroy the fences.
+			vkDestroyFence(vulkan_device, fence_iterator->second, nullptr);
+
+			// Move on to the next Semaphore.
+			fence_iterator++;
+		}
+
+		// Clear the unordered map!
+		fences.clear();
 	}
 
 
