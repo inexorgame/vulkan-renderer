@@ -31,6 +31,7 @@ namespace vulkan_renderer {
 	{
 		uint32_t image_index = 0;
 
+		// TODO: Is accessing this a bottleneck? If so, we could call get_semaphore and setup before drawing.
 		std::optional<VkSemaphore> semaphore_image_available = VulkanSynchronisationManager::get_semaphore("next_image_available");
 
 		if(!semaphore_image_available.has_value())

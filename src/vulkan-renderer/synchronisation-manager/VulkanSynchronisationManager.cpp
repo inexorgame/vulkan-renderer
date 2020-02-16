@@ -51,6 +51,9 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return std::nullopt;
 		}
+		
+        // Use lock guard to ensure thread safety during write operations!
+        std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
 
 		semaphores.insert({semaphore_name, new_semaphore});
 
@@ -74,6 +77,9 @@ namespace vulkan_renderer {
 
 	void VulkanSynchronisationManager::shutdown_semaphores(const VkDevice& vulkan_device)
 	{
+        // Use lock guard to ensure thread safety during write operations!
+        std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
+
 		// Create an iterator for the unordered map.
 		std::unordered_map<std::string, VkSemaphore>::const_iterator sepahore_iterator = semaphores.begin();
  

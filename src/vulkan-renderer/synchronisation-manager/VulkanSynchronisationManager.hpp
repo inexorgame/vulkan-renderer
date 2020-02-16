@@ -24,11 +24,11 @@ namespace vulkan_renderer {
 		private:
 
 			// The stored semaphores.
-			// TODO: Is accessing this a bottleneck? If so, we could call get_semaphore and setup before drawing.
-
-			// @note VkSemaphores are actually nondispatchable handles. This means they can't be copied!
 			std::unordered_map<std::string, VkSemaphore> semaphores;
 			
+			// The mutex of this class.
+			std::mutex vulkan_synchronisation_manager_mutex;
+
 
 		public:
 			
@@ -58,6 +58,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Destroys all existing semaphores.
+			/// @param vulkan_device The Vulkan device handle.
 			void shutdown_semaphores(const VkDevice& vulkan_device);
 
 
