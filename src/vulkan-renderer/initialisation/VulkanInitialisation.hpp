@@ -35,6 +35,7 @@ namespace vulkan_renderer {
 								 public VulkanAvailabilityChecks,
 								 public VulkanSettingsDecisionMaker,
 								 public VulkanShaderManager
+								 // TODO: VulkanSwapchain, VulkanPipeline, VulkanRenderPassEngine?
 	{
 		public:
 

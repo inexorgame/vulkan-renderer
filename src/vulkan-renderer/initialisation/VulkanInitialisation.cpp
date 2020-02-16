@@ -310,6 +310,8 @@ namespace vulkan_renderer {
 
 		if(!graphics_queue_family_index.has_value())
 		{
+			std::string error_message = "Error: No graphics queue family index specified!";
+			display_error_message(error_message);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
@@ -327,6 +329,10 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_command_buffers()
 	{
 		cout << "Creating command buffers." << endl;
+
+		command_buffers.clear();
+
+		// TODO: Migrate to VMA!
 
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 		
@@ -356,16 +362,17 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
-			// Begin recording of command buffer.
+			// Begin recording of the command buffer.
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
 			if(VK_SUCCESS != result) return result;
 
 			// Change color if you want another clear color.
 			// Format: rgba (red, green, blue, alpha).
-			// TODO: Setup clear color by configuration.
 			VkClearValue clear_value;
 			clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
 
+			// TODO: Setup clear color by configuration.
+			
 			VkRenderPassBeginInfo render_pass_begin_info = {};
 			
 			render_pass_begin_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -377,13 +384,13 @@ namespace vulkan_renderer {
 			render_pass_begin_info.clearValueCount   = 1;
 			render_pass_begin_info.pClearValues      = &clear_value;
 
-			// Renderpass configuration.
+
 			vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 			vkCmdDraw(command_buffers[i], 3, 1, 0, 0);
 			vkCmdEndRenderPass(command_buffers[i]);
 
-			// End recording of command buffer.
+			// End recording of the command buffer.
 			result = vkEndCommandBuffer(command_buffers[i]);
 			if(VK_SUCCESS != result) return result;
 		}
@@ -522,7 +529,7 @@ namespace vulkan_renderer {
 			shader_stage_create_info.flags               = 0;
 			shader_stage_create_info.stage               = current_shader.get_shader_type();
 			shader_stage_create_info.module              = current_shader.get_shader_module();
-			shader_stage_create_info.pName               = "main";
+			shader_stage_create_info.pName               = "main"; // TODO: Refactor this to current_shader.get_shader_entry_point().c_str()!
 			shader_stage_create_info.pSpecializationInfo = nullptr;
 			
 			shader_stages.push_back(shader_stage_create_info);
@@ -649,6 +656,10 @@ namespace vulkan_renderer {
 		VkResult result = vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
 		if(VK_SUCCESS != result) return result;
 		
+
+
+
+		// TODO: Generalize renderpass description.
 
 		VkAttachmentDescription attachment_description = {};
 

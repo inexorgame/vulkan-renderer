@@ -104,6 +104,7 @@ namespace vulkan_renderer {
 	{
 		for(std::size_t i=0; i<shaders.size(); i++)
 		{
+			//cout << "Destroying shader module " << shaders[i].get_shader_name().c_str() << endl;
 			vkDestroyShaderModule(vulkan_device, shaders[i].get_shader_module(), nullptr);
 		}
 	}

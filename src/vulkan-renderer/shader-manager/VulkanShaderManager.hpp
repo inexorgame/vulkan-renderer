@@ -58,7 +58,7 @@ namespace vulkan_renderer {
 			/// @param shader_name The name you want to give to the shader.
 			/// @param shader_entry_point The entry point of the shader, usually "main".
 			/// @return True is shader creation succeeded, false otherwise.
-			VkResult VulkanShaderManager::create_shader_from_byte_buffer(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::vector<char>& SPIRV_shader_bytes, const std::string& shader_name = "", const std::string& entry_point = "main");
+			VkResult create_shader_from_byte_buffer(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::vector<char>& SPIRV_shader_bytes, const std::string& shader_name = "", const std::string& entry_point = "main");
 
 			
 			/// @brief Creates a new shader from a file on the hard drive.
@@ -68,14 +68,16 @@ namespace vulkan_renderer {
 			/// @param shader_name The name you want to give to the shader.
 			/// @param shader_entry_point The entry point of the shader, usually "main".
 			/// @return True is shader creation succeeded, false otherwise.
-			VkResult VulkanShaderManager::create_shader_from_file(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::string& SPIRV_shader_file_name, const std::string& shader_name = "", const std::string& shader_entry_point = "main");
+			VkResult create_shader_from_file(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::string& SPIRV_shader_file_name, const std::string& shader_name = "", const std::string& shader_entry_point = "main");
 
 
-			// TODO: Overloaded functions
+			// TODO: Add overloaded methods for creation of specific shaders: create_vertex_shader...
+			
 
 			/// @brief Returns all the shaders which have been loaded.
 			/// @return A const vector of InexorVulkanShader instances.
 			const std::vector<InexorVulkanShader> get_shaders() const;
+
 
 	};
 

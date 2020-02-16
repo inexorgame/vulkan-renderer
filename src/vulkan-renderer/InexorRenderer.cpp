@@ -44,7 +44,6 @@ namespace vulkan_renderer {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
 
-
 		submit_info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.pNext                = nullptr;
 		submit_info.waitSemaphoreCount   = 1;
@@ -93,6 +92,7 @@ namespace vulkan_renderer {
 		// List up all available graphics cards.
 		print_all_physical_devices(instance, surface);
 
+		// TODO: Implement command line argument for preferred graphics card!
 		// Let the user select a graphics card or select the "best" one automatically.
 		std::optional<VkPhysicalDevice> graphics_card = decide_which_graphics_card_to_use(instance);
 		
@@ -107,7 +107,7 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-
+		// TODO: Move this to device selection mechanism!
 		if(!check_swapchain_availability(selected_graphics_card))
 		{
 			display_error_message("Error: Swapchain device extension is not supported on this system!");
@@ -127,6 +127,10 @@ namespace vulkan_renderer {
 		print_driver_vulkan_version();
 		print_instance_layers();
 		print_instance_extensions();
+
+		// TODO: Loop through all available graphics cards and print information about them.
+		// TODO: Implement print_limits_of_every_graphics_card_available() ?
+
 		print_device_layers(selected_graphics_card);
 		print_device_extensions(selected_graphics_card);
 		print_graphics_card_limits(selected_graphics_card);
@@ -135,6 +139,8 @@ namespace vulkan_renderer {
 		print_graphics_card_memory_properties(selected_graphics_card);
 
 		// In this section, we need to check if the setup that we want to make is supported by the system. 
+		
+		// TODO: Move this to device selection mechanism!
 
 		// Query if presentation is supported.
 		if(!check_presentation_availability(selected_graphics_card, surface))
@@ -144,6 +150,7 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
+		// TODO: Move this to create_queues method?
 		// Check if suitable queues were found.
 		if(!present_queue_family_index.has_value() || (!graphics_queue_family_index.has_value()))
 		{
