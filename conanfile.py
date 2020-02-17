@@ -15,7 +15,8 @@ class InexorConan(ConanFile):
         "gtest/1.8.1",
         "spdlog/1.4.2",
         "glfw/3.3@bincrafters/stable",
-		"toml11/3.1.0"
+        "toml11/3.1.0",
+        "imgui/1.75"
     )
 
     generators = "cmake"
