@@ -37,6 +37,7 @@ namespace vulkan_renderer {
 		private:
 
 			// Load all required shaders.
+			// This is build on top of VulkanShaderManager.
 			VkResult load_shaders();
 
 			// The actual rendering method which is called every frame.

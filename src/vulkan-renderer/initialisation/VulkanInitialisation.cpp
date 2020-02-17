@@ -544,11 +544,13 @@ namespace vulkan_renderer {
 		
 		for(auto frame_buffer : frame_buffers)
 		{
-			vkDestroyFramebuffer(device, frame_buffer, nullptr);
+			if(VK_NULL_HANDLE != frame_buffer)
+			{
+				vkDestroyFramebuffer(device, frame_buffer, nullptr);
+			}
 		}
 
 		frame_buffers.clear();
-
 
 		cout << "Destroying command buffers." << endl;
 
@@ -563,26 +565,45 @@ namespace vulkan_renderer {
 		}
 
 		cout << "Destroying pipeline." << endl;
-		vkDestroyPipeline(device, pipeline, nullptr);
-		
+
+		if(VK_NULL_HANDLE != pipeline)
+		{
+			vkDestroyPipeline(device, pipeline, nullptr);
+		}
+
 		cout << "Destroying pipeline layout." << endl;
-		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+		
+		if(VK_NULL_HANDLE != pipeline_layout)
+		{
+			vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+		}
 		
 		cout << "Destroying render pass." << endl;
-		vkDestroyRenderPass(device, render_pass, nullptr);
+		
+		if(VK_NULL_HANDLE != render_pass)
+		{
+			vkDestroyRenderPass(device, render_pass, nullptr);
+		}
 
 		cout << "Destroying image views." << endl;
 		
 		for(auto image_view : swapchain_image_views)
 		{
-			vkDestroyImageView(device, image_view, nullptr);
+			if(VK_NULL_HANDLE != image_view)
+			{
+				vkDestroyImageView(device, image_view, nullptr);
+			}
 		}
 
 		swapchain_image_views.clear();
 		swapchain_images.clear();
 
 		cout << "Destroying swapchain." << endl;
-		vkDestroySwapchainKHR(device, swapchain, nullptr);
+
+		if(VK_NULL_HANDLE != swapchain)
+		{
+			vkDestroySwapchainKHR(device, swapchain, nullptr);
+		}
 	}
 
 
@@ -949,20 +970,32 @@ namespace vulkan_renderer {
 		VulkanSynchronisationManager::shutdown_fences(device);
 
 		cout << "Destroying command pool." << endl;
-		vkDestroyCommandPool(device, command_pool, nullptr);
+		if(VK_NULL_HANDLE != command_pool)
+		{
+			vkDestroyCommandPool(device, command_pool, nullptr);
+		}
 
 		cout << "Destroying shader objects." << endl;
 		VulkanShaderManager::shutdown_shaders(device);
 		
 		cout << "Destroying surface." << endl;
-		vkDestroySurfaceKHR(instance, surface, nullptr);
+		if(VK_NULL_HANDLE != surface)
+		{
+			vkDestroySurfaceKHR(instance, surface, nullptr);
+		}
 		
 		// Device queues are implicitly cleaned up when the device is destroyed, so we don’t need to do anything in cleanup.
 		cout << "Destroying device." << endl;
-		vkDestroyDevice(device, nullptr);
+		if(VK_NULL_HANDLE != device)
+		{
+			vkDestroyDevice(device, nullptr);
+		}
 		
 		cout << "Destroying instance." << endl;
-		vkDestroyInstance(instance, nullptr);
+		if(VK_NULL_HANDLE != instance)
+		{
+			vkDestroyInstance(instance, nullptr);
+		}
 		
 		cout << "Shutdown finished." << endl;
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;

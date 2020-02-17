@@ -18,6 +18,13 @@ namespace vulkan_renderer {
 
 	VkResult VulkanShaderManager::create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
 	{
+		if(0 == SPIRV_shader_bytes.size())
+		{
+			std::string error_message = "Error: SPIR-V shader buffer is empty!";
+			display_error_message(error_message);
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+		
 		VkShaderModuleCreateInfo shader_create_info = {};
 	
 		shader_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

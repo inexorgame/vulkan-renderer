@@ -30,12 +30,27 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::load_shaders()
 	{
+		// TODO: Setup shaders JSON or TOML list file.
 		// It is important to make sure that you debugging folder contains the required shader files!
 		
-		create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, "vertex_shader.spv");
-		create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, "fragment_shader.spv");
+		VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, "vertex_shader.spv");
+		if(VK_SUCCESS != result)
+		{	
+			std::string error_message = "Error: Could not find shader file vertex_shader.spv!";
+			display_error_message(error_message);
+			shutdown_vulkan();
+			exit(-1);
+		}
 
-		// TODO: Setup shaders JSON or TOML list file.
+		result = create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, "fragment_shader.spv");
+		if(VK_SUCCESS != result)
+		{
+			std::string error_message = "Error: Could not find shader file fragment_shader.spv!";
+			display_error_message(error_message);
+			shutdown_vulkan();
+			exit(-1);
+		}
+
 		return VK_SUCCESS;
 	}
 
