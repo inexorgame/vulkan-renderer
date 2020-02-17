@@ -1,4 +1,5 @@
 #include "VulkanSynchronisationManager.hpp"
+using namespace std;
 
 
 namespace inexor {
@@ -80,16 +81,19 @@ namespace vulkan_renderer {
         std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
 
 		// Create an iterator for the unordered map.
-		std::unordered_map<std::string, VkSemaphore>::const_iterator sepahore_iterator = semaphores.begin();
+		std::unordered_map<std::string, VkSemaphore>::const_iterator semaphore_iterator = semaphores.begin();
  
 		// Iterate over the unordered map.
-		while(sepahore_iterator != semaphores.end())
+		while(semaphore_iterator != semaphores.end())
 		{
+			cout << "Shutting down semaphore " << semaphore_iterator->first.c_str() << endl;
+
+
 			// Destroy the semaphore.
-			vkDestroySemaphore(vulkan_device, sepahore_iterator->second, nullptr);
+			vkDestroySemaphore(vulkan_device, semaphore_iterator->second, nullptr);
 
 			// Move on to the next Semaphore.
-			sepahore_iterator++;
+			semaphore_iterator++;
 		}
 
 		// Clear the unordered map!
@@ -167,6 +171,8 @@ namespace vulkan_renderer {
 		// Iterate over the unordered map.
 		while(fence_iterator != fences.end())
 		{
+			cout << "Shutting down fence " << fence_iterator->first.c_str() << endl;
+			
 			// Destroy the fences.
 			vkDestroyFence(vulkan_device, fence_iterator->second, nullptr);
 
