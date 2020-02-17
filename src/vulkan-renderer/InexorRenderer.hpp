@@ -40,6 +40,9 @@ namespace vulkan_renderer {
 			// This is build on top of VulkanShaderManager.
 			VkResult load_shaders();
 
+			// Create vertex buffers and fill them with data.
+			VkResult setup_vertices();
+
 			// The actual rendering method which is called every frame.
 			VkResult draw_frame();
 

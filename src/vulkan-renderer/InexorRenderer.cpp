@@ -33,23 +33,39 @@ namespace vulkan_renderer {
 		// TODO: Setup shaders JSON or TOML list file.
 		// It is important to make sure that you debugging folder contains the required shader files!
 		
-		VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, "vertex_shader.spv");
+		VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, "vertexshader.spv");
 		if(VK_SUCCESS != result)
 		{	
-			std::string error_message = "Error: Could not find shader file vertex_shader.spv!";
+			std::string error_message = "Error: Could not find shader file vertexshader.spv!";
 			display_error_message(error_message);
 			shutdown_vulkan();
 			exit(-1);
 		}
 
-		result = create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, "fragment_shader.spv");
+		result = create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv");
 		if(VK_SUCCESS != result)
 		{
-			std::string error_message = "Error: Could not find shader file fragment_shader.spv!";
+			std::string error_message = "Error: Could not find shader file fragmentshader.spv!";
 			display_error_message(error_message);
 			shutdown_vulkan();
 			exit(-1);
 		}
+
+		return VK_SUCCESS;
+	}
+
+
+	VkResult InexorRenderer::setup_vertices()
+	{
+		/// @irony These vertices are no longer hardcoded in the vertex shader, they are hardcoded in C++. What a success!
+		/// @note Since we are defining the vertex attributes with the vertices, those is called interleaving vertex attributes.
+		/// @note All of our per-vertex data is packed together in one array, so we’re only going to have one binding.
+		const std::vector<InexorVertex> vertices =
+		{
+			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		};
 
 		return VK_SUCCESS;
 	}
@@ -241,6 +257,9 @@ namespace vulkan_renderer {
 		result = load_shaders();
 		vulkan_error_check(result);
 		
+		result = setup_vertices();
+		vulkan_error_check(result);
+
 		result = create_pipeline();
 		vulkan_error_check(result);
 		
@@ -251,6 +270,9 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		result = create_command_buffers();
+		vulkan_error_check(result);
+
+		result = create_vertex_buffers();
 		vulkan_error_check(result);
 
 		result = record_command_buffers();

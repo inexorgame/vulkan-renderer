@@ -18,6 +18,10 @@
 #include "../settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
 #include "../shader-manager/VulkanShaderManager.hpp"
 #include "../synchronisation-manager/VulkanSynchronisationManager.hpp"
+#include "../vertex-structure/InexorVertex.hpp"
+#include "../vertex-buffer-manager/VulkanVertexBufferManager.hpp"
+#include "../vulkan-memory-manager/VulkanMemoryManager.hpp"
+
 
 #include <vector>
 #include <string>
@@ -39,7 +43,8 @@ namespace vulkan_renderer {
 								 public VulkanAvailabilityChecks,
 								 public VulkanSettingsDecisionMaker,
 								 public VulkanShaderManager,
-								 public VulkanSynchronisationManager
+								 public VulkanSynchronisationManager,
+								 public VulkanVertexBufferManager
 								 // TODO: VulkanSwapchain, VulkanPipeline, VulkanRenderPassEngine?
 	{
 		public:
@@ -47,6 +52,7 @@ namespace vulkan_renderer {
 			VulkanInitialisation();
 
 			~VulkanInitialisation();
+
 
 		public:
 			
@@ -57,6 +63,21 @@ namespace vulkan_renderer {
 
 		protected:
 		
+			// TODO: Remove this duplicate!
+			const std::vector<InexorVertex> vertices =
+			{
+				{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+				{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+				{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+			};
+
+
+			// The vertex buffer.
+			VkBuffer vertex_buffer;
+
+			// 
+			VkDeviceMemory vertex_buffer_memory;
+
 			// The Vulkan instance handle.
 			VkInstance instance;
 
@@ -76,7 +97,7 @@ namespace vulkan_renderer {
 			VkSwapchainKHR swapchain;
 
 			// The number of images in the swapchain.
-			uint32_t number_of_images_in_swapchain;
+			uint32_t number_of_images_in_swapchain = 0;
 
 			// Structure specifying a queue submit operation.
 			VkSubmitInfo submit_info;
@@ -169,6 +190,10 @@ namespace vulkan_renderer {
 
 			/// @brief Creates the command buffers.
 			VkResult create_command_buffers();
+
+
+			/// @brief Creates the vertex buffers.
+			VkResult create_vertex_buffers();
 
 
 			/// @brief Records the command buffers.
