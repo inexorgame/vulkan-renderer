@@ -51,5 +51,4 @@ assign_source_group(${source_files})
 
 add_executable(inexor-vulkan-renderer src/main.cpp ${source_files})
 
-    target_link_libraries(base ${Vulkan_LIBRARY} ${ASSIMP_LIBRARIES} ${WINLIBS} ktx)
 target_link_libraries(inexor-vulkan-renderer PUBLIC ${CONAN_LIBS})
