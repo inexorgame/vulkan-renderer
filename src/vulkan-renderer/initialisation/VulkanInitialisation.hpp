@@ -188,6 +188,10 @@ namespace vulkan_renderer {
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
 
 
+			/// @brief Initialises graphics and transfer queue.
+			VkResult initialise_queues();
+
+
 			/// @brief Creates the command buffers.
 			VkResult create_command_buffers();
 

@@ -38,12 +38,6 @@ namespace vulkan_renderer {
 		cout << "Supported Vulkan API version: " << api_major_version << "." << api_minor_version << "." << api_version_patch << endl;
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 
-		// Is Vulkan 1.1 available on this system?
-		if(api_major_version > 1 || api_minor_version >= 1)
-		{
-			cout << "Vulkan 1.1 is supported." << endl;
-		}
-
 		cout << endl;
 	}
 

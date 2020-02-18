@@ -60,6 +60,7 @@ namespace vulkan_renderer {
 	}
 
 
+	// TODO: Refactor rendering!
 	VkResult InexorRenderer::draw_frame()
 	{
 		vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
@@ -139,104 +140,60 @@ namespace vulkan_renderer {
 	}
 	
 
-	// TODO: Refactor this setup code!
-	void InexorRenderer::init()
+	VkResult InexorRenderer::init()
 	{
-		// Create a window using GLFW library.
+		// Create a resizable window using GLFW library.
 		create_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_WINDOW_TITLE, true);
 
-		// Store the current InexorRenderer instance in the window user pointer.
-		// Since GLFW is a C API, we can't pass pointers to member functions and have to do it this way!
+		// Store the current InexorRenderer instance in the GLFW window user pointer.
+		// Since GLFW is a C-style API, we can't use a class method as callback for window resize!
 		glfwSetWindowUserPointer(window, this);
 
-		// Setup callback for window resize
+		// Setup callback for window resize.
+		// Since GLFW is a C-style API, we can't use a class method as callback for window resize!
 		glfwSetFramebufferSizeCallback(window, frame_buffer_resize_callback);
 
 		// Create a Vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
 		vulkan_error_check(result);
-		
-		// The window surface needs to be created right after the instance creation,
-		// because it can actually influence the physical device selection.
-
+			
 		// Create a window surface using GLFW library.
+		// @note The window surface needs to be created right after the instance creation,
+		// because it can actually influence the physical device selection.
 		result = create_window_surface(instance, window, surface);
-		vulkan_error_check(result);
-
-		// List up all available graphics cards.
-		print_all_physical_devices(instance, surface);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return result;
+		}
 
 		// TODO: Implement command line argument for preferred graphics card!
-		// Let the user select a graphics card or select the "best" one automatically.
-		std::optional<VkPhysicalDevice> graphics_card = decide_which_graphics_card_to_use(instance);
-		
-		if(graphics_card.has_value())
+
+		// Let's see if there is a graphics card that is suitable for us.
+		std::optional<VkPhysicalDevice> graphics_card_candidate = decide_which_graphics_card_to_use(instance, surface);
+
+		// Check if we found a graphics card candidate.
+		if(graphics_card_candidate.has_value())
 		{
-			selected_graphics_card = graphics_card.value();
+			selected_graphics_card = graphics_card_candidate.value();
 		}
 		else
 		{
-			std::string error_message = "Error: Could not find a suitable graphics card!";
+			// No graphics card suitable!
+			std::string error_message = "Error: Could not find any suitable GPU!";
 			display_error_message(error_message);
-			exit(-1);
-		}
 
-		// TODO: Move this to device selection mechanism!
-		if(!check_swapchain_availability(selected_graphics_card))
-		{
-			display_error_message("Error: Swapchain device extension is not supported on this system!");
-			shutdown_vulkan();
-			exit(-1);
-		}
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}		
 
-		// Create the device queues.
 		result = create_device_queues();
 		vulkan_error_check(result);
-
-		// Create a physical device handle of the selected graphics card.
+		
 		result = create_physical_device(selected_graphics_card);
 		vulkan_error_check(result);
 
-		// Print some detailed information about the available Vulkan driver.
-		print_driver_vulkan_version();
-		print_instance_layers();
-		print_instance_extensions();
-
-		// TODO: Loop through all available graphics cards and print information about them.
-		// TODO: Implement print_limits_of_every_graphics_card_available() ?
-
-		print_device_layers(selected_graphics_card);
-		print_device_extensions(selected_graphics_card);
-		print_graphics_card_limits(selected_graphics_card);
-		print_graphics_cards_sparse_properties(selected_graphics_card);
-		print_graphics_card_features(selected_graphics_card);
-		print_graphics_card_memory_properties(selected_graphics_card);
-
-		// In this section, we need to check if the setup that we want to make is supported by the system. 
-		
-		// TODO: Move this to device selection mechanism!
-
-		// Query if presentation is supported.
-		if(!check_presentation_availability(selected_graphics_card, surface))
-		{
-			display_error_message("Error: Presentation is not supported on this system!");
-			shutdown_vulkan();
-			exit(-1);
-		}
-
-		// TODO: Move this to create_queues method?
-		// Check if suitable queues were found.
-		if(!present_queue_family_index.has_value() || (!graphics_queue_family_index.has_value()))
-		{
-			display_error_message("Error: Could not find suitable queues!");
-			shutdown_vulkan();
-			exit(-1);
-		}
-
-		// Setup the queues for presentation and graphics.
-		// Since we only have one queue per queue family, we acquire index 0.
-		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
-		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
+		result = initialise_queues();
+		vulkan_error_check(result);
 
 		result = create_swapchain();
 		vulkan_error_check(result);
@@ -267,6 +224,8 @@ namespace vulkan_renderer {
 
 		result = create_synchronisation_objects();
 		vulkan_error_check(result);
+
+		return VK_SUCCESS;
 	}
 
 

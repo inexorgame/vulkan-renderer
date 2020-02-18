@@ -141,6 +141,17 @@ namespace vulkan_renderer {
 	}
 
 
+	VkResult VulkanInitialisation::initialise_queues()
+	{
+		// Setup the queues for presentation and graphics.
+		// Since we only have one queue per queue family, we acquire index 0.
+		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
+		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
+
+		return VK_SUCCESS;
+	}
+
+
 	VkResult VulkanInitialisation::create_device_queues()
 	{
 		cout << "Creating device queues." << endl;
@@ -341,7 +352,6 @@ namespace vulkan_renderer {
 
 
 
-
 	/// @param type_filter parameter will be used to specify the bit field of memory types
 	/// that are suitable. That means that we can find the index of a suitable memory
 	/// type by simply iterating over them and checking if the corresponding bit is set to 1.
@@ -465,7 +475,7 @@ namespace vulkan_renderer {
 			clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
 
 			// TODO: Setup clear color by configuration.
-			
+
 			VkRenderPassBeginInfo render_pass_begin_info = {};
 			
 			render_pass_begin_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

@@ -48,7 +48,7 @@ namespace vulkan_renderer {
 		public:
 			
 			/// @brief Initialise the Vulkan renderer.
-			void init();
+			VkResult init();
 
 			/// @brief Run the event loop of the Vulkan renderer.
 			void run();

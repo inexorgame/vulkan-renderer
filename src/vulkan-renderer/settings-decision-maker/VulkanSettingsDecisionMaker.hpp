@@ -37,19 +37,22 @@ namespace vulkan_renderer {
 			// TODO: Turn into std::optional values!
 
 			// TODO
-			//uint32_t decide_which_graphics_card_queue_family_index_to_use(const VkPhysicalDevice& graphics_card);
-			//uint32_t decide_which_graphics_card_queue_family_index_to_use();
 			//uint32_t decide_size_of_swapchain_images();
-			//void decide_which_pre_transformation_to_use();
 			//decide_which_image_color_space_to_use();
 			//decide_which_image_sharing_mode_to_use();
 
 			
 			/// @brief Automatically decides if a graphics cardis suitable for this application's purpose!
+			/// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
+			/// - It must support a swapchain.
+			/// - It must support presentation.
+			/// - Add more here if you want..
 			/// @note Add more checks to the validation mechanism if neccesary, e.h. check for geometry shader support.
 			/// @param graphics_card The graphics card which will be checked for suitability.
 			/// @return True if the graphics card is suitable, false otherwise.
-			VkBool32 decide_if_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card);
+			/// @warning Do not discriminate graphics cards which are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+			/// because this would deny some players to run Inexor on their machines!
+			VkBool32 decide_if_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 
 
 			/// @brief Automatically selects the best graphics card in case multiple are available.
@@ -62,7 +65,7 @@ namespace vulkan_renderer {
 			/// @param vulkan_instance A pointer to the Vulkan instance handle.
 			/// @param preferred_graphics_card_index The preferred graphics card (by array index).
 			/// @return The physical device which was chosen to be the best one.
-			std::optional<VkPhysicalDevice> decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const uint32_t& preferred_graphics_card_index = UINT32_MAX);
+			std::optional<VkPhysicalDevice> decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index = std::nullopt);
 
 			
 			/// @brief Automatically decides how many images will be used in the swap chain.

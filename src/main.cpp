@@ -13,11 +13,13 @@ int main(int argc, char* argv[])
     // TODO: Let the user specify which graphics card to use by passing command line argument -GPU <number>.
     // TODO: Initialise an empty octree-world.
 
-    renderer.init();
-    renderer.run();
-    renderer.cleanup();
-    
-    cout << "Window closed." << endl;
+    if(VK_SUCCESS == renderer.init())
+    {
+        renderer.run();
+        renderer.cleanup();
+        
+        cout << "Window closed." << endl;
+    }
 
     std::cin.get();
 

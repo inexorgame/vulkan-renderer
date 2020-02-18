@@ -132,7 +132,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkBool32 VulkanSettingsDecisionMaker::decide_if_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card)
+	VkBool32 VulkanSettingsDecisionMaker::decide_if_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		// The properties of the graphics card.
 		VkPhysicalDeviceProperties graphics_card_properties;
@@ -146,24 +146,12 @@ namespace vulkan_renderer {
 		// Get the information about the graphics card's features.
 		vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
 
-
 		cout << "Checking suitability of graphics card " << graphics_card_properties.deviceName << "." << endl;
 
-		// This mechanism checks if a graphics card is suitable for the application's purpose.
-		
-		// In contrast to the original plan, we will not discriminate graphics cards which
-		// are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, as this would deny many players
-		// to run Inexor on their machines!
+		// Step 1: Check if swapchain is supported.
+		// In theory we could have used the code from VulkanAvailabilityChecks, but I didn't want
+		// VulkanSettingsDecisionMaker to have a dependency just because of this one code part here.
 
-		// Check if geometry shaders are supported.
-		if(!graphics_card_features.geometryShader)
-		{
-			cout << "This device is not suitable since it does not support geometry shaders." << endl;
-			return false;
-		}
-
-
-		// Check if swapchain is supported.
 		bool swapchain_is_supported = false;
 
 		uint32_t number_of_available_device_extensions = 0;
@@ -197,20 +185,45 @@ namespace vulkan_renderer {
 
 		if(!swapchain_is_supported)
 		{
-			cout << "This device is not suitable since it does not support swap chains." << endl;
+			cout << "This device is not suitable because it does not support swap chain!" << endl;
 			return false;
 		}
 
+
+		// Step 2: Check if presentation is supported
 		// TODO: Check if the selected device supports queue families for graphics bits and presentation!
-		// Add more suitability checks here if desired.
+		
+		VkBool32 presentation_available = false;
+		
+		// Query if presentation is supported.
+		result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return false;
+		}
+
+		if(!presentation_available)
+		{
+			cout << "This device is not suitable because it does not support presentation!" << endl;
+			return false;
+		}
+
+
+		// Add more suitability checks here if neccesary.
+		// ....
 
 		return true;
 	}
 
 	
-	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const uint32_t& preferred_graphics_card_index)
+	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index)
 	{
-		cout << "Deciding automatically which graphics card to use." << endl;
+		// If the user did not specify a preferred graphics card, we have to select one automatically.
+		if(!preferred_graphics_card_index.has_value())
+		{
+			cout << "Automatically selecting a suitable graphics card." << endl;
+		}
 		
 		uint32_t number_of_available_graphics_cards = 0;
 
@@ -220,11 +233,10 @@ namespace vulkan_renderer {
 
 		if(0 == number_of_available_graphics_cards)
 		{
+			// In this case there are not Vulkan compatible graphics cards available!
 			display_error_message("Error: Could not find any graphics cards!");
 			return std::nullopt;
 		}
-		
-		cout << "There are " << number_of_available_graphics_cards << " graphics cards available." << endl;
 
 		// Preallocate memory for the available graphics cards.
 		std::vector<VkPhysicalDevice> available_graphics_cards(number_of_available_graphics_cards);
@@ -236,46 +248,59 @@ namespace vulkan_renderer {
 		// If there is only 1 graphics card available, we don't have a choice and must use that one.
 		if(1 == available_graphics_cards.size())
 		{
+			cout << "Because there is only 1 graphics card available, we don't have a choice and must use that one." << endl;
+			
 			// Did the user specify a preferred GPU by command line argument?
-			if(UINT32_MAX != preferred_graphics_card_index)
+			// If so, let's take a look at what he wanted us to use.
+			if(preferred_graphics_card_index.has_value())
 			{
-				if(0 != preferred_graphics_card_index)
+				// Since we only have one graphics card to choose from, index 0 is our only option.
+				if(0 != preferred_graphics_card_index.value())
 				{
 					// A little hint message just to be sure.
-					cout << "Ignoring command line argument -GPU " << preferred_graphics_card_index << " because there is only one GPU to chose from." << endl;
+					cout << "Ignoring command line argument -GPU " << preferred_graphics_card_index.value() << " because there is only one GPU to chose from." << endl;
 				}
-				if(!(preferred_graphics_card_index >= 0 && preferred_graphics_card_index < available_graphics_cards.size()))
+				if(!(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index.value() < available_graphics_cards.size()))
 				{
 					// Haha.
-					cout << "Array index would have been invalid anyways!" << endl;
+					cout << "Warning: Array index for selected graphics card would have been invalid anyways!" << endl;
 				}
 			}
 
-			cout << "Because there is only 1 graphics card, we don't have a choice and must use that one." << endl;
-			return available_graphics_cards[0];
+			if(decide_if_graphics_card_is_suitable(available_graphics_cards[0], surface))
+			{
+				cout << "The only graphics card available is suitable for the application's purpose!" << endl;
+				return available_graphics_cards[0];
+			}
+			else
+			{
+				std::string error_message = "Error: The only graphics card available is unsuitable for the application's purposes!";
+				display_error_message(error_message);
+				return std::nullopt;
+			}
 		}
 
 		// The user passed a command line parameter to the application which specifies the array index of the GPU to use.
-		if(UINT32_MAX != preferred_graphics_card_index)
+		if(preferred_graphics_card_index.has_value())
 		{
 			// Check if this array index is valid!
 			if(preferred_graphics_card_index >= 0 && preferred_graphics_card_index < available_graphics_cards.size())
 			{
-				cout << "Command line parameter for desired GPU specified. Checking graphics card with index " << preferred_graphics_card_index << "." << endl;
+				cout << "Command line parameter for desired GPU specified. Checking graphics card with index " << preferred_graphics_card_index.value() << "." << endl;
 	
 				bool selected_graphics_card_is_suitable = false;
 				
 				// Check if the graphics card selected by the user meets all the criteria we need!
-				selected_graphics_card_is_suitable = decide_if_graphics_card_is_suitable(available_graphics_cards[preferred_graphics_card_index]);
+				selected_graphics_card_is_suitable = decide_if_graphics_card_is_suitable(available_graphics_cards[preferred_graphics_card_index.value()], surface);
 
 				if(selected_graphics_card_is_suitable)
 				{
 					// We are done: Use the graphics card which was specified by the user's command line argument.
-					return available_graphics_cards[preferred_graphics_card_index];
+					return available_graphics_cards[preferred_graphics_card_index.value()];
 				}
 				else
 				{
-					cout << "Error: The preferred graphics card with index " << preferred_graphics_card_index << " is not suitable for this application!" << endl;
+					cout << "Error: The preferred graphics card with index " << preferred_graphics_card_index.value() << " is not suitable for this application!" << endl;
 					cout << "The array index is valid, but this graphics card does not fulfill all requirements!" << endl;
 
 					// We are NOT done!
@@ -285,7 +310,7 @@ namespace vulkan_renderer {
 			else
 			{
 				// No, this array index for available_graphics_cards is invalid!
-				cout << "Error: invalid command line argument! Graphics card array index " << preferred_graphics_card_index << " is invalid!" << endl;
+				cout << "Error: invalid command line argument! Graphics card array index " << preferred_graphics_card_index.value() << " is invalid!" << endl;
 
 				// We are NOT done!
 				// Try to select the best graphics card automatically!
@@ -295,6 +320,9 @@ namespace vulkan_renderer {
 		{
 			cout << "No command line argument for preferred graphics card given." << endl;
 		}
+
+
+
 
 		cout << "Detecting best graphics card automatically." << endl;
 		cout << "Phase 1: Sort out all graphics cards which are unsuitable." << endl;
@@ -307,7 +335,7 @@ namespace vulkan_renderer {
 		// Loop through all available graphics cards and sort out the unsuitable ones.
 		for(std::size_t i=0; i<number_of_available_graphics_cards; i++)
 		{
-			if(decide_if_graphics_card_is_suitable(available_graphics_cards[i]))
+			if(decide_if_graphics_card_is_suitable(available_graphics_cards[i], surface))
 			{
 				cout << "Adding graphics card index " << i << " to the list of suitable graphics cards." << endl;
 
@@ -505,13 +533,12 @@ namespace vulkan_renderer {
 				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 				{
 					// Ok this queue family supports graphics!
-					// This is all we need for now.
-
 					return static_cast<uint32_t>(i);
 				}
 			}
 		}
 
+		// In this case we could not find any suitable graphics queue family!
 		return std::nullopt;
 	}
 			
@@ -551,7 +578,8 @@ namespace vulkan_renderer {
 				}
 			}
 		}
-
+		
+		// In this case we could not find any suitable present queue family!
 		return std::nullopt;
 	}
 
