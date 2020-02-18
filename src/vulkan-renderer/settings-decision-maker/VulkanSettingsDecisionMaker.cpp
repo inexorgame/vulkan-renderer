@@ -219,12 +219,6 @@ namespace vulkan_renderer {
 	
 	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index)
 	{
-		// If the user did not specify a preferred graphics card, we have to select one automatically.
-		if(!preferred_graphics_card_index.has_value())
-		{
-			cout << "Automatically selecting a suitable graphics card." << endl;
-		}
-		
 		uint32_t number_of_available_graphics_cards = 0;
 
 		// First check how many graphics cards are available.
@@ -245,8 +239,12 @@ namespace vulkan_renderer {
 		result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards, available_graphics_cards.data());
 		vulkan_error_check(result);
 
+
+
+		// ATTEMPT 1
 		// If there is only 1 graphics card available, we don't have a choice and must use that one.
-		if(1 == available_graphics_cards.size())
+		// The preferred graphics card index which could have been specified by the user can either be this one or an invalid index!
+		if(1 == number_of_available_graphics_cards)
 		{
 			cout << "Because there is only 1 graphics card available, we don't have a choice and must use that one." << endl;
 			
@@ -280,20 +278,22 @@ namespace vulkan_renderer {
 			}
 		}
 
-		// The user passed a command line parameter to the application which specifies the array index of the GPU to use.
+
+
+		// ATTEMPT 2
+		// There is more than 1 graphics cards available, but the user specified which one should be preferred.
+		// It is important to note that the preferred graphics card can be unsuitable though! If that is the case,
+		// the automatic graphics card selection mechanism is responsible for finding a suitable graphics card.
+		// The user can also simply change the command line argument and try to prefer another graphics card.
 		if(preferred_graphics_card_index.has_value())
 		{
 			// Check if this array index is valid!
-			if(preferred_graphics_card_index >= 0 && preferred_graphics_card_index < available_graphics_cards.size())
+			if(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index < number_of_available_graphics_cards)
 			{
 				cout << "Command line parameter for desired GPU specified. Checking graphics card with index " << preferred_graphics_card_index.value() << "." << endl;
 	
-				bool selected_graphics_card_is_suitable = false;
-				
 				// Check if the graphics card selected by the user meets all the criteria we need!
-				selected_graphics_card_is_suitable = decide_if_graphics_card_is_suitable(available_graphics_cards[preferred_graphics_card_index.value()], surface);
-
-				if(selected_graphics_card_is_suitable)
+				if(decide_if_graphics_card_is_suitable(available_graphics_cards[preferred_graphics_card_index.value()], surface))
 				{
 					// We are done: Use the graphics card which was specified by the user's command line argument.
 					return available_graphics_cards[preferred_graphics_card_index.value()];
@@ -318,16 +318,37 @@ namespace vulkan_renderer {
 		}
 		else
 		{
+			// Give the user a little hint message.
 			cout << "No command line argument for preferred graphics card given." << endl;
+			cout << "You have more than 1 graphics card available on your machine." << endl;
+			cout << "Specify which one to use by passing -GPU <number> as command line argument." << endl;
+			cout << "Please be aware that the first index is 0." << endl;
 		}
 
 
 
+		// Attempt 3
+		// There are more than 1 graphics card available and the user did not specify which one to use.
+		// If there are exactly 2 graphics card and one of them is VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU and the other one
+		// is VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, we should prefere the real graphics card over the integrated one.
+		// We also need to check if the VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU one is suitable though!
+		// If that is not the case, we check if the VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU is suitable and use it instead.
+		// If both are unsuitable, there are no suitable graphics cards available on this machine!
+		if(2 == number_of_available_graphics_cards)
+		{
+			
 
-		cout << "Detecting best graphics card automatically." << endl;
-		cout << "Phase 1: Sort out all graphics cards which are unsuitable." << endl;
 
-		std::size_t available_graphics_cards_array_index = UINT32_MAX;
+		}
+
+
+
+		// ATTEMPT 4
+		// - There is more than 1 graphics card available.
+		// - The user did not specify which one to prefer.
+		// - It's not like there are 2 GPUs, one of them a real graphics card and another one an integrated one.
+		// We now have to sort our all GPUs that do not support swapchain and presentation.
+		// After this we have to rank them by a score!
 		
 		// The suitable graphics cards (by array index).
 		std::vector<std::size_t> suitable_graphics_cards;
@@ -366,18 +387,12 @@ namespace vulkan_renderer {
 		// Only 1 graphics card is suitable, let's choose that one.
 		if(1 == suitable_graphics_cards.size())
 		{
-			available_graphics_cards_array_index = suitable_graphics_cards[0];
-			return available_graphics_cards[available_graphics_cards_array_index];
+			cout << "There is only 1 suitable graphics card available." << endl;
+			return available_graphics_cards[0];
 		}
 
 		// We have more than one suitable graphics card.
-		// The situation is more complex.
-
 		// There is at least one graphics card that is suitable at least.
-		// This means available_graphics_cards_array_index can no longer be UINT32_MAX from now on!1
-
-		cout << "Phase 2: We have multiple suitable graphics card." << endl;
-		cout << "Starting to rank them by score." << endl;
 
 		// ----------------------------------------
 		// TODO: Implement score ranking mechanism!
@@ -385,9 +400,7 @@ namespace vulkan_renderer {
 
 		// For now, let's just use the first index of the suitable graphics cards.
 		// This might be not the best choice after all, but it simplifies the situation for now.
-		available_graphics_cards_array_index = suitable_graphics_cards[0];
-
-		return available_graphics_cards[available_graphics_cards_array_index];
+		return available_graphics_cards[0];
 	}
 
 	
