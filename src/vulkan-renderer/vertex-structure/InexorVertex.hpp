@@ -16,7 +16,10 @@ namespace vulkan_renderer {
 	{
 		public:
 
+			/// The position of the vertex.
 			glm::vec2 pos;
+
+			/// The RGB color of the vertex.
 			glm::vec3 color;
 
 

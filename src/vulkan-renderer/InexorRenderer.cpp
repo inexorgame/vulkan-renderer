@@ -30,42 +30,31 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::load_shaders()
 	{
-		// TODO: Setup shaders JSON or TOML list file.
 		// It is important to make sure that you debugging folder contains the required shader files!
-		
-		VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, "vertexshader.spv");
-		if(VK_SUCCESS != result)
-		{	
-			std::string error_message = "Error: Could not find shader file vertexshader.spv!";
-			display_error_message(error_message);
-			shutdown_vulkan();
-			exit(-1);
-		}
-
-		result = create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv");
-		if(VK_SUCCESS != result)
+		struct InexorShaderSetup
 		{
-			std::string error_message = "Error: Could not find shader file fragmentshader.spv!";
-			display_error_message(error_message);
-			shutdown_vulkan();
-			exit(-1);
-		}
-
-		return VK_SUCCESS;
-	}
-
-
-	VkResult InexorRenderer::setup_vertices()
-	{
-		/// @irony These vertices are no longer hardcoded in the vertex shader, they are hardcoded in C++. What a success!
-		/// @note Since we are defining the vertex attributes with the vertices, those is called interleaving vertex attributes.
-		/// @note All of our per-vertex data is packed together in one array, so we’re only going to have one binding.
-		const std::vector<InexorVertex> vertices =
-		{
-			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+			VkShaderStageFlagBits shader_type;
+			std::string shader_file_name;
 		};
+		
+		// The actual file list of shaders that we want to load.
+		// TODO: Setup shaders JSON or TOML list file.
+		const std::vector<InexorShaderSetup> shader_list = 
+		{
+			{VK_SHADER_STAGE_VERTEX_BIT, "vertexshader.spv"},
+			{VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv"}
+		};
+
+		for(const auto& shader : shader_list)
+		{
+			VkResult result = create_shader_from_file(device, shader.shader_type, shader.shader_file_name);
+			if(VK_SUCCESS != result)
+			{
+				vulkan_error_check(result);
+				std::string error_message = "Error: Could not initialise shader " +  shader.shader_file_name;
+				display_error_message(error_message);
+			}
+		}
 
 		return VK_SUCCESS;
 	}
@@ -150,6 +139,7 @@ namespace vulkan_renderer {
 	}
 	
 
+	// TODO: Refactor this setup code!
 	void InexorRenderer::init()
 	{
 		// Create a window using GLFW library.
@@ -255,9 +245,6 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		result = load_shaders();
-		vulkan_error_check(result);
-		
-		result = setup_vertices();
 		vulkan_error_check(result);
 
 		result = create_pipeline();

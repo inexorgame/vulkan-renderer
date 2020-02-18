@@ -20,7 +20,9 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	// Now I am become renderer, the drawer of worlds.
+	/// @class InexorRenderer
+	/// @brief Inexor's Vulkan API rendering engine.
+	/// @note Now I am become renderer, the drawer of worlds.
 	class InexorRenderer : public VulkanInitialisation
 	{
 		public:
@@ -36,26 +38,22 @@ namespace vulkan_renderer {
 
 		private:
 
-			// Load all required shaders.
-			// This is build on top of VulkanShaderManager.
+			/// @brief Load all required shaders.
 			VkResult load_shaders();
 
-			// Create vertex buffers and fill them with data.
-			VkResult setup_vertices();
-
-			// The actual rendering method which is called every frame.
+			/// @brief The actual rendering method which is called every frame.
 			VkResult draw_frame();
 
 
 		public:
 			
-			// Initialise the Vulkan renderer.
+			/// @brief Initialise the Vulkan renderer.
 			void init();
 
-			// Run the event loop of the Vulkan renderer.
+			/// @brief Run the event loop of the Vulkan renderer.
 			void run();
 
-			// Destroy the window and shutdown Vulkan.
+			/// @brief Destroy the window and shutdown Vulkan.
 			void cleanup();
 
 	};

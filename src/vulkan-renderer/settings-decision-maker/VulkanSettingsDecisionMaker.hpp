@@ -44,11 +44,6 @@ namespace vulkan_renderer {
 			//decide_which_image_color_space_to_use();
 			//decide_which_image_sharing_mode_to_use();
 
-
-
-
-
-
 			
 			/// @brief Automatically decides if a graphics cardis suitable for this application's purpose!
 			/// @note Add more checks to the validation mechanism if neccesary, e.h. check for geometry shader support.

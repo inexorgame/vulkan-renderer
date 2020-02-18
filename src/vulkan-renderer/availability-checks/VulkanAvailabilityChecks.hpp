@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../error-handling/VulkanErrorHandling.hpp"
+
 #include <string>
 #include <vector>
 #include <optional>
-
-#include "../error-handling/VulkanErrorHandling.hpp"
 
 
 namespace inexor {
