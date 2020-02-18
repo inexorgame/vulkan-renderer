@@ -15,8 +15,11 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	// @class VulkanWindowManager
-	// @brief A class for managing windows.
+	// TODO: Support multiple windows in the future.
+
+
+	/// @class VulkanWindowManager
+	/// @brief A class for managing windows.
 	class VulkanWindowManager
 	{
 		public:
@@ -28,22 +31,22 @@ namespace vulkan_renderer {
 
 		protected:
 			
-			// The GLFW window.
-			GLFWwindow* window;
+			/// The GLFW window.
+			GLFWwindow* window = nullptr;
 			
-			// The width of the window.
-			uint32_t window_width;
+			/// The width of the window.
+			uint32_t window_width = 0;
 
-			// The height of the window.
-			uint32_t window_height;
+			/// The height of the window.
+			uint32_t window_height = 0;
 
-			// Creates a window of with a specific width, height and name.
-			// @param width The width of the window.
-			// @param height The height of the window.
-			// @param window_name The name of the window.
+			/// @brief Creates a window of with a specific width, height and name.
+			/// @param width The width of the window.
+			/// @param height The height of the window.
+			/// @param window_name The name of the window.
 			void create_window(const int width, const int height, const std::string& window_name, const bool window_resizable = false);
 			
-			// Destroys the window.
+			/// @brief Destroys the window.
 			void destroy_window();
 
 	};

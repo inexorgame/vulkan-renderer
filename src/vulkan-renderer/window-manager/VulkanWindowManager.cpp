@@ -7,9 +7,6 @@ namespace vulkan_renderer {
 	
 	VulkanWindowManager::VulkanWindowManager()
 	{
-		window = nullptr;
-		window_width = 0;
-		window_height = 0;
 	}
 
 	
@@ -20,8 +17,6 @@ namespace vulkan_renderer {
 
 	void VulkanWindowManager::create_window(const int width, const int height, const std::string& window_name, const bool window_resizable)
 	{
-		// TODO: What if window has already been initialised?
-
 		// Initialise GLFW library.
 		glfwInit();
 
