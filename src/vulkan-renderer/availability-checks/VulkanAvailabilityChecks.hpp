@@ -14,6 +14,7 @@ namespace vulkan_renderer {
 	/// @class VulkanAvailabilityChecks
 	/// @brief This class bundles various availability checks.
 	/// @note In Vulkan we always need to check if a feature or a setting that we want to use is available in the current system.
+	/// Since Vulkan API is designed to work on various platforms, we must take into account the platform's different capabilities!
 	class VulkanAvailabilityChecks
 	{
 		public:
@@ -26,22 +27,22 @@ namespace vulkan_renderer {
 		protected:
 
 
-			/// @brief Checks if a certain instance layer is available on the system.
-			// Available instance layers can then be enabled by passing them as parameter for Vulkan instance creation.
-			// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateInstanceLayerProperties.html
+			/// @brief Checks if a certain Vulkan instance layer is available on the system.
+			/// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateInstanceLayerProperties.html
+			/// @note Available instance layers can then be enabled by passing them as parameter during Vulkan instance creation.
 			bool check_instance_layer_availability(const std::string& instance_layer_name);
 			
 			
-			/// @brief Checks if a certain instance extension is available on the system.
-			// Available instance extensions can then be enabled by passing them as parameter for Vulkan instance creation.
-			// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateInstanceExtensionProperties.html
-			/// @param instance_extension_name The name of the instance extension.
+			/// @brief Checks if a certain Vulkan instance extension is available on the system.
+			/// Available instance extensions can then be enabled by passing them as parameter during Vulkan instance creation.
+			/// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateInstanceExtensionProperties.html
+			/// @param instance_extension_name The name of the Vulkan instance extension.
 			/// @return true if the instance extension is available, false otherwise.
 			bool check_instance_extension_availability(const std::string& instance_extension_name);
 
 
-			/// @brief Checks if a certain device layer is available on the system.
-			/// Available device layers can then be enabled by passing them as a parameter for Vulkan device creation.
+			/// @brief Checks if a certain Vulkan device layer is available on the system.
+			/// Available device layers can then be enabled by passing them as a parameter during Vulkan device creation.
 			/// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateDeviceLayerProperties.html
 			/// @note Device layers and device extensions are coupled to a certain graphics card which needs to be specified as parameter.
 			/// @param graphics_card The selected graphics card.
@@ -49,8 +50,8 @@ namespace vulkan_renderer {
 			bool check_device_layer_availability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name);
 			
 
-			/// @brief Checks if a certain device extension is available on the system.
-			/// Available device extensions can then be enabled by passing them as a parameter for Vulkan device creation.
+			/// @brief Checks if a certain Vulkan device extension is available on the system.
+			/// Available device extensions can then be enabled by passing them as a parameter during Vulkan device creation.
 			/// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateDeviceExtensionProperties.html
 			/// @note Device layers and device extensions are coupled to a certain graphics card which needs to be specified as parameter.
 			/// @param graphics_card The selected graphics card.
@@ -59,7 +60,8 @@ namespace vulkan_renderer {
 
 
 			/// @brief Query if presentation is available for a certain combination of graphics card and surface.
-			// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceSupportKHR.html
+			/// The present mode describes how the rendered image will be presented on the screen.
+			/// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceSupportKHR.html
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The window surface.
 			/// @return true if presentation is available, false otherwise.

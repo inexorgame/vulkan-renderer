@@ -20,11 +20,13 @@ namespace vulkan_renderer {
 	{
 		uint32_t number_of_available_instance_extensions = 0;
 
+		// First ask Vulkan how many instance extensions are available on the system.
 		VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_available_instance_extensions, NULL);
 		vulkan_error_check(result);
 
 		if(0 == number_of_available_instance_extensions)
-		{
+		{	
+			// It should be a very rare case that no instance extensions are available at all. Still we have to consider this!
 			display_error_message("Error: No Vulkan instance extensions available!");
 
 			// Since there are no instance extensions available at all, the desired one is not supported either.
@@ -34,6 +36,8 @@ namespace vulkan_renderer {
 		{
 			// Preallocate memory for extension properties.
 			std::vector<VkExtensionProperties> instance_extensions(number_of_available_instance_extensions);
+
+			// Get the information about the available instance extensions.
 			result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_available_instance_extensions, instance_extensions.data());
 			vulkan_error_check(result);
 
@@ -58,11 +62,13 @@ namespace vulkan_renderer {
 	{
 		uint32_t number_of_available_instance_layers = 0;
 
+		// First ask Vulkan how many instance layers are available on the system.
 		VkResult result = vkEnumerateInstanceLayerProperties(&number_of_available_instance_layers, nullptr);
 		vulkan_error_check(result);
 
 		if(0 == number_of_available_instance_layers)
 		{
+			// It should be a very rare case that no instance layers are available at all. Still we have to consider this!
 			display_error_message("Error: No Vulkan instance layers available!");
 
 			// Since there are no instance layers available at all, the desired one is not supported either.
@@ -72,6 +78,8 @@ namespace vulkan_renderer {
 		{
 			// Preallocate memory for layer properties.
 			std::vector<VkLayerProperties> instance_layers(number_of_available_instance_layers);
+			
+			// Get the information about the available instance layers.
 			result = vkEnumerateInstanceLayerProperties(&number_of_available_instance_layers, instance_layers.data());
 			vulkan_error_check(result);
 		
@@ -95,12 +103,14 @@ namespace vulkan_renderer {
 	bool VulkanAvailabilityChecks::check_device_layer_availability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name)
 	{
 		uint32_t number_of_available_device_layers = 0;
-
+		
+		// First ask Vulkan how many device layers are available on the system.
 		VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_available_device_layers, nullptr);
 		vulkan_error_check(result);
 
 		if(0 == number_of_available_device_layers)
 		{
+			// It should be a very rare case that no device layers are available at all. Still we have to consider this!
 			display_error_message("Error: No Vulkan device layers available!");
 
 			// Since there are no device layers available at all, the desired one is not supported either.
@@ -110,6 +120,8 @@ namespace vulkan_renderer {
 		{
 			// Preallocate memory for device layers.
 			std::vector<VkLayerProperties> device_layer_properties(number_of_available_device_layers);
+			
+			// Get the information about the available device layers.
 			result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_available_device_layers, device_layer_properties.data());
 			vulkan_error_check(result);
 		
@@ -132,12 +144,14 @@ namespace vulkan_renderer {
 	bool VulkanAvailabilityChecks::check_device_extension_availability(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name)
 	{
 		uint32_t number_of_available_device_extensions = 0;
-
+		
+		// First ask Vulkan how many device extensions are available on the system.
 		VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr);
 		vulkan_error_check(result);
 
 		if(0 == number_of_available_device_extensions)
 		{
+			// It should be a very rare case that no device extension are available at all. Still we have to consider this!
 			display_error_message("Error: No Vulkan device extensions available!");
 
 			// Since there are no device extensions available at all, the desired one is not supported either.
@@ -147,6 +161,8 @@ namespace vulkan_renderer {
 		{
 			// Preallocate memory for device extensions.
 			std::vector<VkExtensionProperties> device_extensions(number_of_available_device_extensions);
+			
+			// Get the information about the available device extensions.
 			result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, device_extensions.data());
 			vulkan_error_check(result);
 
@@ -171,9 +187,12 @@ namespace vulkan_renderer {
 		VkBool32 presentation_available = false;
 		
 		// Query if presentation is supported.
-		// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceSupportKHR.html
 		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
-		vulkan_error_check(result);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return false;
+		}
 
 		return presentation_available;
 	}
@@ -181,6 +200,7 @@ namespace vulkan_renderer {
 
 	bool VulkanAvailabilityChecks::check_swapchain_availability(const VkPhysicalDevice& graphics_card)
 	{
+		// Just overload the other method. VK_KHR_SWAPCHAIN_EXTENSION_NAME is a nice macro which Vulkan defines for us.
 		return check_device_extension_availability(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
@@ -229,6 +249,8 @@ namespace vulkan_renderer {
 			}
 		}
 
+		// There is no queue which supports both graphics and presentation.
+		// We have to used 2 separate queues then!
 		return std::nullopt;
 	}
 
