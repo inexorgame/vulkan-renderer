@@ -66,8 +66,6 @@ namespace vulkan_renderer {
 			/// @param vulkan_device The Vulkan device handle.
 			void shutdown_semaphores(const VkDevice& vulkan_device);
 
-
-
 			
 			/// @brief Checks if a fence with this name already exists.
 			/// @param fence_name The name of the fence.
@@ -78,7 +76,7 @@ namespace vulkan_renderer {
 			/// @brief Creates a new Vulkan fence.
 			/// @param vulkan_device The Vulkan device handle.
 			/// @param fence_name The unique name of the fence.
-			const std::optional<VkFence> create_fence(const VkDevice& vulkan_device, const std::string& fence_name);
+			const std::optional<VkFence> create_fence(const VkDevice& vulkan_device, const std::string& fence_name, bool create_as_signaled = true);
 
 			
 			/// @brief Gets a certain fence by name.

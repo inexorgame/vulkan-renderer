@@ -55,6 +55,7 @@ namespace vulkan_renderer {
         // Use lock guard to ensure thread safety during write operations!
         std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
 
+		// Insert the semaphore into the semaphore map.
 		semaphores.insert({semaphore_name, new_semaphore});
 
 		return new_semaphore;
@@ -88,7 +89,6 @@ namespace vulkan_renderer {
 		{
 			cout << "Shutting down semaphore " << semaphore_iterator->first.c_str() << endl;
 
-
 			// Destroy the semaphore.
 			vkDestroySemaphore(vulkan_device, semaphore_iterator->second, nullptr);
 
@@ -109,7 +109,7 @@ namespace vulkan_renderer {
 	}
 
 
-	const std::optional<VkFence> VulkanSynchronisationManager::create_fence(const VkDevice& vulkan_device, const std::string& fence_name)
+	const std::optional<VkFence> VulkanSynchronisationManager::create_fence(const VkDevice& vulkan_device, const std::string& fence_name, bool create_as_signaled)
 	{
 		// First check if a Vulkan fence with this name already exists!
 		if(does_fence_exist(fence_name))
@@ -124,8 +124,11 @@ namespace vulkan_renderer {
 		fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fence_create_info.pNext = nullptr;
 
-		// Create this fence in a signaled state!
-		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		if(create_as_signaled)
+		{
+			// Create this fence in a signaled state!
+			fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		}
 
 		// The new Vulkan fence which will be created.
 		VkFence new_fence;
@@ -140,6 +143,7 @@ namespace vulkan_renderer {
         // Use lock guard to ensure thread safety during write operations!
         std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
 
+		// Insert the new fence into the fence map.
 		fences.insert({fence_name, new_fence});
 
 		return new_fence;
