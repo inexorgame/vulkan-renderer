@@ -167,8 +167,6 @@ namespace vulkan_renderer {
 			return result;
 		}
 
-		// TODO: Implement command line argument for preferred graphics card!
-
 		// Let's see if there is a graphics card that is suitable for us.
 		std::optional<VkPhysicalDevice> graphics_card_candidate = decide_which_graphics_card_to_use(instance, surface);
 
@@ -184,6 +182,19 @@ namespace vulkan_renderer {
 			display_error_message(error_message);
 
 			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
+		// TODO: Implement command line argument for preferred graphics card!
+		bool display_graphics_card_info = true;
+
+		if(display_graphics_card_info)
+		{
+			print_driver_vulkan_version();
+			print_instance_layers();
+			print_instance_extensions();
+
+			// Print all information that we can find about all graphics card available.
+			print_all_physical_devices(instance, surface);
 		}
 
 		result = create_device_queues();

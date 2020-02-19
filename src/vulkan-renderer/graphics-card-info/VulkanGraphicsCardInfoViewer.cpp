@@ -15,7 +15,7 @@ namespace vulkan_renderer {
 	{
 	}
 
-
+	
 	void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version()
 	{
 		// The version of the available Vulkan API is encoded as a 32 bit integer.
@@ -41,7 +41,7 @@ namespace vulkan_renderer {
 		cout << endl;
 	}
 
-	
+
 	void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const VkPhysicalDevice& graphics_card)
 	{
 		// The number of available queue families.
@@ -89,7 +89,7 @@ namespace vulkan_renderer {
 		}
 	}
 
-	
+
 	void VulkanGraphicsCardInfoViewer::print_instance_layers()
 	{
 		uint32_t number_of_instance_layers = 0;
@@ -257,7 +257,7 @@ namespace vulkan_renderer {
 		}
 	}
 
-	
+
 	void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
 	{
 		cout << "Printing surface capabilities" << endl;
@@ -745,13 +745,19 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 
 			// Loop through all graphics cards and print information about them.
-			for(auto graphics_cards : available_graphics_cards)
+			for(auto graphics_card : available_graphics_cards)
 			{
-				print_graphics_card_info(graphics_cards);
-				print_physical_device_queue_families(graphics_cards);
-				print_surface_capabilities(graphics_cards, vulkan_surface);
-				print_supported_surface_formats(graphics_cards, vulkan_surface);
-				print_presentation_modes(graphics_cards, vulkan_surface);
+				print_device_layers(graphics_card);
+				print_device_extensions(graphics_card);
+				print_graphics_card_info(graphics_card);
+				print_physical_device_queue_families(graphics_card);
+				print_surface_capabilities(graphics_card, vulkan_surface);
+				print_supported_surface_formats(graphics_card, vulkan_surface);
+				print_presentation_modes(graphics_card, vulkan_surface);
+				print_graphics_card_memory_properties(graphics_card);
+				print_graphics_card_features(graphics_card);
+				print_graphics_cards_sparse_properties(graphics_card);
+				print_graphics_card_limits(graphics_card);
 				cout << endl;
 			}
 		}
