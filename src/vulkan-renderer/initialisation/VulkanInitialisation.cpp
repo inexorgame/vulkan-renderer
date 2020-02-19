@@ -357,35 +357,26 @@ namespace vulkan_renderer {
 		allocatorInfo.physicalDevice = selected_graphics_card;
 		allocatorInfo.device = device;
 
-		return vmaCreateAllocator(&allocatorInfo, &allocator);
+		return vmaCreateAllocator(&allocatorInfo, &vma_allocator);
 	}
 	
 
 	VkResult VulkanInitialisation::create_vertex_buffers()
 	{
-		VkBufferCreateInfo buffer_create_info = {};
-
-		buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_create_info.size        = sizeof(vertices[0])*vertices.size();
-		buffer_create_info.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		VmaAllocationCreateInfo allocCreateInfo = {};
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
- 
-		VmaAllocationInfo allocInfo;
-		VkResult result = vmaCreateBuffer(allocator, &buffer_create_info, &allocCreateInfo, &vertex_buffer, &vertex_buffer_allocation, &allocInfo);
-
-		if(VK_SUCCESS != result)
+		const std::vector<InexorVertex> vertices =
 		{
-			vulkan_error_check(result);
-			return result;
-		}
+			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		};
 		
-		// Copy vertices to transfer them to GPU memory.
-		memcpy(allocInfo.pMappedData, vertices.data(), buffer_create_info.size);
-		
+		const VkDeviceSize vertex_buffer_size = sizeof(vertices[0])*vertices.size();
+
+		VkResult result = create_vertex_buffer(vma_allocator, vertex_buffer_size, example_vertex_buffer);
+		vulkan_error_check(result);
+
+		update_vertex_buffer_memory(example_vertex_buffer, vertices.data());
+
 		return VK_SUCCESS;
 	}
 
@@ -430,7 +421,7 @@ namespace vulkan_renderer {
 
 			// TODO: Refactor this!
 			VkDeviceSize offsets[] = {0};
-			VkBuffer vertex_buffers[] = {vertex_buffer};
+			VkBuffer vertex_buffers[] = {example_vertex_buffer.buffer};
 			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertex_buffers, offsets);
 
 			// TODO: Draw size of buffer!
@@ -1019,13 +1010,13 @@ namespace vulkan_renderer {
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Shutting down Vulkan API." << endl;
 		
-		// This functions calls vkDeviceWaitIdle for us.
 		cleanup_swapchain();
 
-		// Destroy vertex buffer.		
-		vmaDestroyBuffer(allocator, vertex_buffer, vertex_buffer_allocation);
-		vmaDestroyAllocator(allocator);
+		cout << "Destroying vertex buffers." << endl;
+		VulkanVertexBufferManager::shutdown_vertex_buffers(vma_allocator);
 
+		// Destroy allocator of Vulkan Memory Allocator (VMA) library.
+		vmaDestroyAllocator(vma_allocator);
 
 		cout << "Destroying semaphores." << endl;
 		VulkanSynchronisationManager::shutdown_semaphores(device);
@@ -1048,14 +1039,15 @@ namespace vulkan_renderer {
 			vkDestroySurfaceKHR(instance, surface, nullptr);
 		}
 		
-		// Device queues are implicitly cleaned up when the device is destroyed, so we don’t need to do anything in cleanup.
-		cout << "Destroying device." << endl;
+		// Device queues are implicitly cleaned up when the device is destroyed,
+		// so we don’t need to do anything in cleanup.
+		cout << "Destroying Vulkan device." << endl;
 		if(VK_NULL_HANDLE != device)
 		{
 			vkDestroyDevice(device, nullptr);
 		}
 		
-		cout << "Destroying instance." << endl;
+		cout << "Destroying Vulkan instance." << endl;
 		if(VK_NULL_HANDLE != instance)
 		{
 			vkDestroyInstance(instance, nullptr);

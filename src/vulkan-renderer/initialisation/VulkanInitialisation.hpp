@@ -49,7 +49,7 @@ namespace vulkan_renderer {
 								 public VulkanShaderManager,
 								 public VulkanSynchronisationManager,
 								 public VulkanVertexBufferManager
-								 // TODO: VulkanSwapchain, VulkanPipeline, VulkanRenderPassEngine?
+								 // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
 		public:
 
@@ -67,31 +67,15 @@ namespace vulkan_renderer {
 
 		private:
 
-			// TODO: Refactoring of the memory management!
-
 			// Vulkan Memory Allocator
-			VmaAllocator allocator;
+			// TODO: Text here!
+			VmaAllocator vma_allocator;
 			
-			// Vertex buffer allocation.
-			VmaAllocation vertex_buffer_allocation;
-
+			// TODO: Refactor!
+			InexorVertexBuffer example_vertex_buffer;
 
 		protected:
-		
-			// TODO: Remove this duplicate!
-			const std::vector<InexorVertex> vertices =
-			{
-				{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-				{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-				{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-			};
 
-
-			// The vertex buffer.
-			VkBuffer vertex_buffer;
-
-			// 
-			VkDeviceMemory vertex_buffer_memory;
 
 			// The Vulkan instance handle.
 			VkInstance instance;
@@ -202,8 +186,10 @@ namespace vulkan_renderer {
 			/// @param graphics_card The regarded graphics card.
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
 
+
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.
 			VkResult create_vma_allocator();
+
 
 			/// @brief Initialises graphics and transfer queue.
 			VkResult initialise_queues();
