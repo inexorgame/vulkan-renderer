@@ -596,5 +596,45 @@ namespace vulkan_renderer {
 		return std::nullopt;
 	}
 
+
+	std::optional<uint32_t> VulkanSettingsDecisionMaker::decide_which_transfer_queue_family_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	{
+		uint32_t number_of_available_queue_families = 0;
+
+		// First check how many queue families are available.
+		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
+
+		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+
+		// Preallocate memory for the available queue families.
+		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
+		
+		// Get information about the available queue families.
+		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+
+
+		// Loop through all available queue families and look for a suitable one.
+		for(std::size_t i=0; i<available_queue_families.size(); i++)
+		{			
+			if(available_queue_families[i].queueCount > 0)
+			{
+				VkBool32 presentation_available = false;
+
+				if(!(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+				{
+					if(available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
+					{
+						uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+						return this_queue_family_index;
+					}
+				}
+			}
+		}
+		
+		// In this case we could not find any suitable transfer queue family!
+		return std::nullopt;
+	}
+
+
 };
 };

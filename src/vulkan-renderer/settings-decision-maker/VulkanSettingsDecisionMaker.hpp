@@ -47,6 +47,7 @@ namespace vulkan_renderer {
 			/// - It must support a swapchain.
 			/// - It must support presentation.
 			/// - Add more here if you want..
+			/// 
 			/// @note Add more checks to the validation mechanism if neccesary, e.h. check for geometry shader support.
 			/// @param graphics_card The graphics card which will be checked for suitability.
 			/// @return True if the graphics card is suitable, false otherwise.
@@ -130,6 +131,13 @@ namespace vulkan_renderer {
 			/// @param surface The selected (window) surface.
 			/// @return The index of the queue family which can be used for presentation.
 			std::optional<uint32_t> decide_which_presentation_queue_family_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+
+
+			/// @brief Decides which transfer queue family index to use.
+			/// @param graphics_card The selected graphics card.
+			/// @param surface The selected (window) surface.
+			/// @return The index of the queue family which can be used for data transfer.
+			std::optional<uint32_t> decide_which_transfer_queue_family_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 
 
 	};
