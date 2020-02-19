@@ -20,13 +20,17 @@
 #include "../synchronisation-manager/VulkanSynchronisationManager.hpp"
 #include "../vertex-structure/InexorVertex.hpp"
 #include "../vertex-buffer-manager/VulkanVertexBufferManager.hpp"
-#include "../vulkan-memory-manager/VulkanMemoryManager.hpp"
+
+// Vulkan Memory Allocator (VMA) library.
+// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+#include "../../vma/vk_mem_alloc.h"
 
 
 #include <vector>
 #include <string>
 #include <vector>
 #include <iostream>
+using namespace std;
 
 // The maximum number of images to process simultaneously.
 #define INEXOR_MAX_FRAMES_IN_FLIGHT 2
@@ -59,6 +63,17 @@ namespace vulkan_renderer {
 			// Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
 			// it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
 			bool frame_buffer_resized = false;
+
+
+		private:
+
+			// TODO: Refactoring of the memory management!
+
+			// Vulkan Memory Allocator
+			VmaAllocator allocator;
+			
+			// Vertex buffer allocation.
+			VmaAllocation vertex_buffer_allocation;
 
 
 		protected:
@@ -187,6 +202,8 @@ namespace vulkan_renderer {
 			/// @param graphics_card The regarded graphics card.
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
 
+			/// @brief Initialise allocator of Vulkan Memory Allocator library.
+			VkResult create_vma_allocator();
 
 			/// @brief Initialises graphics and transfer queue.
 			VkResult initialise_queues();

@@ -186,10 +186,15 @@ namespace vulkan_renderer {
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}		
 
+
 		result = create_device_queues();
 		vulkan_error_check(result);
 		
 		result = create_physical_device(selected_graphics_card);
+		vulkan_error_check(result);
+
+		// Initialise allocator of Vulkan Memory Allocator library.
+		result = create_vma_allocator();
 		vulkan_error_check(result);
 
 		result = initialise_queues();

@@ -1,5 +1,8 @@
 #include "VulkanInitialisation.hpp"
-using namespace std;
+
+// Vulkan Memory Allocator (VMA) library.
+#define VMA_IMPLEMENTATION
+#include "../../vma/vk_mem_alloc.h"
 
 
 namespace inexor {
@@ -333,9 +336,6 @@ namespace vulkan_renderer {
 
 		command_buffers.clear();
 
-		// TODO: Migrate to Vulkan Memory Allocator (VMA)!
-		// Hopefully there will be a conan package for that some day.
-
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 		
 		command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -351,42 +351,16 @@ namespace vulkan_renderer {
 	}
 
 
-
-	/// @param type_filter parameter will be used to specify the bit field of memory types
-	/// that are suitable. That means that we can find the index of a suitable memory
-	/// type by simply iterating over them and checking if the corresponding bit is set to 1.
-	uint32_t find_suitable_memory_type(const VkPhysicalDevice& device, const uint32_t type_filter, const VkMemoryPropertyFlags& memory_property_flags)
+	VkResult VulkanInitialisation::create_vma_allocator()
 	{
-		VkPhysicalDeviceMemoryProperties memory_properties;
+		VmaAllocatorCreateInfo allocatorInfo = {};
+		allocatorInfo.physicalDevice = selected_graphics_card;
+		allocatorInfo.device = device;
 
-		// Query information about the available types of memory
-		vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
-
-		/// Memory heaps are distinct memory resources like dedicated VRAM and swap space in RAM for when VRAM runs out.
-		/// The different types of memory exist within these heaps. Right now we’ll only concern ourselves with the type
-		/// of memory and not the heap it comes from, but you can imagine that this can affect performance.
-
-		// Let's use uint32_t for iteration so we don't need to static_castt the return value i.
-		for(uint32_t i=0; i<memory_properties.memoryTypeCount; i++)
-		{
-			// 
-			if(type_filter & (1 << i))
-			{
-				/// We may have more than one desirable property, so we should check if the result
-				/// of the bitwise AND is not just non-zero, but equal to the desired properties bit field.
-				if(memory_properties.memoryTypes[i].propertyFlags & memory_property_flags)
-				{
-					return i;
-				}
-			}
-		}
-
-		cout << "Error: No matching memory type found!" << endl;
-
-		return 0;
+		return vmaCreateAllocator(&allocatorInfo, &allocator);
 	}
-
 	
+
 	VkResult VulkanInitialisation::create_vertex_buffers()
 	{
 		VkBufferCreateInfo buffer_create_info = {};
@@ -396,58 +370,22 @@ namespace vulkan_renderer {
 		buffer_create_info.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 		buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		VkResult result = vkCreateBuffer(device, &buffer_create_info, nullptr, &vertex_buffer);
-		vulkan_error_check(result);
+		VmaAllocationCreateInfo allocCreateInfo = {};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+ 
+		VmaAllocationInfo allocInfo;
+		VkResult result = vmaCreateBuffer(allocator, &buffer_create_info, &allocCreateInfo, &vertex_buffer, &vertex_buffer_allocation, &allocInfo);
 
-		/// The buffer has been created, but it doesn’t actually have any memory assigned to it yet!
-		/// The first step of allocating memory for the buffer is to query its memory requirements.
-		VkMemoryRequirements memory_requirements;
-
-		vkGetBufferMemoryRequirements(device, vertex_buffer, &memory_requirements);
-
-		cout << "Vertex buffer size: " << memory_requirements.size << endl;
-
-		/// Graphics cards can offer different types of memory to allocate from. Each type of
-		/// memory varies in terms of allowed operations and performance characteristics.
-		/// We need to combine the requirements of the buffer and our own application
-		/// requirements to find the right type of memory to use.
-
-
-		VkMemoryAllocateInfo memory_allocate_info = {};
-
-		// TODO: Use std::optional
-		//std::optional<uint32_t> memory_type_index = find_suitable_memory_type(selected_graphics_card, memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		uint32_t memory_type_index = find_suitable_memory_type(selected_graphics_card, memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		/*
-		if(!memory_type_index.has_value())
+		if(VK_SUCCESS != result)
 		{
-			std:: string error_message = "Error: Could not find suitable memory index!";
-			display_error_message(error_message);
-			return VK_ERROR_INITIALIZATION_FAILED;
+			vulkan_error_check(result);
+			return result;
 		}
-		*/
 		
-		memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memory_allocate_info.allocationSize  = memory_requirements.size;
-		memory_allocate_info.pNext           = nullptr;
-		memory_allocate_info.memoryTypeIndex = memory_type_index;
-
-		result = vkAllocateMemory(device, &memory_allocate_info, nullptr, &vertex_buffer_memory);
-		vulkan_error_check(result);
-
-		vkBindBufferMemory(device, vertex_buffer, vertex_buffer_memory, 0);
-
-		// Get the memory address.
-		void* data;
-		vkMapMemory(device, vertex_buffer_memory, 0, buffer_create_info.size, 0, &data);
+		// Copy vertices to transfer them to GPU memory.
+		memcpy(allocInfo.pMappedData, vertices.data(), buffer_create_info.size);
 		
-		// TODO: Refactor this process! Use a proper staging buffer!
-		//std::memcpy(data, vertices.data(), static_cast<std::size_t>(buffer_create_info.size));
-		memcpy(data, vertices.data(), (size_t) buffer_create_info.size);
-
-		vkUnmapMemory(device, vertex_buffer_memory);
-
 		return VK_SUCCESS;
 	}
 
@@ -547,7 +485,7 @@ namespace vulkan_renderer {
 		
 		if(selected_surface_format.has_value())
 		{
-			selected_color_space = selected_surface_format.value().colorSpace;
+			selected_color_space  = selected_surface_format.value().colorSpace;
 			selected_image_format = selected_surface_format.value().format;
 		}
 		else
@@ -556,7 +494,6 @@ namespace vulkan_renderer {
 			display_error_message(error_message);
 			exit(-1);
 		}
-
 
 		decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
 
@@ -1085,9 +1022,10 @@ namespace vulkan_renderer {
 		// This functions calls vkDeviceWaitIdle for us.
 		cleanup_swapchain();
 
-		// TODO: Refactor memory management!
-		vkDestroyBuffer(device, vertex_buffer, nullptr);
-		vkFreeMemory(device, vertex_buffer_memory, nullptr);
+		// Destroy vertex buffer.		
+		vmaDestroyBuffer(allocator, vertex_buffer, vertex_buffer_allocation);
+		vmaDestroyAllocator(allocator);
+
 
 		cout << "Destroying semaphores." << endl;
 		VulkanSynchronisationManager::shutdown_semaphores(device);
