@@ -365,14 +365,16 @@ namespace vulkan_renderer {
 	{
 		const std::vector<InexorVertex> vertices =
 		{
-			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-		};
-		
-		const VkDeviceSize vertex_buffer_size = sizeof(vertices[0])*vertices.size();
+			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
 
-		VkResult result = create_vertex_buffer(vma_allocator, vertex_buffer_size, example_vertex_buffer);
+			{{0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{-0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+		};
+
+		VkResult result = create_vertex_buffer(vma_allocator, static_cast<uint32_t>(vertices.size()), example_vertex_buffer);
 		vulkan_error_check(result);
 
 		update_vertex_buffer_memory(example_vertex_buffer, vertices.data());
@@ -423,9 +425,9 @@ namespace vulkan_renderer {
 			VkDeviceSize offsets[] = {0};
 			VkBuffer vertex_buffers[] = {example_vertex_buffer.buffer};
 			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertex_buffers, offsets);
-
-			// TODO: Draw size of buffer!
-			vkCmdDraw(command_buffers[i], 3, 1, 0, 0);
+			
+			vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
+			
 			vkCmdEndRenderPass(command_buffers[i]);
 
 			// End recording of the command buffer.

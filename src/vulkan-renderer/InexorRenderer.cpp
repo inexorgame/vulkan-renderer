@@ -184,8 +184,7 @@ namespace vulkan_renderer {
 			display_error_message(error_message);
 
 			return VK_ERROR_INITIALIZATION_FAILED;
-		}		
-
+		}
 
 		result = create_device_queues();
 		vulkan_error_check(result);

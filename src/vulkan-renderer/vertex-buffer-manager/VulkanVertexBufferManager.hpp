@@ -32,6 +32,8 @@ namespace vulkan_renderer {
 		VmaAllocationInfo allocation_info;
 		
 		VmaAllocationCreateInfo allocation_create_info;
+
+		uint32_t number_of_vertices;
 	};
 
 
@@ -64,7 +66,7 @@ namespace vulkan_renderer {
 			/// @param memory_usage The VMA memory usage flags.
 			/// @param create_flags The VMA buffer create flags.
 			VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator,
-			                                                         const VkDeviceSize& memory_size,
+			                                                         const uint32_t& number_of_vertices,
                                                                      InexorVertexBuffer& vertex_buffer,
 																	 const VmaMemoryUsage& memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
 																	 const VmaAllocationCreateFlags& create_flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);

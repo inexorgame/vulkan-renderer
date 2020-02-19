@@ -16,12 +16,12 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator, const VkDeviceSize& memory_size, InexorVertexBuffer& vertex_buffer, const VmaMemoryUsage& memory_usage, const VmaAllocationCreateFlags& create_flags)
+	VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator, const uint32_t& number_of_vertices, InexorVertexBuffer& vertex_buffer, const VmaMemoryUsage& memory_usage, const VmaAllocationCreateFlags& create_flags)
 	{
 		VkBufferCreateInfo buffer_create_info = {};
 
 		buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_create_info.size        = memory_size;
+		buffer_create_info.size        = number_of_vertices*sizeof(InexorVertex);
 		buffer_create_info.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 		buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -37,7 +37,8 @@ namespace vulkan_renderer {
 		new_vertex_buffer.allocation_create_info = allocation_create_info;
 		new_vertex_buffer.buffer_create_info= buffer_create_info;
 		new_vertex_buffer.allocation_info = allocation_info;
-		
+		new_vertex_buffer.number_of_vertices = number_of_vertices;
+
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
