@@ -9,9 +9,9 @@ int main(int argc, char* argv[])
 {
     InexorRenderer renderer;
 
-    // TODO: Pass on command line arguments.
-    // TODO: Let the user specify which graphics card to use by passing command line argument -GPU <number>.
-    // TODO: Initialise an empty octree-world.
+    // Parse the command line arguments.
+    renderer.parse_command_line_arguments(argc, argv);
+
 
     if(VK_SUCCESS == renderer.init())
     {

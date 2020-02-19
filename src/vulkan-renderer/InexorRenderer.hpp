@@ -3,6 +3,7 @@
 #include "shader-manager/VulkanShaderManager.hpp"
 #include "error-handling/VulkanErrorHandling.hpp"
 #include "initialisation/VulkanInitialisation.hpp"
+#include "tools/argument-parser/CommandLineArgumentParser.hpp"
 
 
 // Change these definitions if you want to fork the renderer!
@@ -23,7 +24,8 @@ namespace vulkan_renderer {
 	/// @class InexorRenderer
 	/// @brief Inexor's Vulkan API rendering engine.
 	/// @note Now I am become renderer, the drawer of worlds.
-	class InexorRenderer : public VulkanInitialisation
+	class InexorRenderer : public VulkanInitialisation, 
+	                       public tools::CommandLineArgumentParser
 	{
 		public:
 

@@ -167,8 +167,11 @@ namespace vulkan_renderer {
 			return result;
 		}
 
+		// The user can specify with "-gpu <number" which graphics card to prefer.
+		std::optional<uint32_t> prefered_graphics_card = get_command_line_argument_uint32_t("-gpu");
+
 		// Let's see if there is a graphics card that is suitable for us.
-		std::optional<VkPhysicalDevice> graphics_card_candidate = decide_which_graphics_card_to_use(instance, surface);
+		std::optional<VkPhysicalDevice> graphics_card_candidate = decide_which_graphics_card_to_use(instance, surface, prefered_graphics_card);
 
 		// Check if we found a graphics card candidate.
 		if(graphics_card_candidate.has_value())
@@ -184,8 +187,16 @@ namespace vulkan_renderer {
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		// TODO: Implement command line argument for preferred graphics card!
 		bool display_graphics_card_info = true;
+		
+		// If the user specified command line argument "-nostats", no information will be 
+		// displayed about all the graphics cards which are available on the system.
+		std::optional<bool> hide_gpu_stats = is_command_line_argument_specified("-nostats");
+		
+		if(hide_gpu_stats.has_value())
+		{
+			display_graphics_card_info = false;
+		}
 
 		if(display_graphics_card_info)
 		{
@@ -196,6 +207,7 @@ namespace vulkan_renderer {
 			// Print all information that we can find about all graphics card available.
 			print_all_physical_devices(instance, surface);
 		}
+
 
 		result = create_device_queues();
 		vulkan_error_check(result);
