@@ -172,7 +172,7 @@ namespace vulkan_renderer {
 			/// @param application_version The version of the application encoded as an unsigned 32 bit integer.
 			/// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
 			/// @param enable_validation_layers True if validation is enabled.
-			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers = true);
+			VkResult create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers = true, bool enable_renderdoc_instance_layer = false);
 
 
 			/// @brief Create a window surface.

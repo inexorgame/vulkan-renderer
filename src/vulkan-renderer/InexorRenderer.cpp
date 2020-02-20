@@ -153,8 +153,38 @@ namespace vulkan_renderer {
 		// Since GLFW is a C-style API, we can't use a class method as callback for window resize!
 		glfwSetFramebufferSizeCallback(window, frame_buffer_resize_callback);
 
+		
+		bool enable_renderdoc_instance_layer = false;
+		
+		// If the user specified command line argument "-renderdoc", the RenderDoc instance layer will be enabled.
+		std::optional<bool> enable_renderdoc = is_command_line_argument_specified("-renderdoc");
+		
+		if(enable_renderdoc.has_value())
+		{
+			if(enable_renderdoc.value())
+			{
+				enable_renderdoc_instance_layer = true;
+			}
+		}
+
+		
+		bool enable_khronos_validation_instance_layer = true;
+
+		// If the user specified command line argument "-novalidation", the Khronos validation instance layer will be disabled.
+		// For development builds, this is not advisable! Always use validation layers during development!
+		std::optional<bool> disable_validation = is_command_line_argument_specified("-novalidation");
+
+		if(disable_validation.has_value())
+		{
+			if(disable_validation.value())
+			{
+				enable_khronos_validation_instance_layer = false;
+			}
+		}
+
+
 		// Create a Vulkan instance.
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION);
+		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 		vulkan_error_check(result);
 			
 		// Create a window surface using GLFW library.
@@ -195,7 +225,10 @@ namespace vulkan_renderer {
 		
 		if(hide_gpu_stats.has_value())
 		{
-			display_graphics_card_info = false;
+			if(hide_gpu_stats.value())
+			{
+				display_graphics_card_info = false;
+			}
 		}
 
 		if(display_graphics_card_info)

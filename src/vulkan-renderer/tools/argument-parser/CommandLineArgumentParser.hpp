@@ -77,6 +77,16 @@ namespace tools {
 				/// Defines if we will print stats about graphics cards.
 				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-nostats"},
 
+				// TODO: Implement!
+				// Use vertical synchronisation.
+				//{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-vsync"},
+
+				// Use RenderDoc layer.
+				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-renderdoc"},
+
+				// Disable Khronos validation layer.
+				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-novalidation"}
+
 				/// TODO: Add more command line argumetns here!
 			};
 

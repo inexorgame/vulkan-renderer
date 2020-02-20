@@ -19,7 +19,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_layers)
+	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer)
 	{
 		// Get the major, minor and patch version of the application.
 		uint32_t app_major = VK_VERSION_MAJOR(application_version);
@@ -86,12 +86,24 @@ namespace vulkan_renderer {
 		// The layers that we would like to enable.
 		std::vector<const char*> instance_layers_wishlist = {
 			//"VK_LAYER_RENDERDOC_Capture"
+			// Add more instance layers if neccesary..
 		};
+
+		/// RenderDoc is a modern graphics debugger written by Baldur Karlsson.
+		/// It allows many useful debugging functions!
+		/// https://renderdoc.org/
+		/// https://github.com/baldurk/renderdoc
+		if(enable_renderdoc_instance_layer)
+		{
+			const char renderdoc_layer_name[] = "VK_LAYER_RENDERDOC_Capture";
+			instance_layers_wishlist.push_back(renderdoc_layer_name);
+		}
+
 
 		// If validation is requested, we need to add the validation layer as instance extension!
 		// For more information on Vulkan validation layers see:
 		// https://vulkan.lunarg.com/doc/view/1.0.39.0/windows/layers.html
-		if(enable_validation_layers)
+		if(enable_validation_instance_layers)
 		{
 			const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
 			instance_layers_wishlist.push_back(validation_layer_name);
