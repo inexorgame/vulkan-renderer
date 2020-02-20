@@ -601,15 +601,19 @@ namespace vulkan_renderer {
 		cout << "Device is idle." << endl;
 		cout << "Destroying frame buffer." << endl;
 		
-		for(auto frame_buffer : frame_buffers)
+		if(frame_buffers.size() > 0)
 		{
-			if(VK_NULL_HANDLE != frame_buffer)
+			for(auto frame_buffer : frame_buffers)
 			{
-				vkDestroyFramebuffer(device, frame_buffer, nullptr);
+				if(VK_NULL_HANDLE != frame_buffer)
+				{
+					vkDestroyFramebuffer(device, frame_buffer, nullptr);
+					frame_buffer = VK_NULL_HANDLE;
+				}
 			}
-		}
 
-		frame_buffers.clear();
+			frame_buffers.clear();
+		}
 
 		cout << "Destroying command buffers." << endl;
 
@@ -628,6 +632,7 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != pipeline)
 		{
 			vkDestroyPipeline(device, pipeline, nullptr);
+			pipeline = VK_NULL_HANDLE;
 		}
 
 		cout << "Destroying pipeline layout." << endl;
@@ -635,6 +640,7 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != pipeline_layout)
 		{
 			vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+			pipeline_layout = VK_NULL_HANDLE;
 		}
 		
 		cout << "Destroying render pass." << endl;
@@ -642,19 +648,25 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != render_pass)
 		{
 			vkDestroyRenderPass(device, render_pass, nullptr);
+			render_pass = VK_NULL_HANDLE;
 		}
 
 		cout << "Destroying image views." << endl;
 		
-		for(auto image_view : swapchain_image_views)
+		if(swapchain_image_views.size() > 0)
 		{
-			if(VK_NULL_HANDLE != image_view)
+			for(auto image_view : swapchain_image_views)
 			{
-				vkDestroyImageView(device, image_view, nullptr);
+				if(VK_NULL_HANDLE != image_view)
+				{
+					vkDestroyImageView(device, image_view, nullptr);
+					image_view = VK_NULL_HANDLE;
+				}
 			}
-		}
 
-		swapchain_image_views.clear();
+			swapchain_image_views.clear();
+		}
+		
 		swapchain_images.clear();
 
 		cout << "Destroying swapchain." << endl;
@@ -662,6 +674,7 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != swapchain)
 		{
 			vkDestroySwapchainKHR(device, swapchain, nullptr);
+			swapchain = VK_NULL_HANDLE;
 		}
 	}
 
@@ -1042,6 +1055,7 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != command_pool)
 		{
 			vkDestroyCommandPool(device, command_pool, nullptr);
+			command_pool = VK_NULL_HANDLE;
 		}
 
 		cout << "Destroying shader objects." << endl;
@@ -1051,6 +1065,7 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != surface)
 		{
 			vkDestroySurfaceKHR(instance, surface, nullptr);
+			surface = VK_NULL_HANDLE;
 		}
 		
 		// Device queues are implicitly cleaned up when the device is destroyed,
@@ -1059,12 +1074,14 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != device)
 		{
 			vkDestroyDevice(device, nullptr);
+			device = VK_NULL_HANDLE;
 		}
 		
 		cout << "Destroying Vulkan instance." << endl;
 		if(VK_NULL_HANDLE != instance)
 		{
 			vkDestroyInstance(instance, nullptr);
+			instance = VK_NULL_HANDLE;
 		}
 		
 		cout << "Shutdown finished." << endl;
