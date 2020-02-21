@@ -282,7 +282,7 @@ namespace vulkan_renderer {
 		result = create_physical_device(selected_graphics_card);
 		vulkan_error_check(result);
 
-		// Initialise allocator of Vulkan Memory Allocator library.
+		// Initialise Vulkan Memory Allocator.
 		result = create_vma_allocator();
 		vulkan_error_check(result);
 

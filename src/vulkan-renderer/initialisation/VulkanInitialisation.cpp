@@ -449,6 +449,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_vma_allocator()
 	{
 		VmaAllocatorCreateInfo allocatorInfo = {};
+
 		allocatorInfo.physicalDevice = selected_graphics_card;
 		allocatorInfo.device = device;
 
@@ -463,13 +464,17 @@ namespace vulkan_renderer {
 			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
 			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
 			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-
-			{{0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 		};
 
-		VkResult result = create_vertex_buffer(vma_allocator, data_transfer_queue, vertices, example_vertex_buffer);
+		const std::vector<uint32_t> indices =
+		{
+			0, 1, 2, 2, 3, 0
+		};
+
+		//VkResult result = create_vertex_buffer(vma_allocator, data_transfer_queue, vertices, example_vertex_buffer);
+
+		VkResult result = create_vertex_buffer_with_index_buffer(vma_allocator, data_transfer_queue, vertices, indices, example_vertex_buffer);
 
 		return result;
 	}
@@ -515,11 +520,16 @@ namespace vulkan_renderer {
 
 			// TODO: Refactor this!
 			VkDeviceSize offsets[] = {0};
-			VkBuffer vertex_buffers[] = {example_vertex_buffer.buffer};
+			VkBuffer vertex_buffers[] = {example_vertex_buffer.vertex_buffer};
 			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertex_buffers, offsets);
 			
-			vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
+			VkBuffer index_buffers[] = {example_vertex_buffer.index_buffer};
+			vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+
+			//vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
 			
+			vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
+
 			vkCmdEndRenderPass(command_buffers[i]);
 
 			// End recording of the command buffer.
