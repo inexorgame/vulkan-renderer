@@ -21,7 +21,7 @@
 #include "../shader-manager/VulkanShaderManager.hpp"
 #include "../synchronisation-manager/VulkanSynchronisationManager.hpp"
 #include "../vertex-structure/InexorVertex.hpp"
-#include "../vertex-buffer-manager/VulkanVertexBufferManager.hpp"
+#include "../vertex-buffer-manager/VulkanMeshBufferManager.hpp"
 
 // Vulkan Memory Allocator (VMA) library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
@@ -50,7 +50,7 @@ namespace vulkan_renderer {
 								 public VulkanSettingsDecisionMaker,
 								 public VulkanShaderManager,
 								 public VulkanSynchronisationManager,
-								 public VulkanVertexBufferManager
+								 public VulkanMeshBufferManager
 								 // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager, VulkanQueueManager?
 	{
 		public:
@@ -66,8 +66,7 @@ namespace vulkan_renderer {
 			// it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
 			bool frame_buffer_resized = false;
 
-
-		private:
+		protected:
 
 			// Vulkan Memory Allocator
 			// TODO: Text here!
@@ -75,8 +74,6 @@ namespace vulkan_renderer {
 			
 			// TODO: Refactor!
 			InexorMeshBuffer example_vertex_buffer;
-
-		protected:
 
 
 			// The Vulkan instance handle.

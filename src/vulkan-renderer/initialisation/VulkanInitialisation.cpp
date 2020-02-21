@@ -473,7 +473,7 @@ namespace vulkan_renderer {
 		};
 
 		VkResult result = create_vertex_buffer_with_index_buffer(vma_allocator, vertices, indices, example_vertex_buffer);
-
+		
 		return result;
 	}
 
@@ -517,12 +517,12 @@ namespace vulkan_renderer {
 
 			VkDeviceSize offsets[] = {0};
 
-			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &example_vertex_buffer.vertex_buffer, offsets);
+			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &example_vertex_buffer.vertex_buffer.buffer, offsets);
 			
 			if(example_vertex_buffer.index_buffer_available)
 			{
 				// Use the index buffer as well!
-				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 				// Draw using index buffer + vertex buffer.
 				vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
@@ -1132,7 +1132,7 @@ namespace vulkan_renderer {
 		cleanup_swapchain();
 
 		cout << "Destroying vertex buffers." << endl;
-		VulkanVertexBufferManager::shutdown_vertex_buffers(vma_allocator);
+		VulkanMeshBufferManager::shutdown_vertex_buffers(vma_allocator);
 
 		// Destroy allocator of Vulkan Memory Allocator (VMA) library.
 		vmaDestroyAllocator(vma_allocator);

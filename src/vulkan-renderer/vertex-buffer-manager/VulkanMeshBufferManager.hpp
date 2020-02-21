@@ -18,11 +18,11 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// @class VulkanVertexBufferManager
+	/// @class VulkanMeshBufferManager
 	/// @brief A manager class for vertex buffers.
 	/// @note Buffers in Vulkan are regions of memory used for storing arbitrary data that can be read by the graphics card.
 	/// @note Unlike the Vulkan objects, buffers do not automatically allocate memory for themselves.
-	class VulkanVertexBufferManager
+	class VulkanMeshBufferManager
 	{
 		private:
 
@@ -31,33 +31,39 @@ namespace vulkan_renderer {
 			std::vector<InexorMeshBuffer> list_of_meshes;
 
 			// The command pool for data transfer.
-			VkCommandPool data_transfer_command_pool;
+			VkCommandPool data_transfer_command_pool = VK_NULL_HANDLE;
 
 			// The command buffer for data transfer to GPU memory.
-			VkCommandBuffer data_transfer_command_buffer;
+			VkCommandBuffer data_transfer_command_buffer = VK_NULL_HANDLE;
 
 			// The data transfer queue.
-			VkQueue vulkan_data_transfer_queue;
+			VkQueue vulkan_data_transfer_queue = VK_NULL_HANDLE;
 
 			/// 
-			VkDevice vulkan_device;
+			VkDevice vulkan_device = VK_NULL_HANDLE;
+
+			// The Vulkan Memory Allocator handle.
+			VmaAllocator vma_allocator_handle;
 
 
 		private:
 
-			// TOOD: Refactoring here!
+		
+			/// @brief Create a buffer.
+			/// @param buffer The InexorBuffer which will be created.
+			/// @param buffer_usage The usage flags of the buffer. The default is value is VK_BUFFER_USAGE_TRANSFER_SRC_BIT for staging buffers.
+			VkResult create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 
-			// copy_index_buffer_data()
-			// copy_vertex_buffer_data()
-			// submit_data_transfer_command()
-			// create_staging_buffers()
-			// create vertex buffer
+			
+			/// @brief Submits buffer copy command to data transfer queue.
+			VkResult upload_data_to_gpu();
+
 
 		public:
 
-			VulkanVertexBufferManager();
+			VulkanMeshBufferManager();
 
-			~VulkanVertexBufferManager();
+			~VulkanMeshBufferManager();
 		
 
 		protected:
@@ -68,7 +74,7 @@ namespace vulkan_renderer {
 			/// @param data_transfer_queue_index The queue family index which is used for data transfer.
 			/// This is neccesary since we need to allocate a new command pool for the staging buffer!
 			/// @param data_transfer_queue The VkQueue which is used for data transfer from CPU to GPU.
-			VkResult initialise(const VkDevice& device, const uint32_t& data_transfer_queue_index, const VkQueue& data_transfer_queue);
+			VkResult initialise(const VkDevice& device, const VmaAllocator& allocator, const uint32_t& data_transfer_queue_index, const VkQueue& data_transfer_queue);
 
 			
 			/// @brief Creates a new vertex buffer.
