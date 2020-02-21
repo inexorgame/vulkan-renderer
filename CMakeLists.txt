@@ -51,4 +51,8 @@ assign_source_group(${source_files})
 
 add_executable(inexor-vulkan-renderer src/main.cpp ${source_files})
 
-target_link_libraries(inexor-vulkan-renderer PUBLIC ${CONAN_LIBS})
+target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
+
+target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
+target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
