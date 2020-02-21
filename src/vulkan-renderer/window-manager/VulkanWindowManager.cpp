@@ -23,6 +23,9 @@ namespace vulkan_renderer {
 		// We do not want to use the OpenGL API.
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+		glfwWindowHint(GLFW_VISIBLE, false);
+
+
 		// Give the window a fixed size, if resize is not desired.
 		if(!window_resizable)
 		{

@@ -54,6 +54,7 @@ namespace vulkan_renderer {
 				vulkan_error_check(result);
 				std::string error_message = "Error: Could not initialise shader " +  shader.shader_file_name;
 				display_error_message(error_message);
+				exit(-1);
 			}
 		}
 
@@ -321,6 +322,10 @@ namespace vulkan_renderer {
 
 		result = create_synchronisation_objects();
 		vulkan_error_check(result);
+		
+
+		// Show window after Vulkan has been initialised.
+		glfwShowWindow(window);
 
 		return VK_SUCCESS;
 	}
