@@ -59,26 +59,45 @@ namespace vulkan_renderer {
 		app_info.apiVersion         = VK_API_VERSION_1_1;
 
 
+		// A vector of strings which represent the enabled instance extensions.
+		std::vector<const char*> enabled_instance_extensions;
+
+		// The extensions that we would like to enable.
+		std::vector<const char*> instance_extension_wishlist = {
+			"VK_EXT_debug_utils",
+			// TODO: Add more instance extensions here.
+		};
+
+
 		// Query which extensions are needed for GLFW.
 		uint32_t number_of_GLFW_extensions = 0;
-		
+
 		auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_GLFW_extensions);
 
 		cout << "Required GLFW instance extensions: " << endl;
-
+		
 		for(std::size_t i=0; i<number_of_GLFW_extensions; i++)
 		{
 			cout << glfw_extensions[i] << endl;
 
-			if(!check_instance_extension_availability(glfw_extensions[i]))
+			instance_extension_wishlist.push_back(glfw_extensions[i]);
+		}
+
+		for(const auto& instance_extension : instance_extension_wishlist)
+		{
+			if(check_instance_extension_availability(instance_extension))
 			{
-				std::string error_message = "Error: GLFW required instance extension " + std::string(glfw_extensions[i]) + " not available!";
+				enabled_instance_extensions.push_back(instance_extension);
+			}
+			else
+			{
+				std::string error_message = "Error: Required instance extension " + std::string(instance_extension) + " not available!";
 				display_error_message(error_message);
-				exit(-1);
 			}
 		}
 
 		cout << endl;
+
 
 		// A vector of strings which represent the enabled instance layers.
 		std::vector<const char*> enabled_instance_layers;
