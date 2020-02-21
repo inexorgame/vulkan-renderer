@@ -10,14 +10,11 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-
-	// TODO: Rename this to MeshBuffer ?
-
-	/// @class InexorVertexBufferMemory
-	/// @brief We will store every allocation of memory in an instance of this
-	/// structure, so we can store all allocations in a std::vector and shutdown
-	/// every allocation in shutdown_vertex_buffers() at once!
-	struct InexorVertexBuffer
+	
+	/// @class InexorMeshBuffer
+	/// @brief A structure which bundles vertex buffer and index buffer (if existent).
+	/// It contains all data which are related to memory allocations for these buffers.
+	struct InexorMeshBuffer
 	{
 		VkBuffer vertex_buffer = VK_NULL_HANDLE;
 

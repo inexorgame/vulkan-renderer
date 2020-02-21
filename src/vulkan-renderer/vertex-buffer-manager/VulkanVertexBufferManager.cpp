@@ -18,13 +18,14 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanVertexBufferManager::initialise(const VkDevice& device, const uint32_t& transfer_queue_family_index)
+	VkResult VulkanVertexBufferManager::initialise(const VkDevice& device, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
 	{
 		assert(device);
 
 		vulkan_device = device;
+		vulkan_data_transfer_queue = data_transfer_queue;
 
-		cout << "Creating vertex buffer manager command pool." << endl;
+		cout << "Creating command pool for vertex buffer manager." << endl;
 
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
@@ -36,17 +37,30 @@ namespace vulkan_renderer {
 		command_pool_create_info.queueFamilyIndex = transfer_queue_family_index;
 
 		// Create a second command pool for all commands that are going to be executed in the data transfer queue.
-		VkResult result = vkCreateCommandPool(vulkan_device, &command_pool_create_info, nullptr, &data_transfer_command_pool);
+		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &data_transfer_command_pool);
+		vulkan_error_check(result);
+
+
+		cout << "Creating command pool for vertex buffer manager." << endl;
+		
+		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
+
+		command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		command_buffer_allocate_info.commandPool        = data_transfer_command_pool;
+		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		command_buffer_allocate_info.commandBufferCount = 1;
+
+		// Allocate a command buffer for data transfer commands.
+		result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &data_transfer_command_buffer);
 		vulkan_error_check(result);
 
 		return result;
 	}
 
 
-	VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator, const VkQueue& data_transfer_queue, const std::vector<InexorVertex>& vertices, InexorVertexBuffer& target_vertex_buffer)
+	VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator, const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer)
 	{
 		assert(vma_allocator);
-		assert(vulkan_device);
 		assert(data_transfer_command_pool);
 		assert(vertices.size() > 0);
 
@@ -119,20 +133,6 @@ namespace vulkan_renderer {
 		}
 
 
-		// Step 3: Create a command buffer for uploading the vertices to the GPU memory.
-		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
-
-		command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		command_buffer_allocate_info.commandPool        = data_transfer_command_pool;
-		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		command_buffer_allocate_info.commandBufferCount = 1;
-		
-		VkCommandBuffer temporary_command_buffer;
-
-		result = vkAllocateCommandBuffers(vulkan_device, &command_buffer_allocate_info, &temporary_command_buffer);
-		vulkan_error_check(result);
-
-
 		// Step 4: Define a copy command for the command queue.
 		VkBufferCopy copy_region = {};
 
@@ -157,14 +157,14 @@ namespace vulkan_renderer {
 		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 		cmd_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		result = vkBeginCommandBuffer(temporary_command_buffer, &cmd_buffer_begin_info);
+		result = vkBeginCommandBuffer(data_transfer_command_buffer, &cmd_buffer_begin_info);
 		vulkan_error_check(result);
 
-		vkCmdCopyBuffer(temporary_command_buffer, staging_vertex_buffer, vertex_buffer, 1, &copy_region);
+		vkCmdCopyBuffer(data_transfer_command_buffer, staging_vertex_buffer, vertex_buffer, 1, &copy_region);
 
 
 		// Step 5: Submit this command to the GPU.
-		result = vkEndCommandBuffer(temporary_command_buffer);
+		result = vkEndCommandBuffer(data_transfer_command_buffer);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -172,14 +172,14 @@ namespace vulkan_renderer {
 		}
 
 
-		// TODO: Refactor this!
 		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
 		submit_info.commandBufferCount   = 1;
-		submit_info.pCommandBuffers      = &temporary_command_buffer;
+		submit_info.pCommandBuffers      = &data_transfer_command_buffer;
 
+		// TODO: Why not just do it multithreaded?
 		// TODO: Add VkFence! For no we will use vkQueueWaitIdle.
-		result = vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
+		result = vkQueueSubmit(vulkan_data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -187,7 +187,7 @@ namespace vulkan_renderer {
 		}
 
 		// Wait until copying memory is done!
-		result = vkQueueWaitIdle(data_transfer_queue);
+		result = vkQueueWaitIdle(vulkan_data_transfer_queue);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -196,20 +196,20 @@ namespace vulkan_renderer {
 
 
 		// Step 6: Store the vertex buffer as output.
-		target_vertex_buffer.vertex_buffer                        = vertex_buffer;
-		target_vertex_buffer.vertex_buffer_create_info            = vertex_buffer_create_info;
-		target_vertex_buffer.vertex_buffer_allocation             = vertex_buffer_allocation;
-		target_vertex_buffer.vertex_buffer_allocation_info        = vertex_buffer_allocation_info;
-		target_vertex_buffer.vertex_buffer_allocation_create_info = vertex_buffer_allocation_create_info;
-		target_vertex_buffer.number_of_vertices                   = static_cast<uint32_t>(vertices.size());
+		mesh_buffer.vertex_buffer                        = vertex_buffer;
+		mesh_buffer.vertex_buffer_create_info            = vertex_buffer_create_info;
+		mesh_buffer.vertex_buffer_allocation             = vertex_buffer_allocation;
+		mesh_buffer.vertex_buffer_allocation_info        = vertex_buffer_allocation_info;
+		mesh_buffer.vertex_buffer_allocation_create_info = vertex_buffer_allocation_create_info;
+		mesh_buffer.number_of_vertices                   = static_cast<uint32_t>(vertices.size());
 
 
 		// Don't forget to declare that there is no index buffer for this vertex buffer!
-		target_vertex_buffer.index_buffer_available = false;
+		mesh_buffer.index_buffer_available = false;
 
 
 		// Add this vertex buffer to the list.
-		list_of_vertex_buffers.push_back(target_vertex_buffer);
+		list_of_meshes.push_back(mesh_buffer);
 
 
 		// Step 7: Destroy the staging buffer and its memory!
@@ -220,12 +220,9 @@ namespace vulkan_renderer {
 
 
 	
-	VkResult VulkanVertexBufferManager::create_vertex_buffer_with_index_buffer(const VmaAllocator& vma_allocator, const VkQueue& data_transfer_queue, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorVertexBuffer& target_vertex_buffer)
+	VkResult VulkanVertexBufferManager::create_vertex_buffer_with_index_buffer(const VmaAllocator& vma_allocator, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorMeshBuffer& mesh_buffer)
 	{
-		// TODO: Refactor all of this!
-
 		assert(vma_allocator);
-		assert(vulkan_device);
 		assert(data_transfer_command_pool);
 
 		assert(vertices.size() > 0);
@@ -364,20 +361,6 @@ namespace vulkan_renderer {
 		}
 
 
-		// Create a command buffer for uploading the vertices and indices to the GPU memory.
-		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
-
-		command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		command_buffer_allocate_info.commandPool        = data_transfer_command_pool;
-		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		command_buffer_allocate_info.commandBufferCount = 1;
-		
-		VkCommandBuffer temporary_command_buffer;
-
-		result = vkAllocateCommandBuffers(vulkan_device, &command_buffer_allocate_info, &temporary_command_buffer);
-		vulkan_error_check(result);
-
-
 		VkBufferCopy vertex_buffer_copy_region = {};
 
 		vertex_buffer_copy_region.srcOffset = 0;
@@ -408,14 +391,14 @@ namespace vulkan_renderer {
 		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 		cmd_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		result = vkBeginCommandBuffer(temporary_command_buffer, &cmd_buffer_begin_info);
+		result = vkBeginCommandBuffer(data_transfer_command_buffer, &cmd_buffer_begin_info);
 		vulkan_error_check(result);
 
-		vkCmdCopyBuffer(temporary_command_buffer, staging_vertex_buffer, vertex_buffer, 1, &vertex_buffer_copy_region);
-		vkCmdCopyBuffer(temporary_command_buffer, staging_index_buffer, index_buffer, 1, &index_buffer_copy_region);
+		vkCmdCopyBuffer(data_transfer_command_buffer, staging_vertex_buffer, vertex_buffer, 1, &vertex_buffer_copy_region);
+		vkCmdCopyBuffer(data_transfer_command_buffer, staging_index_buffer, index_buffer, 1, &index_buffer_copy_region);
 
 		// End command buffer recording.
-		result = vkEndCommandBuffer(temporary_command_buffer);
+		result = vkEndCommandBuffer(data_transfer_command_buffer);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -426,14 +409,13 @@ namespace vulkan_renderer {
 		// TODO: submit_buffer_copy_command();
 
 
-		// TODO: Refactor this!
 		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
 		submit_info.commandBufferCount   = 1;
-		submit_info.pCommandBuffers      = &temporary_command_buffer;
+		submit_info.pCommandBuffers      = &data_transfer_command_buffer;
 
 		// TODO: Add VkFence! For no we will use vkQueueWaitIdle.
-		result = vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
+		result = vkQueueSubmit(vulkan_data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -441,7 +423,7 @@ namespace vulkan_renderer {
 		}
 
 		// Wait until copying memory is done!
-		result = vkQueueWaitIdle(data_transfer_queue);
+		result = vkQueueWaitIdle(vulkan_data_transfer_queue);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -450,25 +432,25 @@ namespace vulkan_renderer {
 
 
 		// Store the vertex buffer and index buffer as output.
-		target_vertex_buffer.vertex_buffer                        = vertex_buffer;
-		target_vertex_buffer.vertex_buffer_create_info            = vertex_buffer_create_info;
-		target_vertex_buffer.vertex_buffer_allocation             = vertex_buffer_allocation;
-		target_vertex_buffer.vertex_buffer_allocation_info        = vertex_buffer_allocation_info;
-		target_vertex_buffer.vertex_buffer_allocation_create_info = vertex_buffer_allocation_create_info;
-		target_vertex_buffer.number_of_vertices                   = static_cast<uint32_t>(vertices.size());
+		mesh_buffer.vertex_buffer                        = vertex_buffer;
+		mesh_buffer.vertex_buffer_create_info            = vertex_buffer_create_info;
+		mesh_buffer.vertex_buffer_allocation             = vertex_buffer_allocation;
+		mesh_buffer.vertex_buffer_allocation_info        = vertex_buffer_allocation_info;
+		mesh_buffer.vertex_buffer_allocation_create_info = vertex_buffer_allocation_create_info;
+		mesh_buffer.number_of_vertices                   = static_cast<uint32_t>(vertices.size());
 
 		// Don't forget to declare that there is no index buffer for this vertex buffer!
-		target_vertex_buffer.index_buffer_available = true;
+		mesh_buffer.index_buffer_available = true;
 
-		target_vertex_buffer.index_buffer = index_buffer;
-		target_vertex_buffer.index_buffer_create_info = index_buffer_create_info;
-		target_vertex_buffer.index_buffer_allocation = index_buffer_allocation;
-		target_vertex_buffer.index_buffer_allocation_info = index_buffer_allocation_info;
-		target_vertex_buffer.number_of_indices = static_cast<uint32_t>(indices.size());
+		mesh_buffer.index_buffer = index_buffer;
+		mesh_buffer.index_buffer_create_info = index_buffer_create_info;
+		mesh_buffer.index_buffer_allocation = index_buffer_allocation;
+		mesh_buffer.index_buffer_allocation_info = index_buffer_allocation_info;
+		mesh_buffer.number_of_indices = static_cast<uint32_t>(indices.size());
 
 
 		// Add this buffer to the list.
-		list_of_vertex_buffers.push_back(target_vertex_buffer);
+		list_of_meshes.push_back(mesh_buffer);
 
 
 		// Destroy staging vertex buffer and its memory!
@@ -484,7 +466,7 @@ namespace vulkan_renderer {
 	void VulkanVertexBufferManager::shutdown_vertex_buffers(const VmaAllocator& vma_allocator)
 	{
 		// Loop through all vertex buffers and release their memoy.
-		for(const auto& vertex_buffer : list_of_vertex_buffers)
+		for(const auto& vertex_buffer : list_of_meshes)
 		{
 			// Destroy vertex buffer.		
 			vmaDestroyBuffer(vma_allocator, vertex_buffer.vertex_buffer, vertex_buffer.vertex_buffer_allocation);

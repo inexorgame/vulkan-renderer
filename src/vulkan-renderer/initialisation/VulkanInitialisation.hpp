@@ -74,7 +74,7 @@ namespace vulkan_renderer {
 			VmaAllocator vma_allocator;
 			
 			// TODO: Refactor!
-			InexorVertexBuffer example_vertex_buffer;
+			InexorMeshBuffer example_vertex_buffer;
 
 		protected:
 

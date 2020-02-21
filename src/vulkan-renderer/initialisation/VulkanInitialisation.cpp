@@ -472,9 +472,7 @@ namespace vulkan_renderer {
 			0, 1, 2, 2, 3, 0
 		};
 
-		//VkResult result = create_vertex_buffer(vma_allocator, data_transfer_queue, vertices, example_vertex_buffer);
-
-		VkResult result = create_vertex_buffer_with_index_buffer(vma_allocator, data_transfer_queue, vertices, indices, example_vertex_buffer);
+		VkResult result = create_vertex_buffer_with_index_buffer(vma_allocator, vertices, indices, example_vertex_buffer);
 
 		return result;
 	}
@@ -484,25 +482,24 @@ namespace vulkan_renderer {
 	{
 		cout << "Recording command buffers." << endl;
 
-		VkCommandBufferBeginInfo command_buffer_begin_info = {};
-
-		command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		command_buffer_begin_info.pNext            = nullptr;
-		command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		command_buffer_begin_info.pInheritanceInfo = nullptr;
-
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			VkCommandBufferBeginInfo command_buffer_begin_info = {};
+
+			command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			command_buffer_begin_info.pNext            = nullptr;
+			command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+			command_buffer_begin_info.pInheritanceInfo = nullptr;
+			
 			// Begin recording of the command buffer.
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
 			if(VK_SUCCESS != result) return result;
 
 			// Change color if you want another clear color.
 			// Format: rgba (red, green, blue, alpha).
+			// TODO: Setup clear color by configuration.
 			VkClearValue clear_value;
 			clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
-
-			// TODO: Setup clear color by configuration.
 
 			VkRenderPassBeginInfo render_pass_begin_info = {};
 			
@@ -518,17 +515,23 @@ namespace vulkan_renderer {
 			vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-			// TODO: Refactor this!
 			VkDeviceSize offsets[] = {0};
-			VkBuffer vertex_buffers[] = {example_vertex_buffer.vertex_buffer};
-			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertex_buffers, offsets);
-			
-			VkBuffer index_buffers[] = {example_vertex_buffer.index_buffer};
-			vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer, 0, VK_INDEX_TYPE_UINT32);
 
-			//vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
+			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &example_vertex_buffer.vertex_buffer, offsets);
 			
-			vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
+			if(example_vertex_buffer.index_buffer_available)
+			{
+				// Use the index buffer as well!
+				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+
+				// Draw using index buffer + vertex buffer.
+				vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
+			}
+			else
+			{
+				// Draw using vertex buffer only. No index buffer specified.
+				vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
+			}
 
 			vkCmdEndRenderPass(command_buffers[i]);
 
@@ -1123,7 +1126,6 @@ namespace vulkan_renderer {
 	void VulkanInitialisation::shutdown_vulkan()
 	{
 		// It is important to destroy the objects in reversal of the order of creation.
-		
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Shutting down Vulkan API." << endl;
 		
