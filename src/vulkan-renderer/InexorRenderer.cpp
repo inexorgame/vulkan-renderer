@@ -1,4 +1,5 @@
 #include "InexorRenderer.hpp"
+#include "debug-callback/VulkanDebugCallback.hpp"
 
 
 namespace inexor {
@@ -186,7 +187,40 @@ namespace vulkan_renderer {
 		// Create a Vulkan instance.
 		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 		vulkan_error_check(result);
+		
+
+		// Create a debug callback using VK_EXT_debug_utils
+		// Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
+		if(enable_khronos_validation_instance_layer)
+		{
+			if(check_instance_extension_availability(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+			{
+				VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 			
+				debug_report_create_info.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+				debug_report_create_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+				debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&VulkanDebugMessageCallback;
+
+				// We have to explicitly load this function.
+				PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
+
+				if(nullptr != vkCreateDebugReportCallbackEXT)
+				{
+					// Create the debug report callback.
+					VkResult result = vkCreateDebugReportCallbackEXT(instance, &debug_report_create_info, nullptr, &debug_report_callback);
+					if(VK_SUCCESS == result)
+					{
+						cout << "Created debug report callback." << endl;
+						debug_report_callback_initialised = true;
+					}
+					else
+					{
+						vulkan_error_check(result);
+					}
+				}
+			}
+		}
+
 		// Create a window surface using GLFW library.
 		// @note The window surface needs to be created right after the instance creation,
 		// because it can actually influence the physical device selection.

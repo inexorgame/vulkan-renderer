@@ -173,6 +173,13 @@ namespace vulkan_renderer {
 			// TODO: Refactor!
 			const float global_queue_priority = 1.0f;
 
+
+			/// Debug report callback.
+			VkDebugReportCallbackEXT debug_report_callback{};
+
+			// Vulkan debug report callback.
+			bool debug_report_callback_initialised = false;
+
 		protected:
 
 

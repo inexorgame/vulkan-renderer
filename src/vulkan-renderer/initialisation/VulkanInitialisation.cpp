@@ -63,8 +63,10 @@ namespace vulkan_renderer {
 		std::vector<const char*> enabled_instance_extensions;
 
 		// The extensions that we would like to enable.
-		std::vector<const char*> instance_extension_wishlist = {
-			"VK_EXT_debug_utils",
+		std::vector<const char*> instance_extension_wishlist =
+		{
+			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+			VK_EXT_DEBUG_REPORT_EXTENSION_NAME
 			// TODO: Add more instance extensions here.
 		};
 
@@ -80,6 +82,7 @@ namespace vulkan_renderer {
 		{
 			cout << glfw_extensions[i] << endl;
 
+			// Add instance extensions required by GLFW to our wishlist.
 			instance_extension_wishlist.push_back(glfw_extensions[i]);
 		}
 
@@ -93,6 +96,7 @@ namespace vulkan_renderer {
 			{
 				std::string error_message = "Error: Required instance extension " + std::string(instance_extension) + " not available!";
 				display_error_message(error_message);
+				exit(-1);
 			}
 		}
 
@@ -103,9 +107,10 @@ namespace vulkan_renderer {
 		std::vector<const char*> enabled_instance_layers;
 
 		// The layers that we would like to enable.
-		std::vector<const char*> instance_layers_wishlist = {
-			//"VK_LAYER_RENDERDOC_Capture"
-			// Add more instance layers if neccesary..
+		std::vector<const char*> instance_layers_wishlist =
+		{
+			// RenderDoc instance layer can be specified using -renderdoc command line argument.
+			// Add instance layers if neccesary..
 		};
 
 		/// RenderDoc is a modern graphics debugger written by Baldur Karlsson.
@@ -158,8 +163,8 @@ namespace vulkan_renderer {
 		instance_create_info.pNext                   = nullptr;
 		instance_create_info.flags                   = 0;
 		instance_create_info.pApplicationInfo        = &app_info;
-		instance_create_info.enabledExtensionCount   = number_of_GLFW_extensions;
-		instance_create_info.ppEnabledExtensionNames = glfw_extensions;
+		instance_create_info.ppEnabledExtensionNames = enabled_instance_extensions.data();
+		instance_create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_instance_extensions.size());
 		instance_create_info.ppEnabledLayerNames     = enabled_instance_layers.data();
 		instance_create_info.enabledLayerCount       = static_cast<uint32_t>(enabled_instance_layers.size());
 
@@ -1150,6 +1155,19 @@ namespace vulkan_renderer {
 		{
 			vkDestroyDevice(device, nullptr);
 			device = VK_NULL_HANDLE;
+		}
+		
+		// Destroy Vulkan debug callback.
+		if(debug_report_callback_initialised)
+		{
+			// We have to explicitly load this function.
+			PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
+
+			if(nullptr != vkDestroyDebugReportCallbackEXT)
+			{
+				vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
+				debug_report_callback_initialised = false;
+			}
 		}
 		
 		cout << "Destroying Vulkan instance." << endl;
