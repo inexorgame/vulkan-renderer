@@ -11,6 +11,7 @@
 #include "../vertex-structure/InexorVertex.hpp"
 
 #include <vector>
+#include <iostream>
 
 
 namespace inexor {
@@ -48,6 +49,27 @@ namespace vulkan_renderer {
 			// The vertex buffers.
 			std::vector<InexorVertexBuffer> list_of_vertex_buffers;
 
+			// The command pool for data transfer.
+			VkCommandPool data_transfer_command_pool;
+
+			// The Vulkan device.
+			VkDevice vulkan_device;
+
+			// The queue family index to use for data transfer.
+			// This might be a queue which is has VK_QUEUE_TRANSFER_BIT and is used to data transfer exclusively.
+			// In case such a distinct queue does not exist, the queue likely has VK_QUEUE_TRANSFER_BIT and other flags like VK_QUEUE_GRAPHICS_BIT.
+			// It should be noted that most GPUs most likely have a distinct VK_QUEUE_TRANSFER_BIT queue though.
+			
+			// A temporary command buffer for uploading data to the GPU.
+			VkCommandBuffer temporary_command_buffer = VK_NULL_HANDLE;
+
+
+		private:
+
+			VkResult begin_single_command();
+
+			VkResult end_single_command(const VkQueue& data_transfer_queue);
+
 
 		public:
 
@@ -58,24 +80,20 @@ namespace vulkan_renderer {
 
 		protected:
 
+			
+			/// @brief Initialises a command pool for commands that are commited on the data transfer queue
+			/// @param device The Vulkan device.
+			VkResult initialise(const VkDevice& device, const uint32_t& data_transfer_queue_index);
 
+			
 			/// @brief Creates a new vertex buffer.
 			/// @param vma_allocator The allocator of the Vulkan Memory Allocator library.
 			/// @param memory_size The size of the vertex buffer.
 			/// @param vertex_buffer The InexorVertexBuffer instance to fill.
 			/// @param memory_usage The VMA memory usage flags.
 			/// @param create_flags The VMA buffer create flags.
-			VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator,
-			                                                         const uint32_t& number_of_vertices,
-                                                                     InexorVertexBuffer& vertex_buffer,
-																	 const VmaMemoryUsage& memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
-																	 const VmaAllocationCreateFlags& create_flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+			VkResult create_vertex_buffer(const VmaAllocator& vma_allocator, const VkQueue& data_transfer_queue, const std::vector<InexorVertex>& vertices, InexorVertexBuffer& target_vertex_buffer);
 		
-			/// @brief Uses memory mapping to update vertex buffer.
-			/// @warning You should use a staging buffer, since memory mapping is slow!
-			/// @param vertex_buffer The Inexor vertex buffer which contains the bundled information.
-			/// @param source_memory A pointer to The InexorVertex vertex data.
-			void update_vertex_buffer_memory(InexorVertexBuffer& vertex_buffer, const InexorVertex* source_memory);
 
 			/// @brief Releases all Vulkan memory buffers.
 			/// @param vma_allocator The allocator of the Vulkan Memory Allocator library.

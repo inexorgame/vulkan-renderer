@@ -76,7 +76,7 @@ namespace vulkan_renderer {
 
 			/// @brief Checks if there is a queue family (index) which can be used for both graphics and presentation.
 			/// @return The queue family index which can be used for both graphics and presentation (if existent), std::nullopt otherwise.
-			std::optional<uint32_t> check_existence_of_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			std::optional<uint32_t> find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 
 
 	};

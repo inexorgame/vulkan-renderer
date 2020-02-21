@@ -6,7 +6,9 @@
 #include <glm/mat4x4.hpp>
 
 #ifdef _WIN32
-#define VK_USE_PLATFORM_WIN32_KHR
+  #ifndef VK_USE_PLATFORM_WIN32_KHR
+    #define VK_USE_PLATFORM_WIN32_KHR
+  #endif
 #endif
 
 // TODO: Add support for other operation systems here.
@@ -49,7 +51,7 @@ namespace vulkan_renderer {
 								 public VulkanShaderManager,
 								 public VulkanSynchronisationManager,
 								 public VulkanVertexBufferManager
-								 // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
+								 // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager, VulkanQueueManager?
 	{
 		public:
 
@@ -143,6 +145,10 @@ namespace vulkan_renderer {
 			// Try to use one queue family for both graphics and presentation.
 			bool use_one_queue_family_for_graphics_and_presentation = false;
 
+			// Try to use a separated queue family for data transfer to GPU.
+			// TODO: This is not used in any code yet. Is it neccesary?
+			bool use_distinct_data_transfer_queue = false;
+
 			// 
 			std::optional<uint32_t> graphics_queue_family_index;
 			VkQueue graphics_queue;
@@ -150,6 +156,10 @@ namespace vulkan_renderer {
 			// 
 			std::optional<uint32_t> present_queue_family_index;
 			VkQueue present_queue;
+
+			// This queue will be used to upload data from RAM to GPU.
+			std::optional<uint32_t> data_transfer_queue_family_index;
+			VkQueue data_transfer_queue;
 
 			// 
 			std::vector<VkDeviceQueueCreateInfo> device_queues;

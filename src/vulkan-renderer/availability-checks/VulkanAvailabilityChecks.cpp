@@ -205,7 +205,7 @@ namespace vulkan_renderer {
 	}
 
 
-	std::optional<uint32_t> VulkanAvailabilityChecks::check_existence_of_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	std::optional<uint32_t> VulkanAvailabilityChecks::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		uint32_t number_of_available_queue_families = 0;
 

@@ -122,7 +122,7 @@ namespace vulkan_renderer {
 			/// @warning This function should only be used when it is not possible to use one queue family for both graphics and presentation!
 			/// @param graphics_card The selected graphics card.
 			/// @return The index of the queue family which can be used for graphics.
-			std::optional<uint32_t> decide_which_graphics_queue_family_to_use(const VkPhysicalDevice& graphics_card);
+			std::optional<uint32_t> find_graphics_queue_family(const VkPhysicalDevice& graphics_card);
 			
 			
 			/// @brief Decides which presentation queue family index to use in case it is not possible to use one for both graphics and presentation.
@@ -130,14 +130,27 @@ namespace vulkan_renderer {
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The selected (window) surface.
 			/// @return The index of the queue family which can be used for presentation.
-			std::optional<uint32_t> decide_which_presentation_queue_family_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			std::optional<uint32_t> find_presentation_queue_family(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			
+
+			/// @brief Tries to find a queue family which has VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT.
+			/// @warning It might be the case that there is no distinct queue family available on your system!
+			/// This means that find_distinct_data_transfer_queue_family must be called to find any queue family which
+			/// has VK_QUEUE_TRANSFER_BIT (besides other flags).
+			/// @param graphics_card The selected graphics card.
+			/// @param surface The selected (window) surface.
+			/// @return The index of the queue family which can be used exclusively  for data transfer.
+			std::optional<uint32_t> find_distinct_data_transfer_queue_family(const VkPhysicalDevice& graphics_card);
 
 
-			/// @brief Decides which transfer queue family index to use.
+			/// @brief Tries to find a queue family which has VK_QUEUE_TRANSFER_BIT (besides other flags).
+			/// @warning You should try to find a distinct queue family first using find_distinct_data_transfer_queue_family!
+			/// Distinct queue families have VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT!
+			/// It is very likely that the queue family which can be found using this method has VK_QUEUE_GRAPHICS_BIT as well!
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The selected (window) surface.
 			/// @return The index of the queue family which can be used for data transfer.
-			std::optional<uint32_t> decide_which_transfer_queue_family_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			std::optional<uint32_t> find_any_data_transfer_queue_family(const VkPhysicalDevice& graphics_card);
 
 
 	};

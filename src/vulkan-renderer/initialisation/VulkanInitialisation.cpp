@@ -158,10 +158,18 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::initialise_queues()
 	{
+		// TODO: Check have_value() !!
+
 		// Setup the queues for presentation and graphics.
 		// Since we only have one queue per queue family, we acquire index 0.
 		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
 		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
+
+		if(use_distinct_data_transfer_queue && data_transfer_queue_family_index.has_value())
+		{
+			// Use a separate queue for data transfer to GPU.
+			vkGetDeviceQueue(device, data_transfer_queue_family_index.value(), 0, &data_transfer_queue);
+		}
 
 		return VK_SUCCESS;
 	}
@@ -169,31 +177,35 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_device_queues()
 	{
+		// TODO: Refactor this code part!
+
 		cout << "Creating device queues." << endl;
 
 		// This is neccesary since device queues might be recreated as swapchain becomes invalid.
 		device_queues.clear();
 
 		// Check if there is one queue family which can be used for both graphics and presentation.
-		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = check_existence_of_queue_family_for_both_graphics_and_presentation(selected_graphics_card, surface);
+		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = find_queue_family_for_both_graphics_and_presentation(selected_graphics_card, surface);
 		
 		if(queue_family_index_for_both_graphics_and_presentation.has_value())
 		{
 			graphics_queue_family_index = queue_family_index_for_both_graphics_and_presentation.value();
+			
 			present_queue_family_index = graphics_queue_family_index;
+
 			use_one_queue_family_for_graphics_and_presentation = true;
 
 			// In this case, there is one queue family which can be used for both graphics and presentation.
 			VkDeviceQueueCreateInfo device_queue_create_info = {};
 
 			// For now, we only need one queue family.
-			uint32_t number_of_queues_to_use = 1;
+			uint32_t number_of_combined_queues_to_use = 1;
 
 			device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			device_queue_create_info.pNext            = nullptr;
 			device_queue_create_info.flags            = 0;
 			device_queue_create_info.queueFamilyIndex = queue_family_index_for_both_graphics_and_presentation.value();
-			device_queue_create_info.queueCount       = number_of_queues_to_use;
+			device_queue_create_info.queueCount       = number_of_combined_queues_to_use;
 			device_queue_create_info.pQueuePriorities = &global_queue_priority;
 
 			device_queues.push_back(device_queue_create_info);
@@ -204,7 +216,7 @@ namespace vulkan_renderer {
 			// One for graphics and another one for presentation.
 			
 			// Check which queue family index can be used for graphics.
-			graphics_queue_family_index = decide_which_graphics_queue_family_to_use(selected_graphics_card);
+			graphics_queue_family_index = find_graphics_queue_family(selected_graphics_card);
 			
 			if(!graphics_queue_family_index.has_value())
 			{
@@ -214,7 +226,7 @@ namespace vulkan_renderer {
 			}
 
 			// Check which queue family index can be used for presentation.
-			present_queue_family_index = decide_which_presentation_queue_family_to_use(selected_graphics_card, surface);
+			present_queue_family_index = find_presentation_queue_family(selected_graphics_card, surface);
 
 			if(!present_queue_family_index.has_value())
 			{
@@ -254,6 +266,53 @@ namespace vulkan_renderer {
 			device_queue_create_info_for_presentation_queue.pQueuePriorities = &global_queue_priority;
 
 			device_queues.push_back(device_queue_create_info_for_presentation_queue);
+		}
+
+
+		// Add another device queue just for data transfer.
+		data_transfer_queue_family_index = find_distinct_data_transfer_queue_family(selected_graphics_card);
+
+		if(data_transfer_queue_family_index.has_value())
+		{
+			// We have the opportunity to use a separated queue for data transfer!
+			use_distinct_data_transfer_queue = true;
+
+			VkDeviceQueueCreateInfo device_queue_for_data_transfer_create_info = {};
+
+			// For now, we only need one queue family.
+			uint32_t number_of_queues_to_use = 1;
+
+			device_queue_for_data_transfer_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			device_queue_for_data_transfer_create_info.pNext            = nullptr;
+			device_queue_for_data_transfer_create_info.flags            = 0;
+			device_queue_for_data_transfer_create_info.queueFamilyIndex = data_transfer_queue_family_index.value();
+			device_queue_for_data_transfer_create_info.queueCount       = number_of_queues_to_use;
+			device_queue_for_data_transfer_create_info.pQueuePriorities = &global_queue_priority;
+			
+			device_queues.push_back(device_queue_for_data_transfer_create_info);
+		}
+		else
+		{
+			// We don't have the opportunity to use a separated queue for data transfer!
+			// Do not create a new queue, use the graphics queue instead.
+			use_distinct_data_transfer_queue = false;
+
+			// Add another device queue just for data transfer.
+			data_transfer_queue_family_index = find_any_data_transfer_queue_family(selected_graphics_card);
+
+			VkDeviceQueueCreateInfo device_queue_for_data_transfer_create_info = {};
+
+			// For now, we only need one queue family.
+			uint32_t number_of_queues_to_use = 1;
+
+			device_queue_for_data_transfer_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			device_queue_for_data_transfer_create_info.pNext            = nullptr;
+			device_queue_for_data_transfer_create_info.flags            = 0;
+			device_queue_for_data_transfer_create_info.queueFamilyIndex = data_transfer_queue_family_index.value();
+			device_queue_for_data_transfer_create_info.queueCount       = number_of_queues_to_use;
+			device_queue_for_data_transfer_create_info.pQueuePriorities = &global_queue_priority;
+			
+			device_queues.push_back(device_queue_for_data_transfer_create_info);
 		}
 
 		return VK_SUCCESS;
@@ -386,12 +445,9 @@ namespace vulkan_renderer {
 			{{-0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
 		};
 
-		VkResult result = create_vertex_buffer(vma_allocator, static_cast<uint32_t>(vertices.size()), example_vertex_buffer);
-		vulkan_error_check(result);
+		VkResult result = create_vertex_buffer(vma_allocator, data_transfer_queue, vertices, example_vertex_buffer);
 
-		update_vertex_buffer_memory(example_vertex_buffer, vertices.data());
-
-		return VK_SUCCESS;
+		return result;
 	}
 
 

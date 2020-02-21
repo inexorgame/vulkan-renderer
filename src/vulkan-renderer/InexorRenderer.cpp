@@ -276,6 +276,9 @@ namespace vulkan_renderer {
 		result = create_command_buffers();
 		vulkan_error_check(result);
 
+		// Create a second command pool for data transfer commands.
+		VulkanVertexBufferManager::initialise(device, data_transfer_queue_family_index.value());
+
 		result = create_vertex_buffers();
 		vulkan_error_check(result);
 
