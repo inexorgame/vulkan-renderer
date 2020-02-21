@@ -55,21 +55,6 @@ namespace vulkan_renderer {
 			// The Vulkan device.
 			VkDevice vulkan_device;
 
-			// The queue family index to use for data transfer.
-			// This might be a queue which is has VK_QUEUE_TRANSFER_BIT and is used to data transfer exclusively.
-			// In case such a distinct queue does not exist, the queue likely has VK_QUEUE_TRANSFER_BIT and other flags like VK_QUEUE_GRAPHICS_BIT.
-			// It should be noted that most GPUs most likely have a distinct VK_QUEUE_TRANSFER_BIT queue though.
-			
-			// A temporary command buffer for uploading data to the GPU.
-			VkCommandBuffer temporary_command_buffer = VK_NULL_HANDLE;
-
-
-		private:
-
-			VkResult begin_single_command();
-
-			VkResult end_single_command(const VkQueue& data_transfer_queue);
-
 
 		public:
 

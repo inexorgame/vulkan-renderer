@@ -41,51 +41,6 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanVertexBufferManager::begin_single_command()
-	{
-		VkCommandBufferBeginInfo cmd_buffer_begin_info;
-		
-		cmd_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		cmd_buffer_begin_info.pNext            = nullptr;
-		cmd_buffer_begin_info.pInheritanceInfo = nullptr;
-		
-		// We’re only going to use the command buffer once and wait with returning from the function until
-		// the copy operation has finished executing. It’s good practice to tell the driver about our intent
-		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
-		cmd_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		VkResult result = vkBeginCommandBuffer(temporary_command_buffer, &cmd_buffer_begin_info);
-		vulkan_error_check(result);
-
-		return result;
-	}
-
-	
-	VkResult VulkanVertexBufferManager::end_single_command(const VkQueue& data_transfer_queue)
-	{
-		// Step 5: Submit this command to the GPU.
-		VkResult result = vkEndCommandBuffer(temporary_command_buffer);
-		vulkan_error_check(result);
-
-
-		// TODO: Refactor this!
-		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
-
-		submit_info.commandBufferCount   = 1;
-		submit_info.pCommandBuffers      = &temporary_command_buffer;
-
-		// TODO: Add VkFence! For no we will use vkQueueWaitIdle.
-		result = vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
-		vulkan_error_check(result);
-
-		// Wait until copying memory is done!
-		result = vkQueueWaitIdle(data_transfer_queue);
-		vulkan_error_check(result);
-
-		return result;
-	}
-	
-
 	VkResult VulkanVertexBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator, const VkQueue& data_transfer_queue, const std::vector<InexorVertex>& vertices, InexorVertexBuffer& target_vertex_buffer)
 	{
 		assert(vma_allocator);
@@ -168,6 +123,8 @@ namespace vulkan_renderer {
 		command_buffer_allocate_info.commandPool        = data_transfer_command_pool;
 		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		command_buffer_allocate_info.commandBufferCount = 1;
+		
+		VkCommandBuffer temporary_command_buffer;
 
 		result = vkAllocateCommandBuffers(vulkan_device, &command_buffer_allocate_info, &temporary_command_buffer);
 		vulkan_error_check(result);
@@ -186,11 +143,53 @@ namespace vulkan_renderer {
 		// In some talks about Vulkan it was mentioned that not using dedicated transfer queues is one of the biggest mistakes when using Vulkan.
 		// Copy vertex data from staging buffer to vertex buffer to upload it to GPU memory!
 		
-		begin_single_command();
+		VkCommandBufferBeginInfo cmd_buffer_begin_info;
+		
+		cmd_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		cmd_buffer_begin_info.pNext            = nullptr;
+		cmd_buffer_begin_info.pInheritanceInfo = nullptr;
+		
+		// We’re only going to use the command buffer once and wait with returning from the function until
+		// the copy operation has finished executing. It’s good practice to tell the driver about our intent
+		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
+		cmd_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		result = vkBeginCommandBuffer(temporary_command_buffer, &cmd_buffer_begin_info);
+		vulkan_error_check(result);
 
 		vkCmdCopyBuffer(temporary_command_buffer, staging_vertex_buffer, vertex_buffer, 1, &copy_region);
 
-		end_single_command(data_transfer_queue);
+
+		// Step 5: Submit this command to the GPU.
+		result = vkEndCommandBuffer(temporary_command_buffer);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return result;
+		}
+
+
+		// TODO: Refactor this!
+		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
+
+		submit_info.commandBufferCount   = 1;
+		submit_info.pCommandBuffers      = &temporary_command_buffer;
+
+		// TODO: Add VkFence! For no we will use vkQueueWaitIdle.
+		result = vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return result;
+		}
+
+		// Wait until copying memory is done!
+		result = vkQueueWaitIdle(data_transfer_queue);
+		if(VK_SUCCESS != result)
+		{
+			vulkan_error_check(result);
+			return result;
+		}
 
 
 		// Step 6: Store the vertex buffer as output.
@@ -201,9 +200,9 @@ namespace vulkan_renderer {
 		target_vertex_buffer.allocation_create_info = vertex_buffer_allocation_create_info;
 		target_vertex_buffer.number_of_vertices     = static_cast<uint32_t>(vertices.size());
 
-
 		// Add this vertex buffer to the list.
 		list_of_vertex_buffers.push_back(target_vertex_buffer);
+
 
 		// Step 7: Destroy the staging buffer and its memory!
 		vmaDestroyBuffer(vma_allocator, staging_vertex_buffer, staging_vertex_buffer_allocation);
