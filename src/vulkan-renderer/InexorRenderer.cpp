@@ -31,12 +31,16 @@ namespace vulkan_renderer {
 
 	VkResult InexorRenderer::load_shaders()
 	{
+		assert(device);
+
 		// It is important to make sure that you debugging folder contains the required shader files!
 		struct InexorShaderSetup
 		{
 			VkShaderStageFlagBits shader_type;
 			std::string shader_file_name;
 		};
+
+		// TODO: VulkanPipelineManager!
 		
 		// The actual file list of shaders that we want to load.
 		// TODO: Setup shaders JSON or TOML list file.
@@ -44,6 +48,7 @@ namespace vulkan_renderer {
 		{
 			{VK_SHADER_STAGE_VERTEX_BIT, "vertexshader.spv"},
 			{VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv"}
+			// Add more shaders here..
 		};
 
 		for(const auto& shader : shader_list)
@@ -271,6 +276,7 @@ namespace vulkan_renderer {
 
 		if(display_graphics_card_info)
 		{
+			// Print general information about Vulkan.
 			print_driver_vulkan_version();
 			print_instance_layers();
 			print_instance_extensions();
@@ -279,6 +285,7 @@ namespace vulkan_renderer {
 			print_all_physical_devices(instance, surface);
 		}
 
+		// TODO: asserts in every function!
 
 		result = create_device_queues();
 		vulkan_error_check(result);
@@ -302,12 +309,8 @@ namespace vulkan_renderer {
 		result = load_shaders();
 		vulkan_error_check(result);
 
-
-
 		result = create_descriptor_set_layout();
 		vulkan_error_check(result);
-
-
 
 		result = create_pipeline();
 		vulkan_error_check(result);
@@ -321,9 +324,6 @@ namespace vulkan_renderer {
 		result = create_command_pool();
 		vulkan_error_check(result);
 
-
-
-
 		result = create_uniform_buffers();
 		vulkan_error_check(result);
 
@@ -332,9 +332,6 @@ namespace vulkan_renderer {
 
 		result = create_descriptor_sets();
 		vulkan_error_check(result);
-
-
-
 
 		result = create_command_buffers();
 		vulkan_error_check(result);
@@ -348,7 +345,6 @@ namespace vulkan_renderer {
 		result = create_synchronisation_objects();
 		vulkan_error_check(result);
 		
-
 		// Show window after Vulkan has been initialised.
 		glfwShowWindow(window);
 

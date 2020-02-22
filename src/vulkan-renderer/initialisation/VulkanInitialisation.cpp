@@ -959,10 +959,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::update_uniform_buffer(std::size_t current_image)
 	{
-        static auto startTime = std::chrono::high_resolution_clock::now();
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        float time = InexorTimeStep::get_program_start_time_step();
 
         UniformBufferObject ubo = {};
         ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -974,7 +971,7 @@ namespace vulkan_renderer {
 
 		vmaMapMemory(vma_allocator, uniform_buffers[current_image].allocation, &data);
 
-		std::memcpy(data, &ubo, sizeof(ubo));
+		std::memcpy(uniform_buffers[current_image].allocation_info.pMappedData, &ubo, sizeof(ubo));
 
 		vmaUnmapMemory(vma_allocator, uniform_buffers[current_image].allocation);
 

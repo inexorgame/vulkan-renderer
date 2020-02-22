@@ -23,6 +23,8 @@
 #include "../vertex-structure/InexorVertex.hpp"
 #include "../vertex-buffer-manager/VulkanMeshBufferManager.hpp"
 #include "../ubo-manager/VulkanUniformBufferManager.hpp"
+#include "../time-step/InexorTimeStep.hpp"
+
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
@@ -52,7 +54,8 @@ namespace vulkan_renderer {
 								 public VulkanSettingsDecisionMaker,
 								 public VulkanShaderManager,
 								 public VulkanSynchronisationManager,
-								 public VulkanMeshBufferManager
+								 public VulkanMeshBufferManager,
+								 public InexorTimeStep
 								 // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager, VulkanQueueManager?
 	{
 		public:
