@@ -93,7 +93,7 @@ namespace vulkan_renderer {
 
 		for(const auto& instance_extension : instance_extension_wishlist)
 		{
-			if(check_instance_extension_availability(instance_extension))
+			if(VulkanAvailabilityChecks::is_instance_extension_available(instance_extension))
 			{
 				enabled_instance_extensions.push_back(instance_extension);
 			}
@@ -142,7 +142,7 @@ namespace vulkan_renderer {
 		// Loop through the wishlist and check for availabiliy.
 		for(auto current_layer : instance_layers_wishlist)
 		{
-			if(check_instance_layer_availability(current_layer))
+			if(VulkanAvailabilityChecks::is_instance_layer_available(current_layer))
 			{
 				cout << "Instance layer " << current_layer << " is supported!" << endl;
 				
@@ -371,7 +371,7 @@ namespace vulkan_renderer {
 
 		for(auto device_extension_name : device_extensions_wishlist)
 		{
-			if(check_device_extension_availability(graphics_card, device_extension_name))
+			if(VulkanAvailabilityChecks::is_device_extension_available(graphics_card, device_extension_name))
 			{
 				cout << "Device extension " << device_extension_name << " is supported!" << endl;
 
@@ -610,7 +610,7 @@ namespace vulkan_renderer {
 
 		// Decide which surface color format is used.
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
-		std::optional<VkSurfaceFormatKHR> selected_surface_format = decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
+		std::optional<VkSurfaceFormatKHR> selected_surface_format = VulkanSettingsDecisionMaker::which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
 		
 		if(selected_surface_format.has_value())
 		{
@@ -624,9 +624,9 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
+		VulkanSettingsDecisionMaker::which_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
 
-		std::optional<VkPresentModeKHR> selected_present_mode = decide_which_presentation_mode_to_use(selected_graphics_card, surface);
+		std::optional<VkPresentModeKHR> selected_present_mode = VulkanSettingsDecisionMaker::which_presentation_mode_to_use(selected_graphics_card, surface);
 
 		if(!selected_present_mode.has_value())
 		{
@@ -635,7 +635,7 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		number_of_images_in_swapchain = decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+		number_of_images_in_swapchain = VulkanSettingsDecisionMaker::how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
 
 		if(0 == number_of_images_in_swapchain)
 		{
@@ -974,7 +974,6 @@ namespace vulkan_renderer {
 		std::memcpy(uniform_buffers[current_image].allocation_info.pMappedData, &ubo, sizeof(ubo));
 
 		vmaUnmapMemory(vma_allocator, uniform_buffers[current_image].allocation);
-
 
 		return VK_SUCCESS;
 	}

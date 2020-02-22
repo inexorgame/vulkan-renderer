@@ -1,5 +1,4 @@
 #include "VulkanAvailabilityChecks.hpp"
-using namespace std;
 
 
 namespace inexor {
@@ -16,8 +15,10 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::check_instance_extension_availability(const std::string& instance_extension_name)
+	bool VulkanAvailabilityChecks::is_instance_extension_available(const std::string& instance_extension_name)
 	{
+		assert(instance_extension_name.length()>0);
+
 		uint32_t number_of_available_instance_extensions = 0;
 
 		// First ask Vulkan how many instance extensions are available on the system.
@@ -58,8 +59,10 @@ namespace vulkan_renderer {
 	}
 
 	
-	bool VulkanAvailabilityChecks::check_instance_layer_availability(const std::string& instance_layer_name)
+	bool VulkanAvailabilityChecks::is_instance_layer_available(const std::string& instance_layer_name)
 	{
+		assert(instance_layer_name.length()>0);
+
 		uint32_t number_of_available_instance_layers = 0;
 
 		// First ask Vulkan how many instance layers are available on the system.
@@ -100,8 +103,11 @@ namespace vulkan_renderer {
 	}
 	
 	
-	bool VulkanAvailabilityChecks::check_device_layer_availability(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name)
+	bool VulkanAvailabilityChecks::is_device_layer_available(const VkPhysicalDevice& graphics_card, const std::string& device_layer_name)
 	{
+		assert(graphics_card);
+		assert(device_layer_name.length()>0);
+
 		uint32_t number_of_available_device_layers = 0;
 		
 		// First ask Vulkan how many device layers are available on the system.
@@ -141,8 +147,11 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::check_device_extension_availability(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name)
+	bool VulkanAvailabilityChecks::is_device_extension_available(const VkPhysicalDevice& graphics_card, const std::string& device_extension_name)
 	{
+		assert(graphics_card);
+		assert(device_extension_name.length()>0);
+
 		uint32_t number_of_available_device_extensions = 0;
 		
 		// First ask Vulkan how many device extensions are available on the system.
@@ -182,12 +191,17 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::check_presentation_availability(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	bool VulkanAvailabilityChecks::is_presentation_available(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
+		assert(graphics_card);
+		assert(surface);
+
 		VkBool32 presentation_available = false;
 		
 		// Query if presentation is supported.
 		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
+
+		// I don't know what the value of presentation_available might be in case of an error, so handle it explicitely.
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -198,60 +212,12 @@ namespace vulkan_renderer {
 	}
 
 
-	bool VulkanAvailabilityChecks::check_swapchain_availability(const VkPhysicalDevice& graphics_card)
+	bool VulkanAvailabilityChecks::is_swapchain_available(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		// Just overload the other method. VK_KHR_SWAPCHAIN_EXTENSION_NAME is a nice macro which Vulkan defines for us.
-		return check_device_extension_availability(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-	}
-
-
-	std::optional<uint32_t> VulkanAvailabilityChecks::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
-	{
-		uint32_t number_of_available_queue_families = 0;
-
-		// First check how many queue families are available.
-		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
-
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
-
-		// Preallocate memory for the available queue families.
-		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
-		
-		// Get information about the available queue families.
-		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
-
-
-		// Loop through all available queue families and look for a suitable one.
-		for(std::size_t i=0; i<available_queue_families.size(); i++)
-		{
-			if(available_queue_families[i].queueCount > 0)
-			{
-				// Check if this queue family supports graphics.
-				if(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-				{
-					// Ok this queue family supports graphics!
-					// Now let's check if it supports presentation.
-					VkBool32 presentation_available = false;
-
-					uint32_t this_queue_family_index = static_cast<uint32_t>(i);
-
-					// Query if presentation is supported.
-					VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface, &presentation_available);
-					vulkan_error_check(result);
-
-					// Check if we can use this queue family for presentation as well.
-					if(presentation_available)
-					{
-						cout << "Found one queue family for both graphics and presentation." << endl;
-						return this_queue_family_index;
-					}
-				}
-			}
-		}
-
-		// There is no queue which supports both graphics and presentation.
-		// We have to used 2 separate queues then!
-		return std::nullopt;
+		return is_device_extension_available(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
 

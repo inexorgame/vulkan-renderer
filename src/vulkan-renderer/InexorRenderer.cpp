@@ -202,7 +202,7 @@ namespace vulkan_renderer {
 		// Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
 		if(enable_khronos_validation_instance_layer)
 		{
-			if(check_instance_extension_availability(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+			if(VulkanAvailabilityChecks::is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 			{
 				VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 			
@@ -244,7 +244,7 @@ namespace vulkan_renderer {
 		std::optional<uint32_t> prefered_graphics_card = get_command_line_argument_uint32_t("-gpu");
 
 		// Let's see if there is a graphics card that is suitable for us.
-		std::optional<VkPhysicalDevice> graphics_card_candidate = decide_which_graphics_card_to_use(instance, surface, prefered_graphics_card);
+		std::optional<VkPhysicalDevice> graphics_card_candidate = VulkanSettingsDecisionMaker::which_graphics_card_to_use(instance, surface, prefered_graphics_card);
 
 		// Check if we found a graphics card candidate.
 		if(graphics_card_candidate.has_value())
