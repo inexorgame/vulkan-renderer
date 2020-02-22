@@ -61,13 +61,16 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage)
+	VkResult VulkanMeshBufferManager::create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
 	{
+		assert(vma_allocator_handle);
+
 		buffer.create_info.sType            = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		buffer.create_info.size             = buffer.size;
 		buffer.create_info.usage            = buffer_usage;
 		buffer.create_info.sharingMode      = VK_SHARING_MODE_EXCLUSIVE;
-		buffer.allocation_create_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+
+		buffer.allocation_create_info.usage = memory_usage;
 		buffer.allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
 		VkResult result = vmaCreateBuffer(vma_allocator_handle, &buffer.create_info, &buffer.allocation_create_info, &buffer.buffer, &buffer.allocation, &buffer.allocation_info);
@@ -117,7 +120,7 @@ namespace vulkan_renderer {
 		// Create a staging vertex buffer.
 		InexorBuffer staging_vertex_buffer(vertex_buffer_size);
 
-		VkResult result = create_buffer(staging_vertex_buffer);
+		VkResult result = create_buffer(staging_vertex_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -131,7 +134,7 @@ namespace vulkan_renderer {
 		
 		InexorBuffer vertex_buffer(vertex_buffer_size);
 
-		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -217,7 +220,7 @@ namespace vulkan_renderer {
 		// Create a staging vertex buffer.
 		InexorBuffer staging_vertex_buffer(vertex_buffer_size);
 
-		VkResult result = create_buffer(staging_vertex_buffer);
+		VkResult result = create_buffer(staging_vertex_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -232,7 +235,7 @@ namespace vulkan_renderer {
 
 		InexorBuffer staging_index_buffer(index_buffer_size);
 
-		result = create_buffer(staging_index_buffer);
+		result = create_buffer(staging_index_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -246,7 +249,7 @@ namespace vulkan_renderer {
 		
 		InexorBuffer vertex_buffer(vertex_buffer_size);
 
-		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -255,7 +258,7 @@ namespace vulkan_renderer {
 
 		InexorBuffer index_buffer(index_buffer_size);
 		
-		result = create_buffer(index_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+		result = create_buffer(index_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -343,6 +346,8 @@ namespace vulkan_renderer {
 			// Destroy vertex buffer.		
 			vmaDestroyBuffer(vma_allocator, mesh_buffer.vertex_buffer.buffer, mesh_buffer.vertex_buffer.allocation);
 
+			// TODO: vmaFreeMemory ?
+			
 			// Destroy index buffer if existent.
 			if(mesh_buffer.index_buffer_available)
 			{

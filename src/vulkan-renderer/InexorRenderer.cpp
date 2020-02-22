@@ -75,6 +75,8 @@ namespace vulkan_renderer {
 			vkWaitForFences(device, 1, &images_in_flight[image_index], VK_TRUE, UINT64_MAX);
 		}
 		
+		update_uniform_buffer(current_frame);
+
 		// Mark the image as now being in use by this frame
 		images_in_flight[image_index] = in_flight_fences[current_frame];
 
@@ -112,7 +114,8 @@ namespace vulkan_renderer {
 		submit_info.pSignalSemaphores    = &rendering_finished_semaphores[current_frame];
 
 		vkResetFences(device, 1, &in_flight_fences[current_frame]);
-		
+
+
 		result = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fences[current_frame]);
 		if(VK_SUCCESS != result) return result;
 
@@ -299,20 +302,42 @@ namespace vulkan_renderer {
 		result = load_shaders();
 		vulkan_error_check(result);
 
+
+
+		result = create_descriptor_set_layout();
+		vulkan_error_check(result);
+
+
+
 		result = create_pipeline();
 		vulkan_error_check(result);
 		
 		result = create_frame_buffers();
 		vulkan_error_check(result);
 		
+		// Create a second command pool for data transfer commands.
+		VulkanMeshBufferManager::initialise(device, vma_allocator, data_transfer_queue_family_index.value(), data_transfer_queue);
+		
 		result = create_command_pool();
 		vulkan_error_check(result);
 
-		result = create_command_buffers();
+
+
+
+		result = create_uniform_buffers();
 		vulkan_error_check(result);
 
-		// Create a second command pool for data transfer commands.
-		VulkanMeshBufferManager::initialise(device, vma_allocator, data_transfer_queue_family_index.value(), data_transfer_queue);
+		result = create_descriptor_pool();
+		vulkan_error_check(result);
+
+		result = create_descriptor_sets();
+		vulkan_error_check(result);
+
+
+
+
+		result = create_command_buffers();
+		vulkan_error_check(result);
 
 		result = create_vertex_buffers();
 		vulkan_error_check(result);

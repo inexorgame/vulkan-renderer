@@ -46,15 +46,17 @@ namespace vulkan_renderer {
 			VmaAllocator vma_allocator_handle;
 
 
-		private:
+		public:
 
 		
 			/// @brief Create a buffer.
 			/// @param buffer The InexorBuffer which will be created.
 			/// @param buffer_usage The usage flags of the buffer. The default is value is VK_BUFFER_USAGE_TRANSFER_SRC_BIT for staging buffers.
-			VkResult create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			VkResult create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
 
 			
+		private:
+
 			/// @brief Submits buffer copy command to data transfer queue.
 			VkResult upload_data_to_gpu();
 

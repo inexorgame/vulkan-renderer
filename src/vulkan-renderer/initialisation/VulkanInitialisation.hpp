@@ -22,10 +22,12 @@
 #include "../synchronisation-manager/VulkanSynchronisationManager.hpp"
 #include "../vertex-structure/InexorVertex.hpp"
 #include "../vertex-buffer-manager/VulkanMeshBufferManager.hpp"
+#include "../ubo-manager/VulkanUniformBufferManager.hpp"
 
-// Vulkan Memory Allocator (VMA) library.
+// Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../../vma/vk_mem_alloc.h"
+
 
 
 #include <vector>
@@ -35,7 +37,7 @@
 using namespace std;
 
 // The maximum number of images to process simultaneously.
-#define INEXOR_MAX_FRAMES_IN_FLIGHT 2
+#define INEXOR_MAX_FRAMES_IN_FLIGHT 3
 
 
 namespace inexor {
@@ -74,7 +76,6 @@ namespace vulkan_renderer {
 			
 			// TODO: Refactor!
 			InexorMeshBuffer example_vertex_buffer;
-
 
 			// The Vulkan instance handle.
 			VkInstance instance;
@@ -177,6 +178,10 @@ namespace vulkan_renderer {
 			// Vulkan debug report callback.
 			bool debug_report_callback_initialised = false;
 
+
+			std::vector<InexorBuffer> uniform_buffers;
+
+
 		protected:
 
 
@@ -230,8 +235,25 @@ namespace vulkan_renderer {
 			
 			
 			/// @brief Cleans the swapchain.
-			void cleanup_swapchain();
+			VkResult cleanup_swapchain();
 			
+			VkResult create_uniform_buffers();
+
+			VkDescriptorSetLayout descriptorSetLayout;
+			
+			VkDescriptorPool descriptorPool;
+
+			
+			std::vector<VkDescriptorSet> descriptorSets;
+			
+			VkResult create_descriptor_sets();
+
+
+			VkResult create_descriptor_pool();
+			
+
+			VkResult update_uniform_buffer(std::size_t current_image);
+
 
 			/// @brief Recreates the swapchain.
 			VkResult recreate_swapchain();
@@ -244,6 +266,10 @@ namespace vulkan_renderer {
 			/// @brief Creates the frame buffers.
 			VkResult create_frame_buffers();
 			
+
+			/// @brief Creates the descriptor set layout.
+			VkResult create_descriptor_set_layout();
+
 
 			/// @brief Creates the rendering pipeline.
 			VkResult create_pipeline();
@@ -258,7 +284,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Destroys all Vulkan objects.
-			void shutdown_vulkan();
+			VkResult shutdown_vulkan();
 
 	};
 	

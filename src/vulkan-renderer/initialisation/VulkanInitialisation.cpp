@@ -5,6 +5,11 @@
 #include "../../vma/vk_mem_alloc.h"
 
 
+#include <glm/glm.hpp>
+#include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
+
+
 namespace inexor {
 namespace vulkan_renderer {
 
@@ -474,6 +479,8 @@ namespace vulkan_renderer {
 
 		VkResult result = create_vertex_buffer_with_index_buffer(vma_allocator, vertices, indices, example_vertex_buffer);
 		
+		//VkResult result = create_vertex_buffer(vma_allocator, vertices, example_vertex_buffer);
+		
 		return result;
 	}
 
@@ -523,12 +530,16 @@ namespace vulkan_renderer {
 			{
 				// Use the index buffer as well!
 				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+				
+				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
 
 				// Draw using index buffer + vertex buffer.
 				vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
 			}
 			else
 			{
+				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
+
 				// Draw using vertex buffer only. No index buffer specified.
 				vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
 			}
@@ -684,7 +695,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanInitialisation::cleanup_swapchain()
+	VkResult VulkanInitialisation::cleanup_swapchain()
 	{
 		cout << "Cleaning up swapchain." << endl;
 		cout << "Waiting for device to be idle." << endl;
@@ -769,6 +780,23 @@ namespace vulkan_renderer {
 			vkDestroySwapchainKHR(device, swapchain, nullptr);
 			swapchain = VK_NULL_HANDLE;
 		}
+
+
+		cout << "Destroying uniform buffers." << endl;
+		
+		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
+		{
+			vkDestroyBuffer(device, uniform_buffers[i].buffer, nullptr);
+			vmaFreeMemory(vma_allocator, uniform_buffers[i].allocation);
+		}
+
+		uniform_buffers.clear();
+
+		cout << "Destroying descriptor pool" << endl;
+
+		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+
+		return VK_SUCCESS;
 	}
 
 
@@ -803,6 +831,15 @@ namespace vulkan_renderer {
 		result = create_frame_buffers();
 		if(VK_SUCCESS != result) return result;
 		
+		result = create_uniform_buffers();
+		if(VK_SUCCESS != result) return result;
+
+		result = create_descriptor_pool();
+		if(VK_SUCCESS != result) return result;
+		
+		result = create_descriptor_sets();
+		if(VK_SUCCESS != result) return result;
+		
 		result = create_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
@@ -810,6 +847,135 @@ namespace vulkan_renderer {
 		
 		result = record_command_buffers();
 		if(VK_SUCCESS != result) return result;
+
+		return VK_SUCCESS;
+	}
+
+	
+	VkResult VulkanInitialisation::create_descriptor_set_layout()
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+
+		uboLayoutBinding.binding            = 0;
+		uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.descriptorCount    = 1;
+		uboLayoutBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &uboLayoutBinding;
+
+		VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout);
+		vulkan_error_check(result);
+
+		return VK_SUCCESS;
+	}
+
+	
+	VkResult VulkanInitialisation::create_descriptor_pool()
+	{
+		VkDescriptorPoolSize poolSize = {};
+
+		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSize.descriptorCount = number_of_images_in_swapchain;
+
+		VkDescriptorPoolCreateInfo poolInfo = {};
+
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.poolSizeCount = 1;
+		poolInfo.pPoolSizes = &poolSize;
+		poolInfo.maxSets = number_of_images_in_swapchain;
+
+		VkResult result = vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool);
+		vulkan_error_check(result);
+
+		return VK_SUCCESS;
+	}
+
+	
+	VkResult VulkanInitialisation::create_descriptor_sets()
+	{
+        std::vector<VkDescriptorSetLayout> layouts(number_of_images_in_swapchain, descriptorSetLayout);
+        
+		VkDescriptorSetAllocateInfo allocInfo = {};
+
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = descriptorPool;
+        allocInfo.descriptorSetCount = number_of_images_in_swapchain;
+        allocInfo.pSetLayouts = layouts.data();
+
+		descriptorSets.clear();
+        descriptorSets.resize(number_of_images_in_swapchain);
+
+		VkResult result = vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data());
+		vulkan_error_check(result);
+		
+
+        for(size_t i = 0; i < number_of_images_in_swapchain; i++)
+		{
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = uniform_buffers[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(UniformBufferObject);
+
+            VkWriteDescriptorSet descriptorWrite = {};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = descriptorSets[i];
+            descriptorWrite.dstBinding = 0;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &bufferInfo;
+
+            vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+        }
+
+		return VK_SUCCESS;
+	}
+
+
+	VkResult VulkanInitialisation::update_uniform_buffer(std::size_t current_image)
+	{
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        UniformBufferObject ubo = {};
+        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), window_width / (float) window_height, 0.1f, 10.0f);
+        ubo.proj[1][1] *= -1;
+
+        void* data;
+
+		vmaMapMemory(vma_allocator, uniform_buffers[current_image].allocation, &data);
+
+		std::memcpy(data, &ubo, sizeof(ubo));
+
+		vmaUnmapMemory(vma_allocator, uniform_buffers[current_image].allocation);
+
+
+		return VK_SUCCESS;
+	}
+
+
+	VkResult VulkanInitialisation::create_uniform_buffers()
+	{
+		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+		uniform_buffers.clear();
+		uniform_buffers.resize(number_of_images_in_swapchain, bufferSize);
+
+		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
+		{
+			// It is important to use VMA_MEMORY_USAGE_CPU_TO_GPU for uniform buffers!
+			VkResult result = create_buffer(uniform_buffers[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+			vulkan_error_check(result);
+		}
 
 		return VK_SUCCESS;
 	}
@@ -903,7 +1069,7 @@ namespace vulkan_renderer {
 		pipeline_rasterization_state_create_info.depthClampEnable        = VK_FALSE;
 		pipeline_rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
 		pipeline_rasterization_state_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
-		pipeline_rasterization_state_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
+		pipeline_rasterization_state_create_info.cullMode                = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipeline_rasterization_state_create_info.frontFace               = VK_FRONT_FACE_CLOCKWISE;
 		pipeline_rasterization_state_create_info.depthBiasEnable         = VK_FALSE;
 		pipeline_rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
@@ -957,8 +1123,8 @@ namespace vulkan_renderer {
 		pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_create_info.pNext                  = nullptr;
 		pipeline_layout_create_info.flags                  = 0;
-		pipeline_layout_create_info.setLayoutCount         = 0;
-		pipeline_layout_create_info.pSetLayouts            = nullptr;
+		pipeline_layout_create_info.setLayoutCount         = 1;
+		pipeline_layout_create_info.pSetLayouts            = &descriptorSetLayout;
 		pipeline_layout_create_info.pushConstantRangeCount = 0;
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
@@ -1123,13 +1289,15 @@ namespace vulkan_renderer {
 	}
 
 	
-	void VulkanInitialisation::shutdown_vulkan()
+	VkResult VulkanInitialisation::shutdown_vulkan()
 	{
 		// It is important to destroy the objects in reversal of the order of creation.
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Shutting down Vulkan API." << endl;
 		
 		cleanup_swapchain();
+
+		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
 		cout << "Destroying vertex buffers." << endl;
 		VulkanMeshBufferManager::shutdown_vertex_buffers(vma_allocator);
@@ -1191,6 +1359,8 @@ namespace vulkan_renderer {
 		
 		cout << "Shutdown finished." << endl;
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
+	
+		return VK_SUCCESS;
 	}
 
 
