@@ -39,6 +39,7 @@
 using namespace std;
 
 // The maximum number of images to process simultaneously.
+// TODO: Refactoring! That is triple buffering essentially!
 #define INEXOR_MAX_FRAMES_IN_FLIGHT 3
 
 
@@ -148,7 +149,7 @@ namespace vulkan_renderer {
 
 			// Try to use a separated queue family for data transfer to GPU.
 			// TODO: This is not used in any code yet. Is it neccesary?
-			bool use_distinct_data_transfer_queue = false;
+			bool use_distinct_data_transfer_queue = true;
 
 			// 
 			std::optional<uint32_t> graphics_queue_family_index;
@@ -173,6 +174,15 @@ namespace vulkan_renderer {
 
 			// TODO: Refactor!
 			const float global_queue_priority = 1.0f;
+
+			
+			VkDescriptorSetLayout descriptor_set_layout;
+			
+			
+			VkDescriptorPool descriptor_pool;
+
+			
+			std::vector<VkDescriptorSet> descriptor_sets;
 
 
 			/// Debug report callback.
@@ -240,21 +250,20 @@ namespace vulkan_renderer {
 			/// @brief Cleans the swapchain.
 			VkResult cleanup_swapchain();
 			
+			
+			/// @brief Creates the uniform buffers.
 			VkResult create_uniform_buffers();
 
-			VkDescriptorSetLayout descriptorSetLayout;
 			
-			VkDescriptorPool descriptorPool;
-
-			
-			std::vector<VkDescriptorSet> descriptorSets;
-			
+			/// @brief Creates the descriptor set.
 			VkResult create_descriptor_sets();
 
 
+			/// @brief Creates the descriptor pool.
 			VkResult create_descriptor_pool();
 			
 
+			/// @brief Updates the uniform buffer.
 			VkResult update_uniform_buffer(std::size_t current_image);
 
 
@@ -283,7 +292,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Creates the device queues.
-			VkResult create_device_queues();
+			VkResult create_device_queues(bool use_distinct_data_transfer_queue_if_available = true);
 
 
 			/// @brief Destroys all Vulkan objects.

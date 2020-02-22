@@ -180,6 +180,10 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_window_surface(const VkInstance& instance, GLFWwindow* window, VkSurfaceKHR& surface)
 	{
+		assert(instance);
+		assert(window);
+		assert(surface);
+
 		// Create a window surface using GLFW library.
 		return glfwCreateWindowSurface(instance, window, nullptr, &surface);
 	}
@@ -187,13 +191,15 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::initialise_queues()
 	{
-		// TODO: Check have_value() !!
+		assert(present_queue_family_index.has_value());
+		assert(graphics_queue_family_index.has_value());
 
 		// Setup the queues for presentation and graphics.
 		// Since we only have one queue per queue family, we acquire index 0.
 		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
 		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
 
+		// The use of data transfer queues can be forbidden by using -no_separate_data_queue.
 		if(use_distinct_data_transfer_queue && data_transfer_queue_family_index.has_value())
 		{
 			// Use a separate queue for data transfer to GPU.
@@ -204,7 +210,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_device_queues()
+	VkResult VulkanInitialisation::create_device_queues(bool use_distinct_data_transfer_queue_if_available)
 	{
 		// TODO: Refactor this code part!
 
@@ -301,7 +307,7 @@ namespace vulkan_renderer {
 		// Add another device queue just for data transfer.
 		data_transfer_queue_family_index = find_distinct_data_transfer_queue_family(selected_graphics_card);
 
-		if(data_transfer_queue_family_index.has_value())
+		if(data_transfer_queue_family_index.has_value() && use_distinct_data_transfer_queue_if_available)
 		{
 			// We have the opportunity to use a separated queue for data transfer!
 			use_distinct_data_transfer_queue = true;
@@ -325,23 +331,6 @@ namespace vulkan_renderer {
 			// We don't have the opportunity to use a separated queue for data transfer!
 			// Do not create a new queue, use the graphics queue instead.
 			use_distinct_data_transfer_queue = false;
-
-			// Add another device queue just for data transfer.
-			data_transfer_queue_family_index = find_any_data_transfer_queue_family(selected_graphics_card);
-
-			VkDeviceQueueCreateInfo device_queue_for_data_transfer_create_info = {};
-
-			// For now, we only need one queue family.
-			uint32_t number_of_queues_to_use = 1;
-
-			device_queue_for_data_transfer_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			device_queue_for_data_transfer_create_info.pNext            = nullptr;
-			device_queue_for_data_transfer_create_info.flags            = 0;
-			device_queue_for_data_transfer_create_info.queueFamilyIndex = data_transfer_queue_family_index.value();
-			device_queue_for_data_transfer_create_info.queueCount       = number_of_queues_to_use;
-			device_queue_for_data_transfer_create_info.pQueuePriorities = &global_queue_priority;
-			
-			device_queues.push_back(device_queue_for_data_transfer_create_info);
 		}
 
 		return VK_SUCCESS;
@@ -350,6 +339,10 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card)
 	{
+		assert(device);
+		assert(graphics_card);
+		assert(device_queues.size()>0);
+
 		cout << "Creating a physical device." << endl;
 		
 		// Currently, we don't need any special features at all.
@@ -404,20 +397,17 @@ namespace vulkan_renderer {
 		device_create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
 		device_create_info.pEnabledFeatures        = &used_features;
 
-		return vkCreateDevice(graphics_card, &device_create_info, NULL, &device);
+		return vkCreateDevice(graphics_card, &device_create_info, nullptr, &device);
 	}
 
 
 	VkResult VulkanInitialisation::create_command_pool()
 	{
-		cout << "Creating command pool." << endl;
+		assert(device);
+		assert(command_pool);
+		assert(graphics_queue_family_index.has_value());
 
-		if(!graphics_queue_family_index.has_value())
-		{
-			std::string error_message = "Error: No graphics queue family index specified!";
-			display_error_message(error_message);
-			return VK_ERROR_INITIALIZATION_FAILED;
-		}
+		cout << "Creating command pool." << endl;
 
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
@@ -432,6 +422,8 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_command_buffers()
 	{
+		assert(device);
+
 		cout << "Creating command buffers." << endl;
 
 		command_buffers.clear();
@@ -453,6 +445,10 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_vma_allocator()
 	{
+		assert(device);
+		assert(vma_allocator);
+		assert(selected_graphics_card);
+
 		VmaAllocatorCreateInfo allocatorInfo = {};
 
 		allocatorInfo.physicalDevice = selected_graphics_card;
@@ -496,9 +492,9 @@ namespace vulkan_renderer {
 			//vertices2[i].pos.z = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		}
 
-		//VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, example_vertex_buffer);
+		VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, example_vertex_buffer);
 		
-		VkResult result = create_vertex_buffer(vertices2, example_vertex_buffer);
+		//VkResult result = create_vertex_buffer(vertices2, example_vertex_buffer);
 		
 		return result;
 	}
@@ -551,14 +547,14 @@ namespace vulkan_renderer {
 				// Use the index buffer as well!
 				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 				
-				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
+				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
 
 				// Draw using index buffer + vertex buffer.
 				vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
 			}
 			else
 			{
-				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
+				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
 
 				// Draw using vertex buffer only. No index buffer specified.
 				vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
@@ -577,6 +573,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_synchronisation_objects()
 	{
+		assert(number_of_images_in_swapchain>0);
+
 		cout << "Creating semaphores and fences." << endl;
 		
 		in_flight_fences.clear();
@@ -604,6 +602,10 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_swapchain()
 	{
+		assert(device);
+		assert(surface);
+		assert(selected_graphics_card);
+
 		cout << "Creating swap chain." << endl;
 
 		// TODO: Check if system supports this image sharing mode!
@@ -814,7 +816,7 @@ namespace vulkan_renderer {
 
 		cout << "Destroying descriptor pool" << endl;
 
-		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+		vkDestroyDescriptorPool(device, descriptor_pool, nullptr);
 
 		return VK_SUCCESS;
 	}
@@ -822,6 +824,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::recreate_swapchain()
 	{
+		assert(device);
+
 		int current_window_width = 0;
 		int current_window_height = 0;
 
@@ -863,8 +867,6 @@ namespace vulkan_renderer {
 		result = create_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
-		// TODO: create vertex buffers?
-		
 		result = record_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
@@ -874,6 +876,8 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_descriptor_set_layout()
 	{
+		assert(device);
+
 		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 
 		uboLayoutBinding.binding            = 0;
@@ -884,11 +888,11 @@ namespace vulkan_renderer {
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = 1;
-		layoutInfo.pBindings = &uboLayoutBinding;
+		layoutInfo.pBindings    = &uboLayoutBinding;
 
-		VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout);
+		VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptor_set_layout);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -897,19 +901,21 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_descriptor_pool()
 	{
-		VkDescriptorPoolSize poolSize = {};
+		assert(device);
 
-		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSize.descriptorCount = number_of_images_in_swapchain;
+		VkDescriptorPoolSize pool_size = {};
 
-		VkDescriptorPoolCreateInfo poolInfo = {};
+		pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		pool_size.descriptorCount = number_of_images_in_swapchain;
 
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = 1;
-		poolInfo.pPoolSizes = &poolSize;
-		poolInfo.maxSets = number_of_images_in_swapchain;
+		VkDescriptorPoolCreateInfo pool_info = {};
 
-		VkResult result = vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool);
+		pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.poolSizeCount = 1;
+		pool_info.pPoolSizes    = &pool_size;
+		pool_info.maxSets       = number_of_images_in_swapchain;
+
+		VkResult result = vkCreateDescriptorPool(device, &pool_info, nullptr, &descriptor_pool);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -918,37 +924,42 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanInitialisation::create_descriptor_sets()
 	{
-        std::vector<VkDescriptorSetLayout> layouts(number_of_images_in_swapchain, descriptorSetLayout);
+		assert(device);
+		assert(number_of_images_in_swapchain>0);
+
+        std::vector<VkDescriptorSetLayout> layouts(number_of_images_in_swapchain, descriptor_set_layout);
         
-		VkDescriptorSetAllocateInfo allocInfo = {};
+		VkDescriptorSetAllocateInfo alloc_info = {};
 
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = descriptorPool;
-        allocInfo.descriptorSetCount = number_of_images_in_swapchain;
-        allocInfo.pSetLayouts = layouts.data();
+        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info.descriptorPool = descriptor_pool;
+        alloc_info.descriptorSetCount = number_of_images_in_swapchain;
+        alloc_info.pSetLayouts = layouts.data();
 
-		descriptorSets.clear();
-        descriptorSets.resize(number_of_images_in_swapchain);
+		descriptor_sets.clear();
+        descriptor_sets.resize(number_of_images_in_swapchain);
 
-		VkResult result = vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data());
+		VkResult result = vkAllocateDescriptorSets(device, &alloc_info, descriptor_sets.data());
 		vulkan_error_check(result);
 		
 
-        for(size_t i = 0; i < number_of_images_in_swapchain; i++)
+        for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
             VkDescriptorBufferInfo bufferInfo = {};
+
             bufferInfo.buffer = uniform_buffers[i].buffer;
             bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(UniformBufferObject);
+            bufferInfo.range  = sizeof(UniformBufferObject);
 
             VkWriteDescriptorSet descriptorWrite = {};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = descriptorSets[i];
-            descriptorWrite.dstBinding = 0;
+
+            descriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet          = descriptor_sets[i];
+            descriptorWrite.dstBinding      = 0;
             descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfo;
+            descriptorWrite.pBufferInfo     = &bufferInfo;
 
             vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
         }
@@ -959,6 +970,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::update_uniform_buffer(std::size_t current_image)
 	{
+		assert(vma_allocator);
+
         float time = InexorTimeStep::get_program_start_time_step();
 
         UniformBufferObject ubo = {};
@@ -999,6 +1012,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_pipeline()
 	{
+		assert(device);
+
 		cout << "Creating graphics pipeline." << endl;
 
 		shader_stages.clear();
@@ -1140,7 +1155,7 @@ namespace vulkan_renderer {
 		pipeline_layout_create_info.pNext                  = nullptr;
 		pipeline_layout_create_info.flags                  = 0;
 		pipeline_layout_create_info.setLayoutCount         = 1;
-		pipeline_layout_create_info.pSetLayouts            = &descriptorSetLayout;
+		pipeline_layout_create_info.pSetLayouts            = &descriptor_set_layout;
 		pipeline_layout_create_info.pushConstantRangeCount = 0;
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
@@ -1242,6 +1257,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_frame_buffers()
 	{
+		assert(device);
+		assert(number_of_images_in_swapchain>0);
+
 		cout << "Creating frame buffers." << endl;
 
 		// Preallocate memory for frame buffers.
@@ -1271,6 +1289,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_image_views()
 	{
+		assert(device);
+		assert(number_of_images_in_swapchain>0);
+
 		cout << "Creating image views." << endl;
 
 		// Preallocate memory for the image views.
@@ -1313,7 +1334,7 @@ namespace vulkan_renderer {
 		
 		cleanup_swapchain();
 
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
 
 		cout << "Destroying vertex buffers." << endl;
 		VulkanMeshBufferManager::shutdown_vertex_buffers();

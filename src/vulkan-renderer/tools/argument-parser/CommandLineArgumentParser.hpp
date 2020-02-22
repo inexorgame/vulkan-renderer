@@ -85,7 +85,10 @@ namespace tools {
 				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-renderdoc"},
 
 				// Disable Khronos validation layer.
-				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-novalidation"}
+				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-novalidation"},
+
+				// Do not use distinct data transfer queue, use graphics queue.
+				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_separate_data_queue"},
 
 				/// TODO: Add more command line argumetns here!
 			};

@@ -287,7 +287,18 @@ namespace vulkan_renderer {
 
 		// TODO: asserts in every function!
 
-		result = create_device_queues();
+		// Ignore distinct data transfer queue.
+		std::optional<bool> forbid_distinct_data_transfer_queue = is_command_line_argument_specified("-no_separate_data_queue");
+
+		if(forbid_distinct_data_transfer_queue.has_value())
+		{
+			if(forbid_distinct_data_transfer_queue.value())
+			{
+				use_distinct_data_transfer_queue = false;
+			}
+		}
+
+		result = create_device_queues(use_distinct_data_transfer_queue);
 		vulkan_error_check(result);
 		
 		result = create_physical_device(selected_graphics_card);
@@ -299,6 +310,14 @@ namespace vulkan_renderer {
 
 		result = initialise_queues();
 		vulkan_error_check(result);
+
+		if(!use_distinct_data_transfer_queue)
+		{
+			// In case -no_separate_data_queue is specified as command line argument,
+			// we will use the graphics queue for data transfer.
+			data_transfer_queue = graphics_queue;
+			data_transfer_queue_family_index = graphics_queue_family_index;
+		}
 
 		result = create_swapchain();
 		vulkan_error_check(result);
