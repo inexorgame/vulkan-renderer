@@ -75,7 +75,7 @@ namespace vulkan_renderer {
 			VmaAllocator vma_allocator;
 			
 			// TODO: Refactor!
-			InexorMeshBuffer example_vertex_buffer;
+			InexorMeshBuffer example_vertex_buffer, example_vertex_buffer2;
 
 			// The Vulkan instance handle.
 			VkInstance instance;

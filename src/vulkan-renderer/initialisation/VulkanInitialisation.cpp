@@ -477,9 +477,28 @@ namespace vulkan_renderer {
 			0, 1, 2, 2, 3, 0
 		};
 
-		VkResult result = create_vertex_buffer_with_index_buffer(vma_allocator, vertices, indices, example_vertex_buffer);
+
+		std::vector<InexorVertex> vertices2;
+
+		std::size_t number_of_vertices = std::rand() % 90 + 9;
+
+		vertices2.resize(number_of_vertices);
+
+		// Create <number_of_vertices> vertices.
+		for(std::size_t i=0; i<number_of_vertices; i++)
+		{
+			vertices2[i].color.r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			vertices2[i].color.g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			vertices2[i].color.b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+			vertices2[i].pos.x = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			vertices2[i].pos.y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			//vertices2[i].pos.z = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		}
+
+		//VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, example_vertex_buffer);
 		
-		//VkResult result = create_vertex_buffer(vma_allocator, vertices, example_vertex_buffer);
+		VkResult result = create_vertex_buffer(vertices2, example_vertex_buffer);
 		
 		return result;
 	}
@@ -525,6 +544,7 @@ namespace vulkan_renderer {
 			VkDeviceSize offsets[] = {0};
 
 			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &example_vertex_buffer.vertex_buffer.buffer, offsets);
+
 			
 			if(example_vertex_buffer.index_buffer_available)
 			{
@@ -1300,7 +1320,7 @@ namespace vulkan_renderer {
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
 		cout << "Destroying vertex buffers." << endl;
-		VulkanMeshBufferManager::shutdown_vertex_buffers(vma_allocator);
+		VulkanMeshBufferManager::shutdown_vertex_buffers();
 
 		// Destroy allocator of Vulkan Memory Allocator (VMA) library.
 		vmaDestroyAllocator(vma_allocator);

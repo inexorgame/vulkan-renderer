@@ -103,9 +103,9 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_vertex_buffer(const VmaAllocator& vma_allocator, const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer)
+	VkResult VulkanMeshBufferManager::create_vertex_buffer(const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer)
 	{
-		assert(vma_allocator);
+		assert(vma_allocator_handle);
 		assert(vertices.size() > 0);
 		assert(data_transfer_command_pool);
 
@@ -194,17 +194,17 @@ namespace vulkan_renderer {
 		list_of_meshes.push_back(mesh_buffer);
 
 		// Destroy staging vertex buffer and its memory!
-		vmaDestroyBuffer(vma_allocator, staging_vertex_buffer.buffer, staging_vertex_buffer.allocation);
+		vmaDestroyBuffer(vma_allocator_handle, staging_vertex_buffer.buffer, staging_vertex_buffer.allocation);
 
 		return result;
 	}
 
 	
-	VkResult VulkanMeshBufferManager::create_vertex_buffer_with_index_buffer(const VmaAllocator& vma_allocator, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorMeshBuffer& mesh_buffer)
+	VkResult VulkanMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorMeshBuffer& mesh_buffer)
 	{
-		assert(vma_allocator);
-		assert(vertices.size() > 0);
 		assert(indices.size() > 0);
+		assert(vertices.size() > 0);
+		assert(vma_allocator_handle);
 		assert(data_transfer_command_pool);
 
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
@@ -329,32 +329,33 @@ namespace vulkan_renderer {
 		list_of_meshes.push_back(mesh_buffer);
 
 		// Destroy staging vertex buffer and its memory!
-		vmaDestroyBuffer(vma_allocator, staging_vertex_buffer.buffer, staging_vertex_buffer.allocation);
+		vmaDestroyBuffer(vma_allocator_handle, staging_vertex_buffer.buffer, staging_vertex_buffer.allocation);
 		
 		// Destroy staging index buffer and its memory!
-		vmaDestroyBuffer(vma_allocator, staging_index_buffer.buffer, staging_index_buffer.allocation);
+		vmaDestroyBuffer(vma_allocator_handle, staging_index_buffer.buffer, staging_index_buffer.allocation);
 
 		return result;
 	}
 
 
-	void VulkanMeshBufferManager::shutdown_vertex_buffers(const VmaAllocator& vma_allocator)
+	void VulkanMeshBufferManager::shutdown_vertex_buffers()
 	{
+		assert(vma_allocator_handle);
+
 		// Loop through all vertex buffers and release their memoy.
 		for(const auto& mesh_buffer : list_of_meshes)
 		{
 			// Destroy vertex buffer.		
-			vmaDestroyBuffer(vma_allocator, mesh_buffer.vertex_buffer.buffer, mesh_buffer.vertex_buffer.allocation);
+			vmaDestroyBuffer(vma_allocator_handle, mesh_buffer.vertex_buffer.buffer, mesh_buffer.vertex_buffer.allocation);
 
 			// TODO: vmaFreeMemory ?
 			
 			// Destroy index buffer if existent.
 			if(mesh_buffer.index_buffer_available)
 			{
-				vmaDestroyBuffer(vma_allocator, mesh_buffer.index_buffer.buffer, mesh_buffer.index_buffer.allocation);
+				vmaDestroyBuffer(vma_allocator_handle, mesh_buffer.index_buffer.buffer, mesh_buffer.index_buffer.allocation);
 			}
 		}
-
 
 		cout << "Destroying command pool for vertex buffer manager." << endl;
 		
