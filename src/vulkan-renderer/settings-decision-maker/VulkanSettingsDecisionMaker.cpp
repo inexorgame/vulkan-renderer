@@ -1,4 +1,5 @@
 #include "VulkanSettingsDecisionMaker.hpp"
+
 using namespace std;
 
 
@@ -226,6 +227,51 @@ namespace vulkan_renderer {
 	}
 
 	
+	VkPhysicalDeviceType VulkanSettingsDecisionMaker::get_graphics_card_type(const VkPhysicalDevice& graphics_card)
+	{
+		// The properties of the graphics card.
+		VkPhysicalDeviceProperties graphics_card_properties;
+
+		// Get the information about that graphics card.
+		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
+
+		return graphics_card_properties.deviceType;
+	}
+
+	
+	std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevice& graphics_card)
+	{
+		assert(graphics_card);
+		
+		// The score of the graphics card.
+		std::size_t graphics_card_score = 0;
+
+		// For now, we will only score the memory of the graphics cards.
+		// Therefore we calculate the sum of all memory that is 
+
+		// Check memory properties of this graphics card.
+		VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
+
+		vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
+
+		// Loop through all memory heaps.
+		for(std::size_t i=0; i<graphics_card_memory_properties.memoryHeapCount; i++)
+		{
+			auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
+
+			if(propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+			{
+				// Use real GPU memory as score.
+				graphics_card_score += graphics_card_memory_properties.memoryHeaps[i].size/(1000*1000);
+			}
+		}
+
+		// TODO: Check for more features or limits.
+
+		return graphics_card_score;
+	}
+
+
 	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index)
 	{
 		assert(vulkan_instance);
@@ -255,22 +301,22 @@ namespace vulkan_renderer {
 
 
 
-		// ATTEMPT 1
-		// If there is only 1 graphics card available, we don't have a choice and must use that one.
-		// The preferred graphics card index which could have been specified by the user can either be this one or an invalid index!
+		/// ATTEMPT 1
+		/// If there is only 1 graphics card available, we don't have a choice and must use that one.
+		/// The preferred graphics card index which could have been specified by the user must be either this one or an invalid index!
 		if(1 == number_of_available_graphics_cards)
 		{
 			cout << "Because there is only 1 graphics card available, we don't have a choice and must use that one." << endl;
 			
 			// Did the user specify a preferred GPU by command line argument?
 			// If so, let's take a look at what he wanted us to use.
+			// This does not matter in any way in this case.
 			if(preferred_graphics_card_index.has_value())
 			{
 				// Since we only have one graphics card to choose from, index 0 is our only option.
 				if(0 != preferred_graphics_card_index.value())
 				{
-					// A little hint message just to be sure.
-					cout << "Ignoring command line argument -GPU " << preferred_graphics_card_index.value() << " because there is only one GPU to chose from." << endl;
+					cout << "Ignoring command line argument -gpu " << preferred_graphics_card_index.value() << " because there is only one GPU to chose from." << endl;
 				}
 				if(!(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index.value() < available_graphics_cards.size()))
 				{
@@ -281,7 +327,8 @@ namespace vulkan_renderer {
 
 			if(VulkanSettingsDecisionMaker::is_graphics_card_is_suitable(available_graphics_cards[0], surface))
 			{
-				cout << "The only graphics card available is suitable for the application's purpose!" << endl;
+				cout << "The only graphics card available is suitable for the application!" << endl;
+				cout << "Score: " << rate_graphics_card(available_graphics_cards[0]) << endl;
 				return available_graphics_cards[0];
 			}
 			else
@@ -294,22 +341,24 @@ namespace vulkan_renderer {
 
 
 
-		// ATTEMPT 2
-		// There is more than 1 graphics cards available, but the user specified which one should be preferred.
-		// It is important to note that the preferred graphics card can be unsuitable though! If that is the case,
-		// the automatic graphics card selection mechanism is responsible for finding a suitable graphics card.
-		// The user can also simply change the command line argument and try to prefer another graphics card.
+		/// ATTEMPT 2
+		/// There is more than 1 graphics cards available, but the user specified which one should be preferred.
+		/// It is important to note that the preferred graphics card can be unsuitable for the application's purposes though!
+		/// If that is the case, the automatic graphics card selection mechanism is responsible for finding a suitable graphics card.
+		/// The user can also simply change the command line argument and try to prefer another graphics card.
 		if(preferred_graphics_card_index.has_value())
 		{
 			// Check if this array index is valid!
 			if(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index < number_of_available_graphics_cards)
 			{
-				cout << "Command line parameter for desired GPU specified. Checking graphics card with index " << preferred_graphics_card_index.value() << "." << endl;
+				cout << "Command line parameter for prefered GPU specified. Checking graphics card with index " << preferred_graphics_card_index.value() << "." << endl;
 	
 				// Check if the graphics card selected by the user meets all the criteria we need!
 				if(VulkanSettingsDecisionMaker::is_graphics_card_is_suitable(available_graphics_cards[preferred_graphics_card_index.value()], surface))
 				{
 					// We are done: Use the graphics card which was specified by the user's command line argument.
+					cout << "The prefered graphics card is suitable for this application." << endl;
+					cout << "Score: " << rate_graphics_card(available_graphics_cards[preferred_graphics_card_index.value()]) << endl;
 					return available_graphics_cards[preferred_graphics_card_index.value()];
 				}
 				else
@@ -324,7 +373,7 @@ namespace vulkan_renderer {
 			else
 			{
 				// No, this array index for available_graphics_cards is invalid!
-				cout << "Error: invalid command line argument! Graphics card array index " << preferred_graphics_card_index.value() << " is invalid!" << endl;
+				cout << "Error: Invalid command line argument! Graphics card array index " << preferred_graphics_card_index.value() << " is invalid!" << endl;
 
 				// We are NOT done!
 				// Try to select the best graphics card automatically!
@@ -333,15 +382,15 @@ namespace vulkan_renderer {
 		else
 		{
 			// Give the user a little hint message.
-			cout << "No command line argument for preferred graphics card given." << endl;
+			cout << "Info: No command line argument for preferred graphics card given." << endl;
 			cout << "You have more than 1 graphics card available on your machine." << endl;
-			cout << "Specify which one to use by passing -GPU <number> as command line argument." << endl;
+			cout << "Specify which one to use by passing -gpu <number> as command line argument." << endl;
 			cout << "Please be aware that the first index is 0." << endl;
 		}
 
 
 
-		// Attempt 3
+		/// ATTEMPT 3
 		// There are more than 1 graphics card available and the user did not specify which one to use.
 		// If there are exactly 2 graphics card and one of them is VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU and the other one
 		// is VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, we should prefere the real graphics card over the integrated one.
@@ -350,22 +399,90 @@ namespace vulkan_renderer {
 		// If both are unsuitable, there are no suitable graphics cards available on this machine!
 		if(2 == number_of_available_graphics_cards)
 		{
+			bool integrated_graphics_card_exists = false;
+			bool discrete_graphics_card_exists = false;
+
+			// Both indices are available because number_of_available_graphics_cards is 2.
+			VkPhysicalDeviceType GPU_type_1 = get_graphics_card_type(available_graphics_cards[0]);
+			VkPhysicalDeviceType GPU_type_2 = get_graphics_card_type(available_graphics_cards[1]);
+
+			if(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == GPU_type_1 || VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == GPU_type_2)
+			{
+				discrete_graphics_card_exists = true;
+			}
 			
+			if(VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU == GPU_type_1 || VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU == GPU_type_2)
+			{
+				integrated_graphics_card_exists = true;
+			}
 
+			if(discrete_graphics_card_exists && integrated_graphics_card_exists)
+			{
+				// Try to prefer the discrete graphics card over the integrated one!
+				VkPhysicalDevice discrete_GPU;
+				VkPhysicalDevice integrated_GPU;
 
+				if(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == GPU_type_1)
+				{
+					discrete_GPU = available_graphics_cards[0];
+					integrated_GPU = available_graphics_cards[1];
+				}
+				else if(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == GPU_type_2)
+				{
+					// The other way around.
+					discrete_GPU = available_graphics_cards[1];
+					integrated_GPU = available_graphics_cards[0];
+				}
+
+				// Usually integrated GPUs which do not support Vulkan are not visible to Vulkan's
+				// graphics card enumeration. It could be the case that an integrated GPU supports
+				// Vulkan but is unsuitable for the application's purposes, since this decision is up to us.
+
+				// Ok, so try to prefer the discrete GPU over the integrated GPU.
+				if(is_graphics_card_is_suitable(discrete_GPU, surface))
+				{
+					cout << "You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application. The integrated GPU is not!" << endl;
+					cout << "Score: " << rate_graphics_card(discrete_GPU) << endl;
+					
+					return discrete_GPU;
+				}
+				// Ok, so the discrete GPU is unsuitable. What about the integrated GPU?
+				else if(is_graphics_card_is_suitable(integrated_GPU, surface))
+				{
+					cout << "You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The discrete GPU is not!" << endl;
+					cout << "Score: " << rate_graphics_card(integrated_GPU) << endl;
+
+					// This might be a very rare case though.
+					return integrated_GPU;
+				}
+				else
+				{
+					cout << "" << endl;
+
+					// Neither the integrated GPU nor the discrete GPU are suitable!
+					return std::nullopt;
+				}
+
+			}
+			else
+			{
+				cout << "Only discrete GPUs available, no integrated graphics." << endl;
+			}
 		}
 
 
 
-		// ATTEMPT 4
-		// - There is more than 1 graphics card available.
-		// - The user did not specify which one to prefer.
-		// - It's not like there are 2 GPUs, one of them a real graphics card and another one an integrated one.
-		// We now have to sort our all GPUs that do not support swapchain and presentation.
-		// After this we have to rank them by a score!
+		/// ATTEMPT 4
+		/// - There are more than 2 graphics cards available.
+		/// - Some of them might be suitable for the application.
+		/// - The user did no specify a command line argument to prefer a certain graphics card.
+		/// - It's not like there are 2 GPUs, one of them a real graphics card and another one an integrated one.
+		/// We now have to sort out all the GPU which are unsuitable for the application's purposes.
+		/// After this we have to rank them by a score!
 		
 		// The suitable graphics cards (by array index).
 		std::vector<std::size_t> suitable_graphics_cards;
+
 
 		// Loop through all available graphics cards and sort out the unsuitable ones.
 		for(std::size_t i=0; i<number_of_available_graphics_cards; i++)
@@ -379,7 +496,7 @@ namespace vulkan_renderer {
 			}
 			else
 			{
-				cout << "Sorting out graphics card index " << i << " because it is unsuitable for this application's purpose!" << endl;
+				cout << "Sorting out graphics card index " << i << " because it is unsuitable for this application's purposes!" << endl;
 			}
 		}
 		
@@ -388,7 +505,7 @@ namespace vulkan_renderer {
 
 		if(how_many_graphics_card_disqualified > 0)
 		{
-			cout << how_many_graphics_card_disqualified << " have been disqualified because they are unsuitable for the application's purpose!" << endl;
+			cout << how_many_graphics_card_disqualified << " have been disqualified because they are unsuitable for the application's purposes!" << endl;
 		}
 
 		// We could not find any suitable graphics card!
@@ -402,19 +519,49 @@ namespace vulkan_renderer {
 		if(1 == suitable_graphics_cards.size())
 		{
 			cout << "There is only 1 suitable graphics card available." << endl;
+			cout << "Score: " << rate_graphics_card(available_graphics_cards[0]) << endl;
 			return available_graphics_cards[0];
 		}
 
 		// We have more than one suitable graphics card.
-		// There is at least one graphics card that is suitable at least.
+		// There is at least one graphics card that is suitable.
 
-		// ----------------------------------------
-		// TODO: Implement score ranking mechanism!
-		// ----------------------------------------
 
-		// For now, let's just use the first index of the suitable graphics cards.
-		// This might be not the best choice after all, but it simplifies the situation for now.
-		return available_graphics_cards[0];
+		// Use an ordered map to automatically rank graphics cards by score.
+		std::multimap<std::size_t, VkPhysicalDevice> graphics_cards_candidates;
+
+		for(const auto& candidate : available_graphics_cards)
+		{
+			std::size_t candidate_score = rate_graphics_card(candidate);
+
+			if(candidate_score > 0)
+			{
+				// Add it to the candidate map.
+				graphics_cards_candidates.insert(std::make_pair(candidate_score, candidate));
+			}
+			else
+			{
+				// This is extremely unlike but still we have to account for his.
+				cout << "A graphics card has been disqualified because it received a score of 0" << endl;
+			}
+		}
+
+		// The multimap already ensures that the entries are sorted by key,
+		// which is defined as the graphics card's score!
+
+		// Loop through the map using an interator and return the first graphics card which has a score greater than zero.
+		// It should be extremy unlikely that a graphics card gets a score of zero after all!
+		for(std::multimap<std::size_t, VkPhysicalDevice>::const_iterator candidate_iterator = graphics_cards_candidates.begin(); candidate_iterator != graphics_cards_candidates.end(); candidate_iterator++)
+		{
+			cout << "Score: " << candidate_iterator->first << endl;
+
+			// We can be sure that the candidate's score is greater than 0 because of the aforementioned code block.
+			return candidate_iterator->second;
+		}
+
+		// In this case, all available graphics cards are suitable for the application's purposes
+		// but scored 0 points in the graphics card score. This is extremely unlikely!
+		return std::nullopt;
 	}
 
 	

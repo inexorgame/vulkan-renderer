@@ -44,6 +44,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+		
 		// The number of available queue families.
 		uint32_t number_of_queue_families = 0;
 
@@ -176,6 +178,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		uint32_t number_of_device_layers = 0;
 
 		// First check how many device layers are available.
@@ -220,6 +224,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		uint32_t number_of_device_extensions = 0;
 		
 		// First check how many device extensions are available.
@@ -260,6 +266,9 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
 	{
+		assert(graphics_card);
+		assert(vulkan_surface);
+
 		cout << "Printing surface capabilities" << endl;
 		
 		VkSurfaceCapabilitiesKHR surface_capabilities;
@@ -286,6 +295,9 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
 	{
+		assert(graphics_card);
+		assert(vulkan_surface);
+
 		uint32_t number_of_supported_formats = 0;
 		
 		// First check how many formats are supported.
@@ -330,6 +342,9 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& vulkan_surface)
 	{
+		assert(graphics_card);
+		assert(vulkan_surface);
+
 		uint32_t number_of_present_modes = 0;
 		
 		// First check how many presentation modes are available.
@@ -384,6 +399,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		// The properties of the graphics card.
 		VkPhysicalDeviceProperties graphics_card_properties;
 
@@ -441,6 +458,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_graphics_card_memory_properties(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
 		cout << "Graphics card's memory properties:" << endl;
 		cout << "------------------------------------------------------------------------------------------------------------" << endl;
@@ -492,6 +511,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_graphics_card_features(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		VkPhysicalDeviceFeatures graphics_card_features;
 
 		// Check which features are supported by this graphics card.
@@ -566,6 +587,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_graphics_cards_sparse_properties(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		VkPhysicalDeviceProperties graphics_card_properties;
 
 		// Get the information about that graphics card.
@@ -589,6 +612,8 @@ namespace vulkan_renderer {
 	
 	void VulkanGraphicsCardInfoViewer::print_graphics_card_limits(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		VkPhysicalDeviceProperties graphics_card_properties;
 
 		// Get the information about that graphics card.
@@ -722,6 +747,9 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance& vulkan_instance, const VkSurfaceKHR& vulkan_surface)
 	{
+		assert(vulkan_instance);
+		assert(vulkan_surface);
+
 		uint32_t number_of_graphics_cards = 0;
 
 		VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, nullptr);

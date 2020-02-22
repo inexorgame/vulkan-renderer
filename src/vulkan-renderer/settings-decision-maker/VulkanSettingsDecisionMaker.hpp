@@ -2,6 +2,7 @@
 
 #include "../error-handling/VulkanErrorHandling.hpp"
 
+#include <map>
 #include <vector>
 #include <iostream>
 #include <algorithm>
@@ -31,10 +32,18 @@ namespace vulkan_renderer {
 			~VulkanSettingsDecisionMaker();
 
 
+		private:
+
+			/// @brief Rates a graphcs card by its features.
+			/// @param graphics_card The graphics card.
+			/// @return A score which is greater or equal to 0.
+			std::size_t rate_graphics_card(const VkPhysicalDevice& graphics_card);
+
+
 		protected:
 
 			
-			/// @brief Automatically decides if a graphics cardis suitable for this application's purpose!
+			/// @brief Automatically decides if a graphics card is suitable for this application's purposes.
 			/// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
 			/// - It must support a swapchain.
 			/// - It must support presentation.
@@ -47,14 +56,16 @@ namespace vulkan_renderer {
 			/// because this would deny some players to run Inexor on their machines!
 			VkBool32 is_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
 
+			
+			/// @brief Gets the VkPhysicalDeviceType of a graphics card.
+			/// @param graphics_card The graphics card.
+			/// @return The graphics_card of the graphics card.
+			VkPhysicalDeviceType get_graphics_card_type(const VkPhysicalDevice& graphics_card);
 
-			/// @brief Automatically selects the best graphics card in case multiple are available.
+
+			/// @brief Automatically selects the best graphics card considering all available ones.
 			/// @note If there is only one graphics card available, we can't choose and must use it obviously.
-			/// @note The user can manually specify which graphics card will be used by passing a command line argument.
-			/// @note A graphics card is only suitable if it supports the following list of features:
-			/// - One queue family that supports both graphics and present or 2 queue families for graphics and present.
-			/// - Present mode VK_PRESENT_MODE_MAILBOX_KHR or VK_PRESENT_MODE_FIFO_KHR.
-			/// - Support of double buffering, even better triple buffering.
+			/// @note The user can manually specify which graphics card will be used by passing the command line argument -gpu <index>.
 			/// @param vulkan_instance A pointer to the Vulkan instance handle.
 			/// @param preferred_graphics_card_index The preferred graphics card (by array index).
 			/// @return The physical device which was chosen to be the best one.
