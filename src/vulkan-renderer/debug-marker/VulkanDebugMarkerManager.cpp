@@ -5,17 +5,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VulkanDebugMarkerManager::VulkanDebugMarkerManager()
-	{
-	}
-
-	
-	VulkanDebugMarkerManager::~VulkanDebugMarkerManager()
-	{
-	}
-	
-
-	VkResult VulkanDebugMarkerManager::initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card)
+	VulkanDebugMarkerManager::VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card)
 	{
 		// Check if the debug marker extension is present (which is the case if run from a graphics debugger)
 		uint32_t extensionCount;
@@ -30,6 +20,7 @@ namespace vulkan_renderer {
 			if(0 == strcmp(extension.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
 				active = true;
+				extension_present = true;
 				break;
 			}
 		}
@@ -38,33 +29,39 @@ namespace vulkan_renderer {
 		{
 			// The debug marker extension is not part of the core, so function pointers need to be loaded manually
 			vkDebugMarkerSetObjectTag = (PFN_vkDebugMarkerSetObjectTagEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT");
+			assert(vkDebugMarkerSetObjectTag);
 
 			vkDebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT");
+			assert(vkDebugMarkerSetObjectName);
 					
 			vkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT");
+			assert(vkCmdDebugMarkerBegin);
 					
 			vkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT");
+			assert(vkCmdDebugMarkerEnd);
 					
 			vkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT");
+			assert(vkCmdDebugMarkerInsert);
 
 			// Set flag if at least one function pointer is present
-			active = (vkDebugMarkerSetObjectName != VK_NULL_HANDLE);
-
-			return VK_SUCCESS;
+			active = true;
 		}
 		else
 		{
 			std::cout << "Warning: " << VK_EXT_DEBUG_MARKER_EXTENSION_NAME << " not present, debug markers are disabled.";
 			std::cout << "Try running from inside a Vulkan graphics debugger (e.g. RenderDoc)" << std::endl;
 		}
+	}
 
-		return VK_ERROR_INITIALIZATION_FAILED;
+	
+	VulkanDebugMarkerManager::~VulkanDebugMarkerManager()
+	{
 	}
 
 
 	void VulkanDebugMarkerManager::set_object_name(const VkDevice& device, const uint64_t& object, const VkDebugReportObjectTypeEXT& object_type, const char *name)
 	{
-		assert(extension_present);
+		assert(device);
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
 		if(active)
@@ -83,7 +80,7 @@ namespace vulkan_renderer {
 
 	void VulkanDebugMarkerManager::set_object_tag(const VkDevice& device, const uint64_t& object, const VkDebugReportObjectTypeEXT& object_type, const uint64_t& name, const std::size_t& tag_size, const void* tag)
 	{
-		assert(extension_present);
+		assert(device);
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
 		if (active)
@@ -102,27 +99,28 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer& cmdbuffer, const std::string& debug_marker_name, const glm::vec4& color)
+	void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& color)
 	{
-		assert(extension_present);
+		assert(command_buffer);
+		assert(debug_marker_name.length()>0);
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
-		if (active)
+		if(active)
 		{
 			VkDebugMarkerMarkerInfoEXT markerInfo = {};
 
 			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
 			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
-
 			markerInfo.pMarkerName = debug_marker_name.c_str();
-			vkCmdDebugMarkerBegin(cmdbuffer, &markerInfo);
+
+			vkCmdDebugMarkerBegin(command_buffer, &markerInfo);
 		}
 	}
 
 
 	void VulkanDebugMarkerManager::insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, glm::vec4 debug_marker_color)
 	{
-		assert(extension_present);
+		assert(command_buffer);
 		assert(debug_marker_name.length()>0);
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
@@ -141,8 +139,6 @@ namespace vulkan_renderer {
 
 	void VulkanDebugMarkerManager::end_region(const VkCommandBuffer& command_buffer)
 	{
-		assert(extension_present);
-
 		// Check for valid function (may not be present if not runnin in a debugging application)
 		if(vkCmdDebugMarkerEnd)
 		{

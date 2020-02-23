@@ -289,8 +289,6 @@ namespace vulkan_renderer {
 			print_all_physical_devices(instance, surface);
 		}
 
-		// TODO: asserts in every function!
-
 		// Ignore distinct data transfer queue.
 		std::optional<bool> forbid_distinct_data_transfer_queue = is_command_line_argument_specified("-no_separate_data_queue");
 
@@ -307,6 +305,14 @@ namespace vulkan_renderer {
 		
 		result = create_physical_device(selected_graphics_card);
 		vulkan_error_check(result);
+
+		// Initialise Vulkan debug markers.
+		// Those debug markes will be very useful when debugging with RenderDoc!
+		result = initialise_debug_marker_manager();
+		vulkan_error_check(result);
+
+		// Initialise shader manager.
+		VulkanShaderManager::initialise(debug_marker_manager);
 
 		// Initialise Vulkan Memory Allocator.
 		result = create_vma_allocator();
@@ -342,7 +348,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		// Create a second command pool for data transfer commands.
-		VulkanMeshBufferManager::initialise(device, vma_allocator, data_transfer_queue_family_index.value(), data_transfer_queue);
+		VulkanMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, data_transfer_queue_family_index.value(), data_transfer_queue);
 		
 		result = create_command_pool();
 		vulkan_error_check(result);

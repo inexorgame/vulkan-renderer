@@ -74,7 +74,7 @@ namespace vulkan_renderer {
 		std::vector<const char*> instance_extension_wishlist =
 		{
 			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-			VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+			VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
 			// TODO: Add more instance extensions here.
 		};
 
@@ -354,8 +354,11 @@ namespace vulkan_renderer {
 		const std::vector<const char*> device_extensions_wishlist =
 		{
 			// Since we actually want a window to draw on, we need this swapchain extension.
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
-			
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+
+			// Debug markers.
+			VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+
 			// Add more device extensions here if neccesary.
 		};
 
@@ -402,11 +405,20 @@ namespace vulkan_renderer {
 	}
 
 
+	VkResult VulkanInitialisation::initialise_debug_marker_manager()
+	{
+		// Create an instance of VulkanDebugMarkerManager.
+		debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>(device, selected_graphics_card);
+		return VK_SUCCESS;
+	}
+
+
 	VkResult VulkanInitialisation::create_command_pool()
 	{
 		assert(device);
 		assert(command_pool);
 		assert(graphics_queue_family_index.has_value());
+		assert(debug_marker_manager);
 
 		cout << "Creating command pool." << endl;
 
@@ -424,6 +436,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_command_buffers()
 	{
 		assert(device);
+		assert(debug_marker_manager);
 
 		cout << "Creating command buffers." << endl;
 
@@ -449,6 +462,7 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(vma_allocator);
 		assert(selected_graphics_card);
+		assert(debug_marker_manager);
 
 		VmaAllocatorCreateInfo allocatorInfo = {};
 
@@ -461,6 +475,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_vertex_buffers()
 	{
+		assert(debug_marker_manager);
+		
 		const std::vector<InexorVertex> vertices =
 		{
 			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -503,10 +519,14 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::record_command_buffers()
 	{
+		assert(debug_marker_manager);
+		
 		cout << "Recording command buffers." << endl;
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering", INEXOR_DEBUG_MARKER_GREEN);
+
 			VkCommandBufferBeginInfo command_buffer_begin_info = {};
 
 			command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -545,6 +565,8 @@ namespace vulkan_renderer {
 			
 			if(example_vertex_buffer.index_buffer_available)
 			{
+				debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
+				
 				// Use the index buffer as well!
 				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 				
@@ -552,13 +574,19 @@ namespace vulkan_renderer {
 
 				// Draw using index buffer + vertex buffer.
 				vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
+				
+				debug_marker_manager->end_region(command_buffers[i]);
 			}
 			else
 			{
+				debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
+
 				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
 
 				// Draw using vertex buffer only. No index buffer specified.
 				vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
+				
+				debug_marker_manager->end_region(command_buffers[i]);
 			}
 
 			vkCmdEndRenderPass(command_buffers[i]);
@@ -566,6 +594,8 @@ namespace vulkan_renderer {
 			// End recording of the command buffer.
 			result = vkEndCommandBuffer(command_buffers[i]);
 			if(VK_SUCCESS != result) return result;
+			
+			debug_marker_manager->end_region(command_buffers[i]);
 		}
 
 		return VK_SUCCESS;
@@ -575,6 +605,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_synchronisation_objects()
 	{
 		assert(number_of_images_in_swapchain>0);
+		assert(debug_marker_manager);
 
 		cout << "Creating semaphores and fences." << endl;
 		
@@ -606,6 +637,7 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(surface);
 		assert(selected_graphics_card);
+		assert(debug_marker_manager);
 
 		cout << "Creating swap chain." << endl;
 
@@ -878,6 +910,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_descriptor_set_layout()
 	{
 		assert(device);
+		assert(debug_marker_manager);
 
 		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 
@@ -903,6 +936,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_descriptor_pool()
 	{
 		assert(device);
+		assert(debug_marker_manager);
 
 		VkDescriptorPoolSize pool_size = {};
 
@@ -927,6 +961,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
+		assert(debug_marker_manager);
 
         std::vector<VkDescriptorSetLayout> layouts(number_of_images_in_swapchain, descriptor_set_layout);
         
@@ -972,6 +1007,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::update_uniform_buffer(std::size_t current_image)
 	{
 		assert(vma_allocator);
+		assert(debug_marker_manager);
 
         float time = InexorTimeStep::get_program_start_time_step();
 
@@ -995,6 +1031,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_uniform_buffers()
 	{
+		assert(device);
+		assert(debug_marker_manager);
+		
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 		uniform_buffers.clear();
@@ -1014,6 +1053,7 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_pipeline()
 	{
 		assert(device);
+		assert(debug_marker_manager);
 
 		cout << "Creating graphics pipeline." << endl;
 
@@ -1260,6 +1300,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
+		assert(debug_marker_manager);
 
 		cout << "Creating frame buffers." << endl;
 
@@ -1292,6 +1333,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
+		assert(debug_marker_manager);
 
 		cout << "Creating image views." << endl;
 

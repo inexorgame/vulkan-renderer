@@ -10,6 +10,7 @@
 
 #include "../vertex-structure/InexorVertex.hpp"
 #include "../vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "../debug-marker/VulkanDebugMarkerManager.hpp"
 
 #include <vector>
 
@@ -25,6 +26,10 @@ namespace vulkan_renderer {
 	class VulkanMeshBufferManager
 	{
 		private:
+
+			
+			// The debug marker manager.
+			std::shared_ptr<VulkanDebugMarkerManager> dbg_marker_manager;
 
 			// The mesh buffers.
 			// TODO: Should we just use pointers for this?
@@ -76,7 +81,7 @@ namespace vulkan_renderer {
 			/// @param data_transfer_queue_index The queue family index which is used for data transfer.
 			/// This is neccesary since we need to allocate a new command pool for the staging buffer!
 			/// @param data_transfer_queue The VkQueue which is used for data transfer from CPU to GPU.
-			VkResult initialise(const VkDevice& device, const VmaAllocator& allocator, const uint32_t& data_transfer_queue_index, const VkQueue& data_transfer_queue);
+			VkResult initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance, const VmaAllocator& allocator, const uint32_t& data_transfer_queue_index, const VkQueue& data_transfer_queue);
 
 			
 			/// @brief Creates a new vertex buffer.

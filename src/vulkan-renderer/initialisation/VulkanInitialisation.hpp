@@ -23,8 +23,9 @@
 #include "../vertex-structure/InexorVertex.hpp"
 #include "../vertex-buffer-manager/VulkanMeshBufferManager.hpp"
 #include "../ubo-manager/VulkanUniformBufferManager.hpp"
-#include "../time-step/InexorTimeStep.hpp"
+#include "../debug-marker/VulkanDebugMarkerManager.hpp"
 
+#include "../time-step/InexorTimeStep.hpp"
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
@@ -77,6 +78,9 @@ namespace vulkan_renderer {
 			// Vulkan Memory Allocator
 			// TODO: Text here!
 			VmaAllocator vma_allocator;
+			
+			// The debug marker manager instance.
+			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
 			
 			// TODO: Refactor!
 			InexorMeshBuffer example_vertex_buffer, example_vertex_buffer2;
@@ -217,6 +221,10 @@ namespace vulkan_renderer {
 			/// @brief Create a physical device handle.
 			/// @param graphics_card The regarded graphics card.
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
+
+			
+			/// @brief Creates an instance of VulkanDebugMarkerManager
+			VkResult initialise_debug_marker_manager();
 
 
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.

@@ -3,6 +3,8 @@
 
 #include "../error-handling/VulkanErrorHandling.hpp"
 #include "../shader-manager/InexorVulkanShader.hpp"
+#include "../debug-marker/VulkanDebugMarkerManager.hpp"
+
 
 #include <vector>
 #include <string>
@@ -25,6 +27,10 @@ namespace vulkan_renderer {
 
 		
 		private:
+			
+
+			// The debug marker manager.
+			std::shared_ptr<VulkanDebugMarkerManager> dbg_marker_manager;
 
 
 			/// The shaders which have been loaded into memory.
@@ -44,6 +50,10 @@ namespace vulkan_renderer {
 
 
 		protected:
+
+
+			/// @param debug_marker_manager_instance The VulkanDebugMarkerManager instance.
+			void initialise(const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance);
 
 
 			/// @brief Destroy all shader objects.

@@ -18,15 +18,17 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanMeshBufferManager::initialise(const VkDevice& device, const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
+	VkResult VulkanMeshBufferManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance,  const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
 	{
 		assert(device);
 		assert(vma_allocator);
 		assert(data_transfer_queue);
+		assert(debug_marker_manager_instance);
 
 		vulkan_device = device;
 		vma_allocator_handle = vma_allocator;
 		vulkan_data_transfer_queue = data_transfer_queue;
+		dbg_marker_manager = debug_marker_manager_instance;
 
 		cout << "Creating command pool for vertex buffer manager." << endl;
 
@@ -43,7 +45,6 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &data_transfer_command_pool);
 		vulkan_error_check(result);
 
-
 		cout << "Creating command pool for vertex buffer manager." << endl;
 		
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
@@ -56,26 +57,29 @@ namespace vulkan_renderer {
 		// Allocate a command buffer for data transfer commands.
 		result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &data_transfer_command_buffer);
 		vulkan_error_check(result);
+		
+		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command buffer for mesh data transfer.");
 
 		return result;
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
+	VkResult VulkanMeshBufferManager::create_buffer(InexorBuffer& buffer_object, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
 	{
 		assert(vma_allocator_handle);
+		assert(dbg_marker_manager);
 
-		buffer.create_info.sType            = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer.create_info.size             = buffer.size;
-		buffer.create_info.usage            = buffer_usage;
-		buffer.create_info.sharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+		buffer_object.create_info.sType            = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		buffer_object.create_info.size             = buffer_object.size;
+		buffer_object.create_info.usage            = buffer_usage;
+		buffer_object.create_info.sharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 
-		buffer.allocation_create_info.usage = memory_usage;
-		buffer.allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		buffer_object.allocation_create_info.usage = memory_usage;
+		buffer_object.allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-		VkResult result = vmaCreateBuffer(vma_allocator_handle, &buffer.create_info, &buffer.allocation_create_info, &buffer.buffer, &buffer.allocation, &buffer.allocation_info);
+		VkResult result = vmaCreateBuffer(vma_allocator_handle, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
 		vulkan_error_check(result);
-		
+
 		return result;
 	}
 
@@ -83,6 +87,9 @@ namespace vulkan_renderer {
 	VkResult VulkanMeshBufferManager::upload_data_to_gpu()
 	{
 		assert(vulkan_data_transfer_queue);
+		assert(dbg_marker_manager);
+
+		// TODO: Add debug markers?
 
 		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
@@ -110,6 +117,7 @@ namespace vulkan_renderer {
 		assert(vertices.size() > 0);
 		assert(vma_allocator_handle);
 		assert(data_transfer_command_pool);
+		assert(dbg_marker_manager);
 
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
 		// It is highly advised to use a staging buffer which will be filled with the vertex data.
@@ -128,6 +136,9 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return result;
 		}
+		
+		// TODO: Take a name as parameter!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Staging vertex buffer for?..");
 
 		// Copy the vertex data to the staging vertex bufer.
 		std::memcpy(staging_vertex_buffer.allocation_info.pMappedData, vertices.data(), vertex_buffer_size);
@@ -142,6 +153,9 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return result;
 		}
+
+		// TODO: Take a name as parameter!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Vertex buffer for?..");
 
 
 		VkBufferCopy vertex_buffer_copy_region = {};
@@ -209,6 +223,7 @@ namespace vulkan_renderer {
 		assert(vma_allocator_handle);
 		assert(data_transfer_command_pool);
 		assert(data_transfer_command_buffer);
+		assert(dbg_marker_manager);
 
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
 		// It is highly advised to use a staging buffer which will be filled with the vertex data.
@@ -230,6 +245,9 @@ namespace vulkan_renderer {
 			return result;
 		}
 
+		// TODO: Take a name as parameter!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Staging vertex buffer for?..");
+
 		// Copy the vertex data to the staging vertex bufer.
 		std::memcpy(staging_vertex_buffer.allocation_info.pMappedData, vertices.data(), vertex_buffer_size);
 
@@ -245,6 +263,8 @@ namespace vulkan_renderer {
 			return result;
 		}
 
+		// TODO: Take a name as parameter!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Staging index buffer for?..");
 
 		// Copy the index data to the staging index buffer.
 		std::memcpy(staging_index_buffer.allocation_info.pMappedData, indices.data(), index_buffer_size);
@@ -258,6 +278,9 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return result;
 		}
+		
+		// TODO: Take a name as parameter!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Vertex buffer for?..");
 
 		InexorBuffer index_buffer(index_buffer_size);
 		
@@ -267,6 +290,9 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return result;
 		}
+		
+		// TODO: Take a name as parameter!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Index buffer for?..");
 
 		VkBufferCopy vertex_buffer_copy_region = {};
 

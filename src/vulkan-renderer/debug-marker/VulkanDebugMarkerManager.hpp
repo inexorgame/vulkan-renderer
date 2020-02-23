@@ -13,6 +13,16 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
+	// Predefined color markers.
+	// These colors will be visible in RenderDoc.
+	#define INEXOR_DEBUG_MARKER_BLUE   glm::vec4(0.0f, 148/255, 1.0f, 1.0f)
+	#define INEXOR_DEBUG_MARKER_RED    glm::vec4(1.0f, 0.0f, 21/255, 1.0f)
+	#define INEXOR_DEBUG_MARKER_YELLOW glm::vec4(1.0f, 1.0f, 0.0f, 1.0f)
+	#define INEXOR_DEBUG_MARKER_PURPLE glm::vec4(1.0f, 0.0f, 180/255, 1.0f)
+	#define INEXOR_DEBUG_MARKER_GREEN  glm::vec4(40/255, 210/255, 0.0f, 1.0f)
+	#define INEXOR_DEBUG_MARKER_ORANGE glm::vec4(1.0f, 100/255, 0.0f, 1.0f)
+
+
 	/// @class VulkanDebugMarkerManager
 	/// @brief A manager class for Vulkan debug markers.
 	/// Debug markers are very useful because they allow the single steps of the renderer
@@ -37,17 +47,13 @@ namespace vulkan_renderer {
 
 		public:
 
-			VulkanDebugMarkerManager();
-			
-			~VulkanDebugMarkerManager();
-
-		protected:
-
-
 			/// @brief Initialises Vulkan debug marker manager.
 			/// @param device The Vulkan device.
 			/// @param graphics_card The graphics card.
-			VkResult initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card);
+			VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card);
+			
+			
+			~VulkanDebugMarkerManager();
 
 			
 			// Sets the debug name of an object

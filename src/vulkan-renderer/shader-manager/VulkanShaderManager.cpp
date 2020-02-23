@@ -15,11 +15,19 @@ namespace vulkan_renderer {
 	{
 	}
 
+	
+	void VulkanShaderManager::initialise(const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance)
+	{
+		assert(debug_marker_manager_instance);
+		dbg_marker_manager = debug_marker_manager_instance;
+	}
 
+	
 	VkResult VulkanShaderManager::create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
 	{
 		assert(vulkan_device);
 		assert(SPIRV_shader_bytes.size()>0);
+		assert(dbg_marker_manager);
 		
 		VkShaderModuleCreateInfo shader_create_info = {};
 	
@@ -41,6 +49,7 @@ namespace vulkan_renderer {
 		assert(vulkan_device);
 		assert(shader_name.length()>0);
 		assert(SPIRV_shader_bytes.size()>0);
+		assert(dbg_marker_manager);
 		
 		InexorVulkanShader new_shader;
 
@@ -71,6 +80,7 @@ namespace vulkan_renderer {
 	{
 		assert(vulkan_device);
 		assert(SPIRV_shader_file_name.length()>0);
+		assert(dbg_marker_manager);
 
 		InexorVulkanShader new_fragment_shader;
 
@@ -93,6 +103,9 @@ namespace vulkan_renderer {
 			return result;
 		}
 
+		// Add a debug marker!
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "vertexbuffer_test");
+
 		// Store the generated shader in memory.
 		new_fragment_shader.set_shader_module(new_shader_module);
 
@@ -106,6 +119,7 @@ namespace vulkan_renderer {
 	void VulkanShaderManager::shutdown_shaders(const VkDevice& vulkan_device)
 	{
 		assert(vulkan_device);
+		assert(dbg_marker_manager);
 
 		for(std::size_t i=0; i<shaders.size(); i++)
 		{
