@@ -70,6 +70,10 @@ namespace vulkan_renderer {
 	// TODO: Refactor rendering!
 	VkResult InexorRenderer::draw_frame()
 	{
+		assert(device);
+		assert(graphics_queue);
+		assert(present_queue);
+
 		vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
 
 		uint32_t image_index = 0;

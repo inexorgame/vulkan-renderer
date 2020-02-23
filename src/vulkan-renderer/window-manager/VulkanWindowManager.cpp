@@ -44,6 +44,8 @@ namespace vulkan_renderer {
 
 	void VulkanWindowManager::destroy_window()
 	{
+		assert(window);
+
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}

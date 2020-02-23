@@ -16,7 +16,7 @@ namespace vulkan_renderer {
 	}
 	
 
-	bool VulkanSynchronisationManager::does_semaphore_exist(const std::string&semaphore_name) const
+	bool VulkanSynchronisationManager::does_semaphore_exist(const std::string& semaphore_name) const
 	{
 		std::unordered_map<std::string, VkSemaphore>::const_iterator semaphore_lookup = semaphores.find(semaphore_name);
 		return semaphore_lookup != semaphores.end();
@@ -25,6 +25,9 @@ namespace vulkan_renderer {
 
 	const std::optional<VkSemaphore> VulkanSynchronisationManager::create_semaphore(const VkDevice& vulkan_device, const std::string& semaphore_name)
 	{
+		assert(vulkan_device);
+		assert(semaphore_name.length()>0);
+
 		// First check if a Vulkan semaphore with this name already exists!
 		if(does_semaphore_exist(semaphore_name))
 		{
@@ -64,6 +67,8 @@ namespace vulkan_renderer {
 
 	const std::optional<VkSemaphore> VulkanSynchronisationManager::get_semaphore(const std::string& semaphore_name) const
 	{
+		assert(semaphore_name.length()>0);
+
 		if(!does_semaphore_exist(semaphore_name))
 		{
 			std::string error_message = "Error: Vulkan semaphore with the name " + semaphore_name + " does not exists!";
@@ -78,6 +83,8 @@ namespace vulkan_renderer {
 
 	void VulkanSynchronisationManager::shutdown_semaphores(const VkDevice& vulkan_device)
 	{
+		assert(vulkan_device);
+
         // Use lock guard to ensure thread safety during write operations!
         std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
 
@@ -111,6 +118,8 @@ namespace vulkan_renderer {
 
 	const std::optional<VkFence> VulkanSynchronisationManager::create_fence(const VkDevice& vulkan_device, const std::string& fence_name, bool create_as_signaled)
 	{
+		assert(vulkan_device);
+
 		// First check if a Vulkan fence with this name already exists!
 		if(does_fence_exist(fence_name))
 		{
@@ -166,6 +175,8 @@ namespace vulkan_renderer {
 			
 	void VulkanSynchronisationManager::shutdown_fences(const VkDevice& vulkan_device)
 	{
+		assert(vulkan_device);
+
         // Use lock guard to ensure thread safety during write operations!
         std::lock_guard<std::mutex> lock(vulkan_synchronisation_manager_mutex);
 

@@ -18,12 +18,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanShaderManager::create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
 	{
-		if(0 == SPIRV_shader_bytes.size())
-		{
-			std::string error_message = "Error: SPIR-V shader buffer is empty!";
-			display_error_message(error_message);
-			return VK_ERROR_INITIALIZATION_FAILED;
-		}
+		assert(vulkan_device);
+		assert(SPIRV_shader_bytes.size()>0);
 		
 		VkShaderModuleCreateInfo shader_create_info = {};
 	
@@ -40,14 +36,11 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanShaderManager::create_shader_from_byte_buffer(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::vector<char>& shader_SPIRV_bytes, const std::string& shader_name, const std::string& shader_entry_point)
+	VkResult VulkanShaderManager::create_shader_from_byte_buffer(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::vector<char>& SPIRV_shader_bytes, const std::string& shader_name, const std::string& shader_entry_point)
 	{
-		if(0 == shader_SPIRV_bytes.size())
-		{
-			std::string error_message = "Error: SPIR-V shader buffer is empty!";
-			display_error_message(error_message);
-			return VK_ERROR_INITIALIZATION_FAILED;
-		}
+		assert(vulkan_device);
+		assert(shader_name.length()>0);
+		assert(SPIRV_shader_bytes.size()>0);
 		
 		InexorVulkanShader new_shader;
 
@@ -57,7 +50,7 @@ namespace vulkan_renderer {
 
 		// Create the shader module from the SPIR-V byte buffer.
 		VkShaderModule shader_module;
-		VkResult result = create_shader_module(vulkan_device, shader_SPIRV_bytes, &shader_module);
+		VkResult result = create_shader_module(vulkan_device, SPIRV_shader_bytes, &shader_module);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -76,6 +69,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanShaderManager::create_shader_from_file(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::string& SPIRV_shader_file_name, const std::string& shader_name, const std::string& shader_entry_point)
 	{
+		assert(vulkan_device);
+		assert(SPIRV_shader_file_name.length()>0);
+
 		InexorVulkanShader new_fragment_shader;
 
 		// Load the fragment shader into memory.
@@ -109,6 +105,8 @@ namespace vulkan_renderer {
 
 	void VulkanShaderManager::shutdown_shaders(const VkDevice& vulkan_device)
 	{
+		assert(vulkan_device);
+
 		for(std::size_t i=0; i<shaders.size(); i++)
 		{
 			//cout << "Destroying shader module " << shaders[i].get_shader_name().c_str() << endl;

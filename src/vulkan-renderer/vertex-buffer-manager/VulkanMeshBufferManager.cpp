@@ -82,6 +82,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanMeshBufferManager::upload_data_to_gpu()
 	{
+		assert(vulkan_data_transfer_queue);
+
 		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
 		submit_info.commandBufferCount = 1;
@@ -105,8 +107,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanMeshBufferManager::create_vertex_buffer(const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer)
 	{
-		assert(vma_allocator_handle);
 		assert(vertices.size() > 0);
+		assert(vma_allocator_handle);
 		assert(data_transfer_command_pool);
 
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
@@ -206,6 +208,7 @@ namespace vulkan_renderer {
 		assert(vertices.size() > 0);
 		assert(vma_allocator_handle);
 		assert(data_transfer_command_pool);
+		assert(data_transfer_command_buffer);
 
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
 		// It is highly advised to use a staging buffer which will be filled with the vertex data.
@@ -340,7 +343,9 @@ namespace vulkan_renderer {
 
 	void VulkanMeshBufferManager::shutdown_vertex_buffers()
 	{
+		assert(vulkan_device);
 		assert(vma_allocator_handle);
+		assert(data_transfer_command_pool);
 
 		// Loop through all vertex buffers and release their memoy.
 		for(const auto& mesh_buffer : list_of_meshes)

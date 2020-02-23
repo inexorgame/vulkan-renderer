@@ -229,6 +229,8 @@ namespace vulkan_renderer {
 	
 	VkPhysicalDeviceType VulkanSettingsDecisionMaker::get_graphics_card_type(const VkPhysicalDevice& graphics_card)
 	{
+		assert(graphics_card);
+
 		// The properties of the graphics card.
 		VkPhysicalDeviceProperties graphics_card_properties;
 

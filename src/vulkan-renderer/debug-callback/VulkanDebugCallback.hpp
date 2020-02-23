@@ -21,6 +21,7 @@ namespace vulkan_renderer {
 																	 const char* pMessage,
 																	 void* pUserData) 
 	{
+		// TODO: Embedd spdlog.
 		cout << pMessage << endl;
 		return VK_FALSE;
 	}

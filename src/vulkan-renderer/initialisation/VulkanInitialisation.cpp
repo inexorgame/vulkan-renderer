@@ -26,6 +26,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer)
 	{
+		assert(application_name.length()>0);
+		assert(engine_name.length()>0);
+
 		// Get the major, minor and patch version of the application.
 		uint32_t app_major = VK_VERSION_MAJOR(application_version);
 		uint32_t app_minor = VK_VERSION_MINOR(application_version);
@@ -180,9 +183,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_window_surface(const VkInstance& instance, GLFWwindow* window, VkSurfaceKHR& surface)
 	{
-		assert(instance);
 		assert(window);
 		assert(surface);
+		assert(instance);
 
 		// Create a window surface using GLFW library.
 		return glfwCreateWindowSurface(instance, window, nullptr, &surface);
@@ -212,8 +215,6 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_device_queues(bool use_distinct_data_transfer_queue_if_available)
 	{
-		// TODO: Refactor this code part!
-
 		cout << "Creating device queues." << endl;
 
 		// This is neccesary since device queues might be recreated as swapchain becomes invalid.

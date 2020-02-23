@@ -747,8 +747,8 @@ namespace vulkan_renderer {
 
 	void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance& vulkan_instance, const VkSurfaceKHR& vulkan_surface)
 	{
-		assert(vulkan_instance);
 		assert(vulkan_surface);
+		assert(vulkan_instance);
 
 		uint32_t number_of_graphics_cards = 0;
 

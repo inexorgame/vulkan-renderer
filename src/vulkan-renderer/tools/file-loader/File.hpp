@@ -5,6 +5,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <assert.h>
+
 
 namespace inexor {
 namespace vulkan_renderer {

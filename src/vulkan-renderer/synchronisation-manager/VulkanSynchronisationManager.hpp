@@ -8,6 +8,8 @@
 #include <optional>
 #include <unordered_map>
 
+#include <assert.h>
+
 #include <Vulkan/vulkan.h>
 
 
