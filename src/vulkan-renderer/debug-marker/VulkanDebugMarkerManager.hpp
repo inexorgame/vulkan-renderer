@@ -51,7 +51,7 @@ namespace vulkan_renderer {
 			/// @brief Initialises Vulkan debug marker manager.
 			/// @param device The Vulkan device.
 			/// @param graphics_card The graphics card.
-			VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card);
+			VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card, const bool enable_debug_markers = true);
 			
 			
 			~VulkanDebugMarkerManager();

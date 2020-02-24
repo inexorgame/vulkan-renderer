@@ -362,7 +362,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card)
+	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
 	{
 		assert(device);
 		assert(graphics_card);
@@ -375,16 +375,19 @@ namespace vulkan_renderer {
 		VkPhysicalDeviceFeatures used_features = {};
 
 		// Our wishlist of device extensions that we would like to enable.
-		const std::vector<const char*> device_extensions_wishlist =
+		std::vector<const char*> device_extensions_wishlist =
 		{
 			// Since we actually want a window to draw on, we need this swapchain extension.
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-
-			// Debug markers are only present if RenderDoc is enabled.
-			VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
 			
 			// Add more device extensions here if neccesary.
 		};
+
+		if(enable_debug_markers)
+		{
+			// Debug markers are only present if RenderDoc is enabled.
+			device_extensions_wishlist.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+		}
 
 
 		// The actual list of enabled device extensions.
@@ -425,12 +428,12 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::initialise_debug_marker_manager()
+	VkResult VulkanInitialisation::initialise_debug_marker_manager(const bool enable_debug_markers)
 	{
 		spdlog::debug("Initialising Vulkan debug marker manager.");
 
 		// Create an instance of VulkanDebugMarkerManager.
-		debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>(device, selected_graphics_card);
+		debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>(device, selected_graphics_card, enable_debug_markers);
 		return VK_SUCCESS;
 	}
 

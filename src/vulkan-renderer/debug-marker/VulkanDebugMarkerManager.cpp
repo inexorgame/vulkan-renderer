@@ -5,51 +5,54 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VulkanDebugMarkerManager::VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card)
+	VulkanDebugMarkerManager::VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
 	{
-		// Check if the debug marker extension is present (which is the case if run from a graphics debugger)
-		uint32_t extensionCount;
+		if(enable_debug_markers)
+		{
+			// Check if the debug marker extension is present (which is the case if run from a graphics debugger)
+			uint32_t extensionCount;
 
-		vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &extensionCount, nullptr);
+			vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &extensionCount, nullptr);
 				
-		std::vector<VkExtensionProperties> extensions(extensionCount);
+			std::vector<VkExtensionProperties> extensions(extensionCount);
 
-		vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &extensionCount, extensions.data());
-		for(const auto& extension : extensions)
-		{
-			if(0 == strcmp(extension.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
+			vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &extensionCount, extensions.data());
+			for(const auto& extension : extensions)
 			{
-				active = true;
-				extension_present = true;
-				break;
+				if(0 == strcmp(extension.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
+				{
+					active = true;
+					extension_present = true;
+					break;
+				}
 			}
-		}
 
-		if(extension_present)
-		{
-			// The debug marker extension is not part of the core, so function pointers need to be loaded manually
-			vkDebugMarkerSetObjectTag = (PFN_vkDebugMarkerSetObjectTagEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT");
-			assert(vkDebugMarkerSetObjectTag);
+			if(extension_present)
+			{
+				// The debug marker extension is not part of the core, so function pointers need to be loaded manually
+				vkDebugMarkerSetObjectTag = (PFN_vkDebugMarkerSetObjectTagEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT");
+				assert(vkDebugMarkerSetObjectTag);
 
-			vkDebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT");
-			assert(vkDebugMarkerSetObjectName);
+				vkDebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT");
+				assert(vkDebugMarkerSetObjectName);
 					
-			vkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT");
-			assert(vkCmdDebugMarkerBegin);
+				vkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT");
+				assert(vkCmdDebugMarkerBegin);
 					
-			vkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT");
-			assert(vkCmdDebugMarkerEnd);
+				vkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT");
+				assert(vkCmdDebugMarkerEnd);
 					
-			vkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT");
-			assert(vkCmdDebugMarkerInsert);
+				vkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT");
+				assert(vkCmdDebugMarkerInsert);
 
-			// Set flag if at least one function pointer is present
-			active = true;
-		}
-		else
-		{
-			spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-			spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
+				// Set flag if at least one function pointer is present
+				active = true;
+			}
+			else
+			{
+				spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+				spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
+			}
 		}
 	}
 
@@ -73,6 +76,7 @@ namespace vulkan_renderer {
 			nameInfo.object = object;
 			nameInfo.pObjectName = name;
 
+			assert(vkDebugMarkerSetObjectName);
 			vkDebugMarkerSetObjectName(device, &nameInfo);
 		}
 	}
@@ -94,6 +98,7 @@ namespace vulkan_renderer {
 			tagInfo.tagSize = tag_size;
 			tagInfo.pTag = tag;
 
+			assert(vkDebugMarkerSetObjectTag);
 			vkDebugMarkerSetObjectTag(device, &tagInfo);
 		}
 	}
@@ -113,6 +118,7 @@ namespace vulkan_renderer {
 			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
 			markerInfo.pMarkerName = debug_marker_name.c_str();
 
+			assert(vkCmdDebugMarkerBegin);
 			vkCmdDebugMarkerBegin(command_buffer, &markerInfo);
 		}
 	}
@@ -132,6 +138,7 @@ namespace vulkan_renderer {
 			memcpy(debug_marker_info.color, &debug_marker_color[0], sizeof(float) * 4);
 			debug_marker_info.pMarkerName = debug_marker_name.c_str();
 
+			assert(vkCmdDebugMarkerInsert);
 			vkCmdDebugMarkerInsert(command_buffer, &debug_marker_info);
 		}
 	}
@@ -142,6 +149,7 @@ namespace vulkan_renderer {
 		// Check for valid function (may not be present if not runnin in a debugging application)
 		if(vkCmdDebugMarkerEnd)
 		{
+			assert(vkCmdDebugMarkerEnd);
 			vkCmdDebugMarkerEnd(command_buffer);
 		}
 	}

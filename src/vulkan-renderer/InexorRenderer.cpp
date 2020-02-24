@@ -355,13 +355,37 @@ namespace vulkan_renderer {
 		
 		result = create_device_queues(use_distinct_data_transfer_queue);
 		vulkan_error_check(result);
-				
-		result = create_physical_device(selected_graphics_card);
+
+		spdlog::debug("Checking for -no_vk_debug_markers command line argument.");
+
+		bool enable_debug_marker_device_extension = true;
+
+		if(!enable_renderdoc_instance_layer)
+		{
+			// Debug markers are only available if RenderDoc is enabled.
+			enable_debug_marker_device_extension = false;
+		}
+
+		// Check if vulkan debug markers should be disabled.
+		// Those are only available if RenderDoc instance layer is enabled!
+		std::optional<bool> no_vulkan_debug_markers = is_command_line_argument_specified("-no_vk_debug_markers");
+		
+		if(no_vulkan_debug_markers.has_value())
+		{
+			if(no_vulkan_debug_markers.value())
+			{
+				spdlog::warn("Vulkan debug markers are disabled because -no_vk_debug_markers was specified.");
+				enable_debug_marker_device_extension = false;
+			}
+		}
+
+
+		result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
 		// Initialise Vulkan debug markers.
 		// Those debug markes will be very useful when debugging with RenderDoc!
-		result = initialise_debug_marker_manager();
+		result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
 		// Initialise shader manager.

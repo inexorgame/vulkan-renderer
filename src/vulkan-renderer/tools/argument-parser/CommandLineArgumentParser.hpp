@@ -4,7 +4,8 @@
 #include <string>
 #include <optional>
 #include <unordered_map>
-#include <iostream>
+
+#include <spdlog/spdlog.h>
 
 
 namespace inexor {
@@ -90,6 +91,9 @@ namespace tools {
 				// Do not use distinct data transfer queue, use graphics queue.
 				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_separate_data_queue"},
 
+				// Disable debug markers (even if -renderdoc is specified)
+				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_vk_debug_markers"}
+
 				/// TODO: Add more command line argumetns here!
 			};
 
@@ -109,7 +113,7 @@ namespace tools {
 
 
 			// @brief Checks if the command line argument is specified.
-			bool is_command_line_argument_specified(const std::string argument_name);
+			std::optional<bool> is_command_line_argument_specified(const std::string argument_name);
 
 		public:
 			

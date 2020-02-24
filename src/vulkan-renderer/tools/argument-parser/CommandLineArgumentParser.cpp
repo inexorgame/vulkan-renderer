@@ -1,7 +1,5 @@
 #include "CommandLineArgumentParser.hpp"
 
-using namespace std;
-
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -33,10 +31,25 @@ namespace tools {
 	}
 	
 	
-	bool CommandLineArgumentParser::is_command_line_argument_specified(const std::string argument_name)
+	std::optional<bool> CommandLineArgumentParser::is_command_line_argument_specified(const std::string argument_name)
 	{
+		if(!does_command_line_argument_template_exist(argument_name))
+		{
+			return std::nullopt;
+		}
+
 		std::unordered_map<std::string, CommandLineArgumentValue>::const_iterator argument_specified = parsed_command_line_arguments.find(argument_name);
-		return (argument_specified != parsed_command_line_arguments.end());
+		
+		if(argument_specified == parsed_command_line_arguments.end())
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+
+		return std::nullopt;
 	}
 
 	
@@ -124,7 +137,7 @@ namespace tools {
 					}
 					else
 					{
-						std::cout << "Error: Argument " << arguments[i] << " is accepted but no value specified!" << endl;
+						spdlog::error("Argument {} is accepted but no value specified!", arguments[i]);
 					}
 				}
 
@@ -144,7 +157,7 @@ namespace tools {
 				if(i>0)
 				{
 					// The user specified a command line argument which is not known to the application!
-					cout << "Warning: Command line argument " << arguments[i] << " not known!" << endl;
+					spdlog::warn("Warning: Unknown command line argument {}", arguments[i]);
 				}
 			}
 		}

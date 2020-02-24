@@ -221,11 +221,11 @@ namespace vulkan_renderer {
 
 			/// @brief Create a physical device handle.
 			/// @param graphics_card The regarded graphics card.
-			VkResult create_physical_device(const VkPhysicalDevice& graphics_card);
+			VkResult create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers = true);
 
 			
 			/// @brief Creates an instance of VulkanDebugMarkerManager
-			VkResult initialise_debug_marker_manager();
+			VkResult initialise_debug_marker_manager(const bool enable_debug_markers = true);
 
 
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.

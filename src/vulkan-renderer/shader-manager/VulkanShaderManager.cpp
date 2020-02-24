@@ -112,7 +112,7 @@ namespace vulkan_renderer {
 		}
 
 		// Add a debug marker!
-		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "vertexbuffer_test");
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "vertexbuffer_test");
 
 		// Store the generated shader in memory.
 		new_fragment_shader.set_shader_module(new_shader_module);
