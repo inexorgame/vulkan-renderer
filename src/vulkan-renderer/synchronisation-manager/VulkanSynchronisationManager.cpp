@@ -1,5 +1,4 @@
 #include "VulkanSynchronisationManager.hpp"
-using namespace std;
 
 
 namespace inexor {
@@ -94,7 +93,7 @@ namespace vulkan_renderer {
 		// Iterate over the unordered map.
 		while(semaphore_iterator != semaphores.end())
 		{
-			cout << "Shutting down semaphore " << semaphore_iterator->first.c_str() << endl;
+			spdlog::debug("Shutting down semaphore: {}", semaphore_iterator->first);
 
 			// Destroy the semaphore.
 			vkDestroySemaphore(vulkan_device, semaphore_iterator->second, nullptr);
@@ -186,8 +185,8 @@ namespace vulkan_renderer {
 		// Iterate over the unordered map.
 		while(fence_iterator != fences.end())
 		{
-			cout << "Shutting down fence " << fence_iterator->first.c_str() << endl;
-			
+			spdlog::debug("Shutting down fence: {}", fence_iterator->first);
+
 			// Destroy the fences.
 			vkDestroyFence(vulkan_device, fence_iterator->second, nullptr);
 

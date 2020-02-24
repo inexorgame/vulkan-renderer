@@ -39,12 +39,11 @@ namespace vulkan_renderer {
 		uint32_t engine_minor = VK_VERSION_MINOR(engine_version);
 		uint32_t engine_patch = VK_VERSION_PATCH(engine_version);
 
-		cout << "Initialising Vulkan instance." << endl;
-		cout << "Application name: "            << application_name.c_str() << endl;
-		cout << "Application version: "         << app_major << "." << app_minor << "." << app_patch << endl;
-		cout << "Engine name: "                 << engine_name.c_str() << endl;
-		cout << "Engine version: "              << engine_major << "." << engine_minor << "." << engine_patch << endl;
-		cout << endl;
+		spdlog::info("Initialising Vulkan instance.");
+		spdlog::info("Application name: {}", application_name.c_str());
+		spdlog::info("Application version: {}.{}.{}", app_major, app_minor, app_patch);
+		spdlog::info("Engine name: {}", engine_name.c_str());
+		spdlog::info("Engine version: {}.{}.{}", engine_major, engine_minor, engine_patch);
 
 		// TODO: Check which version of Vulkan is available before trying to create an instance!
 		// TODO: Switch to VOLK one day? This would allow for dynamic initialisation during runtime without linking vulkan libraries.
@@ -84,12 +83,12 @@ namespace vulkan_renderer {
 
 		auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_GLFW_extensions);
 
-		cout << "Required GLFW instance extensions: " << endl;
+		spdlog::debug("Required GLFW instance extensions:");
 		
 		for(std::size_t i=0; i<number_of_GLFW_extensions; i++)
 		{
-			cout << glfw_extensions[i] << endl;
-
+			spdlog::debug(glfw_extensions[i]);
+			
 			// Add instance extensions required by GLFW to our wishlist.
 			instance_extension_wishlist.push_back(glfw_extensions[i]);
 		}
@@ -98,17 +97,15 @@ namespace vulkan_renderer {
 		{
 			if(VulkanAvailabilityChecks::is_instance_extension_available(instance_extension))
 			{
+				spdlog::debug("Adding {} to instance extension wishlist.", instance_extension);
 				enabled_instance_extensions.push_back(instance_extension);
 			}
 			else
 			{
 				std::string error_message = "Error: Required instance extension " + std::string(instance_extension) + " not available!";
-				display_error_message(error_message);
-				exit(-1);
+				display_warning_message(error_message);
 			}
 		}
-
-		cout << endl;
 
 
 		// A vector of strings which represent the enabled instance layers.
@@ -128,6 +125,8 @@ namespace vulkan_renderer {
 		if(enable_renderdoc_instance_layer)
 		{
 			const char renderdoc_layer_name[] = "VK_LAYER_RENDERDOC_Capture";
+			
+			spdlog::debug("Adding {} to instance extension wishlist.", renderdoc_layer_name);
 			instance_layers_wishlist.push_back(renderdoc_layer_name);
 		}
 
@@ -138,6 +137,8 @@ namespace vulkan_renderer {
 		if(enable_validation_instance_layers)
 		{
 			const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
+			
+			spdlog::debug("Adding {} to instance extension wishlist.", validation_layer_name);
 			instance_layers_wishlist.push_back(validation_layer_name);
 		}
 
@@ -147,7 +148,7 @@ namespace vulkan_renderer {
 		{
 			if(VulkanAvailabilityChecks::is_instance_layer_available(current_layer))
 			{
-				cout << "Instance layer " << current_layer << " is supported!" << endl;
+				spdlog::debug("Instance layer {} is supported.", current_layer);
 				
 				// This instance layer is available!
 				// Add it to the list of enabled instance layers!
@@ -155,14 +156,10 @@ namespace vulkan_renderer {
 			}
 			else
 			{
-				cout << "Instance layer " << current_layer << " is NOT supported!" << endl;
-
 				std::string error_message = "Error: instance layer " + std::string(current_layer) + " not available!";
 				display_error_message(error_message);
 			}
 		}
-
-		cout << endl;
 
 		// Structure specifying parameters of a newly created instance.
 		VkInstanceCreateInfo instance_create_info = {};
@@ -196,6 +193,13 @@ namespace vulkan_renderer {
 	{
 		assert(present_queue_family_index.has_value());
 		assert(graphics_queue_family_index.has_value());
+		assert(data_transfer_queue_family_index.has_value());
+		
+		spdlog::debug("Initialising GPU queues.");
+
+		spdlog::info("Graphics queue family index: {}.", graphics_queue_family_index.value());
+		spdlog::info("Presentation queue family index: {}.", present_queue_family_index.value());
+		spdlog::info("Data transfer queue family index: {}.", data_transfer_queue_family_index.value());
 
 		// Setup the queues for presentation and graphics.
 		// Since we only have one queue per queue family, we acquire index 0.
@@ -215,7 +219,16 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::create_device_queues(bool use_distinct_data_transfer_queue_if_available)
 	{
-		cout << "Creating device queues." << endl;
+		spdlog::debug("Creating Vulkan device queues.");
+		
+		if(use_distinct_data_transfer_queue_if_available)
+		{
+			spdlog::debug("The application will try to use a distinct data transfer queue if it is available.");
+		}
+		else
+		{
+			spdlog::warn("The application is forced not to use a distinct data transfer queue!");
+		}
 
 		// This is neccesary since device queues might be recreated as swapchain becomes invalid.
 		device_queues.clear();
@@ -223,8 +236,11 @@ namespace vulkan_renderer {
 		// Check if there is one queue family which can be used for both graphics and presentation.
 		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = find_queue_family_for_both_graphics_and_presentation(selected_graphics_card, surface);
 		
+		// TODO: Implement command line argument for separate queues!
 		if(queue_family_index_for_both_graphics_and_presentation.has_value())
 		{
+			spdlog::debug("One queue for both graphics and presentation will be used.");
+			
 			graphics_queue_family_index = queue_family_index_for_both_graphics_and_presentation.value();
 			
 			present_queue_family_index = graphics_queue_family_index;
@@ -248,6 +264,9 @@ namespace vulkan_renderer {
 		}
 		else
 		{
+			spdlog::debug("No queue found which supports both graphics and presentation.");
+			spdlog::debug("The application will try to use 2 separate queues.");
+
 			// We have to use 2 different queue families.
 			// One for graphics and another one for presentation.
 			
@@ -270,7 +289,9 @@ namespace vulkan_renderer {
 				display_error_message(error_message);
 				return VK_ERROR_INITIALIZATION_FAILED;
 			}
-
+			
+			spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index.value());
+			spdlog::debug("Presentation queue family index: {}.", present_queue_family_index.value());
 
 			// Set up one queue for graphics.
 			VkDeviceQueueCreateInfo device_queue_create_info_for_graphics_queue = {};
@@ -310,6 +331,9 @@ namespace vulkan_renderer {
 
 		if(data_transfer_queue_family_index.has_value() && use_distinct_data_transfer_queue_if_available)
 		{
+			spdlog::debug("A separate queue will be used for data transfer.");
+			spdlog::debug("Data transfer queue family index: {}.", data_transfer_queue_family_index.value());
+
 			// We have the opportunity to use a separated queue for data transfer!
 			use_distinct_data_transfer_queue = true;
 
@@ -343,8 +367,8 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(graphics_card);
 		assert(device_queues.size()>0);
-
-		cout << "Creating a physical device." << endl;
+		
+		spdlog::debug("Creating physical device.");
 		
 		// Currently, we don't need any special features at all.
 		// Fill this with required features if neccesary.
@@ -356,9 +380,9 @@ namespace vulkan_renderer {
 			// Since we actually want a window to draw on, we need this swapchain extension.
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 
-			// Debug markers.
+			// Debug markers are only present if RenderDoc is enabled.
 			VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
-
+			
 			// Add more device extensions here if neccesary.
 		};
 
@@ -370,7 +394,7 @@ namespace vulkan_renderer {
 		{
 			if(VulkanAvailabilityChecks::is_device_extension_available(graphics_card, device_extension_name))
 			{
-				cout << "Device extension " << device_extension_name << " is supported!" << endl;
+				spdlog::debug("Device extension {} is supported!", device_extension_name);
 
 				// This device layer is supported!
 				// Add it to the list of enabled device layers.
@@ -378,15 +402,11 @@ namespace vulkan_renderer {
 			}
 			else
 			{
-				cout << "Device extension " << device_extension_name << " is supported!" << endl;
-
 				// This device layer is not supported!
 				std::string error_message = "Error: Device extension " + std::string(device_extension_name) + " not supported!";
 				display_error_message(error_message);
 			}
 		}
-
-		cout << endl;
 
 		VkDeviceCreateInfo device_create_info = {};
 		
@@ -407,6 +427,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::initialise_debug_marker_manager()
 	{
+		spdlog::debug("Initialising Vulkan debug marker manager.");
+
 		// Create an instance of VulkanDebugMarkerManager.
 		debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>(device, selected_graphics_card);
 		return VK_SUCCESS;
@@ -419,8 +441,8 @@ namespace vulkan_renderer {
 		assert(command_pool);
 		assert(graphics_queue_family_index.has_value());
 		assert(debug_marker_manager);
-
-		cout << "Creating command pool." << endl;
+		
+		spdlog::debug("Creating command pool for rendering.");
 
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
@@ -438,7 +460,8 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(debug_marker_manager);
 
-		cout << "Creating command buffers." << endl;
+		spdlog::debug("Creating command buffers.");
+		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
 
 		command_buffers.clear();
 
@@ -464,6 +487,8 @@ namespace vulkan_renderer {
 		assert(selected_graphics_card);
 		assert(debug_marker_manager);
 
+		spdlog::debug("Initialising Vulkan memory allocator.");
+
 		VmaAllocatorCreateInfo allocatorInfo = {};
 
 		allocatorInfo.physicalDevice = selected_graphics_card;
@@ -476,6 +501,8 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::create_vertex_buffers()
 	{
 		assert(debug_marker_manager);
+		
+		spdlog::debug("Creating vertex buffers.");
 		
 		const std::vector<InexorVertex> vertices =
 		{
@@ -521,10 +548,12 @@ namespace vulkan_renderer {
 	{
 		assert(debug_marker_manager);
 		
-		cout << "Recording command buffers." << endl;
+		spdlog::debug("Recording command buffers.");
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			spdlog::debug("Recording command buffer #{}.", i);
+
 			debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering", INEXOR_DEBUG_MARKER_GREEN);
 
 			VkCommandBufferBeginInfo command_buffer_begin_info = {};
@@ -564,7 +593,9 @@ namespace vulkan_renderer {
 
 			
 			if(example_vertex_buffer.index_buffer_available)
-			{
+			{	
+				spdlog::debug("Recording indexed drawing of (name?).");
+
 				debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
 				
 				// Use the index buffer as well!
@@ -579,6 +610,8 @@ namespace vulkan_renderer {
 			}
 			else
 			{
+				spdlog::debug("Recording drawing of (name?). (No index buffer!)");
+
 				debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
 
 				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
@@ -607,7 +640,8 @@ namespace vulkan_renderer {
 		assert(number_of_images_in_swapchain>0);
 		assert(debug_marker_manager);
 
-		cout << "Creating semaphores and fences." << endl;
+		spdlog::debug("Creating synchronisation objects (semaphores and fences).");
+		spdlog::debug("Number of images in swapchain: {}", number_of_images_in_swapchain);
 		
 		in_flight_fences.clear();
 		image_available_semaphores.clear();
@@ -639,10 +673,10 @@ namespace vulkan_renderer {
 		assert(selected_graphics_card);
 		assert(debug_marker_manager);
 
-		cout << "Creating swap chain." << endl;
+		spdlog::debug("Creating swapchain.");
 
 		// TODO: Check if system supports this image sharing mode!
-
+		
 		// Decide which surface color format is used.
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
 		std::optional<VkSurfaceFormatKHR> selected_surface_format = VulkanSettingsDecisionMaker::which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
@@ -731,7 +765,7 @@ namespace vulkan_renderer {
 		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
 		if(VK_SUCCESS != result) return result;
 
-		cout << "Images in swap chain: " << number_of_images_in_swapchain << endl;
+		spdlog::info("Images in swap chain: {}.", number_of_images_in_swapchain);
 
 		if(number_of_images_in_swapchain <= 0)
 		{
@@ -752,13 +786,14 @@ namespace vulkan_renderer {
 
 	VkResult VulkanInitialisation::cleanup_swapchain()
 	{
-		cout << "Cleaning up swapchain." << endl;
-		cout << "Waiting for device to be idle." << endl;
+		spdlog::debug("Cleaning up swapchain.");
+		
+		spdlog::debug("Waiting for device to be idle.");
 		
 		vkDeviceWaitIdle(device);
 
-		cout << "Device is idle." << endl;
-		cout << "Destroying frame buffer." << endl;
+		spdlog::debug("Device is idle.");
+		spdlog::debug("Destroying frame buffer.");
 		
 		if(frame_buffers.size() > 0)
 		{
@@ -773,8 +808,8 @@ namespace vulkan_renderer {
 
 			frame_buffers.clear();
 		}
-
-		cout << "Destroying command buffers." << endl;
+		
+		spdlog::debug("Destroying command buffers.");
 
 		// We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
 		if(command_buffers.size() > 0)
@@ -786,7 +821,7 @@ namespace vulkan_renderer {
 			command_buffers.clear();
 		}
 
-		cout << "Destroying pipeline." << endl;
+		spdlog::debug("Destroying pipeline.");
 
 		if(VK_NULL_HANDLE != pipeline)
 		{
@@ -794,7 +829,7 @@ namespace vulkan_renderer {
 			pipeline = VK_NULL_HANDLE;
 		}
 
-		cout << "Destroying pipeline layout." << endl;
+		spdlog::debug("Destroying pipeline layout.");
 		
 		if(VK_NULL_HANDLE != pipeline_layout)
 		{
@@ -802,15 +837,15 @@ namespace vulkan_renderer {
 			pipeline_layout = VK_NULL_HANDLE;
 		}
 		
-		cout << "Destroying render pass." << endl;
-		
+		spdlog::debug("Destroying render pass.");
+
 		if(VK_NULL_HANDLE != render_pass)
 		{
 			vkDestroyRenderPass(device, render_pass, nullptr);
 			render_pass = VK_NULL_HANDLE;
 		}
 
-		cout << "Destroying image views." << endl;
+		spdlog::debug("Destroying image views.");
 		
 		if(swapchain_image_views.size() > 0)
 		{
@@ -828,16 +863,15 @@ namespace vulkan_renderer {
 		
 		swapchain_images.clear();
 
-		cout << "Destroying swapchain." << endl;
+		spdlog::debug("Destroying swapchain.");
 
 		if(VK_NULL_HANDLE != swapchain)
 		{
 			vkDestroySwapchainKHR(device, swapchain, nullptr);
 			swapchain = VK_NULL_HANDLE;
 		}
-
-
-		cout << "Destroying uniform buffers." << endl;
+		
+		spdlog::debug("Destroying uniform buffers.");
 		
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
@@ -847,7 +881,7 @@ namespace vulkan_renderer {
 
 		uniform_buffers.clear();
 
-		cout << "Destroying descriptor pool" << endl;
+		spdlog::debug("Destroying descriptor pool.");
 
 		vkDestroyDescriptorPool(device, descriptor_pool, nullptr);
 
@@ -871,7 +905,7 @@ namespace vulkan_renderer {
 
 		vkDeviceWaitIdle(device);
 		
-		cout << "Recreating the swapchain." << endl;
+		spdlog::debug("Recreating the swapchain.");
 
 		// Cleanup only neccesary parts.
 		cleanup_swapchain();
@@ -911,6 +945,8 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(debug_marker_manager);
+		
+		spdlog::debug("Creating descriptor set layout.");
 
 		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 
@@ -937,6 +973,8 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(debug_marker_manager);
+		
+		spdlog::debug("Creating descriptor pool.");
 
 		VkDescriptorPoolSize pool_size = {};
 
@@ -963,6 +1001,9 @@ namespace vulkan_renderer {
 		assert(number_of_images_in_swapchain>0);
 		assert(debug_marker_manager);
 
+		spdlog::debug("Creating descriptor set layout.");
+		spdlog::debug("Number of images in swapchain: {}", number_of_images_in_swapchain);
+
         std::vector<VkDescriptorSetLayout> layouts(number_of_images_in_swapchain, descriptor_set_layout);
         
 		VkDescriptorSetAllocateInfo alloc_info = {};
@@ -981,6 +1022,8 @@ namespace vulkan_renderer {
 
         for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			spdlog::debug("Updating descriptor set #{}", i);
+
             VkDescriptorBufferInfo bufferInfo = {};
 
             bufferInfo.buffer = uniform_buffers[i].buffer;
@@ -1034,13 +1077,17 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(debug_marker_manager);
 		
-		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+		VkDeviceSize buffer_size = sizeof(UniformBufferObject);
+		
+		spdlog::debug("Creating uniform buffers of size {}.", buffer_size);
 
 		uniform_buffers.clear();
-		uniform_buffers.resize(number_of_images_in_swapchain, bufferSize);
+		uniform_buffers.resize(number_of_images_in_swapchain, buffer_size);
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			spdlog::debug("Creating uniform buffer {}.", i);
+
 			// It is important to use VMA_MEMORY_USAGE_CPU_TO_GPU for uniform buffers!
 			VkResult result = create_buffer(uniform_buffers[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 			vulkan_error_check(result);
@@ -1055,7 +1102,7 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(debug_marker_manager);
 
-		cout << "Creating graphics pipeline." << endl;
+		spdlog::debug("Creating graphics pipeline.");
 
 		shader_stages.clear();
 		
@@ -1064,6 +1111,8 @@ namespace vulkan_renderer {
 
 		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
 		auto list_of_shaders = VulkanShaderManager::get_shaders();
+
+		spdlog::debug("Setting up shader stages.");
 
 		for(const auto& current_shader : list_of_shaders)
 		{
@@ -1079,7 +1128,6 @@ namespace vulkan_renderer {
 			
 			shader_stages.push_back(shader_stage_create_info);
 		}
-
 		
 		VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 		
@@ -1201,6 +1249,8 @@ namespace vulkan_renderer {
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
 
+		spdlog::debug("Setting up pipeline layout.");
+
 		VkResult result = vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
 		if(VK_SUCCESS != result) return result;
 		
@@ -1263,6 +1313,8 @@ namespace vulkan_renderer {
 		render_pass_create_info.dependencyCount = 1;
 		render_pass_create_info.pDependencies   = &subpass_dependency;
 
+		spdlog::debug("Setting up render pass.");
+
 		result = vkCreateRenderPass(device, &render_pass_create_info, nullptr, &render_pass);
 		if(VK_SUCCESS != result) return result;
 
@@ -1289,6 +1341,8 @@ namespace vulkan_renderer {
 		graphics_pipeline_create_info.basePipelineHandle  = VK_NULL_HANDLE;
 		graphics_pipeline_create_info.basePipelineIndex   = -1;
 
+		spdlog::debug("Finalizing graphics pipeline.");
+
 		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
 		if(VK_SUCCESS != result) return result;
 
@@ -1301,14 +1355,17 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
 		assert(debug_marker_manager);
-
-		cout << "Creating frame buffers." << endl;
+		
+		spdlog::debug("Creating frame buffers.");
+		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
 
 		// Preallocate memory for frame buffers.
 		frame_buffers.resize(number_of_images_in_swapchain);
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			spdlog::debug("Creating frameuffer #{}.", i);
+
 			VkFramebufferCreateInfo frame_buffer_create_info = {};
 
 			frame_buffer_create_info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -1335,14 +1392,17 @@ namespace vulkan_renderer {
 		assert(number_of_images_in_swapchain>0);
 		assert(debug_marker_manager);
 
-		cout << "Creating image views." << endl;
-
+		spdlog::debug("Creating image views.");
+		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
+		
 		// Preallocate memory for the image views.
 		swapchain_image_views.clear();
 		swapchain_image_views.resize(number_of_images_in_swapchain);
 	
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
+			spdlog::debug("Creating image #{}.", i);
+			
 			VkImageViewCreateInfo image_view_create_info = {};
 		
 			image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1372,36 +1432,37 @@ namespace vulkan_renderer {
 	VkResult VulkanInitialisation::shutdown_vulkan()
 	{
 		// It is important to destroy the objects in reversal of the order of creation.
-		cout << "------------------------------------------------------------------------------------------------------------" << endl;
-		cout << "Shutting down Vulkan API." << endl;
+		spdlog::debug("------------------------------------------------------------------------------------------------------------");
+		spdlog::debug("Shutting down Vulkan API.");
 		
 		cleanup_swapchain();
 
 		vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
 
-		cout << "Destroying vertex buffers." << endl;
+		spdlog::debug("Destroying vertex buffers.");
 		VulkanMeshBufferManager::shutdown_vertex_buffers();
 
 		// Destroy allocator of Vulkan Memory Allocator (VMA) library.
 		vmaDestroyAllocator(vma_allocator);
 
-		cout << "Destroying semaphores." << endl;
+		spdlog::debug("Destroying semaphores.");
 		VulkanSynchronisationManager::shutdown_semaphores(device);
 
-		cout << "Destroying fences." << endl;
+		spdlog::debug("Destroying fences.");
 		VulkanSynchronisationManager::shutdown_fences(device);
 
-		cout << "Destroying command pool." << endl;
+		spdlog::debug("Destroying command pool.");
+
 		if(VK_NULL_HANDLE != command_pool)
 		{
 			vkDestroyCommandPool(device, command_pool, nullptr);
 			command_pool = VK_NULL_HANDLE;
 		}
 
-		cout << "Destroying shader objects." << endl;
+		spdlog::debug("Destroying shader objects.");
 		VulkanShaderManager::shutdown_shaders(device);
 		
-		cout << "Destroying surface." << endl;
+		spdlog::debug("Destroying surface.");
 		if(VK_NULL_HANDLE != surface)
 		{
 			vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -1410,7 +1471,7 @@ namespace vulkan_renderer {
 		
 		// Device queues are implicitly cleaned up when the device is destroyed,
 		// so we don’t need to do anything in cleanup.
-		cout << "Destroying Vulkan device." << endl;
+		spdlog::debug("Destroying Vulkan device.");
 		if(VK_NULL_HANDLE != device)
 		{
 			vkDestroyDevice(device, nullptr);
@@ -1430,16 +1491,16 @@ namespace vulkan_renderer {
 			}
 		}
 		
-		cout << "Destroying Vulkan instance." << endl;
+		spdlog::debug("Destroying Vulkan instance.");
 		if(VK_NULL_HANDLE != instance)
 		{
 			vkDestroyInstance(instance, nullptr);
 			instance = VK_NULL_HANDLE;
 		}
 		
-		cout << "Shutdown finished." << endl;
-		cout << "------------------------------------------------------------------------------------------------------------" << endl;
-	
+		spdlog::debug("Shutdown finished.");
+		spdlog::debug("------------------------------------------------------------------------------------------------------------");
+		
 		return VK_SUCCESS;
 	}
 

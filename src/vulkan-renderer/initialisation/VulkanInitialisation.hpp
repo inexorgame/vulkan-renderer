@@ -31,6 +31,7 @@
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../../vma/vk_mem_alloc.h"
 
+#include <spdlog/spdlog.h>
 
 
 #include <vector>

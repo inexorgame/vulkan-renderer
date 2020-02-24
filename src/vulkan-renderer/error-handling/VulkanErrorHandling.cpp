@@ -1,5 +1,4 @@
 #include "VulkanErrorHandling.hpp"
-using namespace std;
 
 
 namespace inexor {
@@ -111,16 +110,46 @@ namespace vulkan_renderer {
 
 		return error_string;
 	}
-
+	
 
 	void display_error_message(const std::string& error_message, const std::string& message_box_title)
 	{
 		// Also print error message to console.
-		cout << error_message.c_str() << endl;
+		spdlog::error(error_message);
 
 		#ifdef _WIN32
 			// Windows-specific message box.
 			MessageBox(NULL, error_message.c_str(), message_box_title.c_str(), MB_OK|MB_ICONERROR);
+		#endif
+
+		// TODO: Add Linux specific error message box.
+		// TODO: Add Mac-OS specific error message box.
+	}
+
+
+	void display_fatal_error_message(const std::string& error_message, const std::string& message_box_title)
+	{
+		// Also print error message to console.
+		spdlog::critical(error_message);
+
+		#ifdef _WIN32
+			// Windows-specific message box.
+			MessageBox(NULL, error_message.c_str(), message_box_title.c_str(), MB_OK|MB_ICONERROR);
+		#endif
+
+		// TODO: Add Linux specific error message box.
+		// TODO: Add Mac-OS specific error message box.
+	}
+
+
+	void display_warning_message(const std::string& warning_message, const std::string& message_box_title)
+	{
+		// Also print error message to console.
+		spdlog::warn(warning_message);
+
+		#ifdef _WIN32
+			// Windows-specific message box.
+			MessageBox(NULL, warning_message.c_str(), message_box_title.c_str(), MB_OK|MB_ICONWARNING);
 		#endif
 
 		// TODO: Add Linux specific error message box.

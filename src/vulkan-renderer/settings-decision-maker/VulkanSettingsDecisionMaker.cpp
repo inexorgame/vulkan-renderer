@@ -22,7 +22,7 @@ namespace vulkan_renderer {
 		assert(graphics_card);
 		assert(surface);
 
-		cout << "Deciding automatically how many images in swapchain to use." << endl;
+		spdlog::debug("Deciding automatically how many images in swapchain to use.");
 
 		uint32_t number_of_images_in_swapchain = 0;
 
@@ -51,7 +51,7 @@ namespace vulkan_renderer {
 		assert(graphics_card);
 		assert(surface);
 
-		cout << "Deciding automatically which surface color format in swapchain to use." << endl;
+		spdlog::debug("Deciding automatically which surface color format in swapchain to use.");
 
 		uint32_t number_of_available_surface_formats = 0;
 
@@ -156,7 +156,8 @@ namespace vulkan_renderer {
 		// Get the information about the graphics card's features.
 		vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
 
-		cout << "Checking suitability of graphics card " << graphics_card_properties.deviceName << "." << endl;
+		spdlog::debug("Checking suitability of graphics card: {}.", graphics_card_properties.deviceName);
+
 
 		// Step 1: Check if swapchain is supported.
 		// In theory we could have used the code from VulkanAvailabilityChecks, but I didn't want
@@ -195,7 +196,7 @@ namespace vulkan_renderer {
 
 		if(!swapchain_is_supported)
 		{
-			cout << "This device is not suitable because it does not support swap chain!" << endl;
+			spdlog::debug("This device is not suitable because it does not support swap chain!.");
 			return false;
 		}
 
@@ -215,7 +216,7 @@ namespace vulkan_renderer {
 
 		if(!presentation_available)
 		{
-			cout << "This device is not suitable because it does not support presentation!" << endl;
+			spdlog::debug("This device is not suitable because it does not support presentation!");
 			return false;
 		}
 
@@ -308,7 +309,7 @@ namespace vulkan_renderer {
 		/// The preferred graphics card index which could have been specified by the user must be either this one or an invalid index!
 		if(1 == number_of_available_graphics_cards)
 		{
-			cout << "Because there is only 1 graphics card available, we don't have a choice and must use that one." << endl;
+			spdlog::debug("Because there is only 1 graphics card available, we don't have a choice and must use that one.");
 			
 			// Did the user specify a preferred GPU by command line argument?
 			// If so, let's take a look at what he wanted us to use.
@@ -318,19 +319,18 @@ namespace vulkan_renderer {
 				// Since we only have one graphics card to choose from, index 0 is our only option.
 				if(0 != preferred_graphics_card_index.value())
 				{
-					cout << "Ignoring command line argument -gpu " << preferred_graphics_card_index.value() << " because there is only one GPU to chose from." << endl;
+					spdlog::debug("Ignoring command line argument -gpu {} because there is only one GPU to chose from.", preferred_graphics_card_index.value());
 				}
 				if(!(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index.value() < available_graphics_cards.size()))
 				{
-					// Haha.
-					cout << "Warning: Array index for selected graphics card would have been invalid anyways!" << endl;
+					spdlog::warn("Warning: Array index for selected graphics card would have been invalid anyways!");
 				}
 			}
 
 			if(VulkanSettingsDecisionMaker::is_graphics_card_is_suitable(available_graphics_cards[0], surface))
 			{
-				cout << "The only graphics card available is suitable for the application!" << endl;
-				cout << "Score: " << rate_graphics_card(available_graphics_cards[0]) << endl;
+				spdlog::debug("The only graphics card available is suitable for the application!");
+				spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[0]));
 				return available_graphics_cards[0];
 			}
 			else
@@ -353,20 +353,20 @@ namespace vulkan_renderer {
 			// Check if this array index is valid!
 			if(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index < number_of_available_graphics_cards)
 			{
-				cout << "Command line parameter for prefered GPU specified. Checking graphics card with index " << preferred_graphics_card_index.value() << "." << endl;
-	
+				spdlog::debug("Command line parameter for prefered GPU specified. Checking graphics card with index {}.", preferred_graphics_card_index.value());
+
 				// Check if the graphics card selected by the user meets all the criteria we need!
 				if(VulkanSettingsDecisionMaker::is_graphics_card_is_suitable(available_graphics_cards[preferred_graphics_card_index.value()], surface))
 				{
 					// We are done: Use the graphics card which was specified by the user's command line argument.
-					cout << "The prefered graphics card is suitable for this application." << endl;
-					cout << "Score: " << rate_graphics_card(available_graphics_cards[preferred_graphics_card_index.value()]) << endl;
+					spdlog::debug("The prefered graphics card is suitable for this application.");
+					spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[preferred_graphics_card_index.value()]));
 					return available_graphics_cards[preferred_graphics_card_index.value()];
 				}
 				else
 				{
-					cout << "Error: The preferred graphics card with index " << preferred_graphics_card_index.value() << " is not suitable for this application!" << endl;
-					cout << "The array index is valid, but this graphics card does not fulfill all requirements!" << endl;
+					spdlog::error("The preferred graphics card with index {} is not suitable for this application!", preferred_graphics_card_index.value());
+					spdlog::error("The array index is valid, but this graphics card does not fulfill all requirements!");
 
 					// We are NOT done!
 					// Try to select the best graphics card automatically!
@@ -375,7 +375,7 @@ namespace vulkan_renderer {
 			else
 			{
 				// No, this array index for available_graphics_cards is invalid!
-				cout << "Error: Invalid command line argument! Graphics card array index " << preferred_graphics_card_index.value() << " is invalid!" << endl;
+				spdlog::error("Error: Invalid command line argument! Graphics card array index {} is invalid!", preferred_graphics_card_index.value());
 
 				// We are NOT done!
 				// Try to select the best graphics card automatically!
@@ -384,10 +384,10 @@ namespace vulkan_renderer {
 		else
 		{
 			// Give the user a little hint message.
-			cout << "Info: No command line argument for preferred graphics card given." << endl;
-			cout << "You have more than 1 graphics card available on your machine." << endl;
-			cout << "Specify which one to use by passing -gpu <number> as command line argument." << endl;
-			cout << "Please be aware that the first index is 0." << endl;
+			spdlog::info("Info: No command line argument for preferred graphics card given.");
+			spdlog::info("You have more than 1 graphics card available on your machine.");
+			spdlog::info("Specify which one to use by passing -gpu <number> as command line argument.");
+			spdlog::info("Please be aware that the first index is 0.");
 		}
 
 
@@ -443,23 +443,23 @@ namespace vulkan_renderer {
 				// Ok, so try to prefer the discrete GPU over the integrated GPU.
 				if(is_graphics_card_is_suitable(discrete_GPU, surface))
 				{
-					cout << "You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application. The integrated GPU is not!" << endl;
-					cout << "Score: " << rate_graphics_card(discrete_GPU) << endl;
-					
+					spdlog::debug("You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application. The integrated GPU is not!");
+					spdlog::debug("Score: {}", rate_graphics_card(discrete_GPU));
+
 					return discrete_GPU;
 				}
 				// Ok, so the discrete GPU is unsuitable. What about the integrated GPU?
 				else if(is_graphics_card_is_suitable(integrated_GPU, surface))
 				{
-					cout << "You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The discrete GPU is not!" << endl;
-					cout << "Score: " << rate_graphics_card(integrated_GPU) << endl;
+					spdlog::debug("You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The discrete GPU is not!");
+					spdlog::debug("Score: {}", rate_graphics_card(integrated_GPU));
 
 					// This might be a very rare case though.
 					return integrated_GPU;
 				}
 				else
 				{
-					cout << "" << endl;
+					spdlog::critical("Neither the integrated GPU nor the discrete GPU are suitable!");
 
 					// Neither the integrated GPU nor the discrete GPU are suitable!
 					return std::nullopt;
@@ -468,7 +468,7 @@ namespace vulkan_renderer {
 			}
 			else
 			{
-				cout << "Only discrete GPUs available, no integrated graphics." << endl;
+				spdlog::info("Only discrete GPUs available, no integrated graphics.");
 			}
 		}
 
@@ -491,14 +491,14 @@ namespace vulkan_renderer {
 		{
 			if(VulkanSettingsDecisionMaker::is_graphics_card_is_suitable(available_graphics_cards[i], surface))
 			{
-				cout << "Adding graphics card index " << i << " to the list of suitable graphics cards." << endl;
+				spdlog::debug("Adding graphics card index {} to the list of suitable graphics cards", i);
 
 				// Add this graphics card to the list of suitable graphics cards.
 				suitable_graphics_cards.push_back(i);
 			}
 			else
 			{
-				cout << "Sorting out graphics card index " << i << " because it is unsuitable for this application's purposes!" << endl;
+				spdlog::debug("Sorting out graphics card index {} because it is unsuitable for this application's purposes!", i);
 			}
 		}
 		
@@ -507,21 +507,22 @@ namespace vulkan_renderer {
 
 		if(how_many_graphics_card_disqualified > 0)
 		{
-			cout << how_many_graphics_card_disqualified << " have been disqualified because they are unsuitable for the application's purposes!" << endl;
+			spdlog::debug("{} have been disqualified because they are unsuitable for the application's purposes!", how_many_graphics_card_disqualified);
 		}
 
 		// We could not find any suitable graphics card!
 		if(0 == suitable_graphics_cards.size())
 		{
-			cout << "Error: Could not find suitable graphics card automatically." << endl;
+			spdlog::critical("Error: Could not find suitable graphics card automatically.");
 			return std::nullopt;
 		}
 
 		// Only 1 graphics card is suitable, let's choose that one.
 		if(1 == suitable_graphics_cards.size())
 		{
-			cout << "There is only 1 suitable graphics card available." << endl;
-			cout << "Score: " << rate_graphics_card(available_graphics_cards[0]) << endl;
+			spdlog::debug("There is only 1 suitable graphics card available.");
+			spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[0]));
+
 			return available_graphics_cards[0];
 		}
 
@@ -544,7 +545,7 @@ namespace vulkan_renderer {
 			else
 			{
 				// This is extremely unlike but still we have to account for his.
-				cout << "A graphics card has been disqualified because it received a score of 0" << endl;
+				spdlog::debug("A graphics card has been disqualified because it received a score of 0.");
 			}
 		}
 
@@ -555,7 +556,7 @@ namespace vulkan_renderer {
 		// It should be extremy unlikely that a graphics card gets a score of zero after all!
 		for(std::multimap<std::size_t, VkPhysicalDevice>::const_iterator candidate_iterator = graphics_cards_candidates.begin(); candidate_iterator != graphics_cards_candidates.end(); candidate_iterator++)
 		{
-			cout << "Score: " << candidate_iterator->first << endl;
+			spdlog::debug("Score: {}", candidate_iterator->first);
 
 			// We can be sure that the candidate's score is greater than 0 because of the aforementioned code block.
 			return candidate_iterator->second;
@@ -634,8 +635,8 @@ namespace vulkan_renderer {
 			}
 		}
 
-		cout << "Info: VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device." << endl;
-		cout << "Let's see if VK_PRESENT_MODE_FIFO_KHR is supported." << endl;
+		spdlog::warn("Info: VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device.");
+		spdlog::warn("Let's see if VK_PRESENT_MODE_FIFO_KHR is supported.");
 
 		for(auto present_mode : available_present_modes)
 		{
@@ -650,7 +651,7 @@ namespace vulkan_renderer {
 			}
 		}
 		
-		cout << "Info: VK_PRESENT_MODE_FIFO_KHR is not supported by the regarded device." << endl;
+		spdlog::warn("VK_PRESENT_MODE_FIFO_KHR is not supported by the regarded device.");
 
 		// Lets try with any present mode available!
 		if(available_present_modes.size() > 0)
@@ -659,7 +660,7 @@ namespace vulkan_renderer {
 			return available_present_modes[0];
 		}
 
-		cout << "Error: The selected graphics card does not support any presentation at all!" << endl;
+		spdlog::critical("The selected graphics card does not support any presentation at all!");
 		
 		return std::nullopt;
 	}
@@ -703,7 +704,7 @@ namespace vulkan_renderer {
 		// First check how many queue families are available.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+		spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
 
 		// Preallocate memory for the available queue families.
 		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -740,7 +741,7 @@ namespace vulkan_renderer {
 		// First check how many queue families are available.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+		spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
 
 		// Preallocate memory for the available queue families.
 		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -783,7 +784,7 @@ namespace vulkan_renderer {
 		// First check how many queue families are available.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+		spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
 
 		// Preallocate memory for the available queue families.
 		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -822,7 +823,7 @@ namespace vulkan_renderer {
 		// First check how many queue families are available.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+		spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
 
 		// Preallocate memory for the available queue families.
 		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -862,7 +863,7 @@ namespace vulkan_renderer {
 		// First check how many queue families are available.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-		cout << "There are " << number_of_available_queue_families << " queue families available." << endl;
+		spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
 
 		// Preallocate memory for the available queue families.
 		std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -892,7 +893,7 @@ namespace vulkan_renderer {
 					// Check if we can use this queue family for presentation as well.
 					if(presentation_available)
 					{
-						cout << "Found one queue family for both graphics and presentation." << endl;
+						spdlog::debug("Found one queue family for both graphics and presentation.");
 						return this_queue_family_index;
 					}
 				}

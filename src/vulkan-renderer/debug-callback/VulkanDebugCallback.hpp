@@ -21,8 +21,27 @@ namespace vulkan_renderer {
 																	 const char* pMessage,
 																	 void* pUserData) 
 	{
-		// TODO: Embedd spdlog.
-		cout << pMessage << endl;
+		if(flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT)
+		{
+			spdlog::info(pMessage);
+		}
+		else if(flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT)
+		{
+			spdlog::debug(pMessage);
+		}
+		else if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+		{
+			spdlog::error(pMessage);
+		}
+		else if(flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+		{
+			spdlog::warn(pMessage);
+		}
+		else
+		{
+			spdlog::warn(pMessage);
+		}
+
 		return VK_FALSE;
 	}
 

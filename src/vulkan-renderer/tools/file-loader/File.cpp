@@ -38,7 +38,7 @@ namespace tools {
 
 		if(file_to_load.is_open())
 		{
-			cout << "File " << file_name.c_str() << " has been opened." << endl;
+			spdlog::debug("File {} has been opened.", file_name);
 
 			// Read the size of the file.
 			file_size = file_to_load.tellg();
@@ -55,13 +55,13 @@ namespace tools {
 			// Close the file stream.
 			file_to_load.close();
 
-			cout << "File " << file_name.c_str() << " has been closed." << endl;
+			spdlog::debug("File {} has been closed.", file_name.c_str());
 
 			return true;
 		}
 		else
 		{
-			cout << "Could not open shader!" << endl;
+			spdlog::error("Could not open shader!");
 			return false;
 		}
 

@@ -48,8 +48,8 @@ namespace vulkan_renderer {
 		}
 		else
 		{
-			std::cout << "Warning: " << VK_EXT_DEBUG_MARKER_EXTENSION_NAME << " not present, debug markers are disabled.";
-			std::cout << "Try running from inside a Vulkan graphics debugger (e.g. RenderDoc)" << std::endl;
+			spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+			spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
 		}
 	}
 

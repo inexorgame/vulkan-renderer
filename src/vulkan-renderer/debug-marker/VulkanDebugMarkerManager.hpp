@@ -3,10 +3,11 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
-#include <iostream>
 #include <assert.h>
 
 #include <glm/glm.hpp>
+
+#include <spdlog/spdlog.h>
 
 
 namespace inexor {

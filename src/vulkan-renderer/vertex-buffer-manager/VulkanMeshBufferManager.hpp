@@ -14,6 +14,8 @@
 
 #include <vector>
 
+#include <spdlog/spdlog.h>
+
 
 namespace inexor {
 namespace vulkan_renderer {

@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <iostream>
+
+#include <spdlog/spdlog.h>
 
 #include <vulkan/vulkan.h>
 
@@ -24,6 +25,18 @@ namespace vulkan_renderer {
 	// @param error_message The error message.
 	// @param message_box_title The title of the message box.
 	void display_error_message(const std::string& error_message, const std::string& message_box_title = "Error");
+	
+	
+	/// 
+	/// 
+	/// 
+	void display_fatal_error_message(const std::string& error_message, const std::string& message_box_title = "Fatal Error");
+	
+
+	/// 
+	/// 
+	/// 
+	void display_warning_message(const std::string& warning_message, const std::string& message_box_title = "Warning");
 
 	// @brief Generalises error handling.
 	// @param result The result which is to be validated.

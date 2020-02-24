@@ -2,8 +2,9 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 #include <fstream>
+
+#include <spdlog/spdlog.h>
 
 #include <assert.h>
 

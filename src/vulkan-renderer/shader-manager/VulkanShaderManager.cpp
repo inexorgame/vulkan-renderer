@@ -19,6 +19,8 @@ namespace vulkan_renderer {
 	void VulkanShaderManager::initialise(const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance)
 	{
 		assert(debug_marker_manager_instance);
+
+		spdlog::debug("Initialising Vulkan shader manager.");
 		dbg_marker_manager = debug_marker_manager_instance;
 	}
 
@@ -29,6 +31,8 @@ namespace vulkan_renderer {
 		assert(SPIRV_shader_bytes.size()>0);
 		assert(dbg_marker_manager);
 		
+		spdlog::debug("SPIR-V shader byte size: {}.", SPIRV_shader_bytes.size());
+
 		VkShaderModuleCreateInfo shader_create_info = {};
 	
 		shader_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -50,6 +54,8 @@ namespace vulkan_renderer {
 		assert(shader_name.length()>0);
 		assert(SPIRV_shader_bytes.size()>0);
 		assert(dbg_marker_manager);
+
+		spdlog::debug("Creating shader {} from byte buffer.", shader_name.c_str());
 		
 		InexorVulkanShader new_shader;
 
@@ -81,6 +87,8 @@ namespace vulkan_renderer {
 		assert(vulkan_device);
 		assert(SPIRV_shader_file_name.length()>0);
 		assert(dbg_marker_manager);
+		
+		spdlog::debug("Creating shader {} from file.", SPIRV_shader_file_name.c_str());
 
 		InexorVulkanShader new_fragment_shader;
 
@@ -121,9 +129,12 @@ namespace vulkan_renderer {
 		assert(vulkan_device);
 		assert(dbg_marker_manager);
 
+		spdlog::debug("Shutting down shader manager.");
+
 		for(std::size_t i=0; i<shaders.size(); i++)
 		{
-			//cout << "Destroying shader module " << shaders[i].get_shader_name().c_str() << endl;
+			spdlog::debug("Destroying shader module {}.", shaders[i].get_shader_name());
+			
 			vkDestroyShaderModule(vulkan_device, shaders[i].get_shader_module(), nullptr);
 		}
 	}

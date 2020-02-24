@@ -5,6 +5,8 @@
 #include "initialisation/VulkanInitialisation.hpp"
 #include "tools/argument-parser/CommandLineArgumentParser.hpp"
 
+#include <spdlog/spdlog.h>
+
 
 // Change these definitions if you want to fork the renderer!
 #define INEXOR_ENGINE_VERSION       VK_MAKE_VERSION(1,0,0)

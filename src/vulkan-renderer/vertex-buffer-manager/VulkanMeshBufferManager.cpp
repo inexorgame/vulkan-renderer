@@ -1,8 +1,6 @@
 #include "VulkanMeshBufferManager.hpp"
 #include "../error-handling/VulkanErrorHandling.hpp"
 
-using namespace std;
-
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -29,8 +27,9 @@ namespace vulkan_renderer {
 		vma_allocator_handle = vma_allocator;
 		vulkan_data_transfer_queue = data_transfer_queue;
 		dbg_marker_manager = debug_marker_manager_instance;
-
-		cout << "Creating command pool for vertex buffer manager." << endl;
+		
+		spdlog::debug("Initialising Vulkan mesh buffer manager.");
+		spdlog::debug("Creating command pool for mesh buffer manager.");
 
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
@@ -44,8 +43,8 @@ namespace vulkan_renderer {
 		// Create a second command pool for all commands that are going to be executed in the data transfer queue.
 		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &data_transfer_command_pool);
 		vulkan_error_check(result);
-
-		cout << "Creating command pool for vertex buffer manager." << endl;
+		
+		spdlog::debug("Creating command pool for mesh buffer manager.");
 		
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 
@@ -53,6 +52,8 @@ namespace vulkan_renderer {
 		command_buffer_allocate_info.commandPool        = data_transfer_command_pool;
 		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		command_buffer_allocate_info.commandBufferCount = 1;
+
+		spdlog::debug("Allocating command buffers for mesh buffer manager.");
 
 		// Allocate a command buffer for data transfer commands.
 		result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &data_transfer_command_buffer);
@@ -68,6 +69,8 @@ namespace vulkan_renderer {
 	{
 		assert(vma_allocator_handle);
 		assert(dbg_marker_manager);
+		
+		spdlog::debug("Creating a mesh buffer.");
 
 		buffer_object.create_info.sType            = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		buffer_object.create_info.size             = buffer_object.size;
@@ -91,6 +94,8 @@ namespace vulkan_renderer {
 
 		// TODO: Add debug markers?
 
+		spdlog::debug("Uploading mesh data from CPU to GPU using staging buffers.");
+
 		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
 		submit_info.commandBufferCount = 1;
@@ -108,6 +113,8 @@ namespace vulkan_renderer {
 		result = vkQueueWaitIdle(vulkan_data_transfer_queue);
 		vulkan_error_check(result);
 
+		spdlog::debug("Uploading finished.");
+
 		return result;
 	}
 
@@ -119,6 +126,12 @@ namespace vulkan_renderer {
 		assert(data_transfer_command_pool);
 		assert(dbg_marker_manager);
 
+		spdlog::debug("Creating new mesh buffer for {} vertices.", vertices.size());
+
+		spdlog::warn("This vertex buffer doesn't have an associated index buffer!");
+		spdlog::warn("Using index buffers can improve performance significantly!");
+
+
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
 		// It is highly advised to use a staging buffer which will be filled with the vertex data.
 		// Once the staging buffer is filled, a queue command can be executed to use a transfer queue
@@ -126,6 +139,8 @@ namespace vulkan_renderer {
 		
 		// Calculate the size of the vertex buffer and the index buffer.
 		std::size_t vertex_buffer_size = sizeof(InexorVertex) * vertices.size();
+
+		spdlog::debug("Creating staging vertex buffer.");
 
 		// Create a staging vertex buffer.
 		InexorBuffer staging_vertex_buffer(vertex_buffer_size);
@@ -140,11 +155,15 @@ namespace vulkan_renderer {
 		// TODO: Take a name as parameter!
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Staging vertex buffer for?..");
 
+		spdlog::debug("Copying mesh data from RAM to staging vertex buffer.");
+
 		// Copy the vertex data to the staging vertex bufer.
 		std::memcpy(staging_vertex_buffer.allocation_info.pMappedData, vertices.data(), vertex_buffer_size);
 
 		// No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
 		
+		spdlog::debug("Creating vertex buffer.");
+
 		InexorBuffer vertex_buffer(vertex_buffer_size);
 
 		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
@@ -157,6 +176,7 @@ namespace vulkan_renderer {
 		// TODO: Take a name as parameter!
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Vertex buffer for?..");
 
+		spdlog::debug("Specifying copy region of staging vertex buffer.");
 
 		VkBufferCopy vertex_buffer_copy_region = {};
 
@@ -181,10 +201,15 @@ namespace vulkan_renderer {
 		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 		cmd_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+		spdlog::debug("Beginning command buffer recording for copy command.");
+
 		result = vkBeginCommandBuffer(data_transfer_command_buffer, &cmd_buffer_begin_info);
 		vulkan_error_check(result);
 
+		spdlog::debug("Specifying copy operation in command buffer.");
 		vkCmdCopyBuffer(data_transfer_command_buffer, staging_vertex_buffer.buffer, vertex_buffer.buffer, 1, &vertex_buffer_copy_region);
+
+		spdlog::debug("Ending command buffer recording for copy command.");
 
 		// End command buffer recording.
 		result = vkEndCommandBuffer(data_transfer_command_buffer);
@@ -193,9 +218,12 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return result;
 		}
+		
 
 		// Submit buffer copy command to data transfer queue.
 		upload_data_to_gpu();
+		
+		spdlog::debug("Storing mesh buffer in output.");
 
 		// Store the vertex buffer.
 		mesh_buffer.vertex_buffer = vertex_buffer;
@@ -208,6 +236,8 @@ namespace vulkan_renderer {
 
 		// Add this buffer to the list.
 		list_of_meshes.push_back(mesh_buffer);
+		
+		spdlog::debug("Destroying staging vertex buffer.");
 
 		// Destroy staging vertex buffer and its memory!
 		vmaDestroyBuffer(vma_allocator_handle, staging_vertex_buffer.buffer, staging_vertex_buffer.allocation);
@@ -225,6 +255,7 @@ namespace vulkan_renderer {
 		assert(data_transfer_command_buffer);
 		assert(dbg_marker_manager);
 
+
 		// In general, it is inefficient to use normal memory mapping to a vertex buffer.
 		// It is highly advised to use a staging buffer which will be filled with the vertex data.
 		// Once the staging buffer is filled, a queue command can be executed to use a transfer queue
@@ -233,7 +264,11 @@ namespace vulkan_renderer {
 		// Calculate the size of the vertex buffer and the index buffer.
 		std::size_t vertex_buffer_size = sizeof(InexorVertex) * vertices.size();
 		std::size_t index_buffer_size = sizeof(InexorVertex) * indices.size();
+		
+		spdlog::debug("Creating new mesh buffer for {} vertices.", vertex_buffer_size);
+		spdlog::debug("Creating new mesh buffer for {} indices.", index_buffer_size);
 
+		spdlog::debug("Creating staging vertex buffer.");
 
 		// Create a staging vertex buffer.
 		InexorBuffer staging_vertex_buffer(vertex_buffer_size);
@@ -247,12 +282,16 @@ namespace vulkan_renderer {
 
 		// TODO: Take a name as parameter!
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Staging vertex buffer for?..");
+		
+		spdlog::debug("Copying mesh data from RAM to staging index buffer.");
 
 		// Copy the vertex data to the staging vertex bufer.
 		std::memcpy(staging_vertex_buffer.allocation_info.pMappedData, vertices.data(), vertex_buffer_size);
 
 		// No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
 
+		
+		spdlog::debug("Creating staging index buffer.");
 
 		InexorBuffer staging_index_buffer(index_buffer_size);
 
@@ -265,6 +304,8 @@ namespace vulkan_renderer {
 
 		// TODO: Take a name as parameter!
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Staging index buffer for?..");
+		
+		spdlog::debug("Copying mesh data from RAM to staging index buffer.");
 
 		// Copy the index data to the staging index buffer.
 		std::memcpy(staging_index_buffer.allocation_info.pMappedData, indices.data(), index_buffer_size);
@@ -294,12 +335,17 @@ namespace vulkan_renderer {
 		// TODO: Take a name as parameter!
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "Index buffer for?..");
 
+		
+		spdlog::debug("Specifying copy region of staging vertex buffer.");
+
 		VkBufferCopy vertex_buffer_copy_region = {};
 
 		vertex_buffer_copy_region.srcOffset = 0;
 		vertex_buffer_copy_region.dstOffset = 0;
 		vertex_buffer_copy_region.size      = vertex_buffer.create_info.size;
+		
 
+		spdlog::debug("Specifying copy region of staging index buffer.");
 
 		VkBufferCopy index_buffer_copy_region = {};
 
@@ -323,12 +369,21 @@ namespace vulkan_renderer {
 		// the copy operation has finished executing. It’s good practice to tell the driver about our intent
 		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 		cmd_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		
+		spdlog::debug("Beginning command buffer recording for copy commands.");
 
 		result = vkBeginCommandBuffer(data_transfer_command_buffer, &cmd_buffer_begin_info);
 		vulkan_error_check(result);
-
+		
+		spdlog::debug("Specifying vertex buffer copy operation in command buffer.");
+		
 		vkCmdCopyBuffer(data_transfer_command_buffer, staging_vertex_buffer.buffer, vertex_buffer.buffer, 1, &vertex_buffer_copy_region);
+		
+		spdlog::debug("Specifying index buffer copy operation in command buffer.");
+		
 		vkCmdCopyBuffer(data_transfer_command_buffer, staging_index_buffer.buffer, index_buffer.buffer, 1, &index_buffer_copy_region);
+		
+		spdlog::debug("Ending command buffer recording for copy commands.");
 
 		// End command buffer recording.
 		result = vkEndCommandBuffer(data_transfer_command_buffer);
@@ -340,6 +395,8 @@ namespace vulkan_renderer {
 
 		// Submit buffer copy command to data transfer queue.
 		upload_data_to_gpu();
+
+		spdlog::debug("Storing mesh buffer in output.");
 
 		// Store the vertex buffer.
 		mesh_buffer.vertex_buffer = vertex_buffer;
@@ -357,9 +414,13 @@ namespace vulkan_renderer {
 		// Add this buffer to the list.
 		list_of_meshes.push_back(mesh_buffer);
 
+		spdlog::debug("Destroying staging vertex buffer.");
+
 		// Destroy staging vertex buffer and its memory!
 		vmaDestroyBuffer(vma_allocator_handle, staging_vertex_buffer.buffer, staging_vertex_buffer.allocation);
 		
+		spdlog::debug("Destroying staging index buffer.");
+
 		// Destroy staging index buffer and its memory!
 		vmaDestroyBuffer(vma_allocator_handle, staging_index_buffer.buffer, staging_index_buffer.allocation);
 
@@ -376,6 +437,8 @@ namespace vulkan_renderer {
 		// Loop through all vertex buffers and release their memoy.
 		for(const auto& mesh_buffer : list_of_meshes)
 		{
+			spdlog::debug("Destroying vertex buffer (name?).");
+
 			// Destroy vertex buffer.		
 			vmaDestroyBuffer(vma_allocator_handle, mesh_buffer.vertex_buffer.buffer, mesh_buffer.vertex_buffer.allocation);
 
@@ -384,12 +447,14 @@ namespace vulkan_renderer {
 			// Destroy index buffer if existent.
 			if(mesh_buffer.index_buffer_available)
 			{
+				spdlog::debug("Destroying index buffer (name?).");
+
 				vmaDestroyBuffer(vma_allocator_handle, mesh_buffer.index_buffer.buffer, mesh_buffer.index_buffer.allocation);
 			}
 		}
 
-		cout << "Destroying command pool for vertex buffer manager." << endl;
-		
+		spdlog::debug("Destroying command pool for vertex buffer manager.");
+
 		vkDestroyCommandPool(vulkan_device, data_transfer_command_pool, nullptr);
 	}
 

@@ -8,7 +8,8 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
+
+#include <spdlog/spdlog.h>
 
 
 namespace inexor {

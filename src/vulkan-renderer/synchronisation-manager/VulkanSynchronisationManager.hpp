@@ -4,11 +4,12 @@
 
 #include <mutex>
 #include <vector>
-#include <iostream>
 #include <optional>
 #include <unordered_map>
 
 #include <assert.h>
+
+#include <spdlog/spdlog.h>
 
 #include <Vulkan/vulkan.h>
 

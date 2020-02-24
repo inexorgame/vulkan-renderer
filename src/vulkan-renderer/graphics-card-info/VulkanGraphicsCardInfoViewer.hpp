@@ -1,9 +1,10 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <assert.h>
+
+#include <spdlog/spdlog.h>
 
 #include <vulkan/vulkan.h>
 
