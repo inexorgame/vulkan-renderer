@@ -21,8 +21,7 @@ function(assign_source_group)
     endforeach()
 endfunction(assign_source_group)
 
-# This was taken from SaschaWillems excellent GitHub repository.
-# Use FindVulkan module added with CMAKE 3.7
+
 if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
 	message(STATUS "Using module to find Vulkan")
 	find_package(Vulkan)
@@ -46,15 +45,21 @@ conan_cmake_run(CONANFILE conanfile.py
                 PROFILE_AUTO build_type
                 KEEP_RPATHS
 )
+
 # Use the folder structure in source code directory as project structure in Visual Studio.
 assign_source_group(${source_files})
 
 add_executable(inexor-vulkan-renderer src/main.cpp ${source_files})
 
-target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
+conan_target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 
+# Use C++17!
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 
-target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+IF(WIN32)
+	target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+ENDIF()
+
 target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
+
 target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)

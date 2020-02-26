@@ -23,9 +23,6 @@ class InexorConan(ConanFile):
 
     generators = "cmake"
 
-    default_options = {
-    }
-
     def imports(self):
         # Copies all dll files from packages bin folder to my "bin" folder (win)
         self.copy("*.dll", dst="bin", src="bin")
