@@ -330,32 +330,7 @@ namespace vulkan_renderer {
 	}
 	
 
-	VkResult VulkanRenderer::create_vertex_buffers()
-	{
-		assert(debug_marker_manager);
-		
-		spdlog::debug("Creating vertex buffers.");
-		
-		const std::vector<InexorVertex> vertices =
-		{
-			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-		};
-
-		const std::vector<uint32_t> indices =
-		{
-			0, 1, 2, 2, 3, 0
-		};
-
-		VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, example_vertex_buffer);
-		
-		return result;
-	}
-
-
-	VkResult VulkanRenderer::record_command_buffers()
+	VkResult VulkanRenderer::record_command_buffers(const std::vector<InexorMeshBuffer>& mesh_buffers)
 	{
 		assert(debug_marker_manager);
 		
@@ -400,37 +375,41 @@ namespace vulkan_renderer {
 
 			VkDeviceSize offsets[] = {0};
 
-			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &example_vertex_buffer.vertex_buffer.buffer, offsets);
 
-			
-			if(example_vertex_buffer.index_buffer_available)
-			{	
-				spdlog::debug("Recording indexed drawing of (name?).");
-
-				debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
-				
-				// Use the index buffer as well!
-				vkCmdBindIndexBuffer(command_buffers[i], example_vertex_buffer.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-				
-				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
-
-				// Draw using index buffer + vertex buffer.
-				vkCmdDrawIndexed(command_buffers[i], example_vertex_buffer.number_of_indices, 1, 0, 0, 0);
-				
-				debug_marker_manager->end_region(command_buffers[i]);
-			}
-			else
+			for(std::size_t j=0; j<mesh_buffers.size(); j++)
 			{
-				spdlog::debug("Recording drawing of (name?). (No index buffer!)");
+				vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &mesh_buffers[j].vertex_buffer.buffer, offsets);
 
-				debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
+				if(mesh_buffers[j].index_buffer_available)
+				{	
+					spdlog::debug("Recording indexed drawing of (name?).");
 
-				vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
-
-				// Draw using vertex buffer only. No index buffer specified.
-				vkCmdDraw(command_buffers[i], example_vertex_buffer.number_of_vertices, 1, 0, 0);
+					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
 				
-				debug_marker_manager->end_region(command_buffers[i]);
+					// Use the index buffer as well!
+					vkCmdBindIndexBuffer(command_buffers[i], mesh_buffers[j].index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+				
+					vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
+
+					// Draw using index buffer + vertex buffer.
+					vkCmdDrawIndexed(command_buffers[i], mesh_buffers[j].number_of_indices, 1, 0, 0, 0);
+				
+					debug_marker_manager->end_region(command_buffers[i]);
+				}
+				else
+				{
+					spdlog::debug("Recording drawing of (name?). (No index buffer!)");
+
+					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
+
+					vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
+
+					// Draw using vertex buffer only. No index buffer specified.
+					vkCmdDraw(command_buffers[i], mesh_buffers[j].number_of_vertices, 1, 0, 0);
+				
+					debug_marker_manager->end_region(command_buffers[i]);
+				}
+
 			}
 
 			vkCmdEndRenderPass(command_buffers[i]);
@@ -678,7 +657,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanRenderer::recreate_swapchain()
+	VkResult VulkanRenderer::recreate_swapchain(std::vector<InexorMeshBuffer>& mesh_buffers)
 	{
 		assert(device);
 
@@ -723,7 +702,7 @@ namespace vulkan_renderer {
 		result = create_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
-		result = record_command_buffers();
+		result = record_command_buffers(mesh_buffers);
 		if(VK_SUCCESS != result) return result;
 
 		return VK_SUCCESS;

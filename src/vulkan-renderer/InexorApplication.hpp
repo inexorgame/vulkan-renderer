@@ -4,6 +4,7 @@
 #include "error-handling/VulkanErrorHandling.hpp"
 #include "initialisation/VulkanRenderer.hpp"
 #include "tools/argument-parser/CommandLineArgumentParser.hpp"
+#include "vertex-buffer-manager/InexorMeshBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -39,7 +40,12 @@ namespace vulkan_renderer {
 
 		private:
 			
+			// 
 			std::size_t current_frame = 0;
+			
+			// 
+			std::vector<InexorMeshBuffer> mesh_buffers;
+
 
 		private:
 
@@ -63,6 +69,7 @@ namespace vulkan_renderer {
 
 			/// @brief Destroy the window and shutdown Vulkan.
 			void cleanup();
+
 
 	};
 

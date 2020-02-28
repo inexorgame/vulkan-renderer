@@ -26,6 +26,7 @@
 #include "../debug-marker/VulkanDebugMarkerManager.hpp"
 #include "../queue-manager/VulkanQueueManager.hpp"
 #include "../time-step/InexorTimeStep.hpp"
+#include "../vertex-buffer-manager/InexorMeshBuffer.hpp"
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
@@ -59,7 +60,7 @@ namespace vulkan_renderer {
 							public VulkanMeshBufferManager,
 							public VulkanQueueManager,
 							public InexorTimeStep
-							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager, VulkanQueueManager?
+							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
 		public:
 
@@ -77,14 +78,12 @@ namespace vulkan_renderer {
 		protected:
 
 			// Vulkan Memory Allocator
-			// TODO: Text here!
+			// Vulkan requires you to manage video memory for every type of resource like textures or vertex buffers manually.
+			// To avoid having to do the memory management explicitely, we will use the famous Vulkan memory allocator library by AMD.
 			VmaAllocator vma_allocator;
 			
 			// The debug marker manager instance.
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
-			
-			// TODO: Refactor!
-			InexorMeshBuffer example_vertex_buffer, example_vertex_buffer2;
 
 			// The Vulkan instance handle.
 			VkInstance instance;
@@ -213,12 +212,8 @@ namespace vulkan_renderer {
 			VkResult create_command_buffers();
 
 
-			/// @brief Creates the vertex buffers.
-			VkResult create_vertex_buffers();
-
-
 			/// @brief Records the command buffers.
-			VkResult record_command_buffers();
+			VkResult record_command_buffers(const std::vector<InexorMeshBuffer>& buffers);
 
 
 			/// @brief Creates the semaphores neccesary for synchronisation.
@@ -250,7 +245,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Recreates the swapchain.
-			VkResult recreate_swapchain();
+			VkResult recreate_swapchain(std::vector<InexorMeshBuffer>& mesh_buffers);
 
 
 			/// @brief Creates the command pool.

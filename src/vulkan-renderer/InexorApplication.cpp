@@ -102,7 +102,7 @@ namespace vulkan_renderer {
 		{
 			// VK_ERROR_OUT_OF_DATE_KHR: The swap chain has become incompatible with the surface
 			// and can no longer be used for rendering. Usually happens after a window resize.
-			return recreate_swapchain();
+			return recreate_swapchain(mesh_buffers);
 		}
 
 		// Did something else fail?
@@ -153,7 +153,7 @@ namespace vulkan_renderer {
 		if(VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result || frame_buffer_resized)
 		{
 			frame_buffer_resized = false;
-			recreate_swapchain();
+			recreate_swapchain(mesh_buffers);
 		}
 		
         current_frame = (current_frame + 1) % INEXOR_MAX_FRAMES_IN_FLIGHT;
@@ -161,6 +161,35 @@ namespace vulkan_renderer {
 		return VK_SUCCESS;
 	}
 	
+
+	VkResult InexorApplication::load_models()
+	{
+		assert(debug_marker_manager);
+		
+		spdlog::debug("Creating vertex buffers.");
+		
+		std::size_t number_of_buffers = 1;
+
+		mesh_buffers.resize(number_of_buffers);
+
+		const std::vector<InexorVertex> vertices =
+		{
+			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+		};
+
+		const std::vector<uint32_t> indices =
+		{
+			0, 1, 2, 2, 3, 0
+		};
+
+		VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, mesh_buffers[0]);
+		
+		return result;
+	}
+
 
 	VkResult InexorApplication::init()
 	{
@@ -436,10 +465,10 @@ namespace vulkan_renderer {
 		result = create_command_buffers();
 		vulkan_error_check(result);
 
-		result = create_vertex_buffers();
+		result = load_models();
 		vulkan_error_check(result);
 
-		result = record_command_buffers();
+		result = record_command_buffers(mesh_buffers);
 		vulkan_error_check(result);
 
 		result = create_synchronisation_objects();
