@@ -26,14 +26,14 @@ namespace vulkan_renderer {
 	/// @class InexorRenderer
 	/// @brief Inexor's Vulkan API rendering engine.
 	/// @note Now I am become renderer, the drawer of worlds.
-	class InexorRenderer : public VulkanInitialisation, 
-	                       public tools::CommandLineArgumentParser
+	class InexorApplication : public VulkanInitialisation, 
+	                          public tools::CommandLineArgumentParser
 	{
 		public:
 
-			InexorRenderer();
+			InexorApplication();
 			
-			~InexorRenderer();
+			~InexorApplication();
 
 
 		private:

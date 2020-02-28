@@ -1,4 +1,4 @@
-#include "vulkan-renderer/InexorRenderer.hpp"
+#include "vulkan-renderer/InexorApplication.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -9,13 +9,13 @@ using namespace inexor::vulkan_renderer;
 
 int main(int argc, char* argv[])
 {
-    InexorRenderer renderer;
+    InexorApplication renderer;
     
     spdlog::set_level(spdlog::level::debug);
     
     spdlog::set_pattern("[%t][%H:%M:%S.%e][%^%l%$] %v");
     
-    spdlog::info("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+    spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 
     spdlog::debug("Parsing command line arguments.");
     

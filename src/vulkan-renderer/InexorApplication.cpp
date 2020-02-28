@@ -1,4 +1,4 @@
-#include "InexorRenderer.hpp"
+#include "InexorApplication.hpp"
 #include "debug-callback/VulkanDebugCallback.hpp"
 
 
@@ -21,17 +21,17 @@ namespace vulkan_renderer {
 	}
 
 
-	InexorRenderer::InexorRenderer()
+	InexorApplication::InexorApplication()
 	{
 	}
 
 
-	InexorRenderer::~InexorRenderer()
+	InexorApplication::~InexorApplication()
 	{
 	}
 
 
-	VkResult InexorRenderer::load_shaders()
+	VkResult InexorApplication::load_shaders()
 	{
 		assert(device);
 
@@ -76,7 +76,7 @@ namespace vulkan_renderer {
 
 
 	// TODO: Refactor rendering!
-	VkResult InexorRenderer::draw_frame()
+	VkResult InexorApplication::draw_frame()
 	{
 		assert(device);
 		assert(graphics_queue);
@@ -162,7 +162,7 @@ namespace vulkan_renderer {
 	}
 	
 
-	VkResult InexorRenderer::init()
+	VkResult InexorApplication::init()
 	{
 		spdlog::debug("Initialising vulkan-renderer.");
 		spdlog::debug("Creating window.");
@@ -464,7 +464,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorRenderer::run()
+	void InexorApplication::run()
 	{
 		spdlog::debug("Running InexorRenderer application.");
 
@@ -477,7 +477,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorRenderer::cleanup()
+	void InexorApplication::cleanup()
 	{
 		spdlog::debug("Cleaning up InexorRenderer.");
 
