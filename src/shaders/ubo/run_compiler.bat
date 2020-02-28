@@ -1,11 +1,5 @@
-glslangValidator.exe -H vertexshader.vert
-glslangValidator.exe -V vertexshader.vert
+glslangValidator.exe -V vertexshader.vert -o vertexshader.spv
 
-pause
-
-cls
-
-glslangValidator.exe -H fragmentshader.frag
-glslangValidator.exe -V fragmentshader.frag
+glslangValidator.exe -V fragmentshader.frag -o fragmentshader.spv
 
 pause
