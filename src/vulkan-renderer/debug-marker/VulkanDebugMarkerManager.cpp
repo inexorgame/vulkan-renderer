@@ -104,7 +104,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& color)
+	void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color)
 	{
 		assert(command_buffer);
 		assert(debug_marker_name.length()>0);
@@ -112,19 +112,22 @@ namespace vulkan_renderer {
 		// Check for valid function pointer (may not be present if not running in a debugging application)
 		if(active)
 		{
-			VkDebugMarkerMarkerInfoEXT markerInfo = {};
+			VkDebugMarkerMarkerInfoEXT debug_marker_info = {};
 
-			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-			memcpy(markerInfo.color, &color[0], sizeof(float) * 4);
-			markerInfo.pMarkerName = debug_marker_name.c_str();
+			debug_marker_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+			debug_marker_info.color[0]    = debug_marker_color[0];
+			debug_marker_info.color[1]    = debug_marker_color[1];
+			debug_marker_info.color[2]    = debug_marker_color[2];
+			debug_marker_info.color[3]    = debug_marker_color[3];
+			debug_marker_info.pMarkerName = debug_marker_name.c_str();
 
 			assert(vkCmdDebugMarkerBegin);
-			vkCmdDebugMarkerBegin(command_buffer, &markerInfo);
+			vkCmdDebugMarkerBegin(command_buffer, &debug_marker_info);
 		}
 	}
 
 
-	void VulkanDebugMarkerManager::insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, glm::vec4 debug_marker_color)
+	void VulkanDebugMarkerManager::insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color)
 	{
 		assert(command_buffer);
 		assert(debug_marker_name.length()>0);
@@ -134,8 +137,11 @@ namespace vulkan_renderer {
 		{
 			VkDebugMarkerMarkerInfoEXT debug_marker_info = {};
 					
-			debug_marker_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-			memcpy(debug_marker_info.color, &debug_marker_color[0], sizeof(float) * 4);
+			debug_marker_info.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+			debug_marker_info.color[0]    = debug_marker_color[0];
+			debug_marker_info.color[1]    = debug_marker_color[1];
+			debug_marker_info.color[2]    = debug_marker_color[2];
+			debug_marker_info.color[3]    = debug_marker_color[3];
 			debug_marker_info.pMarkerName = debug_marker_name.c_str();
 
 			assert(vkCmdDebugMarkerInsert);

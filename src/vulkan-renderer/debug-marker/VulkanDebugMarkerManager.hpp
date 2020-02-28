@@ -68,11 +68,11 @@ namespace vulkan_renderer {
 
 
 			// Start a new debug marker region
-			void bind_region(const VkCommandBuffer& cmdbuffer, const std::string& debug_marker_name, const glm::vec4& color);
+			void bind_region(const VkCommandBuffer& cmdbuffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color);
 
 
 			// Insert a new debug marker into the command buffer
-			void insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, glm::vec4 debug_marker_color);
+			void insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color);
 
 
 			// End the current debug marker region
