@@ -39,11 +39,11 @@ namespace vulkan_renderer {
 		uint32_t engine_minor = VK_VERSION_MINOR(engine_version);
 		uint32_t engine_patch = VK_VERSION_PATCH(engine_version);
 
-		spdlog::info("Initialising Vulkan instance.");
-		spdlog::info("Application name: {}", application_name.c_str());
-		spdlog::info("Application version: {}.{}.{}", app_major, app_minor, app_patch);
-		spdlog::info("Engine name: {}", engine_name.c_str());
-		spdlog::info("Engine version: {}.{}.{}", engine_major, engine_minor, engine_patch);
+		spdlog::debug("Initialising Vulkan instance.");
+		spdlog::debug("Application name: {}", application_name.c_str());
+		spdlog::debug("Application version: {}.{}.{}", app_major, app_minor, app_patch);
+		spdlog::debug("Engine name: {}", engine_name.c_str());
+		spdlog::debug("Engine version: {}.{}.{}", engine_major, engine_minor, engine_patch);
 
 		// TODO: Check which version of Vulkan is available before trying to create an instance!
 		// TODO: Switch to VOLK one day? This would allow for dynamic initialisation during runtime without linking vulkan libraries.
@@ -119,7 +119,7 @@ namespace vulkan_renderer {
 		};
 
 		/// RenderDoc is a modern graphics debugger written by Baldur Karlsson.
-		/// It allows many useful debugging functions!
+		/// It comes with many useful debugging functions!
 		/// https://renderdoc.org/
 		/// https://github.com/baldurk/renderdoc
 		if(enable_renderdoc_instance_layer)
@@ -197,9 +197,9 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Initialising GPU queues.");
 
-		spdlog::info("Graphics queue family index: {}.", graphics_queue_family_index.value());
-		spdlog::info("Presentation queue family index: {}.", present_queue_family_index.value());
-		spdlog::info("Data transfer queue family index: {}.", data_transfer_queue_family_index.value());
+		spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index.value());
+		spdlog::debug("Presentation queue family index: {}.", present_queue_family_index.value());
+		spdlog::debug("Data transfer queue family index: {}.", data_transfer_queue_family_index.value());
 
 		// Setup the queues for presentation and graphics.
 		// Since we only have one queue per queue family, we acquire index 0.
@@ -520,28 +520,7 @@ namespace vulkan_renderer {
 			0, 1, 2, 2, 3, 0
 		};
 
-
-		std::vector<InexorVertex> vertices2;
-
-		std::size_t number_of_vertices = std::rand() % 90 + 9;
-
-		vertices2.resize(number_of_vertices);
-
-		// Create <number_of_vertices> vertices.
-		for(std::size_t i=0; i<number_of_vertices; i++)
-		{
-			vertices2[i].color.r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			vertices2[i].color.g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			vertices2[i].color.b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-
-			vertices2[i].pos.x = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			vertices2[i].pos.y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			//vertices2[i].pos.z = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-		}
-
 		VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, example_vertex_buffer);
-		
-		//VkResult result = create_vertex_buffer(vertices2, example_vertex_buffer);
 		
 		return result;
 	}
@@ -768,7 +747,7 @@ namespace vulkan_renderer {
 		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
 		if(VK_SUCCESS != result) return result;
 
-		spdlog::info("Images in swap chain: {}.", number_of_images_in_swapchain);
+		spdlog::debug("Images in swap chain: {}.", number_of_images_in_swapchain);
 
 		if(number_of_images_in_swapchain <= 0)
 		{

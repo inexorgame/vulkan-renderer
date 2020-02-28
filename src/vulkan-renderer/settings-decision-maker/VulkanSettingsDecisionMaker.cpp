@@ -384,10 +384,10 @@ namespace vulkan_renderer {
 		else
 		{
 			// Give the user a little hint message.
-			spdlog::info("Info: No command line argument for preferred graphics card given.");
-			spdlog::info("You have more than 1 graphics card available on your machine.");
-			spdlog::info("Specify which one to use by passing -gpu <number> as command line argument.");
-			spdlog::info("Please be aware that the first index is 0.");
+			spdlog::debug("Info: No command line argument for preferred graphics card given.");
+			spdlog::debug("You have more than 1 graphics card available on your machine.");
+			spdlog::debug("Specify which one to use by passing -gpu <number> as command line argument.");
+			spdlog::debug("Please be aware that the first index is 0.");
 		}
 
 
@@ -468,7 +468,7 @@ namespace vulkan_renderer {
 			}
 			else
 			{
-				spdlog::info("Only discrete GPUs available, no integrated graphics.");
+				spdlog::debug("Only discrete GPUs available, no integrated graphics.");
 			}
 		}
 
