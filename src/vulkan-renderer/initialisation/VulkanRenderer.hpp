@@ -51,7 +51,7 @@ namespace vulkan_renderer {
 
 	/// @class VulkanInitialisation
 	/// @brief A class for initialisation of the Vulkan API.
-	class VulkanInitialisation : public VulkanGraphicsCardInfoViewer,
+	class VulkanRenderer : public VulkanGraphicsCardInfoViewer,
 								 public VulkanWindowManager,
 								 public VulkanAvailabilityChecks,
 								 public VulkanSettingsDecisionMaker,
@@ -63,9 +63,9 @@ namespace vulkan_renderer {
 	{
 		public:
 
-			VulkanInitialisation();
+			VulkanRenderer();
 
-			~VulkanInitialisation();
+			~VulkanRenderer();
 
 
 		public:

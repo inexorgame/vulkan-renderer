@@ -1,4 +1,4 @@
-#include "VulkanInitialisation.hpp"
+#include "VulkanRenderer.hpp"
 
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
@@ -14,17 +14,17 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	VulkanInitialisation::VulkanInitialisation()
+	VulkanRenderer::VulkanRenderer()
 	{
 	}
 
 
-	VulkanInitialisation::~VulkanInitialisation()
+	VulkanRenderer::~VulkanRenderer()
 	{
 	}
 
 
-	VkResult VulkanInitialisation::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer)
+	VkResult VulkanRenderer::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer)
 	{
 		assert(application_name.length()>0);
 		assert(engine_name.length()>0);
@@ -178,7 +178,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_window_surface(const VkInstance& instance, GLFWwindow* window, VkSurfaceKHR& surface)
+	VkResult VulkanRenderer::create_window_surface(const VkInstance& instance, GLFWwindow* window, VkSurfaceKHR& surface)
 	{
 		assert(window);
 		assert(surface);
@@ -189,7 +189,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::initialise_queues()
+	VkResult VulkanRenderer::initialise_queues()
 	{
 		assert(present_queue_family_index.has_value());
 		assert(graphics_queue_family_index.has_value());
@@ -217,7 +217,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_device_queues(bool use_distinct_data_transfer_queue_if_available)
+	VkResult VulkanRenderer::create_device_queues(bool use_distinct_data_transfer_queue_if_available)
 	{
 		spdlog::debug("Creating Vulkan device queues.");
 		
@@ -362,7 +362,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
+	VkResult VulkanRenderer::create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
 	{
 		assert(device);
 		assert(graphics_card);
@@ -428,7 +428,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::initialise_debug_marker_manager(const bool enable_debug_markers)
+	VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug_markers)
 	{
 		spdlog::debug("Initialising Vulkan debug marker manager.");
 
@@ -438,7 +438,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_command_pool()
+	VkResult VulkanRenderer::create_command_pool()
 	{
 		assert(device);
 		assert(command_pool);
@@ -458,7 +458,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::create_command_buffers()
+	VkResult VulkanRenderer::create_command_buffers()
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -483,7 +483,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_vma_allocator()
+	VkResult VulkanRenderer::create_vma_allocator()
 	{
 		assert(device);
 		assert(vma_allocator);
@@ -501,7 +501,7 @@ namespace vulkan_renderer {
 	}
 	
 
-	VkResult VulkanInitialisation::create_vertex_buffers()
+	VkResult VulkanRenderer::create_vertex_buffers()
 	{
 		assert(debug_marker_manager);
 		
@@ -526,7 +526,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::record_command_buffers()
+	VkResult VulkanRenderer::record_command_buffers()
 	{
 		assert(debug_marker_manager);
 		
@@ -617,7 +617,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_synchronisation_objects()
+	VkResult VulkanRenderer::create_synchronisation_objects()
 	{
 		assert(number_of_images_in_swapchain>0);
 		assert(debug_marker_manager);
@@ -648,7 +648,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_swapchain()
+	VkResult VulkanRenderer::create_swapchain()
 	{
 		assert(device);
 		assert(surface);
@@ -766,7 +766,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::cleanup_swapchain()
+	VkResult VulkanRenderer::cleanup_swapchain()
 	{
 		spdlog::debug("Cleaning up swapchain.");
 		
@@ -871,7 +871,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::recreate_swapchain()
+	VkResult VulkanRenderer::recreate_swapchain()
 	{
 		assert(device);
 
@@ -923,7 +923,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::create_descriptor_set_layout()
+	VkResult VulkanRenderer::create_descriptor_set_layout()
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -951,7 +951,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::create_descriptor_pool()
+	VkResult VulkanRenderer::create_descriptor_pool()
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -977,7 +977,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::create_descriptor_sets()
+	VkResult VulkanRenderer::create_descriptor_sets()
 	{
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
@@ -1029,7 +1029,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::update_uniform_buffer(std::size_t current_image)
+	VkResult VulkanRenderer::update_uniform_buffer(std::size_t current_image)
 	{
 		assert(vma_allocator);
 		assert(debug_marker_manager);
@@ -1054,7 +1054,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_uniform_buffers()
+	VkResult VulkanRenderer::create_uniform_buffers()
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -1079,7 +1079,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_pipeline()
+	VkResult VulkanRenderer::create_pipeline()
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -1332,7 +1332,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_frame_buffers()
+	VkResult VulkanRenderer::create_frame_buffers()
 	{
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
@@ -1368,7 +1368,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanInitialisation::create_image_views()
+	VkResult VulkanRenderer::create_image_views()
 	{
 		assert(device);
 		assert(number_of_images_in_swapchain>0);
@@ -1411,7 +1411,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanInitialisation::shutdown_vulkan()
+	VkResult VulkanRenderer::shutdown_vulkan()
 	{
 		// It is important to destroy the objects in reversal of the order of creation.
 		spdlog::debug("------------------------------------------------------------------------------------------------------------");
