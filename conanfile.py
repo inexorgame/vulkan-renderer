@@ -18,7 +18,9 @@ class InexorConan(ConanFile):
         "toml11/3.1.0",
         "imgui/1.75",
         "assimp/5.0.1",
-        "enet/1.3.14 "
+        "enet/1.3.14",
+        "stb/20190512@conan/stable",
+        "zlib/1.2.11"
     )
 
     generators = "cmake"
