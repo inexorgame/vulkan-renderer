@@ -184,189 +184,17 @@ namespace vulkan_renderer {
 		assert(surface);
 		assert(instance);
 
+		spdlog::debug("Creating window surface");
+
 		// Create a window surface using GLFW library.
 		return glfwCreateWindowSurface(instance, window, nullptr, &surface);
 	}
 
 
-	VkResult VulkanRenderer::initialise_queues()
-	{
-		assert(present_queue_family_index.has_value());
-		assert(graphics_queue_family_index.has_value());
-		assert(data_transfer_queue_family_index.has_value());
-		
-		spdlog::debug("Initialising GPU queues.");
-
-		spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index.value());
-		spdlog::debug("Presentation queue family index: {}.", present_queue_family_index.value());
-		spdlog::debug("Data transfer queue family index: {}.", data_transfer_queue_family_index.value());
-
-		// Setup the queues for presentation and graphics.
-		// Since we only have one queue per queue family, we acquire index 0.
-		vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
-		vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
-
-		// The use of data transfer queues can be forbidden by using -no_separate_data_queue.
-		if(use_distinct_data_transfer_queue && data_transfer_queue_family_index.has_value())
-		{
-			// Use a separate queue for data transfer to GPU.
-			vkGetDeviceQueue(device, data_transfer_queue_family_index.value(), 0, &data_transfer_queue);
-		}
-
-		return VK_SUCCESS;
-	}
-
-
-	VkResult VulkanRenderer::create_device_queues(bool use_distinct_data_transfer_queue_if_available)
-	{
-		spdlog::debug("Creating Vulkan device queues.");
-		
-		if(use_distinct_data_transfer_queue_if_available)
-		{
-			spdlog::debug("The application will try to use a distinct data transfer queue if it is available.");
-		}
-		else
-		{
-			spdlog::warn("The application is forced not to use a distinct data transfer queue!");
-		}
-
-		// This is neccesary since device queues might be recreated as swapchain becomes invalid.
-		device_queues.clear();
-
-		// Check if there is one queue family which can be used for both graphics and presentation.
-		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = find_queue_family_for_both_graphics_and_presentation(selected_graphics_card, surface);
-		
-		// TODO: Implement command line argument for separate queues!
-		if(queue_family_index_for_both_graphics_and_presentation.has_value())
-		{
-			spdlog::debug("One queue for both graphics and presentation will be used.");
-			
-			graphics_queue_family_index = queue_family_index_for_both_graphics_and_presentation.value();
-			
-			present_queue_family_index = graphics_queue_family_index;
-
-			use_one_queue_family_for_graphics_and_presentation = true;
-
-			// In this case, there is one queue family which can be used for both graphics and presentation.
-			VkDeviceQueueCreateInfo device_queue_create_info = {};
-
-			// For now, we only need one queue family.
-			uint32_t number_of_combined_queues_to_use = 1;
-
-			device_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			device_queue_create_info.pNext            = nullptr;
-			device_queue_create_info.flags            = 0;
-			device_queue_create_info.queueFamilyIndex = queue_family_index_for_both_graphics_and_presentation.value();
-			device_queue_create_info.queueCount       = number_of_combined_queues_to_use;
-			device_queue_create_info.pQueuePriorities = &global_queue_priority;
-
-			device_queues.push_back(device_queue_create_info);
-		}
-		else
-		{
-			spdlog::debug("No queue found which supports both graphics and presentation.");
-			spdlog::debug("The application will try to use 2 separate queues.");
-
-			// We have to use 2 different queue families.
-			// One for graphics and another one for presentation.
-			
-			// Check which queue family index can be used for graphics.
-			graphics_queue_family_index = find_graphics_queue_family(selected_graphics_card);
-			
-			if(!graphics_queue_family_index.has_value())
-			{
-				std::string error_message = "Error: Could not find suitable queue family indices for graphics!";
-				display_error_message(error_message);
-				return VK_ERROR_INITIALIZATION_FAILED;
-			}
-
-			// Check which queue family index can be used for presentation.
-			present_queue_family_index = find_presentation_queue_family(selected_graphics_card, surface);
-
-			if(!present_queue_family_index.has_value())
-			{
-				std::string error_message = "Error: Could not find suitable queue family indices for presentation!";
-				display_error_message(error_message);
-				return VK_ERROR_INITIALIZATION_FAILED;
-			}
-			
-			spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index.value());
-			spdlog::debug("Presentation queue family index: {}.", present_queue_family_index.value());
-
-			// Set up one queue for graphics.
-			VkDeviceQueueCreateInfo device_queue_create_info_for_graphics_queue = {};
-			
-			// For now, we only need one queue family.
-			uint32_t number_of_graphics_queues_to_use = 1;
-
-			device_queue_create_info_for_graphics_queue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			device_queue_create_info_for_graphics_queue.pNext            = nullptr;
-			device_queue_create_info_for_graphics_queue.flags            = 0;
-			device_queue_create_info_for_graphics_queue.queueFamilyIndex = graphics_queue_family_index.value();
-			device_queue_create_info_for_graphics_queue.queueCount       = number_of_graphics_queues_to_use;
-			device_queue_create_info_for_graphics_queue.pQueuePriorities = &global_queue_priority;
-
-			device_queues.push_back(device_queue_create_info_for_graphics_queue);
-
-
-			// Set up one queue for presentation.
-			VkDeviceQueueCreateInfo device_queue_create_info_for_presentation_queue = {};
-			
-			// For now, we only need one queue family.
-			uint32_t number_of_present_queues_to_use = 1;
-
-			device_queue_create_info_for_presentation_queue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			device_queue_create_info_for_presentation_queue.pNext            = nullptr;
-			device_queue_create_info_for_presentation_queue.flags            = 0;
-			device_queue_create_info_for_presentation_queue.queueFamilyIndex = present_queue_family_index.value();
-			device_queue_create_info_for_presentation_queue.queueCount       = number_of_present_queues_to_use;
-			device_queue_create_info_for_presentation_queue.pQueuePriorities = &global_queue_priority;
-
-			device_queues.push_back(device_queue_create_info_for_presentation_queue);
-		}
-
-
-		// Add another device queue just for data transfer.
-		data_transfer_queue_family_index = find_distinct_data_transfer_queue_family(selected_graphics_card);
-
-		if(data_transfer_queue_family_index.has_value() && use_distinct_data_transfer_queue_if_available)
-		{
-			spdlog::debug("A separate queue will be used for data transfer.");
-			spdlog::debug("Data transfer queue family index: {}.", data_transfer_queue_family_index.value());
-
-			// We have the opportunity to use a separated queue for data transfer!
-			use_distinct_data_transfer_queue = true;
-
-			VkDeviceQueueCreateInfo device_queue_for_data_transfer_create_info = {};
-
-			// For now, we only need one queue family.
-			uint32_t number_of_queues_to_use = 1;
-
-			device_queue_for_data_transfer_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			device_queue_for_data_transfer_create_info.pNext            = nullptr;
-			device_queue_for_data_transfer_create_info.flags            = 0;
-			device_queue_for_data_transfer_create_info.queueFamilyIndex = data_transfer_queue_family_index.value();
-			device_queue_for_data_transfer_create_info.queueCount       = number_of_queues_to_use;
-			device_queue_for_data_transfer_create_info.pQueuePriorities = &global_queue_priority;
-			
-			device_queues.push_back(device_queue_for_data_transfer_create_info);
-		}
-		else
-		{
-			// We don't have the opportunity to use a separated queue for data transfer!
-			// Do not create a new queue, use the graphics queue instead.
-			use_distinct_data_transfer_queue = false;
-		}
-
-		return VK_SUCCESS;
-	}
-
-	
 	VkResult VulkanRenderer::create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
 	{
 		assert(device);
 		assert(graphics_card);
-		assert(device_queues.size()>0);
 		
 		spdlog::debug("Creating physical device.");
 		
@@ -412,12 +240,14 @@ namespace vulkan_renderer {
 		}
 
 		VkDeviceCreateInfo device_create_info = {};
+
+		auto queues_to_create = VulkanQueueManager::get_queues_to_create();
 		
 		device_create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_create_info.pNext                   = nullptr;
 		device_create_info.flags                   = 0;
-		device_create_info.queueCreateInfoCount    = static_cast<uint32_t>(device_queues.size());
-		device_create_info.pQueueCreateInfos       = device_queues.data();
+		device_create_info.queueCreateInfoCount    = static_cast<uint32_t>(queues_to_create.size());
+		device_create_info.pQueueCreateInfos       = queues_to_create.data();
 		device_create_info.enabledLayerCount       = 0;
 		device_create_info.ppEnabledLayerNames     = nullptr;
 		device_create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_device_extensions.size());
@@ -442,7 +272,6 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(command_pool);
-		assert(graphics_queue_family_index.has_value());
 		assert(debug_marker_manager);
 		
 		spdlog::debug("Creating command pool for rendering.");
@@ -452,7 +281,7 @@ namespace vulkan_renderer {
 		command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext            = nullptr;
 		command_pool_create_info.flags            = 0;
-		command_pool_create_info.queueFamilyIndex = graphics_queue_family_index.value();
+		command_pool_create_info.queueFamilyIndex = VulkanQueueManager::get_graphics_family_index().value();
 
 		return vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
 	}
@@ -708,29 +537,7 @@ namespace vulkan_renderer {
 		swapchain_create_info.imageArrayLayers      = 1;
 		swapchain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		if(use_one_queue_family_for_graphics_and_presentation)
-		{
-			// In this case, we can use one queue family for both graphics and presentation.
-			swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
-			swapchain_create_info.queueFamilyIndexCount = 0;
-			swapchain_create_info.pQueueFamilyIndices   = nullptr;
-		}
-		else
-		{
-			// In this case, we can't use the same queue family for both graphics and presentation.
-			// We must use 2 separate queue families!
-			const std::vector<uint32_t> queue_family_indices =
-			{
-				graphics_queue_family_index.value(),
-				present_queue_family_index.value()
-			};
-			
-			// It is important to note that we can't use VK_SHARING_MODE_EXCLUSIVE in this case.
-			// VK_SHARING_MODE_CONCURRENT may result in lower performance access to the buffer or image than VK_SHARING_MODE_EXCLUSIVE.
-			swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-			swapchain_create_info.pQueueFamilyIndices   = queue_family_indices.data();
-			swapchain_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
-		}
+		VulkanQueueManager::prepare_swapchain_creation(swapchain_create_info);
 
 		swapchain_create_info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchain_create_info.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;

@@ -79,8 +79,8 @@ namespace vulkan_renderer {
 	VkResult InexorApplication::draw_frame()
 	{
 		assert(device);
-		assert(graphics_queue);
-		assert(present_queue);
+		assert(VulkanQueueManager::get_graphics_queue());
+		assert(VulkanQueueManager::get_present_queue());
 
 		vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
 
@@ -133,7 +133,7 @@ namespace vulkan_renderer {
 		vkResetFences(device, 1, &in_flight_fences[current_frame]);
 
 
-		result = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fences[current_frame]);
+		result = vkQueueSubmit(VulkanQueueManager::get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame]);
 		if(VK_SUCCESS != result) return result;
 
 		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -145,7 +145,7 @@ namespace vulkan_renderer {
 		present_info.pImageIndices      = &image_index;
 		present_info.pResults           = nullptr;
 
-		result = vkQueuePresentKHR(present_queue, &present_info);
+		result = vkQueuePresentKHR(VulkanQueueManager::get_present_queue(), &present_info);
 
 		// Some notes on frame_buffer_resized:
 		// It is important to do this after vkQueuePresentKHR to ensure that the semaphores are
@@ -342,6 +342,8 @@ namespace vulkan_renderer {
 		// Ignore distinct data transfer queue.
 		std::optional<bool> forbid_distinct_data_transfer_queue = is_command_line_argument_specified("-no_separate_data_queue");
 
+		bool use_distinct_data_transfer_queue = true;
+
 		if(forbid_distinct_data_transfer_queue.has_value())
 		{
 			if(forbid_distinct_data_transfer_queue.value())
@@ -353,7 +355,7 @@ namespace vulkan_renderer {
 			}
 		}
 		
-		result = create_device_queues(use_distinct_data_transfer_queue);
+		result = prepare_queues(selected_graphics_card, surface, use_distinct_data_transfer_queue);
 		vulkan_error_check(result);
 
 		spdlog::debug("Checking for -no_vk_debug_markers command line argument.");
@@ -395,19 +397,8 @@ namespace vulkan_renderer {
 		result = create_vma_allocator();
 		vulkan_error_check(result);
 
-		result = initialise_queues();
+		result = setup_queues(device);
 		vulkan_error_check(result);
-
-		if(!use_distinct_data_transfer_queue)
-		{
-			spdlog::warn("The application is forces to avoid distinct data transfer queues.");
-			spdlog::warn("Because of this, the graphics queue will be used for data transfer.");
-			
-			// In case -no_separate_data_queue is specified as command line argument,
-			// we will use the graphics queue for data transfer.
-			data_transfer_queue = graphics_queue;
-			data_transfer_queue_family_index = graphics_queue_family_index;
-		}
 
 		result = create_swapchain();
 		vulkan_error_check(result);
@@ -428,7 +419,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Create a second command pool for data transfer commands.
-		VulkanMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, data_transfer_queue_family_index.value(), data_transfer_queue);
+		VulkanMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
 		
 		result = create_command_pool();
 		vulkan_error_check(result);

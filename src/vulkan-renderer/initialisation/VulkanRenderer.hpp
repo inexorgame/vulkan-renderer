@@ -24,7 +24,7 @@
 #include "../vertex-buffer-manager/VulkanMeshBufferManager.hpp"
 #include "../ubo-manager/VulkanUniformBufferManager.hpp"
 #include "../debug-marker/VulkanDebugMarkerManager.hpp"
-
+#include "../queue-manager/VulkanQueueManager.hpp"
 #include "../time-step/InexorTimeStep.hpp"
 
 // Vulkan Memory Allocator.
@@ -52,14 +52,14 @@ namespace vulkan_renderer {
 	/// @class VulkanInitialisation
 	/// @brief A class for initialisation of the Vulkan API.
 	class VulkanRenderer : public VulkanGraphicsCardInfoViewer,
-								 public VulkanWindowManager,
-								 public VulkanAvailabilityChecks,
-								 public VulkanSettingsDecisionMaker,
-								 public VulkanShaderManager,
-								 public VulkanSynchronisationManager,
-								 public VulkanMeshBufferManager,
-								 public InexorTimeStep
-								 // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager, VulkanQueueManager?
+							public VulkanWindowManager,
+							public VulkanAvailabilityChecks,
+							public VulkanShaderManager,
+							public VulkanSynchronisationManager,
+							public VulkanMeshBufferManager,
+							public VulkanQueueManager,
+							public InexorTimeStep
+							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager, VulkanQueueManager?
 	{
 		public:
 
@@ -149,36 +149,13 @@ namespace vulkan_renderer {
 			// 
 			std::vector<VkCommandBuffer> command_buffers;
 			
-			// Try to use one queue family for both graphics and presentation.
-			bool use_one_queue_family_for_graphics_and_presentation = false;
 
-			// Try to use a separated queue family for data transfer to GPU.
-			// TODO: This is not used in any code yet. Is it neccesary?
-			bool use_distinct_data_transfer_queue = true;
-
-			// 
-			std::optional<uint32_t> graphics_queue_family_index;
-			VkQueue graphics_queue;
-			
-			// 
-			std::optional<uint32_t> present_queue_family_index;
-			VkQueue present_queue;
-
-			// This queue will be used to upload data from RAM to GPU.
-			std::optional<uint32_t> data_transfer_queue_family_index;
-			VkQueue data_transfer_queue;
-
-			// 
-			std::vector<VkDeviceQueueCreateInfo> device_queues;
 
 			// Neccesary for synchronisation!
 			std::vector<VkSemaphore> image_available_semaphores;
 			std::vector<VkSemaphore> rendering_finished_semaphores;
 			std::vector<VkFence> in_flight_fences;
 			std::vector<VkFence> images_in_flight;
-
-			// TODO: Refactor!
-			const float global_queue_priority = 1.0f;
 
 			
 			VkDescriptorSetLayout descriptor_set_layout;
@@ -230,10 +207,6 @@ namespace vulkan_renderer {
 
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.
 			VkResult create_vma_allocator();
-
-
-			/// @brief Initialises graphics and transfer queue.
-			VkResult initialise_queues();
 
 
 			/// @brief Creates the command buffers.
@@ -298,10 +271,6 @@ namespace vulkan_renderer {
 
 			/// @brief Creates the image views.
 			VkResult create_image_views();
-
-
-			/// @brief Creates the device queues.
-			VkResult create_device_queues(bool use_distinct_data_transfer_queue_if_available = true);
 
 
 			/// @brief Destroys all Vulkan objects.

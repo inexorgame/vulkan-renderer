@@ -18,6 +18,7 @@
 #define INEXOR_WINDOW_HEIGHT        600
 
 
+using namespace inexor::vulkan_renderer::tools;
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -27,7 +28,7 @@ namespace vulkan_renderer {
 	/// @brief Inexor's Vulkan API rendering engine.
 	/// @note Now I am become renderer, the drawer of worlds.
 	class InexorApplication : public VulkanRenderer, 
-	                          public tools::CommandLineArgumentParser
+	                          public CommandLineArgumentParser
 	{
 		public:
 
@@ -44,6 +45,9 @@ namespace vulkan_renderer {
 
 			/// @brief Load all required shaders.
 			VkResult load_shaders();
+
+			/// @brief Loads all required models.
+			VkResult load_models();
 
 			/// @brief The actual rendering method which is called every frame.
 			VkResult draw_frame();
