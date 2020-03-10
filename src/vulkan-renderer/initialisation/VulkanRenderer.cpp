@@ -716,21 +716,31 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Creating descriptor set layout.");
 
-		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+		VkDescriptorSetLayoutBinding ubo_layout_binding = {};
 
-		uboLayoutBinding.binding            = 0;
-		uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.descriptorCount    = 1;
-		uboLayoutBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
+		ubo_layout_binding.binding            = 0;
+		ubo_layout_binding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		ubo_layout_binding.descriptorCount    = 1;
+		ubo_layout_binding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
+		ubo_layout_binding.pImmutableSamplers = nullptr;
 
-		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+		VkDescriptorSetLayoutBinding sampler_layout_binding = {};
+        
+		sampler_layout_binding.binding            = 1;
+        sampler_layout_binding.descriptorCount    = 1;
+        sampler_layout_binding.descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        sampler_layout_binding.pImmutableSamplers = nullptr;
+        sampler_layout_binding.stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 1;
-		layoutInfo.pBindings    = &uboLayoutBinding;
+        std::array<VkDescriptorSetLayoutBinding, 2> bindings = {ubo_layout_binding, sampler_layout_binding};
 
-		VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptor_set_layout);
+        VkDescriptorSetLayoutCreateInfo layout_info = {};
+
+        layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
+        layout_info.pBindings = bindings.data();
+
+		VkResult result = vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &descriptor_set_layout);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -744,17 +754,20 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Creating descriptor pool.");
 
-		VkDescriptorPoolSize pool_size = {};
+		// TODO: Set it up dynamically!
+		std::array<VkDescriptorPoolSize, 2> pool_sizes = {};
+        
+		pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        pool_sizes[0].descriptorCount = number_of_images_in_swapchain;
+        pool_sizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
-		pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		pool_size.descriptorCount = number_of_images_in_swapchain;
+        VkDescriptorPoolCreateInfo pool_info = {};
 
-		VkDescriptorPoolCreateInfo pool_info = {};
-
-		pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		pool_info.poolSizeCount = 1;
-		pool_info.pPoolSizes    = &pool_size;
-		pool_info.maxSets       = number_of_images_in_swapchain;
+        pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
+        pool_info.pPoolSizes    = pool_sizes.data();
+        pool_info.maxSets       = number_of_images_in_swapchain;
 
 		VkResult result = vkCreateDescriptorPool(device, &pool_info, nullptr, &descriptor_pool);
 		vulkan_error_check(result);
@@ -797,18 +810,35 @@ namespace vulkan_renderer {
             bufferInfo.buffer = uniform_buffers[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range  = sizeof(UniformBufferObject);
+			
+			VkDescriptorImageInfo image_info = {};
 
-            VkWriteDescriptorSet descriptorWrite = {};
+			// TODO: Change for more textures!!
+			uint32_t index = 0;
 
-            descriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet          = descriptor_sets[i];
-            descriptorWrite.dstBinding      = 0;
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo     = &bufferInfo;
+            image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            image_info.imageView   = VulkanTextureManager::get_texture_view(index);
+            image_info.sampler     = VulkanTextureManager::get_texture_sampler(index);
 
-            vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+            std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+
+            descriptor_writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_writes[0].dstSet          = descriptor_sets[i];
+            descriptor_writes[0].dstBinding      = 0;
+            descriptor_writes[0].dstArrayElement = 0;
+            descriptor_writes[0].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptor_writes[0].descriptorCount = 1;
+            descriptor_writes[0].pBufferInfo     = &bufferInfo;
+
+			descriptor_writes[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_writes[1].dstSet           = descriptor_sets[i];
+            descriptor_writes[1].dstBinding       = 1;
+            descriptor_writes[1].dstArrayElement  = 0;
+            descriptor_writes[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptor_writes[1].descriptorCount  = 1;
+            descriptor_writes[1].pImageInfo       = &image_info;
+
+            vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
         }
 
 		return VK_SUCCESS;

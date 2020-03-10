@@ -172,12 +172,11 @@ namespace vulkan_renderer {
 
 		mesh_buffers.resize(number_of_buffers);
 
-		const std::vector<InexorVertex> vertices =
-		{
-			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+		const std::vector<InexorVertex> vertices = {
+			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 		};
 
 		const std::vector<uint32_t> indices =
@@ -432,6 +431,23 @@ namespace vulkan_renderer {
 		result = create_swapchain();
 		vulkan_error_check(result);
 		
+		// Check if anisotropic filtering is available!
+		VkPhysicalDeviceFeatures graphics_card_features;
+
+		// Check which features are supported by this graphics card.
+		vkGetPhysicalDeviceFeatures(selected_graphics_card, &graphics_card_features);
+
+		if(!graphics_card_features.samplerAnisotropy)
+		{
+			spdlog::warn("The selected graphics card does NOT support anisotropic filtering!");
+		}
+
+		// Initialise texture manager.
+		VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
+
+		// Load a shader.
+		VulkanTextureManager::create_texture_from_file("../../../assets/texture_2_1024.jpg", example_texture);
+
 		result = create_image_views();
 		vulkan_error_check(result);
 		
@@ -449,7 +465,7 @@ namespace vulkan_renderer {
 
 		// Create a second command pool for data transfer commands.
 		VulkanMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
-		
+
 		result = create_command_pool();
 		vulkan_error_check(result);
 

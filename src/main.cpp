@@ -30,7 +30,5 @@ int main(int argc, char* argv[])
         spdlog::debug("Window closed.");
     }
 
-    std::cin.get();
-
     return 0;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../../vma/vk_mem_alloc.h"

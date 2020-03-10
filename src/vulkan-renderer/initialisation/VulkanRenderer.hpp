@@ -26,6 +26,7 @@
 #include "../debug-marker/VulkanDebugMarkerManager.hpp"
 #include "../queue-manager/VulkanQueueManager.hpp"
 #include "../time-step/InexorTimeStep.hpp"
+#include "../texture-manager/VulkanTextureManager.hpp"
 #include "../vertex-buffer-manager/InexorMeshBuffer.hpp"
 
 // Vulkan Memory Allocator.
@@ -52,13 +53,14 @@ namespace vulkan_renderer {
 
 	/// @class VulkanInitialisation
 	/// @brief A class for initialisation of the Vulkan API.
-	class VulkanRenderer : public VulkanGraphicsCardInfoViewer,
+	class VulkanRenderer :  public VulkanGraphicsCardInfoViewer,
 							public VulkanWindowManager,
 							public VulkanAvailabilityChecks,
 							public VulkanShaderManager,
 							public VulkanSynchronisationManager,
 							public VulkanMeshBufferManager,
 							public VulkanQueueManager,
+							public VulkanTextureManager,
 							public InexorTimeStep
 							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
