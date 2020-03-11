@@ -127,7 +127,7 @@ namespace tools {
 
 			/// @brief Returns the type of a command line argument.
 			/// @param argument_name The name of the command line argument.
-			const std::optional<INEXOR_COMMAND_LINE_ARGUMENT_TYPE> CommandLineArgumentParser::get_argument_template_type(const std::string& argument_name);
+			const std::optional<INEXOR_COMMAND_LINE_ARGUMENT_TYPE> get_argument_template_type(const std::string& argument_name);
 
 
 			/// @brief Returns the value of a boolean command line argument (if existent).

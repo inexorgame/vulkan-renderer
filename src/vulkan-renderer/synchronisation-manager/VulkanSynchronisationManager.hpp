@@ -11,7 +11,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Vulkan/vulkan.h>
+#include <vulkan/vulkan.h>
 
 
 namespace inexor {
