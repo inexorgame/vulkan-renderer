@@ -177,6 +177,12 @@ namespace vulkan_renderer {
 
 			std::vector<InexorBuffer> uniform_buffers;
 
+		
+		public:
+
+			/// @brief Run Vulkan memory allocator's memory statistics.
+			VkResult calculate_memory_budget();
+
 
 		protected:
 

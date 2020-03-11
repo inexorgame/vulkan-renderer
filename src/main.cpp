@@ -25,6 +25,10 @@ int main(int argc, char* argv[])
     if(VK_SUCCESS == renderer.init())
     {
         renderer.run();
+
+        // Let's take a look at how much memory we did need.
+        renderer.calculate_memory_budget();
+
         renderer.cleanup();
         
         spdlog::debug("Window closed.");

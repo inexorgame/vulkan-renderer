@@ -446,7 +446,7 @@ namespace vulkan_renderer {
 		VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
 
 		// Load a shader.
-		VulkanTextureManager::create_texture_from_file("../../../assets/texture_2_1024.jpg", example_texture);
+		VulkanTextureManager::create_texture_from_file("example_texture_1", "../../../assets/texture_2_1024.jpg", example_texture);
 
 		result = create_image_views();
 		vulkan_error_check(result);

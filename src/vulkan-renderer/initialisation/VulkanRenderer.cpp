@@ -2,6 +2,12 @@
 
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
+
+// Use extensive memory debugging settings during development.
+#define VMA_DEBUG_MARGIN 16
+#define VMA_DEBUG_DETECT_CORRUPTION 1
+#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
+
 #include "../../vma/vk_mem_alloc.h"
 
 
@@ -812,13 +818,10 @@ namespace vulkan_renderer {
             bufferInfo.range  = sizeof(UniformBufferObject);
 			
 			VkDescriptorImageInfo image_info = {};
-
-			// TODO: Change for more textures!!
-			uint32_t index = 0;
-
+			
             image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            image_info.imageView   = VulkanTextureManager::get_texture_view(index);
-            image_info.sampler     = VulkanTextureManager::get_texture_sampler(index);
+            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_1");
+            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_1");
 
             std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 
@@ -1226,6 +1229,62 @@ namespace vulkan_renderer {
 		return VK_SUCCESS;
 	}
 
+
+	VkResult VulkanRenderer::calculate_memory_budget()
+	{
+		VmaStats memory_stats;
+		
+		spdlog::debug("------------------------------------------------------------------------------------------------------------");
+		spdlog::debug("Calculating memory statistics before shutdown.");
+
+		// Use Vulkan memory allocator's statistics.
+		vmaCalculateStats(vma_allocator, &memory_stats);
+
+		spdlog::debug("VMA heap:");
+
+		spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryHeap->blockCount);
+		spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}", memory_stats.memoryHeap->allocationCount);
+		spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryHeap->unusedRangeCount);
+		spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryHeap->usedBytes);
+		spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryHeap->unusedBytes);
+		spdlog::debug("memory_stats.memoryHeap->allocationSizeMin: {}", memory_stats.memoryHeap->allocationSizeMin);
+		spdlog::debug("memory_stats.memoryHeap->allocationSizeAvg: {}", memory_stats.memoryHeap->allocationSizeAvg);
+		spdlog::debug("memory_stats.memoryHeap->allocationSizeMax: {}", memory_stats.memoryHeap->allocationSizeMax);
+		spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeMin: {}", memory_stats.memoryHeap->unusedRangeSizeMin);
+		spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeAvg: {}", memory_stats.memoryHeap->unusedRangeSizeAvg);
+		spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeMax: {}", memory_stats.memoryHeap->unusedRangeSizeMax);
+
+		spdlog::debug("VMA memory type:");
+
+		spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryType->blockCount);
+		spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}", memory_stats.memoryType->allocationCount);
+		spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryType->unusedRangeCount);
+		spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryType->usedBytes);
+		spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryType->unusedBytes);
+		spdlog::debug("memory_stats.memoryType->allocationSizeMin: {}", memory_stats.memoryType->allocationSizeMin);
+		spdlog::debug("memory_stats.memoryType->allocationSizeAvg: {}", memory_stats.memoryType->allocationSizeAvg);
+		spdlog::debug("memory_stats.memoryType->allocationSizeMax: {}", memory_stats.memoryType->allocationSizeMax);
+		spdlog::debug("memory_stats.memoryType->unusedRangeSizeMin: {}", memory_stats.memoryType->unusedRangeSizeMin);
+		spdlog::debug("memory_stats.memoryType->unusedRangeSizeAvg: {}", memory_stats.memoryType->unusedRangeSizeAvg);
+		spdlog::debug("memory_stats.memoryType->unusedRangeSizeMax: {}", memory_stats.memoryType->unusedRangeSizeMax);
+
+		spdlog::debug("VMA total:");
+
+		spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.total.blockCount);
+		spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}", memory_stats.total.allocationCount);
+		spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.total.unusedRangeCount);
+		spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.total.usedBytes);
+		spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.total.unusedBytes);
+		spdlog::debug("memory_stats.total.allocationSizeMin: {}", memory_stats.total.allocationSizeMin);
+		spdlog::debug("memory_stats.total.allocationSizeAvg: {}", memory_stats.total.allocationSizeAvg);
+		spdlog::debug("memory_stats.total.allocationSizeMax: {}", memory_stats.total.allocationSizeMax);
+		spdlog::debug("memory_stats.total.unusedRangeSizeMin: {}", memory_stats.total.unusedRangeSizeMin);
+		spdlog::debug("memory_stats.total.unusedRangeSizeAvg: {}", memory_stats.total.unusedRangeSizeAvg);
+		spdlog::debug("memory_stats.total.unusedRangeSizeMax: {}", memory_stats.total.unusedRangeSizeMax);
+
+		return VK_SUCCESS;
+	}
+
 	
 	VkResult VulkanRenderer::shutdown_vulkan()
 	{
@@ -1234,6 +1293,23 @@ namespace vulkan_renderer {
 		spdlog::debug("Shutting down Vulkan API.");
 		
 		cleanup_swapchain();
+
+		spdlog::debug("Destroying swapchain images.");
+		if(swapchain_images.size() > 0)
+		{
+			for(auto image : swapchain_images)
+			{
+				if(VK_NULL_HANDLE != image)
+				{
+					vkDestroyImage(device, image, nullptr);
+					image =  VK_NULL_HANDLE;
+				}
+			}
+
+			swapchain_images.clear();
+		}
+
+		VulkanTextureManager::shutdown_textures();
 
 		vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
 

@@ -23,7 +23,7 @@ namespace vulkan_renderer {
 
 		vkDestroyImageView(device, view, nullptr);
 
-		vmaDestroyBuffer(vma_allocator, buffer, allocation);
+		// We don't need to destroy any buffers in here.
 
 		file_name = "";
 

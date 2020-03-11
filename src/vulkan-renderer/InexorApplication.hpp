@@ -47,7 +47,7 @@ namespace vulkan_renderer {
 			std::vector<InexorMeshBuffer> mesh_buffers;
 
 			// 
-			InexorTexture example_texture;
+			std::shared_ptr<InexorTexture> example_texture = std::make_shared<InexorTexture>();
 
 
 		private:
