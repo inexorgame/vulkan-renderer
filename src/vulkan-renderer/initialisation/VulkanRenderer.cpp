@@ -279,6 +279,7 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(command_pool);
 		assert(debug_marker_manager);
+		assert(VulkanQueueManager::get_graphics_family_index().has_value());
 		
 		spdlog::debug("Creating command pool for rendering.");
 
@@ -297,6 +298,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(debug_marker_manager);
+		assert(number_of_images_in_swapchain>0);
 
 		spdlog::debug("Creating command buffers.");
 		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
@@ -757,6 +759,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(debug_marker_manager);
+		assert(number_of_images_in_swapchain>0);
 		
 		spdlog::debug("Creating descriptor pool.");
 
@@ -861,13 +864,8 @@ namespace vulkan_renderer {
         ubo.proj = glm::perspective(glm::radians(45.0f), window_width / (float) window_height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
 
-        void* data;
-
-		vmaMapMemory(vma_allocator, uniform_buffers[current_image].allocation, &data);
-
+		// Update!
 		std::memcpy(uniform_buffers[current_image].allocation_info.pMappedData, &ubo, sizeof(ubo));
-
-		vmaUnmapMemory(vma_allocator, uniform_buffers[current_image].allocation);
 
 		return VK_SUCCESS;
 	}
