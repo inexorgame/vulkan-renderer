@@ -98,7 +98,7 @@ namespace vulkan_renderer {
 			/// @param 
 			/// @param 
 			/// @param 
-			VkResult copy_buffer_to_image(VkBuffer buffer, VkImage& image, uint32_t width, uint32_t height);
+			VkResult copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 
 			/// @brief 

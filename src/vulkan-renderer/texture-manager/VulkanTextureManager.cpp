@@ -454,7 +454,7 @@ namespace vulkan_renderer {
 	}
 	
 	
-	VkResult VulkanTextureManager::copy_buffer_to_image(VkBuffer buffer, VkImage& image, uint32_t width, uint32_t height)
+	VkResult VulkanTextureManager::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
 		// Start the recording of a command buffer.
 		begin_single_time_commands();

@@ -161,6 +161,10 @@ namespace vulkan_renderer {
 			std::optional<uint32_t> find_any_data_transfer_queue_family(const VkPhysicalDevice& graphics_card);
 
 
+			/// 
+			/// 
+			std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice& graphics_card, const std::vector<VkFormat>& formats, VkImageTiling tiling, VkFormatFeatureFlags feature_flags);
+
 	};
 
 };

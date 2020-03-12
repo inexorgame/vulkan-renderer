@@ -19,7 +19,7 @@ namespace vulkan_renderer {
 			// TODO: Generalize this setup!
 
 			/// The position of the vertex.
-			glm::vec2 pos;
+			glm::vec3 pos;
 
 			/// The RGB color of the vertex.
 			glm::vec3 color;
@@ -46,11 +46,13 @@ namespace vulkan_renderer {
 			/// It is allowed to use more channels than the number of components in the shader, but they will be silently discarded.
 			static std::array<VkVertexInputAttributeDescription, 3> get_attribute_binding_description()
 			{
+				// TODO: Generalize this setup!
+			
 				std::array<VkVertexInputAttributeDescription, 3> vertex_input_attribute_description = {};
 
 				vertex_input_attribute_description[0].binding  = 0;
 				vertex_input_attribute_description[0].location = 0;
-				vertex_input_attribute_description[0].format   = VK_FORMAT_R32G32_SFLOAT;
+				vertex_input_attribute_description[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
 				vertex_input_attribute_description[0].offset   = offsetof(InexorVertex, pos);
 
 				vertex_input_attribute_description[1].binding  = 0;

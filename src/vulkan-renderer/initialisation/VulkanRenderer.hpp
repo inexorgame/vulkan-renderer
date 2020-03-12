@@ -177,7 +177,21 @@ namespace vulkan_renderer {
 
 			std::vector<InexorBuffer> uniform_buffers;
 
-		
+
+			// Depth buffer.
+			VkImage depth_buffer_image;
+
+			// 
+			VkImageView depth_buffer_image_view;
+			
+			// 
+			std::optional<VkFormat> depth_buffer_format;
+
+			// 
+			InexorBuffer depth_buffer;
+
+
+
 		public:
 
 			/// @brief Run Vulkan memory allocator's memory statistics.
@@ -214,6 +228,10 @@ namespace vulkan_renderer {
 
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.
 			VkResult create_vma_allocator();
+
+
+			/// @brief Create depth image.
+			VkResult create_depth_buffer();
 
 
 			/// @brief Creates the command buffers.

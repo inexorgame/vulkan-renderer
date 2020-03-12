@@ -906,5 +906,29 @@ namespace vulkan_renderer {
 	}
 
 
+	std::optional<VkFormat> VulkanSettingsDecisionMaker::find_depth_buffer_format(const VkPhysicalDevice& graphics_card, const std::vector<VkFormat>& formats, VkImageTiling tiling, VkFormatFeatureFlags feature_flags)
+	{
+		spdlog::debug("Trying to find appropriate format for depth buffer.");
+
+		for(const auto& format : formats)
+		{
+			VkFormatProperties format_properties;
+
+			vkGetPhysicalDeviceFormatProperties(graphics_card, format, &format_properties);
+
+			if(VK_IMAGE_TILING_LINEAR == tiling && feature_flags == (format_properties.linearTilingFeatures & feature_flags))
+			{
+				return format;
+			}
+			else if(VK_IMAGE_TILING_OPTIMAL == tiling && feature_flags == (format_properties.optimalTilingFeatures & feature_flags))
+			{
+				return format;
+			}
+		}
+
+		return std::nullopt;
+	}
+
+
 };
 };

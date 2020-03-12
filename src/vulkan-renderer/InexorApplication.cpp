@@ -31,6 +31,23 @@ namespace vulkan_renderer {
 	}
 
 
+	VkResult InexorApplication::load_textures()
+	{
+		// Initialise texture manager.
+		VkResult result = VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
+		vulkan_error_check(result);
+
+		// Load textures
+		result = VulkanTextureManager::create_texture_from_file("example_texture_1", "../../../assets/texture_1_1024.jpg", example_texture_1);
+		vulkan_error_check(result);
+		
+		result = VulkanTextureManager::create_texture_from_file("example_texture_2", "../../../assets/texture_2_1024.jpg", example_texture_2);
+		vulkan_error_check(result);
+
+		return VK_SUCCESS;
+	}
+
+
 	VkResult InexorApplication::load_shaders()
 	{
 		assert(device);
@@ -173,15 +190,21 @@ namespace vulkan_renderer {
 		mesh_buffers.resize(number_of_buffers);
 
 		const std::vector<InexorVertex> vertices = {
-			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+			{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+			{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+			{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+			
+			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+			{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+			{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 		};
 
 		const std::vector<uint32_t> indices =
 		{
-			0, 1, 2, 2, 3, 0
+			0, 1, 2, 2, 3, 0,
+			4, 5, 6, 6, 7, 4
 		};
 
 		VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, mesh_buffers[0]);
@@ -442,11 +465,11 @@ namespace vulkan_renderer {
 			spdlog::warn("The selected graphics card does NOT support anisotropic filtering!");
 		}
 
-		// Initialise texture manager.
-		VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
+		result = create_depth_buffer();
+		vulkan_error_check(result);
 
-		// Load a shader.
-		VulkanTextureManager::create_texture_from_file("example_texture_1", "../../../assets/texture_2_1024.jpg", example_texture);
+		result = load_textures();
+		vulkan_error_check(result);
 
 		result = create_image_views();
 		vulkan_error_check(result);

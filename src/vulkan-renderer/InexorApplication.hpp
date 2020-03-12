@@ -47,12 +47,16 @@ namespace vulkan_renderer {
 			std::vector<InexorMeshBuffer> mesh_buffers;
 
 			// 
-			std::shared_ptr<InexorTexture> example_texture = std::make_shared<InexorTexture>();
+			std::shared_ptr<InexorTexture> example_texture_1 = std::make_shared<InexorTexture>();
+			std::shared_ptr<InexorTexture> example_texture_2 = std::make_shared<InexorTexture>();
 
 
 		private:
 
-			/// @brief Load all required shaders.
+			/// @brief Loads all required textures.
+			VkResult load_textures();
+
+			/// @brief Loads all required shaders.
 			VkResult load_shaders();
 
 			/// @brief Loads all required models.
