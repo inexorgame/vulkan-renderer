@@ -90,7 +90,7 @@ namespace vulkan_renderer {
 			/// @param vma_allocator The allocator of the Vulkan Memory Allocator library.
 			/// @param vertices The vertices to fill into the vertex buffer.
 			/// @param mesh_buffer The target InexorMeshBuffer instance to fill.
-			VkResult create_vertex_buffer(const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer);
+			VkResult create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer);
 		
 			
 			/// @brief Creates a new vertex buffer with a corresponding index buffer.
@@ -98,7 +98,7 @@ namespace vulkan_renderer {
 			/// @param vertices The vertices to fill into the vertex buffer.
 			/// @param indices 
 			/// @param mesh_buffer The target InexorMeshBuffer instance to fill.
-			VkResult create_vertex_buffer_with_index_buffer(const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorMeshBuffer& mesh_buffer);
+			VkResult create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorMeshBuffer& mesh_buffer);
 
 
 			/// @brief Releases all Vulkan memory buffers.

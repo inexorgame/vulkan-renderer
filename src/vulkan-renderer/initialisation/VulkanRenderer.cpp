@@ -3,11 +3,6 @@
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
 
-// Use extensive memory debugging settings during development.
-#define VMA_DEBUG_MARGIN 16
-#define VMA_DEBUG_DETECT_CORRUPTION 1
-#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
-
 #include "../../vma/vk_mem_alloc.h"
 
 
@@ -180,7 +175,9 @@ namespace vulkan_renderer {
 		instance_create_info.enabledLayerCount       = static_cast<uint32_t>(enabled_instance_layers.size());
 
 		// Create a new Vulkan instance.
-		return vkCreateInstance(&instance_create_info, nullptr, &instance);
+		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance);
+
+		return VK_SUCCESS;
 	}
 
 
@@ -207,6 +204,9 @@ namespace vulkan_renderer {
 		// Currently, we don't need any special features at all.
 		// Fill this with required features if neccesary.
 		VkPhysicalDeviceFeatures used_features = {};
+
+		// Enable anisotropic filtering.
+		used_features.samplerAnisotropy = VK_TRUE;
 
 		// Our wishlist of device extensions that we would like to enable.
 		std::vector<const char*> device_extensions_wishlist =
@@ -260,7 +260,10 @@ namespace vulkan_renderer {
 		device_create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
 		device_create_info.pEnabledFeatures        = &used_features;
 
-		return vkCreateDevice(graphics_card, &device_create_info, nullptr, &device);
+		VkResult result = vkCreateDevice(graphics_card, &device_create_info, nullptr, &device);
+		vulkan_error_check(result);
+
+		return VK_SUCCESS;
 	}
 
 
@@ -290,7 +293,13 @@ namespace vulkan_renderer {
 		command_pool_create_info.flags            = 0;
 		command_pool_create_info.queueFamilyIndex = VulkanQueueManager::get_graphics_family_index().value();
 
-		return vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
+		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
+		vulkan_error_check(result);
+
+		// Give this command pool an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command pool for core engine.");
+
+		return VK_SUCCESS;
 	}
 
 	
@@ -354,9 +363,12 @@ namespace vulkan_renderer {
 		view_info.subresourceRange.levelCount     = 1;
 		view_info.subresourceRange.baseArrayLayer = 0;
 		view_info.subresourceRange.layerCount     = 1;
-		
+
 		result = vkCreateImageView(device, &view_info, nullptr, &depth_buffer_image_view);
 		vulkan_error_check(result);
+
+		// Give this buffer image view an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer_image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "Depth buffer image view.");
 	
 		return VK_SUCCESS;
 	}
@@ -384,7 +396,11 @@ namespace vulkan_renderer {
 		// Preallocate memory for command buffers.
 		command_buffers.resize(number_of_images_in_swapchain);
 
-		return vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
+		VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
+
+		debug_marker_manager->set_object_name(device, (uint64_t)(command_buffers.data()), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "Command buffer for core engine.");
+
+		return VK_SUCCESS;
 	}
 
 
@@ -607,6 +623,9 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
 		if(VK_SUCCESS != result) return result;
 
+		// Give this swapchain an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(swapchain), VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "Swapchain for core engine.");
+
 		swapchain_image_views.clear();
 
 		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
@@ -639,11 +658,11 @@ namespace vulkan_renderer {
 		
 		vkDeviceWaitIdle(device);
 
-		// Cleanup depth buffer.
 		vkDestroyImageView(device, depth_buffer_image_view, nullptr);
-		vkDestroyImage(device, depth_buffer_image, nullptr);
-		vmaFreeMemory(vma_allocator, depth_buffer.allocation);
+		
+		vmaDestroyImage(vma_allocator, depth_buffer_image, depth_buffer.allocation);
 
+		
 		spdlog::debug("Device is idle.");
 		spdlog::debug("Destroying frame buffer.");
 		
@@ -792,6 +811,8 @@ namespace vulkan_renderer {
 		result = record_command_buffers(mesh_buffers);
 		if(VK_SUCCESS != result) return result;
 
+		calculate_memory_budget();
+
 		return VK_SUCCESS;
 	}
 
@@ -830,6 +851,9 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &descriptor_set_layout);
 		vulkan_error_check(result);
 
+		// Give this descriptor set an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_set_layout), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, "Descriptor set layout for core engine.");
+
 		return VK_SUCCESS;
 	}
 
@@ -859,6 +883,9 @@ namespace vulkan_renderer {
 
 		VkResult result = vkCreateDescriptorPool(device, &pool_info, nullptr, &descriptor_pool);
 		vulkan_error_check(result);
+
+		// Give this descriptor pool an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_pool), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, "Descriptor pool for core engine.");
 
 		return VK_SUCCESS;
 	}
@@ -969,6 +996,11 @@ namespace vulkan_renderer {
 			// It is important to use VMA_MEMORY_USAGE_CPU_TO_GPU for uniform buffers!
 			VkResult result = create_buffer(uniform_buffers[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 			vulkan_error_check(result);
+
+			std::string buffer_description = "Uniform buffer #" + std::to_string(i);
+
+			// Give this uniform buffer an appropriate name.
+			debug_marker_manager->set_object_name(device, (uint64_t)(uniform_buffers[i].buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, buffer_description.c_str());
 		}
 
 		return VK_SUCCESS;
@@ -1137,13 +1169,14 @@ namespace vulkan_renderer {
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
 
-
-
 		spdlog::debug("Setting up pipeline layout.");
 
 		VkResult result = vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
 		if(VK_SUCCESS != result) return result;
 		
+		// Give this pipeline layout an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(pipeline_layout), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "Pipeline layout for core engine.");
+
 
 		// TODO: Generalize renderpass description.
 
@@ -1226,6 +1259,8 @@ namespace vulkan_renderer {
 		result = vkCreateRenderPass(device, &render_pass_create_info, nullptr, &render_pass);
 		if(VK_SUCCESS != result) return result;
 
+		// Give this renderpass an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
 
 		VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
 
@@ -1254,6 +1289,9 @@ namespace vulkan_renderer {
 		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
 		if(VK_SUCCESS != result) return result;
 
+		// Give this graphics pipeline an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "Graphics pipeline for core engine.");
+
 		return VK_SUCCESS;
 	}
 
@@ -1272,7 +1310,7 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
-			spdlog::debug("Creating frameuffer #{}.", i);
+			spdlog::debug("Creating framebuffer #{}.", i);
 
 			std::array<VkImageView, 2> attachments =
 			{
@@ -1294,6 +1332,11 @@ namespace vulkan_renderer {
 
 			VkResult result = vkCreateFramebuffer(device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
 			if(VK_SUCCESS != result) return result;
+
+			std::string frame_buffer_name = "Frame buffer #"+ std::to_string(i);
+			
+			// Give this frame buffer an appropriate name.
+			debug_marker_manager->set_object_name(device, (uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
 		}
 
 		return VK_SUCCESS;
@@ -1337,6 +1380,11 @@ namespace vulkan_renderer {
 
 			VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
 			if(VK_SUCCESS != result) return result;
+			
+			std::string swapchain_image_view_name = "Swapchain image view #"+ std::to_string(i);
+
+			// Give this swapchain image view an appropriate name
+			debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, swapchain_image_view_name.c_str());
 		}
 
 		return VK_SUCCESS;
@@ -1394,6 +1442,28 @@ namespace vulkan_renderer {
 		spdlog::debug("memory_stats.total.unusedRangeSizeMin: {}", memory_stats.total.unusedRangeSizeMin);
 		spdlog::debug("memory_stats.total.unusedRangeSizeAvg: {}", memory_stats.total.unusedRangeSizeAvg);
 		spdlog::debug("memory_stats.total.unusedRangeSizeMax: {}", memory_stats.total.unusedRangeSizeMax);
+
+		/*
+		char* vma_stats_string = nullptr;
+
+		vmaBuildStatsString(vma_allocator, &vma_stats_string, true);
+		
+		spdlog::debug("{}", vma_stats_string);
+
+		std::ofstream vma_memory_dump;
+
+		std::string memory_dump_file_name = "inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
+
+		vma_memory_dump.open(memory_dump_file_name, std::ios::out);
+
+		vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string));
+
+		vma_memory_dump.close();
+
+		vma_dump_index++;
+
+		vmaFreeStatsString(vma_allocator, vma_stats_string);
+		*/
 
 		return VK_SUCCESS;
 	}

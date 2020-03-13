@@ -111,8 +111,10 @@ namespace vulkan_renderer {
 			return result;
 		}
 
-		// Add a debug marker!
-		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "vertexbuffer_test");
+		std::string internal_shader_name = "Shader module '"+ SPIRV_shader_file_name +"'.";
+
+		// Give this shader an appropriate name.
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, internal_shader_name.c_str());
 
 		// Store the generated shader in memory.
 		new_fragment_shader.set_shader_module(new_shader_module);

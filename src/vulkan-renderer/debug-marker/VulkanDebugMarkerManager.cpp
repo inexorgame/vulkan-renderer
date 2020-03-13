@@ -71,9 +71,9 @@ namespace vulkan_renderer {
 		{
 			VkDebugMarkerObjectNameInfoEXT nameInfo = {};
 
-			nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-			nameInfo.objectType = object_type;
-			nameInfo.object = object;
+			nameInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+			nameInfo.objectType  = object_type;
+			nameInfo.object      = object;
 			nameInfo.pObjectName = name;
 
 			assert(vkDebugMarkerSetObjectName);

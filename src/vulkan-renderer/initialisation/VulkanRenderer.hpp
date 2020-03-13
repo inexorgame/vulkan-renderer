@@ -190,6 +190,7 @@ namespace vulkan_renderer {
 			// 
 			InexorBuffer depth_buffer;
 
+			uint32_t vma_dump_index = 0;
 
 
 		public:

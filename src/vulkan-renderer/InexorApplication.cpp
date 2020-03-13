@@ -38,10 +38,10 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Load textures
-		result = VulkanTextureManager::create_texture_from_file("example_texture_1", "../../../assets/texture_1_1024.jpg", example_texture_1);
+		result = VulkanTextureManager::create_texture_from_file("example_texture_1", "../../../assets/textures/texture_A_1024.jpg", example_texture_1);
 		vulkan_error_check(result);
 		
-		result = VulkanTextureManager::create_texture_from_file("example_texture_2", "../../../assets/texture_2_1024.jpg", example_texture_2);
+		result = VulkanTextureManager::create_texture_from_file("example_texture_2", "../../../assets/textures/texture_A_1024.jpg", example_texture_2);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -189,7 +189,8 @@ namespace vulkan_renderer {
 
 		mesh_buffers.resize(number_of_buffers);
 
-		const std::vector<InexorVertex> vertices = {
+		const std::vector<InexorVertex> vertices =
+		{
 			{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 			{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
 			{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
@@ -207,7 +208,7 @@ namespace vulkan_renderer {
 			4, 5, 6, 6, 7, 4
 		};
 
-		VkResult result = create_vertex_buffer_with_index_buffer(vertices, indices, mesh_buffers[0]);
+		VkResult result = create_vertex_buffer_with_index_buffer("Example vertex buffer 1", vertices, indices, mesh_buffers[0]);
 		
 		return result;
 	}

@@ -50,7 +50,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		// Give this command pool an appropriate name.
-		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "VulkanTextureManager's command pool for transfer of texture data.");
+		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command pool for VulkanTextureManager.");
 		
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 
@@ -66,7 +66,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Give this command pool an appropriate name.
-		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "VulkanTextureManager's command buffer for transfer of texture data.");
+		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "Command buffer for VulkanTextureManager.");
 
 		return result;
 	}
@@ -84,17 +84,15 @@ namespace vulkan_renderer {
 		buffer_object.create_info.usage            = buffer_usage;
 		buffer_object.create_info.sharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 
-		buffer_object.allocation_create_info.usage = memory_usage;
-		buffer_object.allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-
-		// Assign an appropriate name to this allocation.
-		buffer_object.allocation_create_info.pUserData = "test";
+		buffer_object.allocation_create_info.usage     = memory_usage;
+		buffer_object.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+		buffer_object.allocation_create_info.pUserData = "Inexor-test-texture";
 
 		VkResult result = vmaCreateBuffer(vma_allocator, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
 		vulkan_error_check(result);
 		
 		// Give this texture data buffer an appropriate name.
-		const std::string data_buffer_name = "Data buffer for texture " + texture_name + ".";
+		const std::string data_buffer_name = "Data buffer for texture '" + texture_name + "'.";
 
 		dbg_marker_manager->set_object_name(device, (uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
 
@@ -331,7 +329,7 @@ namespace vulkan_renderer {
 		// performance, but lower quality results. There is no graphics hardware
 		// available today that will use more than 16 samples, because the difference
 		// is negligible beyond that point.
-		sampler_create_info.anisotropyEnable = VK_FALSE; // TODO: enable!!
+		sampler_create_info.anisotropyEnable = VK_TRUE;
 		sampler_create_info.maxAnisotropy = 16;
 		
 		// The borderColor field specifies which color is returned when sampling beyond
@@ -351,7 +349,7 @@ namespace vulkan_renderer {
 		sampler_create_info.compareEnable = VK_FALSE;
 
 		// TODO: Verify if we should use something else than this.
-		sampler_create_info.compareOp     = VK_COMPARE_OP_NEVER;
+		sampler_create_info.compareOp     = VK_COMPARE_OP_ALWAYS;
 
 		sampler_create_info.mipmapMode    = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		sampler_create_info.mipLodBias    = 0.0f;
@@ -364,12 +362,8 @@ namespace vulkan_renderer {
 		
 		VkPhysicalDeviceProperties graphics_card_properties;
 		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
-		
-		sampler_create_info.maxAnisotropy = 1.0;
 
-		// TODO: Doesn't work yet Bugfix!
 
-		/*
 		if(VK_TRUE == device_features.samplerAnisotropy)
 		{
 			// Anisotropic filtering is available.
@@ -382,7 +376,6 @@ namespace vulkan_renderer {
 			sampler_create_info.maxAnisotropy = 1.0;
 			sampler_create_info.anisotropyEnable = VK_FALSE;
 		}
-		*/
 
 		VkResult result = vkCreateSampler(device, &sampler_create_info, nullptr, &texture->sampler);
 		vulkan_error_check(result);
