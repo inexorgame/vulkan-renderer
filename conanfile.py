@@ -20,7 +20,9 @@ class InexorConan(ConanFile):
         "assimp/5.0.1",
         "enet/1.3.14",
         "stb/20190512@conan/stable",
-        "zlib/1.2.11"
+        "zlib/1.2.11",
+		"cgltf/1.5",
+		"tinyobjloader/1.0.6 "
     )
 
     generators = "cmake"
