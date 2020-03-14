@@ -86,7 +86,8 @@ namespace vulkan_renderer {
 
 		buffer_object.allocation_create_info.usage     = memory_usage;
 		buffer_object.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-		buffer_object.allocation_create_info.pUserData = "Inexor-test-texture";
+
+		buffer_object.allocation_create_info.pUserData = "Inexor-TODO!";
 
 		VkResult result = vmaCreateBuffer(vma_allocator, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
 		vulkan_error_check(result);
@@ -310,7 +311,7 @@ namespace vulkan_renderer {
 		return VK_SUCCESS;
 	}
 
-	
+
 	VkResult VulkanTextureManager::create_texture_sampler(std::shared_ptr<InexorTexture> texture)
 	{
 		VkSamplerCreateInfo sampler_create_info = {};
@@ -330,7 +331,7 @@ namespace vulkan_renderer {
 		// available today that will use more than 16 samples, because the difference
 		// is negligible beyond that point.
 		sampler_create_info.anisotropyEnable = VK_TRUE;
-		sampler_create_info.maxAnisotropy = 16;
+		sampler_create_info.maxAnisotropy    = 16;
 		
 		// The borderColor field specifies which color is returned when sampling beyond
 		// the image with clamp to border addressing mode. It is possible to return black,

@@ -23,6 +23,12 @@ namespace vulkan_renderer {
 
 	InexorApplication::InexorApplication()
 	{
+		/*
+		for(std::size_t i=0; i<100; i++)
+		{
+			test_textures[i] = std::make_shared<InexorTexture>();
+		}
+		*/
 	}
 
 
@@ -37,13 +43,19 @@ namespace vulkan_renderer {
 		VkResult result = VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
 		vulkan_error_check(result);
 
-		// Load textures
-		result = VulkanTextureManager::create_texture_from_file("example_texture_1", "../../../assets/textures/texture_A_1024.jpg", example_texture_1);
+		// Load the same texture 100 times
+		/*for(std::size_t i=0; i<test_textures.size(); i++)
+		{
+			std::string texture_name = "example_texture_"+ std::to_string(i);
+			result = VulkanTextureManager::create_texture_from_file(texture_name, "../../../assets/textures/texture_A_1024.jpg", test_textures[i]);
+			vulkan_error_check(result);
+		}
+		*/
+		
+		std::string texture_name = "example_texture_0";
+		result = VulkanTextureManager::create_texture_from_file(texture_name, "../../../assets/textures/texture_A_1024.jpg", example_texture_1);
 		vulkan_error_check(result);
 		
-		result = VulkanTextureManager::create_texture_from_file("example_texture_2", "../../../assets/textures/texture_A_1024.jpg", example_texture_2);
-		vulkan_error_check(result);
-
 		return VK_SUCCESS;
 	}
 
@@ -67,9 +79,10 @@ namespace vulkan_renderer {
 		// TODO: Setup shaders JSON or TOML list file.
 		const std::vector<InexorShaderSetup> shader_list = 
 		{
-			{VK_SHADER_STAGE_VERTEX_BIT, "vertexshader.spv"},
+			{VK_SHADER_STAGE_VERTEX_BIT,   "vertexshader.spv"},
 			{VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv"}
 			// Add more shaders here..
+			// TODO: Support more shader types!
 		};
 
 		for(const auto& shader : shader_list)

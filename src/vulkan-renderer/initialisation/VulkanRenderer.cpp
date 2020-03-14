@@ -3,6 +3,20 @@
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
 
+// Enable VMA memory recording and replay.
+#define VMA_RECORDING_ENABLED 1
+
+// It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
+// Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
+// Memory is automatically mapped and unmapped if necessary.
+#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
+
+// Enforce specified number of bytes as a margin before and after every allocation.
+#define VMA_DEBUG_MARGIN 16
+
+// Enable validation of contents of the margins.
+#define VMA_DEBUG_DETECT_CORRUPTION 1
+
 #include "../../vma/vk_mem_alloc.h"
 
 
@@ -75,6 +89,7 @@ namespace vulkan_renderer {
 		{
 			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 			VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+			//VK_EXT_MEMORY_BUDGET_EXTENSION_NAME
 			// TODO: Add more instance extensions here.
 		};
 
@@ -320,20 +335,20 @@ namespace vulkan_renderer {
 		};
 
 		// Try to find an appropriate format for the depth buffer.
-		depth_buffer_format = VulkanSettingsDecisionMaker::find_depth_buffer_format(selected_graphics_card, depth_buffer_format_candidates, tiling, format);
+		depth_buffer.format = VulkanSettingsDecisionMaker::find_depth_buffer_format(selected_graphics_card, depth_buffer_format_candidates, tiling, format);
 
-		assert(depth_buffer_format.has_value());
+		assert(depth_buffer.format.has_value());
 
 		VkImageCreateInfo depth_buffer_image_create_info = {};
 
 		depth_buffer_image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		depth_buffer_image_create_info.imageType     = VK_IMAGE_TYPE_2D;
-		depth_buffer_image_create_info.extent.width  = window_width;
-		depth_buffer_image_create_info.extent.height = window_height;
+		depth_buffer_image_create_info.extent.width  = selected_swapchain_image_extent.width;
+		depth_buffer_image_create_info.extent.height = selected_swapchain_image_extent.height;
 		depth_buffer_image_create_info.extent.depth  = 1;
 		depth_buffer_image_create_info.mipLevels     = 1;
 		depth_buffer_image_create_info.arrayLayers   = 1;
-		depth_buffer_image_create_info.format        = depth_buffer_format.value();
+		depth_buffer_image_create_info.format        = depth_buffer.format.value();
 		depth_buffer_image_create_info.tiling        = tiling;
 		depth_buffer_image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		depth_buffer_image_create_info.usage         = image_usage;
@@ -346,29 +361,29 @@ namespace vulkan_renderer {
 		depth_buffer.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
 		depth_buffer.allocation_create_info.pUserData = "Depth buffer image.";
 
-		VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer_image, &depth_buffer.allocation, nullptr);
+		VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image, &depth_buffer.allocation, nullptr);
 		vulkan_error_check(result);
 
-		debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer_image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "Depth buffer image.");
+		debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "Depth buffer image.");
 
 
 		VkImageViewCreateInfo view_info = {};
 
 		view_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		view_info.image                           = depth_buffer_image;
+		view_info.image                           = depth_buffer.image;
 		view_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-		view_info.format                          = depth_buffer_format.value();
+		view_info.format                          = depth_buffer.format.value();
 		view_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
 		view_info.subresourceRange.baseMipLevel   = 0;
 		view_info.subresourceRange.levelCount     = 1;
 		view_info.subresourceRange.baseArrayLayer = 0;
 		view_info.subresourceRange.layerCount     = 1;
 
-		result = vkCreateImageView(device, &view_info, nullptr, &depth_buffer_image_view);
+		result = vkCreateImageView(device, &view_info, nullptr, &depth_buffer.image_view);
 		vulkan_error_check(result);
 
 		// Give this buffer image view an appropriate name.
-		debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer_image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "Depth buffer image view.");
+		debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "Depth buffer image view.");
 	
 		return VK_SUCCESS;
 	}
@@ -413,12 +428,21 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Initialising Vulkan memory allocator.");
 
-		VmaAllocatorCreateInfo allocatorInfo = {};
+		VmaAllocatorCreateInfo allocator_info = {};
 
-		allocatorInfo.physicalDevice = selected_graphics_card;
-		allocatorInfo.device = device;
+		// VMA memory recording and replay.
+		VmaRecordSettings vma_record_settings;
 
-		return vmaCreateAllocator(&allocatorInfo, &vma_allocator);
+		vma_record_settings.pFilePath = "../../../memory-replays/vma_replay.csv";
+
+		// Flush after every memory allocation. No half measures!
+		vma_record_settings.flags     = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
+
+		allocator_info.physicalDevice  = selected_graphics_card;
+		allocator_info.device          = device;
+		allocator_info.pRecordSettings = &vma_record_settings;
+
+		return vmaCreateAllocator(&allocator_info, &vma_allocator);
 	}
 	
 
@@ -658,11 +682,6 @@ namespace vulkan_renderer {
 		
 		vkDeviceWaitIdle(device);
 
-		vkDestroyImageView(device, depth_buffer_image_view, nullptr);
-		
-		vmaDestroyImage(vma_allocator, depth_buffer_image, depth_buffer.allocation);
-
-		
 		spdlog::debug("Device is idle.");
 		spdlog::debug("Destroying frame buffer.");
 		
@@ -690,6 +709,18 @@ namespace vulkan_renderer {
 
 			// Don't forget to free the memory.
 			command_buffers.clear();
+		}
+
+		if(VK_NULL_HANDLE != depth_buffer.image_view)
+		{
+			vkDestroyImageView(device, depth_buffer.image_view, nullptr);
+			depth_buffer.image_view = VK_NULL_HANDLE;
+		}
+
+		if(VK_NULL_HANDLE != depth_buffer.image)
+		{
+			vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
+			depth_buffer.image = VK_NULL_HANDLE;
 		}
 
 		spdlog::debug("Destroying pipeline.");
@@ -929,8 +960,8 @@ namespace vulkan_renderer {
 			VkDescriptorImageInfo image_info = {};
 			
             image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_1");
-            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_1");
+            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_0");
+            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_0");
 
             std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 
@@ -1201,7 +1232,7 @@ namespace vulkan_renderer {
 
 		VkAttachmentDescription depth_attachment = {};
 
-		depth_attachment.format         = depth_buffer_format.value();
+		depth_attachment.format         = depth_buffer.format.value();
 		depth_attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
 		depth_attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depth_attachment.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -1315,7 +1346,7 @@ namespace vulkan_renderer {
 			std::array<VkImageView, 2> attachments =
 			{
 				swapchain_image_views[i],
-				depth_buffer_image_view
+				depth_buffer.image_view
 			};
 
 			VkFramebufferCreateInfo frame_buffer_create_info = {};
@@ -1443,16 +1474,16 @@ namespace vulkan_renderer {
 		spdlog::debug("memory_stats.total.unusedRangeSizeAvg: {}", memory_stats.total.unusedRangeSizeAvg);
 		spdlog::debug("memory_stats.total.unusedRangeSizeMax: {}", memory_stats.total.unusedRangeSizeMax);
 
-		/*
+		
 		char* vma_stats_string = nullptr;
 
 		vmaBuildStatsString(vma_allocator, &vma_stats_string, true);
 		
-		spdlog::debug("{}", vma_stats_string);
+		//spdlog::debug("{}", vma_stats_string);
 
 		std::ofstream vma_memory_dump;
 
-		std::string memory_dump_file_name = "inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
+		std::string memory_dump_file_name = "../../../memory-dumps/inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
 
 		vma_memory_dump.open(memory_dump_file_name, std::ios::out);
 
@@ -1463,7 +1494,7 @@ namespace vulkan_renderer {
 		vma_dump_index++;
 
 		vmaFreeStatsString(vma_allocator, vma_stats_string);
-		*/
+		
 
 		return VK_SUCCESS;
 	}

@@ -28,6 +28,7 @@
 #include "../time-step/InexorTimeStep.hpp"
 #include "../texture-manager/VulkanTextureManager.hpp"
 #include "../vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "../depth-buffer/InexorDepthBuffer.hpp"
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
@@ -151,22 +152,17 @@ namespace vulkan_renderer {
 			std::vector<VkCommandBuffer> command_buffers;
 			
 
-
 			// Neccesary for synchronisation!
 			std::vector<VkSemaphore> image_available_semaphores;
 			std::vector<VkSemaphore> rendering_finished_semaphores;
 			std::vector<VkFence> in_flight_fences;
 			std::vector<VkFence> images_in_flight;
-
 			
 			VkDescriptorSetLayout descriptor_set_layout;
 			
-			
 			VkDescriptorPool descriptor_pool;
 
-			
 			std::vector<VkDescriptorSet> descriptor_sets;
-
 
 			/// Debug report callback.
 			VkDebugReportCallbackEXT debug_report_callback{};
@@ -174,22 +170,13 @@ namespace vulkan_renderer {
 			// Vulkan debug report callback.
 			bool debug_report_callback_initialised = false;
 
-
+			// The uniform buffers which may change up to every frame.
 			std::vector<InexorBuffer> uniform_buffers;
 
-
-			// Depth buffer.
-			VkImage depth_buffer_image;
-
-			// 
-			VkImageView depth_buffer_image_view;
-			
-			// 
-			std::optional<VkFormat> depth_buffer_format;
+			// The depth buffer.
+			InexorDepthBuffer depth_buffer;
 
 			// 
-			InexorBuffer depth_buffer;
-
 			uint32_t vma_dump_index = 0;
 
 
