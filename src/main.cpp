@@ -1,4 +1,4 @@
-#include "vulkan-renderer/InexorApplication.hpp"
+#include "InexorApplication.hpp"
 
 #include <spdlog/spdlog.h>
 

@@ -13,26 +13,26 @@
 
 // TODO: Add support for other operation systems here.
 
-#include "../error-handling/VulkanErrorHandling.hpp"
-#include "../graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
-#include "../window-manager/VulkanWindowManager.hpp"
-#include "../availability-checks/VulkanAvailabilityChecks.hpp"
-#include "../settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
-#include "../shader-manager/VulkanShaderManager.hpp"
-#include "../synchronisation-manager/VulkanSynchronisationManager.hpp"
-#include "../vertex-structure/InexorVertex.hpp"
-#include "../vertex-buffer-manager/VulkanMeshBufferManager.hpp"
-#include "../ubo-manager/VulkanUniformBufferManager.hpp"
-#include "../debug-marker/VulkanDebugMarkerManager.hpp"
-#include "../queue-manager/VulkanQueueManager.hpp"
-#include "../time-step/InexorTimeStep.hpp"
-#include "../texture-manager/VulkanTextureManager.hpp"
-#include "../vertex-buffer-manager/InexorMeshBuffer.hpp"
-#include "../depth-buffer/InexorDepthBuffer.hpp"
+#include "error-handling/VulkanErrorHandling.hpp"
+#include "graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
+#include "window-manager/VulkanWindowManager.hpp"
+#include "availability-checks/VulkanAvailabilityChecks.hpp"
+#include "settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
+#include "shader-manager/VulkanShaderManager.hpp"
+#include "synchronisation-manager/VulkanSynchronisationManager.hpp"
+#include "vertex-structure/InexorVertex.hpp"
+#include "vertex-buffer-manager/VulkanMeshBufferManager.hpp"
+#include "ubo-manager/VulkanUniformBufferManager.hpp"
+#include "debug-marker/VulkanDebugMarkerManager.hpp"
+#include "queue-manager/VulkanQueueManager.hpp"
+#include "time-step/InexorTimeStep.hpp"
+#include "texture-manager/VulkanTextureManager.hpp"
+#include "vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "depth-buffer/InexorDepthBuffer.hpp"
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-#include "../../vma/vk_mem_alloc.h"
+#include "../vma/vk_mem_alloc.h"
 
 #include <spdlog/spdlog.h>
 

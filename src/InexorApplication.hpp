@@ -1,10 +1,10 @@
 #pragma once
 
-#include "shader-manager/VulkanShaderManager.hpp"
-#include "error-handling/VulkanErrorHandling.hpp"
-#include "initialisation/VulkanRenderer.hpp"
-#include "tools/argument-parser/CommandLineArgumentParser.hpp"
-#include "vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "vulkan-renderer/VulkanRenderer.hpp"
+#include "vulkan-renderer/shader-manager/VulkanShaderManager.hpp"
+#include "vulkan-renderer/error-handling/VulkanErrorHandling.hpp"
+#include "vulkan-renderer/tools/argument-parser/CommandLineArgumentParser.hpp"
+#include "vulkan-renderer/vertex-buffer-manager/InexorMeshBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 

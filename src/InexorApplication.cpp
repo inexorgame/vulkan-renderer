@@ -1,5 +1,5 @@
 #include "InexorApplication.hpp"
-#include "debug-callback/VulkanDebugCallback.hpp"
+#include "vulkan-renderer/debug-callback/VulkanDebugCallback.hpp"
 
 
 namespace inexor {
