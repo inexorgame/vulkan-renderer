@@ -2,3 +2,5 @@ build
 *.spv
 documentation
 *.ini
+*.json
+*.csv
