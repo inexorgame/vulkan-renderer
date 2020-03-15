@@ -23,12 +23,6 @@ namespace vulkan_renderer {
 
 	InexorApplication::InexorApplication()
 	{
-		/*
-		for(std::size_t i=0; i<100; i++)
-		{
-			test_textures[i] = std::make_shared<InexorTexture>();
-		}
-		*/
 	}
 
 
@@ -42,17 +36,9 @@ namespace vulkan_renderer {
 		// Initialise texture manager.
 		VkResult result = VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
 		vulkan_error_check(result);
-
-		// Load the same texture 100 times
-		/*for(std::size_t i=0; i<test_textures.size(); i++)
-		{
-			std::string texture_name = "example_texture_"+ std::to_string(i);
-			result = VulkanTextureManager::create_texture_from_file(texture_name, "../../../assets/textures/texture_A_1024.jpg", test_textures[i]);
-			vulkan_error_check(result);
-		}
-		*/
 		
-		std::string texture_name = "example_texture_0";
+		// Create a texture.
+		std::string texture_name = "example_texture_1";
 		result = VulkanTextureManager::create_texture_from_file(texture_name, "../../../assets/textures/texture_A_1024.jpg", example_texture_1);
 		vulkan_error_check(result);
 		

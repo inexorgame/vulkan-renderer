@@ -714,13 +714,13 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != depth_buffer.image_view)
 		{
 			vkDestroyImageView(device, depth_buffer.image_view, nullptr);
-			depth_buffer.image_view = VK_NULL_HANDLE;
+			//depth_buffer.image_view = VK_NULL_HANDLE;
 		}
 
 		if(VK_NULL_HANDLE != depth_buffer.image)
 		{
 			vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
-			depth_buffer.image = VK_NULL_HANDLE;
+			//depth_buffer.image = VK_NULL_HANDLE;
 		}
 
 		spdlog::debug("Destroying pipeline.");
@@ -960,8 +960,8 @@ namespace vulkan_renderer {
 			VkDescriptorImageInfo image_info = {};
 			
             image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_0");
-            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_0");
+            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_1");
+            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_1");
 
             std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 
@@ -1431,7 +1431,7 @@ namespace vulkan_renderer {
 
 		// Use Vulkan memory allocator's statistics.
 		vmaCalculateStats(vma_allocator, &memory_stats);
-
+		/*
 		spdlog::debug("VMA heap:");
 
 		spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryHeap->blockCount);
@@ -1473,7 +1473,7 @@ namespace vulkan_renderer {
 		spdlog::debug("memory_stats.total.unusedRangeSizeMin: {}", memory_stats.total.unusedRangeSizeMin);
 		spdlog::debug("memory_stats.total.unusedRangeSizeAvg: {}", memory_stats.total.unusedRangeSizeAvg);
 		spdlog::debug("memory_stats.total.unusedRangeSizeMax: {}", memory_stats.total.unusedRangeSizeMax);
-
+		*/
 		
 		char* vma_stats_string = nullptr;
 

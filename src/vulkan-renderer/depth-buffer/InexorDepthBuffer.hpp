@@ -1,14 +1,12 @@
 #pragma once
 
-#include "../buffers/InexorBuffer.hpp"
-
 
 namespace inexor {
 namespace vulkan_renderer {
 
 
 	/// 
-	class InexorDepthBuffer : public InexorBuffer
+	class InexorDepthBuffer
 	{
 		public:
 
@@ -21,6 +19,12 @@ namespace vulkan_renderer {
 			}
 
 
+			// The VMA allocation.
+			VmaAllocation allocation = VK_NULL_HANDLE;
+			
+			// The structure describing the VMA allocation.
+			VmaAllocationCreateInfo allocation_create_info = {};	
+			
 			// The actual depth buffer image.
 			VkImage image;
 
@@ -29,9 +33,6 @@ namespace vulkan_renderer {
 			
 			// The depth buffer's format.
 			std::optional<VkFormat> format;
-
-			// The data of the depth buffer.
-			InexorBuffer buffer;
 
 	};
 
