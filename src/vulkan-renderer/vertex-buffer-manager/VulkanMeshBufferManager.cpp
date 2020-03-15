@@ -121,7 +121,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, InexorMeshBuffer& mesh_buffer)
+	VkResult VulkanMeshBufferManager::create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, std::vector<InexorMeshBuffer>& mesh_buffers)
 	{
 		assert(vertices.size() > 0);
 		assert(vma_allocator_handle);
@@ -229,17 +229,21 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Storing mesh buffer in output.");
 
+		InexorMeshBuffer new_mesh_buffer;
+
 		// Store the vertex buffer.
-		mesh_buffer.vertex_buffer = vertex_buffer;
+		new_mesh_buffer.vertex_buffer = vertex_buffer;
 
 		// Yes, there is an index buffer available!
-		mesh_buffer.index_buffer_available = false;
+		new_mesh_buffer.index_buffer_available = false;
 
 		// Store the number of vertices and indices.
-		mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
+		new_mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
+
+		mesh_buffers.push_back(new_mesh_buffer);
 
 		// Add this buffer to the list.
-		list_of_meshes.push_back(mesh_buffer);
+		list_of_meshes.push_back(new_mesh_buffer);
 		
 		spdlog::debug("Destroying staging vertex buffer.");
 
@@ -250,7 +254,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, InexorMeshBuffer& mesh_buffer)
+	VkResult VulkanMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, std::vector<InexorMeshBuffer>& mesh_buffers)
 	{
 		assert(indices.size() > 0);
 		assert(vertices.size() > 0);
@@ -409,21 +413,29 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Storing mesh buffer in output.");
 
+		InexorMeshBuffer new_mesh_buffer;
+
 		// Store the vertex buffer.
-		mesh_buffer.vertex_buffer = vertex_buffer;
+		new_mesh_buffer.vertex_buffer = vertex_buffer;
 
 		// Yes, there is an index buffer available!
-		mesh_buffer.index_buffer_available = true;
+		new_mesh_buffer.index_buffer_available = true;
 
 		// Store the index buffer.
-		mesh_buffer.index_buffer = index_buffer;
+		new_mesh_buffer.index_buffer = index_buffer;
 
 		// Store the number of vertices and indices.
-		mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
-		mesh_buffer.number_of_indices  = static_cast<uint32_t>(indices.size());
+		new_mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
+		new_mesh_buffer.number_of_indices  = static_cast<uint32_t>(indices.size());
+
+		// 
+		mesh_buffers.push_back(new_mesh_buffer);
+
+		// Add this buffer to he global list of meshes.
+		mesh_buffers.push_back(new_mesh_buffer);
 
 		// Add this buffer to the list.
-		list_of_meshes.push_back(mesh_buffer);
+		list_of_meshes.push_back(new_mesh_buffer);
 
 		spdlog::debug("Destroying staging vertex buffer.");
 

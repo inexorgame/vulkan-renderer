@@ -184,30 +184,35 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Creating vertex buffers.");
 		
-		std::size_t number_of_buffers = 1;
-
-		mesh_buffers.resize(number_of_buffers);
-
-		const std::vector<InexorVertex> vertices =
+		const std::vector<InexorVertex> vertices1 =
 		{
 			{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 			{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
 			{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
 			{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-			
+		};
+
+		const std::vector<InexorVertex> vertices2 = 
+		{
 			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 			{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
 			{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
 			{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 		};
 
-		const std::vector<uint32_t> indices =
+		const std::vector<uint32_t> indices1 =
 		{
-			0, 1, 2, 2, 3, 0,
-			4, 5, 6, 6, 7, 4
+			0, 1, 2, 2, 3, 0
 		};
 
-		VkResult result = create_vertex_buffer_with_index_buffer("Example vertex buffer 1", vertices, indices, mesh_buffers[0]);
+		const std::vector<uint32_t> indices2 =
+		{
+			0, 1, 2, 2, 3, 0
+		};
+
+		VkResult result = create_vertex_buffer_with_index_buffer("Example vertex buffer 1", vertices1, indices1, mesh_buffers);
+		
+		result = create_vertex_buffer_with_index_buffer("Example vertex buffer 2", vertices2, indices2, mesh_buffers);
 		
 		return result;
 	}
