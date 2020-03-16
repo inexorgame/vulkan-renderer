@@ -111,6 +111,8 @@ namespace vulkan_renderer {
 
 		for(const auto& instance_extension : instance_extension_wishlist)
 		{
+			// TODO: Why is this taking so long?
+			// TODO: Limit the number of function calls?
 			if(VulkanAvailabilityChecks::is_instance_extension_available(instance_extension))
 			{
 				spdlog::debug("Adding {} to instance extension wishlist.", instance_extension);
@@ -177,7 +179,6 @@ namespace vulkan_renderer {
 			}
 		}
 
-		// Structure specifying parameters of a newly created instance.
 		VkInstanceCreateInfo instance_create_info = {};
 
 		instance_create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -305,7 +306,7 @@ namespace vulkan_renderer {
 
 		command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext            = nullptr;
-		command_pool_create_info.flags            = 0;
+		command_pool_create_info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		command_pool_create_info.queueFamilyIndex = VulkanQueueManager::get_graphics_family_index().value();
 
 		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
@@ -364,6 +365,7 @@ namespace vulkan_renderer {
 		VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image, &depth_buffer.allocation, nullptr);
 		vulkan_error_check(result);
 
+		// Give this depth buffer image an appropriate name.
 		debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "Depth buffer image.");
 
 
@@ -428,21 +430,22 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Initialising Vulkan memory allocator.");
 
-		VmaAllocatorCreateInfo allocator_info = {};
-
 		// VMA memory recording and replay.
 		VmaRecordSettings vma_record_settings;
 
 		vma_record_settings.pFilePath = "../../../memory-replays/vma_replay.csv";
-
-		// Flush after every memory allocation. No half measures!
 		vma_record_settings.flags     = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
+
+		VmaAllocatorCreateInfo allocator_info = {};
 
 		allocator_info.physicalDevice  = selected_graphics_card;
 		allocator_info.device          = device;
 		allocator_info.pRecordSettings = &vma_record_settings;
 
-		return vmaCreateAllocator(&allocator_info, &vma_allocator);
+		VkResult result = vmaCreateAllocator(&allocator_info, &vma_allocator);
+		vulkan_error_check(result);
+
+		return VK_SUCCESS;
 	}
 	
 
@@ -471,7 +474,6 @@ namespace vulkan_renderer {
 
 			// TODO: Setup clear color by configuration.
 			
-			
 			std::array<VkClearValue, 2> clear_values;
 			
 			// Note that the order of clearValues should be identical to the order of your attachments.
@@ -494,14 +496,13 @@ namespace vulkan_renderer {
 
 			VkDeviceSize offsets[] = {0};
 
-
 			for(std::size_t j=0; j<mesh_buffers.size(); j++)
 			{
 				vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &mesh_buffers[j].vertex_buffer.buffer, offsets);
 
 				if(mesh_buffers[j].index_buffer_available)
 				{	
-					spdlog::debug("Recording indexed drawing of (name?).");
+					spdlog::debug("Recording drawing of buffer {}.", mesh_buffers[j].description);
 
 					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
 				
@@ -517,7 +518,8 @@ namespace vulkan_renderer {
 				}
 				else
 				{
-					spdlog::debug("Recording drawing of (name?). (No index buffer!)");
+					spdlog::debug("Recording drawing of buffer {}.", mesh_buffers[j].description);
+					spdlog::warn("No Index buffer specified! This might decrease performance!");
 
 					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
 
@@ -581,6 +583,8 @@ namespace vulkan_renderer {
 		assert(surface);
 		assert(selected_graphics_card);
 		assert(debug_marker_manager);
+		assert(window_width>0);
+		assert(window_height>0);
 
 		spdlog::debug("Creating swapchain.");
 
@@ -624,24 +628,24 @@ namespace vulkan_renderer {
 
 		VkSwapchainCreateInfoKHR swapchain_create_info = {};
 		
-		swapchain_create_info.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapchain_create_info.pNext                 = nullptr;
-		swapchain_create_info.flags                 = 0;
-		swapchain_create_info.surface               = surface;
-		swapchain_create_info.minImageCount         = number_of_images_in_swapchain;
-		swapchain_create_info.imageFormat           = selected_image_format;
-		swapchain_create_info.imageColorSpace       = selected_color_space;
-		swapchain_create_info.imageExtent           = selected_swapchain_image_extent;
-		swapchain_create_info.imageArrayLayers      = 1;
-		swapchain_create_info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchain_create_info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchain_create_info.pNext            = nullptr;
+		swapchain_create_info.flags            = 0;
+		swapchain_create_info.surface          = surface;
+		swapchain_create_info.minImageCount    = number_of_images_in_swapchain;
+		swapchain_create_info.imageFormat      = selected_image_format;
+		swapchain_create_info.imageColorSpace  = selected_color_space;
+		swapchain_create_info.imageExtent      = selected_swapchain_image_extent;
+		swapchain_create_info.imageArrayLayers = 1;
+		swapchain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 		VulkanQueueManager::prepare_swapchain_creation(swapchain_create_info);
 
-		swapchain_create_info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		swapchain_create_info.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swapchain_create_info.presentMode           = selected_present_mode.value();
-		swapchain_create_info.clipped               = VK_TRUE;
-		swapchain_create_info.oldSwapchain          = VK_NULL_HANDLE;
+		swapchain_create_info.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapchain_create_info.presentMode    = selected_present_mode.value();
+		swapchain_create_info.clipped        = VK_TRUE;
+		swapchain_create_info.oldSwapchain   = VK_NULL_HANDLE;
 
 
 		VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
@@ -683,8 +687,10 @@ namespace vulkan_renderer {
 		vkDeviceWaitIdle(device);
 
 		spdlog::debug("Device is idle.");
+
 		spdlog::debug("Destroying frame buffer.");
 		
+
 		if(frame_buffers.size() > 0)
 		{
 			for(auto frame_buffer : frame_buffers)
@@ -699,6 +705,7 @@ namespace vulkan_renderer {
 			frame_buffers.clear();
 		}
 		
+
 		spdlog::debug("Destroying command buffers.");
 
 		// We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
@@ -707,21 +714,27 @@ namespace vulkan_renderer {
 			// The size of the command buffer is equal to the number of image in swapchain.
 			vkFreeCommandBuffers(device, command_pool, static_cast<uint32_t>(command_buffers.size()), command_buffers.data());
 
-			// Don't forget to free the memory.
 			command_buffers.clear();
 		}
+
+
+		spdlog::debug("Destroying depth buffer image view.");
 
 		if(VK_NULL_HANDLE != depth_buffer.image_view)
 		{
 			vkDestroyImageView(device, depth_buffer.image_view, nullptr);
-			//depth_buffer.image_view = VK_NULL_HANDLE;
+			depth_buffer.image_view = VK_NULL_HANDLE;
 		}
+
+
+		spdlog::debug("Destroying depth buffer image.");
 
 		if(VK_NULL_HANDLE != depth_buffer.image)
 		{
 			vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
-			//depth_buffer.image = VK_NULL_HANDLE;
+			depth_buffer.image = VK_NULL_HANDLE;
 		}
+
 
 		spdlog::debug("Destroying pipeline.");
 
@@ -731,6 +744,7 @@ namespace vulkan_renderer {
 			pipeline = VK_NULL_HANDLE;
 		}
 
+
 		spdlog::debug("Destroying pipeline layout.");
 		
 		if(VK_NULL_HANDLE != pipeline_layout)
@@ -739,6 +753,7 @@ namespace vulkan_renderer {
 			pipeline_layout = VK_NULL_HANDLE;
 		}
 		
+
 		spdlog::debug("Destroying render pass.");
 
 		if(VK_NULL_HANDLE != render_pass)
@@ -746,6 +761,7 @@ namespace vulkan_renderer {
 			vkDestroyRenderPass(device, render_pass, nullptr);
 			render_pass = VK_NULL_HANDLE;
 		}
+
 
 		spdlog::debug("Destroying image views.");
 		
@@ -765,6 +781,7 @@ namespace vulkan_renderer {
 		
 		swapchain_images.clear();
 
+
 		spdlog::debug("Destroying swapchain.");
 
 		if(VK_NULL_HANDLE != swapchain)
@@ -772,16 +789,21 @@ namespace vulkan_renderer {
 			vkDestroySwapchainKHR(device, swapchain, nullptr);
 			swapchain = VK_NULL_HANDLE;
 		}
+
 		
 		spdlog::debug("Destroying uniform buffers.");
 		
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
-			vkDestroyBuffer(device, uniform_buffers[i].buffer, nullptr);
-			vmaFreeMemory(vma_allocator, uniform_buffers[i].allocation);
+			if(VK_NULL_HANDLE == uniform_buffers[i].buffer)
+			{
+				vmaDestroyBuffer(vma_allocator, uniform_buffers[i].buffer, nullptr);
+				uniform_buffers[i].buffer = VK_NULL_HANDLE;
+			}
 		}
 
 		uniform_buffers.clear();
+
 
 		spdlog::debug("Destroying descriptor pool.");
 
@@ -1495,7 +1517,6 @@ namespace vulkan_renderer {
 
 		vmaFreeStatsString(vma_allocator, vma_stats_string);
 		
-
 		return VK_SUCCESS;
 	}
 
@@ -1523,9 +1544,13 @@ namespace vulkan_renderer {
 			swapchain_images.clear();
 		}
 
+		spdlog::debug("Destroying textures.");
 		VulkanTextureManager::shutdown_textures();
 
+		
+		spdlog::debug("Destroying descriptor set layout.");
 		vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
+
 
 		spdlog::debug("Destroying vertex buffers.");
 		VulkanMeshBufferManager::shutdown_vertex_buffers();

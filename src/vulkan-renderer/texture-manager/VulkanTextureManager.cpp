@@ -18,7 +18,6 @@ namespace vulkan_renderer {
 	{
 	}
 
-
 	VkResult VulkanTextureManager::initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,  const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
 	{
 		assert(device);
@@ -27,11 +26,11 @@ namespace vulkan_renderer {
 		assert(debug_marker_manager);
 		assert(graphics_card);
 
-		this->device = device;
-		this->vma_allocator = vma_allocator;
+		this->device              = device;
+		this->vma_allocator       = vma_allocator;
 		this->data_transfer_queue = data_transfer_queue;
-		this->dbg_marker_manager = debug_marker_manager;
-		this->graphics_card = graphics_card;
+		this->dbg_marker_manager  = debug_marker_manager;
+		this->graphics_card       = graphics_card;
 
 		spdlog::debug("Initialising Vulkan texture buffer manager.");
 		spdlog::debug("Creating command pool for texture buffer manager.");
@@ -40,7 +39,7 @@ namespace vulkan_renderer {
 
 		command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext = nullptr;
-		command_pool_create_info.flags = 0;
+		command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // TODO: Do we need this?
 
 		// This might be a distinct data transfer queue.
 		command_pool_create_info.queueFamilyIndex = transfer_queue_family_index;
@@ -76,17 +75,17 @@ namespace vulkan_renderer {
 	{
 		assert(vma_allocator);
 		assert(dbg_marker_manager);
+		assert(texture_name.length()>0);
 		
 		spdlog::debug("Creating data buffer for texture '" + texture_name + "'.");
 
-		buffer_object.create_info.sType            = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_object.create_info.size             = buffer_object.size;
-		buffer_object.create_info.usage            = buffer_usage;
-		buffer_object.create_info.sharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+		buffer_object.create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		buffer_object.create_info.size        = buffer_object.size;
+		buffer_object.create_info.usage       = buffer_usage;
+		buffer_object.create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		buffer_object.allocation_create_info.usage     = memory_usage;
 		buffer_object.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-
 		buffer_object.allocation_create_info.pUserData = "Inexor-TODO!";
 
 		VkResult result = vmaCreateBuffer(vma_allocator, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
@@ -95,6 +94,7 @@ namespace vulkan_renderer {
 		// Give this texture data buffer an appropriate name.
 		const std::string data_buffer_name = "Data buffer for texture '" + texture_name + "'.";
 
+		// Give this texture buffer an appropriate name.
 		dbg_marker_manager->set_object_name(device, (uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
 
 		return result;
@@ -103,30 +103,30 @@ namespace vulkan_renderer {
 
 	VkResult VulkanTextureManager::create_texture_image(std::shared_ptr<InexorTexture> texture, const uint32_t& texture_width, const uint32_t& texture_height, const VkFormat& format, const VkImageTiling& tiling, const VmaMemoryUsage& memory_usage, const VkBufferUsageFlags& buffer_usage, const VkImageUsageFlags& image_usage_flags)
 	{
-		VkImageCreateInfo texture_image_create_info = {};
+		texture->image_create_info = {};
 
-		texture_image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		texture_image_create_info.imageType     = VK_IMAGE_TYPE_2D;
-		texture_image_create_info.extent.width  = texture_width;
-		texture_image_create_info.extent.height = texture_height;
-		texture_image_create_info.extent.depth  = 1;
-		texture_image_create_info.mipLevels     = 1;
-		texture_image_create_info.arrayLayers   = 1;
-		texture_image_create_info.format        = format;
-		texture_image_create_info.tiling        = tiling;
-		texture_image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		texture_image_create_info.usage         = image_usage_flags;
-		texture_image_create_info.samples       = VK_SAMPLE_COUNT_1_BIT;
-		texture_image_create_info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+		texture->image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		texture->image_create_info.imageType     = VK_IMAGE_TYPE_2D;
+		texture->image_create_info.extent.width  = texture_width;
+		texture->image_create_info.extent.height = texture_height;
+		texture->image_create_info.extent.depth  = 1;
+		texture->image_create_info.mipLevels     = 1;
+		texture->image_create_info.arrayLayers   = 1;
+		texture->image_create_info.format        = format;
+		texture->image_create_info.tiling        = tiling;
+		texture->image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		texture->image_create_info.usage         = image_usage_flags;
+		texture->image_create_info.samples       = VK_SAMPLE_COUNT_1_BIT;
+		texture->image_create_info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 				
 		// Image creation does not allocate memory for the image automatically.
 		// This is done in the following code part:
 
-		texture->allocation_create_info.usage = memory_usage;
-		texture->allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+		texture->allocation_create_info.usage     = memory_usage;
+		texture->allocation_create_info.flags     = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
 		texture->allocation_create_info.pUserData = "test";
 		
-		VkResult result = vmaCreateImage(vma_allocator, &texture_image_create_info, &texture->allocation_create_info, &texture->image, &texture->allocation, nullptr);
+		VkResult result = vmaCreateImage(vma_allocator, &texture->image_create_info, &texture->allocation_create_info, &texture->image, &texture->allocation, nullptr);
 		vulkan_error_check(result);
 
 		// Assign an appropriate name to this image view.
@@ -206,19 +206,19 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanTextureManager::create_texture_image_view(std::shared_ptr<InexorTexture> texture, const VkFormat& format)
 	{
-		VkImageViewCreateInfo view_info = {};
+		texture->view_create_info = {};
 
-		view_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		view_info.image                           = texture->image;
-		view_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-		view_info.format                          = format;
-		view_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		view_info.subresourceRange.baseMipLevel   = 0;
-		view_info.subresourceRange.levelCount     = 1;
-		view_info.subresourceRange.baseArrayLayer = 0;
-		view_info.subresourceRange.layerCount     = 1;
+		texture->view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		texture->view_create_info.image                           = texture->image;
+		texture->view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+		texture->view_create_info.format                          = format;
+		texture->view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		texture->view_create_info.subresourceRange.baseMipLevel   = 0;
+		texture->view_create_info.subresourceRange.levelCount     = 1;
+		texture->view_create_info.subresourceRange.baseArrayLayer = 0;
+		texture->view_create_info.subresourceRange.layerCount     = 1;
 		
-		VkResult result = vkCreateImageView(device, &view_info, nullptr, &texture->view);
+		VkResult result = vkCreateImageView(device, &texture->view_create_info, nullptr, &texture->view);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -351,7 +351,6 @@ namespace vulkan_renderer {
 
 		// TODO: Verify if we should use something else than this.
 		sampler_create_info.compareOp     = VK_COMPARE_OP_ALWAYS;
-
 		sampler_create_info.mipmapMode    = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		sampler_create_info.mipLodBias    = 0.0f;
 		sampler_create_info.minLod        = 0.0f;
@@ -477,14 +476,14 @@ namespace vulkan_renderer {
 	VkImageView VulkanTextureManager::get_texture_view(const std::string& texture_name)
 	{
 		// TODO: Check if index exists.
-		return textures[texture_name]->descriptor.imageView;
+		return textures[texture_name]->view;
 	}
     
 	
 	VkSampler VulkanTextureManager::get_texture_sampler(const std::string& texture_name)
 	{
 		// TODO: Check if index exists.
-		return textures[texture_name]->descriptor.sampler;
+		return textures[texture_name]->sampler;
 	}
 
 

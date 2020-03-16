@@ -23,6 +23,7 @@ namespace vulkan_renderer {
 		// We do not want to use the OpenGL API.
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+		// Don't show window until Vulkan initialisation is finished.
 		glfwWindowHint(GLFW_VISIBLE, false);
 
 

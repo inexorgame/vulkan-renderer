@@ -34,6 +34,8 @@ namespace vulkan_renderer {
 
 		uint32_t number_of_indices = 0;
 
+		std::string description = "";
+
 		// Don't forget that index buffers are optional!
 		bool index_buffer_available = false;
 	};

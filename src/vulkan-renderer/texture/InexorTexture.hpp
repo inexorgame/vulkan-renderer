@@ -32,6 +32,12 @@ namespace vulkan_renderer {
 
 			// The file name of the texture.
 			std::string file_name = "";
+			
+			// 
+			VkImageViewCreateInfo view_create_info;
+
+			// The create info struct of the texture image.
+			VkImageCreateInfo image_create_info;
 
 			// The texture's image buffer.
 			VkImage image;

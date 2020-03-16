@@ -33,6 +33,11 @@ namespace vulkan_renderer {
 
 	VkResult InexorApplication::load_textures()
 	{
+		assert(device);
+		assert(selected_graphics_card);
+		assert(debug_marker_manager);
+		assert(vma_allocator);
+		
 		// Initialise texture manager.
 		VkResult result = VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
 		vulkan_error_check(result);
@@ -41,6 +46,9 @@ namespace vulkan_renderer {
 		std::string texture_name = "example_texture_1";
 		result = VulkanTextureManager::create_texture_from_file(texture_name, "../../../assets/textures/texture_A_1024.jpg", example_texture_1);
 		vulkan_error_check(result);
+
+		// TODO: Abstract texture loading.
+		// TODO: Add more textures to load.
 		
 		return VK_SUCCESS;
 	}
@@ -52,25 +60,7 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Loading shader files.");
 
-		// It is important to make sure that you debugging folder contains the required shader files!
-		struct InexorShaderSetup
-		{
-			VkShaderStageFlagBits shader_type;
-			std::string shader_file_name;
-		};
-
-		// TODO: VulkanPipelineManager!
-		
-		// The actual file list of shaders that we want to load.
-		// TODO: Setup shaders JSON or TOML list file.
-		const std::vector<InexorShaderSetup> shader_list = 
-		{
-			{VK_SHADER_STAGE_VERTEX_BIT,   "vertexshader.spv"},
-			{VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv"}
-			// Add more shaders here..
-			// TODO: Support more shader types!
-		};
-
+		// Loop through the list of shaders and initialise all of them.
 		for(const auto& shader : shader_list)
 		{
 			spdlog::debug("Loading shader file {}.", shader.shader_file_name);
@@ -85,13 +75,13 @@ namespace vulkan_renderer {
 			}
 		}
 
-		spdlog::debug("Finished loading shaders.");
+		spdlog::debug("Loading shaders finished.");
 
 		return VK_SUCCESS;
 	}
 
 
-	// TODO: Refactor rendering!
+	// TODO: Refactor rendering method!
 	VkResult InexorApplication::draw_frame()
 	{
 		assert(device);
@@ -187,17 +177,17 @@ namespace vulkan_renderer {
 		const std::vector<InexorVertex> vertices1 =
 		{
 			{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-			{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-			{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-			{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+			{{0.5f, -0.5f, 0.0f},  {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, 0.5f, 0.0f},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+			{{-0.5f, 0.5f, 0.0f},  {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 		};
 
 		const std::vector<InexorVertex> vertices2 = 
 		{
 			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-			{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-			{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-			{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+			{{0.5f, -0.5f, -0.5f},  {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, 0.5f, -0.5f},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+			{{-0.5f, 0.5f, -0.5f},  {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 		};
 
 		const std::vector<uint32_t> indices1 =
@@ -214,6 +204,10 @@ namespace vulkan_renderer {
 		
 		result = create_vertex_buffer_with_index_buffer("Example vertex buffer 2", vertices2, indices2, mesh_buffers);
 		
+		spdlog::debug("Vertex buffer setup finished.");
+
+		// TODO: Check creation without index buffer.
+
 		return result;
 	}
 
@@ -228,7 +222,7 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Storing GLFW window user pointer.");
 
-		// Store the current InexorRenderer instance in the GLFW window user pointer.
+		// Store the current InexorApplication instance in the GLFW window user pointer.
 		// Since GLFW is a C-style API, we can't use a class method as callback for window resize!
 		glfwSetWindowUserPointer(window, this);
 
@@ -238,7 +232,7 @@ namespace vulkan_renderer {
 		// Since GLFW is a C-style API, we can't use a class method as callback for window resize!
 		glfwSetFramebufferSizeCallback(window, frame_buffer_resize_callback);
 
-		spdlog::debug("Checking for -renderdoc command line argument.");
+		spdlog::debug("Checking for '-renderdoc' command line argument.");
 
 		bool enable_renderdoc_instance_layer = false;
 		
@@ -254,7 +248,7 @@ namespace vulkan_renderer {
 			}
 		}
 		
-		spdlog::debug("Checking for -novalidation command line argument.");
+		spdlog::debug("Checking for '-novalidation' command line argument.");
 		
 		bool enable_khronos_validation_instance_layer = true;
 
@@ -266,7 +260,7 @@ namespace vulkan_renderer {
 		{
 			if(disable_validation.value())
 			{
-				spdlog::debug("No Vulkan validation layers command line argument specified.");
+				spdlog::warn("Vulkan validation layers DISABLED by command line argument -novalidation!.");
 				enable_khronos_validation_instance_layer = false;
 			}
 		}

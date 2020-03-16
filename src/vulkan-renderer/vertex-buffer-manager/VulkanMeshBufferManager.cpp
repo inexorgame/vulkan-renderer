@@ -33,9 +33,9 @@ namespace vulkan_renderer {
 
 		VkCommandPoolCreateInfo command_pool_create_info = {};
 
-		command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		command_pool_create_info.pNext            = nullptr;
-		command_pool_create_info.flags            = 0;
+		command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		command_pool_create_info.pNext = nullptr;
+		command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 		// This might be a distinct data transfer queue exclusively offers VK
 		command_pool_create_info.queueFamilyIndex = transfer_queue_family_index;
@@ -44,6 +44,7 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &data_transfer_command_pool);
 		vulkan_error_check(result);
 		
+		// 
 		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command pool for VulkanMeshBufferManager.");
 		
 		spdlog::debug("Creating command pool for mesh buffer manager.");
@@ -61,6 +62,7 @@ namespace vulkan_renderer {
 		result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &data_transfer_command_buffer);
 		vulkan_error_check(result);
 		
+		// 
 		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "Command buffer for VulkanMeshBufferManager.");
 
 		return result;
@@ -239,6 +241,9 @@ namespace vulkan_renderer {
 
 		// Store the number of vertices and indices.
 		new_mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
+
+		// Store the internal description of this buffer.
+		new_mesh_buffer.description = internal_buffer_name;
 
 		mesh_buffers.push_back(new_mesh_buffer);
 
@@ -428,8 +433,8 @@ namespace vulkan_renderer {
 		new_mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
 		new_mesh_buffer.number_of_indices  = static_cast<uint32_t>(indices.size());
 
-		// 
-		mesh_buffers.push_back(new_mesh_buffer);
+		// Store the internal description of this buffer.
+		new_mesh_buffer.description = internal_buffer_name;
 
 		// Add this buffer to he global list of meshes.
 		mesh_buffers.push_back(new_mesh_buffer);
@@ -460,23 +465,22 @@ namespace vulkan_renderer {
 		// Loop through all vertex buffers and release their memoy.
 		for(const auto& mesh_buffer : list_of_meshes)
 		{
-			spdlog::debug("Destroying vertex buffer (name?).");
+			spdlog::debug("Destroying vertex buffer {}.", mesh_buffer.description);
 
-			// Destroy vertex buffer.		
+			// Destroy vertex buffer.
 			vmaDestroyBuffer(vma_allocator_handle, mesh_buffer.vertex_buffer.buffer, mesh_buffer.vertex_buffer.allocation);
-
-			// TODO: vmaFreeMemory ?
 			
 			// Destroy index buffer if existent.
 			if(mesh_buffer.index_buffer_available)
 			{
-				spdlog::debug("Destroying index buffer (name?).");
+				spdlog::debug("Destroying index buffer {}.", mesh_buffer.description);
 
+				// Destroy corresponding index buffer.
 				vmaDestroyBuffer(vma_allocator_handle, mesh_buffer.index_buffer.buffer, mesh_buffer.index_buffer.allocation);
 			}
 		}
 
-		spdlog::debug("Destroying command pool for vertex buffer manager.");
+		spdlog::debug("Destroying command pool for VulkanMeshBufferManager.");
 
 		vkDestroyCommandPool(vulkan_device, data_transfer_command_pool, nullptr);
 	}

@@ -6,8 +6,6 @@
 #include "vulkan-renderer/tools/argument-parser/CommandLineArgumentParser.hpp"
 #include "vulkan-renderer/vertex-buffer-manager/InexorMeshBuffer.hpp"
 
-#include <spdlog/spdlog.h>
-
 
 // Change these definitions if you want to fork the renderer!
 #define INEXOR_ENGINE_VERSION       VK_MAKE_VERSION(1,0,0)
@@ -25,10 +23,9 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// @class InexorRenderer
-	/// @brief Inexor's Vulkan API rendering engine.
-	/// @note Now I am become renderer, the drawer of worlds.
-	class InexorApplication : public VulkanRenderer, 
+	/// @class InexorApplication
+	/// @brief The Inexor application wrapper class.
+	class InexorApplication : public VulkanRenderer,
 	                          public CommandLineArgumentParser
 	{
 		public:
@@ -40,40 +37,50 @@ namespace vulkan_renderer {
 
 		private:
 			
-			// 
+			// Frame synchronisation.
 			std::size_t current_frame = 0;
 			
-			// 
+			// The meshes (vertex buffers and index buffers).
 			std::vector<InexorMeshBuffer> mesh_buffers;
 
-			// 
+			// An example texture.
 			std::shared_ptr<InexorTexture> example_texture_1 = std::make_shared<InexorTexture>();
 			
+			// It is important to make sure that you debugging folder contains the required shader files!
+			struct InexorShaderSetup
+			{
+				VkShaderStageFlagBits shader_type;
+				std::string shader_file_name;
+			};
+		
+			// The actual file list of shaders that we want to load.
+			// TODO: Setup shaders JSON or TOML list file.
+			// TODO: Implement a VulkanPipelineManager!
+			const std::vector<InexorShaderSetup> shader_list = 
+			{
+				{VK_SHADER_STAGE_VERTEX_BIT,   "vertexshader.spv"},
+				{VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv"}
+				// Add more shaders here..
+				// TODO: Support more shader types!
+			};
 
 		private:
 
-			/// @brief Loads all required textures.
 			VkResult load_textures();
 
-			/// @brief Loads all required shaders.
 			VkResult load_shaders();
 
-			/// @brief Loads all required models.
 			VkResult load_models();
 
-			/// @brief The actual rendering method which is called every frame.
 			VkResult draw_frame();
 
 
 		public:
 			
-			/// @brief Initialise the Vulkan renderer.
 			VkResult init();
 
-			/// @brief Run the event loop of the Vulkan renderer.
 			void run();
 
-			/// @brief Destroy the window and shutdown Vulkan.
 			void cleanup();
 
 
