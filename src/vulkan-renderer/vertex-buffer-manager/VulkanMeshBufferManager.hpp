@@ -59,7 +59,7 @@ namespace vulkan_renderer {
 			/// @brief Create a buffer.
 			/// @param buffer The InexorBuffer which will be created.
 			/// @param buffer_usage The usage flags of the buffer. The default is value is VK_BUFFER_USAGE_TRANSFER_SRC_BIT for staging buffers.
-			VkResult create_buffer(InexorBuffer& buffer, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
+			VkResult create_buffer(std::string buffer_description, InexorBuffer& buffer, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
 
 			
 		private:

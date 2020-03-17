@@ -362,7 +362,7 @@ namespace vulkan_renderer {
 		depth_buffer.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
 		depth_buffer.allocation_create_info.pUserData = "Depth buffer image.";
 
-		VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image, &depth_buffer.allocation, nullptr);
+		VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image, &depth_buffer.allocation, &depth_buffer.allocation_info);
 		vulkan_error_check(result);
 
 		// Give this depth buffer image an appropriate name.
@@ -442,6 +442,7 @@ namespace vulkan_renderer {
 		allocator_info.device          = device;
 		allocator_info.pRecordSettings = &vma_record_settings;
 
+		// Create an instance of Vulkan memory allocator.
 		VkResult result = vmaCreateAllocator(&allocator_info, &vma_allocator);
 		vulkan_error_check(result);
 
@@ -795,15 +796,14 @@ namespace vulkan_renderer {
 		
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
-			if(VK_NULL_HANDLE == uniform_buffers[i].buffer)
+			if(VK_NULL_HANDLE != uniform_buffers[i].buffer)
 			{
-				vmaDestroyBuffer(vma_allocator, uniform_buffers[i].buffer, nullptr);
+				vmaDestroyBuffer(vma_allocator, uniform_buffers[i].buffer, uniform_buffers[i].allocation);
 				uniform_buffers[i].buffer = VK_NULL_HANDLE;
 			}
 		}
 
 		uniform_buffers.clear();
-
 
 		spdlog::debug("Destroying descriptor pool.");
 
@@ -1040,17 +1040,17 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating uniform buffers of size {}.", buffer_size);
 
 		uniform_buffers.clear();
-		uniform_buffers.resize(number_of_images_in_swapchain, buffer_size);
+		uniform_buffers.resize(number_of_images_in_swapchain);
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			spdlog::debug("Creating uniform buffer {}.", i);
 
-			// It is important to use VMA_MEMORY_USAGE_CPU_TO_GPU for uniform buffers!
-			VkResult result = create_buffer(uniform_buffers[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-			vulkan_error_check(result);
-
 			std::string buffer_description = "Uniform buffer #" + std::to_string(i);
+
+			// It is important to use VMA_MEMORY_USAGE_CPU_TO_GPU for uniform buffers!
+			VkResult result = create_buffer(buffer_description, uniform_buffers[i], buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+			vulkan_error_check(result);
 
 			// Give this uniform buffer an appropriate name.
 			debug_marker_manager->set_object_name(device, (uint64_t)(uniform_buffers[i].buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, buffer_description.c_str());
@@ -1555,9 +1555,6 @@ namespace vulkan_renderer {
 		spdlog::debug("Destroying vertex buffers.");
 		VulkanMeshBufferManager::shutdown_vertex_buffers();
 
-		// Destroy allocator of Vulkan Memory Allocator (VMA) library.
-		vmaDestroyAllocator(vma_allocator);
-
 		spdlog::debug("Destroying semaphores.");
 		VulkanSynchronisationManager::shutdown_semaphores(device);
 
@@ -1582,6 +1579,9 @@ namespace vulkan_renderer {
 			surface = VK_NULL_HANDLE;
 		}
 		
+		// Destroy Vulkan memory allocator instance.
+		vmaDestroyAllocator(vma_allocator);
+
 		// Device queues are implicitly cleaned up when the device is destroyed,
 		// so we don’t need to do anything in cleanup.
 		spdlog::debug("Destroying Vulkan device.");
@@ -1610,7 +1610,7 @@ namespace vulkan_renderer {
 			vkDestroyInstance(instance, nullptr);
 			instance = VK_NULL_HANDLE;
 		}
-		
+
 		spdlog::debug("Shutdown finished.");
 		spdlog::debug("------------------------------------------------------------------------------------------------------------");
 		

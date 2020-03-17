@@ -19,7 +19,7 @@ namespace vulkan_renderer {
 	{
 		vkDestroySampler(device, sampler, nullptr);
 
-		vkDestroyImage(device, image, nullptr);
+		vmaDestroyImage(vma_allocator, image, allocation);
 
 		vkDestroyImageView(device, view, nullptr);
 

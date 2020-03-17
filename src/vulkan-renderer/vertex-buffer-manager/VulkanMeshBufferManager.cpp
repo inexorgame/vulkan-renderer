@@ -69,20 +69,21 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_buffer(InexorBuffer& buffer_object, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
+	VkResult VulkanMeshBufferManager::create_buffer(std::string buffer_description, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
 	{
 		assert(vma_allocator_handle);
 		assert(dbg_marker_manager);
 		
 		spdlog::debug("Creating a mesh buffer.");
 
-		buffer_object.create_info.sType            = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_object.create_info.size             = buffer_object.size;
-		buffer_object.create_info.usage            = buffer_usage;
-		buffer_object.create_info.sharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+		buffer_object.create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		buffer_object.create_info.size        = buffer_size;
+		buffer_object.create_info.usage       = buffer_usage;
+		buffer_object.create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		buffer_object.allocation_create_info.usage = memory_usage;
-		buffer_object.allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		buffer_object.allocation_create_info.usage     = memory_usage;
+		buffer_object.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+		buffer_object.allocation_create_info.pUserData = buffer_description.data();
 
 		VkResult result = vmaCreateBuffer(vma_allocator_handle, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
 		vulkan_error_check(result);
@@ -140,16 +141,18 @@ namespace vulkan_renderer {
 		// It is highly advised to use a staging buffer which will be filled with the vertex data.
 		// Once the staging buffer is filled, a queue command can be executed to use a transfer queue
 		// to upload the data to the GPU memory.
-		
-		// Calculate the size of the vertex buffer and the index buffer.
-		std::size_t vertex_buffer_size = sizeof(InexorVertex) * vertices.size();
 
 		spdlog::debug("Creating staging vertex buffer.");
 
 		// Create a staging vertex buffer.
-		InexorBuffer staging_vertex_buffer(vertex_buffer_size);
+		InexorBuffer staging_vertex_buffer;
 
-		VkResult result = create_buffer(staging_vertex_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		// Calculate the size of the vertex buffer and the index buffer.
+		std::size_t vertex_buffer_size = sizeof(InexorVertex) * vertices.size();
+
+		std::string internal_staging_buffer_name = "Staging buffer for "+ internal_buffer_name;
+
+		VkResult result = create_buffer(internal_staging_buffer_name, staging_vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -158,6 +161,7 @@ namespace vulkan_renderer {
 		
 		std::string staging_vertex_buffer_name = "Staging vertex buffer '"+ internal_buffer_name +"'";
 
+		// 
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, staging_vertex_buffer_name.c_str());
 
 		spdlog::debug("Copying mesh data from RAM to staging vertex buffer.");
@@ -169,9 +173,9 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Creating vertex buffer.");
 
-		InexorBuffer vertex_buffer(vertex_buffer_size);
+		InexorBuffer vertex_buffer;
 
-		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		result = create_buffer(internal_buffer_name, vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -283,9 +287,9 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating staging vertex buffer for {}.", internal_buffer_name);
 
 		// Create a staging vertex buffer.
-		InexorBuffer staging_vertex_buffer(vertex_buffer_size);
+		InexorBuffer staging_vertex_buffer;
 
-		VkResult result = create_buffer(staging_vertex_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		VkResult result = create_buffer(internal_buffer_name, staging_vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -306,9 +310,9 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Creating staging index buffer for {}.", internal_buffer_name);
 
-		InexorBuffer staging_index_buffer(index_buffer_size);
+		InexorBuffer staging_index_buffer;
 
-		result = create_buffer(staging_index_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		result = create_buffer(internal_buffer_name, staging_index_buffer, index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -324,10 +328,9 @@ namespace vulkan_renderer {
 		// Copy the index data to the staging index buffer.
 		std::memcpy(staging_index_buffer.allocation_info.pMappedData, indices.data(), index_buffer_size);
 
-		
-		InexorBuffer vertex_buffer(vertex_buffer_size);
+		InexorBuffer vertex_buffer;
 
-		result = create_buffer(vertex_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		result = create_buffer(internal_buffer_name, vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);
@@ -339,9 +342,9 @@ namespace vulkan_renderer {
 
 		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
 
-		InexorBuffer index_buffer(index_buffer_size);
+		InexorBuffer index_buffer;
 		
-		result = create_buffer(index_buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		result = create_buffer(internal_buffer_name, index_buffer, index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		if(VK_SUCCESS != result)
 		{
 			vulkan_error_check(result);

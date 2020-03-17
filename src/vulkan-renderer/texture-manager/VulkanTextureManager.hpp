@@ -76,7 +76,7 @@ namespace vulkan_renderer {
 			/// @param 
 			/// @param 
 			/// @param 
-			VkResult create_texture_buffer(const std::string& texture_name, InexorBuffer& buffer_object, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
+			VkResult create_texture_buffer(std::shared_ptr<InexorTexture> texture, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
 			
 			
 			/// @brief 

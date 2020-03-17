@@ -21,6 +21,9 @@ namespace vulkan_renderer {
 
 			// The VMA allocation.
 			VmaAllocation allocation = VK_NULL_HANDLE;
+
+			// 
+			VmaAllocationInfo allocation_info;
 			
 			// The structure describing the VMA allocation.
 			VmaAllocationCreateInfo allocation_create_info = {};	

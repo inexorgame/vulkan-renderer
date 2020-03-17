@@ -71,28 +71,28 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanTextureManager::create_texture_buffer(const std::string& texture_name, InexorBuffer& buffer_object, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
+	VkResult VulkanTextureManager::create_texture_buffer(std::shared_ptr<InexorTexture> texture, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
 	{
 		assert(vma_allocator);
 		assert(dbg_marker_manager);
-		assert(texture_name.length()>0);
+		assert(texture->texture_name.length()>0);
 		
-		spdlog::debug("Creating data buffer for texture '" + texture_name + "'.");
+		spdlog::debug("Creating data buffer for texture '" + texture->texture_name + "'.");
 
 		buffer_object.create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_object.create_info.size        = buffer_object.size;
+		buffer_object.create_info.size        = buffer_size;
 		buffer_object.create_info.usage       = buffer_usage;
 		buffer_object.create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		buffer_object.allocation_create_info.usage     = memory_usage;
 		buffer_object.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-		buffer_object.allocation_create_info.pUserData = "Inexor-TODO!";
+		buffer_object.allocation_create_info.pUserData = texture->texture_name.data();
 
 		VkResult result = vmaCreateBuffer(vma_allocator, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
 		vulkan_error_check(result);
 		
 		// Give this texture data buffer an appropriate name.
-		const std::string data_buffer_name = "Data buffer for texture '" + texture_name + "'.";
+		const std::string data_buffer_name = "Data buffer for texture '" + texture->texture_name + "'.";
 
 		// Give this texture buffer an appropriate name.
 		dbg_marker_manager->set_object_name(device, (uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
@@ -124,9 +124,9 @@ namespace vulkan_renderer {
 
 		texture->allocation_create_info.usage     = memory_usage;
 		texture->allocation_create_info.flags     = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-		texture->allocation_create_info.pUserData = "test";
+		texture->allocation_create_info.pUserData = texture->texture_name.data();
 		
-		VkResult result = vmaCreateImage(vma_allocator, &texture->image_create_info, &texture->allocation_create_info, &texture->image, &texture->allocation, nullptr);
+		VkResult result = vmaCreateImage(vma_allocator, &texture->image_create_info, &texture->allocation_create_info, &texture->image, &texture->allocation, &texture->allocation_info);
 		vulkan_error_check(result);
 
 		// Assign an appropriate name to this image view.
@@ -260,15 +260,14 @@ namespace vulkan_renderer {
 		
 		// Store the name of the texture.
 		texture->texture_name = texture_name;
-		texture->size = texture_memory_size;
 
 		// Create a staging vertex buffer.
-		InexorBuffer staging_buffer_for_texture(texture_memory_size);
+		InexorBuffer staging_buffer_for_texture;
 
 		// Create a staging buffer for the texture.
 		// This buffer is used as a transfer source for the buffer copy
 		// TODO: Use generalized buffer creation manager?
-		VkResult result = create_texture_buffer(texture_name, staging_buffer_for_texture, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		VkResult result = create_texture_buffer(texture, staging_buffer_for_texture, texture_memory_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		vulkan_error_check(result);
 
 		// Copy memory to staging buffer.
@@ -290,10 +289,7 @@ namespace vulkan_renderer {
 
 
 		// Destroy staging buffer.
-		vmaDestroyBuffer(vma_allocator, staging_buffer_for_texture.buffer, texture->allocation);
-
-		// Free memory of the texture's staging buffer.
-		vmaFreeMemory(vma_allocator, staging_buffer_for_texture.allocation);
+		vmaDestroyBuffer(vma_allocator, staging_buffer_for_texture.buffer, staging_buffer_for_texture.allocation);
 
 
 		/// Create an image view so shaders can access this texture.

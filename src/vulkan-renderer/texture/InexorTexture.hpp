@@ -14,7 +14,7 @@ namespace vulkan_renderer {
 	/// @class InexorTextureBuffer
 	/// @brief A structure for textures.
 	/// @note The texture's memory will be managed by InexorBuffer.
-	class InexorTexture : public InexorBuffer
+	class InexorTexture
 	{
 		public:
 			
@@ -38,6 +38,18 @@ namespace vulkan_renderer {
 
 			// The create info struct of the texture image.
 			VkImageCreateInfo image_create_info;
+
+			// 
+			VmaAllocation allocation = VK_NULL_HANDLE;
+
+			// 
+			VmaAllocationInfo allocation_info = {};
+
+			// 
+			VkBufferCreateInfo create_info = {};
+				
+			// 
+			VmaAllocationCreateInfo allocation_create_info = {};	
 
 			// The texture's image buffer.
 			VkImage image;

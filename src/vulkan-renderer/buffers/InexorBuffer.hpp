@@ -16,16 +16,7 @@ namespace vulkan_renderer {
 	/// A staging buffer is a buffer that is used for efficient data transfer to GPU.
 	/// It will be deleted immediately after usage.
 	struct InexorBuffer
-	{
-		InexorBuffer()
-		{
-		}
-
-		InexorBuffer(const std::size_t& buffer_size)
-		{	
-			size = buffer_size;
-		}
-				
+	{				
 		std::size_t size;
 				
 		VkBuffer buffer = VK_NULL_HANDLE;

@@ -23,7 +23,6 @@ int main(int argc, char* argv[])
 
     if(VK_SUCCESS == result)
     {
-        system("cls");
         renderer.run();
         renderer.calculate_memory_budget();
         renderer.cleanup();
