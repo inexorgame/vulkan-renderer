@@ -22,7 +22,7 @@ namespace vulkan_renderer {
 
 
 			/// 
-			VkResult load_model_from_glTF_file(const std::string& OBJ_file_name, std::vector<InexorVertex>& vertices, std::vector<uint32_t> indices);
+			VkResult load_model_from_glTF_file(const std::string& OBJ_file_name, std::vector<InexorVertex>& vertices/*, std::vector<uint32_t> indices*/);
 
 	};
 

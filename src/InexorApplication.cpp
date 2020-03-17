@@ -177,7 +177,7 @@ namespace vulkan_renderer {
 		std::vector<InexorVertex> vertices1;
 		std::vector<uint32_t> indices1;
 
-		load_model_from_glTF_file("../../../assets/models/cube/cube.gltf", vertices1, indices1);
+		load_model_from_glTF_file("../../../assets/models/cube/cube.gltf", vertices1/*, indices1*/);
 
 		VkResult result = create_vertex_buffer("Example vertex buffer 1", vertices1, mesh_buffers);
 		

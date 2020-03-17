@@ -184,7 +184,8 @@ namespace vulkan_renderer {
 		
 		std::string vertex_buffer_name = "Vertex buffer '"+ internal_buffer_name +"'";
 
-		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
+		// Give this vertex buffer an appropriate name.
+		dbg_marker_manager->set_object_name(vulkan_device, (uint64_t)(vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
 
 		spdlog::debug("Specifying copy region of staging vertex buffer.");
 
@@ -279,10 +280,10 @@ namespace vulkan_renderer {
 		
 		// Calculate the size of the vertex buffer and the index buffer.
 		std::size_t vertex_buffer_size = sizeof(InexorVertex) * vertices.size();
-		std::size_t index_buffer_size = sizeof(InexorVertex) * indices.size();
+		std::size_t index_buffer_size  = sizeof(InexorVertex) * indices.size();
 		
 		spdlog::debug("Creating new mesh buffer for {} vertices.", vertex_buffer_size);
-		spdlog::debug("Creating new mesh buffer for {} indices.", index_buffer_size);
+		spdlog::debug("Creating new mesh buffer for {} indices.",  index_buffer_size);
 
 		spdlog::debug("Creating staging vertex buffer for {}.", internal_buffer_name);
 
