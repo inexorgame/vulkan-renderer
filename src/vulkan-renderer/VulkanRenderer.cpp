@@ -433,7 +433,7 @@ namespace vulkan_renderer {
 		// VMA memory recording and replay.
 		VmaRecordSettings vma_record_settings;
 
-		vma_record_settings.pFilePath = "../../../memory-replays/vma_replay.csv";
+		vma_record_settings.pFilePath = "../../../vma-replays/vma_replay.csv";
 		vma_record_settings.flags     = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
 
 		VmaAllocatorCreateInfo allocator_info = {};
@@ -1502,7 +1502,7 @@ namespace vulkan_renderer {
 
 		std::ofstream vma_memory_dump;
 
-		std::string memory_dump_file_name = "../../../memory-dumps/inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
+		std::string memory_dump_file_name = "../../../vma-dumps/inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
 
 		vma_memory_dump.open(memory_dump_file_name, std::ios::out);
 
