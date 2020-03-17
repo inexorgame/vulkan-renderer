@@ -415,7 +415,11 @@ namespace vulkan_renderer {
 
 		VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
 
-		debug_marker_manager->set_object_name(device, (uint64_t)(command_buffers.data()), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "Command buffer for core engine.");
+		for(std::size_t i=0; i<command_buffers.size(); i++)
+		{
+			std::string command_buffer_name = "Command buffer "+ std::to_string(i) +" for core engine.";
+			debug_marker_manager->set_object_name(device, (uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, command_buffer_name.c_str());
+		}
 
 		return VK_SUCCESS;
 	}
