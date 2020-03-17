@@ -17,7 +17,7 @@
 // Enable validation of contents of the margins.
 #define VMA_DEBUG_DETECT_CORRUPTION 1
 
-#include "../vma/vk_mem_alloc.h"
+#include "../third_party/vma/vk_mem_alloc.h"
 
 
 #include <glm/glm.hpp>

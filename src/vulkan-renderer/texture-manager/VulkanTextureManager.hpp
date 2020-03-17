@@ -8,7 +8,7 @@
 
 /// Vulkan Memory Allocator library:
 /// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-#include "../../vma/vk_mem_alloc.h"
+#include "../../third_party/vma/vk_mem_alloc.h"
 
 #include <spdlog/spdlog.h>
 
