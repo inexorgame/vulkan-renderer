@@ -16,6 +16,14 @@ namespace vulkan_renderer {
 	{
 		public:
 
+			InexorVertex()
+			{
+			}
+			
+			~InexorVertex()
+			{
+			}
+
 			// TODO: Generalize this setup!
 
 			/// The position of the vertex.
@@ -68,6 +76,10 @@ namespace vulkan_renderer {
 				return vertex_input_attribute_description;
 			}
 
+			bool operator==(const InexorVertex& other) const
+			{
+				return pos == other.pos && color == other.color && texture_coordinates == other.texture_coordinates;
+			}
 
 	};
 

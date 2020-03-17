@@ -1,4 +1,4 @@
-#include "VulkanMeshBufferManager.hpp"
+#include "InexorMeshBufferManager.hpp"
 #include "../error-handling/VulkanErrorHandling.hpp"
 
 
@@ -6,17 +6,17 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VulkanMeshBufferManager::VulkanMeshBufferManager()
+	InexorMeshBufferManager::InexorMeshBufferManager()
 	{
 	}
 
 	
-	VulkanMeshBufferManager::~VulkanMeshBufferManager()
+	InexorMeshBufferManager::~InexorMeshBufferManager()
 	{
 	}
 
 	
-	VkResult VulkanMeshBufferManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance,  const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
+	VkResult InexorMeshBufferManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance,  const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
 	{
 		assert(device);
 		assert(vma_allocator);
@@ -69,7 +69,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_buffer(std::string buffer_description, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
+	VkResult InexorMeshBufferManager::create_buffer(std::string buffer_description, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
 	{
 		assert(vma_allocator_handle);
 		assert(dbg_marker_manager);
@@ -92,7 +92,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::upload_data_to_gpu()
+	VkResult InexorMeshBufferManager::upload_data_to_gpu()
 	{
 		assert(vulkan_data_transfer_queue);
 		assert(dbg_marker_manager);
@@ -124,7 +124,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanMeshBufferManager::create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, std::vector<InexorMeshBuffer>& mesh_buffers)
+	VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, std::vector<InexorMeshBuffer>& mesh_buffers)
 	{
 		assert(vertices.size() > 0);
 		assert(vma_allocator_handle);
@@ -263,7 +263,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult VulkanMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, std::vector<InexorMeshBuffer>& mesh_buffers)
+	VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, std::vector<InexorMeshBuffer>& mesh_buffers)
 	{
 		assert(indices.size() > 0);
 		assert(vertices.size() > 0);
@@ -459,7 +459,7 @@ namespace vulkan_renderer {
 	}
 
 
-	void VulkanMeshBufferManager::shutdown_vertex_buffers()
+	void InexorMeshBufferManager::shutdown_vertex_buffers()
 	{
 		assert(vulkan_device);
 		assert(vma_allocator_handle);

@@ -1453,7 +1453,7 @@ namespace vulkan_renderer {
 
 		// Use Vulkan memory allocator's statistics.
 		vmaCalculateStats(vma_allocator, &memory_stats);
-		/*
+
 		spdlog::debug("VMA heap:");
 
 		spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryHeap->blockCount);
@@ -1495,13 +1495,10 @@ namespace vulkan_renderer {
 		spdlog::debug("memory_stats.total.unusedRangeSizeMin: {}", memory_stats.total.unusedRangeSizeMin);
 		spdlog::debug("memory_stats.total.unusedRangeSizeAvg: {}", memory_stats.total.unusedRangeSizeAvg);
 		spdlog::debug("memory_stats.total.unusedRangeSizeMax: {}", memory_stats.total.unusedRangeSizeMax);
-		*/
 		
 		char* vma_stats_string = nullptr;
 
 		vmaBuildStatsString(vma_allocator, &vma_stats_string, true);
-		
-		//spdlog::debug("{}", vma_stats_string);
 
 		std::ofstream vma_memory_dump;
 
@@ -1553,7 +1550,7 @@ namespace vulkan_renderer {
 
 
 		spdlog::debug("Destroying vertex buffers.");
-		VulkanMeshBufferManager::shutdown_vertex_buffers();
+		InexorMeshBufferManager::shutdown_vertex_buffers();
 
 		spdlog::debug("Destroying semaphores.");
 		VulkanSynchronisationManager::shutdown_semaphores(device);

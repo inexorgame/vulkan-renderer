@@ -9,7 +9,7 @@
 #include "../../vma/vk_mem_alloc.h"
 
 #include "../vertex-structure/InexorVertex.hpp"
-#include "../vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "../mesh-buffer/InexorMeshBuffer.hpp"
 #include "../debug-marker/VulkanDebugMarkerManager.hpp"
 
 #include <vector>
@@ -25,7 +25,7 @@ namespace vulkan_renderer {
 	/// @brief A manager class for vertex buffers.
 	/// @note Buffers in Vulkan are regions of memory used for storing arbitrary data that can be read by the graphics card.
 	/// @note Unlike the Vulkan objects, buffers do not automatically allocate memory for themselves.
-	class VulkanMeshBufferManager
+	class InexorMeshBufferManager
 	{
 		private:
 
@@ -70,9 +70,9 @@ namespace vulkan_renderer {
 
 		public:
 
-			VulkanMeshBufferManager();
+			InexorMeshBufferManager();
 
-			~VulkanMeshBufferManager();
+			~InexorMeshBufferManager();
 		
 
 		protected:

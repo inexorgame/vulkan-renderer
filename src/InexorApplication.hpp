@@ -4,7 +4,7 @@
 #include "vulkan-renderer/shader-manager/VulkanShaderManager.hpp"
 #include "vulkan-renderer/error-handling/VulkanErrorHandling.hpp"
 #include "vulkan-renderer/tools/argument-parser/CommandLineArgumentParser.hpp"
-#include "vulkan-renderer/vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "vulkan-renderer/mesh-buffer/InexorMeshBuffer.hpp"
 
 
 // Change these definitions if you want to fork the renderer!

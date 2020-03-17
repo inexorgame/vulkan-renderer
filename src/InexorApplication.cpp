@@ -174,35 +174,12 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Creating vertex buffers.");
 		
-		const std::vector<InexorVertex> vertices1 =
-		{
-			{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-			{{0.5f, -0.5f, 0.0f},  {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-			{{0.5f, 0.5f, 0.0f},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-			{{-0.5f, 0.5f, 0.0f},  {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-		};
+		std::vector<InexorVertex> vertices1;
+		std::vector<uint32_t> indices1;
 
-		const std::vector<InexorVertex> vertices2 = 
-		{
-			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-			{{0.5f, -0.5f, -0.5f},  {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-			{{0.5f, 0.5f, -0.5f},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-			{{-0.5f, 0.5f, -0.5f},  {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-		};
+		load_model_from_obj_file("../../../assets/models/monkey/monkey.obj", vertices1);
 
-		const std::vector<uint32_t> indices1 =
-		{
-			0, 1, 2, 2, 3, 0
-		};
-
-		const std::vector<uint32_t> indices2 =
-		{
-			0, 1, 2, 2, 3, 0
-		};
-
-		VkResult result = create_vertex_buffer_with_index_buffer("Example vertex buffer 1", vertices1, indices1, mesh_buffers);
-		
-		result = create_vertex_buffer_with_index_buffer("Example vertex buffer 2", vertices2, indices2, mesh_buffers);
+		VkResult result = create_vertex_buffer("Example vertex buffer 1", vertices1, mesh_buffers);
 		
 		spdlog::debug("Vertex buffer setup finished.");
 
@@ -486,7 +463,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Create a second command pool for data transfer commands.
-		VulkanMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
+		InexorMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
 
 		result = create_command_pool();
 		vulkan_error_check(result);

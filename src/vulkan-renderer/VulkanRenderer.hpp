@@ -21,14 +21,16 @@
 #include "shader-manager/VulkanShaderManager.hpp"
 #include "synchronisation-manager/VulkanSynchronisationManager.hpp"
 #include "vertex-structure/InexorVertex.hpp"
-#include "vertex-buffer-manager/VulkanMeshBufferManager.hpp"
+#include "mesh-buffer-manager/InexorMeshBufferManager.hpp"
 #include "ubo-manager/VulkanUniformBufferManager.hpp"
 #include "debug-marker/VulkanDebugMarkerManager.hpp"
 #include "queue-manager/VulkanQueueManager.hpp"
 #include "time-step/InexorTimeStep.hpp"
 #include "texture-manager/VulkanTextureManager.hpp"
-#include "vertex-buffer-manager/InexorMeshBuffer.hpp"
+#include "mesh-buffer/InexorMeshBuffer.hpp"
 #include "depth-buffer/InexorDepthBuffer.hpp"
+#include "mesh-loader/InexorMeshLoader.hpp"
+
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
@@ -59,10 +61,11 @@ namespace vulkan_renderer {
 							public VulkanAvailabilityChecks,
 							public VulkanShaderManager,
 							public VulkanSynchronisationManager,
-							public VulkanMeshBufferManager,
+							public InexorMeshBufferManager,
 							public VulkanQueueManager,
 							public VulkanTextureManager,
-							public InexorTimeStep
+							public InexorTimeStep,
+							public InexorMeshLoader
 							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
 		public:
