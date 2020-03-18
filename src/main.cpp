@@ -19,21 +19,24 @@ int main(int argc, char* argv[])
     
     renderer.parse_command_line_arguments(argc, argv);
 
-    VkResult result = renderer.init();
+    while(true)
+    {
+        VkResult result = renderer.init();
 
-    if(VK_SUCCESS == result)
-    {
-        renderer.run();
-        renderer.calculate_memory_budget();
-        renderer.cleanup();
+        if(VK_SUCCESS == result)
+        {
+            renderer.run();
+            renderer.calculate_memory_budget();
+            renderer.cleanup();
         
-        spdlog::debug("Window closed.");
-    }
-    else
-    {
-        // Something did go wrong when initialising the engine!
-        vulkan_error_check(result);
-        return -1;
+            spdlog::debug("Window closed.");
+        }
+        else
+        {
+            // Something did go wrong when initialising the engine!
+            vulkan_error_check(result);
+            return -1;
+        }
     }
 
     return 0;

@@ -200,7 +200,6 @@ namespace vulkan_renderer {
 	VkResult VulkanRenderer::create_window_surface(const VkInstance& instance, GLFWwindow* window, VkSurfaceKHR& surface)
 	{
 		assert(window);
-		assert(surface);
 		assert(instance);
 
 		spdlog::debug("Creating window surface");
@@ -296,7 +295,6 @@ namespace vulkan_renderer {
 	VkResult VulkanRenderer::create_command_pool()
 	{
 		assert(device);
-		assert(command_pool);
 		assert(debug_marker_manager);
 		assert(VulkanQueueManager::get_graphics_family_index().has_value());
 		
@@ -1362,6 +1360,8 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating frame buffers.");
 		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
 
+		frame_buffers.clear();
+
 		// Preallocate memory for frame buffers.
 		frame_buffers.resize(number_of_images_in_swapchain);
 
@@ -1589,7 +1589,6 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != device)
 		{
 			vkDestroyDevice(device, nullptr);
-			device = VK_NULL_HANDLE;
 		}
 		
 		// Destroy Vulkan debug callback.
@@ -1615,6 +1614,11 @@ namespace vulkan_renderer {
 		spdlog::debug("Shutdown finished.");
 		spdlog::debug("------------------------------------------------------------------------------------------------------------");
 		
+		images_in_flight.clear();
+		in_flight_fences.clear();
+		image_available_semaphores.clear();
+		rendering_finished_semaphores.clear();
+
 		return VK_SUCCESS;
 	}
 

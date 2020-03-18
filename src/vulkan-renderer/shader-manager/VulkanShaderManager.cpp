@@ -139,6 +139,8 @@ namespace vulkan_renderer {
 			
 			vkDestroyShaderModule(vulkan_device, shaders[i].get_shader_module(), nullptr);
 		}
+
+		shaders.clear();
 	}
 
 

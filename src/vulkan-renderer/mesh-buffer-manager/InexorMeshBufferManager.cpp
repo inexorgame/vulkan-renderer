@@ -486,6 +486,8 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Destroying command pool for VulkanMeshBufferManager.");
 
+		list_of_meshes.clear();
+
 		vkDestroyCommandPool(vulkan_device, data_transfer_command_pool, nullptr);
 	}
 
