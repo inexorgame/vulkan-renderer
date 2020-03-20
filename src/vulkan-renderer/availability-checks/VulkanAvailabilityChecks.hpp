@@ -16,7 +16,6 @@ namespace vulkan_renderer {
 	/// @brief This class bundles various availability checks.
 	/// @note In Vulkan we always need to check if a feature or a setting that we want to use is available in the current system.
 	/// Since Vulkan API is designed to work on various platforms, we must take into account the platform's different capabilities!
-	/// @todo Remove display_error_message dependency? Might use std::cout so this class can be used by other programmers.
 	class VulkanAvailabilityChecks
 	{
 		public:

@@ -17,6 +17,9 @@
 // Enable validation of contents of the margins.
 #define VMA_DEBUG_DETECT_CORRUPTION 1
 
+
+/// Vulkan Memory Allocator library.
+/// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../third_party/vma/vk_mem_alloc.h"
 
 

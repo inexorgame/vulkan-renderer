@@ -6,7 +6,7 @@
 #include "../debug-marker/VulkanDebugMarkerManager.hpp"
 #include "../texture/InexorTexture.hpp"
 
-/// Vulkan Memory Allocator library:
+/// Vulkan Memory Allocator library.
 /// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../../third_party/vma/vk_mem_alloc.h"
 

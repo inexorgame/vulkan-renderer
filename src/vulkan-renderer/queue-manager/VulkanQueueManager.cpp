@@ -188,9 +188,6 @@ namespace vulkan_renderer {
 			spdlog::warn("The application is forces to avoid distinct data transfer queues.");
 			spdlog::warn("Because of this, the graphics queue will be used for data transfer.");
 			
-			// In case -no_separate_data_queue is specified as command line argument,
-			// we will use the graphics queue for data transfer.
-			data_transfer_queue = graphics_queue;
 			data_transfer_queue_family_index = graphics_queue_family_index;
 		}
 
@@ -244,8 +241,15 @@ namespace vulkan_renderer {
 
 	VkQueue VulkanQueueManager::get_data_transfer_queue()
 	{
-		assert(data_transfer_queue);
-		return data_transfer_queue;
+		if(use_distinct_data_transfer_queue)
+		{
+			assert(data_transfer_queue);
+			return data_transfer_queue;
+		}
+
+		// Otherwise just use the graphics queue.
+		assert(graphics_queue);
+		return graphics_queue;
 	}
 
 

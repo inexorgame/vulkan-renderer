@@ -1,41 +1,28 @@
 #pragma once
 
 
+/// Vulkan Memory Allocator library.
+/// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+#include "../../third_party/vma/vk_mem_alloc.h"
+
+
 namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// 
-	class InexorDepthBuffer
+	struct InexorDepthBuffer
 	{
-		public:
+		VmaAllocation allocation = VK_NULL_HANDLE;
 
-			InexorDepthBuffer()
-			{
-			}
+		VmaAllocationInfo allocation_info;
 			
-			~InexorDepthBuffer()
-			{
-			}
-
-
-			// The VMA allocation.
-			VmaAllocation allocation = VK_NULL_HANDLE;
-
-			// 
-			VmaAllocationInfo allocation_info;
+		VmaAllocationCreateInfo allocation_create_info = {};	
 			
-			// The structure describing the VMA allocation.
-			VmaAllocationCreateInfo allocation_create_info = {};	
-			
-			// The actual depth buffer image.
-			VkImage image;
+		VkImage image;
 
-			// Depth buffer view.
-			VkImageView image_view;
+		VkImageView image_view;
 			
-			// The depth buffer's format.
-			std::optional<VkFormat> format;
+		std::optional<VkFormat> format;
 
 	};
 

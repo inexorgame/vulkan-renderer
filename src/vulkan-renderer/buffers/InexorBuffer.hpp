@@ -13,8 +13,6 @@ namespace vulkan_renderer {
 
 	/// @class InexorStagingBuffer
 	/// @brief An abstraction class for the creation of staging buffers.
-	/// A staging buffer is a buffer that is used for efficient data transfer to GPU.
-	/// It will be deleted immediately after usage.
 	struct InexorBuffer
 	{				
 		std::size_t size;

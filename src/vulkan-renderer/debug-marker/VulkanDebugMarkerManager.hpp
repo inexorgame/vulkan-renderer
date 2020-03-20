@@ -26,7 +26,8 @@ namespace vulkan_renderer {
 
 	/// @class VulkanDebugMarkerManager
 	/// @brief A manager class for Vulkan debug markers.
-	/// Debug markers are very useful because they allow the single steps of the renderer
+	/// Debug markers are very useful because they allow single steps of the
+	/// rendering process to be tracked by external debugging tools like RenderDoc.
 	class VulkanDebugMarkerManager
 	{
 		private:
@@ -51,31 +52,32 @@ namespace vulkan_renderer {
 			/// @brief Initialises Vulkan debug marker manager.
 			/// @param device The Vulkan device.
 			/// @param graphics_card The graphics card.
+			/// @brief enable_debug_markers True if debug markers are enabled, false otherwise.
 			VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card, const bool enable_debug_markers = true);
 			
 			
 			~VulkanDebugMarkerManager();
 
 			
-			// Sets the debug name of an object
-			// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function
-			// along with the object type
+			/// @brief Sets the debug name of an object.
+			/// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function along with the object type
 			void set_object_name(const VkDevice& device, const uint64_t& object, const VkDebugReportObjectTypeEXT& object_type, const char *name);
 
 
-			// Set the tag for an object
+			/// @brief Sets the tag for an object.
+			/// @note We can link a memory block of arbitrary size to an object.
 			void set_object_tag(const VkDevice& device, const uint64_t& object, const VkDebugReportObjectTypeEXT& object_type, const uint64_t& name, const std::size_t& tag_size, const void* tag);
 
 
-			// Start a new debug marker region
+			/// Starts a new debug marker region.
 			void bind_region(const VkCommandBuffer& cmdbuffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color);
 
 
-			// Insert a new debug marker into the command buffer
+			/// @brief Inserts a new debug marker into the command buffer.
 			void insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color);
 
 
-			// End the current debug marker region
+			/// Ends the current debug marker region.
 			void end_region(const VkCommandBuffer& command_buffer);
 
 

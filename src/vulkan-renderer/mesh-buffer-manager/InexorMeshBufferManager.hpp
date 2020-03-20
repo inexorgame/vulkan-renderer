@@ -31,7 +31,7 @@ namespace vulkan_renderer {
 
 			
 			// The debug marker manager.
-			std::shared_ptr<VulkanDebugMarkerManager> dbg_marker_manager;
+			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
 
 			// The mesh buffers.
 			// TODO: Should we just use pointers for this?
@@ -44,13 +44,13 @@ namespace vulkan_renderer {
 			VkCommandBuffer data_transfer_command_buffer = VK_NULL_HANDLE;
 
 			// The data transfer queue.
-			VkQueue vulkan_data_transfer_queue = VK_NULL_HANDLE;
+			VkQueue data_transfer_queue = VK_NULL_HANDLE;
 
 			/// 
-			VkDevice vulkan_device = VK_NULL_HANDLE;
+			VkDevice device = VK_NULL_HANDLE;
 
 			// The Vulkan Memory Allocator handle.
-			VmaAllocator vma_allocator_handle;
+			VmaAllocator vma_allocator;
 
 
 		public:

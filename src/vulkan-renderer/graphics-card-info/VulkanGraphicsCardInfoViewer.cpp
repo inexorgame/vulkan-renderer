@@ -19,7 +19,7 @@ namespace vulkan_renderer {
 	{
 		// The version of the available Vulkan API is encoded as a 32 bit integer.
 		// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#extendingvulkan-coreversions-versionnumbers
-		uint32_t api_version= 0;
+		uint32_t api_version = 0;
 		
 		// The Vulkan version number comprises three parts indicating the major, minor and patch version of the Vulkan API Specification.
 		// The major version indicates a significant change in the API, which will encompass a wholly new version of the specification.

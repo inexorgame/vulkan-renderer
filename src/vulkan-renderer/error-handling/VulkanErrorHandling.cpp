@@ -5,6 +5,8 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
+	/// @brief Returns a user friendly error description text.
+	/// @param result_code The error code.
 	std::string get_error_description_text(const VkResult& result_code)
 	{
 		std::string error_string = "";
@@ -99,12 +101,11 @@ namespace vulkan_renderer {
 			case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
 			error_string = "A buffer creation failed because the requested address is not available.";
 			break;
-			// TODO: Why is this not working?
-			//case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR:
-			//error_string = "A buffer creation or memory allocation failed because the requested address is not available.";
-			//break;
 			case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
 			error_string = "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent reasons, outside of the application’s control.";
+			break;
+			default:
+			error_string = "Unknown error";
 			break;
 		}
 

@@ -2,16 +2,14 @@
 
 #include <vulkan/vulkan.h>
 
-#include <iostream>
-using namespace std;
+#include <spdlog/spdlog.h>
 
 
 namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// 
-	/// 
+	/// @brief Vulkan validation layer callback.
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugMessageCallback(VkDebugReportFlagsEXT flags,
 	                                                                 VkDebugReportObjectTypeEXT objectType,
 																	 uint64_t object,
