@@ -1,6 +1,9 @@
 #include "VulkanTextureManager.hpp"
-#include "../error-handling/VulkanErrorHandling.hpp"
+#include "../error-handling/error-handling.hpp"
 
+
+// stb single-file public domain libraries for C/C++
+// https://github.com/nothings/stb
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 

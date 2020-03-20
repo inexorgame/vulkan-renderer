@@ -116,7 +116,7 @@ namespace vulkan_renderer {
 		{
 			// TODO: Why is this taking so long?
 			// TODO: Limit the number of function calls?
-			if(VulkanAvailabilityChecks::is_instance_extension_available(instance_extension))
+			if(availability_checks::is_instance_extension_available(instance_extension))
 			{
 				spdlog::debug("Adding {} to instance extension wishlist.", instance_extension);
 				enabled_instance_extensions.push_back(instance_extension);
@@ -167,7 +167,7 @@ namespace vulkan_renderer {
 		// Loop through the wishlist and check for availabiliy.
 		for(auto current_layer : instance_layers_wishlist)
 		{
-			if(VulkanAvailabilityChecks::is_instance_layer_available(current_layer))
+			if(availability_checks::is_instance_layer_available(current_layer))
 			{
 				spdlog::debug("Instance layer {} is supported.", current_layer);
 				
@@ -247,7 +247,7 @@ namespace vulkan_renderer {
 
 		for(auto device_extension_name : device_extensions_wishlist)
 		{
-			if(VulkanAvailabilityChecks::is_device_extension_available(graphics_card, device_extension_name))
+			if(availability_checks::is_device_extension_available(graphics_card, device_extension_name))
 			{
 				spdlog::debug("Device extension {} is supported!", device_extension_name);
 

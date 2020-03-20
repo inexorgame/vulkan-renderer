@@ -2,7 +2,7 @@
 
 #include "vulkan-renderer/VulkanRenderer.hpp"
 #include "vulkan-renderer/shader-manager/VulkanShaderManager.hpp"
-#include "vulkan-renderer/error-handling/VulkanErrorHandling.hpp"
+#include "vulkan-renderer/error-handling/error-handling.hpp"
 #include "vulkan-renderer/tools/argument-parser/CommandLineArgumentParser.hpp"
 #include "vulkan-renderer/mesh-buffer/InexorMeshBuffer.hpp"
 

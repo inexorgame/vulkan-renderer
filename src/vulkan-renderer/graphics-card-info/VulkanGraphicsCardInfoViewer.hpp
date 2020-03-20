@@ -8,7 +8,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include "../error-handling/VulkanErrorHandling.hpp"
+#include "../error-handling/error-handling.hpp"
 #include "../helpers/VulkanSurfaceFormatsText.hpp"
 
 

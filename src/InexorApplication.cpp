@@ -314,7 +314,7 @@ namespace vulkan_renderer {
 		{
 			spdlog::debug("Khronos validation layer is enabled.");
 
-			if(VulkanAvailabilityChecks::is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+			if(availability_checks::is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 			{
 				VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 			

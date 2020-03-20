@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../error-handling/VulkanErrorHandling.hpp"
+#include "../error-handling/error-handling.hpp"
 
 #include <mutex>
 #include <vector>

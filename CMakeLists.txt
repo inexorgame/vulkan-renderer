@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.4)
 project(inexor-vulkan-renderer)
 
 file(GLOB_RECURSE source_files
-  "src/*.hpp"
-  "src/*.cpp"
+	"src/*.hpp"
+	"src/*.cpp"
+	"tests/*.*"
+	"benchmarks/*.*"
 )
 
 # Use the folder structure in source code directory as project structure in Visual Studio.
@@ -20,6 +22,22 @@ function(assign_source_group)
         source_group("${_source_path_msvc}" FILES "${source_files}")
     endforeach()
 endfunction(assign_source_group)
+
+
+set(NORMAL_SOURCE_FILES)
+set(TEST_SOURCE_FILES)
+set(BENCHMARK_SOURCE_FILES)
+
+# Sort source files by tests and benchmarks.
+foreach(file ${source_files} )
+  if(file MATCHES ".*_test.*" )
+     set(TEST_SOURCE_FILES ${TEST_SOURCE_FILES} ${file})
+  elseif(file MATCHES ".*_benchmark.*")
+      set(BENCHMARK_SOURCE_FILES ${BENCHMARK_SOURCE_FILES} ${file})
+  else()
+     set(NORMAL_SOURCE_FILES ${NORMAL_SOURCE_FILES} ${file})
+  endif()
+endforeach()
 
 
 if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
@@ -49,17 +67,36 @@ conan_cmake_run(CONANFILE conanfile.py
 # Use the folder structure in source code directory as project structure in Visual Studio.
 assign_source_group(${source_files})
 
-add_executable(inexor-vulkan-renderer src/main.cpp ${source_files})
-
+add_executable(inexor-vulkan-renderer src/main.cpp ${NORMAL_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
-
-# Use C++17!
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 
 IF(WIN32)
 	target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 ENDIF()
-
 target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
-
 target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
+
+
+# Tests.
+add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES} ${TEST_SOURCE_FILES})
+conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
+target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
+
+IF(WIN32)
+	target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+ENDIF()
+target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
+target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
+
+
+# Benchmarks.
+add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES} ${BENCHMARK_SOURCE_FILES})
+conan_target_link_libraries(inexor-vulkan-renderer-benchmarks PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
+target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
+
+IF(WIN32)
+	target_compile_definitions(inexor-vulkan-renderer-benchmarks PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+ENDIF()
+target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
+target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)

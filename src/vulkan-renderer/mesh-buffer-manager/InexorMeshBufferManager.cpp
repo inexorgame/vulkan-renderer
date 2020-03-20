@@ -1,5 +1,5 @@
 #include "InexorMeshBufferManager.hpp"
-#include "../error-handling/VulkanErrorHandling.hpp"
+#include "../error-handling/error-handling.hpp"
 
 
 namespace inexor {

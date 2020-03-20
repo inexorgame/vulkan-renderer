@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "../error-handling/VulkanErrorHandling.hpp"
+#include "../error-handling/error-handling.hpp"
 #include "../shader-manager/InexorVulkanShader.hpp"
 #include "../debug-marker/VulkanDebugMarkerManager.hpp"
 

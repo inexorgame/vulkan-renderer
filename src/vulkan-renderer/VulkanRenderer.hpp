@@ -13,10 +13,10 @@
 
 // TODO: Add support for other operation systems here.
 
-#include "error-handling/VulkanErrorHandling.hpp"
+#include "error-handling/error-handling.hpp"
 #include "graphics-card-info/VulkanGraphicsCardInfoViewer.hpp"
 #include "window-manager/VulkanWindowManager.hpp"
-#include "availability-checks/VulkanAvailabilityChecks.hpp"
+#include "availability-checks/availability_checks.hpp"
 #include "settings-decision-maker/VulkanSettingsDecisionMaker.hpp"
 #include "shader-manager/VulkanShaderManager.hpp"
 #include "synchronisation-manager/VulkanSynchronisationManager.hpp"
@@ -58,7 +58,6 @@ namespace vulkan_renderer {
 	/// @brief A class for initialisation of the Vulkan API.
 	class VulkanRenderer :  public VulkanGraphicsCardInfoViewer,
 							public VulkanWindowManager,
-							public VulkanAvailabilityChecks,
 							public VulkanShaderManager,
 							public VulkanSynchronisationManager,
 							public InexorMeshBufferManager,
