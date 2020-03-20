@@ -7,14 +7,9 @@
 #include "vulkan-renderer/mesh-buffer/InexorMeshBuffer.hpp"
 
 
-// Change these definitions if you want to fork the renderer!
-#define INEXOR_ENGINE_VERSION       VK_MAKE_VERSION(1,0,0)
-#define INEXOR_APPLICATION_VERSION  VK_MAKE_VERSION(1,0,0)
-#define INEXOR_APPLICATION_NAME     "Inexor-Application"
-#define INEXOR_ENGINE_NAME          "Inexor-Engine"
-#define INEXOR_WINDOW_TITLE         "Inexor-Vulkan-Renderer"
-#define INEXOR_WINDOW_WIDTH         800
-#define INEXOR_WINDOW_HEIGHT        600
+// toml11: TOML for Modern C++ 
+// https://github.com/ToruNiina/toml11
+#include <toml11/toml.hpp>
 
 
 using namespace inexor::vulkan_renderer::tools;
@@ -33,6 +28,19 @@ namespace vulkan_renderer {
 			InexorApplication();
 			
 			~InexorApplication();
+
+
+		private:
+		
+			// The following data will be loaded by the TOML file.
+			
+			std::string application_name = "";
+			
+			std::string engine_name = "";
+
+			uint32_t application_version = 0;
+			
+			uint32_t engine_version = 0;
 
 
 		private:
@@ -58,13 +66,15 @@ namespace vulkan_renderer {
 			// TODO: Implement a VulkanPipelineManager!
 			const std::vector<InexorShaderSetup> shader_list = 
 			{
-				{VK_SHADER_STAGE_VERTEX_BIT,   "vertexshader.spv"},
-				{VK_SHADER_STAGE_FRAGMENT_BIT, "fragmentshader.spv"}
+				{VK_SHADER_STAGE_VERTEX_BIT,   "shaders/textures/vertexshader.spv"},
+				{VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/textures/fragmentshader.spv"}
 				// Add more shaders here..
 				// TODO: Support more shader types!
 			};
 
 		private:
+
+			VkResult load_TOML_configuration_file(const std::string& TOML_file_name);
 
 			VkResult load_textures();
 
@@ -77,12 +87,11 @@ namespace vulkan_renderer {
 
 		public:
 			
-			VkResult init();
+			VkResult initialise();
 
 			void run();
 
 			void cleanup();
-
 
 	};
 

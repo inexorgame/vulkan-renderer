@@ -42,11 +42,14 @@ namespace vulkan_renderer {
 			/// The height of the window.
 			uint32_t window_height = 0;
 
+			// The title of the window.
+			std::string window_title = "";
+
 			/// @brief Creates a window of with a specific width, height and name.
 			/// @param width The width of the window.
 			/// @param height The height of the window.
 			/// @param window_name The name of the window.
-			void create_window(const int width, const int height, const std::string& window_name, const bool window_resizable = false);
+			void create_window(const uint32_t width, const uint32_t height, const std::string& window_name, const bool window_resizable = false);
 			
 			/// @brief Destroys the window.
 			void destroy_window();

@@ -3,11 +3,12 @@
 using namespace inexor::vulkan_renderer;
 
 
+InexorApplication renderer;
+
+
 int main(int argc, char* argv[])
 {
-    InexorApplication renderer;
-    
-    // Set the global spd log level to debug.
+    // Set the global log level to debug.
     // We can change this upon release to display only messages which have more important log levels (like errors).
     spdlog::set_level(spdlog::level::debug);
     
@@ -19,9 +20,10 @@ int main(int argc, char* argv[])
     
     renderer.parse_command_line_arguments(argc, argv);
 
+
     while(true)
     {
-        VkResult result = renderer.init();
+        VkResult result = renderer.initialise();
 
         if(VK_SUCCESS == result)
         {

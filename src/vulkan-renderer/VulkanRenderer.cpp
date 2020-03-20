@@ -192,6 +192,7 @@ namespace vulkan_renderer {
 
 		// Create a new Vulkan instance.
 		VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance);
+		vulkan_error_check(result);
 
 		return VK_SUCCESS;
 	}
@@ -211,7 +212,6 @@ namespace vulkan_renderer {
 
 	VkResult VulkanRenderer::create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
 	{
-		assert(device);
 		assert(graphics_card);
 		
 		spdlog::debug("Creating physical device.");
@@ -426,7 +426,6 @@ namespace vulkan_renderer {
 	VkResult VulkanRenderer::create_vma_allocator()
 	{
 		assert(device);
-		assert(vma_allocator);
 		assert(selected_graphics_card);
 		assert(debug_marker_manager);
 
@@ -435,7 +434,23 @@ namespace vulkan_renderer {
 		// VMA memory recording and replay.
 		VmaRecordSettings vma_record_settings;
 
-		vma_record_settings.pFilePath = "../../../vma-replays/vma_replay.csv";
+
+		const std::string vma_replay_file = "vma-replays/vma_replay.csv";
+
+		std::ofstream replay_file_test;
+		replay_file_test.open(vma_replay_file, std::ios::out);
+
+		// Check if we can open the csv file.
+		// This causes problems when the debugging path is set incorrectly!
+		if(!replay_file_test.is_open())
+		{
+			spdlog::error("Could not open VMA replay file {}", vma_replay_file);
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
+		replay_file_test.close();
+
+		vma_record_settings.pFilePath = vma_replay_file.c_str();
 		vma_record_settings.flags     = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
 
 		VmaAllocatorCreateInfo allocator_info = {};

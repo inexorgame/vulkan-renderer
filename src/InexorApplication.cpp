@@ -30,6 +30,62 @@ namespace vulkan_renderer {
 	{
 	}
 
+	
+	VkResult InexorApplication::load_TOML_configuration_file(const std::string& TOML_file_name)
+	{
+		spdlog::debug("Loading TOML configuration file: {}", TOML_file_name);
+
+		std::ifstream toml_file;
+
+		// Check if this file exists.
+		toml_file.open(TOML_file_name.c_str(), std::ios::in);
+
+		if(!toml_file.is_open())
+		{
+			spdlog::error("Could not open configuration file: {}!", TOML_file_name);
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
+		toml_file.close();
+
+		// Load the TOML file using toml11.
+		auto renderer_configuration = toml::parse(TOML_file_name);
+
+		// Search for the title of the configuration file and print it to debug output.
+		auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
+		spdlog::debug("Title: {}", configuration_title);
+
+		window_width  = toml::find<int>(renderer_configuration, "application", "window", "width");
+		window_height = toml::find<int>(renderer_configuration, "application", "window", "width");
+		window_title  = toml::find<std::string>(renderer_configuration, "application", "window", "name");
+
+		application_name = toml::find<std::string>(renderer_configuration, "application", "name");
+		engine_name = toml::find<std::string>(renderer_configuration, "application", "engine", "name");
+
+		
+		int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
+		int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor"); 
+		int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
+
+		// Generate an uint32_t value from the major, minor and patch version info.
+		application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
+		
+
+		int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
+		int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor"); 
+		int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
+
+		// Generate an uint32_t value from the major, minor and patch version info.
+		engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
+
+
+		// TODO: parse texture list.
+		// TODO: parse shader list.
+		// TODO: parse model list.
+
+		return VK_SUCCESS;
+	}
+
 
 	VkResult InexorApplication::load_textures()
 	{
@@ -44,10 +100,10 @@ namespace vulkan_renderer {
 		
 		// Create a texture.
 		std::string texture_name = "example_texture_1";
-		result = VulkanTextureManager::create_texture_from_file(texture_name, "../../../assets/textures/texture_A_1024.jpg", example_texture_1);
+		result = VulkanTextureManager::create_texture_from_file(texture_name, "assets/textures/texture_A_1024.jpg", example_texture_1);
 		vulkan_error_check(result);
 
-		// TODO: Abstract texture loading.
+		// TODO: Abstract texture loading by TOML file.
 		// TODO: Add more textures to load.
 		
 		return VK_SUCCESS;
@@ -98,9 +154,10 @@ namespace vulkan_renderer {
 			vkWaitForFences(device, 1, &images_in_flight[image_index], VK_TRUE, UINT64_MAX);
 		}
 		
+		// Update the data which changes every frame!
 		update_uniform_buffer(current_frame);
 
-		// Mark the image as now being in use by this frame
+		// Mark the image as now being in use by this frame.
 		images_in_flight[image_index] = in_flight_fences[current_frame];
 
 		// Is it time to regenerate the swapchain because window has been resized or minimized?
@@ -177,7 +234,7 @@ namespace vulkan_renderer {
 		std::vector<InexorVertex> vertices1;
 		std::vector<uint32_t> indices1;
 
-		load_model_from_glTF_file("../../../assets/models/monkey-gltf/monkey_triangulated.gltf", vertices1/*, indices1*/);
+		load_model_from_glTF_file("assets/models/monkey-gltf/monkey_triangulated.gltf", vertices1/*, indices1*/);
 
 		VkResult result = create_vertex_buffer("Example vertex buffer 1", vertices1, mesh_buffers);
 		
@@ -189,13 +246,15 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorApplication::init()
+	VkResult InexorApplication::initialise()
 	{
+		load_TOML_configuration_file("configuration/renderer.toml");
+
 		spdlog::debug("Initialising vulkan-renderer.");
 		spdlog::debug("Creating window.");
 
 		// Create a resizable window using GLFW library.
-		create_window(INEXOR_WINDOW_WIDTH, INEXOR_WINDOW_HEIGHT, INEXOR_WINDOW_TITLE, true);
+		create_window(window_width, window_height, window_title, true);
 
 		spdlog::debug("Storing GLFW window user pointer.");
 
@@ -245,7 +304,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating Vulkan instance.");
 
 		// Create a Vulkan instance.
-		VkResult result = create_vulkan_instance(INEXOR_APPLICATION_NAME, INEXOR_ENGINE_NAME, INEXOR_APPLICATION_VERSION, INEXOR_ENGINE_VERSION, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
+		VkResult result = create_vulkan_instance(application_name, engine_name, application_version, engine_version, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 		vulkan_error_check(result);
 		
 
@@ -501,7 +560,7 @@ namespace vulkan_renderer {
 
 	void InexorApplication::run()
 	{
-		spdlog::debug("Running InexorRenderer application.");
+		spdlog::debug("Running InexorApplication.");
 
 		// TODO: Run this in a separated thread?
 		while(!glfwWindowShouldClose(window))
