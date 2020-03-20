@@ -1,0 +1,63 @@
+# This configuration file contains all options for the vulkan-renderer.
+# Do not change any values unless you know exactly what you are doing!
+
+title = "vulkan-renderer-configuration"
+
+#TODO: Declare further TOML configuration files here?
+
+[application]
+name = "Inexor-Application"
+
+[application.version]
+major = 1
+minor = 0
+patch = 0
+
+[application.engine]
+name = "Inexor-Engine"
+
+[application.engine.version]
+major = 1
+minor = 0
+patch = 0
+
+[application.window]
+width = 800
+height = 600
+name = "Inexor-Vulkan-Renderer"
+
+[shaders]
+
+[shaders.vertexshaders]
+files = [
+	["default-vertex-shader", "vertexshader.glsl"],
+]
+
+[shaders.fragmentshaders]
+files = [
+	["color-fragment-shader", "fragmentshaders.glsl"],
+]
+
+
+
+[textures]
+
+files = [
+	["purple-basic", "texture_A_1024"],
+	["red-basic", "texture_B_1024"],
+	["green-basic", "texture_C_1024"],
+	["pink-basic", "texture_D_1024"],
+	["yellow-basic", "texture_E_1024"],
+	["blue-basic", "texture_F_1024"],
+	["gray-basic", "texture_G_1024"],
+	["inexor-logo", "logo_rendered.png"],
+]
+
+# glTF is the new 3D standard model format
+# https://www.khronos.org/gltf/
+[gltf-models]
+files = [
+	["cube-model", "cube.gltf"],
+	["inexor-logo-model", "Inexor.gltf"],
+	["monkey-head", "monkey_triangulated.gltf"],
+]
