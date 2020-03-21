@@ -78,8 +78,12 @@ target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
 
 
+file(GLOB_RECURSE NORMAL_SOURCE_FILES_WITHOUT_MAIN
+	"src/vulkan-renderer/*"
+)
+
 # Tests.
-add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES} ${TEST_SOURCE_FILES})
+add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${TEST_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 
@@ -91,7 +95,7 @@ target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
 
 
 # Benchmarks.
-add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES} ${BENCHMARK_SOURCE_FILES})
+add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${BENCHMARK_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-benchmarks PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 
