@@ -6,9 +6,9 @@
 #include <glm/mat4x4.hpp>
 
 #ifdef _WIN32
-  #ifndef VK_USE_PLATFORM_WIN32_KHR
-    #define VK_USE_PLATFORM_WIN32_KHR
-  #endif
+#ifndef VK_USE_PLATFORM_WIN32_KHR
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
 #endif
 
 // TODO: Add support for other operation systems here.

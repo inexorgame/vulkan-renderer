@@ -27,37 +27,34 @@ height = 600
 name = "Inexor-Vulkan-Renderer"
 
 [shaders]
-
-[shaders.vertexshaders]
+[shaders.vertex]
 files = [
-	["default-vertex-shader", "vertexshader.glsl"],
+	"shaders/vertexshader.spv",
 ]
 
-[shaders.fragmentshaders]
+[shaders.fragment]
 files = [
-	["color-fragment-shader", "fragmentshaders.glsl"],
+	"shaders/fragmentshader.spv",
 ]
 
-
-
+# TODO: Use key/value pairs and give textures user friendly names.
 [textures]
-
 files = [
-	["purple-basic", "texture_A_1024"],
-	["red-basic", "texture_B_1024"],
-	["green-basic", "texture_C_1024"],
-	["pink-basic", "texture_D_1024"],
-	["yellow-basic", "texture_E_1024"],
-	["blue-basic", "texture_F_1024"],
-	["gray-basic", "texture_G_1024"],
-	["inexor-logo", "logo_rendered.png"],
+	"assets/textures/texture_A_1024.jpg",
+	"assets/textures/texture_B_1024.jpg",
+	"assets/textures/texture_C_1024.jpg",
+	"assets/textures/texture_D_1024.jpg",
+	"assets/textures/texture_E_1024.jpg",
+	"assets/textures/texture_F_1024.jpg",
+	"assets/textures/texture_G_1024.jpg",
+	"assets/textures/logo_rendered.png",
 ]
 
-# glTF is the new 3D standard model format
+# glTF 2.0 is the new standard 3D model format.
 # https://www.khronos.org/gltf/
-[gltf-models]
+[glTFmodels]
 files = [
-	["cube-model", "cube.gltf"],
-	["inexor-logo-model", "Inexor.gltf"],
-	["monkey-head", "monkey_triangulated.gltf"],
+	"assets/models/cube/cube.gltf",
+	"assets/models/inexor-logo/inexor_logo.gltf",
+	"assets/models/monkey/monkey_triangulated.gltf",
 ]

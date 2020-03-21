@@ -59,29 +59,66 @@ namespace vulkan_renderer {
 		window_height = toml::find<int>(renderer_configuration, "application", "window", "width");
 		window_title  = toml::find<std::string>(renderer_configuration, "application", "window", "name");
 
+		spdlog::debug("window: '{}', {} x {}", window_title, window_width, window_height);
+
 		application_name = toml::find<std::string>(renderer_configuration, "application", "name");
 		engine_name = toml::find<std::string>(renderer_configuration, "application", "engine", "name");
 
-		
+		spdlog::debug("application name: {}, engine name: {}", application_name, engine_name);
+
 		int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
 		int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor"); 
 		int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
 
+		spdlog::debug("application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
+
 		// Generate an uint32_t value from the major, minor and patch version info.
 		application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
 		
-
 		int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
 		int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor"); 
 		int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
 
+		spdlog::debug("engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
+
 		// Generate an uint32_t value from the major, minor and patch version info.
 		engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
 
+		texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
+		
+		spdlog::debug("textures:");
 
-		// TODO: parse texture list.
-		// TODO: parse shader list.
-		// TODO: parse model list.
+		for(const auto& texture_file : texture_files)
+		{
+			spdlog::debug("{}", texture_file);
+		}
+
+		gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
+		
+		spdlog::debug("glTF 2.0 models:");
+
+		for(const auto& gltf_model_file : gltf_model_files)
+		{
+			spdlog::debug("{}", gltf_model_file);
+		}
+
+		vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
+		
+		spdlog::debug("vertex shaders:");
+
+		for(const auto& vertex_shader_file : vertex_shader_files)
+		{
+			spdlog::debug("{}", vertex_shader_file);
+		}
+		
+		fragment_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
+				
+		spdlog::debug("fragment shaders:");
+
+		for(const auto& fragment_shader_file : fragment_shader_files)
+		{
+			spdlog::debug("{}", fragment_shader_file);
+		}
 
 		return VK_SUCCESS;
 	}
@@ -98,13 +135,26 @@ namespace vulkan_renderer {
 		VkResult result = VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
 		vulkan_error_check(result);
 		
-		// Create a texture.
-		std::string texture_name = "example_texture_1";
-		result = VulkanTextureManager::create_texture_from_file(texture_name, "assets/textures/texture_A_1024.jpg", example_texture_1);
-		vulkan_error_check(result);
+		// TODO: Refactor! use key from TOML file as name!
+		std::size_t texture_number = 1;
 
-		// TODO: Abstract texture loading by TOML file.
-		// TODO: Add more textures to load.
+
+		for(const auto& texture_file : texture_files)
+		{
+			std::string texture_name = "example_texture_"+ std::to_string(texture_number);
+			texture_number++;
+
+			// Allocate memory for a new texture!
+			std::shared_ptr<InexorTexture> new_texture = std::make_shared<InexorTexture>();
+
+			// TODO: Find duplicate loads!
+			// TOOD: Specify assets folder!
+			result = VulkanTextureManager::create_texture_from_file(texture_name, texture_file, new_texture);
+			vulkan_error_check(result);
+
+			// Store the texture.
+			textures.push_back(new_texture);
+		}
 		
 		return VK_SUCCESS;
 	}
@@ -114,18 +164,45 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 
-		spdlog::debug("Loading shader files.");
+		spdlog::debug("Loading vertex shaders.");
 
-		// Loop through the list of shaders and initialise all of them.
-		for(const auto& shader : shader_list)
+		if(0 == vertex_shader_files.size())
 		{
-			spdlog::debug("Loading shader file {}.", shader.shader_file_name);
+			spdlog::error("No vertex shaders to load!");
+		}
+
+		// Loop through the list of vertex shaders and initialise all of them.
+		for(const auto& vertex_shader : vertex_shader_files)
+		{
+			spdlog::debug("Loading vertex shader file {}.", vertex_shader);
 			
-			VkResult result = create_shader_from_file(device, shader.shader_type, shader.shader_file_name);
+			VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, vertex_shader);
 			if(VK_SUCCESS != result)
 			{
 				vulkan_error_check(result);
-				std::string error_message = "Error: Could not initialise shader " +  shader.shader_file_name;
+				std::string error_message = "Error: Could not initialise vertex shader " +  vertex_shader;
+				display_error_message(error_message);
+				exit(-1);
+			}
+		}
+
+		spdlog::debug("Loading fragment shaders.");
+
+		if(0 == fragment_shader_files.size())
+		{
+			spdlog::error("No fragment shaders to load!");
+		}
+
+		// Loop through the list of fragment shaders and initialise all of them.
+		for(const auto& fragment_shader : fragment_shader_files)
+		{
+			spdlog::debug("Loading fragment shader file {}.", fragment_shader);
+			
+			VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader);
+			if(VK_SUCCESS != result)
+			{
+				vulkan_error_check(result);
+				std::string error_message = "Error: Could not initialise fragment shader " +  fragment_shader;
 				display_error_message(error_message);
 				exit(-1);
 			}
@@ -234,7 +311,7 @@ namespace vulkan_renderer {
 		std::vector<InexorVertex> vertices1;
 		std::vector<uint32_t> indices1;
 
-		load_model_from_glTF_file("assets/models/monkey-gltf/monkey_triangulated.gltf", vertices1/*, indices1*/);
+		load_model_from_glTF_file("assets/models/monkey/monkey_triangulated.gltf", vertices1/*, indices1*/);
 
 		VkResult result = create_vertex_buffer("Example vertex buffer 1", vertices1, mesh_buffers);
 		
@@ -581,6 +658,11 @@ namespace vulkan_renderer {
 		destroy_window();
 
 		mesh_buffers.clear();
+		vertex_shader_files.clear();
+		fragment_shader_files.clear();
+		texture_files.clear();
+		shader_files.clear();
+		gltf_model_files.clear();
 	}
 
 

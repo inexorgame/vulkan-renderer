@@ -7,7 +7,7 @@
 #include "vulkan-renderer/mesh-buffer/vk_mesh_buffer.hpp"
 
 
-// toml11: TOML for Modern C++ 
+// toml11: TOML for Modern C++
 // https://github.com/ToruNiina/toml11
 #include <toml11/toml.hpp>
 
@@ -51,8 +51,8 @@ namespace vulkan_renderer {
 			// The meshes (vertex buffers and index buffers).
 			std::vector<InexorMeshBuffer> mesh_buffers;
 
-			// An example texture.
-			std::shared_ptr<InexorTexture> example_texture_1 = std::make_shared<InexorTexture>();
+			// The textures.
+			std::vector<std::shared_ptr<InexorTexture>> textures;
 			
 			// It is important to make sure that you debugging folder contains the required shader files!
 			struct InexorShaderSetup
@@ -60,17 +60,22 @@ namespace vulkan_renderer {
 				VkShaderStageFlagBits shader_type;
 				std::string shader_file_name;
 			};
-		
-			// The actual file list of shaders that we want to load.
-			// TODO: Setup shaders JSON or TOML list file.
-			// TODO: Implement a VulkanPipelineManager!
-			const std::vector<InexorShaderSetup> shader_list = 
-			{
-				{VK_SHADER_STAGE_VERTEX_BIT,   "shaders/vertexshader.spv"},
-				{VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/fragmentshader.spv"}
-				// Add more shaders here..
-				// TODO: Support more shader types!
-			};
+				
+			// Vertex shaders.
+			std::vector<std::string> vertex_shader_files;
+			
+			// Fragment shaders.
+			std::vector<std::string> fragment_shader_files;
+
+			// The texture files.
+			std::vector<std::string> texture_files;
+
+			// The shader files.
+			std::vector<std::string> shader_files;
+
+			// The glTF 2.0 model files.
+			std::vector<std::string> gltf_model_files;
+
 
 		private:
 
@@ -81,6 +86,8 @@ namespace vulkan_renderer {
 			VkResult load_shaders();
 
 			VkResult load_models();
+
+			VkResult setup_scene();
 
 			VkResult draw_frame();
 
