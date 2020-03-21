@@ -1,5 +1,5 @@
 #include "InexorApplication.hpp"
-#include "vulkan-renderer/debug-callback/VulkanDebugCallback.hpp"
+#include "vulkan-renderer/debug-callback/vk_debug_callback.hpp"
 
 
 namespace inexor {
@@ -248,7 +248,9 @@ namespace vulkan_renderer {
 
 	VkResult InexorApplication::initialise()
 	{
-		load_TOML_configuration_file("configuration/renderer.toml");
+		// Load the configuration from the TOML file.
+		VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
+		vulkan_error_check(result);
 
 		spdlog::debug("Initialising vulkan-renderer.");
 		spdlog::debug("Creating window.");
@@ -304,7 +306,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating Vulkan instance.");
 
 		// Create a Vulkan instance.
-		VkResult result = create_vulkan_instance(application_name, engine_name, application_version, engine_version, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
+		result = create_vulkan_instance(application_name, engine_name, application_version, engine_version, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 		vulkan_error_check(result);
 		
 

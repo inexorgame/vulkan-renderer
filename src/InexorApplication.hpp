@@ -1,10 +1,10 @@
 #pragma once
 
-#include "vulkan-renderer/VulkanRenderer.hpp"
-#include "vulkan-renderer/shader-manager/VulkanShaderManager.hpp"
-#include "vulkan-renderer/error-handling/error-handling.hpp"
-#include "vulkan-renderer/tools/argument-parser/CommandLineArgumentParser.hpp"
-#include "vulkan-renderer/mesh-buffer/InexorMeshBuffer.hpp"
+#include "vulkan-renderer/vk_renderer.hpp"
+#include "vulkan-renderer/shader-manager/vk_shader_manager.hpp"
+#include "vulkan-renderer/error-handling/vk_error_handling.hpp"
+#include "vulkan-renderer/tools/argument-parser/cla_parser.hpp"
+#include "vulkan-renderer/mesh-buffer/vk_mesh_buffer.hpp"
 
 
 // toml11: TOML for Modern C++ 
@@ -66,8 +66,8 @@ namespace vulkan_renderer {
 			// TODO: Implement a VulkanPipelineManager!
 			const std::vector<InexorShaderSetup> shader_list = 
 			{
-				{VK_SHADER_STAGE_VERTEX_BIT,   "shaders/textures/vertexshader.spv"},
-				{VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/textures/fragmentshader.spv"}
+				{VK_SHADER_STAGE_VERTEX_BIT,   "shaders/vertexshader.spv"},
+				{VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/fragmentshader.spv"}
 				// Add more shaders here..
 				// TODO: Support more shader types!
 			};
