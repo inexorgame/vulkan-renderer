@@ -82,6 +82,22 @@ file(GLOB_RECURSE NORMAL_SOURCE_FILES_WITHOUT_MAIN
 	"src/vulkan-renderer/*"
 )
 
+
+# Use the folder structure in source code directory as project structure in Visual Studio.
+function(assign_source_group)
+    foreach(NORMAL_SOURCE_FILES_WITHOUT_MAIN IN ITEMS ${ARGN})
+        if (IS_ABSOLUTE "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
+            file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
+        else()
+            set(_source_rel "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
+        endif()
+        get_filename_component(_source_path "${_source_rel}" PATH)
+        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+        source_group("${_source_path_msvc}" FILES "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
+    endforeach()
+endfunction(assign_source_group)
+
+
 # Tests.
 add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${TEST_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})

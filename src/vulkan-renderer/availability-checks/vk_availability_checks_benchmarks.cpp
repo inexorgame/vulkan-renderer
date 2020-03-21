@@ -12,5 +12,15 @@ static void BM_is_instance_layer_available(benchmark::State& state)
     }
 }
 
-
 BENCHMARK(BM_is_instance_layer_available);
+
+
+static void BM_is_instance_extension_available(benchmark::State& state)
+{
+    for(auto _ : state)
+    {
+        is_instance_extension_available("VK_EXT_debug_utils");
+    }
+}
+
+BENCHMARK(BM_is_instance_extension_available);
