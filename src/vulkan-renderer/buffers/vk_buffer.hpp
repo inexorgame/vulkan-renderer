@@ -15,6 +15,8 @@ namespace vulkan_renderer {
 	/// @brief An abstraction class for the creation of staging buffers.
 	struct InexorBuffer
 	{				
+		// TODO: Inherit to make access unified in syntax!
+
 		std::size_t size;
 				
 		VkBuffer buffer = VK_NULL_HANDLE;

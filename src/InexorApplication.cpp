@@ -600,11 +600,12 @@ namespace vulkan_renderer {
 		result = create_frame_buffers();
 		vulkan_error_check(result);
 
-		// Create a second command pool for data transfer commands.
 		InexorMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
 
 		result = create_command_pool();
 		vulkan_error_check(result);
+
+		VulkanUniformBufferManager::initialise(device, debug_marker_manager, vma_allocator);
 
 		result = create_uniform_buffers();
 		vulkan_error_check(result);

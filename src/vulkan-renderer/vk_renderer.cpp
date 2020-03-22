@@ -22,6 +22,9 @@
 /// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../third_party/vma/vk_mem_alloc.h"
 
+// UniformBufferObject
+#include "uniform-buffer/vk_standard_ubo.hpp"
+
 
 #include <glm/glm.hpp>
 #include <chrono>
@@ -523,7 +526,7 @@ namespace vulkan_renderer {
 
 				if(mesh_buffers[j].index_buffer_available)
 				{	
-					spdlog::debug("Recording drawing of buffer {}.", mesh_buffers[j].description);
+					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j].description);
 
 					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
 				
@@ -539,7 +542,7 @@ namespace vulkan_renderer {
 				}
 				else
 				{
-					spdlog::debug("Recording drawing of buffer {}.", mesh_buffers[j].description);
+					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j].description);
 					spdlog::warn("No Index buffer specified! This might decrease performance!");
 
 					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
@@ -814,16 +817,7 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Destroying uniform buffers.");
 		
-		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
-		{
-			if(VK_NULL_HANDLE != uniform_buffers[i].buffer)
-			{
-				vmaDestroyBuffer(vma_allocator, uniform_buffers[i].buffer, uniform_buffers[i].allocation);
-				uniform_buffers[i].buffer = VK_NULL_HANDLE;
-			}
-		}
-
-		uniform_buffers.clear();
+		VulkanUniformBufferManager::shutdown_uniform_buffers();
 
 		spdlog::debug("Destroying descriptor pool.");
 
@@ -944,6 +938,7 @@ namespace vulkan_renderer {
         
 		pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         pool_sizes[0].descriptorCount = number_of_images_in_swapchain;
+
         pool_sizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
@@ -989,16 +984,21 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 
+		std::optional<std::shared_ptr<InexorUniformBuffer>> matrices_buffer = VulkanUniformBufferManager::get_uniform_buffer("matrices");
+
+		assert(matrices_buffer.has_value());
+
         for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			spdlog::debug("Updating descriptor set #{}", i);
 
             VkDescriptorBufferInfo bufferInfo = {};
 
-            bufferInfo.buffer = uniform_buffers[i].buffer;
+			bufferInfo.buffer = matrices_buffer.value()->buffers[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range  = sizeof(UniformBufferObject);
-			
+
+
 			VkDescriptorImageInfo image_info = {};
 			
             image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1032,9 +1032,6 @@ namespace vulkan_renderer {
 
 	VkResult VulkanRenderer::update_uniform_buffer(std::size_t current_image)
 	{
-		assert(vma_allocator);
-		assert(debug_marker_manager);
-
         float time = InexorTimeStep::get_program_start_time_step();
 
         UniformBufferObject ubo = {};
@@ -1043,38 +1040,23 @@ namespace vulkan_renderer {
         ubo.proj = glm::perspective(glm::radians(45.0f), window_width / (float) window_height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
 
-		// Update!
-		std::memcpy(uniform_buffers[current_image].allocation_info.pMappedData, &ubo, sizeof(ubo));
+		// Update the world matrices!
+		VulkanUniformBufferManager::update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
 
 		return VK_SUCCESS;
 	}
 
+
 	// TODO: Move to InexorApplication?
 	VkResult VulkanRenderer::create_uniform_buffers()
 	{
-		assert(device);
-		assert(debug_marker_manager);
-		
-		VkDeviceSize buffer_size = sizeof(UniformBufferObject);
-		
-		spdlog::debug("Creating uniform buffers of size {}.", buffer_size);
+		spdlog::debug("Creating uniform buffers.");
 
-		uniform_buffers.clear();
-		uniform_buffers.resize(number_of_images_in_swapchain);
+		// The buffer for the world matrices.
+		VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
 
-		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
-		{
-			spdlog::debug("Creating uniform buffer {}.", i);
-
-			std::string buffer_description = "Uniform buffer #" + std::to_string(i);
-
-			// It is important to use VMA_MEMORY_USAGE_CPU_TO_GPU for uniform buffers!
-			VkResult result = create_buffer(buffer_description, uniform_buffers[i], buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-			vulkan_error_check(result);
-
-			// Give this uniform buffer an appropriate name.
-			debug_marker_manager->set_object_name(device, (uint64_t)(uniform_buffers[i].buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, buffer_description.c_str());
-		}
+		VkResult result = VulkanUniformBufferManager::create_uniform_buffer("matrices", matrices_buffer_size, number_of_images_in_swapchain);
+		vulkan_error_check(result);
 
 		return VK_SUCCESS;
 	}

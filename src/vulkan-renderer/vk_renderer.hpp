@@ -30,6 +30,7 @@
 #include "mesh-buffer/vk_mesh_buffer.hpp"
 #include "depth-buffer/vk_depth_buffer.hpp"
 #include "mesh-loader/vk_mesh_loader.hpp"
+#include "uniform-buffer/vk_uniform_buffer.hpp"
 
 
 // Vulkan Memory Allocator.
@@ -64,7 +65,8 @@ namespace vulkan_renderer {
 							public VulkanQueueManager,
 							public VulkanTextureManager,
 							public InexorTimeStep,
-							public InexorMeshLoader
+							public InexorMeshLoader,
+							public VulkanUniformBufferManager
 							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
 		public:
@@ -117,7 +119,7 @@ namespace vulkan_renderer {
 			// Structure describing parameters of a queue presentation.
 			VkPresentInfoKHR present_info;
 
-			// 
+			// The images in the swapchain.
 			std::vector<VkImage> swapchain_images;
 			
 			// The images in the swapchain.
@@ -171,9 +173,6 @@ namespace vulkan_renderer {
 
 			// Vulkan debug report callback.
 			bool debug_report_callback_initialised = false;
-
-			// The uniform buffers which may change up to every frame.
-			std::vector<InexorBuffer> uniform_buffers;
 
 			// The depth buffer.
 			InexorDepthBuffer depth_buffer;

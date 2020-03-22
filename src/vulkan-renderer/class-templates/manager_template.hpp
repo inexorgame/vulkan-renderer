@@ -25,7 +25,7 @@ namespace vulkan_renderer {
 			std::mutex type_manager_lock;
 
 
-		public:
+		protected:
 
 
 			ManagerClassTemplate() = default;
