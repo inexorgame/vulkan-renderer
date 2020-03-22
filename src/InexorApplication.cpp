@@ -221,14 +221,14 @@ namespace vulkan_renderer {
 		assert(VulkanQueueManager::get_graphics_queue());
 		assert(VulkanQueueManager::get_present_queue());
 
-		vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
+		vkWaitForFences(device, 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
 
 		uint32_t image_index = 0;
-		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
+		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, *image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
 		
 		if(VK_NULL_HANDLE != images_in_flight[image_index])
 		{
-			vkWaitForFences(device, 1, &images_in_flight[image_index], VK_TRUE, UINT64_MAX);
+			vkWaitForFences(device, 1, &*images_in_flight[image_index], VK_TRUE, UINT64_MAX);
 		}
 		
 		// Update the data which changes every frame!
@@ -267,19 +267,19 @@ namespace vulkan_renderer {
 		submit_info.commandBufferCount   = 1;
 		submit_info.pCommandBuffers      = &command_buffers[image_index];
 		submit_info.signalSemaphoreCount = 1;
-		submit_info.pWaitSemaphores      = &image_available_semaphores[current_frame];
-		submit_info.pSignalSemaphores    = &rendering_finished_semaphores[current_frame];
+		submit_info.pWaitSemaphores      = &*image_available_semaphores[current_frame];
+		submit_info.pSignalSemaphores    = &*rendering_finished_semaphores[current_frame];
 
-		vkResetFences(device, 1, &in_flight_fences[current_frame]);
+		vkResetFences(device, 1, &*in_flight_fences[current_frame]);
 
 
-		result = vkQueueSubmit(VulkanQueueManager::get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame]);
+		result = vkQueueSubmit(VulkanQueueManager::get_graphics_queue(), 1, &submit_info, *in_flight_fences[current_frame]);
 		if(VK_SUCCESS != result) return result;
 
 		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		present_info.pNext              = nullptr;
 		present_info.waitSemaphoreCount = 1;
-		present_info.pWaitSemaphores    = &rendering_finished_semaphores[current_frame];
+		present_info.pWaitSemaphores    = &*rendering_finished_semaphores[current_frame];
 		present_info.swapchainCount     = 1;
 		present_info.pSwapchains        = &swapchain;
 		present_info.pImageIndices      = &image_index;
@@ -624,6 +624,9 @@ namespace vulkan_renderer {
 
 		result = record_command_buffers(mesh_buffers);
 		vulkan_error_check(result);
+
+		VulkanFenceManager::initialise(device, debug_marker_manager);
+		VulkanSemaphoreManager::initialise(device, debug_marker_manager);
 
 		result = create_synchronisation_objects();
 		vulkan_error_check(result);

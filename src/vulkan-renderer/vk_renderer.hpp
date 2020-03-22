@@ -19,7 +19,8 @@
 #include "availability-checks/vk_availability_checks.hpp"
 #include "settings-decision-maker/vk_settings_decision_maker.hpp"
 #include "shader-manager/vk_shader_manager.hpp"
-#include "synchronisation-manager/vk_sync_manager.hpp"
+#include "fence-manager/vk_fence_manager.hpp"
+#include "semaphore-manager/vk_semaphore_manager.hpp"
 #include "vertex/vk_vertex.hpp"
 #include "mesh-buffer-manager/vk_mesh_buffer_manager.hpp"
 #include "ubo-manager/vk_uniform_buffer_manager.hpp"
@@ -60,7 +61,8 @@ namespace vulkan_renderer {
 	class VulkanRenderer :  public VulkanGraphicsCardInfoViewer,
 							public VulkanWindowManager,
 							public VulkanShaderManager,
-							public VulkanSynchronisationManager,
+							public VulkanFenceManager,
+							public VulkanSemaphoreManager,
 							public InexorMeshBufferManager,
 							public VulkanQueueManager,
 							public VulkanTextureManager,
@@ -157,10 +159,10 @@ namespace vulkan_renderer {
 			
 
 			// Neccesary for synchronisation!
-			std::vector<VkSemaphore> image_available_semaphores;
-			std::vector<VkSemaphore> rendering_finished_semaphores;
-			std::vector<VkFence> in_flight_fences;
-			std::vector<VkFence> images_in_flight;
+			std::vector<std::shared_ptr<VkSemaphore>> image_available_semaphores;
+			std::vector<std::shared_ptr<VkSemaphore>> rendering_finished_semaphores;
+			std::vector<std::shared_ptr<VkFence>> in_flight_fences;
+			std::vector<std::shared_ptr<VkFence>> images_in_flight;
 			
 			VkDescriptorSetLayout descriptor_set_layout;
 			

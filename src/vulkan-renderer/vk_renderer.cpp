@@ -22,6 +22,7 @@
 /// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 #include "../third_party/vma/vk_mem_alloc.h"
 
+
 // UniformBufferObject
 #include "uniform-buffer/vk_standard_ubo.hpp"
 
@@ -95,7 +96,6 @@ namespace vulkan_renderer {
 		{
 			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 			VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-			//VK_EXT_MEMORY_BUDGET_EXTENSION_NAME
 			// TODO: Add more instance extensions here.
 		};
 
@@ -209,7 +209,7 @@ namespace vulkan_renderer {
 		assert(window);
 		assert(instance);
 
-		spdlog::debug("Creating window surface");
+		spdlog::debug("Creating window surface.");
 
 		// Create a window surface using GLFW library.
 		return glfwCreateWindowSurface(instance, window, nullptr, &surface);
@@ -418,6 +418,7 @@ namespace vulkan_renderer {
 		command_buffers.resize(number_of_images_in_swapchain);
 
 		VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
+		vulkan_error_check(result);
 
 		for(std::size_t i=0; i<command_buffers.size(); i++)
 		{
@@ -440,7 +441,6 @@ namespace vulkan_renderer {
 		// VMA memory recording and replay.
 		VmaRecordSettings vma_record_settings;
 
-
 		const std::string vma_replay_file = "vma-replays/vma_replay.csv";
 
 		std::ofstream replay_file_test;
@@ -457,6 +457,8 @@ namespace vulkan_renderer {
 		replay_file_test.close();
 
 		vma_record_settings.pFilePath = vma_replay_file.c_str();
+
+		// We flush the stream after every write operation because we are expecting unforseen program crashes.
 		vma_record_settings.flags     = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
 
 		VmaAllocatorCreateInfo allocator_info = {};
@@ -483,7 +485,8 @@ namespace vulkan_renderer {
 		{
 			spdlog::debug("Recording command buffer #{}.", i);
 
-			debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering", INEXOR_DEBUG_MARKER_GREEN);
+			// Start binding the region with Vulkan debug markers.
+			debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering.", INEXOR_DEBUG_MARKER_GREEN);
 
 			VkCommandBufferBeginInfo command_buffer_begin_info = {};
 
@@ -500,7 +503,7 @@ namespace vulkan_renderer {
 			
 			std::array<VkClearValue, 2> clear_values;
 			
-			// Note that the order of clearValues should be identical to the order of your attachments.
+			// Note that the order of clear_values must be identical to the order of the attachments.
 			clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
 			clear_values[1].depthStencil  = {1.0f, 0};
 
@@ -575,8 +578,8 @@ namespace vulkan_renderer {
 		assert(number_of_images_in_swapchain>0);
 		assert(debug_marker_manager);
 
-		spdlog::debug("Creating synchronisation objects (semaphores and fences).");
-		spdlog::debug("Number of images in swapchain: {}", number_of_images_in_swapchain);
+		spdlog::debug("Creating synchronisation objects: semaphores and fences.");
+		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
 		
 		in_flight_fences.clear();
 		image_available_semaphores.clear();
@@ -584,14 +587,21 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<INEXOR_MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			// TODO: Refactor this into something like create_multiple_semaphores()?
 			// Here we create the semaphores and fences which are neccesary for synchronisation.
 			// Cleanup will be handled by VulkanSynchronisationManager.
-			image_available_semaphores.push_back(create_semaphore(device, "image_available_semaphores_"+std::to_string(i)).value());
-			rendering_finished_semaphores.push_back(create_semaphore(device, "rendering_finished_semaphores_"+std::to_string(i)).value());
-			in_flight_fences.push_back(create_fence(device, "in_flight_fences_"+std::to_string(i)).value());
+			std::string image_available_semaphore_name    = "image_available_semaphores_"+ std::to_string(i);
+			std::string rendering_finished_semaphore_name = "rendering_finished_semaphores_"+ std::to_string(i);
+			std::string in_flight_fence_name              = "in_flight_fences_"+ std::to_string(i);
+			
+			auto in_flight_fence = VulkanFenceManager::create_fence(in_flight_fence_name, true);
+			auto new_image_available_semaphore = VulkanSemaphoreManager::create_semaphore(image_available_semaphore_name);
+			auto new_rendering_finished_semaphore = VulkanSemaphoreManager::create_semaphore(rendering_finished_semaphore_name);
+
+			in_flight_fences.push_back(in_flight_fence.value());
+			image_available_semaphores.push_back(new_image_available_semaphore.value());
+			rendering_finished_semaphores.push_back(new_rendering_finished_semaphore.value());
 		}
-	
+		
 		images_in_flight.clear();
 		
 		// Note: Images in flight do not need to be initialised!
@@ -670,7 +680,6 @@ namespace vulkan_renderer {
 		swapchain_create_info.presentMode    = selected_present_mode.value();
 		swapchain_create_info.clipped        = VK_TRUE;
 		swapchain_create_info.oldSwapchain   = VK_NULL_HANDLE;
-
 
 		VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
 		if(VK_SUCCESS != result) return result;
@@ -911,9 +920,9 @@ namespace vulkan_renderer {
 
         VkDescriptorSetLayoutCreateInfo layout_info = {};
 
-        layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layout_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-        layout_info.pBindings = bindings.data();
+        layout_info.pBindings    = bindings.data();
 
 		VkResult result = vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &descriptor_set_layout);
 		vulkan_error_check(result);
@@ -966,16 +975,16 @@ namespace vulkan_renderer {
 		assert(debug_marker_manager);
 
 		spdlog::debug("Creating descriptor set layout.");
-		spdlog::debug("Number of images in swapchain: {}", number_of_images_in_swapchain);
+		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
 
         std::vector<VkDescriptorSetLayout> layouts(number_of_images_in_swapchain, descriptor_set_layout);
         
 		VkDescriptorSetAllocateInfo alloc_info = {};
 
-        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        alloc_info.descriptorPool = descriptor_pool;
+        alloc_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info.descriptorPool     = descriptor_pool;
         alloc_info.descriptorSetCount = number_of_images_in_swapchain;
-        alloc_info.pSetLayouts = layouts.data();
+        alloc_info.pSetLayouts        = layouts.data();
 
 		descriptor_sets.clear();
         descriptor_sets.resize(number_of_images_in_swapchain);
@@ -1015,13 +1024,13 @@ namespace vulkan_renderer {
             descriptor_writes[0].descriptorCount = 1;
             descriptor_writes[0].pBufferInfo     = &bufferInfo;
 
-			descriptor_writes[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptor_writes[1].dstSet           = descriptor_sets[i];
-            descriptor_writes[1].dstBinding       = 1;
-            descriptor_writes[1].dstArrayElement  = 0;
-            descriptor_writes[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptor_writes[1].descriptorCount  = 1;
-            descriptor_writes[1].pImageInfo       = &image_info;
+			descriptor_writes[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_writes[1].dstSet          = descriptor_sets[i];
+            descriptor_writes[1].dstBinding      = 1;
+            descriptor_writes[1].dstArrayElement = 0;
+            descriptor_writes[1].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptor_writes[1].descriptorCount = 1;
+            descriptor_writes[1].pImageInfo      = &image_info;
 
             vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
         }
@@ -1035,10 +1044,14 @@ namespace vulkan_renderer {
         float time = InexorTimeStep::get_program_start_time_step();
 
         UniformBufferObject ubo = {};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        
+		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
         ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), window_width / (float) window_height, 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1;
+        
+		ubo.proj = glm::perspective(glm::radians(45.0f), window_width / (float) window_height, 0.1f, 10.0f);
+        
+		ubo.proj[1][1] *= -1;
 
 		// Update the world matrices!
 		VulkanUniformBufferManager::update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
@@ -1047,7 +1060,6 @@ namespace vulkan_renderer {
 	}
 
 
-	// TODO: Move to InexorApplication?
 	VkResult VulkanRenderer::create_uniform_buffers()
 	{
 		spdlog::debug("Creating uniform buffers.");
@@ -1071,11 +1083,10 @@ namespace vulkan_renderer {
 
 		shader_stages.clear();
 		
-		// TODO: Load list of shaders from JSON or TOML file.
-		// TODO: Initialise Vulkan pipeline by loading JSON or TOML profiles.
-
 		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
 		auto list_of_shaders = VulkanShaderManager::get_shaders();
+
+		assert(list_of_shaders.size()>0);
 
 		spdlog::debug("Setting up shader stages.");
 
@@ -1107,7 +1118,6 @@ namespace vulkan_renderer {
 		vertex_input_create_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_binding_description.size());
 		vertex_input_create_info.pVertexAttributeDescriptions    = attribute_binding_description.data();
 
-
 		VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = {};
 
 		input_assembly_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -1116,8 +1126,6 @@ namespace vulkan_renderer {
 		input_assembly_create_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
 
-		// TODO: Setup viewport by JSON or TOML file.
-		
 		VkViewport view_port = {};
 
 		view_port.x        = 0.0f;
@@ -1127,13 +1135,10 @@ namespace vulkan_renderer {
 		view_port.minDepth = 0.0f;
 		view_port.maxDepth = 1.0f;
 		
-		// TODO: Setup scissor by JSON or TOML file.
-
 		VkRect2D scissor = {};
 
 		scissor.offset = {0, 0};
 		scissor.extent = {window_width, window_height};
-
 
 		VkPipelineViewportStateCreateInfo pipeline_viewport_viewport_state_info = {};
 
@@ -1144,7 +1149,6 @@ namespace vulkan_renderer {
 		pipeline_viewport_viewport_state_info.pViewports    = &view_port;
 		pipeline_viewport_viewport_state_info.scissorCount  = 1;
 		pipeline_viewport_viewport_state_info.pScissors     = &scissor;
-
 
 		VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_create_info = {};
 
@@ -1162,7 +1166,6 @@ namespace vulkan_renderer {
 		pipeline_rasterization_state_create_info.depthBiasSlopeFactor    = 0.0f;
 		pipeline_rasterization_state_create_info.lineWidth               = 1.0f;
 
-
 		VkPipelineMultisampleStateCreateInfo multisample_create_info = {};
 
 		multisample_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -1175,7 +1178,6 @@ namespace vulkan_renderer {
 		multisample_create_info.alphaToCoverageEnable = VK_FALSE;
 		multisample_create_info.alphaToOneEnable      = VK_FALSE;
 
-
 		VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
         
 		depth_stencil.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1184,7 +1186,6 @@ namespace vulkan_renderer {
         depth_stencil.depthCompareOp        = VK_COMPARE_OP_LESS;
         depth_stencil.depthBoundsTestEnable = VK_FALSE;
         depth_stencil.stencilTestEnable     = VK_FALSE;
-
 
 		VkPipelineColorBlendAttachmentState color_blend_attachment = {};
 
@@ -1196,7 +1197,6 @@ namespace vulkan_renderer {
 		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 		color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
 		color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
 
 		VkPipelineColorBlendStateCreateInfo color_blend_state_create_info = {};
 
@@ -1212,7 +1212,6 @@ namespace vulkan_renderer {
 		color_blend_state_create_info.blendConstants[2] = 0.0f;
 		color_blend_state_create_info.blendConstants[3] = 0.0f;
 
-
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 
 		pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1223,18 +1222,15 @@ namespace vulkan_renderer {
 		pipeline_layout_create_info.pushConstantRangeCount = 0;
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
-
 		spdlog::debug("Setting up pipeline layout.");
 
 		VkResult result = vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
 		if(VK_SUCCESS != result) return result;
 		
-		// Give this pipeline layout an appropriate name.
+		// Use Vulkan debug markers to assign an appropriate name to this pipeline.
 		debug_marker_manager->set_object_name(device, (uint64_t)(pipeline_layout), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "Pipeline layout for core engine.");
 
-
 		// TODO: Generalize renderpass description.
-
 		VkAttachmentDescription color_attachment = {};
 
 		color_attachment.flags          = 0;
@@ -1247,12 +1243,10 @@ namespace vulkan_renderer {
 		color_attachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 		color_attachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-
 		VkAttachmentReference color_attachment_ref = {};
 
 		color_attachment_ref.attachment = 0;
 		color_attachment_ref.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
 
 		VkAttachmentDescription depth_attachment = {};
 
@@ -1270,7 +1264,6 @@ namespace vulkan_renderer {
 		depth_attachment_ref.attachment = 1;
 		depth_attachment_ref.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-
 		VkSubpassDescription subpass_description = {};
 
 		subpass_description.flags                   = 0;
@@ -1284,7 +1277,6 @@ namespace vulkan_renderer {
 		subpass_description.preserveAttachmentCount = 0;
 		subpass_description.pPreserveAttachments    = nullptr;
 
-		
 		VkSubpassDependency subpass_dependency = {};
 
 		subpass_dependency.srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -1313,8 +1305,8 @@ namespace vulkan_renderer {
 
 		result = vkCreateRenderPass(device, &render_pass_create_info, nullptr, &render_pass);
 		if(VK_SUCCESS != result) return result;
-
-		// Give this renderpass an appropriate name.
+		
+		// Use Vulkan debug markers to assign an appropriate name to this renderpass.
 		debug_marker_manager->set_object_name(device, (uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
 
 		VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
@@ -1343,8 +1335,8 @@ namespace vulkan_renderer {
 
 		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
 		if(VK_SUCCESS != result) return result;
-
-		// Give this graphics pipeline an appropriate name.
+		
+		// Use Vulkan debug markers to assign an appropriate name to this pipeline.
 		debug_marker_manager->set_object_name(device, (uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "Graphics pipeline for core engine.");
 
 		return VK_SUCCESS;
@@ -1392,7 +1384,7 @@ namespace vulkan_renderer {
 
 			std::string frame_buffer_name = "Frame buffer #"+ std::to_string(i);
 			
-			// Give this frame buffer an appropriate name.
+			// Use Vulkan debug markers to assign an appropriate name to this frame buffer.
 			debug_marker_manager->set_object_name(device, (uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
 		}
 
@@ -1439,8 +1431,8 @@ namespace vulkan_renderer {
 			if(VK_SUCCESS != result) return result;
 			
 			std::string swapchain_image_view_name = "Swapchain image view #"+ std::to_string(i);
-
-			// Give this swapchain image view an appropriate name
+			
+			// Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
 			debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, swapchain_image_view_name.c_str());
 		}
 
@@ -1548,19 +1540,17 @@ namespace vulkan_renderer {
 		spdlog::debug("Destroying textures.");
 		VulkanTextureManager::shutdown_textures();
 
-		
 		spdlog::debug("Destroying descriptor set layout.");
 		vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
-
 
 		spdlog::debug("Destroying vertex buffers.");
 		InexorMeshBufferManager::shutdown_vertex_buffers();
 
 		spdlog::debug("Destroying semaphores.");
-		VulkanSynchronisationManager::shutdown_semaphores(device);
+		VulkanSemaphoreManager::shutdown_semaphores();
 
 		spdlog::debug("Destroying fences.");
-		VulkanSynchronisationManager::shutdown_fences(device);
+		VulkanFenceManager::shutdown_fences();
 
 		spdlog::debug("Destroying command pool.");
 
