@@ -87,6 +87,8 @@ namespace vulkan_renderer {
 
 			VkResult load_models();
 
+			VkResult check_application_specific_features();
+
 			VkResult setup_scene();
 
 			VkResult draw_frame();

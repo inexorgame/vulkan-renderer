@@ -176,7 +176,7 @@ namespace vulkan_renderer {
 		{
 			spdlog::debug("Loading vertex shader file {}.", vertex_shader);
 			
-			VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_VERTEX_BIT, vertex_shader);
+			VkResult result = create_shader_from_file(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, vertex_shader, "main");
 			if(VK_SUCCESS != result)
 			{
 				vulkan_error_check(result);
@@ -198,7 +198,7 @@ namespace vulkan_renderer {
 		{
 			spdlog::debug("Loading fragment shader file {}.", fragment_shader);
 			
-			VkResult result = create_shader_from_file(device, VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader);
+			VkResult result = create_shader_from_file(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, fragment_shader, "main");
 			if(VK_SUCCESS != result)
 			{
 				vulkan_error_check(result);
@@ -317,9 +317,24 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Vertex buffer setup finished.");
 
-		// TODO: Check creation without index buffer.
-
 		return result;
+	}
+
+
+	VkResult InexorApplication::check_application_specific_features()
+	{
+		// Check if anisotropic filtering is available!
+		VkPhysicalDeviceFeatures graphics_card_features;
+
+		// Check which features are supported by this graphics card.
+		vkGetPhysicalDeviceFeatures(selected_graphics_card, &graphics_card_features);
+
+		if(!graphics_card_features.samplerAnisotropy)
+		{
+			spdlog::warn("The selected graphics card does NOT support anisotropic filtering!");
+		}
+
+		return VK_SUCCESS;
 	}
 
 
@@ -468,7 +483,6 @@ namespace vulkan_renderer {
 			// No graphics card suitable!
 			std::string error_message = "Error: Could not find any suitable GPU!";
 			display_fatal_error_message(error_message);
-
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
@@ -546,19 +560,18 @@ namespace vulkan_renderer {
 			}
 		}
 
-
 		result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
-		// Initialise Vulkan debug markers.
-		// Those debug markes will be very useful when debugging with RenderDoc!
+		result = check_application_specific_features();
+		vulkan_error_check(result);
+
+		// Vulkan debug markes will be very useful when debugging with RenderDoc!
 		result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
-		// Initialise shader manager.
-		VulkanShaderManager::initialise(debug_marker_manager);
+		VulkanShaderManager::initialise(device, debug_marker_manager);
 
-		// Initialise Vulkan Memory Allocator.
 		result = create_vma_allocator();
 		vulkan_error_check(result);
 
@@ -567,17 +580,6 @@ namespace vulkan_renderer {
 
 		result = create_swapchain();
 		vulkan_error_check(result);
-		
-		// Check if anisotropic filtering is available!
-		VkPhysicalDeviceFeatures graphics_card_features;
-
-		// Check which features are supported by this graphics card.
-		vkGetPhysicalDeviceFeatures(selected_graphics_card, &graphics_card_features);
-
-		if(!graphics_card_features.samplerAnisotropy)
-		{
-			spdlog::warn("The selected graphics card does NOT support anisotropic filtering!");
-		}
 
 		result = create_depth_buffer();
 		vulkan_error_check(result);
@@ -626,12 +628,14 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		VulkanFenceManager::initialise(device, debug_marker_manager);
+
 		VulkanSemaphoreManager::initialise(device, debug_marker_manager);
 
 		result = create_synchronisation_objects();
 		vulkan_error_check(result);
 
 		spdlog::debug("Vulkan initialisation finished.");
+
 		spdlog::debug("Showing window.");
 		
 		// Show window after Vulkan has been initialised.

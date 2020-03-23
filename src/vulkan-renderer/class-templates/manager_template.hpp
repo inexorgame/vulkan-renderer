@@ -36,11 +36,12 @@ namespace vulkan_renderer {
 			/// @brief Checks if a value exists by given key.
 			/// @param type_name [in] The name of the type (the key).
 			/// @return True if the value exists, false otherwise.
-			bool does_type_exist(const std::string& type_name)
+			bool does_key_exist(const std::string& type_name)
 			{
 				return !(stored_types.end() == stored_types.find(type_name));
 			}
 
+			// TODO: does_value_exist?
 
 
 			/// @brief Adds a new type to the type map.
@@ -48,9 +49,9 @@ namespace vulkan_renderer {
 			/// @param new_type [in] The new type (the value).
 			/// @note This method is thread safe thanks to the lock guard.
 			/// @return True if adding the type was successful, false otherwise.
-			bool add_type(const std::string& type_name, const std::shared_ptr<T> new_type)
+			bool add_entry(const std::string& type_name, const std::shared_ptr<T> new_type)
 			{
-				if(does_type_exist(type_name))
+				if(does_key_exist(type_name))
 				{
 					return false;
 				}
@@ -71,7 +72,7 @@ namespace vulkan_renderer {
 			/// @param new_type [in] The new type (the value).
 			/// @note This method is thread safe thanks to the lock guard.
 			/// @return True of the value could be updated, false if the key doesn't exist.
-			bool update_type(const std::string& type_name, const std::shared_ptr<T> new_type)
+			bool update_entry(const std::string& type_name, const std::shared_ptr<T> new_type)
 			{
 				if(!does_type_exist(type_name))
 				{
@@ -91,9 +92,9 @@ namespace vulkan_renderer {
 			/// @brief Returns a type (value) by given name (key).
 			/// @param type_name [in] The name of the type (the key).
 			/// @return An std::optional shared pointer of the type (the value).
-			std::optional<std::shared_ptr<T>> get_type(const std::string& type_name)
+			std::optional<std::shared_ptr<T>> get_entry(const std::string& type_name)
 			{
-				if(does_type_exist(type_name))
+				if(does_key_exist(type_name))
 				{
 					// No mutex required as this is a read only operation.
 					return stored_types[type_name];
@@ -105,33 +106,63 @@ namespace vulkan_renderer {
 
 			/// @brief Returns the number of types available.
 			/// @return The number of types available.
-			std::size_t get_type_count() const
+			std::size_t get_entry_count() const
 			{
 				// No mutex required as this is a read only operation.
 				return stored_types.size();
 			}
 
 
-			/// @brief Returns all types.
-			/// @return A std::vector of shared pointers of types (values).
-			std::vector<std::shared_ptr<T>> get_all_types() const
+			/// @brief Returns all keys.
+			/// @return A std::vector of shared pointers of the keys.
+			std::vector<std::shared_ptr<T>> get_all_keys() const
 			{
-				std::vector<std::shared_ptr<T>> all_types;
+				std::vector<std::shared_ptr<T>> all_keys;
 
 				if(0 == stored_types.size())
 				{
-					return all_types;
+					return all_keys;
 				}
 
-				all_types.reserve(stored_types.size());
+				all_keys.reserve(stored_types.size());
 
 				// Iterate through map and fill values into vector.
 				for(auto it = stored_types.begin(); it != stored_types.end(); ++it)
 				{
-					all_types.push_back(it->second);
+					all_keys.push_back(it->first);
 				}
 
-				return all_types;
+				return all_keys;
+			}
+
+
+			/// @brief Returns all values.
+			/// @return A std::vector of shared pointers of the values.
+			std::vector<std::shared_ptr<T>> get_all_values() const
+			{
+				std::vector<std::shared_ptr<T>> all_values;
+
+				if(0 == stored_types.size())
+				{
+					return all_values;
+				}
+
+				all_values.reserve(stored_types.size());
+
+				// Iterate through map and fill values into vector.
+				for(auto it = stored_types.begin(); it != stored_types.end(); ++it)
+				{
+					all_values.push_back(it->second);
+				}
+
+				return all_values;
+			}
+
+
+			/// @brief Returns the entire unordered map.
+			std::unordered_map<std::string, std::shared_ptr<T>> get_entry_map() const
+			{
+				return stored_types;
 			}
 
 
@@ -139,7 +170,7 @@ namespace vulkan_renderer {
 			/// @param type_name [in] The name of the type to delete.
 			/// @note This method is thread safe thanks to the lock guard.
 			/// @return The number of deleted types.
-			std::size_t delete_type(const std::string& type_name)
+			std::size_t delete_entry(const std::string& type_name)
 			{
 				if(!does_type_exist(type_name))
 				{
@@ -157,7 +188,7 @@ namespace vulkan_renderer {
 			
 			/// @brief Deletes all types.
 			/// @note This method is thread safe thanks to the lock guard.
-			void delete_all_types()
+			void delete_all_entries()
 			{
 				// Use lock guard to ensure thread safety.
 				std::lock_guard<std::mutex> lock(type_manager_lock);

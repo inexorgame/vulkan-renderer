@@ -5,6 +5,7 @@
 #include "../shader/vk_shader.hpp"
 #include "../shader-manager/vk_shader_manager.hpp"
 #include "../debug-marker/vk_debug_marker_manager.hpp"
+#include "../class-templates/manager_template.hpp"
 
 
 #include <vector>
@@ -19,7 +20,7 @@ namespace vulkan_renderer {
 
 	/// @class VulkanShaderManager
 	/// @brief A class for managing SPIR-V shaders.
-	class VulkanShaderManager
+	class VulkanShaderManager : public ManagerClassTemplate<InexorShader>
 	{
 		public:
 
@@ -29,38 +30,30 @@ namespace vulkan_renderer {
 
 		
 		private:
+
+			bool shader_manager_initialised;
+
+			std::mutex shader_manager_mutex;
+
+			VkDevice device;
 			
-
-			// The debug marker manager.
-			std::shared_ptr<VulkanDebugMarkerManager> dbg_marker_manager;
-
-
-			/// The shaders which have been loaded into memory.
-			// TODO: Refactor this into an unordered_map if neccesary?
-			std::vector<InexorVulkanShader> shaders;
+			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
 
 
 		private:
 
-
 			/// @brief Creates a shader module.
 			/// @param vulkan_device The Vulkan device handle.
-			/// @param SPIRV_shader_bytes The binary data of the shader.
-			/// @param shader_module The shader module.
+			/// @param SPIRV_shader_bytes [in] The binary data of the shader.
+			/// @param shader_module [out] The shader module.
 			/// @note The buffer with the SPIR-V code can be freed immediately after the shader module was created.
-			VkResult create_shader_module(const VkDevice& vulkan_device, const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
+			VkResult create_shader_module(const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
 
 
 		protected:
 
-
 			/// @param debug_marker_manager_instance The VulkanDebugMarkerManager instance.
-			void initialise(const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance);
-
-
-			/// @brief Destroy all shader objects.
-			/// @param vulkan_device The Vulkan device.
-			void shutdown_shaders(const VkDevice& vulkan_device);
+			void initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
 			
 			/// @brief Creates a new shader from SPIR-V byte buffer.
@@ -70,7 +63,7 @@ namespace vulkan_renderer {
 			/// @param shader_name The name you want to give to the shader.
 			/// @param shader_entry_point The entry point of the shader, usually "main".
 			/// @return True is shader creation succeeded, false otherwise.
-			VkResult create_shader_from_byte_buffer(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::vector<char>& SPIRV_shader_bytes, const std::string& shader_name = "", const std::string& entry_point = "main");
+			VkResult create_shader_from_memory(const std::string& internal_shader_name, const VkShaderStageFlagBits& shader_type, const std::vector<char>& SPIRV_shader_bytes, const std::string& shader_entry_point);
 
 			
 			/// @brief Creates a new shader from a file on the hard drive.
@@ -80,15 +73,16 @@ namespace vulkan_renderer {
 			/// @param shader_name The name you want to give to the shader.
 			/// @param shader_entry_point The entry point of the shader, usually "main".
 			/// @return True is shader creation succeeded, false otherwise.
-			VkResult create_shader_from_file(const VkDevice& vulkan_device, const VkShaderStageFlagBits& shader_type, const std::string& SPIRV_shader_file_name, const std::string& shader_name = "", const std::string& shader_entry_point = "main");
+			VkResult create_shader_from_file(const VkShaderStageFlagBits& shader_type, const std::string& SPIRV_shader_file_name, const std::string& internal_shader_name, const std::string& shader_entry_point);
 
-
-			// TODO: Add overloaded methods for creation of specific shaders: create_vertex_shader...
-			
 
 			/// @brief Returns all the shaders which have been loaded.
 			/// @return A const vector of InexorVulkanShader instances.
-			const std::vector<InexorVulkanShader> get_shaders() const;
+			const std::vector<std::shared_ptr<InexorShader>> get_all_shaders() const;
+
+			
+			/// @brief Destroys all shader objects.
+			void shutdown_shaders();
 
 
 	};

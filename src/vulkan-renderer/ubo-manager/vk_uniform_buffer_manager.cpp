@@ -30,7 +30,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Clearing uniform buffer storage.");
 
 		// Call base class method.
-		delete_all_types();
+		delete_all_entries();
 
 		return VK_SUCCESS;
 	}
@@ -94,7 +94,7 @@ namespace vulkan_renderer {
 
 		// Store the new uniform buffer in the map.
 		// Call base class method.
-		add_type(uniform_buffer_name, new_uniform_buffer);
+		add_entry(uniform_buffer_name, new_uniform_buffer);
 
 		return VK_SUCCESS;
 	}
@@ -102,13 +102,13 @@ namespace vulkan_renderer {
 	
 	std::optional<std::shared_ptr<InexorUniformBuffer>> VulkanUniformBufferManager::get_uniform_buffer(const std::string& uniform_buffer_name)
 	{
-		if(!does_type_exist(uniform_buffer_name))
+		if(!does_key_exist(uniform_buffer_name))
 		{
 			return std::nullopt;
 		}
 
 		// Get the uniform buffer by internal name (key).
-		std::optional<std::shared_ptr<InexorUniformBuffer>> return_value = get_type(uniform_buffer_name);
+		std::optional<std::shared_ptr<InexorUniformBuffer>> return_value = get_entry(uniform_buffer_name);
 
 		return return_value;
 	}
@@ -121,13 +121,13 @@ namespace vulkan_renderer {
 		assert(uniform_buffer_size>0);
 		
 		// Call base class method.
-		if(!does_type_exist(uniform_buffer_name))
+		if(!does_key_exist(uniform_buffer_name))
 		{
 			spdlog::error("Uniform buffer {} does not exist!", uniform_buffer_name);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		auto uniform_buffer = get_type(uniform_buffer_name);
+		auto uniform_buffer = get_entry(uniform_buffer_name);
 
 		if(!uniform_buffer.has_value())
 		{
@@ -149,7 +149,7 @@ namespace vulkan_renderer {
 	{
 		spdlog::debug("Destroying all uniform buffers.");
 
-		auto all_uniform_buffers = get_all_types();
+		auto all_uniform_buffers = get_all_values();
 
 		// Use a lock guard to ensure thread-safety.
 		std::lock_guard<std::mutex> lock(uniform_buffer_manager_mutex);
@@ -166,7 +166,7 @@ namespace vulkan_renderer {
 		}
 
 		// Call base class method.
-		delete_all_types();
+		delete_all_entries();
 		
 		return VK_SUCCESS;
 	}

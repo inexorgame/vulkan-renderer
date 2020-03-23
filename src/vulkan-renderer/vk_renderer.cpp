@@ -1084,7 +1084,7 @@ namespace vulkan_renderer {
 		shader_stages.clear();
 		
 		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
-		auto list_of_shaders = VulkanShaderManager::get_shaders();
+		auto list_of_shaders = VulkanShaderManager::get_all_shaders();
 
 		assert(list_of_shaders.size()>0);
 
@@ -1097,8 +1097,8 @@ namespace vulkan_renderer {
 			shader_stage_create_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			shader_stage_create_info.pNext               = nullptr;
 			shader_stage_create_info.flags               = 0;
-			shader_stage_create_info.stage               = current_shader.get_shader_type();
-			shader_stage_create_info.module              = current_shader.get_shader_module();
+			shader_stage_create_info.stage               = current_shader->get_shader_type();
+			shader_stage_create_info.module              = current_shader->get_shader_module();
 			shader_stage_create_info.pName               = "main"; // TODO: Refactor this to current_shader.get_shader_entry_point().c_str()!
 			shader_stage_create_info.pSpecializationInfo = nullptr;
 			
@@ -1561,7 +1561,7 @@ namespace vulkan_renderer {
 		}
 
 		spdlog::debug("Destroying shader objects.");
-		VulkanShaderManager::shutdown_shaders(device);
+		VulkanShaderManager::shutdown_shaders();
 		
 		spdlog::debug("Destroying surface.");
 		if(VK_NULL_HANDLE != surface)

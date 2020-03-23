@@ -35,13 +35,16 @@ namespace vulkan_renderer {
 	bool VulkanFenceManager::does_fence_exist(const std::string& fence_name)
 	{
 		assert(fence_manager_initialised);
-		return does_type_exist(fence_name);
+		assert(fence_name.length()>0);
+		
+		return does_key_exist(fence_name);
 	}
 
 
 	std::optional<std::shared_ptr<VkFence>> VulkanFenceManager::create_fence(const std::string& fence_name, bool create_as_signaled)
 	{
 		assert(device);
+		assert(fence_name.length()>0);
 		assert(fence_manager_initialised);
 
 		// First check if a Vulkan fence with this name already exists!
@@ -72,7 +75,7 @@ namespace vulkan_renderer {
 		}
 
 		// Insert the new fence into the fence map.
-		add_type(fence_name, new_fence);
+		add_entry(fence_name, new_fence);
 
 		return new_fence;
 	}
@@ -81,13 +84,15 @@ namespace vulkan_renderer {
 	std::optional<std::shared_ptr<VkFence>> VulkanFenceManager::get_fence(const std::string& fence_name)
 	{
 		assert(fence_manager_initialised);
-		if(!does_type_exist(fence_name))
+		assert(fence_name.length()>0);
+
+		if(!does_key_exist(fence_name))
 		{
 			spdlog::error("Vulkan fence '{}' does not exists!", fence_name);
 			return std::nullopt;
 		}
 
-		return get_type(fence_name);
+		return get_entry(fence_name);
 	}
 			
 			
@@ -95,12 +100,12 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(fence_manager_initialised);
-
+		
         // Use lock guard to ensure thread safety during write operations!
         std::lock_guard<std::mutex> lock(fence_manager_mutex);
 
 		// Create an iterator for the unordered map.
-		std::vector<std::shared_ptr<VkFence>> all_fences = get_all_types();
+		std::vector<std::shared_ptr<VkFence>> all_fences = get_all_values();
  
 		// Iterate over the unordered map.
 		for(auto& fence : all_fences)
@@ -109,7 +114,7 @@ namespace vulkan_renderer {
 			vkDestroyFence(device, *fence, nullptr);
 		}
 
-		delete_all_types();
+		delete_all_entries();
 	}
 
 

@@ -38,9 +38,10 @@ namespace vulkan_renderer {
 	bool VulkanSemaphoreManager::does_semaphore_exist(const std::string& semaphore_name)
 	{
 		assert(semaphore_manager_initialised);
+		assert(semaphore_name.length()>0);
 
 		// Call template base class method.
-		return does_type_exist(semaphore_name);
+		return does_key_exist(semaphore_name);
 	}
 
 
@@ -78,7 +79,7 @@ namespace vulkan_renderer {
 		}
 		
 		// Insert the semaphore into the semaphore map.
-		add_type(semaphore_name, new_semaphore);
+		add_entry(semaphore_name, new_semaphore);
 
 		return new_semaphore;
 	}
@@ -87,15 +88,16 @@ namespace vulkan_renderer {
 	std::optional<std::shared_ptr<VkSemaphore>> VulkanSemaphoreManager::get_semaphore(const std::string& semaphore_name)
 	{
 		assert(semaphore_manager_initialised);
+		assert(semaphore_name.length()>0);
 
-		if(!does_type_exist(semaphore_name))
+		if(!does_key_exist(semaphore_name))
 		{
 			spdlog::error("Semaphore '{}' does not exist!", semaphore_name);
 			return std::nullopt;
 		}
 
 		// Call template base class method.
-		return get_type(semaphore_name);
+		return get_entry(semaphore_name);
 	}
 
 
@@ -107,7 +109,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Destroying all semaphores.");
 
 		// TODO: Get as unordered map!
-		auto all_semaphores = get_all_types();
+		auto all_semaphores = get_all_values();
 
 		// Use lock guard to ensure thread safety.
 		std::lock_guard<std::mutex> lock(semaphore_manager_mutex);
@@ -118,7 +120,7 @@ namespace vulkan_renderer {
 		}
 
 		// Call template base class method.
-		delete_all_types();
+		delete_all_entries();
 	}
 
 

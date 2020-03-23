@@ -10,9 +10,9 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// @class InexorVulkanShader
+	/// @class InexorShader
 	/// @brief A class which bundles information about shaders.
-	class InexorVulkanShader : public tools::InexorFile
+	class InexorShader : public tools::InexorFile
 	{
 		private:
 
@@ -30,9 +30,9 @@ namespace vulkan_renderer {
 
 		public:
 
-			InexorVulkanShader();
+			InexorShader();
 
-			~InexorVulkanShader();
+			~InexorShader();
 
 			
 			/// @brief Sets the name of the shader.
