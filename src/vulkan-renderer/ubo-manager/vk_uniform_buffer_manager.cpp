@@ -29,8 +29,7 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Clearing uniform buffer storage.");
 
-		// Call base class method.
-		delete_all_entries();
+		uniform_buffer_initialised = true;
 
 		return VK_SUCCESS;
 	}
@@ -38,10 +37,10 @@ namespace vulkan_renderer {
 
 	VkResult VulkanUniformBufferManager::create_buffer(std::string& internal_buffer_name, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size)
 	{
+		assert(uniform_buffer_initialised);
 		assert(vma_allocator);
 		assert(debug_marker_manager);
-
-		// TODO: Check if buffer size is greater than 0?
+		assert(buffer_size>0);
 		
 		spdlog::debug("Allocating memory for uniform buffer '{}'.", internal_buffer_name);
 
@@ -61,15 +60,20 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string& uniform_buffer_name, const VkDeviceSize& uniform_buffer_size, const std::size_t number_of_images_in_swapchain)
+	VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string& internal_uniform_buffer_name, const VkDeviceSize& uniform_buffer_size, const std::size_t number_of_images_in_swapchain)
 	{
+		assert(uniform_buffer_initialised);
 		assert(uniform_buffer_size>0);
-		assert(uniform_buffer_name.length()>0);
+		assert(internal_uniform_buffer_name.length()>0);
 		assert(number_of_images_in_swapchain>0);
 
-		// TODO: Check if a uniform buffer with this name does already exist!
+		if(does_key_exist(internal_uniform_buffer_name))
+		{
+			spdlog::error("A uniform buffer with the name '{}' does already exist!");
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
 
-		spdlog::debug("Creating uniform buffer '{}' for {} images in swapchain.", uniform_buffer_name, number_of_images_in_swapchain);
+		spdlog::debug("Creating uniform buffer '{}' for {} images in swapchain.", internal_uniform_buffer_name, number_of_images_in_swapchain);
 		
 		std::shared_ptr<InexorUniformBuffer> new_uniform_buffer = std::make_shared<InexorUniformBuffer>();
 
@@ -82,7 +86,7 @@ namespace vulkan_renderer {
 			spdlog::debug("Creating uniform buffer #{}", i);
 
 			// Automatically iterate the naming of the uniform buffers.
-			std::string uniform_buffer_description = "Uniform buffer '"+ uniform_buffer_name +"' #"+ std::to_string(i);
+			std::string uniform_buffer_description = "Uniform buffer '"+ internal_uniform_buffer_name +"' #"+ std::to_string(i);
 
 			// Create the new uniform buffer.
 			VkResult result = create_buffer(uniform_buffer_description, new_uniform_buffer->buffers[i], uniform_buffer_size);
@@ -94,7 +98,7 @@ namespace vulkan_renderer {
 
 		// Store the new uniform buffer in the map.
 		// Call base class method.
-		add_entry(uniform_buffer_name, new_uniform_buffer);
+		add_entry(internal_uniform_buffer_name, new_uniform_buffer);
 
 		return VK_SUCCESS;
 	}
@@ -102,6 +106,8 @@ namespace vulkan_renderer {
 	
 	std::optional<std::shared_ptr<InexorUniformBuffer>> VulkanUniformBufferManager::get_uniform_buffer(const std::string& uniform_buffer_name)
 	{
+		assert(uniform_buffer_initialised);
+
 		if(!does_key_exist(uniform_buffer_name))
 		{
 			return std::nullopt;
@@ -114,24 +120,26 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanUniformBufferManager::update_uniform_buffer(const std::string& uniform_buffer_name, const std::size_t current_image_index, void* data_source_address, const std::size_t uniform_buffer_size)
+	VkResult VulkanUniformBufferManager::update_uniform_buffer(const std::string& internal_uniform_buffer_name, const std::size_t current_image_index, void* data_source_address, const std::size_t uniform_buffer_size)
 	{
-		assert(uniform_buffer_name.length()>0);
+		assert(uniform_buffer_initialised);
+		assert(internal_uniform_buffer_name.length()>0);
 		assert(data_source_address);
 		assert(uniform_buffer_size>0);
 		
 		// Call base class method.
-		if(!does_key_exist(uniform_buffer_name))
+		if(!does_key_exist(internal_uniform_buffer_name))
 		{
-			spdlog::error("Uniform buffer '{}' does not exist!", uniform_buffer_name);
+			spdlog::error("Uniform buffer '{}' does not exist!", internal_uniform_buffer_name);
+			spdlog::error("Uniform buffer manager does not create buffers automatically when calling update method!");
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		auto uniform_buffer = get_entry(uniform_buffer_name);
+		auto uniform_buffer = get_entry(internal_uniform_buffer_name);
 
 		if(!uniform_buffer.has_value())
 		{
-			spdlog::error("Uniform buffer '{}' does not exist!", uniform_buffer_name);
+			spdlog::error("Uniform buffer '{}' does not exist!", internal_uniform_buffer_name);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 		
@@ -147,6 +155,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanUniformBufferManager::shutdown_uniform_buffers()
 	{
+		assert(uniform_buffer_initialised);
+		assert(vma_allocator);
+
 		spdlog::debug("Destroying uniform buffers.");
 
 		auto all_uniform_buffers = get_all_values();

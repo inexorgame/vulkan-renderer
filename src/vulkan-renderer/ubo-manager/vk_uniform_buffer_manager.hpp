@@ -33,17 +33,14 @@ namespace vulkan_renderer {
 	{
 		private:
 
-			VkDevice device;
+			VkDevice device = VK_NULL_HANDLE;
 
-			// The mutex of this class.
+			bool uniform_buffer_initialised = false;
+
 			std::mutex uniform_buffer_manager_mutex;
 
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
 
-			/// Vulkan Memory Allocator.
-			/// Vulkan requires you to manage video memory for every type of resource like textures or vertex buffers manually.
-			/// To avoid having to do the memory management explicitely, we will use the famous Vulkan memory allocator library by AMD.
-			/// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 			VmaAllocator vma_allocator;
 
 
@@ -78,17 +75,17 @@ namespace vulkan_renderer {
 			/// @param uniform_buffer_size [in] The size of the uniform buffer.
 			/// @param number_of_images_in_swapchain [in] The number of images in the swapchain.
 			/// @note We have to create every uniform buffer as often as there are images in the swapchain!
-			VkResult create_uniform_buffer(const std::string& uniform_buffer_name, const VkDeviceSize& uniform_buffer_size, const std::size_t number_of_images_in_swapchain);
+			VkResult create_uniform_buffer(const std::string& internal_uniform_buffer_name, const VkDeviceSize& uniform_buffer_size, const std::size_t number_of_images_in_swapchain);
 
 			
 			/// @brief Returns a uniform buffer by name (key).
 			/// @param uniform_buffer_name [in] The internal name of the uniform buffer.
-			std::optional<std::shared_ptr<InexorUniformBuffer>> get_uniform_buffer(const std::string& uniform_buffer_name);
+			std::optional<std::shared_ptr<InexorUniformBuffer>> get_uniform_buffer(const std::string& internal_uniform_buffer_name);
 
 
 			/// @brief Destroys a uniform buffer.
 			/// @param uniform_buffer_name [in] The internal name of the uniform buffer.
-			VkResult destroy_uniform_buffer(const std::string& uniform_buffer_name);
+			VkResult destroy_uniform_buffer(const std::string& internal_uniform_buffer_name);
 
 
 			/// @brief Updates a uniform buffer.
@@ -96,7 +93,7 @@ namespace vulkan_renderer {
 			/// @param current_image_index [in] The current image index.
 			/// @param uniform_buffer_data_source [in] A pointer to the uniform buffer data.
 			/// @param uniform_buffer_size [in] The size of the uniform buffer.
-			VkResult update_uniform_buffer(const std::string& uniform_buffer_name, const std::size_t current_image_index, void* uniform_buffer_data_source, const std::size_t uniform_buffer_size);
+			VkResult update_uniform_buffer(const std::string& internal_uniform_buffer_name, const std::size_t current_image_index, void* uniform_buffer_data_source, const std::size_t uniform_buffer_size);
 
 
 			/// @brief Shutdown all uniform buffers.
