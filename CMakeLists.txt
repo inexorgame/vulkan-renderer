@@ -71,6 +71,11 @@ add_executable(inexor-vulkan-renderer src/main.cpp ${NORMAL_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 
+# Use multiple threads to generate code.
+if(MSVC)
+ target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
+endif()
+
 IF(WIN32)
 	target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 ENDIF()
@@ -98,7 +103,6 @@ function(assign_source_group)
 endfunction(assign_source_group)
 
 
-# Tests.
 add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${TEST_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
@@ -109,8 +113,12 @@ ENDIF()
 target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
 
+# Use multiple threads to generate code.
+if(MSVC)
+ target_compile_options(inexor-vulkan-renderer-tests PRIVATE "/MP")
+endif()
 
-# Benchmarks.
+
 add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${BENCHMARK_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-benchmarks PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
@@ -120,3 +128,8 @@ IF(WIN32)
 ENDIF()
 target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
+
+# Use multiple threads to generate code.
+if(MSVC)
+ target_compile_options(inexor-vulkan-renderer-benchmarks PRIVATE "/MP")
+endif()
