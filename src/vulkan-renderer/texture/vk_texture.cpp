@@ -21,17 +21,17 @@ namespace vulkan_renderer {
 
 		vmaDestroyImage(vma_allocator, image, allocation);
 
-		vkDestroyImageView(device, view, nullptr);
+		vkDestroyImageView(device, image_view, nullptr);
 
 		// We don't need to destroy any buffers in here.
 
-		file_name = "";
+		texture_file_name = "";
 
 		texture_name = "";
 
 		image = VK_NULL_HANDLE;
 
-		view = VK_NULL_HANDLE;
+		image_view = VK_NULL_HANDLE;
 
 		sampler = VK_NULL_HANDLE;
 
@@ -47,9 +47,9 @@ namespace vulkan_renderer {
 
 	void InexorTexture::update_descriptor()
 	{
-		descriptor.sampler = sampler;
-		descriptor.imageView = view;
-		descriptor.imageLayout = layout;
+		descriptor_image_info.sampler = sampler;
+		descriptor_image_info.imageView = image_view;
+		descriptor_image_info.imageLayout = image_layout;
 	}
 
 

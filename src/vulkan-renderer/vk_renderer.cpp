@@ -1011,8 +1011,8 @@ namespace vulkan_renderer {
 			VkDescriptorImageInfo image_info = {};
 			
             image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_1");
-            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_1");
+            image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_1").value();
+            image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_1").value();
 
             std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 

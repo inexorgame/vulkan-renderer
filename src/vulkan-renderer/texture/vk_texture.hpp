@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "../buffers/vk_buffer.hpp"
+
+#include <vulkan/vulkan.h>
 
 #include <string>
 
@@ -11,9 +11,6 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	/// @class InexorTextureBuffer
-	/// @brief A structure for textures.
-	/// @note The texture's memory will be managed by InexorBuffer.
 	class InexorTexture
 	{
 		public:
@@ -25,68 +22,50 @@ namespace vulkan_renderer {
 
 		public:
 
-			// TODO: Store duplicated of device-related data in here?
-
-			// The internal name of the texture which will be displayed to the user.
 			std::string texture_name = "";
 
-			// The file name of the texture.
-			std::string file_name = "";
+			std::string texture_file_name = "";
 			
-			// 
-			VkImageViewCreateInfo view_create_info;
+			VkImageViewCreateInfo view_create_info = {};
 
-			// The create info struct of the texture image.
-			VkImageCreateInfo image_create_info;
+			VkImageCreateInfo image_create_info = {};
 
-			// 
 			VmaAllocation allocation = VK_NULL_HANDLE;
 
-			// 
 			VmaAllocationInfo allocation_info = {};
 
-			// 
 			VkBufferCreateInfo create_info = {};
 				
-			// 
 			VmaAllocationCreateInfo allocation_create_info = {};	
 
-			// The texture's image buffer.
-			VkImage image;
+			VkImage image = {};
 
-			// Images are accessed through views.
-			VkImageView view;
+			VkImageView image_view = {};
 
-			// The memory layout of the texture.
-			VkImageLayout layout;
+			VkImageLayout image_layout = {};
 
-			// The image descriptor.
-			VkDescriptorImageInfo descriptor;
+			VkDescriptorImageInfo descriptor_image_info = {};
 
-			// The image sampler for shaders.
-			VkSampler sampler;
+			VkSampler sampler = {};
 
-			// The number of layers.
 			uint32_t layer_count = 0;
 
-			// Mipmap levels.
 			uint32_t mip_levels = 0;
 
-			// The width of the texture.
 			uint32_t texture_width = 0;
 
-			// The height of the texture.
 			uint32_t texture_height = 0;
 
 
 		public:
 			
 			/// @brief Destroys a texture.
-			/// @param device The Vulkan device.
-			/// @param vma_allocator The Vulkan memory allocator handle.
+			/// @param device [in] The Vulkan device.
+			/// @param vma_allocator [in] The Vulkan memory allocator handle.
 			void destroy_texture(const VkDevice& device, const VmaAllocator& vma_allocator);
 			
-			/// 
+
+			/// @brief Updates the texture sampler's descriptor.
 			void update_descriptor();
 
 	};

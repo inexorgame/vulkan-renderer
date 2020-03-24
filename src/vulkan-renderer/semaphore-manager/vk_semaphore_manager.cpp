@@ -106,7 +106,7 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(semaphore_manager_initialised);
 		
-		spdlog::debug("Destroying all semaphores.");
+		spdlog::debug("Destroying semaphores.");
 
 		// TODO: Get as unordered map!
 		auto all_semaphores = get_all_values();

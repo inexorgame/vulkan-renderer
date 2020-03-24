@@ -123,7 +123,7 @@ namespace vulkan_renderer {
 		// Call base class method.
 		if(!does_key_exist(uniform_buffer_name))
 		{
-			spdlog::error("Uniform buffer {} does not exist!", uniform_buffer_name);
+			spdlog::error("Uniform buffer '{}' does not exist!", uniform_buffer_name);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
@@ -131,7 +131,7 @@ namespace vulkan_renderer {
 
 		if(!uniform_buffer.has_value())
 		{
-			spdlog::error("Uniform buffer {} does not exist!", uniform_buffer_name);
+			spdlog::error("Uniform buffer '{}' does not exist!", uniform_buffer_name);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 		
@@ -147,7 +147,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanUniformBufferManager::shutdown_uniform_buffers()
 	{
-		spdlog::debug("Destroying all uniform buffers.");
+		spdlog::debug("Destroying uniform buffers.");
 
 		auto all_uniform_buffers = get_all_values();
 

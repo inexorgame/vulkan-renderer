@@ -144,16 +144,17 @@ namespace vulkan_renderer {
 			std::string texture_name = "example_texture_"+ std::to_string(texture_number);
 			texture_number++;
 
-			// Allocate memory for a new texture!
-			std::shared_ptr<InexorTexture> new_texture = std::make_shared<InexorTexture>();
-
 			// TODO: Find duplicate loads!
 			// TOOD: Specify assets folder!
-			result = VulkanTextureManager::create_texture_from_file(texture_name, texture_file, new_texture);
+			result = VulkanTextureManager::create_texture_from_file(texture_name, texture_file);
 			vulkan_error_check(result);
 
+			auto new_texture = get_texture(texture_name);
+
+			assert(new_texture.has_value());
+
 			// Store the texture.
-			textures.push_back(new_texture);
+			textures.push_back(new_texture.value());
 		}
 		
 		return VK_SUCCESS;

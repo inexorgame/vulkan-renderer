@@ -21,6 +21,7 @@ namespace vulkan_renderer {
 	{
 	}
 
+
 	VkResult VulkanTextureManager::initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,  const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue)
 	{
 		assert(device);
@@ -29,11 +30,12 @@ namespace vulkan_renderer {
 		assert(debug_marker_manager);
 		assert(graphics_card);
 
-		this->device              = device;
-		this->vma_allocator       = vma_allocator;
-		this->data_transfer_queue = data_transfer_queue;
-		this->dbg_marker_manager  = debug_marker_manager;
-		this->graphics_card       = graphics_card;
+		// All the other variables will be stored in the base class from which we inherit.
+		this->vma_allocator        = vma_allocator;
+		this->graphics_card        = graphics_card;
+
+		// Initialise base class.
+		SingleTimeCommandBufferRecorder::initialise(device, debug_marker_manager, data_transfer_queue);
 
 		spdlog::debug("Initialising Vulkan texture buffer manager.");
 		spdlog::debug("Creating command pool for texture buffer manager.");
@@ -42,7 +44,9 @@ namespace vulkan_renderer {
 
 		command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext = nullptr;
-		command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // TODO: Do we need this?
+
+		// TODO: Do we need this?
+		command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 		// This might be a distinct data transfer queue.
 		command_pool_create_info.queueFamilyIndex = transfer_queue_family_index;
@@ -52,7 +56,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		// Give this command pool an appropriate name.
-		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command pool for VulkanTextureManager.");
+		debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command pool for VulkanTextureManager.");
 		
 		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 
@@ -68,7 +72,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Give this command pool an appropriate name.
-		dbg_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "Command buffer for VulkanTextureManager.");
+		debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "Command buffer for VulkanTextureManager.");
 
 		return result;
 	}
@@ -77,10 +81,10 @@ namespace vulkan_renderer {
 	VkResult VulkanTextureManager::create_texture_buffer(std::shared_ptr<InexorTexture> texture, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage)
 	{
 		assert(vma_allocator);
-		assert(dbg_marker_manager);
+		assert(debug_marker_manager);
 		assert(texture->texture_name.length()>0);
 		
-		spdlog::debug("Creating data buffer for texture '" + texture->texture_name + "'.");
+		spdlog::debug("Creating data buffer for texture '{}.'", texture->texture_name);
 
 		buffer_object.create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		buffer_object.create_info.size        = buffer_size;
@@ -98,7 +102,7 @@ namespace vulkan_renderer {
 		const std::string data_buffer_name = "Data buffer for texture '" + texture->texture_name + "'.";
 
 		// Give this texture buffer an appropriate name.
-		dbg_marker_manager->set_object_name(device, (uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
+		debug_marker_manager->set_object_name(device, (uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
 
 		return result;
 	}
@@ -122,7 +126,7 @@ namespace vulkan_renderer {
 		texture->image_create_info.samples       = VK_SAMPLE_COUNT_1_BIT;
 		texture->image_create_info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 				
-		// Image creation does not allocate memory for the image automatically.
+		// Image creation does not automatically allocate memory for the image automatically.
 		// This is done in the following code part:
 
 		texture->allocation_create_info.usage     = memory_usage;
@@ -132,81 +136,15 @@ namespace vulkan_renderer {
 		VkResult result = vmaCreateImage(vma_allocator, &texture->image_create_info, &texture->allocation_create_info, &texture->image, &texture->allocation, &texture->allocation_info);
 		vulkan_error_check(result);
 
+		std::string image_name = "Image for texture '" + texture->texture_name + "'.";
+
 		// Assign an appropriate name to this image view.
-		std::string image_name = "Image for texture '" + texture->texture_name + "'";
-
-		dbg_marker_manager->set_object_name(device, (uint64_t)(texture->image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, image_name.c_str());
+		debug_marker_manager->set_object_name(device, (uint64_t)(texture->image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, image_name.c_str());
 
 		return VK_SUCCESS;
 	}
 	
 
-	VkResult VulkanTextureManager::begin_single_time_commands()
-	{
-		spdlog::debug("Started recording command buffer for single command.");
-
-		VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
-
-		command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		command_buffer_allocate_info.pNext              = nullptr;
-		command_buffer_allocate_info.commandBufferCount = 1;
-		command_buffer_allocate_info.commandPool        = data_transfer_command_pool;
-		command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-		// We have to allocate the command buffer every time this function is
-		// called because we call vkFreeCommandBuffers in end_single_time_commands.
-		VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &data_transfer_command_buffer);
-		vulkan_error_check(result);
-
-		// TODO: Assign memory marker to data_transfer_command_buffer!
-
-		VkCommandBufferBeginInfo command_buffer_begin_info = {};
-
-		command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		command_buffer_begin_info.pNext = nullptr;
-
-		// We’re only going to use the command buffer once and wait with returning from the function until
-		// the copy operation has finished executing. It’s good practice to tell the driver about our intent
-		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
-		command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		// Begin recording of the command buffer.
-		result = vkBeginCommandBuffer(data_transfer_command_buffer, &command_buffer_begin_info);
-		vulkan_error_check(result);
-
-		return result;
-	}
-
-
-	VkResult VulkanTextureManager::end_single_time_commands()
-	{
-		spdlog::debug("Ended recording command buffer for single time commands.");
-
-		VkResult result = vkEndCommandBuffer(data_transfer_command_buffer);
-		vulkan_error_check(result);
-
-		VkSubmitInfo submit_info = {};
-
-		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers = &data_transfer_command_buffer;
-
-		result = vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
-		vulkan_error_check(result);
-
-		// TODO: Fence!
-		result = vkQueueWaitIdle(data_transfer_queue);
-		vulkan_error_check(result);
-		
-		spdlog::debug("Destroying command buffer again.");
-
-		// Because we destroy the command buffer after submission, we have to allocate it every time begin_single_commands is called.
-		vkFreeCommandBuffers(device, data_transfer_command_pool, 1, &data_transfer_command_buffer);
-
-		return VK_SUCCESS;
-	}
-	
-	
 	VkResult VulkanTextureManager::create_texture_image_view(std::shared_ptr<InexorTexture> texture, const VkFormat& format)
 	{
 		texture->view_create_info = {};
@@ -221,38 +159,35 @@ namespace vulkan_renderer {
 		texture->view_create_info.subresourceRange.baseArrayLayer = 0;
 		texture->view_create_info.subresourceRange.layerCount     = 1;
 		
-		VkResult result = vkCreateImageView(device, &texture->view_create_info, nullptr, &texture->view);
+		VkResult result = vkCreateImageView(device, &texture->view_create_info, nullptr, &texture->image_view);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
 	}
 
 
-	VkResult VulkanTextureManager::create_texture_from_file(const std::string& texture_name, const std::string& file_name, std::shared_ptr<InexorTexture> texture)
+	VkResult VulkanTextureManager::create_texture_from_file(const std::string& internal_texture_name, const std::string& texture_file_name)
 	{
 		int texture_width = 0;
 		int texture_height = 0;
 		int texture_channels = 0;
 		
 		// TODO: Check if texture with this name does already exist.
-
 		const VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
-		spdlog::debug("Loading texture {}.", file_name);
+		spdlog::debug("Loading texture '{}' from file file '{}'.", internal_texture_name, texture_file_name);
 		
 		// Load the texture file using stb_image library.
 		// Force stb_image to load an alpha channel as well.
-		stbi_uc* pixels = stbi_load(file_name.c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(texture_file_name.c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
 
 		if(!pixels)
 		{
-			spdlog::error("Texture {} could not be loaded!", file_name);
+			spdlog::error("Texture file '{}' could not be loaded!", texture_file_name);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		spdlog::debug("Texture width: {}, height: {}", texture_width, texture_height);
-
-		// Note: Inexor vulkan-renderer does not intend to support linear tiled textures because it is not advisable to do so!
+		spdlog::debug("Texture dimensions: width: {}, height: {}", texture_width, texture_height);
 
 		// Create a staging buffer for the texture.
 		VkBuffer texture_staging_buffer = VK_NULL_HANDLE;
@@ -261,51 +196,47 @@ namespace vulkan_renderer {
 		// We need 4 times the size since we have 4 channels: red, green, blue and alpha channel.
 		VkDeviceSize texture_memory_size = 4 * texture_width * texture_height;
 		
-		// Store the name of the texture.
-		texture->texture_name = texture_name;
+		std::shared_ptr<InexorTexture> new_texture = std::make_shared<InexorTexture>();
 
-		// Create a staging vertex buffer.
+		// Store the name of the texture.
+		new_texture->texture_name = texture_file_name;
+
+		// This buffer is used as a transfer source for the buffer copy.
 		InexorBuffer staging_buffer_for_texture;
 
-		// Create a staging buffer for the texture.
-		// This buffer is used as a transfer source for the buffer copy
-		// TODO: Use generalized buffer creation manager?
-		VkResult result = create_texture_buffer(texture, staging_buffer_for_texture, texture_memory_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		// Create a staging buffer for the texture data.
+		VkResult result = create_texture_buffer(new_texture, staging_buffer_for_texture, texture_memory_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		vulkan_error_check(result);
 
 		// Copy memory to staging buffer.
-		// Vma library already ensures that the memory is mapped for us!
 		std::memcpy(staging_buffer_for_texture.allocation_info.pMappedData, pixels, static_cast<std::size_t>(texture_memory_size));
 
 		// We now can discard the image data since we copied it already.
 		stbi_image_free(pixels);
 
-		result = create_texture_image(texture, texture_width, texture_height, format, VK_IMAGE_TILING_OPTIMAL, VMA_MEMORY_USAGE_GPU_ONLY, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
+		result = create_texture_image(new_texture, texture_width, texture_height, format, VK_IMAGE_TILING_OPTIMAL, VMA_MEMORY_USAGE_GPU_ONLY, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
 		vulkan_error_check(result);
 
-
-		transition_image_layout(texture->image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		transition_image_layout(new_texture->image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		
-		copy_buffer_to_image(staging_buffer_for_texture.buffer, texture->image, texture_width, texture_height);
+		copy_buffer_to_image(staging_buffer_for_texture.buffer, new_texture->image, texture_width, texture_height);
 
-		transition_image_layout(texture->image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		transition_image_layout(new_texture->image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-
-		// Destroy staging buffer.
+		// Destroy the staging buffer for the texture data.
 		vmaDestroyBuffer(vma_allocator, staging_buffer_for_texture.buffer, staging_buffer_for_texture.allocation);
 
+		// Create an image view for the texture.
+		create_texture_image_view(new_texture, format);
 
-		/// Create an image view so shaders can access this texture.
-		create_texture_image_view(texture, format);
-
-		// Create a texture sampler so shaders can access this texture.
-		create_texture_sampler(texture);
+		// Create a texture sampler for the texture.
+		create_texture_sampler(new_texture);
 
 		// Update the texture's descriptor.
-		texture->update_descriptor();
-
-		// TODO: Check if texture with this name does already exist.
-		textures.insert({texture_name, texture});
+		new_texture->update_descriptor();
+		
+		// Call template base class method.
+		add_entry(internal_texture_name, new_texture);
 
 		return VK_SUCCESS;
 	}
@@ -379,10 +310,10 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateSampler(device, &sampler_create_info, nullptr, &texture->sampler);
 		vulkan_error_check(result);
 
-		// Give this texture sampler an appropriate name.
 		const std::string texture_sampler_name = "Texture sampler for texture '" + texture->texture_name + "'.";
 
-		dbg_marker_manager->set_object_name(device, (uint64_t)(texture->sampler), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, texture_sampler_name.c_str());
+		// Give this texture sampler an appropriate name.
+		debug_marker_manager->set_object_name(device, (uint64_t)(texture->sampler), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, texture_sampler_name.c_str());
 
 		return VK_SUCCESS;
 	}
@@ -390,8 +321,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanTextureManager::transition_image_layout(VkImage& image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
 	{
-		// Start the recording of a command buffer.
-		begin_single_time_commands();
+		start_recording_of_single_time_command_buffer();
 
 		VkImageMemoryBarrier barrier = {};
 
@@ -410,6 +340,7 @@ namespace vulkan_renderer {
 		VkPipelineStageFlags source_stage;
 		VkPipelineStageFlags destination_stage;
 
+		// TODO: Refactor!
 		if(VK_IMAGE_LAYOUT_UNDEFINED == old_layout && VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == new_layout)
 		{
 			// 
@@ -436,11 +367,9 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Recording pipeline barrier for image layer transition");
 
-		// 
 		vkCmdPipelineBarrier(data_transfer_command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		
-		// End the recording of a command buffer.
-		end_single_time_commands();
+		end_recording_of_single_time_command_buffer();
 
 		return VK_SUCCESS;
 	}
@@ -448,8 +377,7 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanTextureManager::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
-		// Start the recording of a command buffer.
-		begin_single_time_commands();
+		start_recording_of_single_time_command_buffer();
 
 		VkBufferImageCopy buffer_image_region = {};
 
@@ -465,39 +393,94 @@ namespace vulkan_renderer {
 
 		vkCmdCopyBufferToImage(data_transfer_command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1, &buffer_image_region);
 
-		// End the recording of a command buffer.
-		end_single_time_commands();
+		end_recording_of_single_time_command_buffer();
 
 		return VK_SUCCESS;
 	}
 	
-	
-	VkImageView VulkanTextureManager::get_texture_view(const std::string& texture_name)
+
+	std::optional<std::shared_ptr<InexorTexture>> VulkanTextureManager::get_texture(const std::string& internal_texture_name)
 	{
-		// TODO: Check if index exists.
-		return textures[texture_name]->view;
+		if(!does_key_exist(internal_texture_name))
+		{
+			spdlog::error("Could not find texture '{}'!", internal_texture_name);
+			return std::nullopt;
+		}
+
+		auto texture = get_entry(internal_texture_name);
+
+		if(texture.has_value())
+		{
+			// Return the texture's image view.
+			return texture.value();
+		}
+		else
+		{
+			spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
+		}
+
+		return std::nullopt;
+	}
+
+
+	std::optional<VkImageView> VulkanTextureManager::get_texture_view(const std::string& internal_texture_name)
+	{
+		if(!does_key_exist(internal_texture_name))
+		{
+			spdlog::error("Could not find image view for texture '{}' because this texture does not exist!", internal_texture_name);
+			return std::nullopt;
+		}
+
+		auto texture = get_entry(internal_texture_name);
+
+		if(texture.has_value())
+		{
+			// Return the texture's image view.
+			return texture.value()->image_view;
+		}
+		else
+		{
+			spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
+		}
+
+		return std::nullopt;
 	}
     
 	
-	VkSampler VulkanTextureManager::get_texture_sampler(const std::string& texture_name)
+	std::optional<VkSampler> VulkanTextureManager::get_texture_sampler(const std::string& internal_texture_name)
 	{
-		// TODO: Check if index exists.
-		return textures[texture_name]->sampler;
+		if(!does_key_exist(internal_texture_name))
+		{
+			spdlog::error("Could not find sampler for texture '{}' because this texture does not exist!", internal_texture_name);
+			return std::nullopt;
+		}
+
+		auto texture = get_entry(internal_texture_name);
+
+		if(texture.has_value())
+		{
+			// Return the texture's image sampler.
+			return texture.value()->sampler;
+		}
+		else
+		{
+			spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
+		}
+
+		return std::nullopt;
 	}
 
 
 	void VulkanTextureManager::shutdown_textures()
 	{
-		std::unordered_map<std::string, std::shared_ptr<InexorTexture>>::iterator texture_iterator;
-	
-		// Iterate through all textures and destroy them.
-		for(texture_iterator = textures.begin(); texture_iterator != textures.end(); texture_iterator++)
+		auto textures = get_all_values();
+
+		for(const auto& texture : textures)
 		{
-			texture_iterator->second->destroy_texture(device, vma_allocator);
+			texture->destroy_texture(device, vma_allocator);
 		}
-		
-		// Destroy command pool for texture data transfer.
-		vkDestroyCommandPool(device, data_transfer_command_pool, nullptr);
+
+		destroy_command_pool();
 	}
 
 
