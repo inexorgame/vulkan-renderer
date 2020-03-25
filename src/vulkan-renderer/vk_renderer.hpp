@@ -26,7 +26,7 @@
 #include "ubo-manager/vk_uniform_buffer_manager.hpp"
 #include "debug-marker/vk_debug_marker_manager.hpp"
 #include "queue-manager/vk_queue_manager.hpp"
-#include "time-step/vk_time_step.hpp"
+#include "time-step/inexor_time_step.hpp"
 #include "texture-manager/vk_texture_manager.hpp"
 #include "mesh-buffer/vk_mesh_buffer.hpp"
 #include "depth-buffer/vk_depth_buffer.hpp"
