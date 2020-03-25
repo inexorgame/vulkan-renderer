@@ -32,6 +32,7 @@
 #include "depth-buffer/vk_depth_buffer.hpp"
 #include "mesh-loader/vk_mesh_loader.hpp"
 #include "uniform-buffer/vk_uniform_buffer.hpp"
+#include "descriptor-set-manager/vk_descriptor_set_manager.hpp"
 
 
 // Vulkan Memory Allocator.
@@ -68,7 +69,8 @@ namespace vulkan_renderer {
 							public VulkanTextureManager,
 							public InexorTimeStep,
 							public InexorMeshLoader,
-							public VulkanUniformBufferManager
+							public VulkanUniformBufferManager,
+							public VulkanDescriptorSetManager
 							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
 		public:
@@ -86,100 +88,66 @@ namespace vulkan_renderer {
 
 		protected:
 
-			// Vulkan Memory Allocator
-			// Vulkan requires you to manage video memory for every type of resource like textures or vertex buffers manually.
-			// To avoid having to do the memory management explicitely, we will use the famous Vulkan memory allocator library by AMD.
 			VmaAllocator vma_allocator;
 			
-			// The debug marker manager instance.
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
 
-			// The Vulkan instance handle.
 			VkInstance instance;
 
-			// The device handle.
 			VkDevice device;
 
-			// Opaque handle to a surface object.
 			VkSurfaceKHR surface;
 			
-			// The graphics card which was selected either automatically or manually by the user.
 			VkPhysicalDevice selected_graphics_card;
 
-			// Presentation mode supported for a surface.
 			VkPresentModeKHR selected_present_mode;
 
-			// Opaque handle to a swapchain object.
 			VkSwapchainKHR swapchain;
 
-			// The number of images in the swapchain.
 			uint32_t number_of_images_in_swapchain = 0;
 
-			// Structure specifying a queue submit operation.
 			VkSubmitInfo submit_info;
 			
-			// Structure describing parameters of a queue presentation.
-			VkPresentInfoKHR present_info;
+			VkPresentInfoKHR present_info = {};
 
-			// The images in the swapchain.
 			std::vector<VkImage> swapchain_images;
 			
-			// The images in the swapchain.
 			std::vector<VkImageView> swapchain_image_views;
 
-			// Opaque handle to a pipeline layout object.
-			VkPipelineLayout pipeline_layout;
+			VkPipelineLayout pipeline_layout = {};
 
-			// The image format which is used.
-			VkFormat selected_image_format;
+			VkFormat selected_image_format = {};
 			
-			// 
 			VkExtent2D selected_swapchain_image_extent = {};
 
-			// Supported color space of the presentation engine. 
-			VkColorSpaceKHR selected_color_space;
+			VkColorSpaceKHR selected_color_space = {};
 
-			// 
 			std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
-			// 
-			VkRenderPass render_pass;
+			VkRenderPass render_pass = VK_NULL_HANDLE;
 
-			// 
-			VkPipeline pipeline;
+			VkPipeline pipeline = VK_NULL_HANDLE;
 
-			// 
 			std::vector<VkFramebuffer> frame_buffers;
 
-			// 
-			VkCommandPool command_pool;
+			VkCommandPool command_pool = VK_NULL_HANDLE;
 
-			// 
 			std::vector<VkCommandBuffer> command_buffers;
 			
-
-			// Neccesary for synchronisation!
 			std::vector<std::shared_ptr<VkSemaphore>> image_available_semaphores;
+			
 			std::vector<std::shared_ptr<VkSemaphore>> rendering_finished_semaphores;
+			
 			std::vector<std::shared_ptr<VkFence>> in_flight_fences;
+			
 			std::vector<std::shared_ptr<VkFence>> images_in_flight;
-			
-			VkDescriptorSetLayout descriptor_set_layout;
-			
-			VkDescriptorPool descriptor_pool;
 
-			std::vector<VkDescriptorSet> descriptor_sets;
+			VkDebugReportCallbackEXT debug_report_callback = {};
 
-			/// Debug report callback.
-			VkDebugReportCallbackEXT debug_report_callback{};
-
-			// Vulkan debug report callback.
 			bool debug_report_callback_initialised = false;
 
-			// The depth buffer.
 			InexorDepthBuffer depth_buffer;
 
-			// 
 			uint32_t vma_dump_index = 0;
 
 
@@ -210,7 +178,7 @@ namespace vulkan_renderer {
 
 			/// @brief Create a physical device handle.
 			/// @param graphics_card The regarded graphics card.
-			VkResult create_physical_device(const VkPhysicalDevice& graphics_card, bool enable_debug_markers = true);
+			VkResult create_physical_device(const VkPhysicalDevice& graphics_card, const bool enable_debug_markers = true);
 
 			
 			/// @brief Creates an instance of VulkanDebugMarkerManager
@@ -251,14 +219,10 @@ namespace vulkan_renderer {
 			
 			/// @brief Creates the descriptor set.
 			VkResult create_descriptor_sets();
-
-
-			/// @brief Creates the descriptor pool.
-			VkResult create_descriptor_pool();
 			
 
 			/// @brief Updates the uniform buffer.
-			VkResult update_uniform_buffer(std::size_t current_image);
+			VkResult update_uniform_buffer(const std::size_t current_image);
 
 
 			/// @brief Recreates the swapchain.
@@ -268,13 +232,14 @@ namespace vulkan_renderer {
 			/// @brief Creates the command pool.
 			VkResult create_command_pool();
 
+			// TODO
+			VkResult create_descriptor_pool();
+
+			// TODO
+			VkResult create_descriptor_set_layout();
 
 			/// @brief Creates the frame buffers.
 			VkResult create_frame_buffers();
-			
-
-			/// @brief Creates the descriptor set layout.
-			VkResult create_descriptor_set_layout();
 
 
 			/// @brief Creates the rendering pipeline.
@@ -282,7 +247,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Creates the image views.
-			VkResult create_image_views();
+			VkResult create_swapchain_image_views();
 
 
 			/// @brief Destroys all Vulkan objects.

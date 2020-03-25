@@ -324,6 +324,8 @@ namespace vulkan_renderer {
 
 	VkResult InexorApplication::check_application_specific_features()
 	{
+		assert(selected_graphics_card);
+
 		// Check if anisotropic filtering is available!
 		VkPhysicalDeviceFeatures graphics_card_features;
 
@@ -333,6 +335,10 @@ namespace vulkan_renderer {
 		if(!graphics_card_features.samplerAnisotropy)
 		{
 			spdlog::warn("The selected graphics card does NOT support anisotropic filtering!");
+		}
+		else
+		{
+			spdlog::debug("The selected graphics ccard does support anisotropic filtering.");
 		}
 
 		return VK_SUCCESS;
@@ -588,10 +594,17 @@ namespace vulkan_renderer {
 		result = load_textures();
 		vulkan_error_check(result);
 
-		result = create_image_views();
+		result = create_swapchain_image_views();
 		vulkan_error_check(result);
 		
 		result = load_shaders();
+		vulkan_error_check(result);
+
+		// Initialise Vulkan descriptor set manager.
+		result = VulkanDescriptorSetManager::initialise(device, "standard_descriptor_set", debug_marker_manager, number_of_images_in_swapchain);
+		vulkan_error_check(result);
+
+		result = create_descriptor_pool();
 		vulkan_error_check(result);
 
 		result = create_descriptor_set_layout();
@@ -603,17 +616,16 @@ namespace vulkan_renderer {
 		result = create_frame_buffers();
 		vulkan_error_check(result);
 
-		InexorMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
+		result = InexorMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
+		vulkan_error_check(result);
 
 		result = create_command_pool();
 		vulkan_error_check(result);
 
-		VulkanUniformBufferManager::initialise(device, debug_marker_manager, vma_allocator);
-
-		result = create_uniform_buffers();
+		result = VulkanUniformBufferManager::initialise(device, debug_marker_manager, vma_allocator);
 		vulkan_error_check(result);
 
-		result = create_descriptor_pool();
+		result = create_uniform_buffers();
 		vulkan_error_check(result);
 
 		result = create_descriptor_sets();
@@ -628,9 +640,11 @@ namespace vulkan_renderer {
 		result = record_command_buffers(mesh_buffers);
 		vulkan_error_check(result);
 
-		VulkanFenceManager::initialise(device, debug_marker_manager);
+		result = VulkanFenceManager::initialise(device, debug_marker_manager);
+		vulkan_error_check(result);
 
-		VulkanSemaphoreManager::initialise(device, debug_marker_manager);
+		result = VulkanSemaphoreManager::initialise(device, debug_marker_manager);
+		vulkan_error_check(result);
 
 		result = create_synchronisation_objects();
 		vulkan_error_check(result);
@@ -661,7 +675,7 @@ namespace vulkan_renderer {
 
 	void InexorApplication::cleanup()
 	{
-		spdlog::debug("Cleaning up InexorRenderer.");
+		spdlog::debug("Cleaning up InexorApplication.");
 
 		shutdown_vulkan();
 		destroy_window();
