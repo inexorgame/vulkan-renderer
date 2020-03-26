@@ -221,7 +221,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 		
 		spdlog::debug("------------------------------------------------------------------------------------------------------------");
-		spdlog::debug("Number of device extensions: ", number_of_device_extensions);
+		spdlog::debug("Number of device extensions: {}", number_of_device_extensions);
 		spdlog::debug("------------------------------------------------------------------------------------------------------------");
 
 		if(number_of_device_extensions <= 0)
@@ -390,7 +390,7 @@ namespace vulkan_renderer {
 		vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
 
 		// Print the name of the graphics card.
-		spdlog::debug("Graphics card: graphics_card_properties.deviceName");
+		spdlog::debug("Graphics card: {}", graphics_card_properties.deviceName);
 
 		// Get the major, minor and patch version of the Vulkan API version.
 		uint32_t VulkanAPIversion     = graphics_card_properties.apiVersion;
@@ -451,7 +451,7 @@ namespace vulkan_renderer {
 		// Loop through all memory types and list their features.
 		for(std::size_t i=0; i<graphics_card_memory_properties.memoryTypeCount; i++)
 		{
-			spdlog::debug("[{}] Heap index: ", i, graphics_card_memory_properties.memoryTypes[i].heapIndex);
+			spdlog::debug("[{}] Heap index: {}", i, graphics_card_memory_properties.memoryTypes[i].heapIndex);
 
 			auto &propertyFlag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
 
@@ -468,7 +468,7 @@ namespace vulkan_renderer {
 		// Loop through all memory heaps.
 		for(std::size_t i=0; i<graphics_card_memory_properties.memoryHeapCount; i++)
 		{
-			spdlog::debug("Heap [{}], memory size: ", i, graphics_card_memory_properties.memoryHeaps[i].size/(1000*1000));
+			spdlog::debug("Heap [{}], memory size: {}", i, graphics_card_memory_properties.memoryHeaps[i].size/(1000*1000));
 
 			auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
 
