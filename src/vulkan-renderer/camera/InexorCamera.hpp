@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../time-step/inexor_time_step.hpp"
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -60,7 +58,8 @@ namespace vulkan_renderer {
 			glm::mat4 projection_matrix = glm::mat4();
 
 			/// Neccesary for taking into account the relative speed of the system's CPU.
-			InexorTimeStep timestep;
+			/// The timestep will be calculated in the main loop and will be passed on when update() is called.
+			float timestep;
 
 
 		private:
@@ -93,7 +92,8 @@ namespace vulkan_renderer {
 			
 
 			/// @brief Updates camera movement.
-			void update();
+			/// @brief timestep [in] A float which scales with the amount of time which has passed since last rendering.
+			void update(const float timestep);
 
 
 			/// @brief Sets the camera position.

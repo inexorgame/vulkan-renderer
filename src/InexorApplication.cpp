@@ -675,7 +675,8 @@ namespace vulkan_renderer {
 		camera.set_position(glm::vec3(0.0f, 5.0f, 5.0f));
 		camera.set_direction(glm::vec3(0.0f, 1.0f, 0.0f));
 		camera.set_speed(0.5f);
-		camera.update();
+
+		camera.update(time_passed);
 
 		return VK_SUCCESS;
 	}
@@ -704,6 +705,8 @@ namespace vulkan_renderer {
 
 	void InexorApplication::keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
+		// TODO: Abstract this!
+
 		// Move camera forwards.
 		if(GLFW_KEY_W == key)
 		{
@@ -735,11 +738,7 @@ namespace vulkan_renderer {
 	
 	VkResult InexorApplication::update_cameras()
 	{
-		camera.update();
-
-		auto camera_pos = camera.get_position();
-
-		//spdlog::debug("{}, {}, {}", camera_pos.x, camera_pos.y, camera_pos.z);
+		camera.update(time_passed);
 
 		return VK_SUCCESS;
 	}
@@ -760,6 +759,7 @@ namespace vulkan_renderer {
 
 			// TODO!
 			//update_keyboard();
+			time_passed = clock_timing.get_time_step();
 		}
 	}
 

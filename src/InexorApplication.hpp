@@ -77,6 +77,12 @@ namespace vulkan_renderer {
 
 			InexorCamera camera;
 
+			/// Neccesary for taking into account the relative speed of the system's CPU.
+			float time_passed = 0.0f;
+			
+			InexorTimeStep clock_timing;
+
+
 
 		private:
 
@@ -85,16 +91,28 @@ namespace vulkan_renderer {
 			/// @note It was collectively decided not to use JSON for configuration files.
 			VkResult load_TOML_configuration_file(const std::string& TOML_file_name);
 
+
+			/// 
 			VkResult load_textures();
 
+
+			/// 
 			VkResult load_shaders();
 
+
+			/// 
 			VkResult load_models();
 
+
+			/// 
 			VkResult check_application_specific_features();
 			
+
+			/// 
 			VkResult draw_frame();
 			
+
+			/// 
 			VkResult update_cameras();
 
 			/// @brief Implementation of the uniform buffer update method which is defined as virtual function in VulkanRenderer.
@@ -106,6 +124,7 @@ namespace vulkan_renderer {
 			
 			VkResult initialise();
 
+			
 			/// @brief Keyboard input callback.
 			/// @param window [in] The glfw window.
 			/// @param key [in] The key which was pressed or released.
@@ -114,7 +133,9 @@ namespace vulkan_renderer {
 			/// @param mods [in] Bit field describing which modifier keys were held down.
 			void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+			
 			void run();
+
 
 			void cleanup();
 

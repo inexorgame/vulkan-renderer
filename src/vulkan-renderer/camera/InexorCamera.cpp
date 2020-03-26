@@ -49,8 +49,10 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorCamera::update()
+	void InexorCamera::update(const float timestep)
 	{
+		this->timestep = timestep;
+
 		if(camera_is_moving)
 		{
 			if(!moving_backwards)
@@ -69,15 +71,13 @@ namespace vulkan_renderer {
 
 	void InexorCamera::move_forwards()
 	{
-		auto time_passed_factor = timestep.get_time_step();
-		this->position += (camera_speed * time_passed_factor * direction);
+		this->position += (camera_speed * timestep * direction);
 	}
 
 
 	void InexorCamera::move_backwards()
 	{
-		auto time_passed_factor = timestep.get_time_step();
-		this->position -= (camera_speed * time_passed_factor * direction);
+		this->position -= (camera_speed * timestep * direction);
 	}
 
 	
@@ -134,22 +134,19 @@ namespace vulkan_renderer {
 
 	void InexorCamera::move_camera_x(const float x)
 	{
-		auto time_passed_factor = timestep.get_time_step();
-		this->position.x += (camera_speed * time_passed_factor * x);
+		this->position.x += (camera_speed * timestep * x);
 	}
 
 
 	void InexorCamera::move_camera_y(const float y)
 	{
-		auto time_passed_factor = timestep.get_time_step();
-		this->position.y += (camera_speed * time_passed_factor * y);
+		this->position.y += (camera_speed * timestep * y);
 	}
 
 
 	void InexorCamera::move_camera_z(const float z)
 	{
-		auto time_passed_factor = timestep.get_time_step();
-		this->position.z += (camera_speed * time_passed_factor * z);
+		this->position.z += (camera_speed * timestep * z);
 	}
 
 

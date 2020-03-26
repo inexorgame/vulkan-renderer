@@ -11,6 +11,12 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
+	/// This needs some serious redesign!
+	/// Should we use polling instead of callbacks?
+	/// This would resolve the issue of using static void callback functions instead of class methods!
+	/// Also, we might could run this in a separate thread.
+
+
 	/// @class InexorKeyboardInputHandler.
 	class InexorKeyboardInputHandler
 	{
