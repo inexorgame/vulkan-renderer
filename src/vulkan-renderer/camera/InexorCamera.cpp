@@ -33,15 +33,47 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorCamera::start_camera_movement(bool moveing_backwards)
+	{
+		this->camera_is_moving = true;
+		this->moving_backwards = moveing_backwards;
+	}
+
+
+	void InexorCamera::end_camera_movement()
+	{
+		this->camera_is_moving = false;
+		this->moving_backwards = false;
+	}
+
+
+	void InexorCamera::update()
+	{
+		if(camera_is_moving)
+		{
+			if(!moving_backwards)
+			{
+				move_forwards();
+			}
+			else
+			{
+				move_backwards();
+			}
+		}
+	}
+
+
 	void InexorCamera::move_forwards()
 	{
-		this->position += camera_speed * direction;
+		auto time_passed_factor = timestep.get_time_step();
+		this->position += (camera_speed * time_passed_factor * direction);
 	}
 
 
 	void InexorCamera::move_backwards()
 	{
-		this->position -= camera_speed * direction;
+		auto time_passed_factor = timestep.get_time_step();
+		this->position -= (camera_speed * time_passed_factor * direction);
 	}
 
 	
@@ -89,32 +121,36 @@ namespace vulkan_renderer {
 
 	void InexorCamera::set_rotation(const float yaw, const float pitch, const float roll)
 	{
-		this->yaw = yaw;
+		this->yaw   = yaw;
 		this->pitch = pitch;
-		this->roll = roll;
+		this->roll  = roll;
 	}
 
 
 	void InexorCamera::move_camera_x(const float x)
 	{
-		this->position.x += camera_speed * x;
+		auto time_passed_factor = timestep.get_time_step();
+		this->position.x += camera_speed * time_passed_factor * x;
 	}
 
 
 	void InexorCamera::move_camera_y(const float y)
 	{
-		this->position.y += camera_speed * y;
+		auto time_passed_factor = timestep.get_time_step();
+		this->position.y += camera_speed * time_passed_factor * y;
 	}
 
 
 	void InexorCamera::move_camera_z(const float z)
 	{
-		this->position.z += camera_speed * z;
+		auto time_passed_factor = timestep.get_time_step();
+		this->position.z += camera_speed * time_passed_factor * z;
 	}
 
 
 	void InexorCamera::set_speed(const float camera_speed)
 	{
+		assert(camera_speed > 0.0f);
 		this->camera_speed = camera_speed;
 	}
 
@@ -127,6 +163,7 @@ namespace vulkan_renderer {
 
 	void InexorCamera::set_near_plane(const float near_plane)
 	{
+		assert(near_plane > 0.0f);
 		this->near_plane = near_plane;
 	}
 
@@ -139,6 +176,7 @@ namespace vulkan_renderer {
 
 	void InexorCamera::set_far_plane(const float far_plane)
 	{
+		assert(far_plane > 0.0f);
 		this->far_plane = far_plane;
 	}
 
@@ -151,6 +189,8 @@ namespace vulkan_renderer {
 
 	void InexorCamera::set_zoom(const float zoom)
 	{
+		assert(zoom > 0.0f);
+
 		this->zoom = zoom;
 	}
 
@@ -158,6 +198,19 @@ namespace vulkan_renderer {
 	float InexorCamera::get_zoom() const
 	{
 		return zoom;
+	}
+	
+
+	void InexorCamera::set_aspect_ratio(const float aspect_ratio)
+	{
+		assert(aspect_ratio > 0.0f);
+		this->aspect_ratio = aspect_ratio;
+	}
+			
+
+	float InexorCamera::get_aspect_ratio() const
+	{
+		return this->aspect_ratio;
 	}
 
 

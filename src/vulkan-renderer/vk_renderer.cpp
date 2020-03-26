@@ -1012,38 +1012,6 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanRenderer::update_uniform_buffer(const std::size_t current_image)
-	{
-        float time = InexorTimeStep::get_program_start_time_step();
-
-        UniformBufferObject ubo = {};
-        
-		InexorCamera camera;
-
-		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-
-		camera.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-
-		camera.set_direction(glm::vec3(2.0f, 2.0f, 2.0f));
-
-		ubo.view = camera.get_view_matrix();
-
-        //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        
-		ubo.proj = camera.get_projection_matrix();
-
-		//ubo.proj = glm::perspective(glm::radians(45.0f), window_width / (float) window_height, 0.1f, 10.0f);
-        
-		ubo.proj[1][1] *= -1;
-
-		// Update the world matrices!
-		VulkanUniformBufferManager::update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
-
-		return VK_SUCCESS;
-	}
-
-
 	VkResult VulkanRenderer::create_uniform_buffers()
 	{
 		spdlog::debug("Creating uniform buffers.");

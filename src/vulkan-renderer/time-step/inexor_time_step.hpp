@@ -28,8 +28,6 @@ namespace vulkan_renderer {
 			~InexorTimeStep();
 
 
-		protected:
-
 			/// @brief Returns a scaling factor which corresponds to the
 			/// time which has passed since last render call and now.
 			float get_time_step();

@@ -1,5 +1,4 @@
 #include "InexorApplication.hpp"
-#include "vulkan-renderer/debug-callback/vk_debug_callback.hpp"
 
 
 namespace inexor {
@@ -18,6 +17,20 @@ namespace vulkan_renderer {
 		// This is actually the way it is handled by the official Vulkan samples.
 		auto app = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
 		app->frame_buffer_resized = true;
+	}
+
+
+	/// @brief Static callback for window resize events.
+	/// @note Because GLFW is a C-style API, we can't pass a poiner to a class method, so we have to do it this way!
+	/// @param window [in] The glfw window.
+	/// @param key [in] The key which was pressed or released.
+	/// @param scancode [in] The system-specific scancode of the key.
+	/// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT. 
+	/// @param mods [in] Bit field describing which modifier keys were held down.
+	static void keyboard_input_callback_reloader(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+		auto app = reinterpret_cast<InexorApplication*>(glfwGetWindowUserPointer(window));
+		app->keyboard_input_callback(window, key, scancode, action, mods);
 	}
 
 
@@ -600,7 +613,6 @@ namespace vulkan_renderer {
 		result = load_shaders();
 		vulkan_error_check(result);
 
-		// Initialise Vulkan descriptor set manager.
 		result = VulkanDescriptorSetManager::initialise(device, "standard_descriptor_set", debug_marker_manager, number_of_images_in_swapchain);
 		vulkan_error_check(result);
 
@@ -654,7 +666,84 @@ namespace vulkan_renderer {
 		spdlog::debug("Showing window.");
 		
 		// Show window after Vulkan has been initialised.
+		// TODO: Does this trigger swapchain recreation at startup?
 		glfwShowWindow(window);
+
+		
+		// We must store the window user pointer to be able to call the 
+	    glfwSetWindowUserPointer(window, this);
+
+		InexorKeyboardInputHandler::initialise(window, keyboard_input_callback_reloader);
+		
+		camera.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
+		camera.set_direction(glm::vec3(1.0f, 1.0f, 1.0f));
+		camera.set_speed(0.01f);
+
+		return VK_SUCCESS;
+	}
+
+
+	VkResult InexorApplication::update_uniform_buffer(const std::size_t current_image)
+	{
+        float time = InexorTimeStep::get_program_start_time_step();
+
+        UniformBufferObject ubo = {};
+        
+		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.view = camera.get_view_matrix();
+		ubo.proj = camera.get_projection_matrix();
+        
+		ubo.proj[1][1] *= -1;
+
+		// Update the world matrices!
+		VulkanUniformBufferManager::update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
+
+		return VK_SUCCESS;
+	}
+
+
+	void InexorApplication::keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+		// Move camera forwards.
+		if(GLFW_KEY_W == key)
+		{
+			if(GLFW_PRESS == action)
+			{
+				spdlog::debug("start move forwards!");
+				camera.start_camera_movement();
+			}
+			else
+			{
+				spdlog::debug("end move forwards!");
+				camera.end_camera_movement();
+			}
+		}
+
+		// Move camera backwards.
+		if(GLFW_KEY_S == key)
+		{
+			if(GLFW_PRESS == action)
+			{
+				// true because we're moving backwards.
+				spdlog::debug("start move backwards!");
+				camera.start_camera_movement(true);
+			}
+			else
+			{
+				spdlog::debug("end move backwards!");
+				camera.end_camera_movement();
+			}
+		}
+	}
+
+	
+	VkResult InexorApplication::update_cameras()
+	{
+		camera.update();
+
+		auto camera_pos = camera.get_position();
+
+		spdlog::debug("{}, {}, {}", camera_pos.x, camera_pos.y, camera_pos.z);
 
 		return VK_SUCCESS;
 	}
@@ -669,6 +758,9 @@ namespace vulkan_renderer {
 		{
 			glfwPollEvents();
 			draw_frame();
+
+			// TODO: Merge into one update_game_data() method?
+			update_cameras();
 		}
 	}
 

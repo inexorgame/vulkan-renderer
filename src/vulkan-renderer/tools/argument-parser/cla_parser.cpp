@@ -6,17 +6,17 @@ namespace vulkan_renderer {
 namespace tools {
 
 
-	CommandLineArgumentParser::CommandLineArgumentParser()
+	InexorCommandLineArgumentParser::InexorCommandLineArgumentParser()
 	{
 	}
 
 	
-	CommandLineArgumentParser::~CommandLineArgumentParser()
+	InexorCommandLineArgumentParser::~InexorCommandLineArgumentParser()
 	{
 	}
 
 	
-	bool CommandLineArgumentParser::does_command_line_argument_template_exist(const std::string argument_name)
+	bool InexorCommandLineArgumentParser::does_command_line_argument_template_exist(const std::string argument_name)
 	{
 		for(const auto& accepted_argument : list_of_accepted_command_line_arguments)
 		{
@@ -31,14 +31,14 @@ namespace tools {
 	}
 	
 	
-	std::optional<bool> CommandLineArgumentParser::is_command_line_argument_specified(const std::string argument_name)
+	std::optional<bool> InexorCommandLineArgumentParser::is_command_line_argument_specified(const std::string argument_name)
 	{
 		if(!does_command_line_argument_template_exist(argument_name))
 		{
 			return std::nullopt;
 		}
 
-		std::unordered_map<std::string, CommandLineArgumentValue>::const_iterator argument_specified = parsed_command_line_arguments.find(argument_name);
+		std::unordered_map<std::string, InexorCommandLineArgumentValue>::const_iterator argument_specified = parsed_command_line_arguments.find(argument_name);
 		
 		if(argument_specified == parsed_command_line_arguments.end())
 		{
@@ -53,7 +53,7 @@ namespace tools {
 	}
 
 	
-	const std::optional<INEXOR_COMMAND_LINE_ARGUMENT_TYPE> CommandLineArgumentParser::get_argument_template_type(const std::string& argument_name)
+	const std::optional<INEXOR_COMMAND_LINE_ARGUMENT_TYPE> InexorCommandLineArgumentParser::get_argument_template_type(const std::string& argument_name)
 	{
 		if(does_command_line_argument_template_exist(argument_name))
 		{
@@ -70,7 +70,7 @@ namespace tools {
 	}
 
 
-	void CommandLineArgumentParser::parse_command_line_arguments(std::size_t argument_count, char* arguments[])
+	void InexorCommandLineArgumentParser::parse_command_line_arguments(std::size_t argument_count, char* arguments[])
 	{
 		// Start the loop with 1, since index 0 is the path to the application itself + the applications name.
 		for(std::size_t i=0; i<argument_count; i++)
@@ -80,7 +80,7 @@ namespace tools {
 			// Check if the argument specified is even wated by the application.
 			if(does_command_line_argument_template_exist(argument_name))
 			{
-				CommandLineArgumentValue new_parsed_value;
+				InexorCommandLineArgumentValue new_parsed_value;
 				
 				auto command_line_type = get_argument_template_type(argument_name).value();
 
@@ -164,13 +164,13 @@ namespace tools {
 	}
 
 
-	const std::int64_t CommandLineArgumentParser::get_number_of_parsed_command_line_arguments()
+	const std::int64_t InexorCommandLineArgumentParser::get_number_of_parsed_command_line_arguments()
 	{
 		return number_of_parsed_command_line_arguments;
 	}
 
 
-	const std::optional<bool> CommandLineArgumentParser::get_command_line_argument_bool(const std::string& argument_name)
+	const std::optional<bool> InexorCommandLineArgumentParser::get_command_line_argument_bool(const std::string& argument_name)
 	{
 		if(does_command_line_argument_template_exist(argument_name))
 		{
@@ -188,7 +188,7 @@ namespace tools {
 	}
 
 
-	const std::optional<std::string> CommandLineArgumentParser::get_command_line_argument_string(const std::string& argument_name)
+	const std::optional<std::string> InexorCommandLineArgumentParser::get_command_line_argument_string(const std::string& argument_name)
 	{
 		if(does_command_line_argument_template_exist(argument_name))
 		{
@@ -206,7 +206,7 @@ namespace tools {
 	}
 
 
-	const std::optional<std::int64_t> CommandLineArgumentParser::get_command_line_argument_int64(const std::string& argument_name)
+	const std::optional<std::int64_t> InexorCommandLineArgumentParser::get_command_line_argument_int64(const std::string& argument_name)
 	{
 		if(does_command_line_argument_template_exist(argument_name))
 		{
@@ -224,7 +224,7 @@ namespace tools {
 	}
 
 
-	const std::optional<std::uint32_t> CommandLineArgumentParser::get_command_line_argument_uint32_t(const std::string& argument_name)
+	const std::optional<std::uint32_t> InexorCommandLineArgumentParser::get_command_line_argument_uint32_t(const std::string& argument_name)
 	{
 		if(does_command_line_argument_template_exist(argument_name))
 		{

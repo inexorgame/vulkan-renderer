@@ -15,19 +15,20 @@ namespace vulkan_renderer {
 
 
 	/// @class InexorCamera
-	/// TODO: Add mutex.
+	/// TODO: Add mutex!
+	/// TODO: Because this camera class will be used by scripting as well, runtime errors should be expected.
+	/// assert but spdlog output!
 	class InexorCamera
 	{
 		private:
 
 			glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 			
-			glm::vec3 direction = glm::vec3(2.0f, 2.0f, 2.0f);
+			glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
 
 			float camera_speed = 1.0f;
 
-			// TODO: Parametrize!
-			float aspect_ratio = 800/600;
+			float aspect_ratio = 1920/1080;
 
 			float fov = 90.0f;
 
@@ -42,6 +43,10 @@ namespace vulkan_renderer {
 			float far_plane = 10.0f;
 
 			float zoom;
+
+			bool camera_is_moving = false;
+			
+			bool moving_backwards = false;
 
 			InexorTimeStep timestep;
 
@@ -61,6 +66,19 @@ namespace vulkan_renderer {
 			
 			
 			~InexorCamera();
+			
+			
+			/// @brief Start moving the camera every time update() is called.
+			/// @param move_backwards [in] True if the camera is moving backwards, false otherwise.
+			void start_camera_movement(bool moving_backwards = false);
+			
+			
+			/// @brief Ends moving the camera every time update() is called.
+			void end_camera_movement();
+			
+
+			/// @brief Updates camera movement.
+			void update();
 
 
 			/// @brief Sets the camera position.
@@ -156,6 +174,15 @@ namespace vulkan_renderer {
 
 			/// @brief Returns the far plane.
 			float get_far_plane() const;
+
+
+			/// @brief Sets the aspect ratio.
+			/// @param aspect_ratio [in] The aspect ratio.
+			void set_aspect_ratio(const float aspect_ratio);
+			
+
+			/// @brief Returns the aspect ratio.
+			float get_aspect_ratio() const;
 
 
 			/// @brief Sets the rotation of the camera matrix.

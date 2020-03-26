@@ -222,7 +222,7 @@ namespace vulkan_renderer {
 			
 
 			/// @brief Updates the uniform buffer.
-			VkResult update_uniform_buffer(const std::size_t current_image);
+			virtual VkResult update_uniform_buffer(const std::size_t current_image) = 0;
 
 
 			/// @brief Recreates the swapchain.

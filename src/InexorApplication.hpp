@@ -4,7 +4,11 @@
 #include "vulkan-renderer/shader-manager/vk_shader_manager.hpp"
 #include "vulkan-renderer/error-handling/vk_error_handling.hpp"
 #include "vulkan-renderer/tools/argument-parser/cla_parser.hpp"
+#include "vulkan-renderer/keyboard/inexor_keyboard_input.hpp"
 #include "vulkan-renderer/mesh-buffer/vk_mesh_buffer.hpp"
+#include "vulkan-renderer/camera/InexorCamera.hpp"
+#include "vulkan-renderer/debug-callback/vk_debug_callback.hpp"
+#include "vulkan-renderer/uniform-buffer/vk_standard_ubo.hpp"
 
 
 // toml11: TOML for Modern C++
@@ -21,7 +25,8 @@ namespace vulkan_renderer {
 	/// @class InexorApplication
 	/// @brief The Inexor application wrapper class.
 	class InexorApplication : public VulkanRenderer,
-	                          public CommandLineArgumentParser
+	                          public InexorKeyboardInputHandler,
+	                          public InexorCommandLineArgumentParser
 	{
 		public:
 
@@ -32,7 +37,7 @@ namespace vulkan_renderer {
 
 		private:
 		
-			// The following data will be loaded by the TOML file.
+			// This data will be loaded by the TOML file.
 			
 			std::string application_name = "";
 			
@@ -48,10 +53,8 @@ namespace vulkan_renderer {
 			// Frame synchronisation.
 			std::size_t current_frame = 0;
 			
-			// The meshes (vertex buffers and index buffers).
 			std::vector<InexorMeshBuffer> mesh_buffers;
 
-			// The textures.
 			std::vector<std::shared_ptr<InexorTexture>> textures;
 			
 			// It is important to make sure that you debugging folder contains the required shader files!
@@ -61,20 +64,17 @@ namespace vulkan_renderer {
 				std::string shader_file_name;
 			};
 				
-			// Vertex shaders.
 			std::vector<std::string> vertex_shader_files;
 			
-			// Fragment shaders.
 			std::vector<std::string> fragment_shader_files;
 
-			// The texture files.
 			std::vector<std::string> texture_files;
 
-			// The shader files.
 			std::vector<std::string> shader_files;
 
-			// The glTF 2.0 model files.
 			std::vector<std::string> gltf_model_files;
+
+			InexorCamera camera;
 
 
 		private:
@@ -88,19 +88,30 @@ namespace vulkan_renderer {
 			VkResult load_models();
 
 			VkResult check_application_specific_features();
-
-			VkResult setup_scene();
-
+			
 			VkResult draw_frame();
+			
+			VkResult update_cameras();
+
+			VkResult update_uniform_buffer(const std::size_t current_image);
 
 
 		public:
 			
 			VkResult initialise();
 
+			/// @brief Keyboard input callback.
+			/// @param window [in] The glfw window.
+			/// @param key [in] The key which was pressed or released.
+			/// @param scancode [in] The system-specific scancode of the key.
+			/// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT. 
+			/// @param mods [in] Bit field describing which modifier keys were held down.
+			void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 			void run();
 
 			void cleanup();
+
 
 	};
 

@@ -28,9 +28,9 @@ namespace tools {
 	/// @class CommandLineArgumentTemplate
 	/// @brief A command line argument template class.
 	/// @noe This class does not contain any data yet!
-	struct CommandLineArgumentTemplate
+	struct InexorCommandLineArgumentTemplate
 	{
-		CommandLineArgumentTemplate(const INEXOR_COMMAND_LINE_ARGUMENT_TYPE param_type, std::string param_name)
+		InexorCommandLineArgumentTemplate(const INEXOR_COMMAND_LINE_ARGUMENT_TYPE param_type, std::string param_name)
 		{
 			argument_type = param_type;
 			argument_name = param_name;
@@ -44,7 +44,7 @@ namespace tools {
 	
 	/// @class CommandLineArgumentValue
 	/// @brief Contains the actual command line data.
-	struct CommandLineArgumentValue
+	struct InexorCommandLineArgumentValue
 	{
 		INEXOR_COMMAND_LINE_ARGUMENT_TYPE type;
 
@@ -58,19 +58,19 @@ namespace tools {
 	/// @class CommandLineArgumentParser
 	/// @brief A simple command line argument parser.
 	/// @todo What if an argumen gets specified twice?
-	class CommandLineArgumentParser
+	class InexorCommandLineArgumentParser
 	{
 		public:
 			
-			CommandLineArgumentParser();
+			InexorCommandLineArgumentParser();
 			
-			~CommandLineArgumentParser();
+			~InexorCommandLineArgumentParser();
 
 		private:
 
 
 			/// @brief This defines the list of acceptable command line arguments with their corresponding types.
-			const std::vector<CommandLineArgumentTemplate> list_of_accepted_command_line_arguments
+			const std::vector<InexorCommandLineArgumentTemplate> list_of_accepted_command_line_arguments
 			{
 				/// Defines which GPU to use (by array index).
 				{INEXOR_COMMAND_LINE_ARGUMENT_TYPE_UINT32, "-gpu"},
@@ -99,7 +99,7 @@ namespace tools {
 
 			
 			/// The parsed arguments.
-			std::unordered_map<std::string, CommandLineArgumentValue> parsed_command_line_arguments;
+			std::unordered_map<std::string, InexorCommandLineArgumentValue> parsed_command_line_arguments;
 
 
 			/// The number of command line arguments.
