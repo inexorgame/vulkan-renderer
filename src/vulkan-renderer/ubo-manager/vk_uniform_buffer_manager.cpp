@@ -92,8 +92,9 @@ namespace vulkan_renderer {
 			VkResult result = create_buffer(uniform_buffer_description, new_uniform_buffer->buffers[i], uniform_buffer_size);
 			vulkan_error_check(result);
 
+			// TODO: FIX THIS!
 			// Give this uniform buffer an appropriate name.
-			debug_marker_manager->set_object_name(device, (uint64_t)(&new_uniform_buffer->buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, uniform_buffer_description.c_str());
+			//debug_marker_manager->set_object_name(device, (uint64_t)(&new_uniform_buffer->buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, uniform_buffer_description.c_str());
 		}
 
 		// Store the new uniform buffer in the map.

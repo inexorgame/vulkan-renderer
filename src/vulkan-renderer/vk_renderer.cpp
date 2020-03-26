@@ -143,10 +143,13 @@ namespace vulkan_renderer {
 			// TODO: Add instance layers if neccesary..
 		};
 
+		// TODO: Is #ifdef _DEBUG C++ standard ?
+
 		/// RenderDoc is a modern graphics debugger written by Baldur Karlsson.
 		/// It comes with many useful debugging functions!
 		/// https://renderdoc.org/
 		/// https://github.com/baldurk/renderdoc
+		#ifdef _DEBUG
 		if(enable_renderdoc_instance_layer)
 		{
 			const char renderdoc_layer_name[] = "VK_LAYER_RENDERDOC_Capture";
@@ -154,11 +157,13 @@ namespace vulkan_renderer {
 			spdlog::debug("Adding '{}' to instance extension wishlist.", renderdoc_layer_name);
 			instance_layers_wishlist.push_back(renderdoc_layer_name);
 		}
+		#endif
 
 
 		// If validation is requested, we need to add the validation layer as instance extension!
 		// For more information on Vulkan validation layers see:
 		// https://vulkan.lunarg.com/doc/view/1.0.39.0/windows/layers.html
+		#ifdef _DEBUG
 		if(enable_validation_instance_layers)
 		{
 			const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
@@ -166,6 +171,7 @@ namespace vulkan_renderer {
 			spdlog::debug("Adding '{}' to instance extension wishlist.", validation_layer_name);
 			instance_layers_wishlist.push_back(validation_layer_name);
 		}
+		#endif
 
 		// We now have to check which instance layers of our wishlist are really supported on the current system!
 		// Loop through the wishlist and check for availabiliy.

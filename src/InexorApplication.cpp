@@ -151,7 +151,6 @@ namespace vulkan_renderer {
 		// TODO: Refactor! use key from TOML file as name!
 		std::size_t texture_number = 1;
 
-
 		for(const auto& texture_file : texture_files)
 		{
 			std::string texture_name = "example_texture_"+ std::to_string(texture_number);
@@ -285,7 +284,6 @@ namespace vulkan_renderer {
 		submit_info.pSignalSemaphores    = &*rendering_finished_semaphores[current_frame];
 
 		vkResetFences(device, 1, &*in_flight_fences[current_frame]);
-
 
 		result = vkQueueSubmit(VulkanQueueManager::get_graphics_queue(), 1, &submit_info, *in_flight_fences[current_frame]);
 		if(VK_SUCCESS != result) return result;
@@ -669,15 +667,15 @@ namespace vulkan_renderer {
 		// TODO: Does this trigger swapchain recreation at startup?
 		glfwShowWindow(window);
 
-		
 		// We must store the window user pointer to be able to call the 
 	    glfwSetWindowUserPointer(window, this);
 
 		InexorKeyboardInputHandler::initialise(window, keyboard_input_callback_reloader);
 		
-		camera.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-		camera.set_direction(glm::vec3(1.0f, 1.0f, 1.0f));
-		camera.set_speed(0.01f);
+		camera.set_position(glm::vec3(0.0f, 5.0f, 5.0f));
+		camera.set_direction(glm::vec3(0.0f, 1.0f, 0.0f));
+		camera.set_speed(0.5f);
+		camera.update();
 
 		return VK_SUCCESS;
 	}
@@ -689,9 +687,11 @@ namespace vulkan_renderer {
 
         UniformBufferObject ubo = {};
         
-		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.view = camera.get_view_matrix();
-		ubo.proj = camera.get_projection_matrix();
+		// Rotate the model as a function of time.
+		ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		ubo.view  = camera.get_view_matrix();
+		ubo.proj  = camera.get_projection_matrix();
         
 		ubo.proj[1][1] *= -1;
 
@@ -709,12 +709,10 @@ namespace vulkan_renderer {
 		{
 			if(GLFW_PRESS == action)
 			{
-				spdlog::debug("start move forwards!");
 				camera.start_camera_movement();
 			}
-			else
+			if(GLFW_RELEASE == action)
 			{
-				spdlog::debug("end move forwards!");
 				camera.end_camera_movement();
 			}
 		}
@@ -725,12 +723,10 @@ namespace vulkan_renderer {
 			if(GLFW_PRESS == action)
 			{
 				// true because we're moving backwards.
-				spdlog::debug("start move backwards!");
 				camera.start_camera_movement(true);
 			}
-			else
+			if(GLFW_RELEASE == action)
 			{
-				spdlog::debug("end move backwards!");
 				camera.end_camera_movement();
 			}
 		}
@@ -743,7 +739,7 @@ namespace vulkan_renderer {
 
 		auto camera_pos = camera.get_position();
 
-		spdlog::debug("{}, {}, {}", camera_pos.x, camera_pos.y, camera_pos.z);
+		//spdlog::debug("{}, {}, {}", camera_pos.x, camera_pos.y, camera_pos.z);
 
 		return VK_SUCCESS;
 	}
@@ -753,14 +749,17 @@ namespace vulkan_renderer {
 	{
 		spdlog::debug("Running InexorApplication.");
 
-		// TODO: Run this in a separated thread?
 		while(!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
 			draw_frame();
 
+			// TODO: Run this in a separated thread?
 			// TODO: Merge into one update_game_data() method?
 			update_cameras();
+
+			// TODO!
+			//update_keyboard();
 		}
 	}
 

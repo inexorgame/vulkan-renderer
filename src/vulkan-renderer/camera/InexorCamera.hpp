@@ -2,12 +2,15 @@
 
 #include "../time-step/inexor_time_step.hpp"
 
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <mutex>
+
+#include <spdlog/spdlog.h>
 
 
 namespace inexor {
@@ -17,7 +20,6 @@ namespace vulkan_renderer {
 	/// @class InexorCamera
 	/// TODO: Add mutex!
 	/// TODO: Because this camera class will be used by scripting as well, runtime errors should be expected.
-	/// assert but spdlog output!
 	class InexorCamera
 	{
 		private:
@@ -28,9 +30,8 @@ namespace vulkan_renderer {
 
 			float camera_speed = 1.0f;
 
-			float aspect_ratio = 1920/1080;
-
-			float fov = 90.0f;
+			// TODO: Change with respect to window resolution!
+			float aspect_ratio = 800/600;
 
 			float yaw = 0.0f;
 
@@ -42,13 +43,11 @@ namespace vulkan_renderer {
 
 			float far_plane = 10.0f;
 
-			float zoom;
+			float zoom = 45.0f;
 
 			bool camera_is_moving = false;
 			
 			bool moving_backwards = false;
-
-			InexorTimeStep timestep;
 
 			glm::vec3 world_up = glm::vec3(0.0f, 0.0f, 1.0f);
 			
@@ -56,8 +55,24 @@ namespace vulkan_renderer {
 			
 			glm::vec3 world_right = glm::vec3(0.0f, 1.0f, 0.0f);
 
-			/// @TODO Only update when camera is moved.
-			//void update_view_matrix();
+			glm::mat4 view_matrix = glm::mat4();
+
+			glm::mat4 projection_matrix = glm::mat4();
+
+			/// Neccesary for taking into account the relative speed of the system's CPU.
+			InexorTimeStep timestep;
+
+
+		private:
+
+			/// @brief Updates all matrices.
+			void update_matrices();
+
+			/// @brief Updates the view matrix.
+			void update_view_matrix();
+
+			/// @brief Updates the projection matrix.
+			void update_projection_matrix();
 
 
 		public:
@@ -69,7 +84,7 @@ namespace vulkan_renderer {
 			
 			
 			/// @brief Start moving the camera every time update() is called.
-			/// @param move_backwards [in] True if the camera is moving backwards, false otherwise.
+			/// @param moving_backwards [in] True if the camera is moving backwards, false otherwise.
 			void start_camera_movement(bool moving_backwards = false);
 			
 			
@@ -209,16 +224,12 @@ namespace vulkan_renderer {
 			glm::vec3 get_up() const;
 
 
-			/// 
+			/// @brief Returns the front vector.
 			glm::vec3 get_front() const;
 
 
-			/// 
+			/// @brief Returns the right vector.
 			glm::vec3 get_right() const;
-
-
-			/// 
-			glm::mat4 get_matrix() const;
 
 			
 			/// @brief Pan function (translate both camera eye and lookat point).

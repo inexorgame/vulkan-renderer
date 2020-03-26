@@ -27,6 +27,7 @@ namespace vulkan_renderer {
 	class InexorApplication : public VulkanRenderer,
 	                          public InexorKeyboardInputHandler,
 	                          public InexorCommandLineArgumentParser
+                              // public InexorGameDataUpdater
 	{
 		public:
 
@@ -79,6 +80,9 @@ namespace vulkan_renderer {
 
 		private:
 
+			/// @brief Loads the configuration of the renderer from a TOML configuration file.
+			/// @brief TOML_file_name [in] The TOML configuration file.
+			/// @note It was collectively decided not to use JSON for configuration files.
 			VkResult load_TOML_configuration_file(const std::string& TOML_file_name);
 
 			VkResult load_textures();
@@ -93,7 +97,9 @@ namespace vulkan_renderer {
 			
 			VkResult update_cameras();
 
-			VkResult update_uniform_buffer(const std::size_t current_image);
+			/// @brief Implementation of the uniform buffer update method which is defined as virtual function in VulkanRenderer.
+			/// @param current_image [in] The current image index.
+			VkResult update_uniform_buffer(const std::size_t current_image) override;
 
 
 		public:

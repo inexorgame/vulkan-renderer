@@ -18,12 +18,14 @@ namespace vulkan_renderer {
 	void InexorCamera::set_position(const glm::vec3& position)
 	{
 		this->position = position;
+		update_matrices();
 	}
 
 
 	void InexorCamera::set_direction(const glm::vec3& direction)
 	{
 		this->direction = direction;
+		update_matrices();
 	}
 
 
@@ -33,10 +35,10 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorCamera::start_camera_movement(bool moveing_backwards)
+	void InexorCamera::start_camera_movement(bool moving_backwards)
 	{
 		this->camera_is_moving = true;
-		this->moving_backwards = moveing_backwards;
+		this->moving_backwards = moving_backwards;
 	}
 
 
@@ -59,6 +61,8 @@ namespace vulkan_renderer {
 			{
 				move_backwards();
 			}
+
+			update_matrices();
 		}
 	}
 
@@ -124,27 +128,28 @@ namespace vulkan_renderer {
 		this->yaw   = yaw;
 		this->pitch = pitch;
 		this->roll  = roll;
+		// TODO: Update Matrices!
 	}
 
 
 	void InexorCamera::move_camera_x(const float x)
 	{
 		auto time_passed_factor = timestep.get_time_step();
-		this->position.x += camera_speed * time_passed_factor * x;
+		this->position.x += (camera_speed * time_passed_factor * x);
 	}
 
 
 	void InexorCamera::move_camera_y(const float y)
 	{
 		auto time_passed_factor = timestep.get_time_step();
-		this->position.y += camera_speed * time_passed_factor * y;
+		this->position.y += (camera_speed * time_passed_factor * y);
 	}
 
 
 	void InexorCamera::move_camera_z(const float z)
 	{
 		auto time_passed_factor = timestep.get_time_step();
-		this->position.z += camera_speed * time_passed_factor * z;
+		this->position.z += (camera_speed * time_passed_factor * z);
 	}
 
 
@@ -152,6 +157,7 @@ namespace vulkan_renderer {
 	{
 		assert(camera_speed > 0.0f);
 		this->camera_speed = camera_speed;
+		update_matrices();
 	}
 
 	
@@ -190,7 +196,6 @@ namespace vulkan_renderer {
 	void InexorCamera::set_zoom(const float zoom)
 	{
 		assert(zoom > 0.0f);
-
 		this->zoom = zoom;
 	}
 
@@ -214,17 +219,34 @@ namespace vulkan_renderer {
 	}
 
 
+	void InexorCamera::update_matrices()
+	{
+		update_view_matrix();
+		update_projection_matrix();
+	}
+
+
+	void InexorCamera::update_view_matrix()
+	{
+		this->view_matrix = glm::lookAt(position, direction, world_up);;
+	}
+
+	
+	void InexorCamera::update_projection_matrix()
+	{
+		this->projection_matrix = glm::perspective(glm::radians(45.0f), aspect_ratio, near_plane, far_plane);
+	}
+
+
 	glm::mat4 InexorCamera::get_view_matrix()
 	{
-		// TODO: Update only when data has changed!
-		return glm::lookAt(direction, position, world_up);
+		return this->view_matrix;
 	}
 
 
 	glm::mat4 InexorCamera::get_projection_matrix()
 	{
-		// TODO: Update only when data has changed!
-		return glm::perspective(glm::radians(45.0f), aspect_ratio, near_plane, far_plane);
+		return this->projection_matrix;
 	}
 
 
