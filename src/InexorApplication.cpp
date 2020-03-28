@@ -145,7 +145,7 @@ namespace vulkan_renderer {
 		assert(vma_allocator);
 		
 		// Initialise texture manager.
-		VkResult result = VulkanTextureManager::initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
+		VkResult result = texture_manager->initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
 		vulkan_error_check(result);
 		
 		// TODO: Refactor! use key from TOML file as name!
@@ -160,7 +160,7 @@ namespace vulkan_renderer {
 
 			// TODO: Find duplicate loads!
 			// TOOD: Specify assets folder!
-			result = VulkanTextureManager::create_texture_from_file(texture_name, texture_file, new_texture);
+			result = texture_manager->create_texture_from_file(texture_name, texture_file, new_texture);
 			vulkan_error_check(result);
 
 
@@ -623,13 +623,13 @@ namespace vulkan_renderer {
 		result = create_frame_buffers();
 		vulkan_error_check(result);
 
-		result = InexorMeshBufferManager::initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
+		result = mesh_buffer_manager->initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
 		vulkan_error_check(result);
 
 		result = create_command_pool();
 		vulkan_error_check(result);
 
-		result = VulkanUniformBufferManager::initialise(device, debug_marker_manager, vma_allocator);
+		result = uniform_buffer_manager->initialise(device, debug_marker_manager, vma_allocator);
 		vulkan_error_check(result);
 
 		result = create_uniform_buffers();
@@ -681,7 +681,7 @@ namespace vulkan_renderer {
 
 	VkResult InexorApplication::update_uniform_buffer(const std::size_t current_image)
 	{
-        float time = InexorTimeStep::get_program_start_time_step();
+        float time = time_step.get_program_start_time_step();
 
         UniformBufferObject ubo = {};
         
@@ -694,7 +694,7 @@ namespace vulkan_renderer {
 		ubo.proj[1][1] *= -1;
 
 		// Update the world matrices!
-		VulkanUniformBufferManager::update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
+		uniform_buffer_manager->update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
 
 		return VK_SUCCESS;
 	}

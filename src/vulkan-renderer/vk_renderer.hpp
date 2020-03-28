@@ -63,11 +63,7 @@ namespace vulkan_renderer {
 							public VulkanShaderManager,
 							public VulkanFenceManager,
 							public VulkanSemaphoreManager,
-							public InexorMeshBufferManager,
 							public VulkanQueueManager,
-							public VulkanTextureManager,
-							public InexorTimeStep,
-							public VulkanUniformBufferManager,
 							public VulkanDescriptorSetManager
 							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 	{
@@ -84,11 +80,18 @@ namespace vulkan_renderer {
 			// it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
 			bool frame_buffer_resized = false;
 
+
 		protected:
 
-			VmaAllocator vma_allocator;
+			std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager = std::make_shared<VulkanUniformBufferManager>();
+
+			std::shared_ptr<VulkanTextureManager> texture_manager = std::make_shared<VulkanTextureManager>();
 			
+			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager = std::make_shared<InexorMeshBufferManager>();
+
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
+
+			VmaAllocator vma_allocator;
 
 			VkInstance instance;
 
@@ -147,6 +150,8 @@ namespace vulkan_renderer {
 			InexorDepthBuffer depth_buffer;
 
 			uint32_t vma_dump_index = 0;
+
+			InexorTimeStep time_step;
 
 
 		public:

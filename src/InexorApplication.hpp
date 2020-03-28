@@ -29,7 +29,6 @@ namespace vulkan_renderer {
 	class InexorApplication : public VulkanRenderer,
 	                          public InexorKeyboardInputHandler,
 	                          public InexorCommandLineArgumentParser
-                              // public InexorGameDataUpdater
 	{
 		public:
 

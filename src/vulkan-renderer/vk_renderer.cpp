@@ -840,7 +840,7 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Destroying uniform buffers.");
 		
-		VulkanUniformBufferManager::shutdown_uniform_buffers();
+		uniform_buffer_manager->shutdown_uniform_buffers();
 
 		spdlog::debug("Destroying descriptor sets and layouts.");
 	
@@ -968,7 +968,7 @@ namespace vulkan_renderer {
 	{
 		std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 
-		std::optional<std::shared_ptr<InexorUniformBuffer>> matrices_buffer = VulkanUniformBufferManager::get_uniform_buffer("matrices");
+		std::optional<std::shared_ptr<InexorUniformBuffer>> matrices_buffer = uniform_buffer_manager->get_uniform_buffer("matrices");
 		assert(matrices_buffer.has_value());
 
         VkDescriptorBufferInfo uniform_buffer_info = {};
@@ -995,8 +995,8 @@ namespace vulkan_renderer {
 		VkDescriptorImageInfo image_info = {};
 			
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		image_info.imageView   = VulkanTextureManager::get_texture_view("example_texture_1").value();
-		image_info.sampler     = VulkanTextureManager::get_texture_sampler("example_texture_1").value();
+		image_info.imageView   = texture_manager->get_texture_view("example_texture_1").value();
+		image_info.sampler     = texture_manager->get_texture_sampler("example_texture_1").value();
 
 		descriptor_writes[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		//descriptor_writes[1].dstSet        = descriptor_sets[i];
@@ -1027,7 +1027,7 @@ namespace vulkan_renderer {
 		// The uniform buffer for the world matrices.
 		VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
 
-		VkResult result = VulkanUniformBufferManager::create_uniform_buffer("matrices", matrices_buffer_size, number_of_images_in_swapchain);
+		VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, number_of_images_in_swapchain);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1501,13 +1501,13 @@ namespace vulkan_renderer {
 		}
 
 		spdlog::debug("Destroying textures.");
-		VulkanTextureManager::shutdown_textures();
+		texture_manager->shutdown_textures();
 
 		spdlog::debug("Destroying descriptor set layout.");
 		VulkanDescriptorSetManager::shutdown_descriptor_sets(true);
 
 		spdlog::debug("Destroying vertex buffers.");
-		InexorMeshBufferManager::shutdown_vertex_buffers();
+		mesh_buffer_manager->shutdown_vertex_buffers();
 
 		spdlog::debug("Destroying semaphores.");
 		VulkanSemaphoreManager::shutdown_semaphores();

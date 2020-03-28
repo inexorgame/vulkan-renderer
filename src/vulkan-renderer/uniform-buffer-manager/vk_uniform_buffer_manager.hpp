@@ -60,9 +60,6 @@ namespace vulkan_renderer {
 			~VulkanUniformBufferManager();
 
 
-		protected:
-
-
 			/// @brief Initialises the buffer manager.
 			/// @param device [in] The Vulkan device
 			/// @param debug_marker_manager [in] A pointer to the debug marker manager.
