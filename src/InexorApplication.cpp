@@ -156,17 +156,16 @@ namespace vulkan_renderer {
 			std::string texture_name = "example_texture_"+ std::to_string(texture_number);
 			texture_number++;
 
+			std::shared_ptr<InexorTexture> new_texture;
+
 			// TODO: Find duplicate loads!
 			// TOOD: Specify assets folder!
-			result = VulkanTextureManager::create_texture_from_file(texture_name, texture_file);
+			result = VulkanTextureManager::create_texture_from_file(texture_name, texture_file, new_texture);
 			vulkan_error_check(result);
 
-			auto new_texture = get_texture(texture_name);
-
-			assert(new_texture.has_value());
 
 			// Store the texture.
-			textures.push_back(new_texture.value());
+			textures.push_back(new_texture);
 		}
 		
 		return VK_SUCCESS;
@@ -320,16 +319,11 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Creating vertex buffers.");
 		
-		std::vector<InexorVertex> vertices1;
-		std::vector<uint32_t> indices1;
-
-		load_model_from_glTF_file("assets/models/monkey/monkey_triangulated.gltf", vertices1/*, indices1*/);
-
-		VkResult result = create_vertex_buffer("Example vertex buffer 1", vertices1, mesh_buffers);
+		// TODO: Load models!
 		
 		spdlog::debug("Vertex buffer setup finished.");
 
-		return result;
+		return VK_SUCCESS;
 	}
 
 
@@ -577,6 +571,9 @@ namespace vulkan_renderer {
 				enable_debug_marker_device_extension = false;
 			}
 		}
+
+		// Display number of threads.
+		spdlog::debug("Number of processor cores: {}", std::thread::hardware_concurrency());
 
 		result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
 		vulkan_error_check(result);

@@ -8,7 +8,7 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
-#include <assert.h>
+#include <cassert>
 
 #include <string>
 

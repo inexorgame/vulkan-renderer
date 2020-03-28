@@ -1461,7 +1461,7 @@ namespace vulkan_renderer {
 
 		std::ofstream vma_memory_dump;
 
-		std::string memory_dump_file_name = "../../../vma-dumps/inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
+		std::string memory_dump_file_name = "vma-dumps/inexor_VMA_dump_"+ std::to_string(vma_dump_index) +".json";
 
 		vma_memory_dump.open(memory_dump_file_name, std::ios::out);
 

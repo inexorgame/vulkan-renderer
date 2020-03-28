@@ -15,6 +15,8 @@
 // https://github.com/ToruNiina/toml11
 #include <toml11/toml.hpp>
 
+#include <thread>
+
 
 using namespace inexor::vulkan_renderer::tools;
 
@@ -114,6 +116,7 @@ namespace vulkan_renderer {
 
 			/// 
 			VkResult update_cameras();
+
 
 			/// @brief Implementation of the uniform buffer update method which is defined as virtual function in VulkanRenderer.
 			/// @param current_image [in] The current image index.

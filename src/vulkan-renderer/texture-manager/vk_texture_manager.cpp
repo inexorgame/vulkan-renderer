@@ -1,11 +1,4 @@
 #include "vk_texture_manager.hpp"
-#include "../error-handling/vk_error_handling.hpp"
-
-
-// stb single-file public domain libraries for C/C++
-// https://github.com/nothings/stb
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 
 namespace inexor {
@@ -166,7 +159,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanTextureManager::create_texture_from_file(const std::string& internal_texture_name, const std::string& texture_file_name)
+	VkResult VulkanTextureManager::create_texture_from_file(const std::string& internal_texture_name, const std::string& texture_file_name, std::shared_ptr<InexorTexture> output_texture)
 	{
 		int texture_width = 0;
 		int texture_height = 0;
@@ -237,6 +230,20 @@ namespace vulkan_renderer {
 		
 		// Call template base class method.
 		add_entry(internal_texture_name, new_texture);
+
+		// Store the new texture to output.
+		output_texture = new_texture;
+
+		return VK_SUCCESS;
+	}
+
+	
+	VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string& internal_texture_name, tinygltf::Image &gltf_image, std::shared_ptr<InexorTexture> output_texture)
+	{
+		// TODO: Implement!
+		std::shared_ptr<InexorTexture> new_texture = std::make_shared<InexorTexture>();
+
+		output_texture = new_texture;
 
 		return VK_SUCCESS;
 	}

@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
-#include <assert.h>
+#include <cassert>
 
 #include <glm/glm.hpp>
 

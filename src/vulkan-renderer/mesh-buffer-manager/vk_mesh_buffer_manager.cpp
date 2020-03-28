@@ -1,5 +1,4 @@
 #include "vk_mesh_buffer_manager.hpp"
-#include "../error-handling/vk_error_handling.hpp"
 
 
 namespace inexor {
@@ -124,7 +123,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, std::vector<InexorMeshBuffer>& mesh_buffers)
+	VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<glTF2_models::InexorModelVertex>& vertices, std::shared_ptr<InexorMeshBuffer> mesh_buffer_output)
 	{
 		assert(vertices.size() > 0);
 		assert(vma_allocator);
@@ -229,28 +228,27 @@ namespace vulkan_renderer {
 			vulkan_error_check(result);
 			return result;
 		}
-		
 
 		// Submit buffer copy command to data transfer queue.
 		upload_data_to_gpu();
 		
 		spdlog::debug("Storing mesh buffer in output.");
 
-		InexorMeshBuffer new_mesh_buffer;
+		std::shared_ptr<InexorMeshBuffer> new_mesh_buffer = std::make_shared<InexorMeshBuffer>();
 
 		// Store the vertex buffer.
-		new_mesh_buffer.vertex_buffer = vertex_buffer;
+		new_mesh_buffer->vertex_buffer = vertex_buffer;
 
 		// Yes, there is an index buffer available!
-		new_mesh_buffer.index_buffer_available = false;
+		new_mesh_buffer->index_buffer_available = false;
 
 		// Store the number of vertices and indices.
-		new_mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
+		new_mesh_buffer->number_of_vertices = static_cast<uint32_t>(vertices.size());
 
 		// Store the internal description of this buffer.
-		new_mesh_buffer.description = internal_buffer_name;
+		new_mesh_buffer->description = internal_buffer_name;
 
-		mesh_buffers.push_back(new_mesh_buffer);
+		mesh_buffer_output = new_mesh_buffer;
 
 		// Add this buffer to the list.
 		list_of_meshes.push_back(new_mesh_buffer);
@@ -264,7 +262,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<InexorVertex>& vertices, const std::vector<uint32_t> indices, std::vector<InexorMeshBuffer>& mesh_buffers)
+	VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<glTF2_models::InexorModelVertex>& vertices, const std::vector<uint32_t> indices, std::shared_ptr<InexorMeshBuffer> mesh_buffer_output)
 	{
 		assert(indices.size() > 0);
 		assert(vertices.size() > 0);
@@ -422,26 +420,25 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Storing mesh buffer in output.");
 
-		InexorMeshBuffer new_mesh_buffer;
+		std::shared_ptr<InexorMeshBuffer> new_mesh_buffer = std::make_shared<InexorMeshBuffer>();
 
 		// Store the vertex buffer.
-		new_mesh_buffer.vertex_buffer = vertex_buffer;
+		new_mesh_buffer->vertex_buffer = vertex_buffer;
 
 		// Yes, there is an index buffer available!
-		new_mesh_buffer.index_buffer_available = true;
+		new_mesh_buffer->index_buffer_available = true;
 
 		// Store the index buffer.
-		new_mesh_buffer.index_buffer = index_buffer;
+		new_mesh_buffer->index_buffer = index_buffer;
 
 		// Store the number of vertices and indices.
-		new_mesh_buffer.number_of_vertices = static_cast<uint32_t>(vertices.size());
-		new_mesh_buffer.number_of_indices  = static_cast<uint32_t>(indices.size());
+		new_mesh_buffer->number_of_vertices = static_cast<uint32_t>(vertices.size());
+		new_mesh_buffer->number_of_indices  = static_cast<uint32_t>(indices.size());
 
 		// Store the internal description of this buffer.
-		new_mesh_buffer.description = internal_buffer_name;
+		new_mesh_buffer->description = internal_buffer_name;
 
-		// Add this buffer to he global list of meshes.
-		mesh_buffers.push_back(new_mesh_buffer);
+		mesh_buffer_output = new_mesh_buffer;
 
 		// Add this buffer to the list.
 		list_of_meshes.push_back(new_mesh_buffer);
@@ -469,18 +466,18 @@ namespace vulkan_renderer {
 		// Loop through all vertex buffers and release their memoy.
 		for(const auto& mesh_buffer : list_of_meshes)
 		{
-			spdlog::debug("Destroying vertex buffer {}.", mesh_buffer.description);
+			spdlog::debug("Destroying vertex buffer {}.", mesh_buffer->description);
 
 			// Destroy vertex buffer.
-			vmaDestroyBuffer(vma_allocator, mesh_buffer.vertex_buffer.buffer, mesh_buffer.vertex_buffer.allocation);
+			vmaDestroyBuffer(vma_allocator, mesh_buffer->vertex_buffer.buffer, mesh_buffer->vertex_buffer.allocation);
 			
 			// Destroy index buffer if existent.
-			if(mesh_buffer.index_buffer_available)
+			if(mesh_buffer->index_buffer_available)
 			{
-				spdlog::debug("Destroying index buffer {}.", mesh_buffer.description);
+				spdlog::debug("Destroying index buffer {}.", mesh_buffer->description);
 
 				// Destroy corresponding index buffer.
-				vmaDestroyBuffer(vma_allocator, mesh_buffer.index_buffer.buffer, mesh_buffer.index_buffer.allocation);
+				vmaDestroyBuffer(vma_allocator, mesh_buffer->index_buffer.buffer, mesh_buffer->index_buffer.allocation);
 			}
 		}
 

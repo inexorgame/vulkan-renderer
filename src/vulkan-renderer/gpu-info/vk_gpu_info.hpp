@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <unordered_map>
-#include <assert.h>
+#include <cassert>
 
 #include <spdlog/spdlog.h>
 

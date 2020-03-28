@@ -1,17 +1,36 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "../buffers/vk_buffer.hpp"
 #include "../texture/vk_texture.hpp"
 #include "../class-templates/manager_template.hpp"
 #include "../debug-marker/vk_debug_marker_manager.hpp"
 #include "../command-buffer-recording/vk_single_time_command_buffer.hpp"
+#include "../error-handling/vk_error_handling.hpp"
+
 
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT
 #include "../../third_party/vma/vk_mem_alloc.h"
 
+
+// JSON for modern C++11 library.
+// https://github.com/nlohmann/json
+/// License: MIT
+#include "nlohmann/json.hpp"
+#define TINYGLTF_NO_INCLUDE_JSON
+
+// Header only C++ tiny glTF library(loader/saver).
+// https://github.com/syoyo/tinygltf
+// License: MIT
+#include "../../third_party/tiny_gltf/tiny_gltf.h"
+
+// stb single-file public domain libraries for C/C++
+// https://github.com/nothings/stb
+// License: Public Domain
+#include "stb_image.h"
+
+#include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>
 
 #include <string>
@@ -23,6 +42,7 @@ namespace vulkan_renderer {
 
 	
 	// TODO: 2D textures, 3D textures and cube maps.
+	// TODO: Scan asset directory automatically.
 	
 	/// @class VulkanTextureManager
 	/// @brief A manager class for textures.
@@ -48,7 +68,6 @@ namespace vulkan_renderer {
 
 		
 		private:
-
 
 			/// @brief 
 			/// @param 
@@ -92,7 +111,7 @@ namespace vulkan_renderer {
 			VkResult create_texture_sampler(std::shared_ptr<InexorTexture> texture);
 
 
-		protected:
+		public:
 
 			/// @brief Initialises texture manager by passing some pointers that we need.
 			/// @param device The Vulkan device.
@@ -108,15 +127,21 @@ namespace vulkan_renderer {
 			/// @param internal_texture_name [in] The name of the texture file.
 			/// @param texture_file_name [in] The name of the texture file.
 			/// @param texture [in] The Inexor texture buffer which will be created for this texture.
-			VkResult create_texture_from_file(const std::string& internal_texture_name, const std::string& texture_file_name);
+			VkResult create_texture_from_file(const std::string& internal_texture_name, const std::string& texture_file_name, std::shared_ptr<InexorTexture> output_texture);
 
+
+			/// @brief Creates a new texture from a glTF 2.0 file.
+			/// @param internal_texture_name [in] The name of the texture file.
+			/// @param gltf_image [in] The glTF 2.0 image.
+			VkResult create_texture_from_glTF2_image(const std::string& internal_texture_name, tinygltf::Image &gltf_image, std::shared_ptr<InexorTexture> output_texture);
+		
 
 			/// @brief Returns a certain texture by internal name (key).
 			/// @param internal_texture_name [in] The internal name of the texture
 			/// @return A std::optional shared pointer to the texture instance.
 			std::optional<std::shared_ptr<InexorTexture>> get_texture(const std::string& internal_texture_name);
 
-
+			
 			/// @brief Returns the view of a certain texture by name.
 			/// @param internal_texture_name [in] The name of the texture.
 			std::optional<VkImageView> get_texture_view(const std::string& internal_texture_name);

@@ -23,14 +23,13 @@
 #include "semaphore-manager/vk_semaphore_manager.hpp"
 #include "vertex/vk_vertex.hpp"
 #include "mesh-buffer-manager/vk_mesh_buffer_manager.hpp"
-#include "ubo-manager/vk_uniform_buffer_manager.hpp"
+#include "uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "debug-marker/vk_debug_marker_manager.hpp"
 #include "queue-manager/vk_queue_manager.hpp"
 #include "time-step/inexor_time_step.hpp"
 #include "texture-manager/vk_texture_manager.hpp"
 #include "mesh-buffer/vk_mesh_buffer.hpp"
 #include "depth-buffer/vk_depth_buffer.hpp"
-#include "mesh-loader/vk_mesh_loader.hpp"
 #include "uniform-buffer/vk_uniform_buffer.hpp"
 #include "descriptor-set-manager/vk_descriptor_set_manager.hpp"
 
@@ -68,7 +67,6 @@ namespace vulkan_renderer {
 							public VulkanQueueManager,
 							public VulkanTextureManager,
 							public InexorTimeStep,
-							public InexorMeshLoader,
 							public VulkanUniformBufferManager,
 							public VulkanDescriptorSetManager
 							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?

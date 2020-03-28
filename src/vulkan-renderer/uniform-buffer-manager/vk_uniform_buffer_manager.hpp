@@ -14,7 +14,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <assert.h>
+#include <cassert>
 
 #include "../buffers/vk_buffer.hpp"
 #include "../debug-marker/vk_debug_marker_manager.hpp"

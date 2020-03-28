@@ -8,7 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include <assert.h>
+#include <cassert>
 
 
 namespace inexor {

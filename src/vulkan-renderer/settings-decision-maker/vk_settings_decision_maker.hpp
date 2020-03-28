@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <optional>
-#include <assert.h>
+#include <cassert>
 
 #include <vulkan/vulkan.h>
 

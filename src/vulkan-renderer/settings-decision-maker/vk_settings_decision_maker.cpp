@@ -635,7 +635,7 @@ namespace vulkan_renderer {
 			}
 		}
 
-		spdlog::warn("Info: VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device.");
+		spdlog::warn("VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device.");
 		spdlog::warn("Let's see if VK_PRESENT_MODE_FIFO_KHR is supported.");
 
 		for(auto present_mode : available_present_modes)

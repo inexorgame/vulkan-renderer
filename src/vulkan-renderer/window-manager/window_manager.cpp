@@ -26,7 +26,6 @@ namespace vulkan_renderer {
 		// Don't show window until Vulkan initialisation is finished.
 		glfwWindowHint(GLFW_VISIBLE, false);
 
-
 		// Give the window a fixed size, if resize is not desired.
 		if(!window_resizable)
 		{

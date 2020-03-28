@@ -65,6 +65,8 @@ namespace vulkan_renderer {
 	void VulkanDebugMarkerManager::set_object_name(const VkDevice& device, const uint64_t& object, const VkDebugReportObjectTypeEXT& object_type, const char *name)
 	{
 		assert(device);
+		assert(name);
+		assert(object);
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
 		if(active)
