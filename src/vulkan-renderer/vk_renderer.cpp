@@ -289,13 +289,12 @@ namespace vulkan_renderer {
 	}
 
 
-	// TODO: Move this to VulkanDebugMarkerManager!
 	VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug_markers)
 	{
 		assert(device);
 		assert(selected_graphics_card);
 
-		spdlog::debug("Initialising Vulkan debug marker manager.");
+		spdlog::debug("Initialising debug marker manager.");
 
 		// TODO: Add C++ standard macro #if not debug mode.
 		if(!enable_debug_markers)
@@ -306,6 +305,18 @@ namespace vulkan_renderer {
 
 		// Create an instance of VulkanDebugMarkerManager.
 		debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>(device, selected_graphics_card, enable_debug_markers);
+		return VK_SUCCESS;
+	}
+
+
+	VkResult VulkanRenderer::initialise_glTF2_model_manager()
+	{
+		spdlog::debug("Initialising glTF 2.0 model manager.");
+
+		gltf_model_manager = std::make_shared<glTF2_models::InexorModelManager>();
+
+		gltf_model_manager->initialise(texture_manager, uniform_buffer_manager, mesh_buffer_manager);
+
 		return VK_SUCCESS;
 	}
 

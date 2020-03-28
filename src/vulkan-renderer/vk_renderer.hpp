@@ -1,17 +1,10 @@
 #pragma once
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
-
 #ifdef _WIN32
 #ifndef VK_USE_PLATFORM_WIN32_KHR
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 #endif
-
-// TODO: Add support for other operation systems here.
 
 #include "error-handling/vk_error_handling.hpp"
 #include "GPU-info/vk_gpu_info.hpp"
@@ -32,14 +25,19 @@
 #include "depth-buffer/vk_depth_buffer.hpp"
 #include "uniform-buffer/vk_uniform_buffer.hpp"
 #include "descriptor-set-manager/vk_descriptor_set_manager.hpp"
-
+#include "gltf-models/inexor_gltf_model_manager.hpp"
 
 // Vulkan Memory Allocator.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT
 #include "../third_party/vma/vk_mem_alloc.h"
 
 #include <spdlog/spdlog.h>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <vector>
 #include <string>
@@ -90,6 +88,8 @@ namespace vulkan_renderer {
 			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager = std::make_shared<InexorMeshBufferManager>();
 
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
+
+			std::shared_ptr<glTF2_models::InexorModelManager> gltf_model_manager;
 
 			VmaAllocator vma_allocator;
 
@@ -186,6 +186,10 @@ namespace vulkan_renderer {
 			
 			/// @brief Creates an instance of VulkanDebugMarkerManager
 			VkResult initialise_debug_marker_manager(const bool enable_debug_markers = true);
+
+
+			/// @brief Initialises glTF 2.0 model manager.
+			VkResult initialise_glTF2_model_manager();
 
 
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.

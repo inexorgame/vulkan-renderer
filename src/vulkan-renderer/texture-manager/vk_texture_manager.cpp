@@ -1,5 +1,11 @@
 #include "vk_texture_manager.hpp"
 
+// stb single-file public domain libraries for C/C++
+// https://github.com/nothings/stb
+// License: Public Domain
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 namespace inexor {
 namespace vulkan_renderer {

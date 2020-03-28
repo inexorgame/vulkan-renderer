@@ -25,11 +25,6 @@
 // License: MIT
 #include "../../third_party/tiny_gltf/tiny_gltf.h"
 
-// stb single-file public domain libraries for C/C++
-// https://github.com/nothings/stb
-// License: Public Domain
-#include "stb_image.h"
-
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>
 

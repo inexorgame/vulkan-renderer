@@ -35,11 +35,6 @@
 #include "nlohmann/json.hpp"
 #define TINYGLTF_NO_INCLUDE_JSON
 
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../../third_party/tiny_gltf/tiny_gltf.h"
-
 
 namespace inexor {
 namespace vulkan_renderer {
@@ -54,9 +49,13 @@ namespace glTF2_models {
 
 		public:
 		
-			InexorModelManager();
+			InexorModelManager()
+			{
+			}
 
-			~InexorModelManager();
+			~InexorModelManager()
+			{
+			}
 
 
 		private:
@@ -69,8 +68,8 @@ namespace glTF2_models {
 			
 			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager;
 
-
-		protected:
+		
+		public:
 		
 			/// @brief Initialises Vulkan glTF 2.0 model manager.
 			/// @param texture_manager [in] A shared pointer to the texture manager.

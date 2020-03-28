@@ -1,5 +1,10 @@
 #include "inexor_gltf_model_manager.hpp"
 
+//#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define TINYGLTF_IMPLEMENTATION
+#include "../../third_party/tiny_gltf/tiny_gltf.h"
+
 
 namespace inexor {
 namespace vulkan_renderer {
