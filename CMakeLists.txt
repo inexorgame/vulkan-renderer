@@ -112,6 +112,12 @@ add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} 
 conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 
+# Use root folder of the repository as working directory in Visual Studio debugger!
+# Otherwise Visual Studio can't find any files like shaders or textures.
+if (WIN32)
+    set_property(TARGET inexor-vulkan-renderer PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+endif ()
+
 if (WIN32)
     target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
