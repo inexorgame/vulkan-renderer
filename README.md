@@ -8,21 +8,84 @@ A new rendering engine based on [Vulkan API 1.1](https://www.khronos.org/vulkan/
 ## What is Vulkan?
 ![Vulkan API logo here..](https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/500px-Vulkan.svg.png)
 
-Vulkan is a new API (application programming interface) for high-performance graphics programming and computing. It is seen by some as the successor to OpenGL, although it is important to state that is is very different from it. Both Vulkan and OpenGL are being developed by the [Khronos Group](https://www.khronos.org/). Like DirectX 12, Vulkan is a low level API which allows for much deeper control over the graphics card and the driver. This offers better performance (higher FPS) due to reduction of overhead and driver guesswork during runtime. In general, Vulkan does a lot of work during the initialisation of the application but therefore reduces work during rendering.
+Vulkan is a new, low level API (application programming interface) for high-performance graphics programming and computing. It is seen by some as the successor to OpenGL, although it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Both Vulkan and OpenGL are being developed by the [Khronos Group](https://www.khronos.org/). Like DirectX 12 or Apple's Metal, Vulkan is a low level API which allows for much deeper control over the graphics card and the driver. This offers better performance (higher FPS) due to reduction of overhead and driver guesswork during runtime. In general, Vulkan does a lot of work during the initialisation of the application but therefore reduces work during rendering. Since Vulkan is much more explicit, it is neccesary to write more code and to think about how to abstract it. Rendering a first triangle for example will take much more work than you are used to from OpenGL. The benefits of this low level design outweigh the additional effort though!
 
 ## Why use Vulkan?
 * Unlike OpenGL, Vulkan fits the design of modern GPUs as it is not just one single [state machine](https://stackoverflow.com/questions/31282678/what-is-the-opengl-state-machine).
 * Vulkan is a low-level API which gives much more control over GPU behaviour. This reduces driver guesswork und avoids undefined behaviour of graphics drivers.
 * The API is asynchronous and encourages multithreaded rendering. This is a major advantage over OpenGL!
 * Lower and more predictable CPU load which results in [better performance](https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot) and a reduction of driver guesswork.
-* Vulkan implies memory-management to be done by the application rather than the driver.
+* The reduction of CPU workload and it's improved predictability can enforce the GPU to be the limiting factor (as it should be), instead of the CPU.
+* Vulkan implies memory-management to be done by the application (by you) rather than the driver.
+* Vulkan is a fresh start, whereas OpenGL contains a myriad of hacks to support very rare use cases.
 * Available on a variety of platforms: Windows, Linux, mobile devices and much more!
 * [Validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers) and diagnostics can be independently activated during development, allowing better error handling and debugging compared with OpenGL or DirectX. Upon release builds, the validation layers can be deactivated easily.
-* Vulkan is a fresh start, whereas OpenGL contains a myriad of hacks to support very rare use cases.
 * Vulkan pre-compiles shaders to a [standardised bytecode format](https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation). This again reduces driver guesswork during runtime.
 * Vulkan API and most of the drivers are [open source](https://en.wikipedia.org/wiki/Open_source)! (unlike DirectX 12 for example)
-* Vulkan has layers and extensions. For example it's easy to put steam overlay into a game simply by enabling Valve's steam overlay layer.
-* Vulkan is being developed through a collaboration of major industry-leading companies. It is not being developed by one company only (like DirectX by Microsoft). It's motto is therefore "`industry-forged`"
+* Vulkan has layers and extensions as part of its design. For example it's easy to put steam overlay into a game simply by enabling Valve's steam overlay layer.
+* Vulkan is being developed through an unprecedented collaboration of major industry-leading companies. It is not being developed by one company only (like DirectX by Microsoft). It's motto is therefore `industry-forged`.
+
+## Roadmap
+
+### Initialisation demo (0.1 alpha) (estimated April 5th, 2020)
+* [X] Create a [CMake](https://cmake.org/) file with [conan package manager](https://conan.io/) setup.
+* [X] Integrate [Vulkan Memory Allocator (VMA) library](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
+* [X] Integrate [RenderDoc](https://renderdoc.org/) support.
+* [X] Use [spdlog](https://github.com/gabime/spdlog) as logger library.
+* [X] Integrate (tiny_gltf library)[https://github.com/syoyo/tinygltf].
+* [X] Mesh buffer manager for vertex and index buffers based on [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
+* [X] Texture manager based on [stb_image](https://github.com/nothings/stb) and [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
+* [X] Uniform buffer manager based on [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
+* [X] Shader manager for loading [SPIR-V](https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation) shaders.
+* [X] Load [TOML](https://en.wikipedia.org/wiki/TOML) configuration files using [toml11](https://github.com/ToruNiina/toml11). We deliberately [won't use JSON for this](https://www.lucidchart.com/techblog/2018/07/16/why-json-isnt-a-good-configuration-language/).
+* [X] Vulkan fence manager.
+* [X] Vulkan semaphore manager.
+* [X] GPU info viewer functions.
+* [X] [Vulkan debug callbacks](https://vulkan.lunarg.com/doc/view/1.0.37.0/linux/vkspec.chunked/ch32s02.html).
+* [X] [Vulkan standard validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers).
+* [X] C++11 timestep class.
+* [X] Depth buffer.
+* [X] Let [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) generate memory debug logs.
+* [X] Associate internal resource names with memory regions to improve debugging.
+* [X] Use separate data transfer queue for memory copies if available.
+* [X] Availability checks for Vulkan features.
+* [X] Settings decision maker for Vulkan initialisation.
+* [X] Simple command line argument parser.
+* [X] Automatic GPU selection mechanism and `-GPU <N>` command line argument for preferential  GPU.
+* [X] Create windows using [glfw3](https://www.glfw.org/).
+* [X] Keyboard input based using [glfw3](https://www.glfw.org/).
+* [ ] Mouse input based using [glfw3](https://www.glfw.org/).
+* [X] Load geometry of [glTF 2.0 files](https://www.khronos.org/gltf/) using (tiny_gltf library)[https://github.com/syoyo/tinygltf].
+* [X] Load animations of [glTF 2.0 files](https://www.khronos.org/gltf/) using (tiny_gltf library)[https://github.com/syoyo/tinygltf].
+* [ ] Load textures of [glTF 2.0 files](https://www.khronos.org/gltf/) using (tiny_gltf library)[https://github.com/syoyo/tinygltf].
+* [ ] Render [glTF 2.0 files](https://www.khronos.org/gltf/) with textures and animations
+* [X] Basic camera class.
+* [ ] [Bézier curves](https://en.wikipedia.org/wiki/B%C3%A9zier_curve).
+
+
+### Threadpool demo (0.2 alpha) (date not set)
+* [ ] Implement `-threads <N>` command line argument.
+* [ ] Refactor `render_frame` method: Account for N buffering (prefer triple buffering).
+* [X] Create a threadpool using C++17.
+* [ ] Refactor the engine so it loads resources with worker threads. Use C++17 synchronisation techniques.
+* [ ] Abstract command buffer recording into manager classes.
+* [ ] Abstract pipeline creation into manager classes.
+* [ ] Record command buffers on demand using separate thread.
+* [ ] Update uniform buffers in separate thread.
+* [ ] Poll window events in separate thread.
+* [ ] Implement Vulkan pipeline statistics.
+* [ ] Create new threads on demand.
+* [ ] Give threadpool tasks a name.
+* [ ] Use `std::chrono` to measure how long a task took to finish.
+
+### imgui demo (0.3 alpha) (date not set)
+* [ ] Add [imgui](https://github.com/ocornut/imgui) support.
+
+### Octree demo (0.4 alpha) (date not set)
+* [ ] Suggest implementation for inexor octree file format.
+* [ ] Load octree data from a file.
+* [ ] Render some world geometry which was generated from octree data.
+
 
 ## Who develops Vulkan?
 The [Khronos Group](https://www.khronos.org/), which also made [OpenGL](https://www.opengl.org/).
