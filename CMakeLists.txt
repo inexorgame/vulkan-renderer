@@ -2,25 +2,26 @@ cmake_minimum_required(VERSION 3.4)
 
 project(inexor-vulkan-renderer)
 
-file(GLOB_RECURSE source_files
-	"src/*.hpp"
-	"src/*.cpp"
-	"tests/*.*"
-	"benchmarks/*.*"
+file(
+    GLOB_RECURSE source_files
+    "src/*.hpp"
+    "src/*.cpp"
+    "tests/*.*"
+    "benchmarks/*.*"
 )
 
 # Use the folder structure in source code directory as project structure in Visual Studio.
 function(assign_source_group)
-    foreach(source_files IN ITEMS ${ARGN})
+    foreach (source_files IN ITEMS ${ARGN})
         if (IS_ABSOLUTE "${source_files}")
             file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${source_files}")
-        else()
+        else ()
             set(_source_rel "${source_files}")
-        endif()
+        endif ()
         get_filename_component(_source_path "${_source_rel}" PATH)
         string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
         source_group("${_source_path_msvc}" FILES "${source_files}")
-    endforeach()
+    endforeach ()
 endfunction(assign_source_group)
 
 
@@ -29,39 +30,42 @@ set(TEST_SOURCE_FILES)
 set(BENCHMARK_SOURCE_FILES)
 
 # Sort source files by tests and benchmarks.
-foreach(file ${source_files} )
-  if(file MATCHES ".*_test.*" )
-     set(TEST_SOURCE_FILES ${TEST_SOURCE_FILES} ${file})
-  elseif(file MATCHES ".*_benchmark.*")
-      set(BENCHMARK_SOURCE_FILES ${BENCHMARK_SOURCE_FILES} ${file})
-  else()
-     set(NORMAL_SOURCE_FILES ${NORMAL_SOURCE_FILES} ${file})
-  endif()
-endforeach()
+foreach (file ${source_files})
+    if (file MATCHES ".*_test.*")
+        set(TEST_SOURCE_FILES ${TEST_SOURCE_FILES} ${file})
+    elseif (file MATCHES ".*_benchmark.*")
+        set(BENCHMARK_SOURCE_FILES ${BENCHMARK_SOURCE_FILES} ${file})
+    else ()
+        set(NORMAL_SOURCE_FILES ${NORMAL_SOURCE_FILES} ${file})
+    endif ()
+endforeach ()
 
 
 if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
-	message(STATUS "Using module to find Vulkan")
-	find_package(Vulkan)
-endif()
+    message(STATUS "Using module to find Vulkan")
+    find_package(Vulkan)
+endif ()
 
 # Dependency setup via conan.
 # Download conan executer in case it does not exists.
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
-   message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.14/conan.cmake"
-                 "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
-endif()
+if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
+    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+    file(
+        DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.14/conan.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake"
+    )
+endif ()
 
 # Execute conan build instructions.
 include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(CONANFILE conanfile.py
-                BASIC_SETUP
-                BUILD outdated
-                PROFILE default
-                PROFILE_AUTO build_type
-                KEEP_RPATHS
+conan_cmake_run(
+    CONANFILE conanfile.py
+    BASIC_SETUP
+    BUILD outdated
+    PROFILE default
+    PROFILE_AUTO build_type
+    KEEP_RPATHS
 )
 
 # Use the folder structure in source code directory as project structure in Visual Studio.
@@ -72,34 +76,35 @@ conan_target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 
 # Use multiple threads to generate code.
-if(MSVC)
- target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
-endif()
+if (MSVC)
+    target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
+endif ()
 
-IF(WIN32)
-	target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-ENDIF()
+if (WIN32)
+    target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+endif ()
 target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
 
 
-file(GLOB_RECURSE NORMAL_SOURCE_FILES_WITHOUT_MAIN
-	"src/vulkan-renderer/*"
+file(
+    GLOB_RECURSE NORMAL_SOURCE_FILES_WITHOUT_MAIN
+    "src/vulkan-renderer/*"
 )
 
 
 # Use the folder structure in source code directory as project structure in Visual Studio.
 function(assign_source_group)
-    foreach(NORMAL_SOURCE_FILES_WITHOUT_MAIN IN ITEMS ${ARGN})
+    foreach (NORMAL_SOURCE_FILES_WITHOUT_MAIN IN ITEMS ${ARGN})
         if (IS_ABSOLUTE "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
             file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-        else()
+        else ()
             set(_source_rel "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-        endif()
+        endif ()
         get_filename_component(_source_path "${_source_rel}" PATH)
         string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
         source_group("${_source_path_msvc}" FILES "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-    endforeach()
+    endforeach ()
 endfunction(assign_source_group)
 
 
@@ -107,29 +112,29 @@ add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} 
 conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 
-IF(WIN32)
-	target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-ENDIF()
+if (WIN32)
+    target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+endif ()
 target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
 
 # Use multiple threads to generate code.
-if(MSVC)
- target_compile_options(inexor-vulkan-renderer-tests PRIVATE "/MP")
-endif()
+if (MSVC)
+    target_compile_options(inexor-vulkan-renderer-tests PRIVATE "/MP")
+endif ()
 
 
 add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${BENCHMARK_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-benchmarks PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 
-IF(WIN32)
-	target_compile_definitions(inexor-vulkan-renderer-benchmarks PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-ENDIF()
+if (WIN32)
+    target_compile_definitions(inexor-vulkan-renderer-benchmarks PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+endif ()
 target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
 
 # Use multiple threads to generate code.
-if(MSVC)
- target_compile_options(inexor-vulkan-renderer-benchmarks PRIVATE "/MP")
-endif()
+if (MSVC)
+    target_compile_options(inexor-vulkan-renderer-benchmarks PRIVATE "/MP")
+endif ()
