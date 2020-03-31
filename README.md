@@ -114,6 +114,11 @@ Developers from ARM, LunarG, NVidia.
 * [ ] Render some world geometry which was generated from octree data.
 
 
+## How to build
+Feel free to open a ticket if you have problems generating project map files or building code.
+
+[How to build vulkan-renderer](BUILDING.md)
+
 ## Who develops Vulkan?
 The [Khronos Group](https://www.khronos.org/), which also made [OpenGL](https://www.opengl.org/).
 
