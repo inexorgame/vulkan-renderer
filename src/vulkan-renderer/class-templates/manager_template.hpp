@@ -42,13 +42,10 @@ namespace vulkan_renderer {
 			bool does_key_exist(const std::string& type_name)
 			{
 				// Lock read access.
-				type_manager_shared_mutex.lock_shared();
-				
+				std::shared_lock<std::shared_mutex> lock(type_manager_shared_mutex);
+
 				// Check if we can find the key.
 				bool key_found = !(stored_types.end() == stored_types.find(type_name));
-
-				// Unlock read access.
-				type_manager_shared_mutex.unlock_shared();
 
 				return key_found;
 			}
@@ -69,14 +66,11 @@ namespace vulkan_renderer {
 				}
 
 				// Lock write access.
-				type_manager_shared_mutex.lock();
+				std::unique_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 				// Add a new entry.
 				stored_types.insert({type_name, new_type});
 				
-				// Unlock write access.
-				type_manager_shared_mutex.unlock();
-
 				return true;
 			}
 
@@ -95,13 +89,10 @@ namespace vulkan_renderer {
 				}
 				
 				// Lock write access.
-				type_manager_shared_mutex.lock();
+				std::unique_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 				// Update the entry.
 				stored_types[type_name] = new_type;
-				
-				// Unlock write access.
-				type_manager_shared_mutex.unlock();
 
 				return true;
 			}
@@ -115,12 +106,9 @@ namespace vulkan_renderer {
 				if(does_key_exist(type_name))
 				{
 					// Lock read access.
-					type_manager_shared_mutex.lock_shared();
+					std::shared_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 					auto return_value = stored_types[type_name];
-					
-					// Unlock read access.
-					type_manager_shared_mutex.unlock_shared();
 
 					return return_value;
 				}
@@ -134,13 +122,10 @@ namespace vulkan_renderer {
 			std::size_t get_entry_count()
 			{
 				// Lock read access.
-				type_manager_shared_mutex.lock_shared();
+				std::shared_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 				std::size_t map_size = stored_types.size();
 				
-				// Unlock read access.
-				type_manager_shared_mutex.unlock_shared();
-
 				return map_size;
 			}
 
@@ -165,16 +150,13 @@ namespace vulkan_renderer {
 				all_keys.reserve(stored_types.size());
 				
 				// Lock read access.
-				type_manager_shared_mutex.lock_shared();
+				std::shared_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 				// Iterate through map and fill values into vector.
 				for(auto it = stored_types.begin(); it != stored_types.end(); ++it)
 				{
 					all_keys.push_back(it->first);
 				}
-
-				// Unlock read access.
-				type_manager_shared_mutex.unlock_shared();
 
 				return all_keys;
 			}
@@ -200,7 +182,7 @@ namespace vulkan_renderer {
 				all_values.reserve(stored_types.size());
 
 				// Lock read access.
-				type_manager_shared_mutex.lock_shared();
+				std::shared_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 				// Iterate through map and fill values into vector.
 				for(auto it = stored_types.begin(); it != stored_types.end(); ++it)
@@ -208,22 +190,8 @@ namespace vulkan_renderer {
 					all_values.push_back(it->second);
 				}
 
-				// Unlock read access.
-				type_manager_shared_mutex.unlock_shared();
-
 				return all_values;
 			}
-
-
-			/// @brief Returns the entire unordered map.
-			/// @TODO For now we disabled this method because we can't guarantee to return the data as read-only.
-			/// This means users could gecall get_entry_map() and start updating data without using the class mutex
-			/// It is advised to use update_entry() instead!
-			/*std::unordered_map<std::string, std::shared_ptr<T>> get_entry_map() const
-			{
-				return stored_types;
-			}
-			*/
 
 
 			/// @brief Deletes a certain type by name (key).
@@ -238,12 +206,9 @@ namespace vulkan_renderer {
 				}
 				
 				// Lock write access.
-				type_manager_shared_mutex.lock();
+				std::unique_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 				
 				std::size_t number_of_deleted_entries = stored_types.erase(type_name);
-
-				// Unlock write access.
-				type_manager_shared_mutex.unlock();
 
 				return number_of_deleted_entries;
 			}
@@ -254,12 +219,9 @@ namespace vulkan_renderer {
 			void delete_all_entries()
 			{
 				// Lock write access.
-				type_manager_shared_mutex.lock();
+				std::unique_lock<std::shared_mutex> lock(type_manager_shared_mutex);
 
 				stored_types.clear();
-
-				// Unlock write access.
-				type_manager_shared_mutex.unlock();
 			}
 
 
