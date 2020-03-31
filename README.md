@@ -1,5 +1,5 @@
 # vulkan-renderer
-![License: CC0-1.0](https://img.shields.io/github/license/inexorgame/vulkan-renderer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Issues](https://img.shields.io/github/issues/inexorgame/vulkan-renderer)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://github.com/inexorgame/vulkan-renderer)
 
