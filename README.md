@@ -10,9 +10,31 @@ A new rendering engine based on [Vulkan API 1.1](https://www.khronos.org/vulkan/
 
 Vulkan is a new, low level API ([application programming interface](https://en.wikipedia.org/wiki/Application_programming_interface)) for high-performance graphics programming and computing. It is seen by some as the successor to OpenGL, although it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Both Vulkan and OpenGL are being developed by the [Khronos Group](https://www.khronos.org/). Like DirectX 12 or Apple's Metal, Vulkan is a low level API which allows for much deeper control over the graphics card and the driver. This offers better performance (higher FPS) due to reduction of overhead and driver guesswork during runtime. In general, Vulkan does a lot of work during the initialisation of the application but therefore reduces work during rendering. Since Vulkan is much more explicit, it is neccesary to write more code and to think about how to abstract it. Rendering a first triangle for example will take much more work than you are used to from OpenGL. The benefits of this low level design outweigh the additional effort though!
 
-## Why use Vulkan?
-If you want to hear an expert introduction, you really should listen to [Adam Sawicki's excellent youtube talk](https://www.youtube.com/watch?v=6NWfznwFnMs)!
+## Getting into Vulkan
+You really should watch these expert talks on YouTube:
 
+* [Dustin Land (id-Software): GDC 2018 - Getting explicit: How Hard is Vulkan really?](https://www.youtube.com/watch?v=0R23npUCCnw)
+
+* [DevU 2017: Getting Started with Vulkan](https://www.youtube.com/watch?v=yHZ3-AMJA6Y)
+Developers from Imagination, Google and LunarG.
+
+* [Porting your engine to Vulkan or DX12](https://www.youtube.com/watch?v=6NWfznwFnMs)
+Adam Sawicki, Developer Software Engineer, AMD.
+
+* [Vulkan Best Practices Roundtable discussion](https://www.youtube.com/watch?v=owuJRPKIUAg)
+NVidia, Imagination, Qualcomm, id-Software, EPIC-games and
+
+* [Vulkan Memory Management](https://www.youtube.com/watch?v=rXSdDE7NWmA)
+Jordan Logan, Developer technology engineer, AMD.
+
+* [Vulkan Memory Managenent](https://www.youtube.com/watch?v=zSG6dPq57P8)
+Steven Tovey, Developer technology engineer, AMD.
+
+* [Vulkan: State of the Union 2019](https://www.youtube.com/watch?v=KLZsAJQBR5o)
+Developers from ARM, LunarG, NVidia.
+
+
+## Why use Vulkan?
 * Unlike OpenGL, Vulkan fits the design of modern GPUs as it is not just one single [state machine](https://stackoverflow.com/questions/31282678/what-is-the-opengl-state-machine).
 * Vulkan is a low-level API which gives much more control over GPU behaviour. This reduces driver guesswork und avoids undefined behaviour of graphics drivers.
 * The API is asynchronous and encourages multithreaded rendering. This is a major advantage over OpenGL! Vulkan also wants you to use the GPU asynchronously.
