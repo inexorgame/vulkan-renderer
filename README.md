@@ -13,7 +13,8 @@ Vulkan is a new, low level API ([application programming interface](https://en.w
 ## Getting into Vulkan
 You really should watch these expert talks on YouTube:
 
-* [Dustin Land (id-Software): GDC 2018 - Getting explicit: How Hard is Vulkan really?](https://www.youtube.com/watch?v=0R23npUCCnw)
+* [GDC 2018 - Getting explicit: How Hard is Vulkan really?](https://www.youtube.com/watch?v=0R23npUCCnw)
+Dustin Land, Software engineer, id-Software.
 
 * [DevU 2017: Getting Started with Vulkan](https://www.youtube.com/watch?v=yHZ3-AMJA6Y)
 Developers from Imagination, Google and LunarG.
