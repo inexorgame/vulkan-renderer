@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 #include <optional>
-#include <mutex>
+#include <shared_mutex>
 
 
 namespace inexor {
@@ -22,12 +22,15 @@ namespace vulkan_renderer {
 			
 			std::unordered_map<std::string, std::shared_ptr<T>> stored_types;
 
-			std::mutex type_manager_lock;
+			// We use shared_mutex to give write access to exactly one thread, but read access to all others.
+			// Shared mutexes are especially useful when shared data can be safely read by any number of threads simultaneously,
+			// but a thread may only write the same data when no other thread is reading or writing at the same time. 
+			std::shared_mutex type_manager_shared_mutex;
 
 
 		protected:
 
-
+			//TODO: Write it in all other classes like this as well.
 			ManagerClassTemplate() = default;
 			
 			~ManagerClassTemplate() = default;
@@ -38,7 +41,16 @@ namespace vulkan_renderer {
 			/// @return True if the value exists, false otherwise.
 			bool does_key_exist(const std::string& type_name)
 			{
-				return !(stored_types.end() == stored_types.find(type_name));
+				// Lock read access.
+				type_manager_shared_mutex.lock_shared();
+				
+				// Check if we can find the key.
+				bool key_found = !(stored_types.end() == stored_types.find(type_name));
+
+				// Unlock read access.
+				type_manager_shared_mutex.unlock_shared();
+
+				return key_found;
 			}
 
 			// TODO: does_value_exist?
@@ -56,11 +68,14 @@ namespace vulkan_renderer {
 					return false;
 				}
 
-				// Use lock guard to ensure thread safety.
-				std::lock_guard<std::mutex> lock(type_manager_lock);
+				// Lock write access.
+				type_manager_shared_mutex.lock();
 
-				// Store the new type.
+				// Add a new entry.
 				stored_types.insert({type_name, new_type});
+				
+				// Unlock write access.
+				type_manager_shared_mutex.unlock();
 
 				return true;
 			}
@@ -79,11 +94,14 @@ namespace vulkan_renderer {
 					return false;
 				}
 				
-				// Use lock guard to ensure thread safety.
-				std::lock_guard<std::mutex> lock(type_manager_lock);
+				// Lock write access.
+				type_manager_shared_mutex.lock();
 
 				// Update the entry.
 				stored_types[type_name] = new_type;
+				
+				// Unlock write access.
+				type_manager_shared_mutex.unlock();
 
 				return true;
 			}
@@ -96,8 +114,15 @@ namespace vulkan_renderer {
 			{
 				if(does_key_exist(type_name))
 				{
-					// No mutex required as this is a read only operation.
-					return stored_types[type_name];
+					// Lock read access.
+					type_manager_shared_mutex.lock_shared();
+
+					auto return_value = stored_types[type_name];
+					
+					// Unlock read access.
+					type_manager_shared_mutex.unlock_shared();
+
+					return return_value;
 				}
 
 				return std::nullopt;
@@ -106,25 +131,41 @@ namespace vulkan_renderer {
 
 			/// @brief Returns the number of types available.
 			/// @return The number of types available.
-			std::size_t get_entry_count() const
+			std::size_t get_entry_count()
 			{
-				// No mutex required as this is a read only operation.
-				return stored_types.size();
+				// Lock read access.
+				type_manager_shared_mutex.lock_shared();
+
+				std::size_t map_size = stored_types.size();
+				
+				// Unlock read access.
+				type_manager_shared_mutex.unlock_shared();
+
+				return map_size;
 			}
 
 
 			/// @brief Returns all keys.
 			/// @return A std::vector of shared pointers of the keys.
-			std::vector<std::shared_ptr<T>> get_all_keys() const
+			/// TODO: Is there a way to ensure the data will be sent over as ready-only?
+			/// We return a vector of shared pointers. This means the user could modify 
+			/// the manager class data without using the class mutex!
+			std::vector<std::shared_ptr<T>> get_all_keys()
 			{
-				std::vector<std::shared_ptr<T>> all_keys;
+				// get_entry_count() will lock read access automatically for us.
+				std::size_t map_size = get_entry_count();
 
-				if(0 == stored_types.size())
+				if(0 == map_size)
 				{
 					return all_keys;
 				}
 
+				std::vector<std::shared_ptr<T>> all_keys;
+				
 				all_keys.reserve(stored_types.size());
+				
+				// Lock read access.
+				type_manager_shared_mutex.lock_shared();
 
 				// Iterate through map and fill values into vector.
 				for(auto it = stored_types.begin(); it != stored_types.end(); ++it)
@@ -132,22 +173,34 @@ namespace vulkan_renderer {
 					all_keys.push_back(it->first);
 				}
 
+				// Unlock read access.
+				type_manager_shared_mutex.unlock_shared();
+
 				return all_keys;
 			}
 
 
 			/// @brief Returns all values.
 			/// @return A std::vector of shared pointers of the values.
-			std::vector<std::shared_ptr<T>> get_all_values() const
+			/// TODO: Is there a way to ensure the data will be sent over as ready-only?
+			/// We return a vector of shared pointers. This means the user could modify 
+			/// the manager class data without using the class mutex!
+			std::vector<std::shared_ptr<T>> get_all_values()
 			{
 				std::vector<std::shared_ptr<T>> all_values;
+				
+				// get_entry_count() will lock read access automatically for us.
+				std::size_t map_size = get_entry_count();
 
-				if(0 == stored_types.size())
+				if(0 == map_size)
 				{
 					return all_values;
 				}
 
 				all_values.reserve(stored_types.size());
+
+				// Lock read access.
+				type_manager_shared_mutex.lock_shared();
 
 				// Iterate through map and fill values into vector.
 				for(auto it = stored_types.begin(); it != stored_types.end(); ++it)
@@ -155,15 +208,22 @@ namespace vulkan_renderer {
 					all_values.push_back(it->second);
 				}
 
+				// Unlock read access.
+				type_manager_shared_mutex.unlock_shared();
+
 				return all_values;
 			}
 
 
 			/// @brief Returns the entire unordered map.
-			std::unordered_map<std::string, std::shared_ptr<T>> get_entry_map() const
+			/// @TODO For now we disabled this method because we can't guarantee to return the data as read-only.
+			/// This means users could gecall get_entry_map() and start updating data without using the class mutex
+			/// It is advised to use update_entry() instead!
+			/*std::unordered_map<std::string, std::shared_ptr<T>> get_entry_map() const
 			{
 				return stored_types;
 			}
+			*/
 
 
 			/// @brief Deletes a certain type by name (key).
@@ -177,10 +237,13 @@ namespace vulkan_renderer {
 					return 0;
 				}
 				
-				// Use lock guard to ensure thread safety.
-				std::lock_guard<std::mutex> lock(type_manager_lock);
+				// Lock write access.
+				type_manager_shared_mutex.lock();
 				
 				std::size_t number_of_deleted_entries = stored_types.erase(type_name);
+
+				// Unlock write access.
+				type_manager_shared_mutex.unlock();
 
 				return number_of_deleted_entries;
 			}
@@ -190,11 +253,13 @@ namespace vulkan_renderer {
 			/// @note This method is thread safe thanks to the lock guard.
 			void delete_all_entries()
 			{
-				// Use lock guard to ensure thread safety.
-				std::lock_guard<std::mutex> lock(type_manager_lock);
+				// Lock write access.
+				type_manager_shared_mutex.lock();
 
-				// Use lock guard to ensure thread safety.
 				stored_types.clear();
+
+				// Unlock write access.
+				type_manager_shared_mutex.unlock();
 			}
 
 
