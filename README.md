@@ -23,7 +23,7 @@ Developers from Imagination, Google and LunarG.
 Adam Sawicki, Developer Software Engineer, AMD.
 
 * [Vulkan Best Practices Roundtable discussion](https://www.youtube.com/watch?v=owuJRPKIUAg)
-NVidia, Imagination, Qualcomm, id-Software, EPIC-games and
+NVidia, Imagination, Qualcomm, id-Software, EPIC-games and Google.
 
 * [Vulkan Memory Management](https://www.youtube.com/watch?v=rXSdDE7NWmA)
 Jordan Logan, Developer technology engineer, AMD.
