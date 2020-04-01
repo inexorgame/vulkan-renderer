@@ -5,4 +5,4 @@ Join our telegram group: https://t.me/inexor
 [Iceflower](https://github.com/IceflowRE)
 
 * Advice on thread safety and code design.
-* CMake improvements.
+* CMake improvements and feedback.
