@@ -24,7 +24,6 @@ function(assign_source_group)
     endforeach ()
 endfunction(assign_source_group)
 
-
 set(NORMAL_SOURCE_FILES)
 set(TEST_SOURCE_FILES)
 set(BENCHMARK_SOURCE_FILES)
@@ -39,7 +38,6 @@ foreach (file ${source_files})
         set(NORMAL_SOURCE_FILES ${NORMAL_SOURCE_FILES} ${file})
     endif ()
 endforeach ()
-
 
 if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
     message(STATUS "Using module to find Vulkan")
@@ -56,7 +54,6 @@ if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
     )
 endif ()
 
-# Execute conan build instructions.
 include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
 conan_cmake_run(
@@ -69,7 +66,9 @@ conan_cmake_run(
 )
 
 # Use the folder structure in source code directory as project structure in Visual Studio.
-assign_source_group(${source_files})
+assign_source_group(${NORMAL_SOURCE_FILES})
+assign_source_group(${TEST_SOURCE_FILES})
+assign_source_group(${BENCHMARK_SOURCE_FILES})
 
 add_executable(inexor-vulkan-renderer src/main.cpp ${NORMAL_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
@@ -77,36 +76,23 @@ target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 
 # Use multiple threads to generate code.
 if (MSVC)
-    target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
+	target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
 endif ()
 
+# Use root folder of the repository as working directory in Visual Studio debugger!
+# Otherwise Visual Studio can't find any files like shaders or textures.
 if (WIN32)
+    set_property(TARGET inexor-vulkan-renderer PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
     target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
+
 target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
-
 
 file(
     GLOB_RECURSE NORMAL_SOURCE_FILES_WITHOUT_MAIN
     "src/vulkan-renderer/*"
 )
-
-
-# Use the folder structure in source code directory as project structure in Visual Studio.
-function(assign_source_group)
-    foreach (NORMAL_SOURCE_FILES_WITHOUT_MAIN IN ITEMS ${ARGN})
-        if (IS_ABSOLUTE "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-            file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-        else ()
-            set(_source_rel "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-        endif ()
-        get_filename_component(_source_path "${_source_rel}" PATH)
-        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
-        source_group("${_source_path_msvc}" FILES "${NORMAL_SOURCE_FILES_WITHOUT_MAIN}")
-    endforeach ()
-endfunction(assign_source_group)
-
 
 add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${TEST_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-tests PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
@@ -116,31 +102,30 @@ target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 # Otherwise Visual Studio can't find any files like shaders or textures.
 if (WIN32)
     set_property(TARGET inexor-vulkan-renderer PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-endif ()
-
-if (WIN32)
     target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
+
 target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
 
-# Use multiple threads to generate code.
+# Use multiple threads to compile the code.
 if (MSVC)
     target_compile_options(inexor-vulkan-renderer-tests PRIVATE "/MP")
 endif ()
-
 
 add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${BENCHMARK_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer-benchmarks PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 
 if (WIN32)
+    set_property(TARGET inexor-vulkan-renderer-benchmarks PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
     target_compile_definitions(inexor-vulkan-renderer-benchmarks PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
+
 target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
 
-# Use multiple threads to generate code.
+# Use multiple threads to compile the code.
 if (MSVC)
     target_compile_options(inexor-vulkan-renderer-benchmarks PRIVATE "/MP")
 endif ()
