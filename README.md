@@ -3,7 +3,7 @@
 ![Issues](https://img.shields.io/github/issues/inexorgame/vulkan-renderer)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://github.com/inexorgame/vulkan-renderer)
 
-A new rendering engine based on [Vulkan API 1.1](https://www.khronos.org/vulkan/)
+A new rendering engine based on [Vulkan API](https://www.khronos.org/vulkan/)
 
 ## What is Vulkan?
 ![Vulkan API logo here..](https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/500px-Vulkan.svg.png)
