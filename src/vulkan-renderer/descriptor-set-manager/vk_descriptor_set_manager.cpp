@@ -6,16 +6,6 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	VulkanDescriptorSetManager::VulkanDescriptorSetManager()
-	{
-	}
-
-	
-	VulkanDescriptorSetManager::~VulkanDescriptorSetManager()
-	{
-	}
-
-
 	VkResult VulkanDescriptorSetManager::initialise(const VkDevice& device, const std::string& internal_descriptor_set_name, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const std::size_t number_of_images_in_swapchain)
 	{
 		assert(device);

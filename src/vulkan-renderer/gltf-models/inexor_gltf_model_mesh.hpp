@@ -4,6 +4,8 @@
 #include "inexor_gltf_primitive.hpp"
 
 #include "../uniform-buffer/vk_uniform_buffer.hpp"
+#include "../uniform-buffer/vk_uniform_buffer_group.hpp"
+#include "../uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "../gltf-models/inexor_gltf_model_uniform_buffer.hpp"
 
 #include <vector>
@@ -12,31 +14,32 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace glTF2_models {
+namespace gltf2 {
 
 
 	struct InexorModelMesh
 	{
 		std::vector<std::shared_ptr<InexorModelPrimitive>> primitives;
 
+
 		BoundingBox bb;
+
 
 		BoundingBox aabb;
 
+
 		std::shared_ptr<InexorUniformBuffer> uniform_buffer;
 
+		
 		InexorModelStandardUniformBufferBlock uniform_block;
 
 
-		InexorModelMesh()
-		{
-		}
+		InexorModelMesh() = default;
 
 
-		~InexorModelMesh()
-		{
-		}
+		~InexorModelMesh() = default;
 
+		// TODO: Refactor!
 		
 		/// @brief Sets the model matrix.
 		/// @param mat [in] The input matrix.

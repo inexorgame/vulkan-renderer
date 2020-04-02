@@ -29,12 +29,9 @@ namespace vulkan_renderer {
 
 		public:
 			
-			VulkanFenceManager();
+			VulkanFenceManager() = default;
 
-			~VulkanFenceManager();
-
-			
-		protected:
+			~VulkanFenceManager() = default;
 
 			
 			/// @brief Initialises Vulkan fence manager.

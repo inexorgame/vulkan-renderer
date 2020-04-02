@@ -27,9 +27,9 @@ namespace vulkan_renderer {
 	{
 		public:
 			
-			VulkanSettingsDecisionMaker();
+			VulkanSettingsDecisionMaker() = default;
 
-			~VulkanSettingsDecisionMaker();
+			~VulkanSettingsDecisionMaker() = default;
 
 
 		private:
@@ -40,7 +40,7 @@ namespace vulkan_renderer {
 			std::size_t rate_graphics_card(const VkPhysicalDevice& graphics_card);
 
 
-		protected:
+		public:
 
 			
 			/// @brief Automatically decides if a graphics card is suitable for this application's purposes.

@@ -38,7 +38,7 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace glTF2_models {
+namespace gltf2 {
 
 
 	/// @class InexorModelManager
@@ -81,7 +81,7 @@ namespace glTF2_models {
 			/// @brief Loads a glTF 2.0 file.
 			/// @param internal_model_name [in] The internal name of the glTF 2.0 model which is used inside of the engine.
 			/// @param glTF2_file_name [in] The filename of the glTF 2.0 file.
-			VkResult load_model_from_glTF2_file(const std::string& internal_model_name, const std::string& glTF2_file_name);
+			//VkResult load_model_from_glTF2_file(const std::string& internal_model_name, const std::string& glTF2_file_name);
 
 
 			/// @brief Unloads a model and frees its memory.
@@ -104,6 +104,11 @@ namespace glTF2_models {
 			/// 
 			VkResult draw_all_models(VkCommandBuffer commandBuffer);
 
+			
+			/// 
+			/// 
+			/// 
+			VkResult load_model_from_file(const std::string& file_name, const float scale = 1.0f);
 
 		
 		private:
@@ -113,7 +118,7 @@ namespace glTF2_models {
 			void destroy();
 
 
-			/// TODO: Refactor!
+			/// 
 			void load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, const uint32_t nodeIndex, std::shared_ptr<InexorModel> model, const float globalscale);
 
 
@@ -146,12 +151,7 @@ namespace glTF2_models {
 
 
 			/// 
-			VkResult load_model_from_file(const std::string& file_name, const float scale = 1.0f);
-
-
-			/// 
 			void draw_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer);
-
 
 
 			/// 

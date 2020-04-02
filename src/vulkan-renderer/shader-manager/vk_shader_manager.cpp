@@ -5,17 +5,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VulkanShaderManager::VulkanShaderManager()
-	{
-	}
-
-
-	VulkanShaderManager::~VulkanShaderManager()
-	{
-	}
-
-	
-	void VulkanShaderManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager)
+	VkResult VulkanShaderManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager)
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -26,15 +16,17 @@ namespace vulkan_renderer {
 		this->device = device;
 
 		shader_manager_initialised = true;
+
+		return VK_SUCCESS;
 	}
 
 	
 	VkResult VulkanShaderManager::create_shader_module(const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
 	{
+		assert(shader_manager_initialised);
 		assert(device);
 		assert(debug_marker_manager);
-		assert(shader_manager_initialised);
-		assert(SPIRV_shader_bytes.size()>0);
+		assert(!SPIRV_shader_bytes.empty());
 		
 		spdlog::debug("SPIR-V shader byte size: {}.", SPIRV_shader_bytes.size());
 
@@ -156,7 +148,7 @@ namespace vulkan_renderer {
 	}
 
 
-	const std::vector<std::shared_ptr<InexorShader>> VulkanShaderManager::get_all_shaders() const
+	std::vector<std::shared_ptr<InexorShader>> VulkanShaderManager::get_all_shaders()
 	{
 		assert(shader_manager_initialised);
 

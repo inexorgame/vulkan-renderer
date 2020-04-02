@@ -15,7 +15,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanUniformBufferManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, VmaAllocator& vma_allocator)
+	VkResult VulkanUniformBufferManager::initialise(const VkDevice& device, const std::size_t number_of_images_in_swapchain, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, VmaAllocator& vma_allocator)
 	{
 		assert(device);
 		assert(debug_marker_manager);
@@ -26,6 +26,7 @@ namespace vulkan_renderer {
 		this->device = device;
 		this->debug_marker_manager = debug_marker_manager;
 		this->vma_allocator = vma_allocator;
+		this->number_of_images_in_swapchain = number_of_images_in_swapchain;
 
 		spdlog::debug("Clearing uniform buffer storage.");
 
@@ -35,7 +36,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanUniformBufferManager::create_buffer(std::string& internal_buffer_name, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size)
+	VkResult VulkanUniformBufferManager::create_buffer(std::string& internal_buffer_name, std::shared_ptr<InexorBuffer> buffer_object, const VkDeviceSize& buffer_size)
 	{
 		assert(uniform_buffer_initialised);
 		assert(vma_allocator);
@@ -44,27 +45,27 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Allocating memory for uniform buffer '{}'.", internal_buffer_name);
 
-		buffer_object.create_info.sType                = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_object.create_info.size                 = buffer_size;
-		buffer_object.create_info.usage                = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		buffer_object.create_info.sharingMode          = VK_SHARING_MODE_EXCLUSIVE;
-		buffer_object.allocation_create_info.usage     = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		buffer_object.allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-		buffer_object.allocation_create_info.pUserData = internal_buffer_name.data();
+		buffer_object->create_info.sType                = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		buffer_object->create_info.size                 = buffer_size;
+		buffer_object->create_info.usage                = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		buffer_object->create_info.sharingMode          = VK_SHARING_MODE_EXCLUSIVE;
+		buffer_object->allocation_create_info.usage     = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		buffer_object->allocation_create_info.flags     = VMA_ALLOCATION_CREATE_MAPPED_BIT|VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+		buffer_object->allocation_create_info.pUserData = internal_buffer_name.data();
 
 		// Allocate memory for the uniform buffer.
-		VkResult result = vmaCreateBuffer(vma_allocator, &buffer_object.create_info, &buffer_object.allocation_create_info, &buffer_object.buffer, &buffer_object.allocation, &buffer_object.allocation_info);
+		VkResult result = vmaCreateBuffer(vma_allocator, &buffer_object->create_info, &buffer_object->allocation_create_info, &buffer_object->buffer, &buffer_object->allocation, &buffer_object->allocation_info);
 		vulkan_error_check(result);
 
 		return result;
 	}
 
 
-	VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string& internal_uniform_buffer_name, const VkDeviceSize& uniform_buffer_size, const std::size_t number_of_images_in_swapchain)
+	VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string& internal_uniform_buffer_name, const VkDeviceSize& uniform_buffer_size, std::shared_ptr<InexorUniformBuffer> uniform_buffer_output)
 	{
 		assert(uniform_buffer_initialised);
 		assert(uniform_buffer_size>0);
-		assert(internal_uniform_buffer_name.length()>0);
+		assert(!internal_uniform_buffer_name.empty());
 		assert(number_of_images_in_swapchain>0);
 
 		if(does_key_exist(internal_uniform_buffer_name))
@@ -73,29 +74,22 @@ namespace vulkan_renderer {
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		spdlog::debug("Creating uniform buffer '{}' for {} images in swapchain.", internal_uniform_buffer_name, number_of_images_in_swapchain);
-		
+		spdlog::debug("Creating uniform buffer '{}'", internal_uniform_buffer_name);
+
 		std::shared_ptr<InexorUniformBuffer> new_uniform_buffer = std::make_shared<InexorUniformBuffer>();
 
-		new_uniform_buffer->setup(number_of_images_in_swapchain);
+		// Automatically iterate the naming of the uniform buffers.
+		std::string uniform_buffer_description = "Uniform buffer '"+ internal_uniform_buffer_name +".";
 
+		// Create the new uniform buffer.
+		VkResult result = create_buffer(uniform_buffer_description, new_uniform_buffer, uniform_buffer_size);
+		vulkan_error_check(result);
 
-		// Create one uniform buffer for every image in the swapchain.
-		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
-		{
-			spdlog::debug("Creating uniform buffer #{}", i);
+		// Give this uniform buffer an appropriate name using a Vulkan debug marker.
+		// TODO: Fix!
+		//debug_marker_manager->set_object_name(device, (uint64_t)(&new_uniform_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, uniform_buffer_description.c_str());
 
-			// Automatically iterate the naming of the uniform buffers.
-			std::string uniform_buffer_description = "Uniform buffer '"+ internal_uniform_buffer_name +"' #"+ std::to_string(i);
-
-			// Create the new uniform buffer.
-			VkResult result = create_buffer(uniform_buffer_description, new_uniform_buffer->buffers[i], uniform_buffer_size);
-			vulkan_error_check(result);
-
-			// TODO: FIX THIS!
-			// Give this uniform buffer an appropriate name.
-			//debug_marker_manager->set_object_name(device, (uint64_t)(&new_uniform_buffer->buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, uniform_buffer_description.c_str());
-		}
+		uniform_buffer_output = new_uniform_buffer;
 
 		// Store the new uniform buffer in the map.
 		// Call base class method.
@@ -105,6 +99,46 @@ namespace vulkan_renderer {
 	}
 
 	
+	VkResult VulkanUniformBufferManager::create_multiple_uniform_buffers(const std::string& internal_uniform_buffers_prefix, const VkDeviceSize& uniform_buffer_size, std::size_t number_of_buffers_to_create, InexorUniformBufferGroup& uniform_buffers_output)
+	{
+		assert(uniform_buffer_initialised);
+		assert(uniform_buffer_size>0);
+		assert(!internal_uniform_buffers_prefix.empty());
+		assert(number_of_buffers_to_create);
+
+		// TODO: Check if uniform buffer already exist!
+
+		spdlog::debug("Creating multiple uniform buffers with prefix '{}'.", internal_uniform_buffers_prefix);
+
+		InexorUniformBufferGroup return_value;
+
+		return_value.resize(number_of_buffers_to_create);
+
+
+		// Loop through the list and allocate the uniform buffers.
+		for(std::size_t i=0; i<number_of_buffers_to_create; i++)
+		{
+			std::shared_ptr<InexorUniformBuffer> new_uniform_buffer = std::make_shared<InexorUniformBuffer>();
+
+			// Generate the name of the uniform buffer using the prefix.
+			std::string uniform_buffer_description = "Uniform buffer '"+ internal_uniform_buffers_prefix +"' # {}.";
+			
+			VkResult result = create_buffer(uniform_buffer_description, new_uniform_buffer, uniform_buffer_size);
+
+			// Give this uniform buffer an appropriate name using a Vulkan debug marker.
+			//debug_marker_manager->set_object_name(device, (uint64_t)(&new_uniform_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, uniform_buffer_description.c_str());
+
+			add_entry(uniform_buffer_description, new_uniform_buffer); 
+
+			return_value[i] = new_uniform_buffer;
+		}
+
+		// Store the output!
+		uniform_buffers_output = return_value;		
+
+		return VK_SUCCESS;
+	}
+
 	std::optional<std::shared_ptr<InexorUniformBuffer>> VulkanUniformBufferManager::get_uniform_buffer(const std::string& uniform_buffer_name)
 	{
 		assert(uniform_buffer_initialised);
@@ -118,6 +152,12 @@ namespace vulkan_renderer {
 		std::optional<std::shared_ptr<InexorUniformBuffer>> return_value = get_entry(uniform_buffer_name);
 
 		return return_value;
+	}
+
+
+	VkResult VulkanUniformBufferManager::create_uniform_buffer_for_every_image_in_swapchain(const std::string& internal_uniform_buffers_prefix, const VkDeviceSize& uniform_buffer_size, std::vector<std::shared_ptr<InexorUniformBuffer>>& uniform_buffers_output)
+	{
+		return create_multiple_uniform_buffers(internal_uniform_buffers_prefix, uniform_buffer_size, number_of_images_in_swapchain, uniform_buffers_output);
 	}
 
 
@@ -148,7 +188,7 @@ namespace vulkan_renderer {
 		std::lock_guard<std::mutex> lock(uniform_buffer_manager_mutex);
 
 		// Update the uniform buffer.
-		uniform_buffer.value()->update_buffers(data_source_address, uniform_buffer_size);
+		uniform_buffer.value()->update_buffer(data_source_address, uniform_buffer_size);
 
 		return VK_SUCCESS;
 	}
@@ -168,13 +208,8 @@ namespace vulkan_renderer {
 
 		for(const auto& uniform_buffer : all_uniform_buffers)
 		{
-			for(auto& buffer : uniform_buffer->buffers)
-			{
-				vmaDestroyBuffer(vma_allocator, buffer.buffer, buffer.allocation);
-				buffer.buffer = VK_NULL_HANDLE;
-			}
-			
-			uniform_buffer->shutdown();
+			vmaDestroyBuffer(vma_allocator, uniform_buffer->buffer, uniform_buffer->allocation);
+			uniform_buffer->buffer = VK_NULL_HANDLE;
 		}
 
 		// Call base class method.

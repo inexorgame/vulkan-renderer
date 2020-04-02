@@ -1,21 +1,23 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
-#include <vulkan/vulkan.h>
-
-// Vulkan Memory Allocator.
+// Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT.
 #include "../../third_party/vma/vk_mem_alloc.h"
 
-#include "../vertex/vk_vertex.hpp"
+#include "../gltf-models/inexor_gltf_model_vertex.hpp"
 #include "../mesh-buffer/vk_mesh_buffer.hpp"
 #include "../debug-marker/vk_debug_marker_manager.hpp"
 #include "../gltf-models/inexor_gltf_model_vertex.hpp"
 #include "../error-handling/vk_error_handling.hpp"
+#include "../class-templates/manager_template.hpp"
+#include "../gltf-models/inexor_gltf_model_vertex.hpp"
 
 #include <vector>
+#include <shared_mutex>
 
+#include <glm/glm.hpp>
+#include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>
 
 
@@ -23,86 +25,127 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// @class VulkanMeshBufferManager
-	/// @brief A manager class for vertex buffers.
+	/// @class InexorMeshBufferManager.
+	/// @brief A manager class for vertex buffers and index buffers.
 	/// @note Buffers in Vulkan are regions of memory used for storing arbitrary data that can be read by the graphics card.
-	/// @note Unlike the Vulkan objects, buffers do not automatically allocate memory for themselves.
-	class InexorMeshBufferManager
+	class InexorMeshBufferManager : public ManagerClassTemplate<InexorMeshBuffer>
 	{
+		private:
+			
+			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
+
+			VkCommandPool data_transfer_command_pool = VK_NULL_HANDLE;
+
+			VkCommandBuffer data_transfer_command_buffer = VK_NULL_HANDLE;
+
+			VkQueue data_transfer_queue = VK_NULL_HANDLE;
+
+			VkDevice device = VK_NULL_HANDLE;
+
+			VmaAllocator vma_allocator;
+
+			std::shared_mutex mesh_buffer_manager_mutex;
+
+			uint32_t data_transfer_queue_family_index = 0;
+
+			bool mesh_buffer_manager_initialised = true;
+
+
 		private:
 
 			
-			// The debug marker manager.
-			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
+			/// @brief Creates a command pool for mesh buffer manager.
+			VkResult create_command_pool();
 
-			// The mesh buffers.
-			// TODO: Should we just use pointers for this?
-			std::vector<std::shared_ptr<InexorMeshBuffer>> list_of_meshes;
-
-			// The command pool for data transfer.
-			VkCommandPool data_transfer_command_pool = VK_NULL_HANDLE;
-
-			// The command buffer for data transfer to GPU memory.
-			VkCommandBuffer data_transfer_command_buffer = VK_NULL_HANDLE;
-
-			// The data transfer queue.
-			VkQueue data_transfer_queue = VK_NULL_HANDLE;
-
-			/// 
-			VkDevice device = VK_NULL_HANDLE;
-
-			// The Vulkan Memory Allocator handle.
-			VmaAllocator vma_allocator;
-
-
-		private:
 
 			/// @brief Submits buffer copy command to data transfer queue.
 			VkResult upload_data_to_gpu();
 
 
+			/// @brief Creates a buffer.
+			/// @brief internal_buff [in] The internal 
+			/// @param buffer [in] The buffer which will be created.
+			/// @param buffer_size [in] The usage flags of the buffer.
+			/// @param buffer_usage [in] The buffer usage flags.
+			/// The default value for staging buffers is VK_BUFFER_USAGE_TRANSFER_SRC_BIT.
+			/// The default value for vertex and index buffers is VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT.
+			/// @param memory_usage [in] The VMA memory usage flags.
+			/// The default value for staging buffers and normal buffers is VMA_MEMORY_USAGE_CPU_ONLY.
+			VkResult create_buffer(std::string buffer_description,
+			                       InexorBuffer& buffer,
+								   const VkDeviceSize& buffer_size,
+								   const VkBufferUsageFlags& buffer_usage,
+								   const VmaMemoryUsage& memory_usage);
+
+		
 		public:
 
-			InexorMeshBufferManager();
+			InexorMeshBufferManager() = default;
 
-			~InexorMeshBufferManager();
+			~InexorMeshBufferManager() = default;
 		
 			
-			/// @brief Initialises a command pool for commands that are commited on the data transfer queue
-			/// @param device The Vulkan device.
-			/// @param data_transfer_queue_index The queue family index which is used for data transfer.
-			/// This is neccesary since we need to allocate a new command pool for the staging buffer!
-			/// @param data_transfer_queue The VkQueue which is used for data transfer from CPU to GPU.
-			VkResult initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager_instance, const VmaAllocator& allocator, const uint32_t& data_transfer_queue_index, const VkQueue& data_transfer_queue);
-
+			/// @brief Initialises mesh buffer manager.
+			/// @param device [in] The Vulkan device.
+			/// @param debug_marker_manager [in] The Vulkan debug marker manager.
+			/// @param vma_allocator [in] The Vulkan Memory Allocator library's allocator.
+			/// @param data_transfer_queue_index [in] The data transfer queue family index.
+			/// @param data_transfer_queue [in] The data transfer queue.
+			VkResult initialise(const VkDevice& device,
+			                    const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
+								const VmaAllocator& vma_allocator,
+								const uint32_t data_transfer_queue_family_index,
+								const VkQueue& data_transfer_queue);
 			
-			/// @brief Creates a buffer.
-			/// @param buffer The InexorBuffer which will be created.
-			/// @param buffer_usage The usage flags of the buffer. The default is value is VK_BUFFER_USAGE_TRANSFER_SRC_BIT for staging buffers.
-			VkResult create_buffer(std::string buffer_description, InexorBuffer& buffer, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
 			
-
-			/// @brief Creates a new vertex buffer.
-			/// @param vma_allocator The allocator of the Vulkan Memory Allocator library.
-			/// @param vertices The vertices to fill into the vertex buffer.
-			/// @param mesh_buffer The target InexorMeshBuffer instance to fill.
-			VkResult create_vertex_buffer(const std::string& internal_buffer_name, const std::vector<glTF2_models::InexorModelVertex>& vertices, std::shared_ptr<InexorMeshBuffer> mesh_buffer_output);
+			/// @brief Creates a new vertex buffer of any Vertex structure type.
+			/// @warning Creating a vertex buffer without index buffer is a bad idea because this decreases performance significantly!
+			/// @param internal_buffer_name [in] The internal name of the vertex buffer.
+			/// @param vertices [in] A pointer to the vertex data.
+			/// @param size_of_vertex_structure [in] The memory size of the vertex data structure.
+			/// @param number_of_vertices [in] The number of vertices.
+			/// @param output_mesh_buffer [out] The mesh buffer which will be created.
+			VkResult create_vertex_buffer(const std::string& internal_mesh_buffer_name,
+			                              const void* vertices,
+										  const std::size_t size_of_vertex_structure,
+										  const std::size_t number_of_vertices,
+										  std::shared_ptr<InexorMeshBuffer> output_mesh_buffer);
 		
 			
-			/// @brief Creates a new vertex buffer with a corresponding index buffer.
-			/// @param vma_allocator The allocator of the Vulkan Memory Allocator library.
-			/// @param vertices The vertices to fill into the vertex buffer.
-			/// @param indices 
-			/// @param mesh_buffer The target InexorMeshBuffer instance to fill.
-			VkResult create_vertex_buffer_with_index_buffer(const std::string& internal_buffer_name, const std::vector<glTF2_models::InexorModelVertex>& vertices, const std::vector<uint32_t> indices, std::shared_ptr<InexorMeshBuffer> mesh_buffer_output);
+			/// @brief Creates a new vertex buffer and a corresponding index buffer.
+			/// @param internal_mesh_buffer_name [in] The internal name of the vertex buffer 
+			/// @param vertices [in] A pointer to the vertex data.
+			/// It is recommended to store your vertices in a std::vector because you can just use .data() to pass the pointer to this method.
+			/// @param size_of_vertex_structure [in] The memory size of the vertex data structure.
+			/// @param number_of_vertices [in] The number of vertices.
+			/// @param indices [in] A pointer to the index data.
+			/// It is recommended to store your indices in a std::vector because you can just use .data() to pass the pointer to this method.
+			/// @param size_of_index_structure [in] The memory size of the index data structure.
+			/// @param number_of_indices [in] The number of indices.
+			/// @param mesh_buffer_output [out] The mesh buffer which will be created.
+			VkResult create_vertex_buffer_with_index_buffer(const std::string& internal_mesh_buffer_name,
+			                                                const void* vertices,
+															const std::size_t size_of_vertex_structure,
+															const std::size_t number_of_vertices,
+															const void* indices,
+															const std::size_t size_of_index_structure,
+															const std::size_t number_of_indices,
+															std::shared_ptr<InexorMeshBuffer> mesh_buffer_output);
+
+			
+			// TODO: Overload those methods for established vertex data structures if desired.
+			// TODO: Recycle buffers! Allocation of memory at during rendertime is expensive!
+			// TODO: Destroy buffers.
 
 
-			// TODO: Refactor method so any vertex data structure can be used.
+			/// @brief Returns all existing meshes.
+			/// @TODO: Remove this method! We don't want the user to have direct access to the mesh buffers
+			/// because it would require to use the class mutex! Use MeshBufferManager instead!
+			std::vector<std::shared_ptr<InexorMeshBuffer>> get_all_meshes();
 
 
-			/// @brief Releases all Vulkan memory buffers.
-			/// @param vma_allocator The allocator of the Vulkan Memory Allocator library.
-			void shutdown_vertex_buffers();
+			/// @brief Destroys all vertex buffers and index buffers.
+			void shutdown_vertex_and_index_buffers();
 
 	};
 

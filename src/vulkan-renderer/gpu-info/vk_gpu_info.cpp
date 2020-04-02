@@ -4,16 +4,6 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-
-	VulkanGraphicsCardInfoViewer::VulkanGraphicsCardInfoViewer()
-	{
-	}
-
-	
-	VulkanGraphicsCardInfoViewer::~VulkanGraphicsCardInfoViewer()
-	{
-	}
-
 	
 	void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version()
 	{

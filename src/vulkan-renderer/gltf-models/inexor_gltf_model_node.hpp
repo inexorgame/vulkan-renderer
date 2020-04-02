@@ -21,7 +21,7 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace glTF2_models {
+namespace gltf2 {
 
 
 	struct InexorModelNode;
@@ -91,7 +91,7 @@ namespace glTF2_models {
 		}
 
 
-		void update()
+		void update(const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager)
 		{
 			if(mesh)
 			{
@@ -101,7 +101,7 @@ namespace glTF2_models {
 				{
 					mesh->uniform_block.matrix = m;
 					
-					// Update join matrices
+					// Update join matrices.
 					glm::mat4 inverseTransform = glm::inverse(m);
 					
 					size_t numJoints = std::min((uint32_t)skin->joints.size(), MAX_NUM_JOINTS);
@@ -117,20 +117,23 @@ namespace glTF2_models {
 
 					mesh->uniform_block.joint_count = (float)numJoints;
 
-					// Update the uniform buffers!
-					// TODO: Debug!
-					mesh->uniform_buffer->update_buffers(&mesh->uniform_block, sizeof(mesh->uniform_block));
+					spdlog::debug("Updating uniform buffers.");
+
+					// TODO: Call uniform buffer manager?
+					//std::memcpy(mesh->uniform_buffer->allocation_info.pMappedData, &mesh->uniform_block, sizeof(glm::mat4));
 				}
 				else
 				{
-					// TODO: Debug!
-					mesh->uniform_buffer->update_buffers(&m, sizeof(glm::mat4));
+					spdlog::debug("Updating uniform buffers.");
+
+					// TODO: Call uniform buffer manager?
+					//std::memcpy(mesh->uniform_buffer->allocation_info.pMappedData, &m, sizeof(glm::mat4));
 				}
 			}
 
-			for (auto& child : children)
+			for(auto& child : children)
 			{
-				child->update();
+				child->update(uniform_buffer_manager);
 			}
 		}
 

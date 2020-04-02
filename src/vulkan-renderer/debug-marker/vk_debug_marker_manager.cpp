@@ -5,7 +5,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VulkanDebugMarkerManager::VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
+	void VulkanDebugMarkerManager::initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card, bool enable_debug_markers)
 	{
 		if(enable_debug_markers)
 		{
@@ -54,11 +54,6 @@ namespace vulkan_renderer {
 				spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
 			}
 		}
-	}
-
-	
-	VulkanDebugMarkerManager::~VulkanDebugMarkerManager()
-	{
 	}
 
 

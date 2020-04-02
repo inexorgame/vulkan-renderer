@@ -51,12 +51,11 @@ namespace vulkan_renderer {
 
 		public:
 		
-			VulkanDescriptorSetManager();
+			VulkanDescriptorSetManager() = default;
 			
-			~VulkanDescriptorSetManager();
 
+			~VulkanDescriptorSetManager() = default;
 
-		protected:
 		
 			/// @brief Initialises Vulkan descriptor set manager.
 			/// @param device [in] The Vulkan device.

@@ -25,7 +25,7 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace glTF2_models {
+namespace gltf2 {
 
 
 	struct InexorModel
@@ -59,6 +59,8 @@ namespace glTF2_models {
 		std::vector<std::string> extensions;
 
 		InexorDimensions dimensions;
+
+		std::size_t uniform_buffer_index = 0;
 	};
 
 

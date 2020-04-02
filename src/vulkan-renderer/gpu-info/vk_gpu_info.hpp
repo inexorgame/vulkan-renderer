@@ -22,12 +22,10 @@ namespace vulkan_renderer {
 	{
 		public:
 
-			VulkanGraphicsCardInfoViewer();
+			VulkanGraphicsCardInfoViewer() = default;
 
-			~VulkanGraphicsCardInfoViewer();
+			~VulkanGraphicsCardInfoViewer() = default;
 
-
-		protected:
 
 			// Uses vkEnumerateInstanceVersion to query which version of the Vulkan API is supported on this system.
 			// https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#vkEnumerateInstanceVersion

@@ -49,14 +49,17 @@ namespace vulkan_renderer {
 
 		public:
 
+			VulkanDebugMarkerManager() = default;
+			
+
+			~VulkanDebugMarkerManager() = default;
+
+
 			/// @brief Initialises Vulkan debug marker manager.
-			/// @param device The Vulkan device.
-			/// @param graphics_card The graphics card.
-			/// @brief enable_debug_markers True if debug markers are enabled, false otherwise.
-			VulkanDebugMarkerManager(const VkDevice& device, const VkPhysicalDevice& graphics_card, const bool enable_debug_markers = true);
-			
-			
-			~VulkanDebugMarkerManager();
+			/// @param device [in] The Vulkan device.
+			/// @param graphics_card [in] The graphics card.
+			/// @brief enable_debug_markers [in] True if debug markers are enabled, false otherwise.
+			void initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card, const bool enable_debug_markers = true);
 
 			
 			/// @brief Sets the debug name of an object.

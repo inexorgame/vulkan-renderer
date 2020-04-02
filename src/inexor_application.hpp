@@ -1,65 +1,66 @@
 #pragma once
 
+// toml11: TOML for Modern C++
+// https://github.com/ToruNiina/toml11
+// License: MIT.
+#include <toml11/toml.hpp>
+
 #include "vulkan-renderer/vk_renderer.hpp"
 #include "vulkan-renderer/shader-manager/vk_shader_manager.hpp"
 #include "vulkan-renderer/error-handling/vk_error_handling.hpp"
 #include "vulkan-renderer/tools/argument-parser/cla_parser.hpp"
+#include "vulkan-renderer/debug-callback/vk_debug_callback.hpp"
 #include "vulkan-renderer/keyboard/inexor_keyboard_input.hpp"
+#include "vulkan-renderer/uniform-buffer/vk_standard_ubo.hpp"
+#include "vulkan-renderer/thread-pool/InexorThreadPool.hpp"
 #include "vulkan-renderer/mesh-buffer/vk_mesh_buffer.hpp"
 #include "vulkan-renderer/camera/InexorCamera.hpp"
-#include "vulkan-renderer/debug-callback/vk_debug_callback.hpp"
-#include "vulkan-renderer/uniform-buffer/vk_standard_ubo.hpp"
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
-// toml11: TOML for Modern C++
-// https://github.com/ToruNiina/toml11
-#include <toml11/toml.hpp>
-
-#include <thread>
-
-
-using namespace inexor::vulkan_renderer::tools;
 
 namespace inexor {
 namespace vulkan_renderer {
 
-
-	/// @class InexorApplication
-	/// @brief The Inexor application wrapper class.
+	
 	class InexorApplication : public VulkanRenderer,
 	                          public InexorKeyboardInputHandler,
-	                          public InexorCommandLineArgumentParser
+	                          public tools::InexorCommandLineArgumentParser
 	{
 		public:
 
-			InexorApplication();
+			InexorApplication() = default;
 			
-			~InexorApplication();
+			~InexorApplication() = default;
 
 
 		private:
-		
-			// This data will be loaded by the TOML file.
 			
+			/// Neccesary for taking into account the relative speed of the system's CPU.
+			float time_passed = 0.0f;
+			
+			InexorTimeStep stopwatch;
+
 			std::string application_name = "";
-			
+
 			std::string engine_name = "";
 
 			uint32_t application_version = 0;
 			
 			uint32_t engine_version = 0;
 
-
-		private:
-			
-			// Frame synchronisation.
-			std::size_t current_frame = 0;
-			
-			std::vector<InexorMeshBuffer> mesh_buffers;
+			// The core concept of paralellization in Inexor is to use a
+			// C++17 threadpool implementation which spawns worker threads.
+			// A task system is used to distribute work over worker threads.
+			// Call thread_pool->execute(); to order new tasks to be worked on.
+			std::shared_ptr<InexorThreadPool> thread_pool;
 
 			std::vector<std::shared_ptr<InexorTexture>> textures;
 			
-			// It is important to make sure that you debugging folder contains the required shader files!
+			std::size_t current_frame = 0;
+
+			// TODO: Refactor into a manger class.
 			struct InexorShaderSetup
 			{
 				VkShaderStageFlagBits shader_type;
@@ -77,12 +78,6 @@ namespace vulkan_renderer {
 			std::vector<std::string> gltf_model_files;
 
 			InexorCamera camera;
-
-			/// Neccesary for taking into account the relative speed of the system's CPU.
-			float time_passed = 0.0f;
-			
-			InexorTimeStep clock_timing;
-
 
 
 		private:
@@ -108,22 +103,22 @@ namespace vulkan_renderer {
 			/// 
 			VkResult check_application_specific_features();
 			
-
+			
 			/// 
-			VkResult draw_frame();
+			VkResult render_frame();
 			
 
 			/// 
 			VkResult update_cameras();
 
 
-			/// @brief Implementation of the uniform buffer update method which is defined as virtual function in VulkanRenderer.
+			/// @brief Implementation of the uniform buffer update method.
 			/// @param current_image [in] The current image index.
-			VkResult update_uniform_buffer(const std::size_t current_image) override;
+			VkResult update_uniform_buffers(const std::size_t current_image);
 
 
 		public:
-			
+
 			VkResult initialise();
 
 			

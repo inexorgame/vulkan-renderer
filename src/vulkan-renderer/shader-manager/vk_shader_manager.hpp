@@ -1,12 +1,10 @@
 #pragma once
 
-
 #include "../error-handling/vk_error_handling.hpp"
 #include "../shader/vk_shader.hpp"
 #include "../shader-manager/vk_shader_manager.hpp"
 #include "../debug-marker/vk_debug_marker_manager.hpp"
 #include "../class-templates/manager_template.hpp"
-
 
 #include <vector>
 #include <string>
@@ -24,9 +22,9 @@ namespace vulkan_renderer {
 	{
 		public:
 
-			VulkanShaderManager();
+			VulkanShaderManager() = default;
 			
-			~VulkanShaderManager();
+			~VulkanShaderManager() = default;
 
 		
 		private:
@@ -50,10 +48,10 @@ namespace vulkan_renderer {
 			VkResult create_shader_module(const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module);
 
 
-		protected:
+		public:
 
 			/// @param debug_marker_manager_instance The VulkanDebugMarkerManager instance.
-			void initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
+			VkResult initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
 			
 			/// @brief Creates a new shader from SPIR-V byte buffer.
@@ -78,7 +76,7 @@ namespace vulkan_renderer {
 
 			/// @brief Returns all the shaders which have been loaded.
 			/// @return A const vector of InexorVulkanShader instances.
-			const std::vector<std::shared_ptr<InexorShader>> get_all_shaders() const;
+			std::vector<std::shared_ptr<InexorShader>> get_all_shaders();
 
 			
 			/// @brief Destroys all shader objects.

@@ -1,4 +1,4 @@
-#include "InexorApplication.hpp"
+#include "inexor_application.hpp"
 
 
 namespace inexor {
@@ -10,6 +10,7 @@ namespace vulkan_renderer {
 	/// @param window The GLFW window.
 	/// @param height The width of the window.
 	/// @param height The height of the window.
+	/// @TODO Avoid static methods! Poll the events manually in the render loop!
 	static void frame_buffer_resize_callback(GLFWwindow* window, int width, int height)
 	{
 		spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
@@ -27,26 +28,17 @@ namespace vulkan_renderer {
 	/// @param scancode [in] The system-specific scancode of the key.
 	/// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT. 
 	/// @param mods [in] Bit field describing which modifier keys were held down.
+	/// @TODO Avoid static methods! Poll the events manually in the render loop!
 	static void keyboard_input_callback_reloader(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		auto app = reinterpret_cast<InexorApplication*>(glfwGetWindowUserPointer(window));
 		app->keyboard_input_callback(window, key, scancode, action, mods);
 	}
 
-
-	InexorApplication::InexorApplication()
-	{
-	}
-
-
-	InexorApplication::~InexorApplication()
-	{
-	}
-
 	
 	VkResult InexorApplication::load_TOML_configuration_file(const std::string& TOML_file_name)
 	{
-		spdlog::debug("Loading TOML configuration file: {}", TOML_file_name);
+		spdlog::debug("Loading TOML configuration file: '{}'.", TOML_file_name);
 
 		std::ifstream toml_file;
 
@@ -55,7 +47,7 @@ namespace vulkan_renderer {
 
 		if(!toml_file.is_open())
 		{
-			spdlog::error("Could not open configuration file: {}!", TOML_file_name);
+			spdlog::error("Could not open configuration file: '{}'!", TOML_file_name);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
@@ -66,24 +58,26 @@ namespace vulkan_renderer {
 
 		// Search for the title of the configuration file and print it to debug output.
 		auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
-		spdlog::debug("Title: {}", configuration_title);
+		spdlog::debug("Title: '{}'", configuration_title);
 
 		window_width  = toml::find<int>(renderer_configuration, "application", "window", "width");
 		window_height = toml::find<int>(renderer_configuration, "application", "window", "width");
 		window_title  = toml::find<std::string>(renderer_configuration, "application", "window", "name");
 
-		spdlog::debug("window: '{}', {} x {}", window_title, window_width, window_height);
+		spdlog::debug("Window: '{}', {} x {}", window_title, window_width, window_height);
 
 		application_name = toml::find<std::string>(renderer_configuration, "application", "name");
 		engine_name = toml::find<std::string>(renderer_configuration, "application", "engine", "name");
 
-		spdlog::debug("application name: {}, engine name: {}", application_name, engine_name);
+		spdlog::debug("Application name: '{}'.", application_name);
+		
+		spdlog::debug("engine name: '{}'", engine_name);
 
 		int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
 		int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor"); 
 		int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
 
-		spdlog::debug("application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
+		spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
 
 		// Generate an uint32_t value from the major, minor and patch version info.
 		application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
@@ -92,14 +86,14 @@ namespace vulkan_renderer {
 		int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor"); 
 		int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
 
-		spdlog::debug("engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
+		spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
 
 		// Generate an uint32_t value from the major, minor and patch version info.
 		engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
 
 		texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
 		
-		spdlog::debug("textures:");
+		spdlog::debug("Textures:");
 
 		for(const auto& texture_file : texture_files)
 		{
@@ -117,7 +111,7 @@ namespace vulkan_renderer {
 
 		vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
 		
-		spdlog::debug("vertex shaders:");
+		spdlog::debug("Vertex shaders:");
 
 		for(const auto& vertex_shader_file : vertex_shader_files)
 		{
@@ -126,12 +120,14 @@ namespace vulkan_renderer {
 		
 		fragment_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
 				
-		spdlog::debug("fragment shaders:");
+		spdlog::debug("Fragment shaders:");
 
 		for(const auto& fragment_shader_file : fragment_shader_files)
 		{
 			spdlog::debug("{}", fragment_shader_file);
 		}
+
+		// TODO: Load more info from TOML file.
 
 		return VK_SUCCESS;
 	}
@@ -144,8 +140,7 @@ namespace vulkan_renderer {
 		assert(debug_marker_manager);
 		assert(vma_allocator);
 		
-		// Initialise texture manager.
-		VkResult result = texture_manager->initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, get_graphics_family_index().value(), get_graphics_queue());
+		VkResult result = texture_manager->initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator, gpu_queue_manager->get_graphics_family_index().value(), gpu_queue_manager->get_graphics_queue());
 		vulkan_error_check(result);
 		
 		// TODO: Refactor! use key from TOML file as name!
@@ -160,11 +155,9 @@ namespace vulkan_renderer {
 
 			// TODO: Find duplicate loads!
 			// TOOD: Specify assets folder!
-			result = texture_manager->create_texture_from_file(texture_name, texture_file, new_texture);
+			texture_manager->create_texture_from_file(texture_name, texture_file, new_texture);
 			vulkan_error_check(result);
 
-
-			// Store the texture.
 			textures.push_back(new_texture);
 		}
 		
@@ -188,7 +181,7 @@ namespace vulkan_renderer {
 		{
 			spdlog::debug("Loading vertex shader file {}.", vertex_shader);
 			
-			VkResult result = create_shader_from_file(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, vertex_shader, "main");
+			VkResult result = shader_manager->create_shader_from_file(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, vertex_shader, "main");
 			if(VK_SUCCESS != result)
 			{
 				vulkan_error_check(result);
@@ -210,7 +203,7 @@ namespace vulkan_renderer {
 		{
 			spdlog::debug("Loading fragment shader file {}.", fragment_shader);
 			
-			VkResult result = create_shader_from_file(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, fragment_shader, "main");
+			VkResult result = shader_manager->create_shader_from_file(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, fragment_shader, "main");
 			if(VK_SUCCESS != result)
 			{
 				vulkan_error_check(result);
@@ -226,12 +219,13 @@ namespace vulkan_renderer {
 	}
 
 
-	// TODO: Refactor rendering method!
-	VkResult InexorApplication::draw_frame()
+	/// TODO: Refactor rendering method!
+	/// TODO: Finish present call using transfer queue.
+	VkResult InexorApplication::render_frame()
 	{
 		assert(device);
-		assert(VulkanQueueManager::get_graphics_queue());
-		assert(VulkanQueueManager::get_present_queue());
+		assert(gpu_queue_manager->get_graphics_queue());
+		assert(gpu_queue_manager->get_present_queue());
 
 		vkWaitForFences(device, 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
 
@@ -244,7 +238,7 @@ namespace vulkan_renderer {
 		}
 		
 		// Update the data which changes every frame!
-		update_uniform_buffer(current_frame);
+		update_uniform_buffers(current_frame);
 
 		// Mark the image as now being in use by this frame.
 		images_in_flight[image_index] = in_flight_fences[current_frame];
@@ -254,7 +248,7 @@ namespace vulkan_renderer {
 		{
 			// VK_ERROR_OUT_OF_DATE_KHR: The swap chain has become incompatible with the surface
 			// and can no longer be used for rendering. Usually happens after a window resize.
-			return recreate_swapchain(mesh_buffers);
+			return recreate_swapchain();
 		}
 
 		// Did something else fail?
@@ -284,7 +278,7 @@ namespace vulkan_renderer {
 
 		vkResetFences(device, 1, &*in_flight_fences[current_frame]);
 
-		result = vkQueueSubmit(VulkanQueueManager::get_graphics_queue(), 1, &submit_info, *in_flight_fences[current_frame]);
+		result = vkQueueSubmit(gpu_queue_manager->get_graphics_queue(), 1, &submit_info, *in_flight_fences[current_frame]);
 		if(VK_SUCCESS != result) return result;
 
 		present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -296,7 +290,7 @@ namespace vulkan_renderer {
 		present_info.pImageIndices      = &image_index;
 		present_info.pResults           = nullptr;
 
-		result = vkQueuePresentKHR(VulkanQueueManager::get_present_queue(), &present_info);
+		result = vkQueuePresentKHR(gpu_queue_manager->get_present_queue(), &present_info);
 
 		// Some notes on frame_buffer_resized:
 		// It is important to do this after vkQueuePresentKHR to ensure that the semaphores are
@@ -304,7 +298,7 @@ namespace vulkan_renderer {
 		if(VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result || frame_buffer_resized)
 		{
 			frame_buffer_resized = false;
-			recreate_swapchain(mesh_buffers);
+			recreate_swapchain();
 		}
 		
         current_frame = (current_frame + 1) % INEXOR_MAX_FRAMES_IN_FLIGHT;
@@ -317,11 +311,12 @@ namespace vulkan_renderer {
 	{
 		assert(debug_marker_manager);
 		
-		spdlog::debug("Creating vertex buffers.");
+		spdlog::debug("Loading models.");
 		
-		// TODO: Load models!
-		
-		spdlog::debug("Vertex buffer setup finished.");
+		// TODO: Load models from TOML list.
+		gltf_model_manager->load_model_from_file("assets/models/inexor/inexor.gltf");
+
+		spdlog::debug("Loading models finished.");
 
 		return VK_SUCCESS;
 	}
@@ -331,20 +326,21 @@ namespace vulkan_renderer {
 	{
 		assert(selected_graphics_card);
 
-		// Check if anisotropic filtering is available!
 		VkPhysicalDeviceFeatures graphics_card_features;
 
-		// Check which features are supported by this graphics card.
 		vkGetPhysicalDeviceFeatures(selected_graphics_card, &graphics_card_features);
 
+		// Check if anisotropic filtering is available!
 		if(!graphics_card_features.samplerAnisotropy)
 		{
-			spdlog::warn("The selected graphics card does NOT support anisotropic filtering!");
+			spdlog::warn("The selected graphics card does not support anisotropic filtering!");
 		}
 		else
 		{
-			spdlog::debug("The selected graphics ccard does support anisotropic filtering.");
+			spdlog::debug("The selected graphics card does support anisotropic filtering.");
 		}
+
+		// TODO: Add more checks if necessary.
 
 		return VK_SUCCESS;
 	}
@@ -352,20 +348,41 @@ namespace vulkan_renderer {
 
 	VkResult InexorApplication::initialise()
 	{
+		spdlog::debug("Initialising vulkan-renderer.");
+		
+		spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
+
+		// TOOD: Implement -threads <N> command line argument.
+		
+		// Initialise Inexor thread-pool.
+		thread_pool = std::make_shared<InexorThreadPool>();
+
+		initialise_glTF2_model_manager();
+
 		// Load the configuration from the TOML file.
 		VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
 		vulkan_error_check(result);
 
-		spdlog::debug("Initialising vulkan-renderer.");
 		spdlog::debug("Creating window.");
 
-		// Create a resizable window using GLFW library.
-		create_window(window_width, window_height, window_title, true);
+		// Initialise GLFW library.
+		glfwInit();
+
+		// We do not want to use the OpenGL API.
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+		glfwWindowHint(GLFW_VISIBLE, false);
+
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+		// Create the window using GLFW library.
+		window = glfwCreateWindow(window_width, window_height, window_title.c_str(), nullptr, nullptr);
 
 		spdlog::debug("Storing GLFW window user pointer.");
 
 		// Store the current InexorApplication instance in the GLFW window user pointer.
 		// Since GLFW is a C-style API, we can't use a class method as callback for window resize!
+		// TODO: Refactor! Don't use callback functions! use manual polling in the render loop instead.
 		glfwSetWindowUserPointer(window, this);
 
 		spdlog::debug("Setting up framebuffer resize callback.");
@@ -395,7 +412,7 @@ namespace vulkan_renderer {
 		bool enable_khronos_validation_instance_layer = true;
 
 		// If the user specified command line argument "-novalidation", the Khronos validation instance layer will be disabled.
-		// For development builds, this is not advisable! Always use validation layers during development!
+		// For debug builds, this is not advisable! Always use validation layers during development!
 		std::optional<bool> disable_validation = is_command_line_argument_specified("-novalidation");
 
 		if(disable_validation.has_value())
@@ -409,18 +426,15 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Creating Vulkan instance.");
 
-		// Create a Vulkan instance.
 		result = create_vulkan_instance(application_name, engine_name, application_version, engine_version, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 		vulkan_error_check(result);
 		
-
-		// Create a debug callback using VK_EXT_debug_utils
 		// Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
 		if(enable_khronos_validation_instance_layer)
 		{
 			spdlog::debug("Khronos validation layer is enabled.");
 
-			if(availability_checks::is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+			if(availability_checks_manager->is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 			{
 				VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 			
@@ -463,7 +477,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating window surface.");
 
 		// Create a window surface using GLFW library.
-		// @note The window surface needs to be created right after the instance creation,
+		// The window surface needs to be created right after the instance creation,
 		// because it can actually influence the physical device selection.
 		result = create_window_surface(instance, window, surface);
 		if(VK_SUCCESS != result)
@@ -474,16 +488,16 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Checking for -gpu command line argument.");
 
-		// The user can specify with "-gpu <number" which graphics card to prefer.
+		// The user can specify with "-gpu <number>" which graphics card to prefer.
 		std::optional<uint32_t> prefered_graphics_card = get_command_line_argument_uint32_t("-gpu");
 
 		if(prefered_graphics_card.has_value())
 		{
-			spdlog::debug("Prefered graphics card index {} specified.", prefered_graphics_card.value());
+			spdlog::debug("Preferential graphics card index {} specified.", prefered_graphics_card.value());
 		}
 
 		// Let's see if there is a graphics card that is suitable for us.
-		std::optional<VkPhysicalDevice> graphics_card_candidate = VulkanSettingsDecisionMaker::which_graphics_card_to_use(instance, surface, prefered_graphics_card);
+		std::optional<VkPhysicalDevice> graphics_card_candidate = settings_decision_maker->which_graphics_card_to_use(instance, surface, prefered_graphics_card);
 
 		// Check if we found a graphics card candidate.
 		if(graphics_card_candidate.has_value())
@@ -520,12 +534,12 @@ namespace vulkan_renderer {
 			spdlog::debug("Displaying extended information about graphics cards.");
 			
 			// Print general information about Vulkan.
-			print_driver_vulkan_version();
-			print_instance_layers();
-			print_instance_extensions();
+			gpu_info_manager->print_driver_vulkan_version();
+			gpu_info_manager->print_instance_layers();
+			gpu_info_manager->print_instance_extensions();
 
 			// Print all information that we can find about all graphics card available.
-			print_all_physical_devices(instance, surface);
+			gpu_info_manager->print_all_physical_devices(instance, surface);
 		}
 		
 		spdlog::debug("Checking for -no_separate_data_queue command line argument.");
@@ -545,8 +559,11 @@ namespace vulkan_renderer {
 				use_distinct_data_transfer_queue = false;
 			}
 		}
-		
-		result = prepare_queues(selected_graphics_card, surface, use_distinct_data_transfer_queue);
+
+		result = gpu_queue_manager->initialise(settings_decision_maker);
+		vulkan_error_check(result);
+
+		result = gpu_queue_manager->prepare_queues(selected_graphics_card, surface, use_distinct_data_transfer_queue);
 		vulkan_error_check(result);
 
 		spdlog::debug("Checking for -no_vk_debug_markers command line argument.");
@@ -559,7 +576,7 @@ namespace vulkan_renderer {
 			enable_debug_marker_device_extension = false;
 		}
 
-		// Check if vulkan debug markers should be disabled.
+		// Check if Vulkan debug markers should be disabled.
 		// Those are only available if RenderDoc instance layer is enabled!
 		std::optional<bool> no_vulkan_debug_markers = is_command_line_argument_specified("-no_vk_debug_markers");
 		
@@ -572,9 +589,6 @@ namespace vulkan_renderer {
 			}
 		}
 
-		// Display number of threads.
-		spdlog::debug("Number of processor cores: {}", std::thread::hardware_concurrency());
-
 		result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
@@ -584,13 +598,14 @@ namespace vulkan_renderer {
 		// Vulkan debug markes will be very useful when debugging with RenderDoc!
 		result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
 		vulkan_error_check(result);
-
-		VulkanShaderManager::initialise(device, debug_marker_manager);
+		
+		result = shader_manager->initialise(device, debug_marker_manager);
+		vulkan_error_check(result);
 
 		result = create_vma_allocator();
 		vulkan_error_check(result);
 
-		result = setup_queues(device);
+		result = gpu_queue_manager->setup_queues(device);
 		vulkan_error_check(result);
 
 		result = create_swapchain();
@@ -599,16 +614,18 @@ namespace vulkan_renderer {
 		result = create_depth_buffer();
 		vulkan_error_check(result);
 
+		spdlog::debug("Starting to load textures using threadpool.");
+		
 		result = load_textures();
 		vulkan_error_check(result);
-
+		
 		result = create_swapchain_image_views();
 		vulkan_error_check(result);
 		
 		result = load_shaders();
 		vulkan_error_check(result);
 
-		result = VulkanDescriptorSetManager::initialise(device, "standard_descriptor_set", debug_marker_manager, number_of_images_in_swapchain);
+		result = descriptor_set_manager->initialise(device, "standard_descriptor_set", debug_marker_manager, number_of_images_in_swapchain);
 		vulkan_error_check(result);
 
 		result = create_descriptor_pool();
@@ -623,13 +640,13 @@ namespace vulkan_renderer {
 		result = create_frame_buffers();
 		vulkan_error_check(result);
 
-		result = mesh_buffer_manager->initialise(device, debug_marker_manager, vma_allocator, VulkanQueueManager::get_data_transfer_queue_family_index().value(), VulkanQueueManager::get_data_transfer_queue());
+		result = mesh_buffer_manager->initialise(device, debug_marker_manager, vma_allocator, gpu_queue_manager->get_data_transfer_queue_family_index().value(), gpu_queue_manager->get_data_transfer_queue());
 		vulkan_error_check(result);
 
 		result = create_command_pool();
 		vulkan_error_check(result);
 
-		result = uniform_buffer_manager->initialise(device, debug_marker_manager, vma_allocator);
+		result = uniform_buffer_manager->initialise(device, number_of_images_in_swapchain, debug_marker_manager, vma_allocator);
 		vulkan_error_check(result);
 
 		result = create_uniform_buffers();
@@ -644,13 +661,13 @@ namespace vulkan_renderer {
 		result = load_models();
 		vulkan_error_check(result);
 
-		result = record_command_buffers(mesh_buffers);
+		result = record_command_buffers(mesh_buffer_manager);
 		vulkan_error_check(result);
 
-		result = VulkanFenceManager::initialise(device, debug_marker_manager);
+		result = fence_manager->initialise(device, debug_marker_manager);
 		vulkan_error_check(result);
 
-		result = VulkanSemaphoreManager::initialise(device, debug_marker_manager);
+		result = semaphore_manager->initialise(device, debug_marker_manager);
 		vulkan_error_check(result);
 
 		result = create_synchronisation_objects();
@@ -660,11 +677,10 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Showing window.");
 		
-		// Show window after Vulkan has been initialised.
-		// TODO: Does this trigger swapchain recreation at startup?
 		glfwShowWindow(window);
-
-		// We must store the window user pointer to be able to call the 
+		
+		// We must store the window user pointer to be able to call the window resize callback.
+		// TODO: Use window queue instead?
 	    glfwSetWindowUserPointer(window, this);
 
 		InexorKeyboardInputHandler::initialise(window, keyboard_input_callback_reloader);
@@ -679,7 +695,7 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorApplication::update_uniform_buffer(const std::size_t current_image)
+	VkResult InexorApplication::update_uniform_buffers(const std::size_t current_image)
 	{
         float time = time_step.get_program_start_time_step();
 
@@ -748,7 +764,7 @@ namespace vulkan_renderer {
 		while(!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
-			draw_frame();
+			render_frame();
 
 			// TODO: Run this in a separated thread?
 			// TODO: Merge into one update_game_data() method?
@@ -756,7 +772,7 @@ namespace vulkan_renderer {
 
 			// TODO!
 			//update_keyboard();
-			time_passed = clock_timing.get_time_step();
+			time_passed = stopwatch.get_time_step();
 		}
 	}
 
@@ -766,9 +782,10 @@ namespace vulkan_renderer {
 		spdlog::debug("Cleaning up InexorApplication.");
 
 		shutdown_vulkan();
-		destroy_window();
+		
+		glfwDestroyWindow(window);
+		glfwTerminate();
 
-		mesh_buffers.clear();
 		vertex_shader_files.clear();
 		fragment_shader_files.clear();
 		texture_files.clear();

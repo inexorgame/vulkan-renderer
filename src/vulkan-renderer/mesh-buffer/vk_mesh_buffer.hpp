@@ -4,8 +4,9 @@
 
 #include <vulkan/vulkan.h>
 
-// Vulkan Memory Allocator.
+// Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT
 #include "../../third_party/vma/vk_mem_alloc.h"
 
 

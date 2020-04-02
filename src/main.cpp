@@ -1,7 +1,6 @@
-#include "InexorApplication.hpp"
+#include "inexor_application.hpp"
 
 using namespace inexor::vulkan_renderer;
-
 
 InexorApplication renderer;
 
@@ -18,8 +17,8 @@ int main(int argc, char* argv[])
 
     spdlog::debug("Parsing command line arguments.");
     
+    // We use some simple command line argument parser we wrote ourselves.
     renderer.parse_command_line_arguments(argc, argv);
-
 
     VkResult result = renderer.initialise();
 

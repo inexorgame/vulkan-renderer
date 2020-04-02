@@ -14,19 +14,14 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-
-	/// 
-	/// 
-	/// 
-	/// 
-	/// 
-	class VulkanQueueManager : public VulkanSettingsDecisionMaker
+	
+	class VulkanQueueManager
 	{
 		public:
 		
-			VulkanQueueManager();
+			VulkanQueueManager() = default;
 			
-			~VulkanQueueManager();
+			~VulkanQueueManager() = default;
 
 
 		private:
@@ -62,15 +57,32 @@ namespace vulkan_renderer {
 			std::vector<VkDeviceQueueCreateInfo> device_queues_to_create;
 
 
-		protected:
+			bool queue_manager_initialised = false;
 			
+
+			VkDevice device;
+			
+
+			VkPhysicalDevice graphics_card;
+
+
+			std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker;
+
+
+		public:
+			
+
+			/// @brief Initialises Vulkan queue manager.
+			/// @param 
+			VkResult initialise(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker);
+
 
 			/// 
 			VkResult setup_queues(const VkDevice& device);
 			
 
 			/// 
-			VkResult prepare_queues(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, bool use_distinct_data_transfer_queue_if_available = true);
+			VkResult prepare_queues(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, bool use_distinct_data_transfer_queue_if_available);
 
 			
 			/// 

@@ -35,9 +35,6 @@ namespace vulkan_renderer {
 
 			~VulkanSemaphoreManager();
 
-
-		protected:
-
 			
 			/// @brief Initialises Vulkan semaphore manager.
 			/// @param device [in] The Vulkan device.

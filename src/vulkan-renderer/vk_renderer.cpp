@@ -17,33 +17,14 @@
 // Enable validation of contents of the margins.
 #define VMA_DEBUG_DETECT_CORRUPTION 1
 
-
-/// Vulkan Memory Allocator library.
-/// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// Vulkan Memory Allocator library.
+// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT.
 #include "../third_party/vma/vk_mem_alloc.h"
-
-#include "uniform-buffer/vk_standard_ubo.hpp"
-
-#include "camera/InexorCamera.hpp"
-
-
-#include <glm/glm.hpp>
-#include <chrono>
-#include <glm/gtc/matrix_transform.hpp>
 
 
 namespace inexor {
 namespace vulkan_renderer {
-
-
-	VulkanRenderer::VulkanRenderer()
-	{
-	}
-
-
-	VulkanRenderer::~VulkanRenderer()
-	{
-	}
 
 
 	VkResult VulkanRenderer::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer)
@@ -121,7 +102,7 @@ namespace vulkan_renderer {
 		{
 			// TODO: Why is this taking so long?
 			// TODO: Limit the number of function calls?
-			if(availability_checks::is_instance_extension_available(instance_extension))
+			if(availability_checks_manager->is_instance_extension_available(instance_extension))
 			{
 				spdlog::debug("Adding '{}' to instance extension wishlist.", instance_extension);
 				enabled_instance_extensions.push_back(instance_extension);
@@ -177,7 +158,7 @@ namespace vulkan_renderer {
 		// Loop through the wishlist and check for availabiliy.
 		for(auto current_layer : instance_layers_wishlist)
 		{
-			if(availability_checks::is_instance_layer_available(current_layer))
+			if(availability_checks_manager->is_instance_layer_available(current_layer))
 			{
 				spdlog::debug("Instance layer '{}' is supported.", current_layer);
 				
@@ -251,7 +232,7 @@ namespace vulkan_renderer {
 
 		for(auto device_extension_name : device_extensions_wishlist)
 		{
-			if(availability_checks::is_device_extension_available(graphics_card, device_extension_name))
+			if(availability_checks_manager->is_device_extension_available(graphics_card, device_extension_name))
 			{
 				spdlog::debug("Device extension '{}' is supported!", device_extension_name);
 
@@ -269,7 +250,7 @@ namespace vulkan_renderer {
 
 		VkDeviceCreateInfo device_create_info = {};
 
-		auto queues_to_create = VulkanQueueManager::get_queues_to_create();
+		auto queues_to_create = gpu_queue_manager->get_queues_to_create();
 		
 		device_create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_create_info.pNext                   = nullptr;
@@ -303,18 +284,17 @@ namespace vulkan_renderer {
 			spdlog::warn("This will be of disadvantage when debugging the application with e.g. RenderDoc.");
 		}
 
-		// Create an instance of VulkanDebugMarkerManager.
-		debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>(device, selected_graphics_card, enable_debug_markers);
+		debug_marker_manager->initialise(device, selected_graphics_card, enable_debug_markers);
+		
 		return VK_SUCCESS;
 	}
 
 
 	VkResult VulkanRenderer::initialise_glTF2_model_manager()
 	{
-		spdlog::debug("Initialising glTF 2.0 model manager.");
+		spdlog::debug("Creating a glTF 2.0 model manager instance.");
 
-		gltf_model_manager = std::make_shared<glTF2_models::InexorModelManager>();
-
+		// Create an instance of glTF 2.0 model manager.
 		gltf_model_manager->initialise(texture_manager, uniform_buffer_manager, mesh_buffer_manager);
 
 		return VK_SUCCESS;
@@ -325,7 +305,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(debug_marker_manager);
-		assert(VulkanQueueManager::get_graphics_family_index().has_value());
+		assert(gpu_queue_manager->get_graphics_family_index().has_value());
 		
 		spdlog::debug("Creating command pool for rendering.");
 
@@ -334,7 +314,7 @@ namespace vulkan_renderer {
 		command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext            = nullptr;
 		command_pool_create_info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		command_pool_create_info.queueFamilyIndex = VulkanQueueManager::get_graphics_family_index().value();
+		command_pool_create_info.queueFamilyIndex = gpu_queue_manager->get_graphics_family_index().value();
 
 		VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
 		vulkan_error_check(result);
@@ -363,7 +343,7 @@ namespace vulkan_renderer {
 		};
 
 		// Try to find an appropriate format for the depth buffer.
-		depth_buffer.format = VulkanSettingsDecisionMaker::find_depth_buffer_format(selected_graphics_card, depth_buffer_format_candidates, tiling, format);
+		depth_buffer.format = settings_decision_maker->find_depth_buffer_format(selected_graphics_card, depth_buffer_format_candidates, tiling, format);
 
 		assert(depth_buffer.format.has_value());
 
@@ -496,9 +476,11 @@ namespace vulkan_renderer {
 	}
 	
 
-	VkResult VulkanRenderer::record_command_buffers(const std::vector<InexorMeshBuffer>& mesh_buffers)
+	VkResult VulkanRenderer::record_command_buffers(const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager)
 	{
 		assert(debug_marker_manager);
+		assert(window_width>0);
+		assert(window_height>0);
 		
 		spdlog::debug("Recording command buffers.");
 
@@ -520,8 +502,7 @@ namespace vulkan_renderer {
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
 			if(VK_SUCCESS != result) return result;
 
-			// TODO: Setup clear color by configuration.
-			
+			// TODO: Setup clear color by TOML configuration file.
 			std::array<VkClearValue, 2> clear_values;
 			
 			// Note that the order of clear_values must be identical to the order of the attachments.
@@ -544,41 +525,45 @@ namespace vulkan_renderer {
 
 			VkDeviceSize offsets[] = {0};
 
+
+			auto mesh_buffers = mesh_buffer_manager->get_all_meshes();
+
+
 			for(std::size_t j=0; j<mesh_buffers.size(); j++)
 			{
-				vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &mesh_buffers[j].vertex_buffer.buffer, offsets);
+				vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &mesh_buffers[j]->vertex_buffer.buffer, offsets);
 
-				if(mesh_buffers[j].index_buffer_available)
+				if(mesh_buffers[j]->index_buffer_available)
 				{	
-					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j].description);
+					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j]->description);
 
 					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
 				
 					// Use the index buffer as well!
-					vkCmdBindIndexBuffer(command_buffers[i], mesh_buffers[j].index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+					vkCmdBindIndexBuffer(command_buffers[i], mesh_buffers[j]->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 				
-					auto descriptor_set = VulkanDescriptorSetManager::get_descriptor_set(i);
+					auto descriptor_set = descriptor_set_manager->get_descriptor_set(i);
 
 					vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 					// Draw using index buffer + vertex buffer.
-					vkCmdDrawIndexed(command_buffers[i], mesh_buffers[j].number_of_indices, 1, 0, 0, 0);
+					vkCmdDrawIndexed(command_buffers[i], mesh_buffers[j]->number_of_indices, 1, 0, 0, 0);
 				
 					debug_marker_manager->end_region(command_buffers[i]);
 				}
 				else
 				{
-					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j].description);
+					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j]->description);
 					spdlog::warn("No Index buffer specified! This might decrease performance!");
 
 					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
 
-					auto descriptor_set = VulkanDescriptorSetManager::get_descriptor_set(i);
+					auto descriptor_set = descriptor_set_manager->get_descriptor_set(i);
 
 					vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 					// Draw using vertex buffer only. No index buffer specified.
-					vkCmdDraw(command_buffers[i], mesh_buffers[j].number_of_vertices, 1, 0, 0);
+					vkCmdDraw(command_buffers[i], mesh_buffers[j]->number_of_vertices, 1, 0, 0);
 				
 					debug_marker_manager->end_region(command_buffers[i]);
 				}
@@ -618,9 +603,9 @@ namespace vulkan_renderer {
 			std::string rendering_finished_semaphore_name = "rendering_finished_semaphores_"+ std::to_string(i);
 			std::string in_flight_fence_name              = "in_flight_fences_"+ std::to_string(i);
 			
-			auto in_flight_fence = VulkanFenceManager::create_fence(in_flight_fence_name, true);
-			auto new_image_available_semaphore = VulkanSemaphoreManager::create_semaphore(image_available_semaphore_name);
-			auto new_rendering_finished_semaphore = VulkanSemaphoreManager::create_semaphore(rendering_finished_semaphore_name);
+			auto in_flight_fence = fence_manager->create_fence(in_flight_fence_name, true);
+			auto new_image_available_semaphore = semaphore_manager->create_semaphore(image_available_semaphore_name);
+			auto new_rendering_finished_semaphore = semaphore_manager->create_semaphore(rendering_finished_semaphore_name);
 
 			in_flight_fences.push_back(in_flight_fence.value());
 			image_available_semaphores.push_back(new_image_available_semaphore.value());
@@ -642,8 +627,6 @@ namespace vulkan_renderer {
 		assert(surface);
 		assert(selected_graphics_card);
 		assert(debug_marker_manager);
-		assert(window_width>0);
-		assert(window_height>0);
 
 		spdlog::debug("Creating swapchain.");
 
@@ -651,7 +634,7 @@ namespace vulkan_renderer {
 		
 		// Decide which surface color format is used.
 		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
-		std::optional<VkSurfaceFormatKHR> selected_surface_format = VulkanSettingsDecisionMaker::which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
+		std::optional<VkSurfaceFormatKHR> selected_surface_format = settings_decision_maker->which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
 		
 		if(selected_surface_format.has_value())
 		{
@@ -665,9 +648,9 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		VulkanSettingsDecisionMaker::which_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
+		settings_decision_maker->which_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
 
-		std::optional<VkPresentModeKHR> selected_present_mode = VulkanSettingsDecisionMaker::which_presentation_mode_to_use(selected_graphics_card, surface);
+		std::optional<VkPresentModeKHR> selected_present_mode = settings_decision_maker->which_presentation_mode_to_use(selected_graphics_card, surface);
 
 		if(!selected_present_mode.has_value())
 		{
@@ -676,7 +659,7 @@ namespace vulkan_renderer {
 			exit(-1);
 		}
 
-		number_of_images_in_swapchain = VulkanSettingsDecisionMaker::how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+		number_of_images_in_swapchain = settings_decision_maker->how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
 
 		if(0 == number_of_images_in_swapchain)
 		{
@@ -698,7 +681,7 @@ namespace vulkan_renderer {
 		swapchain_create_info.imageArrayLayers = 1;
 		swapchain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		VulkanQueueManager::prepare_swapchain_creation(swapchain_create_info);
+		gpu_queue_manager->prepare_swapchain_creation(swapchain_create_info);
 
 		swapchain_create_info.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -855,13 +838,13 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Destroying descriptor sets and layouts.");
 	
-		VulkanDescriptorSetManager::shutdown_descriptor_sets();
+		descriptor_set_manager->shutdown_descriptor_sets();
 
 		return VK_SUCCESS;
 	}
 
 
-	VkResult VulkanRenderer::recreate_swapchain(std::vector<InexorMeshBuffer>& mesh_buffers)
+	VkResult VulkanRenderer::recreate_swapchain()
 	{
 		assert(device);
 
@@ -891,7 +874,7 @@ namespace vulkan_renderer {
 		result = create_descriptor_pool();
 		vulkan_error_check(result);
 
-		result = create_descriptor_set_layouts();
+		result = descriptor_set_manager->create_descriptor_set_layouts();
 		vulkan_error_check(result);
 
 		result = create_pipeline();
@@ -912,7 +895,7 @@ namespace vulkan_renderer {
 		result = create_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
-		result = record_command_buffers(mesh_buffers);
+		result = record_command_buffers(mesh_buffer_manager);
 		if(VK_SUCCESS != result) return result;
 
 		calculate_memory_budget();
@@ -934,7 +917,7 @@ namespace vulkan_renderer {
         pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
 		// Create the descriptor pool first.
-		VkResult result = VulkanDescriptorSetManager::create_descriptor_pool(pool_sizes);
+		VkResult result = descriptor_set_manager->create_descriptor_pool(pool_sizes);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -965,11 +948,11 @@ namespace vulkan_renderer {
 
 		for(std::size_t i=0; i<descriptor_set_layouts.size(); i++)
 		{
-			VkResult result = VulkanDescriptorSetManager::add_descriptor_set_layout_binding(descriptor_set_layouts[i]);
+			VkResult result = descriptor_set_manager->add_descriptor_set_layout_binding(descriptor_set_layouts[i]);
 			vulkan_error_check(result);
 		}
 		
-		VulkanDescriptorSetManager::create_descriptor_set_layouts();
+		descriptor_set_manager->create_descriptor_set_layouts();
 
 		return VK_SUCCESS;
 	}
@@ -984,9 +967,7 @@ namespace vulkan_renderer {
 
         VkDescriptorBufferInfo uniform_buffer_info = {};
 		
-		// TODO: Use every buffer in array?
-		// TODO: Refactor InexorUniformBuffer! Let UniformBufferManager decide how many instances to create!
-		uniform_buffer_info.buffer = matrices_buffer.value()->buffers[0].buffer;
+		uniform_buffer_info.buffer = matrices_buffer.value()->buffer;
         uniform_buffer_info.offset = 0;
         uniform_buffer_info.range  = sizeof(UniformBufferObject);
 
@@ -1000,7 +981,7 @@ namespace vulkan_renderer {
 		descriptor_writes[0].descriptorCount = 1;
 		descriptor_writes[0].pBufferInfo     = &uniform_buffer_info;
 
-		VkResult result = VulkanDescriptorSetManager::add_write_descriptor_set(descriptor_writes[0]);
+		VkResult result = descriptor_set_manager->add_write_descriptor_set(descriptor_writes[0]);
 		vulkan_error_check(result);
 
 		VkDescriptorImageInfo image_info = {};
@@ -1019,10 +1000,10 @@ namespace vulkan_renderer {
 		descriptor_writes[1].descriptorCount = 1;
 		descriptor_writes[1].pImageInfo      = &image_info;
 
-		result = VulkanDescriptorSetManager::add_write_descriptor_set(descriptor_writes[1]);
+		result = descriptor_set_manager->add_write_descriptor_set(descriptor_writes[1]);
 		vulkan_error_check(result);
 
-		result = VulkanDescriptorSetManager::create_descriptor_sets();
+		result = descriptor_set_manager->create_descriptor_sets();
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1038,7 +1019,10 @@ namespace vulkan_renderer {
 		// The uniform buffer for the world matrices.
 		VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
 
-		VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, number_of_images_in_swapchain);
+		std::shared_ptr<InexorUniformBuffer> uniform_buffer;
+
+		// TODO: Debug!
+		VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, uniform_buffer);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1056,7 +1040,7 @@ namespace vulkan_renderer {
 		shader_stages.clear();
 		
 		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
-		auto list_of_shaders = VulkanShaderManager::get_all_shaders();
+		auto list_of_shaders = shader_manager->get_all_shaders();
 
 		assert(list_of_shaders.size()>0);
 
@@ -1079,8 +1063,8 @@ namespace vulkan_renderer {
 		
 		VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 		
-		auto vertex_binding_description    = InexorVertex::get_vertex_binding_description();
-		auto attribute_binding_description = InexorVertex::get_attribute_binding_description();
+		auto vertex_binding_description    = gltf2::InexorModelVertex::get_vertex_binding_description();
+		auto attribute_binding_description = gltf2::InexorModelVertex::get_attribute_binding_description();
 
 		vertex_input_create_info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertex_input_create_info.pNext                           = nullptr;
@@ -1186,7 +1170,7 @@ namespace vulkan_renderer {
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 
-		auto descriptor_set_layout = VulkanDescriptorSetManager::get_descriptor_set_layout();
+		auto descriptor_set_layout = descriptor_set_manager->get_descriptor_set_layout();
 
 		pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_create_info.pNext                  = nullptr;
@@ -1515,16 +1499,16 @@ namespace vulkan_renderer {
 		texture_manager->shutdown_textures();
 
 		spdlog::debug("Destroying descriptor set layout.");
-		VulkanDescriptorSetManager::shutdown_descriptor_sets(true);
+		descriptor_set_manager->shutdown_descriptor_sets(true);
 
 		spdlog::debug("Destroying vertex buffers.");
-		mesh_buffer_manager->shutdown_vertex_buffers();
+		mesh_buffer_manager->shutdown_vertex_and_index_buffers();
 
 		spdlog::debug("Destroying semaphores.");
-		VulkanSemaphoreManager::shutdown_semaphores();
+		semaphore_manager->shutdown_semaphores();
 
 		spdlog::debug("Destroying fences.");
-		VulkanFenceManager::shutdown_fences();
+		fence_manager->shutdown_fences();
 
 		spdlog::debug("Destroying command pool.");
 
@@ -1535,7 +1519,7 @@ namespace vulkan_renderer {
 		}
 
 		spdlog::debug("Destroying shader objects.");
-		VulkanShaderManager::shutdown_shaders();
+		shader_manager->shutdown_shaders();
 		
 		spdlog::debug("Destroying surface.");
 		if(VK_NULL_HANDLE != surface)

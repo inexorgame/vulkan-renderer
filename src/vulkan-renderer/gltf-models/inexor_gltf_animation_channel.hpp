@@ -7,7 +7,7 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace glTF2_models {
+namespace gltf2 {
 
 
 	/// 

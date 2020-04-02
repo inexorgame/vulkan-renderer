@@ -4,20 +4,21 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-		
-	VulkanQueueManager::VulkanQueueManager()
-	{
-		device_queues_to_create.clear();
-	}
 
-			
-	VulkanQueueManager::~VulkanQueueManager()
+	VkResult VulkanQueueManager::initialise(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker)
 	{
+		// TODO: Add mutex.
+		this->settings_decision_maker = settings_decision_maker;
+
+		queue_manager_initialised = true;
+
+		return VK_SUCCESS;
 	}
 
 
 	VkResult VulkanQueueManager::setup_queues(const VkDevice& device)
 	{
+		assert(queue_manager_initialised);
 		assert(present_queue_family_index.has_value());
 		assert(graphics_queue_family_index.has_value());
 		assert(data_transfer_queue_family_index.has_value());
@@ -46,6 +47,9 @@ namespace vulkan_renderer {
 
 	VkResult VulkanQueueManager::prepare_queues(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, bool use_distinct_data_transfer_queue_if_available)
 	{
+		assert(queue_manager_initialised);
+		assert(graphics_card);
+
 		spdlog::debug("Creating Vulkan device queues.");
 		
 		if(use_distinct_data_transfer_queue_if_available)
@@ -61,9 +65,8 @@ namespace vulkan_renderer {
 		device_queues_to_create.clear();
 
 		// Check if there is one queue family which can be used for both graphics and presentation.
-		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = find_queue_family_for_both_graphics_and_presentation(graphics_card, surface);
+		std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation = settings_decision_maker->find_queue_family_for_both_graphics_and_presentation(graphics_card, surface);
 		
-		// TODO: Implement command line argument for separate queues!
 		if(queue_family_index_for_both_graphics_and_presentation.has_value())
 		{
 			spdlog::debug("One queue for both graphics and presentation will be used.");
@@ -98,7 +101,7 @@ namespace vulkan_renderer {
 			// One for graphics and another one for presentation.
 			
 			// Check which queue family index can be used for graphics.
-			graphics_queue_family_index = find_graphics_queue_family(graphics_card);
+			graphics_queue_family_index = settings_decision_maker->find_graphics_queue_family(graphics_card);
 			
 			if(!graphics_queue_family_index.has_value())
 			{
@@ -107,7 +110,7 @@ namespace vulkan_renderer {
 			}
 
 			// Check which queue family index can be used for presentation.
-			present_queue_family_index = find_presentation_queue_family(graphics_card, surface);
+			present_queue_family_index = settings_decision_maker->find_presentation_queue_family(graphics_card, surface);
 
 			if(!present_queue_family_index.has_value())
 			{
@@ -152,7 +155,7 @@ namespace vulkan_renderer {
 
 
 		// Add another device queue just for data transfer.
-		data_transfer_queue_family_index = find_distinct_data_transfer_queue_family(graphics_card);
+		data_transfer_queue_family_index = settings_decision_maker->find_distinct_data_transfer_queue_family(graphics_card);
 
 		if(data_transfer_queue_family_index.has_value() && use_distinct_data_transfer_queue_if_available)
 		{
@@ -197,6 +200,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanQueueManager::prepare_swapchain_creation(VkSwapchainCreateInfoKHR& swapchain_create_info)
 	{
+		assert(queue_manager_initialised);
+
 		if(use_one_queue_family_for_graphics_and_presentation)
 		{
 			// In this case, we can use one queue family for both graphics and presentation.
@@ -227,20 +232,26 @@ namespace vulkan_renderer {
 
 	VkQueue VulkanQueueManager::get_graphics_queue()
 	{
+		assert(queue_manager_initialised);
 		assert(graphics_queue);
+
 		return graphics_queue;
 	}
 			
 
 	VkQueue VulkanQueueManager::get_present_queue()
 	{
+		assert(queue_manager_initialised);
 		assert(present_queue);
+
 		return present_queue;
 	}
 			
 
 	VkQueue VulkanQueueManager::get_data_transfer_queue()
 	{
+		assert(queue_manager_initialised);
+
 		if(use_distinct_data_transfer_queue)
 		{
 			assert(data_transfer_queue);
@@ -255,27 +266,36 @@ namespace vulkan_renderer {
 
 	std::optional<uint32_t> VulkanQueueManager::get_graphics_family_index()
 	{
+		assert(queue_manager_initialised);
 		assert(graphics_queue_family_index.has_value());
+
 		return graphics_queue_family_index;
 	}
 
 
 	std::optional<uint32_t> VulkanQueueManager::get_present_queue_family_index()
 	{
+		assert(queue_manager_initialised);
 		assert(present_queue_family_index.has_value());
+
 		return present_queue_family_index;
 	}
 
 
 	std::optional<uint32_t> VulkanQueueManager::get_data_transfer_queue_family_index()
 	{
+		assert(queue_manager_initialised);
 		assert(data_transfer_queue_family_index.has_value());
+
 		return data_transfer_queue_family_index;
 	}
 
 	
 	std::vector<VkDeviceQueueCreateInfo> VulkanQueueManager::get_queues_to_create()
 	{
+		assert(queue_manager_initialised);
+		assert(!device_queues_to_create.empty());
+
 		return device_queues_to_create;
 	}
 

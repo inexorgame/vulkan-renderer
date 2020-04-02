@@ -15,16 +15,16 @@ namespace vulkan_renderer {
 	{
 		public:
 			
-			InexorTexture();
+			InexorTexture() = default;
 			
-			~InexorTexture();
+			~InexorTexture() = default;
 
 
 		public:
 
-			std::string texture_name = "";
+			std::string name = "";
 
-			std::string texture_file_name = "";
+			std::string file_name = "";
 			
 			VkImageViewCreateInfo view_create_info = {};
 
@@ -40,11 +40,13 @@ namespace vulkan_renderer {
 
 			VkImage image = {};
 
+			VkFormat format = {};
+			
 			VkImageView image_view = {};
 
 			VkImageLayout image_layout = {};
-
-			VkDescriptorImageInfo descriptor_image_info = {};
+			
+			VkDescriptorImageInfo descriptor = {};
 
 			VkSampler sampler = {};
 
@@ -52,12 +54,14 @@ namespace vulkan_renderer {
 
 			uint32_t mip_levels = 0;
 
-			uint32_t texture_width = 0;
+			uint32_t width = 0;
 
-			uint32_t texture_height = 0;
+			uint32_t height = 0;
 
 
 		public:
+
+			// TODO: Refactoring: Remove methods! only let VulkanTextureManager change data.
 			
 			/// @brief Destroys a texture.
 			/// @param device [in] The Vulkan device.

@@ -7,16 +7,6 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	VulkanSettingsDecisionMaker::VulkanSettingsDecisionMaker()
-	{
-	}
-
-
-	VulkanSettingsDecisionMaker::~VulkanSettingsDecisionMaker()
-	{
-	}
-	
-	
 	uint32_t VulkanSettingsDecisionMaker::how_many_images_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		assert(graphics_card);
@@ -792,12 +782,12 @@ namespace vulkan_renderer {
 		// Get information about the available queue families.
 		vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
 
-
 		// Loop through all available queue families and look for a suitable one.
 		for(std::size_t i=0; i<available_queue_families.size(); i++)
 		{			
 			if(available_queue_families[i].queueCount > 0)
 			{
+				// A distinct transfer queue has a transfer bit set but no graphics bit.
 				if(!(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 				{
 					if(available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT)

@@ -1,10 +1,12 @@
 #pragma once
 
-#include <cstddef>
-
-// Vulkan Memory Allocator.
+// Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT
 #include "../../third_party/vma/vk_mem_alloc.h"
+
+#include <cstddef>
+#include <string>
 
 
 namespace inexor {
@@ -16,8 +18,10 @@ namespace vulkan_renderer {
 	struct InexorBuffer
 	{				
 		// TODO: Inherit to make access unified in syntax!
+		// TODO: Add mutex!
+		// TODO: Map/Unmap memory.
 
-		std::size_t size;
+		std::string name;
 				
 		VkBuffer buffer = VK_NULL_HANDLE;
 
@@ -27,7 +31,9 @@ namespace vulkan_renderer {
 
 		VkBufferCreateInfo create_info = {};
 				
-		VmaAllocationCreateInfo allocation_create_info = {};				
+		VmaAllocationCreateInfo allocation_create_info = {};
+		
+
 	};
 
 

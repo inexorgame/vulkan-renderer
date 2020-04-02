@@ -8,13 +8,12 @@
 
 #include "error-handling/vk_error_handling.hpp"
 #include "GPU-info/vk_gpu_info.hpp"
-#include "window-manager/window_manager.hpp"
 #include "availability-checks/vk_availability_checks.hpp"
 #include "settings-decision-maker/vk_settings_decision_maker.hpp"
 #include "shader-manager/vk_shader_manager.hpp"
 #include "fence-manager/vk_fence_manager.hpp"
 #include "semaphore-manager/vk_semaphore_manager.hpp"
-#include "vertex/vk_vertex.hpp"
+#include "gltf-models/inexor_gltf_model_vertex.hpp"
 #include "mesh-buffer-manager/vk_mesh_buffer_manager.hpp"
 #include "uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "debug-marker/vk_debug_marker_manager.hpp"
@@ -26,24 +25,33 @@
 #include "uniform-buffer/vk_uniform_buffer.hpp"
 #include "descriptor-set-manager/vk_descriptor_set_manager.hpp"
 #include "gltf-models/inexor_gltf_model_manager.hpp"
+#include "uniform-buffer/vk_standard_ubo.hpp"
+#include "camera/InexorCamera.hpp"
 
-// Vulkan Memory Allocator.
+// Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-// License: MIT
+// License: MIT.
 #include "../third_party/vma/vk_mem_alloc.h"
-
-#include <spdlog/spdlog.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <spdlog/spdlog.h>
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #include <vector>
 #include <string>
 #include <vector>
+#include <chrono>
 #include <iostream>
 using namespace std;
+
 
 // The maximum number of images to process simultaneously.
 // TODO: Refactoring! That is triple buffering essentially!
@@ -54,22 +62,13 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	/// @class VulkanInitialisation
-	/// @brief A class for initialisation of the Vulkan API.
-	class VulkanRenderer :  public VulkanGraphicsCardInfoViewer,
-							public VulkanWindowManager,
-							public VulkanShaderManager,
-							public VulkanFenceManager,
-							public VulkanSemaphoreManager,
-							public VulkanQueueManager,
-							public VulkanDescriptorSetManager
-							// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
+	class VulkanRenderer
 	{
 		public:
 
-			VulkanRenderer();
+			VulkanRenderer() = default;
 
-			~VulkanRenderer();
+			~VulkanRenderer() = default;
 
 
 		public:
@@ -80,6 +79,21 @@ namespace vulkan_renderer {
 
 
 		protected:
+		
+			// We try to avoid inheritance here and prefer a composition pattern.
+			// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
+
+			std::shared_ptr<VulkanShaderManager> shader_manager = std::make_shared<VulkanShaderManager>();
+			
+			std::shared_ptr<VulkanFenceManager> fence_manager = std::make_shared<VulkanFenceManager>();
+			
+			std::shared_ptr<VulkanSemaphoreManager> semaphore_manager = std::make_shared<VulkanSemaphoreManager>();
+			
+			std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
+			
+			std::shared_ptr<VulkanDescriptorSetManager> descriptor_set_manager = std::make_shared<VulkanDescriptorSetManager>();
+
+			std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
 			std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager = std::make_shared<VulkanUniformBufferManager>();
 
@@ -87,9 +101,13 @@ namespace vulkan_renderer {
 			
 			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager = std::make_shared<InexorMeshBufferManager>();
 
-			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
+			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
 
-			std::shared_ptr<glTF2_models::InexorModelManager> gltf_model_manager;
+			std::shared_ptr<gltf2::InexorModelManager> gltf_model_manager = std::make_shared<gltf2::InexorModelManager>();
+
+			std::shared_ptr<InexorAvailabilityChecksManager> availability_checks_manager = std::make_shared<InexorAvailabilityChecksManager>();
+
+			std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker = std::make_shared<VulkanSettingsDecisionMaker>();
 
 			VmaAllocator vma_allocator;
 
@@ -153,6 +171,14 @@ namespace vulkan_renderer {
 
 			InexorTimeStep time_step;
 
+			uint32_t window_width = 0;
+
+			uint32_t window_height = 0;
+
+			std::string window_title = "";
+
+			GLFWwindow* window = nullptr;
+
 
 		public:
 
@@ -205,7 +231,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Records the command buffers.
-			VkResult record_command_buffers(const std::vector<InexorMeshBuffer>& buffers);
+			VkResult record_command_buffers(const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager);
 
 
 			/// @brief Creates the semaphores neccesary for synchronisation.
@@ -226,24 +252,23 @@ namespace vulkan_renderer {
 			
 			/// @brief Creates the descriptor set.
 			VkResult create_descriptor_sets();
-			
-
-			/// @brief Updates the uniform buffer.
-			virtual VkResult update_uniform_buffer(const std::size_t current_image) = 0;
 
 
 			/// @brief Recreates the swapchain.
-			VkResult recreate_swapchain(std::vector<InexorMeshBuffer>& mesh_buffers);
+			VkResult recreate_swapchain();
 
 
 			/// @brief Creates the command pool.
 			VkResult create_command_pool();
 
+
 			// TODO
 			VkResult create_descriptor_pool();
 
+
 			// TODO
 			VkResult create_descriptor_set_layout();
+
 
 			/// @brief Creates the frame buffers.
 			VkResult create_frame_buffers();

@@ -8,7 +8,7 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace glTF2_models {
+namespace gltf2 {
 
 	
 	VkResult InexorModelManager::initialise(const std::shared_ptr<VulkanTextureManager> texture_manager, const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager, const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager)
@@ -33,11 +33,12 @@ namespace glTF2_models {
 
 	void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<InexorModel> model, float globalscale)
 	{
+		spdlog::debug("loadNode");
+
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
 		assert(mesh_buffer_manager);
-		assert(parent);
 		assert(model);
 		assert(globalscale>0.0f);
 
@@ -88,13 +89,20 @@ namespace glTF2_models {
 			}
 		}
 
-		// Node contains mesh data
+		// Node contains mesh data.
 		if(node.mesh > -1)
 		{
 			const tinygltf::Mesh mesh = model->gltf2_container.meshes[node.mesh];
 
 			std::shared_ptr<InexorModelMesh> newMesh = std::make_shared<InexorModelMesh>();
 				
+			std::string gltf_model_name = "glTF 2.0 model '"+ model->name +"', Node: "+ std::to_string(model->uniform_buffer_index) +"."; 
+
+			model->uniform_buffer_index++;
+
+			// Allocate uniform buffers!
+			uniform_buffer_manager->create_uniform_buffer(gltf_model_name, sizeof(InexorModelStandardUniformBufferBlock), newMesh->uniform_buffer);
+
 			newMesh->set_matrix(newNode->matrix);
 
 			for(std::size_t j = 0; j < mesh.primitives.size(); j++)
@@ -191,6 +199,7 @@ namespace glTF2_models {
 					for(std::size_t v = 0; v < posAccessor.count; v++)
 					{
 						InexorModelVertex vert{};
+
 						vert.pos = glm::vec4(glm::make_vec3(&bufferPos[v * posByteStride]), 1.0f);
 						vert.normal = glm::normalize(glm::vec3(bufferNormals ? glm::make_vec3(&bufferNormals[v * normByteStride]) : glm::vec3(0.0f)));
 						vert.uv0 = bufferTexCoordSet0 ? glm::make_vec2(&bufferTexCoordSet0[v * uv0ByteStride]) : glm::vec3(0.0f);
@@ -209,7 +218,7 @@ namespace glTF2_models {
 					}
 				}
 
-				// Indices
+				// Indices.
 				if(hasIndices)
 				{
 					const tinygltf::Accessor &accessor     = model->gltf2_container.accessors[primitive.indices > -1 ? primitive.indices : 0];
@@ -294,6 +303,8 @@ namespace glTF2_models {
 
 	void InexorModelManager::load_skins(std::shared_ptr<InexorModel> model)
 	{
+		spdlog::debug("InexorModelManager::load_skins");
+
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
@@ -340,45 +351,45 @@ namespace glTF2_models {
 	}
 
 
-	// TODO!
 	void InexorModelManager::load_textures(std::shared_ptr<InexorModel> model)
 	{
+		spdlog::debug("loadTextures");
+
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
 		assert(mesh_buffer_manager);
-		
+		assert(model);
+
 		for(tinygltf::Texture &tex : model->gltf2_container.textures)
 		{
 			tinygltf::Image image = model->gltf2_container.images[tex.source];
 
-			// TODO!
+			InexorTextureSampler texture_sampler;
 
-			/*
-			InexorTextureSampler textureSampler;
-				
-			if (tex.sampler == -1)
+			if(-1 == tex.sampler)
 			{
-				// No sampler specified, use a default one
-				textureSampler.magFilter = VK_FILTER_LINEAR;
-				textureSampler.minFilter = VK_FILTER_LINEAR;
-				textureSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-				textureSampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-				textureSampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+				// No sampler specified, use a default one.
+				texture_sampler.magFilter = VK_FILTER_LINEAR;
+				texture_sampler.minFilter = VK_FILTER_LINEAR;
+				texture_sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+				texture_sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+				texture_sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 			}
 			else
 			{
-				textureSampler = textureSamplers[tex.sampler];
+				texture_sampler = model->texture_samplers[tex.sampler];
 			}
-			*/
 			
-			// The new texture.
 			std::shared_ptr<InexorTexture> new_texture;
 			
-			// Call texture manager!
-			texture_manager->create_texture_from_glTF2_image("test", image, new_texture);
+			// Let's just use a random name for now.
+			// TODO: Fix this!
+			std::string texture_name = "glTF2 texture"+ std::to_string(rand());
 
-			// Store the texture pointer.
+			// TODO: Debug!
+			texture_manager->create_texture_from_glTF2_image(texture_name, image, new_texture);
+
 			model->textures.push_back(new_texture);
 		}
 	}
@@ -386,6 +397,8 @@ namespace glTF2_models {
 
 	VkSamplerAddressMode InexorModelManager::get_wrap_mode(const int32_t wrapMode) 
 	{
+		spdlog::debug("getVkWrapMode");
+
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
@@ -435,6 +448,8 @@ namespace glTF2_models {
 
 	void InexorModelManager::load_texture_samplers(std::shared_ptr<InexorModel> model)
 	{
+		spdlog::debug("InexorModelManager::load_texture_samplers");
+
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
@@ -741,6 +756,8 @@ namespace glTF2_models {
 
 	VkResult InexorModelManager::load_model_from_file(const std::string& file_name, const float scale)
 	{
+		spdlog::debug("InexorModelManager::load_model_from_file");
+		
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
@@ -748,7 +765,8 @@ namespace glTF2_models {
 		assert(!file_name.empty());
 		assert(scale>0.0f);
 		
-		tinygltf::Model gltfModel;
+		std::shared_ptr<InexorModel> new_model = std::make_shared<InexorModel>();
+
 		tinygltf::TinyGLTF gltfContext;
 
 		std::string error_message;
@@ -767,11 +785,11 @@ namespace glTF2_models {
 
 		if(is_binary_file)
 		{
-			fileLoaded = gltfContext.LoadBinaryFromFile(&gltfModel, &error_message, &warning_message, file_name.c_str());
+			fileLoaded = gltfContext.LoadBinaryFromFile(&new_model->gltf2_container, &error_message, &warning_message, file_name.c_str());
 		}
 		else
 		{
-			fileLoaded = gltfContext.LoadASCIIFromFile(&gltfModel, &error_message, &warning_message, file_name.c_str());
+			fileLoaded = gltfContext.LoadASCIIFromFile(&new_model->gltf2_container, &error_message, &warning_message, file_name.c_str());
 		}
 
 		if(!fileLoaded)
@@ -790,27 +808,25 @@ namespace glTF2_models {
 			spdlog::error(error_message);
 		}
 
-		std::shared_ptr<InexorModel> new_model = std::make_shared<InexorModel>();
-
 		if(fileLoaded)
 		{
 			load_texture_samplers(new_model);
 
 			load_textures(new_model);
-			
+
 			load_materials(new_model);
 
 			// TODO: scene handling with no default scene
-			const tinygltf::Scene &scene = gltfModel.scenes[gltfModel.defaultScene > -1 ? gltfModel.defaultScene : 0];
+			const tinygltf::Scene &scene = new_model->gltf2_container.scenes[new_model->gltf2_container.defaultScene > -1 ? new_model->gltf2_container.defaultScene : 0];
 				
 			for(size_t i = 0; i < scene.nodes.size(); i++)
 			{
-				const tinygltf::Node node = gltfModel.nodes[scene.nodes[i]];
+				const tinygltf::Node node = new_model->gltf2_container.nodes[scene.nodes[i]];
 
 				load_node(nullptr, node, scene.nodes[i], new_model, scale);
 			}
 				
-			if(gltfModel.animations.size() > 0)
+			if(new_model->gltf2_container.animations.size() > 0)
 			{
 				load_animations(new_model);
 			}
@@ -819,27 +835,28 @@ namespace glTF2_models {
 
 			for(auto node : new_model->linear_nodes)
 			{
-				// Assign skins
+				// Assign skins.
 				if(node->skinIndex > -1)
 				{
 					node->skin = new_model->skins[node->skinIndex];
 				}
 					
-				// Initial pose
+				// Initial pose.
 				if(node->mesh)
 				{
-					node->update();
+					node->update(uniform_buffer_manager);
 				}
 			}
 		}
 
-		new_model->extensions = gltfModel.extensionsUsed;
-
-		spdlog::debug("Calculating vertex buffer size and index buffer size.");
+		new_model->extensions = new_model->gltf2_container.extensionsUsed;
 
 		// Create a new vertex buffer and a new index buffer for the model!
 		std::size_t vertex_buffer_size = new_model->vertex_buffer_cache.size() * sizeof(InexorModelVertex);
 		std::size_t index_buffer_size = new_model->index_buffer_cache.size() * sizeof(uint32_t);
+
+		spdlog::debug("Vertex buffer size: {}.", vertex_buffer_size);
+		spdlog::debug("Index buffer size: {}.", index_buffer_size);
 
 		// Store how many indices are available.
 		std::size_t indices_count = static_cast<uint32_t>(new_model->index_buffer_cache.size());
@@ -850,8 +867,13 @@ namespace glTF2_models {
 		
 		spdlog::debug("Creating a vertex buffer and an index buffer for glTF 2.0 model '{}'.", file_name);
 		
-		// Create a vertex buffer and an index buffer for the model!
-		mesh_buffer_manager->create_vertex_buffer_with_index_buffer(file_name, new_model->vertex_buffer_cache, new_model->index_buffer_cache, new_model->mesh);
+		std::size_t number_of_vertices = new_model->vertex_buffer_cache.size();
+		
+		std::size_t number_of_indices = new_model->index_buffer_cache.size();
+
+		// Create a vertex buffer and an index buffer for the model.
+		VkResult result = mesh_buffer_manager->create_vertex_buffer_with_index_buffer(file_name, new_model->vertex_buffer_cache.data(), sizeof(InexorModelVertex), new_model->vertex_buffer_cache.size(), new_model->index_buffer_cache.data(), sizeof(uint32_t), number_of_indices, new_model->mesh);
+		vulkan_error_check(result);
 
 		spdlog::debug("Calculating model dimensions.");
 
@@ -929,7 +951,6 @@ namespace glTF2_models {
 		assert(mesh_buffer_manager);
 		assert(model);
 		assert(node);
-		assert(parent);
 		
 		BoundingBox parentBvh = parent ? parent->bvh : BoundingBox(model->dimensions.min, model->dimensions.max);
 
@@ -1077,7 +1098,7 @@ namespace glTF2_models {
 		{
 			for(auto &node : model->nodes)
 			{
-				node->update();
+				node->update(uniform_buffer_manager);
 			}
 		}
 	}
@@ -1086,11 +1107,10 @@ namespace glTF2_models {
 	std::shared_ptr<InexorModelNode> InexorModelManager::find_node(std::shared_ptr<InexorModelNode> parent, const uint32_t index)
 	{
 		assert(model_manager_initialised);
-		assert(texture_manager);
-		assert(uniform_buffer_manager);
-		assert(mesh_buffer_manager);
 		assert(parent);
 		
+		spdlog::debug("Finding node by id {}.", index);
+
 		std::shared_ptr<InexorModelNode> node_found = nullptr;
 
 		if(parent->index == index)
@@ -1114,11 +1134,10 @@ namespace glTF2_models {
 	std::shared_ptr<InexorModelNode> InexorModelManager::node_from_index(std::shared_ptr<InexorModel> model, const uint32_t index)
 	{
 		assert(model_manager_initialised);
-		assert(texture_manager);
-		assert(uniform_buffer_manager);
-		assert(mesh_buffer_manager);
 		assert(model);
 		
+		spdlog::debug("Looking up node from index for model '{}' index {}.", model->name, index);
+
 		std::shared_ptr<InexorModelNode> node_found = nullptr;
 
 		for(auto &node : model->nodes)
