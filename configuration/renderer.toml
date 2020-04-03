@@ -54,7 +54,5 @@ files = [
 # https://www.khronos.org/gltf/
 [glTFmodels]
 files = [
-	"assets/models/cube/cube.gltf",
 	"assets/models/inexor-logo/inexor_logo.gltf",
-	"assets/models/monkey/monkey_triangulated.gltf",
 ]
