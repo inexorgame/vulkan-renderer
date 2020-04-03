@@ -130,7 +130,6 @@ namespace vulkan_renderer {
 				descriptor_writes[j].dstSet     = descriptor_sets[i];
 			}
             
-			// TODO: Move out of loop?
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
         }
 
@@ -163,7 +162,6 @@ namespace vulkan_renderer {
 	}
 
 
-	// TODO: Unify into one shutdown method!
 	VkResult VulkanDescriptorSetManager::shutdown_descriptor_sets(bool clear_descriptor_layout_bindings)
 	{
 		assert(descriptor_set_manger_initialised);

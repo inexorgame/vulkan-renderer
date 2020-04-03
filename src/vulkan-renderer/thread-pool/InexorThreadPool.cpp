@@ -52,7 +52,7 @@ namespace inexor {
 
     InexorThreadPool::~InexorThreadPool()
     {
-        spdlog::debug("Shutting down worker threads.");
+        //spdlog::debug("Shutting down worker threads.");
         
         stop_threads = true;
 
@@ -64,14 +64,14 @@ namespace inexor {
             thread.join();
         }
 
-        spdlog::debug("All worker threads closed successfully.");
+        //spdlog::debug("All worker threads closed successfully.");
     }
 
     
     void InexorThreadPool::start_thread()
     {
         // TODO: Do we need additional locks here?
-        spdlog::debug("Starting new worker thread.");
+        //spdlog::debug("Starting new worker thread.");
 
 
         // Start waiting for threads.
@@ -89,7 +89,7 @@ namespace inexor {
                         // Lock the queue
                         queue_lock.lock();
 
-                        spdlog::debug("Waiting for work!.");
+                        //spdlog::debug("Waiting for work!.");
                         
                         // Use the conditional variable to wait for new tasks.
                         tasklist_cv.wait(
@@ -97,7 +97,7 @@ namespace inexor {
                             [&]() -> bool { return !tasklist.empty() || stop_threads; }
                         );
 
-                        spdlog::debug("Starting a new task!.");
+                        //spdlog::debug("Starting a new task!.");
 
                         // Check if we should finish the task.
                         if(stop_threads && tasklist.empty()) return;
@@ -116,7 +116,7 @@ namespace inexor {
                         // Run the task!
                         (*temp_task)();
 
-                        spdlog::debug("Task is done!");
+                        //spdlog::debug("Task is done!");
                     }
                 }
             )

@@ -22,15 +22,14 @@ namespace vulkan_renderer {
 			
 			std::unordered_map<std::string, std::shared_ptr<T>> stored_types;
 
+		protected:
+
 			// We use shared_mutex to give write access to exactly one thread, but read access to all others.
 			// Shared mutexes are especially useful when shared data can be safely read by any number of threads simultaneously,
 			// but a thread may only write the same data when no other thread is reading or writing at the same time. 
 			std::shared_mutex type_manager_shared_mutex;
 
-
-		protected:
-
-			//TODO: Write it in all other classes like this as well.
+			
 			ManagerClassTemplate() = default;
 			
 			~ManagerClassTemplate() = default;
@@ -215,6 +214,7 @@ namespace vulkan_renderer {
 
 			
 			/// @brief Deletes all types.
+			/// @TODO Refactor: Accept locked state so pre-shutdown doesn't have to unlock again before calling this method!
 			/// @note This method is thread safe thanks to the lock guard.
 			void delete_all_entries()
 			{

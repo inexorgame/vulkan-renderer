@@ -2,7 +2,6 @@
 
 #include "inexor_bounding_box.hpp"
 #include "inexor_gltf_model_mesh.hpp"
-#include "../uniform-buffer/vk_uniform_buffer.hpp"
 
 
 #define GLM_FORCE_RADIANS

@@ -6,6 +6,11 @@
 #endif
 #endif
 
+// Vulkan Memory Allocator library.
+// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+// License: MIT.
+#include "../third_party/vma/vk_mem_alloc.h"
+
 #include "error-handling/vk_error_handling.hpp"
 #include "GPU-info/vk_gpu_info.hpp"
 #include "availability-checks/vk_availability_checks.hpp"
@@ -22,16 +27,10 @@
 #include "texture-manager/vk_texture_manager.hpp"
 #include "mesh-buffer/vk_mesh_buffer.hpp"
 #include "depth-buffer/vk_depth_buffer.hpp"
-#include "uniform-buffer/vk_uniform_buffer.hpp"
 #include "descriptor-set-manager/vk_descriptor_set_manager.hpp"
 #include "gltf-models/inexor_gltf_model_manager.hpp"
 #include "uniform-buffer/vk_standard_ubo.hpp"
 #include "camera/InexorCamera.hpp"
-
-// Vulkan Memory Allocator library.
-// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-// License: MIT.
-#include "../third_party/vma/vk_mem_alloc.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -178,6 +177,8 @@ namespace vulkan_renderer {
 			std::string window_title = "";
 
 			GLFWwindow* window = nullptr;
+
+			std::shared_ptr<InexorBuffer> matrices;
 
 
 		public:

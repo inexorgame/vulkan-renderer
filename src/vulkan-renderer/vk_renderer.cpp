@@ -595,6 +595,8 @@ namespace vulkan_renderer {
 		image_available_semaphores.clear();
 		rendering_finished_semaphores.clear();
 
+		// TODO: Add method to create several fences/semaphores.
+
 		for(std::size_t i=0; i<INEXOR_MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			// Here we create the semaphores and fences which are neccesary for synchronisation.
@@ -962,12 +964,9 @@ namespace vulkan_renderer {
 	{
 		std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 
-		std::optional<std::shared_ptr<InexorUniformBuffer>> matrices_buffer = uniform_buffer_manager->get_uniform_buffer("matrices");
-		assert(matrices_buffer.has_value());
-
         VkDescriptorBufferInfo uniform_buffer_info = {};
 		
-		uniform_buffer_info.buffer = matrices_buffer.value()->buffer;
+		uniform_buffer_info.buffer = matrices->buffer;
         uniform_buffer_info.offset = 0;
         uniform_buffer_info.range  = sizeof(UniformBufferObject);
 
@@ -1019,10 +1018,7 @@ namespace vulkan_renderer {
 		// The uniform buffer for the world matrices.
 		VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
 
-		std::shared_ptr<InexorUniformBuffer> uniform_buffer;
-
-		// TODO: Debug!
-		VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, uniform_buffer);
+		VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, matrices);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;

@@ -373,7 +373,7 @@ namespace vulkan_renderer {
 
 		glfwWindowHint(GLFW_VISIBLE, false);
 
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		// Create the window using GLFW library.
 		window = glfwCreateWindow(window_width, window_height, window_title.c_str(), nullptr, nullptr);
@@ -646,7 +646,7 @@ namespace vulkan_renderer {
 		result = create_command_pool();
 		vulkan_error_check(result);
 
-		result = uniform_buffer_manager->initialise(device, number_of_images_in_swapchain, debug_marker_manager, vma_allocator);
+		result = uniform_buffer_manager->initialise(device, vma_allocator, debug_marker_manager);
 		vulkan_error_check(result);
 
 		result = create_uniform_buffers();
@@ -710,7 +710,8 @@ namespace vulkan_renderer {
 		ubo.proj[1][1] *= -1;
 
 		// Update the world matrices!
-		uniform_buffer_manager->update_uniform_buffer("matrices", current_image, &ubo, sizeof(ubo));
+		// TODO: Update by shared pointer value!
+		uniform_buffer_manager->update_uniform_buffer("matrices", &ubo, sizeof(ubo));
 
 		return VK_SUCCESS;
 	}

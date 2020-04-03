@@ -3,8 +3,6 @@
 #include "inexor_bounding_box.hpp"
 #include "inexor_gltf_primitive.hpp"
 
-#include "../uniform-buffer/vk_uniform_buffer.hpp"
-#include "../uniform-buffer/vk_uniform_buffer_group.hpp"
 #include "../uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "../gltf-models/inexor_gltf_model_uniform_buffer.hpp"
 
@@ -28,7 +26,7 @@ namespace gltf2 {
 		BoundingBox aabb;
 
 
-		std::shared_ptr<InexorUniformBuffer> uniform_buffer;
+		std::shared_ptr<InexorBuffer> uniform_buffer;
 
 		
 		InexorModelStandardUniformBufferBlock uniform_block;
