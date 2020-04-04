@@ -314,7 +314,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Loading models.");
 		
 		// TODO: Load models from TOML list.
-		gltf_model_manager->load_model_from_file("assets/models/inexor/inexor.gltf");
+		gltf_model_manager->load_model_from_glTF2_file("inexor_logo", "assets/models/inexor/inexor.gltf");
 
 		spdlog::debug("Loading models finished.");
 
@@ -371,7 +371,7 @@ namespace vulkan_renderer {
 		// We do not want to use the OpenGL API.
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-		glfwWindowHint(GLFW_VISIBLE, false);
+		glfwWindowHint(GLFW_VISIBLE, true);
 
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
@@ -625,13 +625,20 @@ namespace vulkan_renderer {
 		result = load_shaders();
 		vulkan_error_check(result);
 
-		result = descriptor_set_manager->initialise(device, "standard_descriptor_set", debug_marker_manager, number_of_images_in_swapchain);
+		result = descriptor_set_manager->initialise(device, debug_marker_manager, number_of_images_in_swapchain);
+		vulkan_error_check(result);
+
+		// TODO: Remove "3" and replace it with some sort of frame buffering manager?
+		result = descriptor_set_builder->initialise(device, 3, descriptor_set_manager, debug_marker_manager);
+		vulkan_error_check(result);
+
+		result = descriptor_set_builder->start_building_descriptor_set("inexor_standard_descriptor_set");
 		vulkan_error_check(result);
 
 		result = create_descriptor_pool();
 		vulkan_error_check(result);
 
-		result = create_descriptor_set_layout();
+		result = create_descriptor_set_layouts();
 		vulkan_error_check(result);
 
 		result = create_pipeline();
@@ -652,6 +659,9 @@ namespace vulkan_renderer {
 		result = create_uniform_buffers();
 		vulkan_error_check(result);
 
+		result = create_descriptor_writes();
+		vulkan_error_check(result);
+
 		result = create_descriptor_sets();
 		vulkan_error_check(result);
 
@@ -661,7 +671,7 @@ namespace vulkan_renderer {
 		result = load_models();
 		vulkan_error_check(result);
 
-		result = record_command_buffers(mesh_buffer_manager);
+		result = record_command_buffers();
 		vulkan_error_check(result);
 
 		result = fence_manager->initialise(device, debug_marker_manager);
@@ -677,7 +687,7 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Showing window.");
 		
-		glfwShowWindow(window);
+		//glfwShowWindow(window);
 		
 		// We must store the window user pointer to be able to call the window resize callback.
 		// TODO: Use window queue instead?

@@ -6,7 +6,6 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
 	struct InexorModelVertex
@@ -77,16 +76,3 @@ namespace gltf2 {
 
 };
 };
-};
-
-
-/*
-std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
-	{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-	{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
-	{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 },
-	{ 3, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 8 },
-	{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 10 },
-	{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 14 }
-};
-*/

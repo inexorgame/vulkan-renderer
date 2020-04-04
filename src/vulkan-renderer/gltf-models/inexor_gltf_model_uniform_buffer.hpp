@@ -8,7 +8,6 @@
 
 namespace inexor {
 namespace vulkan_renderer{
-namespace gltf2 {
 
 
 	/// @class InexorModelStandardUniformBuffer
@@ -22,6 +21,5 @@ namespace gltf2 {
 		float joint_count{0};
 	};
 
-};
 };
 };

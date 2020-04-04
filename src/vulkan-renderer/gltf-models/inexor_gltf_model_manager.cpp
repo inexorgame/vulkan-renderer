@@ -8,22 +8,28 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 	
-	VkResult InexorModelManager::initialise(const std::shared_ptr<VulkanTextureManager> texture_manager, const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager, const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager)
+	VkResult InexorModelManager::initialise(const std::shared_ptr<VulkanTextureManager> texture_manager,
+	                                        const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
+											const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
+											const std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager,
+											const std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder)
 	{
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
 		assert(mesh_buffer_manager);
+		assert(descriptor_set_manager);
 
 		// TODO: Mutex here!
 
 		spdlog::debug("Initialising glTF 2.0 model manager.");
 
-		this->texture_manager = texture_manager;
+		this->texture_manager        = texture_manager;
 		this->uniform_buffer_manager = uniform_buffer_manager;
-		this->mesh_buffer_manager = mesh_buffer_manager;
+		this->mesh_buffer_manager    = mesh_buffer_manager;
+		this->descriptor_set_manager = descriptor_set_manager;
+		this->descriptor_set_builder = descriptor_set_builder;
 
 		model_manager_initialised = true;
 
@@ -754,18 +760,14 @@ namespace gltf2 {
 	}
 
 
-	VkResult InexorModelManager::load_model_from_file(const std::string& file_name, const float scale)
+	VkResult InexorModelManager::load_model_from_file(const std::string& file_name, std::shared_ptr<InexorModel>& new_model, const float scale)
 	{
-		spdlog::debug("InexorModelManager::load_model_from_file");
-		
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
 		assert(mesh_buffer_manager);
 		assert(!file_name.empty());
 		assert(scale>0.0f);
-		
-		std::shared_ptr<InexorModel> new_model = std::make_shared<InexorModel>();
 
 		tinygltf::TinyGLTF gltfContext;
 
@@ -883,7 +885,7 @@ namespace gltf2 {
 	}
 
 
-	void InexorModelManager::draw_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer)
+	void InexorModelManager::render_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index)
 	{
 		assert(model_manager_initialised);
 		assert(texture_manager);
@@ -896,20 +898,37 @@ namespace gltf2 {
 		{
 			for(auto primitive : node->mesh->primitives)
 			{
-				// Draw the primitive!
-				vkCmdDrawIndexed(commandBuffer, primitive->index_count, 1, primitive->first_index, 0, 0);
+				// TODO: Implement alpha mode check here.
+				auto global_descriptor_set = descriptor_set_manager->get_descriptor_sets("inexor_standard_descriptor_set");
+
+				const std::vector<VkDescriptorSet> descriptor_sets =
+				{
+					global_descriptor_set[current_image_index],
+					//primitive->material.descriptorSet,
+					//node->mesh->uniform_buffer->descriptor_set
+				};
+
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<uint32_t>(descriptor_sets.size()), descriptor_sets.data(), 0, NULL);
+
+				if(primitive->hasIndices)
+				{
+					vkCmdDrawIndexed(commandBuffer, primitive->index_count, 1, primitive->first_index, 0, 0);
+				}
+				else
+				{
+					vkCmdDraw(commandBuffer, primitive->vertex_count, 1, 0, 0);
+				}
 			}
 		}
 
-		// Draw children nodes as well!	
 		for(auto& child : node->children)
 		{
-			draw_node(child, commandBuffer);
+			render_node(child, commandBuffer, pipeline_layout, current_image_index);
 		}
 	}
 
 
-	VkResult InexorModelManager::draw_model(const std::string& internal_model_name, VkCommandBuffer commandBuffer)
+	VkResult InexorModelManager::render_model(const std::string& internal_model_name, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index)
 	{
 		assert(model_manager_initialised);
 		assert(texture_manager);
@@ -936,7 +955,7 @@ namespace gltf2 {
 		// Draw all the children nodes of the model.
 		for(auto& node : model->nodes)
 		{
-			draw_node(node, commandBuffer);
+			render_node(node, commandBuffer, pipeline_layout, current_image_index);
 		}
 
 		return VK_SUCCESS;
@@ -1103,6 +1122,27 @@ namespace gltf2 {
 		}
 	}
 
+	
+	VkResult InexorModelManager::load_model_from_glTF2_file(const std::string& internal_model_name, const std::string& glTF2_file_name)
+	{
+		assert(model_manager_initialised);
+
+		if(does_key_exist(internal_model_name))
+		{
+			spdlog::error("A glTF 2.0 model with internal name '{}' does already exist!");
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+		
+		std::shared_ptr<InexorModel> new_model = std::make_shared<InexorModel>();
+
+		VkResult result = load_model_from_file(glTF2_file_name, new_model);
+		vulkan_error_check(result);
+
+		add_entry(internal_model_name, new_model);
+
+		return VK_SUCCESS;
+	}
+
 
 	std::shared_ptr<InexorModelNode> InexorModelManager::find_node(std::shared_ptr<InexorModelNode> parent, const uint32_t index)
 	{
@@ -1131,6 +1171,60 @@ namespace gltf2 {
 	}
 
 
+	VkResult InexorModelManager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index)
+	{
+		assert(model_manager_initialised);
+
+		const auto models = get_all_values();
+
+		for(const auto& model : models)
+		{
+			VkDeviceSize offsets[1] = { 0 };
+
+			vkCmdBindVertexBuffers(command_buffer, 0, 1, &model->mesh->vertex_buffer.buffer, offsets);
+		
+			// Only bind index buffer if available.
+			if(model->mesh->index_buffer_available) 
+			{
+				vkCmdBindIndexBuffer(command_buffer, model->mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+			}
+
+			// Opaque primitives first.
+			for(auto node : model->nodes)
+			{
+				render_node(node, command_buffer, pipeline_layout, current_image_index);
+			}
+		
+			// Alpha masked primitives.
+			for(auto node : model->nodes)
+			{
+				render_node(node, command_buffer, pipeline_layout, current_image_index);
+			}
+
+			// TODO: PBR alpha blend here!
+		}
+
+		return VK_SUCCESS;
+	}
+
+
+	VkResult InexorModelManager::create_model_descriptor_sets()
+	{
+		assert(model_manager_initialised);
+		
+		// TODO: Implement!
+
+		return VK_SUCCESS;
+	}
+
+	std::size_t InexorModelManager::get_model_count()
+	{
+		assert(model_manager_initialised);
+
+		return get_entry_count();
+	}
+
+
 	std::shared_ptr<InexorModelNode> InexorModelManager::node_from_index(std::shared_ptr<InexorModel> model, const uint32_t index)
 	{
 		assert(model_manager_initialised);
@@ -1153,6 +1247,5 @@ namespace gltf2 {
 	}
 
 
-};
 };
 };

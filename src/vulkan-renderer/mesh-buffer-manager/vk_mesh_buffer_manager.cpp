@@ -129,7 +129,11 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string& internal_mesh_buffer_name, const void* vertices, const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices, std::shared_ptr<InexorMeshBuffer> output_mesh_buffer)
+	VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string& internal_mesh_buffer_name,
+	                                                       const void* vertices,
+														   const std::size_t size_of_vertex_structure,
+														   const std::size_t number_of_vertices,
+														   std::shared_ptr<InexorMeshBuffer>& output_mesh_buffer)
 	{
 		assert(mesh_buffer_manager_initialised);
 		assert(size_of_vertex_structure>0);
@@ -277,7 +281,14 @@ namespace vulkan_renderer {
 	}
 
 			
-	VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_mesh_buffer_name, const void* vertices, const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices, const void* indices, const std::size_t size_of_index_structure, const std::size_t number_of_indices, std::shared_ptr<InexorMeshBuffer> mesh_buffer_output)
+	VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string& internal_mesh_buffer_name,
+	                                                                         const void* vertices,
+																			 const std::size_t size_of_vertex_structure,
+																			 const std::size_t number_of_vertices,
+																			 const void* indices,
+																			 const std::size_t size_of_index_structure,
+																			 const std::size_t number_of_indices,
+																			 std::shared_ptr<InexorMeshBuffer>& mesh_buffer_output)
 	{
 		assert(mesh_buffer_manager_initialised);
 		assert(!internal_mesh_buffer_name.empty());
@@ -484,13 +495,6 @@ namespace vulkan_renderer {
 		vmaDestroyBuffer(vma_allocator, staging_index_buffer.buffer, staging_index_buffer.allocation);
 
 		return result;
-	}
-
-	
-	std::vector<std::shared_ptr<InexorMeshBuffer>> InexorMeshBufferManager::get_all_meshes()
-	{
-		assert(mesh_buffer_manager_initialised);
-		return get_all_values();
 	}
 
 

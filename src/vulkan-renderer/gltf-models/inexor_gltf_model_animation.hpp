@@ -9,7 +9,6 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
 	/// 
@@ -27,6 +26,5 @@ namespace gltf2 {
 	};
 
 
-};
 };
 };

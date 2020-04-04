@@ -7,7 +7,6 @@
 #include <memory>
 
 #include <spdlog/spdlog.h>
-
 #include <vulkan/vulkan.h>
 
 #include "inexor_bounding_box.hpp"
@@ -24,10 +23,11 @@
 #include "inexor_gltf_model.hpp"
 
 #include "../class-templates/manager_template.hpp"
-
 #include "../texture-manager/vk_texture_manager.hpp"
 #include "../uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "../mesh-buffer-manager/vk_mesh_buffer_manager.hpp"
+#include "../descriptor-set-manager/descriptor_set_manager.hpp"
+#include "../descriptor-set-manager/descriptor_set_builder.hpp"
 
 
 // JSON for modern C++11 library.
@@ -38,10 +38,10 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
 	/// @class InexorModelManager
+	/// TODO: Make InexorModelLoader and inherit!
 	/// @brief A manager class for model in glTF 2.0 format.
 	/// https://www.khronos.org/gltf/
 	struct InexorModelManager : ManagerClassTemplate<InexorModel>
@@ -49,13 +49,9 @@ namespace gltf2 {
 
 		public:
 		
-			InexorModelManager()
-			{
-			}
+			InexorModelManager() = default;
 
-			~InexorModelManager()
-			{
-			}
+			~InexorModelManager() = default;
 
 
 		private:
@@ -68,6 +64,10 @@ namespace gltf2 {
 			
 			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager;
 
+			std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager;
+
+			std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder;
+
 		
 		public:
 		
@@ -75,45 +75,58 @@ namespace gltf2 {
 			/// @param texture_manager [in] A shared pointer to the texture manager.
 			/// @param uniform_buffer_manager [in] A shared pointer to the uniform buffer manager.
 			/// @param mesh_buffer_manager [in] mesh_buffer_manager A shared pointer to the mesh buffer manager.
-			VkResult initialise(const std::shared_ptr<VulkanTextureManager> texture_manager, const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager, const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager);
+			VkResult initialise(const std::shared_ptr<VulkanTextureManager> texture_manager,
+			                    const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
+								const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
+								const std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager,
+								const std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder);
 
 
 			/// @brief Loads a glTF 2.0 file.
 			/// @param internal_model_name [in] The internal name of the glTF 2.0 model which is used inside of the engine.
 			/// @param glTF2_file_name [in] The filename of the glTF 2.0 file.
-			//VkResult load_model_from_glTF2_file(const std::string& internal_model_name, const std::string& glTF2_file_name);
-
-
-			/// @brief Unloads a model and frees its memory.
-			/// @param internal_model_name [in] The internal name of the glTF 2.0 model which is used inside of the engine.
-			VkResult unload_model(const std::string& internal_model_name);
-
-
-			/// @brief Unloads all models.
-			VkResult unload_all_models();
+			VkResult load_model_from_glTF2_file(const std::string& internal_model_name,
+			                                    const std::string& glTF2_file_name);
 
 			
-			/// 
-			/// 
-			/// 
-			VkResult draw_model(const std::string& internal_model_name, VkCommandBuffer commandBuffer);
+			/// @brief Renders a certain model during the recording of a command buffer.
+			/// @param internal_model_name [in] The internal name of the glTF 2.0 model.
+			/// The model must be loaded at this point already.
+			/// @param command_buffer[in] The command buffer which is being recorded.
+			/// @param pipeline_layout [in] The pipeline layout.
+			/// @param current_image_index [in] The current frame index.
+			VkResult render_model(const std::string& internal_model_name,
+			                      VkCommandBuffer command_buffer,
+								  VkPipelineLayout pipeline_layout,
+								  std::size_t current_image_index);
 
 			
-			/// 
-			/// 
-			/// 
-			VkResult draw_all_models(VkCommandBuffer commandBuffer);
+			/// @brief Renders all models during the recording of a command buffer.
+			/// @param command_buffer[in] The command buffer which is being recorded.
+			/// @param pipeline_layout [in] The pipeline layout.
+			/// @param current_image_index [in] The current frame index.
+			VkResult render_all_models(VkCommandBuffer command_buffer,
+									   VkPipelineLayout pipeline_layout,
+									   std::size_t current_image_index);
 
-			
-			/// 
-			/// 
-			/// 
-			VkResult load_model_from_file(const std::string& file_name, const float scale = 1.0f);
 
+			/// @brief Sets up descriptor sets for all models.
+			VkResult create_model_descriptor_sets();
+
+
+			/// @brief Returns the number of existing models.
+			std::size_t get_model_count();
 		
+			
 		private:
 
 
+			/// 
+			/// 
+			/// 
+			VkResult load_model_from_file(const std::string& file_name, std::shared_ptr<InexorModel>& new_model, const float scale = 1.0f);
+
+			
 			/// 
 			void destroy();
 
@@ -151,7 +164,7 @@ namespace gltf2 {
 
 
 			/// 
-			void draw_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer);
+			void render_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
 
 
 			/// 
@@ -176,6 +189,5 @@ namespace gltf2 {
 
 	};
 
-};
 };
 };

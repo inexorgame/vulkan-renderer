@@ -295,7 +295,7 @@ namespace vulkan_renderer {
 		spdlog::debug("Creating a glTF 2.0 model manager instance.");
 
 		// Create an instance of glTF 2.0 model manager.
-		gltf_model_manager->initialise(texture_manager, uniform_buffer_manager, mesh_buffer_manager);
+		gltf_model_manager->initialise(texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_set_manager, descriptor_set_builder);
 
 		return VK_SUCCESS;
 	}
@@ -476,7 +476,7 @@ namespace vulkan_renderer {
 	}
 	
 
-	VkResult VulkanRenderer::record_command_buffers(const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager)
+	VkResult VulkanRenderer::record_command_buffers()
 	{
 		assert(debug_marker_manager);
 		assert(window_width>0);
@@ -484,29 +484,33 @@ namespace vulkan_renderer {
 		
 		spdlog::debug("Recording command buffers.");
 
+		VkCommandBufferBeginInfo command_buffer_begin_info = {};
+
+		command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		command_buffer_begin_info.pNext            = nullptr;
+		command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		command_buffer_begin_info.pInheritanceInfo = nullptr;
+
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			spdlog::debug("Recording command buffer #{}.", i);
 
+			// TODO: Fix debug marker regions in RenderDoc.
 			// Start binding the region with Vulkan debug markers.
 			debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering.", INEXOR_DEBUG_MARKER_GREEN);
-
-			VkCommandBufferBeginInfo command_buffer_begin_info = {};
-
-			command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			command_buffer_begin_info.pNext            = nullptr;
-			command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-			command_buffer_begin_info.pInheritanceInfo = nullptr;
 			
-			// Begin recording of the command buffer.
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
-			if(VK_SUCCESS != result) return result;
+			if(VK_SUCCESS != result)
+			{
+				vulkan_error_check(result);
+				return result;
+			}
 
-			// TODO: Setup clear color by TOML configuration file.
+			// TODO: Setup clear colors by TOML configuration file.
 			std::array<VkClearValue, 2> clear_values;
 			
 			// Note that the order of clear_values must be identical to the order of the attachments.
-			clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+			clear_values[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
 			clear_values[1].depthStencil  = {1.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info = {};
@@ -521,54 +525,11 @@ namespace vulkan_renderer {
 			render_pass_begin_info.pClearValues      = clear_values.data();
 
 			vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
 			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-			VkDeviceSize offsets[] = {0};
-
-
-			auto mesh_buffers = mesh_buffer_manager->get_all_meshes();
-
-
-			for(std::size_t j=0; j<mesh_buffers.size(); j++)
-			{
-				vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &mesh_buffers[j]->vertex_buffer.buffer, offsets);
-
-				if(mesh_buffers[j]->index_buffer_available)
-				{	
-					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j]->description);
-
-					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer + index buffer", INEXOR_DEBUG_MARKER_GREEN);
-				
-					// Use the index buffer as well!
-					vkCmdBindIndexBuffer(command_buffers[i], mesh_buffers[j]->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-				
-					auto descriptor_set = descriptor_set_manager->get_descriptor_set(i);
-
-					vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-
-					// Draw using index buffer + vertex buffer.
-					vkCmdDrawIndexed(command_buffers[i], mesh_buffers[j]->number_of_indices, 1, 0, 0, 0);
-				
-					debug_marker_manager->end_region(command_buffers[i]);
-				}
-				else
-				{
-					spdlog::debug("Recording drawing of buffer '{}'.", mesh_buffers[j]->description);
-					spdlog::warn("No Index buffer specified! This might decrease performance!");
-
-					debug_marker_manager->bind_region(command_buffers[i], "Render vertices using vertex buffer ONLY", INEXOR_DEBUG_MARKER_GREEN);
-
-					auto descriptor_set = descriptor_set_manager->get_descriptor_set(i);
-
-					vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-
-					// Draw using vertex buffer only. No index buffer specified.
-					vkCmdDraw(command_buffers[i], mesh_buffers[j]->number_of_vertices, 1, 0, 0);
-				
-					debug_marker_manager->end_region(command_buffers[i]);
-				}
-
-			}
+			// Draw all models!
+			gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
 
 			vkCmdEndRenderPass(command_buffers[i]);
 
@@ -873,10 +834,13 @@ namespace vulkan_renderer {
 		result = create_swapchain_image_views();
 		if(VK_SUCCESS != result) return result;
 		
+		result = descriptor_set_builder->start_building_descriptor_set("inexor_standard_descriptor_set");
+		vulkan_error_check(result);
+
 		result = create_descriptor_pool();
 		vulkan_error_check(result);
 
-		result = descriptor_set_manager->create_descriptor_set_layouts();
+		result = create_descriptor_set_layouts();
 		vulkan_error_check(result);
 
 		result = create_pipeline();
@@ -888,16 +852,25 @@ namespace vulkan_renderer {
 		result = create_frame_buffers();
 		if(VK_SUCCESS != result) return result;
 		
+		result = create_command_pool();
+		if(VK_SUCCESS != result) return result;
+
 		result = create_uniform_buffers();
 		if(VK_SUCCESS != result) return result;
-		
+
+		result = create_descriptor_writes();
+		if(VK_SUCCESS != result) return result;
+
 		result = create_descriptor_sets();
 		if(VK_SUCCESS != result) return result;
 		
+		result = gltf_model_manager->create_model_descriptor_sets();
+		if(VK_SUCCESS != result) return result;
+
 		result = create_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
-		result = record_command_buffers(mesh_buffer_manager);
+		result = record_command_buffers();
 		if(VK_SUCCESS != result) return result;
 
 		calculate_memory_budget();
@@ -905,11 +878,13 @@ namespace vulkan_renderer {
 		return VK_SUCCESS;
 	}
 
-
+	
 	VkResult VulkanRenderer::create_descriptor_pool()
 	{
+		// TODO: Abstract this as well! Every descriptor type should add entries in here automatically.
+
 		std::vector<VkDescriptorPoolSize> pool_sizes = {};
-        
+
 		pool_sizes.resize(2);
 
 		pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -919,22 +894,17 @@ namespace vulkan_renderer {
         pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
 		// Create the descriptor pool first.
-		VkResult result = descriptor_set_manager->create_descriptor_pool(pool_sizes);
+		VkResult result = descriptor_set_builder->create_descriptor_pool(pool_sizes);
 		vulkan_error_check(result);
-
+	
 		return VK_SUCCESS;
 	}
 
 
-	VkResult VulkanRenderer::create_descriptor_set_layout()
+	VkResult VulkanRenderer::create_descriptor_set_layouts()
 	{
 		std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layouts;
-		std::vector<VkWriteDescriptorSet> write_descriptor_sets;
-
 		descriptor_set_layouts.resize(2);
-		write_descriptor_sets.resize(2);
-
-		spdlog::debug("Creating descriptor set layout.");
 
 		descriptor_set_layouts[0].binding            = 0;
 		descriptor_set_layouts[0].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -948,61 +918,63 @@ namespace vulkan_renderer {
         descriptor_set_layouts[1].pImmutableSamplers = nullptr;
         descriptor_set_layouts[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		for(std::size_t i=0; i<descriptor_set_layouts.size(); i++)
+		VkResult result;
+
+		for(const auto& descriptor_set_layout : descriptor_set_layouts)
 		{
-			VkResult result = descriptor_set_manager->add_descriptor_set_layout_binding(descriptor_set_layouts[i]);
+			result = descriptor_set_builder->add_descriptor_set_layout_binding(descriptor_set_layout);
 			vulkan_error_check(result);
 		}
-		
-		descriptor_set_manager->create_descriptor_set_layouts();
+
+		result = descriptor_set_builder->create_descriptor_set_layouts();
+		vulkan_error_check(result);
 
 		return VK_SUCCESS;
 	}
 
-	
-	VkResult VulkanRenderer::create_descriptor_sets()
+
+	VkResult VulkanRenderer::create_descriptor_writes()
 	{
 		std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
 
-        VkDescriptorBufferInfo uniform_buffer_info = {};
-		
 		uniform_buffer_info.buffer = matrices->buffer;
         uniform_buffer_info.offset = 0;
         uniform_buffer_info.range  = sizeof(UniformBufferObject);
 
 		descriptor_writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		//descriptor_writes[0].dstSet        = descriptor_sets[i];
-
-		// TODO: Resolve issue of duplicated data!
+		descriptor_writes[0].dstSet          = 0; // This will be overwritten automatically by descriptor_set_builder.
 		descriptor_writes[0].dstBinding      = 0;
 		descriptor_writes[0].dstArrayElement = 0;
 		descriptor_writes[0].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_writes[0].descriptorCount = 1;
 		descriptor_writes[0].pBufferInfo     = &uniform_buffer_info;
 
-		VkResult result = descriptor_set_manager->add_write_descriptor_set(descriptor_writes[0]);
+		VkResult result = descriptor_set_builder->add_write_descriptor_set(descriptor_writes[0]);
 		vulkan_error_check(result);
-
-		VkDescriptorImageInfo image_info = {};
 			
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		image_info.imageView   = texture_manager->get_texture_view("example_texture_1").value();
 		image_info.sampler     = texture_manager->get_texture_sampler("example_texture_1").value();
 
 		descriptor_writes[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		//descriptor_writes[1].dstSet        = descriptor_sets[i];
-
-		// TODO: Resolve issue of duplicated data!
+		descriptor_writes[1].dstSet          = 0; // This will be overwritten automatically by descriptor_set_builder.
 		descriptor_writes[1].dstBinding      = 1;
 		descriptor_writes[1].dstArrayElement = 0;
 		descriptor_writes[1].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptor_writes[1].descriptorCount = 1;
 		descriptor_writes[1].pImageInfo      = &image_info;
 
-		result = descriptor_set_manager->add_write_descriptor_set(descriptor_writes[1]);
+		result = descriptor_set_builder->add_write_descriptor_set(descriptor_writes[1]);
 		vulkan_error_check(result);
 
-		result = descriptor_set_manager->create_descriptor_sets();
+		return VK_SUCCESS;
+	}
+
+
+	VkResult VulkanRenderer::create_descriptor_sets()
+	{
+		// Stop builder pattern.
+		VkResult result = descriptor_set_builder->finalize_building_descriptor_sets();
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1059,8 +1031,8 @@ namespace vulkan_renderer {
 		
 		VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 		
-		auto vertex_binding_description    = gltf2::InexorModelVertex::get_vertex_binding_description();
-		auto attribute_binding_description = gltf2::InexorModelVertex::get_attribute_binding_description();
+		auto vertex_binding_description    = InexorModelVertex::get_vertex_binding_description();
+		auto attribute_binding_description = InexorModelVertex::get_attribute_binding_description();
 
 		vertex_input_create_info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertex_input_create_info.pNext                           = nullptr;
@@ -1166,7 +1138,7 @@ namespace vulkan_renderer {
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 
-		auto descriptor_set_layout = descriptor_set_manager->get_descriptor_set_layout();
+		auto descriptor_set_layout = descriptor_set_builder->get_current_descriptor_set_layout();
 
 		pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_create_info.pNext                  = nullptr;

@@ -5,10 +5,9 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
-	/// 
+	/// TODO: Remove this!
 	struct InexorDimensions
 	{
 		glm::vec3 min = glm::vec3(FLT_MAX);
@@ -16,6 +15,5 @@ namespace gltf2 {
 	};
 
 
-};
 };
 };

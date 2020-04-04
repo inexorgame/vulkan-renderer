@@ -8,7 +8,6 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
 	struct InexorModelPrimitive
@@ -49,6 +48,5 @@ namespace gltf2 {
 	};
 
 
-};
 };
 };

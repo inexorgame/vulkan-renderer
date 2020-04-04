@@ -5,6 +5,7 @@
 
 #include "../uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "../gltf-models/inexor_gltf_model_uniform_buffer.hpp"
+#include "../uniform-buffer/vk_uniform_buffer.hpp"
 
 #include <vector>
 #include <memory>
@@ -12,11 +13,11 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
 	struct InexorModelMesh
 	{
+
 		std::vector<std::shared_ptr<InexorModelPrimitive>> primitives;
 
 
@@ -26,7 +27,7 @@ namespace gltf2 {
 		BoundingBox aabb;
 
 
-		std::shared_ptr<InexorBuffer> uniform_buffer;
+		std::shared_ptr<InexorUniformBuffer> uniform_buffer;
 
 		
 		InexorModelStandardUniformBufferBlock uniform_block;
@@ -58,6 +59,5 @@ namespace gltf2 {
 		}
 	};
 
-};
 };
 };

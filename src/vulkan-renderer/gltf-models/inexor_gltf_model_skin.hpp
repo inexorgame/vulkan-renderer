@@ -11,11 +11,9 @@
 
 namespace inexor {
 namespace vulkan_renderer {
-namespace gltf2 {
 
 
+	// TODO: Remove this!
 
-
-};
 };
 };

@@ -27,7 +27,8 @@
 #include "texture-manager/vk_texture_manager.hpp"
 #include "mesh-buffer/vk_mesh_buffer.hpp"
 #include "depth-buffer/vk_depth_buffer.hpp"
-#include "descriptor-set-manager/vk_descriptor_set_manager.hpp"
+#include "descriptor-set-manager/descriptor_set_builder.hpp"
+#include "descriptor-set-manager/descriptor_set_manager.hpp"
 #include "gltf-models/inexor_gltf_model_manager.hpp"
 #include "uniform-buffer/vk_standard_ubo.hpp"
 #include "camera/InexorCamera.hpp"
@@ -90,7 +91,9 @@ namespace vulkan_renderer {
 			
 			std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
 			
-			std::shared_ptr<VulkanDescriptorSetManager> descriptor_set_manager = std::make_shared<VulkanDescriptorSetManager>();
+			std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder = std::make_shared<InexorDescriptorSetBuilder>();
+
+			std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager = std::make_shared<InexorDescriptorSetManager>();
 
 			std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
@@ -102,7 +105,7 @@ namespace vulkan_renderer {
 
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
 
-			std::shared_ptr<gltf2::InexorModelManager> gltf_model_manager = std::make_shared<gltf2::InexorModelManager>();
+			std::shared_ptr<InexorModelManager> gltf_model_manager = std::make_shared<InexorModelManager>();
 
 			std::shared_ptr<InexorAvailabilityChecksManager> availability_checks_manager = std::make_shared<InexorAvailabilityChecksManager>();
 
@@ -178,7 +181,14 @@ namespace vulkan_renderer {
 
 			GLFWwindow* window = nullptr;
 
-			std::shared_ptr<InexorBuffer> matrices;
+			
+			// TODO: Refactor this!
+	        VkDescriptorBufferInfo uniform_buffer_info = {};
+			VkDescriptorImageInfo image_info = {};
+
+			std::shared_ptr<InexorUniformBuffer> matrices;
+
+
 
 
 		public:
@@ -232,7 +242,7 @@ namespace vulkan_renderer {
 
 
 			/// @brief Records the command buffers.
-			VkResult record_command_buffers(const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager);
+			VkResult record_command_buffers();
 
 
 			/// @brief Creates the semaphores neccesary for synchronisation.
@@ -250,7 +260,19 @@ namespace vulkan_renderer {
 			/// @brief Creates the uniform buffers.
 			VkResult create_uniform_buffers();
 
-			
+
+			/// 
+			VkResult create_descriptor_pool();
+
+
+			/// 
+			VkResult create_descriptor_set_layouts();
+
+
+			/// 
+			VkResult create_descriptor_writes();
+
+
 			/// @brief Creates the descriptor set.
 			VkResult create_descriptor_sets();
 
@@ -261,14 +283,6 @@ namespace vulkan_renderer {
 
 			/// @brief Creates the command pool.
 			VkResult create_command_pool();
-
-
-			// TODO
-			VkResult create_descriptor_pool();
-
-
-			// TODO
-			VkResult create_descriptor_set_layout();
 
 
 			/// @brief Creates the frame buffers.

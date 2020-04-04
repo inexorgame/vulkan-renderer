@@ -109,7 +109,7 @@ namespace vulkan_renderer {
 			                              const void* vertices,
 										  const std::size_t size_of_vertex_structure,
 										  const std::size_t number_of_vertices,
-										  std::shared_ptr<InexorMeshBuffer> output_mesh_buffer);
+										  std::shared_ptr<InexorMeshBuffer>& output_mesh_buffer);
 		
 			
 			/// @brief Creates a new vertex buffer and a corresponding index buffer.
@@ -130,18 +130,12 @@ namespace vulkan_renderer {
 															const void* indices,
 															const std::size_t size_of_index_structure,
 															const std::size_t number_of_indices,
-															std::shared_ptr<InexorMeshBuffer> mesh_buffer_output);
+															std::shared_ptr<InexorMeshBuffer>& mesh_buffer_output);
 
 			
 			// TODO: Overload those methods for established vertex data structures if desired.
 			// TODO: Recycle buffers! Allocation of memory at during rendertime is expensive!
 			// TODO: Destroy buffers.
-
-
-			/// @brief Returns all existing meshes.
-			/// @TODO: Remove this method! We don't want the user to have direct access to the mesh buffers
-			/// because it would require to use the class mutex! Use MeshBufferManager instead!
-			std::vector<std::shared_ptr<InexorMeshBuffer>> get_all_meshes();
 
 
 			/// @brief Destroys all vertex buffers and index buffers.
