@@ -53,7 +53,7 @@ Developers from ARM, LunarG, NVidia.
 
 ## Roadmap
 
-### Initialisation and glTF2 demo (0.1 alpha) (estimated April 5th, 2020)
+### Initialisation and glTF2 demo (0.1 alpha) (estimated April 12th, 2020)
 * [X] Create a [CMake](https://cmake.org/) file with [conan package manager](https://conan.io/) setup.
 * [X] Integrate [Vulkan Memory Allocator (VMA) library](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
 * [X] Integrate [RenderDoc](https://renderdoc.org/) support.
