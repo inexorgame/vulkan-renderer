@@ -1486,10 +1486,10 @@ namespace vulkan_renderer {
 			command_pool = VK_NULL_HANDLE;
 		}
 
-		spdlog::debug("Destroying shader objects.");
+		spdlog::debug("Destroying Vulkan shader objects.");
 		shader_manager->shutdown_shaders();
 		
-		spdlog::debug("Destroying surface.");
+		spdlog::debug("Destroying window surface.");
 		if(VK_NULL_HANDLE != surface)
 		{
 			vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -1498,6 +1498,12 @@ namespace vulkan_renderer {
 		
 		// Destroy Vulkan memory allocator instance.
 		vmaDestroyAllocator(vma_allocator);
+
+		spdlog::debug("Destroying Vulkan command pool.");
+		if(VK_NULL_HANDLE != command_pool)
+		{
+			vkDestroyCommandPool(device, command_pool, nullptr);
+		}
 
 		// Device queues are implicitly cleaned up when the device is destroyed,
 		// so we don’t need to do anything in cleanup.
