@@ -92,7 +92,6 @@ namespace vulkan_renderer {
 	}
 
 
-	// TODO: Implement update_uniform_buffer() by target memory address. Maybe do not check if value exists in unordered_map for performance reasons? Use shared_mutex!
 	VkResult VulkanUniformBufferManager::update_uniform_buffer(const std::string& internal_uniform_buffer_name,
 	                                                           void* data_source_address,
 															   const std::size_t uniform_buffer_size)
@@ -123,6 +122,26 @@ namespace vulkan_renderer {
 
 		// Update the uniform buffer memory!
 		std::memcpy(uniform_buffer.value()->allocation_info.pMappedData, data_source_address, uniform_buffer_size);
+
+		return VK_SUCCESS;
+	}
+
+
+	VkResult VulkanUniformBufferManager::update_uniform_buffer(std::shared_ptr<InexorUniformBuffer>& uniform_buffer,
+														       void* uniform_buffer_new_data_source,
+															   const std::size_t uniform_buffer_size)
+	{
+		assert(uniform_buffer_initialised);
+		assert(uniform_buffer_new_data_source);
+		assert(uniform_buffer_size>0);
+
+		// TODO: Check if value exists? This would decrease performance though..
+		
+		// Lock write access.
+		std::unique_lock<std::shared_mutex> lock(type_manager_shared_mutex);
+
+		// Update the uniform buffer memory!
+		std::memcpy(uniform_buffer->allocation_info.pMappedData, uniform_buffer_new_data_source, uniform_buffer_size);
 
 		return VK_SUCCESS;
 	}

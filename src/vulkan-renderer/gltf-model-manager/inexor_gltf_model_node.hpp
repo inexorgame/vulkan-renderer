@@ -117,15 +117,15 @@ namespace vulkan_renderer {
 
 					spdlog::debug("Updating uniform buffers.");
 
-					// TODO: Call uniform buffer manager?
-					//std::memcpy(mesh->uniform_buffer->allocation_info.pMappedData, &mesh->uniform_block, sizeof(glm::mat4));
+					// Update uniform buffer.
+					uniform_buffer_manager->update_uniform_buffer(mesh->uniform_buffer, &mesh->uniform_block, sizeof(glm::mat4));
 				}
 				else
 				{
 					spdlog::debug("Updating uniform buffers.");
 
-					// TODO: Call uniform buffer manager?
-					//std::memcpy(mesh->uniform_buffer->allocation_info.pMappedData, &m, sizeof(glm::mat4));
+					// Updat uniform buffer.
+					uniform_buffer_manager->update_uniform_buffer(mesh->uniform_buffer, &m, sizeof(glm::mat4));
 				}
 			}
 

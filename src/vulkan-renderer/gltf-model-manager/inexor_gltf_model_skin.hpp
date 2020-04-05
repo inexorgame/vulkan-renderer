@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "../gltf-models/inexor_gltf_model_node.hpp"
+#include "../gltf-model-manager/inexor_gltf_model_node.hpp"
 
 
 namespace inexor {

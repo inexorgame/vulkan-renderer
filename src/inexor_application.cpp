@@ -671,6 +671,9 @@ namespace vulkan_renderer {
 		result = load_models();
 		vulkan_error_check(result);
 
+		//result = gltf_model_manager->setup_descriptors();
+		//vulkan_error_check(result);
+
 		result = record_command_buffers();
 		vulkan_error_check(result);
 

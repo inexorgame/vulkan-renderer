@@ -18,7 +18,7 @@
 #include "shader-manager/vk_shader_manager.hpp"
 #include "fence-manager/vk_fence_manager.hpp"
 #include "semaphore-manager/vk_semaphore_manager.hpp"
-#include "gltf-models/inexor_gltf_model_vertex.hpp"
+#include "gltf-model-manager/inexor_gltf_model_vertex.hpp"
 #include "mesh-buffer-manager/vk_mesh_buffer_manager.hpp"
 #include "uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "debug-marker/vk_debug_marker_manager.hpp"
@@ -29,7 +29,7 @@
 #include "depth-buffer/vk_depth_buffer.hpp"
 #include "descriptor-set-manager/descriptor_set_builder.hpp"
 #include "descriptor-set-manager/descriptor_set_manager.hpp"
-#include "gltf-models/inexor_gltf_model_manager.hpp"
+#include "gltf-model-manager/inexor_gltf_model_manager.hpp"
 #include "uniform-buffer/vk_standard_ubo.hpp"
 #include "camera/InexorCamera.hpp"
 

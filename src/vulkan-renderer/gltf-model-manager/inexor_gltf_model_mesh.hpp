@@ -4,7 +4,7 @@
 #include "inexor_gltf_primitive.hpp"
 
 #include "../uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
-#include "../gltf-models/inexor_gltf_model_uniform_buffer.hpp"
+#include "../gltf-model-manager/inexor_gltf_model_uniform_buffer.hpp"
 #include "../uniform-buffer/vk_uniform_buffer.hpp"
 
 #include <vector>

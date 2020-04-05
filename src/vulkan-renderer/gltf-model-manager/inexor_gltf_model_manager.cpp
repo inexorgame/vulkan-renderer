@@ -39,8 +39,6 @@ namespace vulkan_renderer {
 
 	void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<InexorModel> model, float globalscale)
 	{
-		spdlog::debug("loadNode");
-
 		assert(model_manager_initialised);
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
@@ -109,7 +107,7 @@ namespace vulkan_renderer {
 			// Allocate uniform buffers!
 			uniform_buffer_manager->create_uniform_buffer(gltf_model_name, sizeof(InexorModelStandardUniformBufferBlock), newMesh->uniform_buffer);
 
-			newMesh->set_matrix(newNode->matrix);
+			//newMesh->set_matrix(newNode->matrix);
 
 			for(std::size_t j = 0; j < mesh.primitives.size(); j++)
 			{

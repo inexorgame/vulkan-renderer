@@ -5,13 +5,13 @@
 // License: MIT.
 #include "../../third_party/vma/vk_mem_alloc.h"
 
-#include "../gltf-models/inexor_gltf_model_vertex.hpp"
 #include "../mesh-buffer/vk_mesh_buffer.hpp"
-#include "../debug-marker/vk_debug_marker_manager.hpp"
-#include "../gltf-models/inexor_gltf_model_vertex.hpp"
 #include "../error-handling/vk_error_handling.hpp"
 #include "../class-templates/manager_template.hpp"
-#include "../gltf-models/inexor_gltf_model_vertex.hpp"
+#include "../gltf-model-manager/inexor_gltf_model_vertex.hpp"
+#include "../debug-marker/vk_debug_marker_manager.hpp"
+#include "../gltf-model-manager/inexor_gltf_model_vertex.hpp"
+#include "../gltf-model-manager/inexor_gltf_model_vertex.hpp"
 
 #include <vector>
 #include <shared_mutex>
