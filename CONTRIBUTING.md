@@ -6,3 +6,6 @@ Join our telegram group: https://t.me/inexor
 
 * Advice on thread safety and code design.
 * CMake improvements and feedback.
+
+[Shikijo](https://github.com/Shikijo)
+* Pointed out broken glsl compiler batch script on Windows.
