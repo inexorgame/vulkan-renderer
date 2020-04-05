@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     // We can change this upon release to display only messages which have more important log levels (like errors).
     spdlog::set_level(spdlog::level::debug);
     
-    spdlog::set_pattern("[%t][%H:%M:%S.%e][%^%l%$] %v");
+    spdlog::set_pattern("%t %H:%M:%S.%f %^%l%$ %v");
     
     spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 
