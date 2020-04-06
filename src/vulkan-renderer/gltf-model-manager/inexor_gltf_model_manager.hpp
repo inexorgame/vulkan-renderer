@@ -26,8 +26,7 @@
 #include "../texture-manager/vk_texture_manager.hpp"
 #include "../uniform-buffer-manager/vk_uniform_buffer_manager.hpp"
 #include "../mesh-buffer-manager/vk_mesh_buffer_manager.hpp"
-#include "../descriptor-set-manager/descriptor_set_manager.hpp"
-#include "../descriptor-set-manager/descriptor_set_builder.hpp"
+#include "../descriptor-manager/descriptor_manager.hpp"
 
 
 // JSON for modern C++11 library.
@@ -56,6 +55,8 @@ namespace vulkan_renderer {
 
 		private:
 		
+			VkDevice device;
+			
 			bool model_manager_initialised = false;
 		
 			std::shared_ptr<VulkanTextureManager> texture_manager;
@@ -64,22 +65,25 @@ namespace vulkan_renderer {
 			
 			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager;
 
-			std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager;
+			std::shared_ptr<InexorDescriptorManager> descriptor_manager;
 
-			std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder;
+			// The global descriptor bundle for glTF 2.0 models.
+			std::shared_ptr<InexorDescriptorBundle> gltf_global_descriptor_bundle;
 
 		
 		public:
 		
 			/// @brief Initialises Vulkan glTF 2.0 model manager.
+			/// @param device [in] The Vulkan device.
+			/// @param global_descriptor_bundle [in] The global descriptor bundle.
 			/// @param texture_manager [in] A shared pointer to the texture manager.
 			/// @param uniform_buffer_manager [in] A shared pointer to the uniform buffer manager.
 			/// @param mesh_buffer_manager [in] mesh_buffer_manager A shared pointer to the mesh buffer manager.
-			VkResult initialise(const std::shared_ptr<VulkanTextureManager> texture_manager,
+			VkResult initialise(const VkDevice& device,
+								const std::shared_ptr<VulkanTextureManager> texture_manager,
 			                    const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
 								const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
-								const std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager,
-								const std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder);
+								const std::shared_ptr<InexorDescriptorManager> descriptor_manager);
 
 
 			/// @brief Loads a glTF 2.0 file.
@@ -110,8 +114,8 @@ namespace vulkan_renderer {
 									   std::size_t current_image_index);
 
 
-			/// @brief Sets up descriptor sets for all models.
-			VkResult create_model_descriptor_sets();
+			/// 
+			VkResult create_model_descriptors(const std::size_t number_of_images_in_swapchain);
 
 
 			/// @brief Returns the number of existing models.
@@ -119,6 +123,11 @@ namespace vulkan_renderer {
 		
 			
 		private:
+
+			
+			/// @brief Sets up descriptor sets for glTF model nodes.
+			/// @param node [in] A glTF model node.
+			VkResult setup_node_descriptor_set(std::shared_ptr<InexorModelNode> node);
 
 
 			/// 
@@ -132,7 +141,11 @@ namespace vulkan_renderer {
 
 
 			/// 
-			void load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, const uint32_t nodeIndex, std::shared_ptr<InexorModel> model, const float globalscale);
+			void load_node(std::shared_ptr<InexorModelNode> parent, 
+						   const tinygltf::Node &node,
+						   const uint32_t nodeIndex,
+						   std::shared_ptr<InexorModel> model,
+						   const float globalscale);
 
 
 			/// 

@@ -290,17 +290,6 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult VulkanRenderer::initialise_glTF2_model_manager()
-	{
-		spdlog::debug("Creating a glTF 2.0 model manager instance.");
-
-		// Create an instance of glTF 2.0 model manager.
-		gltf_model_manager->initialise(texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_set_manager, descriptor_set_builder);
-
-		return VK_SUCCESS;
-	}
-
-
 	VkResult VulkanRenderer::create_command_pool()
 	{
 		assert(device);
@@ -510,7 +499,7 @@ namespace vulkan_renderer {
 			std::array<VkClearValue, 2> clear_values;
 			
 			// Note that the order of clear_values must be identical to the order of the attachments.
-			clear_values[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
+			clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
 			clear_values[1].depthStencil  = {1.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info = {};
@@ -528,12 +517,10 @@ namespace vulkan_renderer {
 
 			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-			// Draw all models!
 			gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
 
 			vkCmdEndRenderPass(command_buffers[i]);
 
-			// End recording of the command buffer.
 			result = vkEndCommandBuffer(command_buffers[i]);
 			if(VK_SUCCESS != result) return result;
 			
@@ -801,7 +788,11 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Destroying descriptor sets and layouts.");
 	
-		descriptor_set_manager->shutdown_descriptor_sets();
+		descriptor_manager->shutdown_descriptors();
+
+		global_descriptor_bundle = VK_NULL_HANDLE;
+		
+		global_descriptor_pool = VK_NULL_HANDLE;
 
 		return VK_SUCCESS;
 	}
@@ -833,11 +824,11 @@ namespace vulkan_renderer {
 
 		result = create_swapchain_image_views();
 		if(VK_SUCCESS != result) return result;
-		
-		result = descriptor_set_builder->start_building_descriptor_set("inexor_standard_descriptor_set");
-		vulkan_error_check(result);
 
 		result = create_descriptor_pool();
+		vulkan_error_check(result);
+		
+		result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor_bundle);
 		vulkan_error_check(result);
 
 		result = create_descriptor_set_layouts();
@@ -864,7 +855,7 @@ namespace vulkan_renderer {
 		result = create_descriptor_sets();
 		if(VK_SUCCESS != result) return result;
 		
-		result = gltf_model_manager->create_model_descriptor_sets();
+		result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
 		if(VK_SUCCESS != result) return result;
 
 		result = create_command_buffers();
@@ -881,8 +872,6 @@ namespace vulkan_renderer {
 	
 	VkResult VulkanRenderer::create_descriptor_pool()
 	{
-		// TODO: Abstract this as well! Every descriptor type should add entries in here automatically.
-
 		std::vector<VkDescriptorPoolSize> pool_sizes = {};
 
 		pool_sizes.resize(2);
@@ -894,7 +883,7 @@ namespace vulkan_renderer {
         pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
 		// Create the descriptor pool first.
-		VkResult result = descriptor_set_builder->create_descriptor_pool(pool_sizes);
+		VkResult result = descriptor_manager->create_descriptor_pool("global_descriptor_pool", pool_sizes, global_descriptor_pool);
 		vulkan_error_check(result);
 	
 		return VK_SUCCESS;
@@ -922,11 +911,11 @@ namespace vulkan_renderer {
 
 		for(const auto& descriptor_set_layout : descriptor_set_layouts)
 		{
-			result = descriptor_set_builder->add_descriptor_set_layout_binding(descriptor_set_layout);
+			result = descriptor_manager->add_descriptor_set_layout_binding(global_descriptor_bundle, descriptor_set_layout);
 			vulkan_error_check(result);
 		}
 
-		result = descriptor_set_builder->create_descriptor_set_layouts();
+		result = descriptor_manager->create_descriptor_set_layouts(global_descriptor_bundle);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -949,7 +938,7 @@ namespace vulkan_renderer {
 		descriptor_writes[0].descriptorCount = 1;
 		descriptor_writes[0].pBufferInfo     = &uniform_buffer_info;
 
-		VkResult result = descriptor_set_builder->add_write_descriptor_set(descriptor_writes[0]);
+		VkResult result = descriptor_manager->add_write_descriptor_set(global_descriptor_bundle, descriptor_writes[0]);
 		vulkan_error_check(result);
 			
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -964,7 +953,7 @@ namespace vulkan_renderer {
 		descriptor_writes[1].descriptorCount = 1;
 		descriptor_writes[1].pImageInfo      = &image_info;
 
-		result = descriptor_set_builder->add_write_descriptor_set(descriptor_writes[1]);
+		result = descriptor_manager->add_write_descriptor_set(global_descriptor_bundle, descriptor_writes[1]);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -973,8 +962,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanRenderer::create_descriptor_sets()
 	{
-		// Stop builder pattern.
-		VkResult result = descriptor_set_builder->finalize_building_descriptor_sets();
+		VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor_bundle);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1138,13 +1126,11 @@ namespace vulkan_renderer {
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 
-		auto descriptor_set_layout = descriptor_set_builder->get_current_descriptor_set_layout();
-
 		pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_create_info.pNext                  = nullptr;
 		pipeline_layout_create_info.flags                  = 0;
 		pipeline_layout_create_info.setLayoutCount         = 1;
-		pipeline_layout_create_info.pSetLayouts            = &descriptor_set_layout;
+		pipeline_layout_create_info.pSetLayouts            = &global_descriptor_bundle->descriptor_set_layout;
 		pipeline_layout_create_info.pushConstantRangeCount = 0;
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
@@ -1467,7 +1453,7 @@ namespace vulkan_renderer {
 		texture_manager->shutdown_textures();
 
 		spdlog::debug("Destroying descriptor set layout.");
-		descriptor_set_manager->shutdown_descriptor_sets(true);
+		descriptor_manager->shutdown_descriptors(true);
 
 		spdlog::debug("Destroying vertex buffers.");
 		mesh_buffer_manager->shutdown_vertex_and_index_buffers();
@@ -1512,6 +1498,12 @@ namespace vulkan_renderer {
 		{
 			vkDestroyDevice(device, nullptr);
 		}
+		
+		descriptor_manager->shutdown_descriptors();
+
+		global_descriptor_bundle = VK_NULL_HANDLE;
+		
+		global_descriptor_pool = VK_NULL_HANDLE;
 		
 		// Destroy Vulkan debug callback.
 		if(debug_report_callback_initialised)

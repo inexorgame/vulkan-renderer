@@ -13,6 +13,8 @@ namespace vulkan_renderer {
 		assert(vma_allocator);
 		assert(debug_marker_manager);
 
+		// TODO: Use mutex here!
+
 		spdlog::debug("Initialising uniorm buffer manager.");
 
 		this->device = device;

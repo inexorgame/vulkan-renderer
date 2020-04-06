@@ -27,8 +27,7 @@
 #include "texture-manager/vk_texture_manager.hpp"
 #include "mesh-buffer/vk_mesh_buffer.hpp"
 #include "depth-buffer/vk_depth_buffer.hpp"
-#include "descriptor-set-manager/descriptor_set_builder.hpp"
-#include "descriptor-set-manager/descriptor_set_manager.hpp"
+#include "descriptor-manager/descriptor_manager.hpp"
 #include "gltf-model-manager/inexor_gltf_model_manager.hpp"
 #include "uniform-buffer/vk_standard_ubo.hpp"
 #include "camera/InexorCamera.hpp"
@@ -90,10 +89,12 @@ namespace vulkan_renderer {
 			std::shared_ptr<VulkanSemaphoreManager> semaphore_manager = std::make_shared<VulkanSemaphoreManager>();
 			
 			std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
-			
-			std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder = std::make_shared<InexorDescriptorSetBuilder>();
 
-			std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager = std::make_shared<InexorDescriptorSetManager>();
+			std::shared_ptr<InexorDescriptorManager> descriptor_manager = std::make_shared<InexorDescriptorManager>();
+
+			std::shared_ptr<InexorDescriptorBundle> global_descriptor_bundle;
+
+			std::shared_ptr<InexorDescriptorPool> global_descriptor_pool;
 
 			std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 

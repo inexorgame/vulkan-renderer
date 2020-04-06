@@ -357,8 +357,6 @@ namespace vulkan_renderer {
 		// Initialise Inexor thread-pool.
 		thread_pool = std::make_shared<InexorThreadPool>();
 
-		initialise_glTF2_model_manager();
-
 		// Load the configuration from the TOML file.
 		VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
 		vulkan_error_check(result);
@@ -592,6 +590,9 @@ namespace vulkan_renderer {
 		result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
+		result = gltf_model_manager->initialise(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
+		vulkan_error_check(result);
+
 		result = check_application_specific_features();
 		vulkan_error_check(result);
 
@@ -625,17 +626,13 @@ namespace vulkan_renderer {
 		result = load_shaders();
 		vulkan_error_check(result);
 
-		result = descriptor_set_manager->initialise(device, debug_marker_manager, number_of_images_in_swapchain);
-		vulkan_error_check(result);
-
-		// TODO: Remove "3" and replace it with some sort of frame buffering manager?
-		result = descriptor_set_builder->initialise(device, 3, descriptor_set_manager, debug_marker_manager);
-		vulkan_error_check(result);
-
-		result = descriptor_set_builder->start_building_descriptor_set("inexor_standard_descriptor_set");
+		result = descriptor_manager->initialise(device, number_of_images_in_swapchain, debug_marker_manager);
 		vulkan_error_check(result);
 
 		result = create_descriptor_pool();
+		vulkan_error_check(result);
+
+		result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor_bundle);
 		vulkan_error_check(result);
 
 		result = create_descriptor_set_layouts();
@@ -671,8 +668,8 @@ namespace vulkan_renderer {
 		result = load_models();
 		vulkan_error_check(result);
 
-		//result = gltf_model_manager->setup_descriptors();
-		//vulkan_error_check(result);
+		result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
+		vulkan_error_check(result);
 
 		result = record_command_buffers();
 		vulkan_error_check(result);
@@ -699,7 +696,7 @@ namespace vulkan_renderer {
 		InexorKeyboardInputHandler::initialise(window, keyboard_input_callback_reloader);
 		
 		camera.set_position(glm::vec3(0.0f, 5.0f, 5.0f));
-		camera.set_direction(glm::vec3(0.0f, 1.0f, 0.0f));
+		camera.set_direction(glm::vec3(0.0f, 1.0f, 1.0f));
 		camera.set_speed(0.5f);
 
 		camera.update(time_passed);

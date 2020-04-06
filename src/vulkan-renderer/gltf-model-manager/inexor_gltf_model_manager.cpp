@@ -10,26 +10,26 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	VkResult InexorModelManager::initialise(const std::shared_ptr<VulkanTextureManager> texture_manager,
+	VkResult InexorModelManager::initialise(const VkDevice& device,
+											const std::shared_ptr<VulkanTextureManager> texture_manager,
 	                                        const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
 											const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
-											const std::shared_ptr<InexorDescriptorSetManager> descriptor_set_manager,
-											const std::shared_ptr<InexorDescriptorSetBuilder> descriptor_set_builder)
+											const std::shared_ptr<InexorDescriptorManager> descriptor_manager)
 	{
 		assert(texture_manager);
 		assert(uniform_buffer_manager);
 		assert(mesh_buffer_manager);
-		assert(descriptor_set_manager);
+		assert(descriptor_manager);
 
 		// TODO: Mutex here!
 
 		spdlog::debug("Initialising glTF 2.0 model manager.");
 
+		this->device                 = device;
 		this->texture_manager        = texture_manager;
 		this->uniform_buffer_manager = uniform_buffer_manager;
 		this->mesh_buffer_manager    = mesh_buffer_manager;
-		this->descriptor_set_manager = descriptor_set_manager;
-		this->descriptor_set_builder = descriptor_set_builder;
+		this->descriptor_manager = descriptor_manager;
 
 		model_manager_initialised = true;
 
@@ -37,7 +37,11 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<InexorModel> model, float globalscale)
+	void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent,
+	                                   const tinygltf::Node &node,
+									   uint32_t node_index,
+									   std::shared_ptr<InexorModel> model,
+									   float globalscale)
 	{
 		assert(model_manager_initialised);
 		assert(texture_manager);
@@ -758,7 +762,9 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorModelManager::load_model_from_file(const std::string& file_name, std::shared_ptr<InexorModel>& new_model, const float scale)
+	VkResult InexorModelManager::load_model_from_file(const std::string& file_name,
+	                                                  std::shared_ptr<InexorModel>& new_model,
+													  const float scale)
 	{
 		assert(model_manager_initialised);
 		assert(texture_manager);
@@ -777,6 +783,7 @@ namespace vulkan_renderer {
 		
 		if(extpos != std::string::npos)
 		{
+			// TODO: Move to tools:: find_file_extension?
 			// Check if it's a binary glTF file or a raw text file.
 			is_binary_file = (file_name.substr(extpos + 1, file_name.length() - extpos) == "glb");
 		}  
@@ -872,8 +879,19 @@ namespace vulkan_renderer {
 		std::size_t number_of_indices = new_model->index_buffer_cache.size();
 
 		// Create a vertex buffer and an index buffer for the model.
-		VkResult result = mesh_buffer_manager->create_vertex_buffer_with_index_buffer(file_name, new_model->vertex_buffer_cache.data(), sizeof(InexorModelVertex), new_model->vertex_buffer_cache.size(), new_model->index_buffer_cache.data(), sizeof(uint32_t), number_of_indices, new_model->mesh);
-		vulkan_error_check(result);
+		if(number_of_indices > 0)
+		{
+			// Create a vertex buffer with an index buffer, as it should always be!
+			VkResult result = mesh_buffer_manager->create_vertex_buffer_with_index_buffer(file_name, new_model->vertex_buffer_cache.data(), sizeof(InexorModelVertex), new_model->vertex_buffer_cache.size(), new_model->index_buffer_cache.data(), sizeof(uint32_t), number_of_indices, new_model->mesh);
+			vulkan_error_check(result);
+		}
+		else
+		{
+			// Always make sure you use a model which has indices.
+			// Not using an index buffer decreases performance significantly!
+			VkResult result = mesh_buffer_manager->create_vertex_buffer(file_name, new_model->vertex_buffer_cache.data(), sizeof(InexorModelVertex), new_model->vertex_buffer_cache.size(), new_model->mesh);
+			vulkan_error_check(result);
+		}
 
 		spdlog::debug("Calculating model dimensions.");
 
@@ -883,7 +901,10 @@ namespace vulkan_renderer {
 	}
 
 
-	void InexorModelManager::render_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index)
+	void InexorModelManager::render_node(std::shared_ptr<InexorModelNode> node,
+	                                     VkCommandBuffer commandBuffer,
+										 VkPipelineLayout pipeline_layout,
+										 std::size_t current_image_index)
 	{
 		assert(model_manager_initialised);
 		assert(texture_manager);
@@ -897,16 +918,22 @@ namespace vulkan_renderer {
 			for(auto primitive : node->mesh->primitives)
 			{
 				// TODO: Implement alpha mode check here.
-				auto global_descriptor_set = descriptor_set_manager->get_descriptor_sets("inexor_standard_descriptor_set");
+				auto global_descriptor_bundle = descriptor_manager->get_descriptor_bundle("inexor_global_descriptor_bundle");
+				
+				assert(global_descriptor_bundle.has_value());
 
 				const std::vector<VkDescriptorSet> descriptor_sets =
 				{
-					global_descriptor_set[current_image_index],
+					global_descriptor_bundle.value()->descriptor_sets[current_image_index],
 					//primitive->material.descriptorSet,
 					//node->mesh->uniform_buffer->descriptor_set
 				};
 
+				// TODO: Encapsulate this by descriptor set manager?
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<uint32_t>(descriptor_sets.size()), descriptor_sets.data(), 0, NULL);
+
+				// TODO! InexorPushConstantsManager
+				//vkCmdPushConstants
 
 				if(primitive->hasIndices)
 				{
@@ -923,7 +950,7 @@ namespace vulkan_renderer {
 		{
 			render_node(child, commandBuffer, pipeline_layout, current_image_index);
 		}
-	}
+	}	
 
 
 	VkResult InexorModelManager::render_model(const std::string& internal_model_name, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index)
@@ -1206,14 +1233,50 @@ namespace vulkan_renderer {
 	}
 
 
-	VkResult InexorModelManager::create_model_descriptor_sets()
+	VkResult InexorModelManager::create_model_descriptors(const std::size_t number_of_images_in_swapchain)
 	{
-		assert(model_manager_initialised);
 		
-		// TODO: Implement!
+		return VK_SUCCESS;
+	}
+
+
+	VkResult InexorModelManager::setup_node_descriptor_set(std::shared_ptr<InexorModelNode> node)
+	{
+		if(node->mesh)
+		{
+			// TODO!
+			/*
+			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+			
+			descriptorSetAllocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descriptorSetAllocInfo.descriptorPool     = descriptor_pool;
+			descriptorSetAllocInfo.pSetLayouts        = &descriptor_set_for_gltf_model_nodes;
+			descriptorSetAllocInfo.descriptorSetCount = 1;
+
+			VkResult result = vkAllocateDescriptorSets(device, &descriptorSetAllocInfo, &node->mesh->uniform_buffer->descriptor_set);
+			vulkan_error_check(result);
+
+			VkWriteDescriptorSet writeDescriptorSet{};
+
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.dstSet = node->mesh->uniform_buffer->descriptor_set;
+			writeDescriptorSet.dstBinding = 0;
+			writeDescriptorSet.pBufferInfo = &node->mesh->uniform_buffer->descriptor_buffer_info;
+
+			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+			*/
+		}
+
+		for(auto& child : node->children)
+		{
+			setup_node_descriptor_set(child);
+		}
 
 		return VK_SUCCESS;
 	}
+
 
 	std::size_t InexorModelManager::get_model_count()
 	{
