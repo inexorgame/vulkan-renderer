@@ -13,15 +13,8 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	class InexorDescriptorBundle
+	struct InexorDescriptorBundle
 	{
-		private:
-		
-			std::string internal_descriptor_set_name;
-
-			std::shared_ptr<InexorDescriptorPool> descriptor_pool;
-
-
 		public:
 
 
@@ -32,22 +25,15 @@ namespace vulkan_renderer {
 			/// @brief Allow name and descriptor pool to be set in constructor only!
 			InexorDescriptorBundle(const std::string& internal_descriptor_set_name,
 			                       std::shared_ptr<InexorDescriptorPool> descriptor_pool)
+				: name(internal_descriptor_set_name),
+				  associated_descriptor_pool(descriptor_pool)
 			{
-				this->internal_descriptor_set_name = internal_descriptor_set_name;
-				this->descriptor_pool = descriptor_pool;
 			}
 			
 
-			std::string get_name() const
-			{
-				return internal_descriptor_set_name;
-			}
+			const std::string name;
 
-
-			VkDescriptorPool get_descriptor_pool() const
-			{
-				return descriptor_pool->pool;
-			}
+			const std::shared_ptr<InexorDescriptorPool> associated_descriptor_pool;
 
 			VkDescriptorSetLayout descriptor_set_layout;
 

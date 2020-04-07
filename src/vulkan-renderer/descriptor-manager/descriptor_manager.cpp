@@ -42,7 +42,7 @@ namespace vulkan_renderer {
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		descriptor_pool = std::make_shared<InexorDescriptorPool>();
+		descriptor_pool = std::make_shared<InexorDescriptorPool>(internal_descriptor_pool_name, pool_sizes);
 
 		spdlog::debug("Creating new descriptor pool.");
 
@@ -102,7 +102,7 @@ namespace vulkan_renderer {
 		assert(descriptor_manager_initialised);
 		assert(descriptor_bundle);
 
-		spdlog::debug("Adding descriptor set layout to '{}'.", descriptor_bundle->get_name());
+		spdlog::debug("Adding descriptor set layout to '{}'.", descriptor_bundle->name);
 
 		// Add the new descriptor set layout binding to the descriptor bundle.
 		descriptor_bundle->descriptor_set_layout_bindings.push_back(descriptor_set_layout_binding);
@@ -117,7 +117,7 @@ namespace vulkan_renderer {
 		assert(descriptor_manager_initialised);
 		assert(descriptor_bundle);
 
-		spdlog::debug("Adding write descriptor set to '{}'.", descriptor_bundle->get_name());
+		spdlog::debug("Adding write descriptor set to '{}'.", descriptor_bundle->name);
 		
 		// Add the new write descriptor set to the descriptor bundle.
 		descriptor_bundle->write_descriptor_sets.push_back(write_descriptor_set);
@@ -133,7 +133,7 @@ namespace vulkan_renderer {
 		assert(!descriptor_bundle->descriptor_set_layout_bindings.empty());
 		assert(device);
 
-		spdlog::debug("Creating descriptor set layout for '{}'.", descriptor_bundle->get_name());
+		spdlog::debug("Creating descriptor set layout for '{}'.", descriptor_bundle->name);
 
 		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {};
 
@@ -144,7 +144,7 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateDescriptorSetLayout(device, &descriptor_set_layout_create_info, nullptr, &descriptor_bundle->descriptor_set_layout);
 		vulkan_error_check(result);
 
-		std::string debug_marker_name = "Descriptor set layout for descriptor bundle '"+ descriptor_bundle->get_name() +"'.";
+		std::string debug_marker_name = "Descriptor set layout for descriptor bundle '"+ descriptor_bundle->name +"'.";
 		
 		// Assign an appropriate debug marker name to this descriptor pool.
 		debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_bundle->descriptor_set_layout), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, debug_marker_name.c_str());
@@ -160,14 +160,14 @@ namespace vulkan_renderer {
 		assert(!descriptor_bundle->write_descriptor_sets.empty());
 		assert(device);
 
-		spdlog::debug("Creating descriptor sets for '{}'.", descriptor_bundle->get_name());
+		spdlog::debug("Creating descriptor sets for '{}'.", descriptor_bundle->name);
 
 		const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(number_of_images_in_swapchain, descriptor_bundle->descriptor_set_layout);
 
 		VkDescriptorSetAllocateInfo descriptor_set_alloc_info = {};
 
 		descriptor_set_alloc_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptor_set_alloc_info.descriptorPool     = descriptor_bundle->get_descriptor_pool();
+		descriptor_set_alloc_info.descriptorPool     = descriptor_bundle->associated_descriptor_pool->pool;
 		descriptor_set_alloc_info.descriptorSetCount = static_cast<uint32_t>(number_of_images_in_swapchain);
 		descriptor_set_alloc_info.pSetLayouts        = descriptor_set_layouts.data();
 
@@ -179,14 +179,14 @@ namespace vulkan_renderer {
 		VkResult result = vkAllocateDescriptorSets(device, &descriptor_set_alloc_info, descriptor_bundle->descriptor_sets.data());
 		vulkan_error_check(result);
 
-		std::string debug_marker_name = "Descriptor sets for bundle '{"+ descriptor_bundle->get_name() +"}'.";
+		std::string debug_marker_name = "Descriptor sets for bundle '{"+ descriptor_bundle->name +"}'.";
 		
 		// Assign an appropriate debug marker name to these descriptor sets.
 		debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_bundle->descriptor_sets.data()), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, debug_marker_name.c_str());
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
-			spdlog::debug("Updating descriptor set '{}' #{}", descriptor_bundle->get_name(), i);
+			spdlog::debug("Updating descriptor set '{}' #{}", descriptor_bundle->name, i);
 
 			for(std::size_t j=0; j<descriptor_bundle->write_descriptor_sets.size(); j++)
 			{
@@ -197,10 +197,10 @@ namespace vulkan_renderer {
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptor_bundle->write_descriptor_sets.size()), descriptor_bundle->write_descriptor_sets.data(), 0, nullptr);
 		}
 
-		spdlog::debug("Storing descriptor bundle '{}'.", descriptor_bundle->get_name());
+		spdlog::debug("Storing descriptor bundle '{}'.", descriptor_bundle->name);
 
 		// Store the descriptor bundle!
-		ManagerClassTemplate<InexorDescriptorBundle>::add_entry(descriptor_bundle->get_name(), descriptor_bundle);
+		ManagerClassTemplate<InexorDescriptorBundle>::add_entry(descriptor_bundle->name, descriptor_bundle);
 
 		return VK_SUCCESS;
 	}
@@ -235,9 +235,9 @@ namespace vulkan_renderer {
 			vkDestroyDescriptorSetLayout(device, descriptor_bundle->descriptor_set_layout, nullptr);
 			descriptor_bundle->descriptor_set_layout = VK_NULL_HANDLE;
 
-			if(VK_NULL_HANDLE != descriptor_bundle->get_descriptor_pool())
+			if(VK_NULL_HANDLE != descriptor_bundle->associated_descriptor_pool)
 			{
-				vkDestroyDescriptorPool(device, descriptor_bundle->get_descriptor_pool(), nullptr);
+				vkDestroyDescriptorPool(device, descriptor_bundle->associated_descriptor_pool->pool, nullptr);
 				// TODO: Set descriptor pool to VK_NULL_HANDLE?
 			}
 			
