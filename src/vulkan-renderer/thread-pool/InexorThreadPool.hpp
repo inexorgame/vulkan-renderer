@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <thread>
 #include <future>
@@ -157,7 +158,7 @@ namespace inexor {
             
             std::condition_variable tasklist_cv;
 
-            bool stop_threads = false;
+            std::atomic<bool> stop_threads = false;
 
 
     };
