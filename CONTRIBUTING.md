@@ -10,3 +10,6 @@ Join our telegram group: https://t.me/inexor
 
 [Shikijo](https://github.com/Shikijo)
 * Pointed out broken glsl compiler batch script on Windows.
+
+[Croydon](https://github.com/Croydon)
+* Advice on [conan package manager](https://conan.io/).

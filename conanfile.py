@@ -19,7 +19,7 @@ class InexorConan(ConanFile):
         "imgui/1.75",
         "assimp/5.0.1",
         "enet/1.3.14",
-        "stb/20190512@conan/stable",
+        "stb/20200203",
         "zlib/1.2.11",
         "nlohmann_json/3.7.3",
     )
