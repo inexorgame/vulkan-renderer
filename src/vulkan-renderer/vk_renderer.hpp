@@ -76,6 +76,11 @@ namespace vulkan_renderer {
 			// it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
 			bool frame_buffer_resized = false;
 
+			/// Neccesary for taking into account the relative speed of the system's CPU.
+			float time_passed = 0.0f;
+			
+			InexorTimeStep stopwatch;
+
 
 		protected:
 		
@@ -182,14 +187,14 @@ namespace vulkan_renderer {
 
 			GLFWwindow* window = nullptr;
 
+			InexorCamera game_camera_1;
+
 			
 			// TODO: Refactor this!
 	        VkDescriptorBufferInfo uniform_buffer_info = {};
 			VkDescriptorImageInfo image_info = {};
 
 			std::shared_ptr<InexorUniformBuffer> matrices;
-
-
 
 
 		public:
@@ -228,6 +233,10 @@ namespace vulkan_renderer {
 
 			/// @brief Initialises glTF 2.0 model manager.
 			VkResult initialise_glTF2_model_manager();
+
+			
+			/// 
+			VkResult update_cameras();
 
 
 			/// @brief Initialise allocator of Vulkan Memory Allocator library.
@@ -300,6 +309,7 @@ namespace vulkan_renderer {
 
 			/// @brief Destroys all Vulkan objects.
 			VkResult shutdown_vulkan();
+
 
 	};
 	

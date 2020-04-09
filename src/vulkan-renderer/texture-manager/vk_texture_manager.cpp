@@ -172,6 +172,11 @@ namespace vulkan_renderer {
 		VkResult result = vkCreateImageView(device, &texture->view_create_info, nullptr, &texture->image_view);
 		vulkan_error_check(result);
 
+		std::string debug_marker_name = "Image view for texture '"+ texture->name +"'";
+
+		// 
+		debug_marker_manager->set_object_name(device, (uint64_t)(texture->image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, debug_marker_name.c_str());
+
 		return VK_SUCCESS;
 	}
 

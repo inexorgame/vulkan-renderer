@@ -4,16 +4,6 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-
-	InexorCamera::InexorCamera()
-	{
-	}
-
-	
-	InexorCamera::~InexorCamera()
-	{
-	}
-
 	
 	void InexorCamera::set_position(const glm::vec3& position)
 	{

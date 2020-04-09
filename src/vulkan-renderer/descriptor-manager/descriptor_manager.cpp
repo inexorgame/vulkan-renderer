@@ -180,9 +180,13 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		std::string debug_marker_name = "Descriptor sets for bundle '{"+ descriptor_bundle->name +"}'.";
-		
-		// Assign an appropriate debug marker name to these descriptor sets.
-		debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_bundle->descriptor_sets.data()), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, debug_marker_name.c_str());
+	
+		// Iterate through all descriptor sets.
+		for(auto& descriptor_set : descriptor_bundle->descriptor_sets)
+		{
+			// Assign an appropriate debug marker name to these descriptor sets.
+			debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_set), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, debug_marker_name.c_str());
+		}
 
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{

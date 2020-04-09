@@ -265,7 +265,7 @@ namespace vulkan_renderer {
 
 		VkResult result = vkCreateDevice(graphics_card, &device_create_info, nullptr, &device);
 		vulkan_error_check(result);
-
+		
 		return VK_SUCCESS;
 	}
 
@@ -665,6 +665,14 @@ namespace vulkan_renderer {
 		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, swapchain_images.data());
 		if(VK_SUCCESS != result) return result;
 
+		for(std::size_t i=0; i<swapchain_images.size(); i++)
+		{
+			std::string debug_marker_name = "Swapchain image #"+ std::to_string(i);
+
+			// 
+			debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, debug_marker_name.c_str());
+		}
+
 		return VK_SUCCESS;
 	}
 
@@ -797,6 +805,14 @@ namespace vulkan_renderer {
 		return VK_SUCCESS;
 	}
 
+		
+	VkResult VulkanRenderer::update_cameras()
+	{
+		game_camera_1.update(time_passed);
+
+		return VK_SUCCESS;
+	}
+
 
 	VkResult VulkanRenderer::recreate_swapchain()
 	{
@@ -811,6 +827,14 @@ namespace vulkan_renderer {
 			glfwGetFramebufferSize(window, &current_window_width, &current_window_height);
 			glfwWaitEvents();
 		}
+
+		window_width = current_window_width;
+		window_height = current_window_height;
+
+		float aspect_ratio = window_width / static_cast<float>(window_height);
+
+		game_camera_1.set_aspect_ratio(aspect_ratio);
+		game_camera_1.update_matrices();
 
 		vkDeviceWaitIdle(device);
 		

@@ -64,9 +64,6 @@ namespace vulkan_renderer {
 
 		private:
 
-			/// @brief Updates all matrices.
-			void update_matrices();
-
 			/// @brief Updates the view matrix.
 			void update_view_matrix();
 
@@ -76,12 +73,16 @@ namespace vulkan_renderer {
 
 		public:
 
-			InexorCamera();
+			InexorCamera() = default;
 			
 			
-			~InexorCamera();
+			~InexorCamera() = default;
 			
 			
+			/// @brief Updates all matrices.
+			void update_matrices();
+			
+
 			/// @brief Start moving the camera every time update() is called.
 			/// @param moving_backwards [in] True if the camera is moving backwards, false otherwise.
 			void start_camera_movement(bool moving_backwards = false);

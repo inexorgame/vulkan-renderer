@@ -37,11 +37,6 @@ namespace vulkan_renderer {
 
 		private:
 			
-			/// Neccesary for taking into account the relative speed of the system's CPU.
-			float time_passed = 0.0f;
-			
-			InexorTimeStep stopwatch;
-
 			std::string application_name = "";
 
 			std::string engine_name = "";
@@ -77,7 +72,6 @@ namespace vulkan_renderer {
 
 			std::vector<std::string> gltf_model_files;
 
-			InexorCamera camera;
 
 
 		private:
@@ -106,10 +100,6 @@ namespace vulkan_renderer {
 			
 			/// 
 			VkResult render_frame();
-			
-
-			/// 
-			VkResult update_cameras();
 
 
 			/// @brief Implementation of the uniform buffer update method.

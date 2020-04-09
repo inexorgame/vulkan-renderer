@@ -590,6 +590,10 @@ namespace vulkan_renderer {
 		result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
 		vulkan_error_check(result);
 
+		// Assign an appropriate name to the central Vulkan device.
+		// Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
+		//debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
+
 		result = gltf_model_manager->initialise(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
 		vulkan_error_check(result);
 
@@ -695,11 +699,11 @@ namespace vulkan_renderer {
 
 		InexorKeyboardInputHandler::initialise(window, keyboard_input_callback_reloader);
 		
-		camera.set_position(glm::vec3(0.0f, 5.0f, 5.0f));
-		camera.set_direction(glm::vec3(0.0f, 1.0f, 1.0f));
-		camera.set_speed(0.5f);
+		game_camera_1.set_position(glm::vec3(0.0f, 5.0f, 5.0f));
+		game_camera_1.set_direction(glm::vec3(0.0f, 1.0f, 1.0f));
+		game_camera_1.set_speed(0.5f);
 
-		camera.update(time_passed);
+		game_camera_1.update(time_passed);
 
 		return VK_SUCCESS;
 	}
@@ -714,8 +718,8 @@ namespace vulkan_renderer {
 		// Rotate the model as a function of time.
 		ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-		ubo.view  = camera.get_view_matrix();
-		ubo.proj  = camera.get_projection_matrix();
+		ubo.view  = game_camera_1.get_view_matrix();
+		ubo.proj  = game_camera_1.get_projection_matrix();
         
 		ubo.proj[1][1] *= -1;
 
@@ -736,11 +740,11 @@ namespace vulkan_renderer {
 		{
 			if(GLFW_PRESS == action)
 			{
-				camera.start_camera_movement();
+				game_camera_1.start_camera_movement();
 			}
 			if(GLFW_RELEASE == action)
 			{
-				camera.end_camera_movement();
+				game_camera_1.end_camera_movement();
 			}
 		}
 
@@ -750,21 +754,13 @@ namespace vulkan_renderer {
 			if(GLFW_PRESS == action)
 			{
 				// true because we're moving backwards.
-				camera.start_camera_movement(true);
+				game_camera_1.start_camera_movement(true);
 			}
 			if(GLFW_RELEASE == action)
 			{
-				camera.end_camera_movement();
+				game_camera_1.end_camera_movement();
 			}
 		}
-	}
-
-	
-	VkResult InexorApplication::update_cameras()
-	{
-		camera.update(time_passed);
-
-		return VK_SUCCESS;
 	}
 
 
