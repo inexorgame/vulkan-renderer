@@ -145,7 +145,7 @@ namespace vulkan_renderer {
 
 			VkFormat selected_image_format = {};
 			
-			VkExtent2D selected_swapchain_image_extent = {};
+			VkExtent2D swapchain_image_extent = {};
 
 			VkColorSpaceKHR selected_color_space = {};
 
@@ -301,10 +301,6 @@ namespace vulkan_renderer {
 
 			/// @brief Creates the rendering pipeline.
 			VkResult create_pipeline();
-
-
-			/// @brief Creates the image views.
-			VkResult create_swapchain_image_views();
 
 
 			/// @brief Destroys all Vulkan objects.

@@ -495,7 +495,7 @@ namespace vulkan_renderer {
 		}
 
 		// Let's see if there is a graphics card that is suitable for us.
-		std::optional<VkPhysicalDevice> graphics_card_candidate = settings_decision_maker->which_graphics_card_to_use(instance, surface, prefered_graphics_card);
+		std::optional<VkPhysicalDevice> graphics_card_candidate = settings_decision_maker->decide_which_graphics_card_to_use(instance, surface, prefered_graphics_card);
 
 		// Check if we found a graphics card candidate.
 		if(graphics_card_candidate.has_value())
@@ -624,8 +624,9 @@ namespace vulkan_renderer {
 		result = load_textures();
 		vulkan_error_check(result);
 		
-		result = create_swapchain_image_views();
-		vulkan_error_check(result);
+		// TOOD: Can we remove this?
+		//result = create_swapchain_image_views();
+		//vulkan_error_check(result);
 		
 		result = load_shaders();
 		vulkan_error_check(result);

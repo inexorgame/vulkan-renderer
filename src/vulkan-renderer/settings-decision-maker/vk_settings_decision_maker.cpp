@@ -7,7 +7,7 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	uint32_t VulkanSettingsDecisionMaker::how_many_images_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		assert(graphics_card);
 		assert(surface);
@@ -36,7 +36,7 @@ namespace vulkan_renderer {
 	}
 
 
-	std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		assert(graphics_card);
 		assert(surface);
@@ -265,7 +265,7 @@ namespace vulkan_renderer {
 	}
 
 
-	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index)
+	std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index)
 	{
 		assert(vulkan_instance);
 		assert(surface);
@@ -558,7 +558,7 @@ namespace vulkan_renderer {
 	}
 
 	
-	VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::which_image_transformation_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		assert(graphics_card);
 		assert(surface);
@@ -585,7 +585,38 @@ namespace vulkan_renderer {
 	}
 
 
-	std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
+	// TOOD: std::optional?
+	VkCompositeAlphaFlagBitsKHR VulkanSettingsDecisionMaker::find_composite_alpha_format(VkPhysicalDevice& selected_graphics_card, VkSurfaceKHR& surface)
+	{
+		VkCompositeAlphaFlagBitsKHR composite_alpha;
+
+		const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags =
+		{
+			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+		};
+
+		VkSurfaceCapabilitiesKHR surface_capabilities = {};
+
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(selected_graphics_card, surface, &surface_capabilities);
+		vulkan_error_check(result);
+
+		for(auto& compositeAlphaFlag : composite_alpha_flags)
+		{
+			if(surface_capabilities.supportedCompositeAlpha & compositeAlphaFlag)
+			{
+				composite_alpha = compositeAlphaFlag;
+				break;
+			};
+		}
+
+		return composite_alpha;
+	}
+
+
+	std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface)
 	{
 		assert(graphics_card);
 		assert(surface);
@@ -650,13 +681,14 @@ namespace vulkan_renderer {
 			return available_present_modes[0];
 		}
 
+		// Yes, this might be the case for integrated systems!
 		spdlog::critical("The selected graphics card does not support any presentation at all!");
 		
 		return std::nullopt;
 	}
 
 
-	void VulkanSettingsDecisionMaker::which_width_and_height_of_swapchain_extent(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, uint32_t& window_width, uint32_t& window_height, VkExtent2D& swapchain_extent)
+	void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, uint32_t& window_width, uint32_t& window_height, VkExtent2D& swapchain_extent)
 	{
 		assert(graphics_card);
 		assert(surface);

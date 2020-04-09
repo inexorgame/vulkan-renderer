@@ -340,8 +340,8 @@ namespace vulkan_renderer {
 
 		depth_buffer_image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		depth_buffer_image_create_info.imageType     = VK_IMAGE_TYPE_2D;
-		depth_buffer_image_create_info.extent.width  = selected_swapchain_image_extent.width;
-		depth_buffer_image_create_info.extent.height = selected_swapchain_image_extent.height;
+		depth_buffer_image_create_info.extent.width  = swapchain_image_extent.width;
+		depth_buffer_image_create_info.extent.height = swapchain_image_extent.height;
 		depth_buffer_image_create_info.extent.depth  = 1;
 		depth_buffer_image_create_info.mipLevels     = 1;
 		depth_buffer_image_create_info.arrayLayers   = 1;
@@ -495,6 +495,18 @@ namespace vulkan_renderer {
 				return result;
 			}
 
+			VkViewport viewport{};
+			viewport.width = (float)window_width;
+			viewport.height = (float)window_height;
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
+			
+			VkRect2D scissor{};
+			scissor.extent.width = window_width;
+			scissor.extent.height = window_height;
+			vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
+
 			// TODO: Setup clear colors by TOML configuration file.
 			std::array<VkClearValue, 2> clear_values;
 			
@@ -578,99 +590,156 @@ namespace vulkan_renderer {
 		assert(selected_graphics_card);
 		assert(debug_marker_manager);
 
-		spdlog::debug("Creating swapchain.");
+		// TODO: Implement command line argument!
+		bool vsync = false;
 
-		// TODO: Check if system supports this image sharing mode!
-		
-		// Decide which surface color format is used.
-		// The standard format VK_FORMAT_B8G8R8A8_UNORM should be available on every system.
-		std::optional<VkSurfaceFormatKHR> selected_surface_format = settings_decision_maker->which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
-		
-		if(selected_surface_format.has_value())
-		{
-			selected_color_space  = selected_surface_format.value().colorSpace;
-			selected_image_format = selected_surface_format.value().format;
-		}
-		else
-		{
-			std::string error_message = "Could not find a acceptable surface format!";
-			display_error_message(error_message);
-			exit(-1);
-		}
+		// Store the old swapchain. This allows us to pass it
+		// to VkSwapchainCreateInfoKHR::oldSwapchain to speed up swapchain recreation.
+		// TODO: Is it a problem that this value is VK_NULL_HANDLE in the beginning?
+		VkSwapchainKHR old_swapchain = swapchain;
 
-		settings_decision_maker->which_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, selected_swapchain_image_extent);
+		// Select extent of swapchain images.
+		settings_decision_maker->decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, swapchain_image_extent);
 
-		std::optional<VkPresentModeKHR> selected_present_mode = settings_decision_maker->which_presentation_mode_to_use(selected_graphics_card, surface);
+		// TODO: Remove std::optional from this method!
+		// Select a present mode for the swapchain.
+		std::optional<VkPresentModeKHR> present_mode = settings_decision_maker->decide_which_presentation_mode_to_use(selected_graphics_card, surface);
 
-		if(!selected_present_mode.has_value())
-		{
-			std::string error_message = "Could not select a presentation mode for the presentation engine. This is strange, since VK_PRESENT_MODE_FIFO_KHR should be available on all systems!";
-			display_error_message(error_message);
-			exit(-1);
-		}
+		assert(present_mode.has_value());
 
-		number_of_images_in_swapchain = settings_decision_maker->how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+		selected_present_mode = present_mode.value();
 
-		if(0 == number_of_images_in_swapchain)
-		{
-			std::string error_message = "Invalid number of images in swapchain!";
-			display_error_message(error_message);
-			exit(-1);
-		}
+		// Decide how many images in swapchain to use.
+		number_of_images_in_swapchain = settings_decision_maker->decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+
+		// Find the transformation of the surface.
+		auto pre_transform = settings_decision_maker->decide_which_image_transformation_to_use(selected_graphics_card, surface);
+
+		// Find a supported composite alpha format (not all devices support alpha opaque)
+		auto composite_alpha_format = settings_decision_maker->find_composite_alpha_format(selected_graphics_card, surface);
+
+		// TODO: Remove std::optional from this method?
+		// Find a color format.
+		auto selected_image_format_candidate = settings_decision_maker->decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
+
+		assert(selected_image_format_candidate.has_value());
+
+		selected_color_space  = selected_image_format_candidate.value().colorSpace;
+		selected_image_format = selected_image_format_candidate.value().format;
 
 		VkSwapchainCreateInfoKHR swapchain_create_info = {};
-		
-		swapchain_create_info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapchain_create_info.pNext            = nullptr;
-		swapchain_create_info.flags            = 0;
-		swapchain_create_info.surface          = surface;
-		swapchain_create_info.minImageCount    = number_of_images_in_swapchain;
-		swapchain_create_info.imageFormat      = selected_image_format;
-		swapchain_create_info.imageColorSpace  = selected_color_space;
-		swapchain_create_info.imageExtent      = selected_swapchain_image_extent;
+
+		swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchain_create_info.pNext = nullptr;
+		swapchain_create_info.surface = surface;
+		swapchain_create_info.minImageCount = number_of_images_in_swapchain;
+		swapchain_create_info.imageFormat = selected_image_format;
+		swapchain_create_info.imageColorSpace = selected_color_space;
+		swapchain_create_info.imageExtent.width  = swapchain_image_extent.width;
+		swapchain_create_info.imageExtent.height = swapchain_image_extent.height;
+		swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchain_create_info.preTransform = (VkSurfaceTransformFlagBitsKHR)pre_transform;
 		swapchain_create_info.imageArrayLayers = 1;
-		swapchain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchain_create_info.queueFamilyIndexCount = 0;
+		swapchain_create_info.pQueueFamilyIndices = nullptr;
+		swapchain_create_info.presentMode = selected_present_mode;
+		swapchain_create_info.oldSwapchain = old_swapchain;
+		// Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
+		swapchain_create_info.clipped = VK_TRUE;
+		swapchain_create_info.compositeAlpha = composite_alpha_format;
 
-		gpu_queue_manager->prepare_swapchain_creation(swapchain_create_info);
 
-		swapchain_create_info.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swapchain_create_info.presentMode    = selected_present_mode.value();
-		swapchain_create_info.clipped        = VK_TRUE;
-		swapchain_create_info.oldSwapchain   = VK_NULL_HANDLE;
+		// Set additional usage flag for blitting from the swapchain images if supported.
+		VkFormatProperties formatProps;
 
-		VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
-		if(VK_SUCCESS != result) return result;
-
-		// Give this swapchain an appropriate name.
-		debug_marker_manager->set_object_name(device, (uint64_t)(swapchain), VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "Swapchain for core engine.");
-
-		swapchain_image_views.clear();
-
-		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
-		if(VK_SUCCESS != result) return result;
-
-		spdlog::debug("Images in swap chain: {}.", number_of_images_in_swapchain);
-
-		if(number_of_images_in_swapchain <= 0)
+		vkGetPhysicalDeviceFormatProperties(selected_graphics_card, selected_image_format, &formatProps);
+		
+		if((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) || (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT))
 		{
-			display_error_message("Invalid number of images in swapchain!");
+			swapchain_create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		}
 
-		swapchain_images.clear();
+		VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
+		vulkan_error_check(result);
 
-		// Preallocate memory for the images in swapchain.
+
+		// If an existing swapchain is recreated, destroy the old swapchain.
+		// This also cleans up all the presentable images.
+		if(VK_NULL_HANDLE != old_swapchain)
+		{
+			if(swapchain_image_views.size() > 0)
+			{
+				for(auto image_view : swapchain_image_views)
+				{
+					if(VK_NULL_HANDLE != image_view)
+					{
+						vkDestroyImageView(device, image_view, nullptr);
+						image_view = VK_NULL_HANDLE;
+					}
+				}
+
+				swapchain_image_views.clear();
+			}
+
+			vkDestroySwapchainKHR(device, old_swapchain, nullptr);
+		
+			swapchain_images.clear();
+		}
+
+		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
+		vulkan_error_check(result);
+
 		swapchain_images.resize(number_of_images_in_swapchain);
-
+		
 		result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, swapchain_images.data());
-		if(VK_SUCCESS != result) return result;
+		vulkan_error_check(result);
 
 		for(std::size_t i=0; i<swapchain_images.size(); i++)
 		{
 			std::string debug_marker_name = "Swapchain image #"+ std::to_string(i);
 
-			// 
+			// Assign an appropriate debug marker name to the swapchain images.
 			debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, debug_marker_name.c_str());
+		}
+
+
+		spdlog::debug("Creating swapchainm image views.");
+		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
+		
+		// Preallocate memory for the image views.
+		swapchain_image_views.clear();
+		swapchain_image_views.resize(number_of_images_in_swapchain);
+	
+		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
+		{
+			spdlog::debug("Creating swapchain image #{}.", i);
+			
+			VkImageViewCreateInfo image_view_create_info = {};
+		
+			image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			image_view_create_info.pNext                           = nullptr;
+			image_view_create_info.flags                           = 0;
+			image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+			image_view_create_info.format                          = selected_image_format;
+			image_view_create_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+			image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			image_view_create_info.subresourceRange.baseMipLevel   = 0;
+			image_view_create_info.subresourceRange.levelCount     = 1;
+			image_view_create_info.subresourceRange.baseArrayLayer = 0;
+			image_view_create_info.subresourceRange.layerCount     = 1;
+			image_view_create_info.image = swapchain_images[i];
+
+			VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
+			if(VK_SUCCESS != result) return result;
+			
+			std::string swapchain_image_view_name = "Swapchain image view #"+ std::to_string(i) +".";
+			
+			// Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
+			debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, swapchain_image_view_name.c_str());
 		}
 
 		return VK_SUCCESS;
@@ -818,8 +887,14 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 
+		vkDeviceWaitIdle(device);
+
+		// TODO: outsource cleanup_swapchain() methods!
+
 		int current_window_width = 0;
 		int current_window_height = 0;
+
+		spdlog::debug("Querying new window size.");
 
 		// If window is minimized, wait until it is visible again.
 		while(current_window_width == 0 || current_window_height == 0)
@@ -831,61 +906,71 @@ namespace vulkan_renderer {
 		window_width = current_window_width;
 		window_height = current_window_height;
 
+		spdlog::debug("New window size: width: {}, height: {}.", window_width, window_height);
+
+		VkResult result = create_swapchain();
+		vulkan_error_check(result);
+
+		// TODO: if(multisampling) destroy additional resources.
+
+		spdlog::debug("Destroying depth buffer image view.");
+
+		if(VK_NULL_HANDLE != depth_buffer.image_view)
+		{
+			vkDestroyImageView(device, depth_buffer.image_view, nullptr);
+			depth_buffer.image_view = VK_NULL_HANDLE;
+		}
+
+		spdlog::debug("Destroying depth buffer image.");
+
+		if(VK_NULL_HANDLE != depth_buffer.image)
+		{
+			vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
+			depth_buffer.image = VK_NULL_HANDLE;
+		}
+
+		// TODO: Create methods for destroying resources as well!
+		spdlog::debug("Destroying frame buffer.");
+		
+		if(frame_buffers.size() > 0)
+		{
+			for(auto frame_buffer : frame_buffers)
+			{
+				if(VK_NULL_HANDLE != frame_buffer)
+				{
+					vkDestroyFramebuffer(device, frame_buffer, nullptr);
+					frame_buffer = VK_NULL_HANDLE;
+				}
+			}
+
+			frame_buffers.clear();
+		}
+
+		result = create_depth_buffer();
+		vulkan_error_check(result);
+
+		result = create_frame_buffers();
+		vulkan_error_check(result);
+
+		vkDeviceWaitIdle(device);
+
+		// Calculate the new aspect ratio so we can update game camera matrices.
 		float aspect_ratio = window_width / static_cast<float>(window_height);
+
+		spdlog::debug("New aspect ratio: {}.", aspect_ratio);
+		
+		vkDeviceWaitIdle(device);
 
 		game_camera_1.set_aspect_ratio(aspect_ratio);
 		game_camera_1.update_matrices();
 
+		result = record_command_buffers();
+		vulkan_error_check(result);
+
 		vkDeviceWaitIdle(device);
 		
-		spdlog::debug("Recreating the swapchain.");
-
-		// Cleanup only neccesary parts.
-		cleanup_swapchain();
-
-		VkResult result = create_swapchain();
-		if(VK_SUCCESS != result) return result;
-
-		result = create_swapchain_image_views();
-		if(VK_SUCCESS != result) return result;
-
-		result = create_descriptor_pool();
-		vulkan_error_check(result);
-		
-		result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor_bundle);
-		vulkan_error_check(result);
-
-		result = create_descriptor_set_layouts();
-		vulkan_error_check(result);
-
-		result = create_pipeline();
-		if(VK_SUCCESS != result) return result;
-		
-		result = create_depth_buffer();
-		if(VK_SUCCESS != result) return result;
-		
-		result = create_frame_buffers();
-		if(VK_SUCCESS != result) return result;
-
-		result = create_uniform_buffers();
-		if(VK_SUCCESS != result) return result;
-
-		result = create_descriptor_writes();
-		if(VK_SUCCESS != result) return result;
-
-		result = create_descriptor_sets();
-		if(VK_SUCCESS != result) return result;
-		
-		result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
-		if(VK_SUCCESS != result) return result;
-
-		result = create_command_buffers();
-		if(VK_SUCCESS != result) return result;
-
-		result = record_command_buffers();
-		if(VK_SUCCESS != result) return result;
-
-		calculate_memory_budget();
+		// TODO: Should we move this to Vulkan renderer code?
+		//update_uniform_buffers();
 
 		return VK_SUCCESS;
 	}
@@ -1242,6 +1327,20 @@ namespace vulkan_renderer {
 		// Use Vulkan debug markers to assign an appropriate name to this renderpass.
 		debug_marker_manager->set_object_name(device, (uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
 
+		const std::vector<VkDynamicState> enabled_dynamic_states = 
+		{
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR
+
+		};
+
+		VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {};
+
+		dynamic_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamic_state_create_info.pDynamicStates = enabled_dynamic_states.data();
+		dynamic_state_create_info.dynamicStateCount = enabled_dynamic_states.size();
+
+
 		VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
 
 		graphics_pipeline_create_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -1257,7 +1356,7 @@ namespace vulkan_renderer {
 		graphics_pipeline_create_info.pMultisampleState   = &multisample_create_info;
 		graphics_pipeline_create_info.pDepthStencilState  = &depth_stencil;
 		graphics_pipeline_create_info.pColorBlendState    = &color_blend_state_create_info;
-		graphics_pipeline_create_info.pDynamicState       = nullptr;
+		graphics_pipeline_create_info.pDynamicState       = &dynamic_state_create_info;
 		graphics_pipeline_create_info.layout              = pipeline_layout;
 		graphics_pipeline_create_info.renderPass          = render_pass;
 		graphics_pipeline_create_info.subpass             = 0;
@@ -1279,10 +1378,12 @@ namespace vulkan_renderer {
 	VkResult VulkanRenderer::create_frame_buffers()
 	{
 		assert(device);
-		assert(number_of_images_in_swapchain>0);
+		assert(window_width > 0);
+		assert(window_height > 0);
 		assert(debug_marker_manager);
-		assert(window_width>0);
-		assert(window_height>0);
+		assert(number_of_images_in_swapchain >0 );
+
+		// TODO: Support multisampling!
 
 		spdlog::debug("Creating frame buffers.");
 		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
@@ -1313,60 +1414,12 @@ namespace vulkan_renderer {
 			frame_buffer_create_info.layers          = 1;
 
 			VkResult result = vkCreateFramebuffer(device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
-			if(VK_SUCCESS != result) return result;
+			vulkan_error_check(result);
 
-			std::string frame_buffer_name = "Frame buffer #"+ std::to_string(i);
+			std::string frame_buffer_name = "Frame buffer #"+ std::to_string(i) +".";
 			
 			// Use Vulkan debug markers to assign an appropriate name to this frame buffer.
 			debug_marker_manager->set_object_name(device, (uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
-		}
-
-		return VK_SUCCESS;
-	}
-
-
-	VkResult VulkanRenderer::create_swapchain_image_views()
-	{
-		assert(device);
-		assert(number_of_images_in_swapchain>0);
-		assert(debug_marker_manager);
-
-		spdlog::debug("Creating swapchainm image views.");
-		spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
-		
-		// Preallocate memory for the image views.
-		swapchain_image_views.clear();
-		swapchain_image_views.resize(number_of_images_in_swapchain);
-	
-		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
-		{
-			spdlog::debug("Creating swapchain image #{}.", i);
-			
-			VkImageViewCreateInfo image_view_create_info = {};
-		
-			image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			image_view_create_info.pNext                           = nullptr;
-			image_view_create_info.flags                           = 0;
-			image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-			image_view_create_info.format                          = selected_image_format;
-			image_view_create_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-			image_view_create_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-			image_view_create_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-			image_view_create_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-			image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-			image_view_create_info.subresourceRange.baseMipLevel   = 0;
-			image_view_create_info.subresourceRange.levelCount     = 1;
-			image_view_create_info.subresourceRange.baseArrayLayer = 0;
-			image_view_create_info.subresourceRange.layerCount     = 1;
-			image_view_create_info.image = swapchain_images[i];
-
-			VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
-			if(VK_SUCCESS != result) return result;
-			
-			std::string swapchain_image_view_name = "Swapchain image view #"+ std::to_string(i);
-			
-			// Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
-			debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, swapchain_image_view_name.c_str());
 		}
 
 		return VK_SUCCESS;
