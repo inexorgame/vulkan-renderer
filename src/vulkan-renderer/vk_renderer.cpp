@@ -866,9 +866,6 @@ namespace vulkan_renderer {
 		
 		result = create_frame_buffers();
 		if(VK_SUCCESS != result) return result;
-		
-		result = create_command_pool();
-		if(VK_SUCCESS != result) return result;
 
 		result = create_uniform_buffers();
 		if(VK_SUCCESS != result) return result;
@@ -1487,14 +1484,6 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Destroying fences.");
 		fence_manager->shutdown_fences();
-
-		spdlog::debug("Destroying command pool.");
-
-		if(VK_NULL_HANDLE != command_pool)
-		{
-			vkDestroyCommandPool(device, command_pool, nullptr);
-			command_pool = VK_NULL_HANDLE;
-		}
 
 		spdlog::debug("Destroying Vulkan shader objects.");
 		shader_manager->shutdown_shaders();
