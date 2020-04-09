@@ -5,16 +5,16 @@
 // License: MIT.
 #include <toml11/toml.hpp>
 
-#include "vulkan-renderer/vk_renderer.hpp"
-#include "vulkan-renderer/shader-manager/vk_shader_manager.hpp"
-#include "vulkan-renderer/error-handling/vk_error_handling.hpp"
+#include "vulkan-renderer/renderer.hpp"
+#include "vulkan-renderer/shader-manager/shader_manager.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
 #include "vulkan-renderer/tools/argument-parser/cla_parser.hpp"
-#include "vulkan-renderer/debug-callback/vk_debug_callback.hpp"
-#include "vulkan-renderer/keyboard/inexor_keyboard_input.hpp"
-#include "vulkan-renderer/uniform-buffer/vk_standard_ubo.hpp"
-#include "vulkan-renderer/thread-pool/InexorThreadPool.hpp"
-#include "vulkan-renderer/mesh-buffer/vk_mesh_buffer.hpp"
-#include "vulkan-renderer/camera/InexorCamera.hpp"
+#include "vulkan-renderer/debug-callback/debug_callback.hpp"
+#include "vulkan-renderer/keyboard/keyboard_input.hpp"
+#include "vulkan-renderer/uniform-buffer/standard_ubo.hpp"
+#include "vulkan-renderer/thread-pool/thread_pool.hpp"
+#include "vulkan-renderer/mesh-buffer/mesh_buffer.hpp"
+#include "vulkan-renderer/camera/camera.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

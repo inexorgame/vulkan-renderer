@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../descriptor-pool/InexorDescriptorPool.hpp"
+#include "../descriptor-pool/descriptor_pool.hpp"
 
 #include <vulkan/vulkan.h>
 
