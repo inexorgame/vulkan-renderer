@@ -968,9 +968,6 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		vkDeviceWaitIdle(device);
-		
-		// TODO: Should we move this to Vulkan renderer code?
-		//update_uniform_buffers();
 
 		return VK_SUCCESS;
 	}
@@ -1336,10 +1333,9 @@ namespace vulkan_renderer {
 
 		VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {};
 
-		dynamic_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamic_state_create_info.pDynamicStates = enabled_dynamic_states.data();
-		dynamic_state_create_info.dynamicStateCount = enabled_dynamic_states.size();
-
+		dynamic_state_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamic_state_create_info.pDynamicStates    = enabled_dynamic_states.data();
+		dynamic_state_create_info.dynamicStateCount = static_cast<uint32_t>(enabled_dynamic_states.size());
 
 		VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
 
@@ -1548,7 +1544,6 @@ namespace vulkan_renderer {
 			surface = VK_NULL_HANDLE;
 		}
 		
-		// Destroy Vulkan memory allocator instance.
 		vmaDestroyAllocator(vma_allocator);
 
 		spdlog::debug("Destroying Vulkan command pool.");

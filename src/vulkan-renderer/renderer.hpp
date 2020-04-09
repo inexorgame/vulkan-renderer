@@ -31,6 +31,7 @@
 #include "gltf-model-manager/gltf_model_manager.hpp"
 #include "uniform-buffer/standard_ubo.hpp"
 #include "camera/camera.hpp"
+#include "fps-counter/fps_counter.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -189,6 +190,7 @@ namespace vulkan_renderer {
 
 			InexorCamera game_camera_1;
 
+			InexorFPSCounter fps_counter;
 			
 			// TODO: Refactor this!
 	        VkDescriptorBufferInfo uniform_buffer_info = {};

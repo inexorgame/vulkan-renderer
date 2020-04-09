@@ -303,6 +303,16 @@ namespace vulkan_renderer {
 		
         current_frame = (current_frame + 1) % INEXOR_MAX_FRAMES_IN_FLIGHT;
 
+		auto fps_value = fps_counter.update();
+
+		if(fps_value.has_value())
+		{
+			// Update fps by changing window name.
+			std::string window_title = "Inexor Vulkan API renderer demo - "+ std::to_string(fps_value.value()) +" FPS";
+			glfwSetWindowTitle(window, window_title.c_str());
+		}
+
+
 		return VK_SUCCESS;
 	}
 	
