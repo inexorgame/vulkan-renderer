@@ -10,13 +10,6 @@ matrix:
   # Show final status immediately if a test fails.
   fast_finish: true
   include:
-    # Android build.
-    - language: android
-      android:
-        components:
-          - build-tools-26.0.2
-          - android-26
-          - extra
       env: VULKAN_BUILD_TARGET=ANDROID ANDROID_ABI=armeabi-v7a
     # Linux GCC debug build.
     - os: linux
@@ -64,25 +57,6 @@ before_install:
       python travis/update_deps.py --dir=external $UPDATE_DEPS_EXTRA_OPTIONS
     fi
   - |
-    if [[ "$VULKAN_BUILD_TARGET" == "ANDROID" ]]; then
-      # Install the Android NDK.
-      export ARCH=`uname -m`
-      wget http://dl.google.com/android/repository/android-ndk-r15c-linux-${ARCH}.zip
-      unzip -u -q android-ndk-r15c-linux-${ARCH}.zip
-      export ANDROID_NDK_HOME=`pwd`/android-ndk-r15c
-      export JAVA_HOME="/usr/lib/jvm/java-8-oracle"
-      export PATH="$ANDROID_NDK_HOME:$PATH"
-      pushd android-ndk-r15c
-      yes | sdkmanager --update
-      popd
-    fi
-  - |
-    if [[ "$CHECK_FORMAT" == "ON" && "$TRAVIS_PULL_REQUEST" != "false" ]]; then
-      # Install the clang format diff tool, but only for pull requests.
-      curl -L http://llvm.org/svn/llvm-project/cfe/trunk/tools/clang-format/clang-format-diff.py -o scripts/clang-format-diff.py;
-    fi
-  # Misc setup
-  - |
   - export core_count=$(nproc || echo 4) && echo core_count = $core_count
   - set +e
 
@@ -90,36 +64,14 @@ script:
   - set -e
   - |
   - |
-    if [[ "$VULKAN_BUILD_TARGET" == "ANDROID" ]]; then
-      pushd android-ndk-r15c/sources/third_party/shaderc
-      ../../../ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=Android.mk APP_STL:=c++_static APP_ABI=$ANDROID_ABI NDK_TOOLCHAIN_VERSION:=clang libshaderc_combined -j16
-      popd
-      cd API-Samples
-      cmake --version
-      cmake -DANDROID=ON -DABI_NAME=$ANDROID_ABI
-      cd android
-      python3 compile_shaders.py
-      ./gradlew build
-    fi
     if [[ "$VULKAN_BUILD_TARGET" == "LINUX" ]]; then
       mkdir build
-      cd build
       echo "Starting to build vulkan-renderer."
-      cmake -DCMAKE_BUILD_TYPE=Debug ../CMakeLists.txt
+      cmake -DCMAKE_BUILD_TYPE=Debug CMakeLists.txt -B build
       make -j $core_count
       cd ..
     fi
   - |
-    if [[ "$CHECK_FORMAT" == "ON" ]]; then
-      if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
-        # Run the clang format check only for pull request builds because the
-        # master branch is needed to do the git diff.
-        echo "Checking clang-format between TRAVIS_BRANCH=$TRAVIS_BRANCH and TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH"
-        ./scripts/check_code_format.sh
-      else
-        echo "Skipping clang-format check since this is not a pull request."
-      fi
-    fi
   - set +e
 
 notifications:
