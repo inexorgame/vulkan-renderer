@@ -1,97 +1,17 @@
-
-# Build Configuration for Travis CI
-# https://travis-ci.org
-
+os: linux
+language: python
+python: "3.7"
 dist: xenial
-sudo: required
-language: cpp
-
-matrix:
-  # Show final status immediately if a test fails.
-  fast_finish: true
-  include:
-    # Linux GCC debug build.
-    - os: linux
-      compiler: gcc
-      env: VULKAN_BUILD_TARGET=LINUX
-    # Linux clang debug build.
-    - os: linux
-      compiler: clang
-      env: VULKAN_BUILD_TARGET=LINUX
-    # Check for proper clang formatting in the pull request.
-    - env: CHECK_FORMAT=ON
-
-cache: ccache
-
-# Use set -e so that the build fails when a command fails.
-# The default action for Travis-CI is to continue running even if a command fails.
-# See https://github.com/travis-ci/travis-ci/issues/1066.
-# Use the YAML block scalar header (|) to allow easier multiline script coding.
-# Install the desired CMake before running update_deps.py
-
-before_install:
-  - set -e
-  - CMAKE_VERSION=3.10.2
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.*}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz"
-      echo CMAKE_URL=${CMAKE_URL}
-      mkdir cmake-${CMAKE_VERSION} && travis_retry wget --no-check-certificate -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake-${CMAKE_VERSION}
-      export PATH=${PWD}/cmake-${CMAKE_VERSION}/bin:${PATH}
-    else
-      brew install cmake || brew upgrade cmake
-    fi
-    cmake --version
-  - |
-    if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
-        # Add an option to update dependencies from master
-        UPDATE_DEPS_EXTRA_OPTIONS="--ref=master"
-    fi
-  - |
-    if [[ "$VULKAN_BUILD_TARGET" == "LINUX" ]]; then
-      # Install the appropriate Linux packages.
-      sudo apt-get -qq update
-      sudo apt-get -y install libxkbcommon-dev libwayland-dev libxrandr-dev libx11-xcb-dev
-      # Install dependencies
-      python travis/update_deps.py --dir=external $UPDATE_DEPS_EXTRA_OPTIONS
-    fi
-  - |
-    if [[ "$CHECK_FORMAT" == "ON" && "$TRAVIS_PULL_REQUEST" != "false" ]]; then
-      # Install the clang format diff tool, but only for pull requests.
-      curl -L http://llvm.org/svn/llvm-project/cfe/trunk/tools/clang-format/clang-format-diff.py -o scripts/clang-format-diff.py;
-    fi
-  # Misc setup
-  - |
-  - export core_count=$(nproc || echo 4) && echo core_count = $core_count
-  - set +e
-
+compiler:
+  - gcc
+install:
+# Install conan
+  - pip install conan
+# Automatic detection of your arch, compiler, etc.
+  - conan user
 script:
-  - set -e
-  - |
-  - |
-    if [[ "$VULKAN_BUILD_TARGET" == "LINUX" ]]; then
-      mkdir build
-      echo "Starting to build vulkan-renderer."
-      cmake -DCMAKE_BUILD_TYPE=Debug CMakeLists.txt
-      make -j $core_count
-      cd ..
-    fi
-  - |
-    if [[ "$CHECK_FORMAT" == "ON" ]]; then
-      if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
-        # Run the clang format check only for pull request builds because the
-        # master branch is needed to do the git diff.
-        echo "Checking clang-format between TRAVIS_BRANCH=$TRAVIS_BRANCH and TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH"
-        ./scripts/check_code_format.sh
-      else
-        echo "Skipping clang-format check since this is not a pull request."
-      fi
-    fi
-  - set +e
-
-notifications:
-  email:
-    recipients:
-      - info@inexor.org
-    on_success: change
-    on_failure: always
+# Download dependencies and build project
+  - conan install conanfile.py
+# Call your build system
+  - cmake . -G "Unix Makefiles"
+  - cmake --build .
