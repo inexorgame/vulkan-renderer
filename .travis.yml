@@ -1,4 +1,5 @@
-language: shell
+language: cpp
+sudo: required
 os: linux
 
 stages:
@@ -13,3 +14,10 @@ jobs:
       script:
         - cmake -G"Visual Studio 15 2017 Win64"
         - cmake --build build --target inexor-vulkan-renderer --config Debug
+
+notifications:
+  email:
+    recipients:
+      - info@inexor.org
+    on_success: change
+    on_failure: always
