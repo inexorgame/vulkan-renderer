@@ -105,7 +105,7 @@ script:
       # Build VulkanSamples
       mkdir build
       cd build
-      cmake -C../external/helper.cmake ..
+      cmake -DCMAKE_BUILD_TYPE=Debug -C../external/helper.cmake ..
       make -j $core_count
       cd ..
     fi
