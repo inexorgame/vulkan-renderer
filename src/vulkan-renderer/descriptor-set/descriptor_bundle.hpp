@@ -13,12 +13,15 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
+	/// 
+	/// 
+	/// 
 	struct InexorDescriptorBundle
 	{
 		public:
 
-
-			// Force to use overloaded constructor!
+		
+			/// Force use of the overloaded constructor!
 			InexorDescriptorBundle() = delete;
 
 

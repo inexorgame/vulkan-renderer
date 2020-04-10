@@ -17,9 +17,7 @@ namespace vulkan_renderer {
 		bool valid = false;
 		
 
-		BoundingBox()
-		{
-		};
+		BoundingBox() = default;
 	
 
 		BoundingBox(glm::vec3 min, glm::vec3 max) : min(min), max(max)
@@ -55,6 +53,7 @@ namespace vulkan_renderer {
 
 			return BoundingBox(min, max);
 		}
+
 	};
 
 };

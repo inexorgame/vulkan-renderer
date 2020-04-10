@@ -4,17 +4,7 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-				
-	VulkanSemaphoreManager::VulkanSemaphoreManager()
-	{
-	}
 
-
-	VulkanSemaphoreManager::~VulkanSemaphoreManager()
-	{
-	}
-
-	
 	VkResult VulkanSemaphoreManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager)
 	{
 		assert(device);

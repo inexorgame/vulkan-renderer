@@ -20,9 +20,9 @@ namespace vulkan_renderer {
 	{
 		public:
 			
-			SingleTimeCommandBufferRecorder();
+			SingleTimeCommandBufferRecorder() = default;
 			
-			~SingleTimeCommandBufferRecorder();
+			~SingleTimeCommandBufferRecorder() = default;
 
 
 		protected:

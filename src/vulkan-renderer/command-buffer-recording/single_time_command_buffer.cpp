@@ -4,16 +4,6 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-	
-	SingleTimeCommandBufferRecorder::SingleTimeCommandBufferRecorder()
-	{
-	}
-	
-	
-	SingleTimeCommandBufferRecorder::~SingleTimeCommandBufferRecorder()
-	{
-	}
-
 
 	VkResult SingleTimeCommandBufferRecorder::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VkQueue& data_transfer_queue)
 	{

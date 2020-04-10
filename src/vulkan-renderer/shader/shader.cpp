@@ -5,16 +5,6 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
-	InexorShader::InexorShader()
-	{
-	}
-	
-
-	InexorShader::~InexorShader()
-	{
-	}
-
-
 	void InexorShader::set_shader_name(const std::string& shader_name)
 	{
 		assert(shader_name.length()>0);

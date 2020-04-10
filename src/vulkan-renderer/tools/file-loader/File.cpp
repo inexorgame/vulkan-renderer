@@ -6,16 +6,6 @@ namespace inexor {
 namespace vulkan_renderer {
 namespace tools {
 
-	
-	InexorFile::InexorFile()
-	{
-	}
-	
-
-	InexorFile::~InexorFile()
-	{
-	}
-
 
 	const std::size_t InexorFile::get_file_size() const
 	{

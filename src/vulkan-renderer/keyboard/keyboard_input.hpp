@@ -22,9 +22,9 @@ namespace vulkan_renderer {
 	{
 		public:
 
-			InexorKeyboardInputHandler();
+			InexorKeyboardInputHandler() = default;
 			
-			~InexorKeyboardInputHandler();
+			~InexorKeyboardInputHandler() = default;
 
 
 		protected:

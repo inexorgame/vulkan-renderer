@@ -28,9 +28,9 @@ namespace tools {
 
 		public:
 			
-			InexorFile();
+			InexorFile() = default;
 
-			~InexorFile();
+			~InexorFile() = default;
 
 
 			/// @brief Returns the size of the file.

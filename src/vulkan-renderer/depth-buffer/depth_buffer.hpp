@@ -10,6 +10,9 @@ namespace inexor {
 namespace vulkan_renderer {
 
 
+	/// 
+	/// 
+	/// 
 	struct InexorDepthBuffer
 	{
 		VmaAllocation allocation = VK_NULL_HANDLE;

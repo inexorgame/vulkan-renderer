@@ -136,9 +136,6 @@ namespace vulkan_renderer {
 		}
 
 
-		~InexorModelNode()
-		{
-		}
 	};
 
 };

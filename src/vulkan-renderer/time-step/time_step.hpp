@@ -25,7 +25,7 @@ namespace vulkan_renderer {
 
 			InexorTimeStep();
 
-			~InexorTimeStep();
+			~InexorTimeStep() = default;
 
 
 			/// @brief Returns a scaling factor which corresponds to the

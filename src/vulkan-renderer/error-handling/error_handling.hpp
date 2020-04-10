@@ -17,6 +17,7 @@ namespace vulkan_renderer {
 	// @return A string which describes the error.
 	std::string get_error_description_text(const VkResult& result_code);
 
+
 	// @brief Displays an error message as a message.
 	// @param error_message The error message.
 	// @param message_box_title The title of the message box.

@@ -30,9 +30,9 @@ namespace vulkan_renderer {
 
 		public:
 
-			InexorShader();
+			InexorShader() = default;
 
-			~InexorShader();
+			~InexorShader() = default;
 
 			
 			/// @brief Sets the name of the shader.

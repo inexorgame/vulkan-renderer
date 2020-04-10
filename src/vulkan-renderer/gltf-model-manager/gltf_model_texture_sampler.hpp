@@ -17,5 +17,6 @@ namespace vulkan_renderer {
 		VkSamplerAddressMode addressModeW;
 	};
 
+
 };
 };

@@ -5,16 +5,6 @@ namespace inexor {
 namespace vulkan_renderer {
 
 	
-	InexorKeyboardInputHandler::InexorKeyboardInputHandler()
-	{
-	}
-	
-	
-	InexorKeyboardInputHandler::~InexorKeyboardInputHandler()
-	{
-	}
-
-
 	void InexorKeyboardInputHandler::initialise(GLFWwindow* window, GLFWkeyfun keyboard_input_callback)
 	{
 		assert(window);

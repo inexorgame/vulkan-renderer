@@ -32,9 +32,9 @@ namespace vulkan_renderer {
 
 		public:
 			
-			VulkanSemaphoreManager();
+			VulkanSemaphoreManager() = default;
 
-			~VulkanSemaphoreManager();
+			~VulkanSemaphoreManager() = default;
 
 			
 			/// @brief Initialises Vulkan semaphore manager.

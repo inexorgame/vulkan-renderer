@@ -11,17 +11,19 @@ namespace vulkan_renderer {
 
 
 	/// 
+	/// 
+	/// 
 	struct InexorDescriptorPool
 	{
 	
-		/// Force to use overloaded constructor!
+		/// Force use of the overloaded constructor!
 		InexorDescriptorPool() = delete;
 
 
 		/// 
 		InexorDescriptorPool(const std::string& internal_descriptor_pool_name,
 		                     const std::vector<VkDescriptorPoolSize>& pool_sizes)
-             : name(internal_descriptor_pool_name), sizes(pool_sizes)
+                             : name(internal_descriptor_pool_name), sizes(pool_sizes)
 		{
 		}
 
@@ -31,6 +33,7 @@ namespace vulkan_renderer {
 		const std::vector<VkDescriptorPoolSize> sizes;
 
 		VkDescriptorPool pool;
+
 	};
 
 

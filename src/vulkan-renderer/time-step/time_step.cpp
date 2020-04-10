@@ -12,11 +12,6 @@ namespace vulkan_renderer {
 	}
 
 
-	InexorTimeStep::~InexorTimeStep()
-	{
-	}
-
-
 	float InexorTimeStep::get_time_step()
 	{
 		auto current_time = std::chrono::high_resolution_clock::now();
