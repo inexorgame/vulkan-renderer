@@ -1,6 +1,6 @@
 build
 *.spv
+vma-dumps/*.json
 documentation/html
 *.ini
-*.json
 *.csv
