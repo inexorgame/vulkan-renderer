@@ -1321,12 +1321,20 @@ namespace vulkan_renderer {
 		multisample_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		multisample_create_info.pNext                 = nullptr;
 		multisample_create_info.flags                 = 0;
-		multisample_create_info.rasterizationSamples  = multisampling_sample_count; // TODO: check if this is correct!
 		multisample_create_info.sampleShadingEnable   = VK_FALSE;
 		multisample_create_info.minSampleShading      = 1.0f;
 		multisample_create_info.pSampleMask           = nullptr;
 		multisample_create_info.alphaToCoverageEnable = VK_FALSE;
 		multisample_create_info.alphaToOneEnable      = VK_FALSE;
+
+		if(multisampling_enabled)
+		{
+			multisample_create_info.rasterizationSamples = multisampling_sample_count;
+		}
+		else
+		{
+			multisample_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		}
 
 		VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
         
