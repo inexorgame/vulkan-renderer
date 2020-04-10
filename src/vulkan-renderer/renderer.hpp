@@ -26,12 +26,13 @@
 #include "time-step/time_step.hpp"
 #include "texture-manager/texture_manager.hpp"
 #include "mesh-buffer/mesh_buffer.hpp"
-#include "depth-buffer/depth_buffer.hpp"
+#include "image-buffer/image_buffer.hpp"
 #include "descriptor-manager/descriptor_manager.hpp"
 #include "gltf-model-manager/gltf_model_manager.hpp"
 #include "uniform-buffer/standard_ubo.hpp"
 #include "camera/camera.hpp"
 #include "fps-counter/fps_counter.hpp"
+#include "multisampling/msaa_target.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -80,6 +81,7 @@ namespace vulkan_renderer {
 			/// Neccesary for taking into account the relative speed of the system's CPU.
 			float time_passed = 0.0f;
 			
+			// 
 			InexorTimeStep stopwatch;
 
 
@@ -174,7 +176,9 @@ namespace vulkan_renderer {
 
 			bool debug_report_callback_initialised = false;
 
-			InexorDepthBuffer depth_buffer;
+			InexorImageBuffer depth_buffer;
+			
+			InexorImageBuffer depth_stencil;
 
 			uint32_t vma_dump_index = 0;
 
@@ -199,6 +203,14 @@ namespace vulkan_renderer {
 			std::shared_ptr<InexorUniformBuffer> matrices;
 			
 			VkPipelineCache pipeline_cache;
+			
+			// TODO: Read from TOML configuration file and pass value to core engine.
+			bool multisampling_enabled = true;
+
+			VkSampleCountFlagBits multisampling_sample_count = VK_SAMPLE_COUNT_4_BIT;
+
+			InexorMSAATarget msaa_target_buffer;
+
 
 
 		public:
