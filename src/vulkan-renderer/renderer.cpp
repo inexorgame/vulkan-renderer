@@ -3,6 +3,11 @@
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
 
+// Disable warning C4005 (macro redefinition of VMA_RECORDING_ENABLED) in MS Visual Studio.
+#ifdef _MSC_VER
+#pragma warning(disable: 4005)
+#endif
+
 // Enable VMA memory recording and replay.
 #define VMA_RECORDING_ENABLED 1
 
