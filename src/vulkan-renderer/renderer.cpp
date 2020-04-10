@@ -314,7 +314,7 @@ namespace vulkan_renderer {
 		vulkan_error_check(result);
 
 		// Give this command pool an appropriate name.
-		debug_marker_manager->set_object_name(device, (uint64_t)(command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Command pool for core engine.");
+		debug_marker_manager->set_object_name(device, (uint64_t)(command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Core engine command pool.");
 
 		return VK_SUCCESS;
 	}
@@ -1097,6 +1097,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanRenderer::create_pipeline()
 	{
+		// TODO: Support multisampling!
 		// TODO: VulkanPipelineManager!
 		assert(device);
 		assert(debug_marker_manager);
@@ -1311,6 +1312,8 @@ namespace vulkan_renderer {
 
 		std::array<VkAttachmentDescription, 2> attachments = {color_attachment, depth_attachment};
 
+
+		// End marker 1
 		VkRenderPassCreateInfo render_pass_create_info = {};
 		
 		render_pass_create_info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -1366,9 +1369,23 @@ namespace vulkan_renderer {
 		graphics_pipeline_create_info.basePipelineHandle  = VK_NULL_HANDLE;
 		graphics_pipeline_create_info.basePipelineIndex   = -1;
 
+		spdlog::debug("Creating pipeline cache.");
+
+		VkPipelineCacheCreateInfo pipeline_cache_create_info = {};
+		pipeline_cache_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+
+		/// Vulkan Spec:
+		/// "Pipeline cache objects allow the result of pipeline construction to be reused between pipelines and between runs of an application.
+		/// Reuse between pipelines is achieved by passing the same pipeline cache object when creating multiple related pipelines. Reuse across
+		/// runs of an application is achieved by retrieving pipeline cache contents in one run of an application, saving the contents, and using
+		/// them to preinitialize a pipeline cache on a subsequent run. The contents of the pipeline cache objects are managed by the implementation.
+		/// Applications can manage the host memory consumed by a pipeline cache object and control the amount of data retrieved from a pipeline cache object."
+		result = vkCreatePipelineCache(device, &pipeline_cache_create_info, nullptr, &pipeline_cache);
+		vulkan_error_check(result);
+
 		spdlog::debug("Finalizing graphics pipeline.");
 
-		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
+		result = vkCreateGraphicsPipelines(device, pipeline_cache, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
 		if(VK_SUCCESS != result) return result;
 		
 		// Use Vulkan debug markers to assign an appropriate name to this pipeline.
@@ -1553,10 +1570,19 @@ namespace vulkan_renderer {
 		
 		vmaDestroyAllocator(vma_allocator);
 
+		spdlog::debug("Destroying Vulkan pipeline cache.");
+
+		if(VK_NULL_HANDLE != pipeline_cache)
+		{
+			vkDestroyPipelineCache(device, pipeline_cache, nullptr);
+			pipeline_cache = VK_NULL_HANDLE;
+		}
+
 		spdlog::debug("Destroying Vulkan command pool.");
 		if(VK_NULL_HANDLE != command_pool)
 		{
 			vkDestroyCommandPool(device, command_pool, nullptr);
+			command_pool = VK_NULL_HANDLE;
 		}
 
 		// Device queues are implicitly cleaned up when the device is destroyed,
@@ -1565,6 +1591,7 @@ namespace vulkan_renderer {
 		if(VK_NULL_HANDLE != device)
 		{
 			vkDestroyDevice(device, nullptr);
+			device = VK_NULL_HANDLE;
 		}
 		
 		descriptor_manager->shutdown_descriptors();

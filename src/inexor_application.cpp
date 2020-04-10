@@ -634,10 +634,6 @@ namespace vulkan_renderer {
 		result = load_textures();
 		vulkan_error_check(result);
 		
-		// TOOD: Can we remove this?
-		//result = create_swapchain_image_views();
-		//vulkan_error_check(result);
-		
 		result = load_shaders();
 		vulkan_error_check(result);
 

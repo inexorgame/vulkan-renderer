@@ -197,6 +197,8 @@ namespace vulkan_renderer {
 			VkDescriptorImageInfo image_info = {};
 
 			std::shared_ptr<InexorUniformBuffer> matrices;
+			
+			VkPipelineCache pipeline_cache;
 
 
 		public:
