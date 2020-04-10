@@ -331,9 +331,11 @@ namespace vulkan_renderer {
 		// Supported candidates for depth buffer format.
 		const std::vector<VkFormat> depth_buffer_format_candidates = 
 		{
-			VK_FORMAT_D32_SFLOAT,
 			VK_FORMAT_D32_SFLOAT_S8_UINT,
-			VK_FORMAT_D24_UNORM_S8_UINT
+			VK_FORMAT_D32_SFLOAT,
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_FORMAT_D16_UNORM_S8_UINT,
+			VK_FORMAT_D16_UNORM
 		};
 
 		// Try to find an appropriate format for the depth buffer.
