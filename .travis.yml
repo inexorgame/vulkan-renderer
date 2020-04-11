@@ -14,4 +14,5 @@ script:
   - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
   - conan install conanfile.py
 # Use CMake to build vulkan-renderer.
+  - cmake .
   - cmake --build buildfolder --target inexor-vulkan-renderer
