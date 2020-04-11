@@ -1,2 +1,0 @@
-To build the projects, run CMake and select this folder as build folder.
-You could select any other empty folder as well.

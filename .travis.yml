@@ -1,18 +1,26 @@
 os: linux
-language: python
+language: cpp
 python: "3.7"
 dist: xenial
 compiler:
   - gcc
+before_script:
+  # create a build folder for the out-of-source build
+  - mkdir build
+  # switch to build directory
+  - cd build
+  # run cmake; here we assume that the project's
+  # top-level CMakeLists.txt is located at '..'
+  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+  - conan install conanfile.py
+  - cmake ..
 install:
 # Install conan
   - pip install conan
 # Automatic detection of your arch, compiler, etc.
   - conan user
 script:
-# Download dependencies and build project
-  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-  - conan install conanfile.py
-# Use CMake to build vulkan-renderer.
-  - cmake .
-  - cmake --build buildfolder --target inexor-vulkan-renderer
+# once CMake has done its job we just build using make as usual
+  - make
+# if the project uses ctest we can run the tests like this
+  - make test
