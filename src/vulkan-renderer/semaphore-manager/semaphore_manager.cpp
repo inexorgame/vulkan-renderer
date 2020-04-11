@@ -27,7 +27,7 @@ namespace vulkan_renderer {
 	bool VulkanSemaphoreManager::does_semaphore_exist(const std::string& semaphore_name)
 	{
 		assert(semaphore_manager_initialised);
-		assert(semaphore_name.length()>0);
+		assert(!semaphore_name.empty());
 
 		// Call template base class method.
 		return does_key_exist(semaphore_name);
@@ -38,7 +38,7 @@ namespace vulkan_renderer {
 	{
 		assert(device);
 		assert(semaphore_manager_initialised);
-		assert(semaphore_name.length()>0);
+		assert(!semaphore_name.empty());
 		
 		// First check if a Vulkan semaphore with this name already exists!
 		if(does_semaphore_exist(semaphore_name))
@@ -77,7 +77,7 @@ namespace vulkan_renderer {
 	std::optional<std::shared_ptr<VkSemaphore>> VulkanSemaphoreManager::get_semaphore(const std::string& semaphore_name)
 	{
 		assert(semaphore_manager_initialised);
-		assert(semaphore_name.length()>0);
+		assert(!semaphore_name.empty());
 
 		if(!does_key_exist(semaphore_name))
 		{

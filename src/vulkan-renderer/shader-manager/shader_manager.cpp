@@ -53,8 +53,8 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(debug_marker_manager);
 		assert(shader_manager_initialised);
-		assert(internal_shader_name.length()>0);
-		assert(SPIRV_shader_bytes.size()>0);
+		assert(!internal_shader_name.empty());
+		assert(!SPIRV_shader_bytes.empty());
 
 		spdlog::debug("Creating shader '{}' from memory.", internal_shader_name.c_str());
 		
@@ -88,7 +88,7 @@ namespace vulkan_renderer {
 		assert(device);
 		assert(debug_marker_manager);
 		assert(shader_manager_initialised);
-		assert(SPIRV_shader_file_name.length()>0);
+		assert(!SPIRV_shader_file_name.empty());
 		
 		spdlog::debug("Creating shader '{}' from file.", SPIRV_shader_file_name.c_str());
 

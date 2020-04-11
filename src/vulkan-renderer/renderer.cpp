@@ -34,8 +34,8 @@ namespace vulkan_renderer {
 
 	VkResult VulkanRenderer::create_vulkan_instance(const std::string& application_name, const std::string& engine_name, const uint32_t application_version, const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer)
 	{
-		assert(application_name.length()>0);
-		assert(engine_name.length()>0);
+		assert(!application_name.empty());
+		assert(!engine_name.empty());
 
 		// Get the major, minor and patch version of the application.
 		uint32_t app_major = VK_VERSION_MAJOR(application_version);
@@ -1244,7 +1244,7 @@ namespace vulkan_renderer {
 		// Loop through all shaders in Vulkan shader manager's list and add them to the setup.
 		auto list_of_shaders = shader_manager->get_all_shaders();
 
-		assert(list_of_shaders.size()>0);
+		assert(!list_of_shaders.empty());
 
 		spdlog::debug("Setting up shader stages.");
 

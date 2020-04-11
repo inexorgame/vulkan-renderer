@@ -104,7 +104,7 @@ namespace vulkan_renderer {
 	void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color)
 	{
 		assert(command_buffer);
-		assert(debug_marker_name.length()>0);
+		assert(!debug_marker_name.empty());
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
 		if(active)
@@ -127,7 +127,7 @@ namespace vulkan_renderer {
 	void VulkanDebugMarkerManager::insert(const VkCommandBuffer& command_buffer, const std::string& debug_marker_name, const glm::vec4& debug_marker_color)
 	{
 		assert(command_buffer);
-		assert(debug_marker_name.length()>0);
+		assert(!debug_marker_name.empty());
 
 		// Check for valid function pointer (may not be present if not running in a debugging application)
 		if(active)

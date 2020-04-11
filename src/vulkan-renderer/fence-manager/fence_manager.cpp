@@ -24,7 +24,7 @@ namespace vulkan_renderer {
 	bool VulkanFenceManager::does_fence_exist(const std::string& fence_name)
 	{
 		assert(fence_manager_initialised);
-		assert(fence_name.length()>0);
+		assert(!fence_name.empty());
 		
 		return does_key_exist(fence_name);
 	}
@@ -32,9 +32,9 @@ namespace vulkan_renderer {
 
 	std::optional<std::shared_ptr<VkFence>> VulkanFenceManager::create_fence(const std::string& fence_name, bool create_as_signaled)
 	{
-		assert(device);
-		assert(fence_name.length()>0);
 		assert(fence_manager_initialised);
+		assert(!fence_name.empty());
+		assert(device);
 
 		// First check if a Vulkan fence with this name already exists!
 		if(does_fence_exist(fence_name))
@@ -73,7 +73,7 @@ namespace vulkan_renderer {
 	std::optional<std::shared_ptr<VkFence>> VulkanFenceManager::get_fence(const std::string& fence_name)
 	{
 		assert(fence_manager_initialised);
-		assert(fence_name.length()>0);
+		assert(!fence_name.empty());
 
 		if(!does_key_exist(fence_name))
 		{
