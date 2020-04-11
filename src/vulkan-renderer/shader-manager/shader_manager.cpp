@@ -56,13 +56,13 @@ namespace vulkan_renderer {
 		assert(internal_shader_name.length()>0);
 		assert(SPIRV_shader_bytes.size()>0);
 
-		spdlog::debug("Creating shader '{}' from byte buffer.", internal_shader_name.c_str());
+		spdlog::debug("Creating shader '{}' from memory.", internal_shader_name.c_str());
 		
 		std::shared_ptr<InexorShader> new_shader = std::make_shared<InexorShader>();
 
-		new_shader->set_shader_type(shader_type);
-		new_shader->set_shader_name(internal_shader_name);
-		new_shader->set_shader_entry_point(shader_entry_point);
+		new_shader->type = shader_type;
+		new_shader->name = internal_shader_name;
+		new_shader->entry_name = shader_entry_point;
 
 		// Create the shader module from the SPIR-V byte buffer.
 		VkShaderModule shader_module;
@@ -74,7 +74,7 @@ namespace vulkan_renderer {
 		}
 		
 		// Store the generated shader module.
-		new_shader->set_shader_module(shader_module);
+		new_shader->module = shader_module;
 		
 		// Call template base class method.
 		add_entry(internal_shader_name, new_shader);
@@ -96,11 +96,6 @@ namespace vulkan_renderer {
 
 		// Load the fragment shader into memory.
 		new_shader->load_file(SPIRV_shader_file_name);
-		new_shader->set_shader_entry_point(shader_entry_point);
-		new_shader->set_shader_name(internal_shader_name);
-
-		//This is a fragment shader.
-		new_shader->set_shader_type(shader_type);
 
 		VkShaderModule new_shader_module;
 		
@@ -118,7 +113,10 @@ namespace vulkan_renderer {
 		debug_marker_manager->set_object_name(device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, internal_shader_name.c_str());
 
 		// Store the generated shader in memory.
-		new_shader->set_shader_module(new_shader_module);
+		new_shader->entry_name = shader_entry_point;
+		new_shader->name = internal_shader_name;
+		new_shader->type = shader_type;
+		new_shader->module = new_shader_module;
 		
 		// Call template base class method.
 		add_entry(internal_shader_name, new_shader);
@@ -139,9 +137,9 @@ namespace vulkan_renderer {
 
 		for(const auto& shader : shaders)
 		{
-			spdlog::debug("Destroying shader module '{}'.", shader->get_shader_name());
+			spdlog::debug("Destroying shader module '{}'.", shader->name);
 			
-			vkDestroyShaderModule(device, shader->get_shader_module(), nullptr);
+			vkDestroyShaderModule(device, shader->module, nullptr);
 		}
 
 		delete_all_entries();

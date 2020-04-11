@@ -1248,16 +1248,16 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Setting up shader stages.");
 
-		for(const auto& current_shader : list_of_shaders)
+		for(const auto& shader : list_of_shaders)
 		{
 			VkPipelineShaderStageCreateInfo shader_stage_create_info = {};
 
 			shader_stage_create_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			shader_stage_create_info.pNext               = nullptr;
 			shader_stage_create_info.flags               = 0;
-			shader_stage_create_info.stage               = current_shader->get_shader_type();
-			shader_stage_create_info.module              = current_shader->get_shader_module();
-			shader_stage_create_info.pName               = "main"; // TODO: Refactor this to current_shader.get_shader_entry_point().c_str()!
+			shader_stage_create_info.stage               = shader->type;
+			shader_stage_create_info.module              = shader->module;
+			shader_stage_create_info.pName               = shader->entry_name.c_str();
 			shader_stage_create_info.pSpecializationInfo = nullptr;
 			
 			shader_stages.push_back(shader_stage_create_info);
