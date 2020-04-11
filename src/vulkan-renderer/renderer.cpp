@@ -490,6 +490,44 @@ namespace vulkan_renderer {
 		command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		command_buffer_begin_info.pInheritanceInfo = nullptr;
 
+		// TODO: Setup clear colors by TOML configuration file.
+		std::array<VkClearValue, 3> clear_values;
+			
+		// Note that the order of clear_values must be identical to the order of the attachments.
+		if(multisampling_enabled)
+		{
+			clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+			clear_values[1].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+			clear_values[2].depthStencil = { 1.0f, 0 };
+		}
+		else
+		{
+			clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+			clear_values[1].depthStencil = { 1.0f, 0 };
+		}
+
+		VkRenderPassBeginInfo render_pass_begin_info = {};
+			
+		render_pass_begin_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		render_pass_begin_info.pNext             = nullptr;
+		render_pass_begin_info.renderPass        = render_pass;
+		render_pass_begin_info.renderArea.offset = {0, 0};
+		render_pass_begin_info.renderArea.extent = {window_width, window_height};
+		render_pass_begin_info.clearValueCount   = static_cast<uint32_t>(clear_values.size());
+		render_pass_begin_info.pClearValues      = clear_values.data();
+
+		VkViewport viewport{};
+			
+		viewport.width = (float)window_width;
+		viewport.height = (float)window_height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor{};
+			
+		scissor.extent.width = window_width;
+		scissor.extent.height = window_height;
+
 		for(std::size_t i=0; i<number_of_images_in_swapchain; i++)
 		{
 			spdlog::debug("Recording command buffer #{}.", i);
@@ -499,56 +537,31 @@ namespace vulkan_renderer {
 			debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering.", INEXOR_DEBUG_MARKER_GREEN);
 			
 			VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
-			if(VK_SUCCESS != result)
-			{
-				vulkan_error_check(result);
-				return result;
-			}
+			if(VK_SUCCESS != result) return result;
 
-			VkViewport viewport{};
-			viewport.width = (float)window_width;
-			viewport.height = (float)window_height;
-			viewport.minDepth = 0.0f;
-			viewport.maxDepth = 1.0f;
-			vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
-			
-			VkRect2D scissor{};
-			scissor.extent.width = window_width;
-			scissor.extent.height = window_height;
-			vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
-
-			// TODO: Setup clear colors by TOML configuration file.
-			std::array<VkClearValue, 3> clear_values;
-			
-			// Note that the order of clear_values must be identical to the order of the attachments.
-			if(multisampling_enabled)
-			{
-				clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-				clear_values[1].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-				clear_values[2].depthStencil = { 1.0f, 0 };
-			}
-			else
-			{
-				clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-				clear_values[1].depthStencil = { 1.0f, 0 };
-			}
-
-			VkRenderPassBeginInfo render_pass_begin_info = {};
-			
-			render_pass_begin_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			render_pass_begin_info.pNext             = nullptr;
-			render_pass_begin_info.renderPass        = render_pass;
-			render_pass_begin_info.framebuffer       = frame_buffers[i];
-			render_pass_begin_info.renderArea.offset = {0, 0};
-			render_pass_begin_info.renderArea.extent = {window_width, window_height};
-			render_pass_begin_info.clearValueCount   = static_cast<uint32_t>(clear_values.size());
-			render_pass_begin_info.pClearValues      = clear_values.data();
+			// Update only the necessary parts of VkRenderPassBeginInfo.
+			render_pass_begin_info.framebuffer = frame_buffers[i];
 
 			vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			// ----------------------------------------------------------------------------------------------------------------
+			// Begin of render pass.
+			{
+				vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
+			
+				vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
 
-			gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
+				// TODO: Render skybox!
+
+				vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+				// TODO: This does not specify the order of rendering!
+				gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
+
+				// TODO: Draw imgui user interface.
+			}
+			// End of render pass.
+			// ----------------------------------------------------------------------------------------------------------------
 
 			vkCmdEndRenderPass(command_buffers[i]);
 
@@ -870,6 +883,7 @@ namespace vulkan_renderer {
 			command_buffers.clear();
 		}
 
+		// TODO: Pack every shutdown of a resource into an own function.
 
 		spdlog::debug("Destroying depth buffer image view.");
 
@@ -951,10 +965,6 @@ namespace vulkan_renderer {
 		spdlog::debug("Destroying descriptor sets and layouts.");
 	
 		descriptor_manager->shutdown_descriptors();
-
-		global_descriptor_bundle = VK_NULL_HANDLE;
-		
-		global_descriptor_pool = VK_NULL_HANDLE;
 
 		return VK_SUCCESS;
 	}
@@ -1148,11 +1158,11 @@ namespace vulkan_renderer {
 
 		for(const auto& descriptor_set_layout : descriptor_set_layouts)
 		{
-			result = descriptor_manager->add_descriptor_set_layout_binding(global_descriptor_bundle, descriptor_set_layout);
+			result = descriptor_manager->add_descriptor_set_layout_binding(descriptor_bundles.scene, descriptor_set_layout);
 			vulkan_error_check(result);
 		}
 
-		result = descriptor_manager->create_descriptor_set_layouts(global_descriptor_bundle);
+		result = descriptor_manager->create_descriptor_set_layouts(descriptor_bundles.scene);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1175,7 +1185,7 @@ namespace vulkan_renderer {
 		descriptor_writes[0].descriptorCount = 1;
 		descriptor_writes[0].pBufferInfo     = &uniform_buffer_info;
 
-		VkResult result = descriptor_manager->add_write_descriptor_set(global_descriptor_bundle, descriptor_writes[0]);
+		VkResult result = descriptor_manager->add_write_descriptor_set(descriptor_bundles.scene, descriptor_writes[0]);
 		vulkan_error_check(result);
 			
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1190,7 +1200,7 @@ namespace vulkan_renderer {
 		descriptor_writes[1].descriptorCount = 1;
 		descriptor_writes[1].pImageInfo      = &image_info;
 
-		result = descriptor_manager->add_write_descriptor_set(global_descriptor_bundle, descriptor_writes[1]);
+		result = descriptor_manager->add_write_descriptor_set(descriptor_bundles.scene, descriptor_writes[1]);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1199,7 +1209,7 @@ namespace vulkan_renderer {
 
 	VkResult VulkanRenderer::create_descriptor_sets()
 	{
-		VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor_bundle);
+		VkResult result = descriptor_manager->create_descriptor_sets(descriptor_bundles.scene);
 		vulkan_error_check(result);
 
 		return VK_SUCCESS;
@@ -1209,8 +1219,6 @@ namespace vulkan_renderer {
 	VkResult VulkanRenderer::create_uniform_buffers()
 	{
 		spdlog::debug("Creating uniform buffers.");
-
-		// So far we only have one uniform buffer.
 
 		// The uniform buffer for the world matrices.
 		VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
@@ -1255,6 +1263,7 @@ namespace vulkan_renderer {
 			shader_stages.push_back(shader_stage_create_info);
 		}
 		
+
 		VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 		
 		auto vertex_binding_description    = InexorModelVertex::get_vertex_binding_description();
@@ -1268,6 +1277,7 @@ namespace vulkan_renderer {
 		vertex_input_create_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_binding_description.size());
 		vertex_input_create_info.pVertexAttributeDescriptions    = attribute_binding_description.data();
 
+
 		VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = {};
 
 		input_assembly_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -1275,6 +1285,7 @@ namespace vulkan_renderer {
 		input_assembly_create_info.flags                  = 0;
 		input_assembly_create_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
+
 
 		VkViewport view_port = {};
 
@@ -1285,11 +1296,14 @@ namespace vulkan_renderer {
 		view_port.minDepth = 0.0f;
 		view_port.maxDepth = 1.0f;
 		
+
 		VkRect2D scissor = {};
 
 		scissor.offset = {0, 0};
 		scissor.extent = {window_width, window_height};
 
+
+		// TODO: Multiple viewports (and scissors) - InexorViewportManager and InexorRenderSceneManager
 		VkPipelineViewportStateCreateInfo pipeline_viewport_viewport_state_info = {};
 
 		pipeline_viewport_viewport_state_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -1300,6 +1314,7 @@ namespace vulkan_renderer {
 		pipeline_viewport_viewport_state_info.scissorCount  = 1;
 		pipeline_viewport_viewport_state_info.pScissors     = &scissor;
 
+
 		VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_create_info = {};
 
 		pipeline_rasterization_state_create_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -1307,14 +1322,18 @@ namespace vulkan_renderer {
 		pipeline_rasterization_state_create_info.flags                   = 0;
 		pipeline_rasterization_state_create_info.depthClampEnable        = VK_FALSE;
 		pipeline_rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
-		pipeline_rasterization_state_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
-		pipeline_rasterization_state_create_info.cullMode                = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		pipeline_rasterization_state_create_info.frontFace               = VK_FRONT_FACE_CLOCKWISE;
+
+		// TODO: Implement -wireframe command line argument.
+		// Because the pipeline in Vulkan is immutable, this guides us to record a second command line with wireframe enabled.
+		pipeline_rasterization_state_create_info.polygonMode             = VK_POLYGON_MODE_LINE;
+		pipeline_rasterization_state_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
+		pipeline_rasterization_state_create_info.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipeline_rasterization_state_create_info.depthBiasEnable         = VK_FALSE;
 		pipeline_rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
 		pipeline_rasterization_state_create_info.depthBiasClamp          = 0.0f;
 		pipeline_rasterization_state_create_info.depthBiasSlopeFactor    = 0.0f;
 		pipeline_rasterization_state_create_info.lineWidth               = 1.0f;
+
 
 		VkPipelineMultisampleStateCreateInfo multisample_create_info = {};
 
@@ -1336,17 +1355,20 @@ namespace vulkan_renderer {
 			multisample_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 		}
 
+
 		VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
         
 		depth_stencil.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depth_stencil.depthTestEnable       = VK_TRUE;
         depth_stencil.depthWriteEnable      = VK_TRUE;
-        depth_stencil.depthCompareOp        = VK_COMPARE_OP_LESS;
+        depth_stencil.depthCompareOp        = VK_COMPARE_OP_LESS_OR_EQUAL;
         depth_stencil.depthBoundsTestEnable = VK_FALSE;
         depth_stencil.stencilTestEnable     = VK_FALSE;
 
+
 		VkPipelineColorBlendAttachmentState color_blend_attachment = {};
 
+		// TODO: Do we need this yet?
 		color_blend_attachment.blendEnable         = VK_TRUE;
 		color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 		color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -1355,6 +1377,7 @@ namespace vulkan_renderer {
 		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 		color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
 		color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
 
 		VkPipelineColorBlendStateCreateInfo color_blend_state_create_info = {};
 
@@ -1370,13 +1393,21 @@ namespace vulkan_renderer {
 		color_blend_state_create_info.blendConstants[2] = 0.0f;
 		color_blend_state_create_info.blendConstants[3] = 0.0f;
 
+
+		const std::vector<VkDescriptorSetLayout> set_layouts = 
+		{
+			descriptor_bundles.scene->descriptor_set_layout,
+			//descriptor_bundles.material->descriptor_set_layout,
+			//descriptor_bundles.node->descriptor_set_layout,
+		};
+
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 
 		pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_create_info.pNext                  = nullptr;
 		pipeline_layout_create_info.flags                  = 0;
-		pipeline_layout_create_info.setLayoutCount         = 1;
-		pipeline_layout_create_info.pSetLayouts            = &global_descriptor_bundle->descriptor_set_layout;
+		pipeline_layout_create_info.setLayoutCount         = static_cast<uint32_t>(set_layouts.size());
+		pipeline_layout_create_info.pSetLayouts            = set_layouts.data();
 		pipeline_layout_create_info.pushConstantRangeCount = 0;
 		pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
@@ -1436,21 +1467,25 @@ namespace vulkan_renderer {
 			attachments[3].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachments[3].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+
 			VkAttachmentReference color_reference = {};
 
 			color_reference.attachment = 0;
 			color_reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
 
 			VkAttachmentReference depth_reference = {};
 
 			depth_reference.attachment = 2;
 			depth_reference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-			// Resolve attachment reference for the color attachment
+
+			// Resolve attachment reference for the color attachment.
 			VkAttachmentReference resolve_reference = {};
 
 			resolve_reference.attachment = 1;
 			resolve_reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
 
 			VkSubpassDescription subpass = {};
 			
@@ -1459,6 +1494,7 @@ namespace vulkan_renderer {
 			subpass.pColorAttachments       = &color_reference;
 			subpass.pResolveAttachments     = &resolve_reference;
 			subpass.pDepthStencilAttachment = &depth_reference;
+
 
 			std::array<VkSubpassDependency, 2> dependencies;
 
@@ -1477,6 +1513,7 @@ namespace vulkan_renderer {
 			dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 			dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
 
 			VkRenderPassCreateInfo renderpass_create_info = {};
 
@@ -1519,15 +1556,18 @@ namespace vulkan_renderer {
 			attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+
 			VkAttachmentReference color_reference = {};
 
 			color_reference.attachment = 0;
 			color_reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+
 			VkAttachmentReference depth_reference = {};
 
 			depth_reference.attachment = 1;
 			depth_reference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 
 			VkSubpassDescription subpassDescription = {};
 
@@ -1560,6 +1600,7 @@ namespace vulkan_renderer {
 			dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 			dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+
 			VkRenderPassCreateInfo renderpass_create_info{};
 
 			renderpass_create_info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -1587,11 +1628,15 @@ namespace vulkan_renderer {
 
 		};
 
+		// TODO: Wrap all this into InexorRenderingPipelineManager instead of loading from TOML file?
+		// InexorRenderingPipelineManager could verify if all structures were filled correctly.
+
 		VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {};
 
 		dynamic_state_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 		dynamic_state_create_info.pDynamicStates    = enabled_dynamic_states.data();
 		dynamic_state_create_info.dynamicStateCount = static_cast<uint32_t>(enabled_dynamic_states.size());
+
 
 		VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
 
@@ -1617,7 +1662,9 @@ namespace vulkan_renderer {
 
 		spdlog::debug("Creating pipeline cache.");
 
+
 		VkPipelineCacheCreateInfo pipeline_cache_create_info = {};
+		
 		pipeline_cache_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
 		/// Vulkan Spec:
@@ -1637,6 +1684,10 @@ namespace vulkan_renderer {
 		
 		// Use Vulkan debug markers to assign an appropriate name to this pipeline.
 		debug_marker_manager->set_object_name(device, (uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "Graphics pipeline for core engine.");
+
+		// TODO: We could destroy shader modules here already.
+		// TODO: Create alpha blend pipeline.
+		// TODO: Create PBR pipeline.
 
 		return VK_SUCCESS;
 	}
@@ -1988,10 +2039,6 @@ namespace vulkan_renderer {
 		}
 		
 		descriptor_manager->shutdown_descriptors();
-
-		global_descriptor_bundle = VK_NULL_HANDLE;
-		
-		global_descriptor_pool = VK_NULL_HANDLE;
 		
 		// Destroy Vulkan debug callback.
 		if(debug_report_callback_initialised)

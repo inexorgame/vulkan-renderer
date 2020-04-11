@@ -242,7 +242,7 @@ namespace vulkan_renderer {
 			if(VK_NULL_HANDLE != descriptor_bundle->associated_descriptor_pool)
 			{
 				vkDestroyDescriptorPool(device, descriptor_bundle->associated_descriptor_pool->pool, nullptr);
-				// TODO: Set descriptor pool to VK_NULL_HANDLE?
+				descriptor_bundle->associated_descriptor_pool->pool = VK_NULL_HANDLE;
 			}
 			
 			if(clear_descriptor_layout_bindings)

@@ -643,7 +643,7 @@ namespace vulkan_renderer {
 		result = create_descriptor_pool();
 		vulkan_error_check(result);
 
-		result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor_bundle);
+		result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, descriptor_bundles.scene);
 		vulkan_error_check(result);
 
 		result = create_descriptor_set_layouts();

@@ -100,8 +100,6 @@ namespace vulkan_renderer {
 
 			std::shared_ptr<InexorDescriptorManager> descriptor_manager = std::make_shared<InexorDescriptorManager>();
 
-			std::shared_ptr<InexorDescriptorBundle> global_descriptor_bundle;
-
 			std::shared_ptr<InexorDescriptorPool> global_descriptor_pool;
 
 			std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
@@ -211,6 +209,13 @@ namespace vulkan_renderer {
 
 			InexorMSAATarget msaa_target_buffer;
 
+
+			struct InexorGlobalDescriptorBundle
+			{
+				std::shared_ptr<InexorDescriptorBundle> scene;
+				std::shared_ptr<InexorDescriptorBundle> material;
+				std::shared_ptr<InexorDescriptorBundle> node;
+			} descriptor_bundles;
 
 
 		public:
