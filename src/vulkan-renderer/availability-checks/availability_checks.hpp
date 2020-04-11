@@ -17,8 +17,6 @@ namespace vulkan_renderer {
 	{
 		private:
 
-			std::shared_mutex availability_checks_manager_mutex;
-
 			uint32_t number_of_available_instance_extensions = 0;
 		
 			uint32_t number_of_available_instance_layers = 0;

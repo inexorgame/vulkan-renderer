@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../buffers/gpu_buffer.hpp"
+#include "../gpu-memory-buffer/gpu_memory_buffer.hpp"
 #include "../debug-marker/debug_marker_manager.hpp"
 #include "../error-handling/error_handling.hpp"
 #include "../class-templates/manager_template.hpp"

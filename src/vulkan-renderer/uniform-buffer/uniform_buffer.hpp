@@ -1,13 +1,15 @@
 #pragma once
 
-#include "../buffers/gpu_buffer.hpp"
+#include "../gpu-memory-buffer/gpu_memory_buffer.hpp"
 
 
 namespace inexor {
 namespace vulkan_renderer {
 
 	
-	/// @class InexorUniformBuffer.
+	/// 
+	/// 
+	/// 
 	struct InexorUniformBuffer : public InexorBuffer
 	{
 		// 

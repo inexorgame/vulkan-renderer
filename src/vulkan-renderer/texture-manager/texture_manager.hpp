@@ -16,7 +16,7 @@
 // License: MIT.
 #include "../../../third_party/tiny_gltf/tiny_gltf.h"
 
-#include "../buffers/gpu_buffer.hpp"
+#include "../gpu-memory-buffer/gpu_memory_buffer.hpp"
 #include "../texture/texture.hpp"
 #include "../class-templates/manager_template.hpp"
 #include "../debug-marker/debug_marker_manager.hpp"
