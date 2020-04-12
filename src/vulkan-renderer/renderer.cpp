@@ -444,7 +444,7 @@ namespace inexor
 
 			// VMA memory recording and replay.
 			VmaRecordSettings vma_record_settings;
-
+#ifdef _WIN32
 			const std::string vma_replay_file = "vma-replays/vma_replay.csv";
 
 			std::ofstream replay_file_test;
@@ -465,7 +465,7 @@ namespace inexor
 			// We flush the stream after every write operation because we are expecting unforseen program crashes.
 			// This might has a negative effect on the application's performance but it's worth it for now.
 			vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
-
+#endif
 			VmaAllocatorCreateInfo allocator_info = {};
 
 			allocator_info.physicalDevice = selected_graphics_card;
