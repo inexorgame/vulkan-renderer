@@ -367,7 +367,10 @@ namespace inexor
 			// This is done in the following code part:
 			depth_buffer.allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			depth_buffer.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-			depth_buffer.allocation_create_info.pUserData = "Depth buffer image.";
+
+			std::string depth_buffer_image_name = "Depth buffer image.";
+
+			depth_buffer.allocation_create_info.pUserData = depth_buffer_image_name.data();
 
 			VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image, &depth_buffer.allocation, &depth_buffer.allocation_info);
 			vulkan_error_check(result);
@@ -1730,7 +1733,10 @@ namespace inexor
 
 				msaa_target_buffer.color.allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 				msaa_target_buffer.color.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-				msaa_target_buffer.color.allocation_create_info.pUserData = "MSAA target color image.";
+
+				std::string msaa_target_color_image_name = "MSAA target color image.";
+
+				msaa_target_buffer.color.allocation_create_info.pUserData = msaa_target_color_image_name.data();
 
 				result = vmaCreateImage(vma_allocator, &image_create_info, &msaa_target_buffer.color.allocation_create_info, &msaa_target_buffer.color.image, &msaa_target_buffer.color.allocation, &msaa_target_buffer.color.allocation_info);
 				vulkan_error_check(result);
@@ -1770,7 +1776,10 @@ namespace inexor
 
 				msaa_target_buffer.depth.allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 				msaa_target_buffer.depth.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-				msaa_target_buffer.depth.allocation_create_info.pUserData = "MSAA target depth image.";
+
+				std::string msaa_target_depth_image = "MSAA target depth image.";
+
+				msaa_target_buffer.depth.allocation_create_info.pUserData = msaa_target_depth_image.data();
 
 				result = vmaCreateImage(vma_allocator, &image_create_info, &msaa_target_buffer.depth.allocation_create_info, &msaa_target_buffer.depth.image, &msaa_target_buffer.depth.allocation, &msaa_target_buffer.depth.allocation_info);
 				vulkan_error_check(result);
@@ -1811,7 +1820,10 @@ namespace inexor
 
 			depth_stencil.allocation_create_info.usage = VMA_MEMORY_USAGE_CPU_COPY;
 			depth_stencil.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-			depth_stencil.allocation_create_info.pUserData = "Depth stencil image.";
+
+			std::string depth_stencil_image_name = "Depth stencil image.";
+
+			depth_stencil.allocation_create_info.pUserData = depth_stencil_image_name.data();
 
 			result = vmaCreateImage(vma_allocator, &image_create_info, &depth_stencil.allocation_create_info, &depth_stencil.image, &depth_stencil.allocation, &depth_stencil.allocation_info);
 			vulkan_error_check(result);
