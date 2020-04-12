@@ -35,7 +35,7 @@ script:
   - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
   - conan install .
   - cmake -DCMAKE_BUILD_TYPE=Release .
-  - cmake --build .
+  - cmake --build . --target inexor-vulkan-renderer
   - ctest .
 
 notifications:
