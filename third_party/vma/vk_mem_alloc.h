@@ -14818,6 +14818,7 @@ void VmaRecorder::RecordSetPoolName(uint32_t frameIndex,
 
 VmaRecorder::UserDataString::UserDataString(VmaAllocationCreateFlags allocFlags, const void* pUserData)
 {
+#ifdef _WIN32
     if(pUserData != VMA_NULL)
     {
         if((allocFlags & VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT) != 0)
@@ -14834,6 +14835,9 @@ VmaRecorder::UserDataString::UserDataString(VmaAllocationCreateFlags allocFlags,
     {
         m_Str = "";
     }
+#else
+    #warning "VmaRecorder::Init is only available on MS Windows currently!"
+#endif
 }
 
 void VmaRecorder::WriteConfiguration(
