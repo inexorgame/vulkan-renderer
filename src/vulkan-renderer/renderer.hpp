@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifdef _WIN32
 #ifndef VK_USE_PLATFORM_WIN32_KHR
@@ -9,7 +9,7 @@
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "../third_party/vma/vk_mem_alloc.h"
+#include "../../third_party/vma/vk_mem_alloc.h"
 
 #include "error-handling/error_handling.hpp"
 #include "GPU-info/gpu_info.hpp"
@@ -59,43 +59,45 @@ using namespace std;
 #define INEXOR_MAX_FRAMES_IN_FLIGHT 3
 
 
-namespace inexor {
-namespace vulkan_renderer {
-
-
-	class VulkanRenderer
+namespace inexor
+{
+	namespace vulkan_renderer
 	{
-		public:
+
+
+		class VulkanRenderer
+		{
+			public:
 
 			VulkanRenderer() = default;
 
 			~VulkanRenderer() = default;
 
 
-		public:
-			
+			public:
+
 			// Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
-			// it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
+			// it is not guaranteed to happen. Thatâ€™s why weâ€™ll add some extra code to also handle resizes explicitly.
 			bool frame_buffer_resized = false;
 
 			/// Neccesary for taking into account the relative speed of the system's CPU.
 			float time_passed = 0.0f;
-			
+
 			// 
 			InexorTimeStep stopwatch;
 
 
-		protected:
-		
+			protected:
+
 			// We try to avoid inheritance here and prefer a composition pattern.
 			// TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 
 			std::shared_ptr<VulkanShaderManager> shader_manager = std::make_shared<VulkanShaderManager>();
-			
+
 			std::shared_ptr<VulkanFenceManager> fence_manager = std::make_shared<VulkanFenceManager>();
-			
+
 			std::shared_ptr<VulkanSemaphoreManager> semaphore_manager = std::make_shared<VulkanSemaphoreManager>();
-			
+
 			std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
 
 			std::shared_ptr<InexorDescriptorManager> descriptor_manager = std::make_shared<InexorDescriptorManager>();
@@ -107,7 +109,7 @@ namespace vulkan_renderer {
 			std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager = std::make_shared<VulkanUniformBufferManager>();
 
 			std::shared_ptr<VulkanTextureManager> texture_manager = std::make_shared<VulkanTextureManager>();
-			
+
 			std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager = std::make_shared<InexorMeshBufferManager>();
 
 			std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
@@ -125,7 +127,7 @@ namespace vulkan_renderer {
 			VkDevice device;
 
 			VkSurfaceKHR surface;
-			
+
 			VkPhysicalDevice selected_graphics_card;
 
 			VkPresentModeKHR selected_present_mode;
@@ -135,17 +137,17 @@ namespace vulkan_renderer {
 			uint32_t number_of_images_in_swapchain = 0;
 
 			VkSubmitInfo submit_info;
-			
+
 			VkPresentInfoKHR present_info = {};
 
 			std::vector<VkImage> swapchain_images;
-			
+
 			std::vector<VkImageView> swapchain_image_views;
 
 			VkPipelineLayout pipeline_layout = {};
 
 			VkFormat selected_image_format = {};
-			
+
 			VkExtent2D swapchain_image_extent = {};
 
 			VkColorSpaceKHR selected_color_space = {};
@@ -161,13 +163,13 @@ namespace vulkan_renderer {
 			VkCommandPool command_pool = VK_NULL_HANDLE;
 
 			std::vector<VkCommandBuffer> command_buffers;
-			
+
 			std::vector<std::shared_ptr<VkSemaphore>> image_available_semaphores;
-			
+
 			std::vector<std::shared_ptr<VkSemaphore>> rendering_finished_semaphores;
-			
+
 			std::vector<std::shared_ptr<VkFence>> in_flight_fences;
-			
+
 			std::vector<std::shared_ptr<VkFence>> images_in_flight;
 
 			VkDebugReportCallbackEXT debug_report_callback = {};
@@ -175,7 +177,7 @@ namespace vulkan_renderer {
 			bool debug_report_callback_initialised = false;
 
 			InexorImageBuffer depth_buffer;
-			
+
 			InexorImageBuffer depth_stencil;
 
 			uint32_t vma_dump_index = 0;
@@ -193,15 +195,15 @@ namespace vulkan_renderer {
 			InexorCamera game_camera_1;
 
 			InexorFPSCounter fps_counter;
-			
+
 			// TODO: Refactor this!
-	        VkDescriptorBufferInfo uniform_buffer_info = {};
+			VkDescriptorBufferInfo uniform_buffer_info = {};
 			VkDescriptorImageInfo image_info = {};
 
 			std::shared_ptr<InexorUniformBuffer> matrices;
-			
+
 			VkPipelineCache pipeline_cache;
-			
+
 			// TODO: Read from TOML configuration file and pass value to core engine.
 			bool multisampling_enabled = true;
 
@@ -218,13 +220,13 @@ namespace vulkan_renderer {
 			} descriptor_bundles;
 
 
-		public:
+			public:
 
 			/// @brief Run Vulkan memory allocator's memory statistics.
 			VkResult calculate_memory_budget();
 
 
-		protected:
+			protected:
 
 
 			/// @brief Creates a Vulkan instance.
@@ -247,7 +249,7 @@ namespace vulkan_renderer {
 			/// @param graphics_card The regarded graphics card.
 			VkResult create_physical_device(const VkPhysicalDevice& graphics_card, const bool enable_debug_markers = true);
 
-			
+
 			/// @brief Creates an instance of VulkanDebugMarkerManager
 			VkResult initialise_debug_marker_manager(const bool enable_debug_markers = true);
 
@@ -255,7 +257,7 @@ namespace vulkan_renderer {
 			/// @brief Initialises glTF 2.0 model manager.
 			VkResult initialise_glTF2_model_manager();
 
-			
+
 			/// 
 			VkResult update_cameras();
 
@@ -282,12 +284,12 @@ namespace vulkan_renderer {
 
 			/// @brief Creates the swapchain.
 			VkResult create_swapchain();
-			
-			
+
+
 			/// @brief Cleans the swapchain.
 			VkResult cleanup_swapchain();
-			
-			
+
+
 			/// @brief Creates the uniform buffers.
 			VkResult create_uniform_buffers();
 
@@ -328,7 +330,7 @@ namespace vulkan_renderer {
 			VkResult shutdown_vulkan();
 
 
+		};
+
 	};
-	
-};
 };
