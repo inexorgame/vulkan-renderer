@@ -1,28 +1,25 @@
-language: cpp
-python: "3.7"
-sudo: required
 os: linux
-dist: trusty
+language: python
+python: "3.7"
+dist: xenial
 
-branches:
-  only:
-    - master
-
-compiler:
-  - clang
-  - gcc
+os: linux
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-7
 
 before_script:
   - sudo apt-get install
-  - pip install conan
-  # glfw needs to come from bincrafters.
-  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-  - conan install conanfile.py
-  - mkdir build
-  - cd build
-  - cmake ..
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
 
 install:
+  - pip install conan
+  - conan user
+  - sudo apt-get install -qq g++-7
   - wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha11/premake-5.0.0-alpha11-linux.tar.gz?Human=true -O premake-5.0.0-alpha11-linux.tar.gz
   - tar -xzvf premake-5.0.0-alpha11-linux.tar.gz
   - sudo apt-get -qq update
@@ -33,8 +30,13 @@ install:
   - export VULKAN_SDK=$TRAVIS_BUILD_DIR/$VK_VERSION/x86_64
 
 script:
-  - make config=debug_linux-x64
-  - cd ..
+  - export CC=gcc-7
+  - export CXX=g++-7
+  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+  - conan install .
+  - cmake -DCMAKE_BUILD_TYPE=Release .
+  - cmake --build .
+  - ctest .
 
 notifications:
   email:
