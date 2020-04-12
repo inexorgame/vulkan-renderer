@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // toml11: TOML for Modern C++
 // https://github.com/ToruNiina/toml11
@@ -19,30 +19,34 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <spdlog/spdlog.h>
 
-namespace inexor {
-namespace vulkan_renderer {
 
-	
-	class InexorApplication : public VulkanRenderer,
-	                          public InexorKeyboardInputHandler,
-	                          public tools::InexorCommandLineArgumentParser
+namespace inexor
+{
+	namespace vulkan_renderer
 	{
-		public:
+
+
+		class InexorApplication : public VulkanRenderer,
+			public InexorKeyboardInputHandler,
+			public tools::InexorCommandLineArgumentParser
+		{
+			public:
 
 			InexorApplication() = default;
-			
+
 			~InexorApplication() = default;
 
 
-		private:
-			
+			private:
+
 			std::string application_name = "";
 
 			std::string engine_name = "";
 
 			uint32_t application_version = 0;
-			
+
 			uint32_t engine_version = 0;
 
 			// The core concept of paralellization in Inexor is to use a
@@ -52,7 +56,7 @@ namespace vulkan_renderer {
 			std::shared_ptr<InexorThreadPool> thread_pool;
 
 			std::vector<std::shared_ptr<InexorTexture>> textures;
-			
+
 			std::size_t current_frame = 0;
 
 			// TODO: Refactor into a manger class.
@@ -61,9 +65,9 @@ namespace vulkan_renderer {
 				VkShaderStageFlagBits shader_type;
 				std::string shader_file_name;
 			};
-				
+
 			std::vector<std::string> vertex_shader_files;
-			
+
 			std::vector<std::string> fragment_shader_files;
 
 			std::vector<std::string> texture_files;
@@ -74,7 +78,7 @@ namespace vulkan_renderer {
 
 
 
-		private:
+			private:
 
 			/// @brief Loads the configuration of the renderer from a TOML configuration file.
 			/// @brief TOML_file_name [in] The TOML configuration file.
@@ -96,8 +100,8 @@ namespace vulkan_renderer {
 
 			/// 
 			VkResult check_application_specific_features();
-			
-			
+
+
 			/// 
 			VkResult render_frame();
 
@@ -107,11 +111,11 @@ namespace vulkan_renderer {
 			VkResult update_uniform_buffers(const std::size_t current_image);
 
 
-		public:
+			public:
 
 			VkResult initialise();
 
-			
+
 			/// @brief Keyboard input callback.
 			/// @param window [in] The glfw window.
 			/// @param key [in] The key which was pressed or released.
@@ -120,14 +124,14 @@ namespace vulkan_renderer {
 			/// @param mods [in] Bit field describing which modifier keys were held down.
 			void keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-			
+
 			void run();
 
 
 			void cleanup();
 
 
-	};
+		};
 
-};
+	};
 };

@@ -1,3 +1,5 @@
+﻿#include <spdlog/spdlog.h>
+
 #include "inexor_application.hpp"
 
 using namespace inexor::vulkan_renderer;
@@ -7,35 +9,35 @@ InexorApplication renderer;
 
 int main(int argc, char* argv[])
 {
-    // Set the global log level to debug.
-    // We can change this upon release to display only messages which have more important log levels (like errors).
-    spdlog::set_level(spdlog::level::debug);
-    
-    spdlog::set_pattern("%t %H:%M:%S.%f %^%l%$ %v");
-    
-    spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+	// Set the global log level to debug.
+	// We can change this upon release to display only messages which have more important log levels (like errors).
+	spdlog::set_level(spdlog::level::debug);
 
-    spdlog::debug("Parsing command line arguments.");
-    
-    // We use some simple command line argument parser we wrote ourselves.
-    renderer.parse_command_line_arguments(argc, argv);
+	spdlog::set_pattern("%t %H:%M:%S.%f %^%l%$ %v");
 
-    VkResult result = renderer.initialise();
+	spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 
-    if(VK_SUCCESS == result)
-    {
-        renderer.run();
-        renderer.calculate_memory_budget();
-        renderer.cleanup();
-        
-        spdlog::debug("Window closed.");
-    }
-    else
-    {
-        // Something did go wrong when initialising the engine!
-        vulkan_error_check(result);
-        return -1;
-    }
+	spdlog::debug("Parsing command line arguments.");
 
-    return 0;
+	// We use some simple command line argument parser we wrote ourselves.
+	renderer.parse_command_line_arguments(argc, argv);
+
+	VkResult result = renderer.initialise();
+
+	if(VK_SUCCESS == result)
+	{
+		renderer.run();
+		renderer.calculate_memory_budget();
+		renderer.cleanup();
+
+		spdlog::debug("Window closed.");
+	}
+	else
+	{
+		// Something did go wrong when initialising the engine!
+		vulkan_error_check(result);
+		return -1;
+	}
+
+	return 0;
 }
