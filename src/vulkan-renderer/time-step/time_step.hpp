@@ -1,27 +1,29 @@
-#pragma once
+﻿#pragma once
 
 #include <chrono>
 
 
-namespace inexor {
-namespace vulkan_renderer {
-
-
-	/// @class InexorTimeStep
-	/// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
-	/// Since every machine has slightly different speed, it is neccesary to the timestep when animating something.
-	/// @todo Implement time step for every thread?
-	class InexorTimeStep
+namespace inexor
+{
+	namespace vulkan_renderer
 	{
-		private:
+
+
+		/// @class InexorTimeStep
+		/// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
+		/// Since every machine has slightly different speed, it is neccesary to the timestep when animating something.
+		/// @todo Implement time step for every thread?
+		class InexorTimeStep
+		{
+			private:
 
 			// The time point of the last render call.
-			std::chrono::time_point<std::chrono::steady_clock> last_time;
+			std::chrono::time_point<std::chrono::high_resolution_clock> last_time;
 
 			// The time point of program start.
-			std::chrono::time_point<std::chrono::steady_clock> program_start_time;
+			std::chrono::time_point<std::chrono::high_resolution_clock> program_start_time;
 
-		public:
+			public:
 
 			InexorTimeStep();
 
@@ -38,8 +40,8 @@ namespace vulkan_renderer {
 			float get_program_start_time_step();
 
 
+		};
+
+
 	};
-
-
-};
 };

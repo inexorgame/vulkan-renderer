@@ -1,34 +1,36 @@
-#pragma once
+﻿#pragma once
 
 #include <chrono>
 #include <optional>
 
 
-namespace inexor {
-namespace vulkan_renderer {
-
-	
-	class InexorFPSCounter
+namespace inexor
+{
+	namespace vulkan_renderer
 	{
-		private:
+
+
+		class InexorFPSCounter
+		{
+			private:
 
 			std::size_t frames = 0;
-			
-			std::chrono::time_point<std::chrono::steady_clock> last_time;
+
+			std::chrono::time_point<std::chrono::high_resolution_clock> last_time;
 
 			float fps_update_interval = 1.0f;
 
 
-		public:
+			public:
 
 			InexorFPSCounter() = default;
-			
+
 			~InexorFPSCounter() = default;
 
 			std::optional<uint32_t> update();
 
 
-	};
+		};
 
-};
+	};
 };
