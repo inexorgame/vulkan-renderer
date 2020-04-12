@@ -73,6 +73,8 @@ assign_source_group(${BENCHMARK_SOURCE_FILES})
 add_executable(inexor-vulkan-renderer src/main.cpp ${NORMAL_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer PUBLIC ${Vulkan_LIBS} ${CONAN_LIBS})
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
+target_compile_definitions(inexor-vulkan-renderer PUBLIC SPDLOG_COMPILED_LIB)
+target_compile_definitions(inexor-vulkan-renderer PUBLIC SPDLOG_FMT_EXTERNAL)
 
 # Use multiple threads to generate code.
 if (MSVC)
