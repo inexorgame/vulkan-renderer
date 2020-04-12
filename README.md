@@ -57,7 +57,7 @@ Developers from ARM, LunarG, NVidia.
 
 Next planned releases:
 
-### Threadpool demo (0.2 alpha) (est. April 26th, 2020)
+### [Threadpool](https://en.wikipedia.org/wiki/Thread_pool) demo (0.2 alpha) (est. April 26th, 2020)
 * [ ] Implement `-threads <N>` command line argument.
 * [ ] Refactor `render_frame` method: Account for N buffering (prefer triple buffering).
 * [X] Create a threadpool using C++17.
@@ -72,7 +72,7 @@ Next planned releases:
 * [ ] Give threadpool tasks a name.
 * [ ] Use `std::chrono` to measure how long a task took to finish.
 
-### imgui demo (0.3 alpha) (date not set)
+### [imgui](https://github.com/ocornut/imgui) demo (0.3 alpha) (date not set)
 * [ ] Add [imgui](https://github.com/ocornut/imgui) support.
 
 ### Octree demo (0.4 alpha) (date not set)
