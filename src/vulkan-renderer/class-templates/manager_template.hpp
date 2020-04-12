@@ -137,12 +137,12 @@ namespace inexor
 				// get_entry_count() will lock read access automatically for us.
 				std::size_t map_size = get_entry_count();
 
+				std::vector<std::shared_ptr<T>> all_keys;
+
 				if(0 == map_size)
 				{
 					return all_keys;
 				}
-
-				std::vector<std::shared_ptr<T>> all_keys;
 
 				all_keys.reserve(stored_types.size());
 
