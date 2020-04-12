@@ -83,7 +83,7 @@ namespace inexor
 			bool update_entry(const std::string& type_name,
 							  const std::shared_ptr<T> new_type)
 			{
-				if(!does_type_exist(type_name))
+				if(!does_key_exist(type_name))
 				{
 					return false;
 				}
@@ -195,7 +195,7 @@ namespace inexor
 			/// @return The number of deleted types.
 			std::size_t delete_entry(const std::string& type_name)
 			{
-				if(!does_type_exist(type_name))
+				if(!does_key_exist(type_name))
 				{
 					return 0;
 				}
