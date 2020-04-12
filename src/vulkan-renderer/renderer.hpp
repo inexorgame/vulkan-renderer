@@ -12,7 +12,7 @@
 #include "../../third_party/vma/vk_mem_alloc.h"
 
 #include "error-handling/error_handling.hpp"
-#include "GPU-info/gpu_info.hpp"
+#include "gpu-info/gpu_info.hpp"
 #include "availability-checks/availability_checks.hpp"
 #include "settings-decision-maker/settings_decision_maker.hpp"
 #include "shader-manager/shader_manager.hpp"
