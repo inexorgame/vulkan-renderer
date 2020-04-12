@@ -14897,11 +14897,14 @@ void VmaRecorder::WriteConfiguration(
 
 void VmaRecorder::GetBasicParams(CallParams& outParams)
 {
+#ifdef _WIN32
     outParams.threadId = GetCurrentThreadId();
-
     LARGE_INTEGER counter;
     QueryPerformanceCounter(&counter);
     outParams.time = (double)(counter.QuadPart - m_StartCounter) / (double)m_Freq;
+ #else
+     #warning "VmaRecorder::Init is only available on MS Windows currently!"
+ #endif
 }
 
 void VmaRecorder::PrintPointerList(uint64_t count, const VmaAllocation* pItems)
