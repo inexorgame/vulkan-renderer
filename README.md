@@ -53,44 +53,11 @@ Developers from ARM, LunarG, NVidia.
 
 ## Roadmap
 
-### Initialisation and glTF2 demo (0.1 alpha) (estimated April 12th, 2020)
-* [X] Create a [CMake](https://cmake.org/) file with [conan package manager](https://conan.io/) setup.
-* [X] Integrate [Vulkan Memory Allocator (VMA) library](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
-* [X] Integrate [RenderDoc](https://renderdoc.org/) support.
-* [X] Use [spdlog](https://github.com/gabime/spdlog) as logger library.
-* [X] Integrate [tiny_gltf library](https://github.com/syoyo/tinygltf).
-* [X] Mesh buffer manager for vertex and index buffers based on [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
-* [X] Texture manager based on [stb_image](https://github.com/nothings/stb) and [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
-* [X] Uniform buffer manager based on [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator).
-* [X] Shader manager for loading [SPIR-V](https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation) shaders.
-* [X] Load [TOML](https://en.wikipedia.org/wiki/TOML) configuration files using [toml11](https://github.com/ToruNiina/toml11). We deliberately [won't use JSON for this](https://www.lucidchart.com/techblog/2018/07/16/why-json-isnt-a-good-configuration-language/).
-* [X] Vulkan [fence](https://vulkan.lunarg.com/doc/view/1.0.26.0/linux/vkspec.chunked/ch06s01.html) manager.
-* [X] Vulkan [semaphore](https://www.khronos.org/blog/vulkan-timeline-semaphores) manager.
-* [X] GPU info viewer functions.
-* [X] [Vulkan debug callbacks](https://vulkan.lunarg.com/doc/view/1.0.37.0/linux/vkspec.chunked/ch32s02.html).
-* [X] [Vulkan standard validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers).
-* [X] C++11 timestep class.
-* [X] Use [glm](https://glm.g-truc.net/0.9.9/index.html).
-* [X] Depth buffer.
-* [X] Let [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) generate memory debug logs.
-* [X] Associate internal resource names with memory regions to improve debugging.
-* [X] Use separate data transfer queue for memory copies if available.
-* [X] Availability checks for Vulkan features.
-* [X] Settings decision maker for Vulkan initialisation.
-* [X] Simple command line argument parser.
-* [X] Automatic GPU selection mechanism and `-GPU <N>` command line argument for preferential  GPU.
-* [X] Create windows using [glfw3](https://www.glfw.org/).
-* [X] Keyboard input based using [glfw3](https://www.glfw.org/).
-* [ ] Mouse input based using [glfw3](https://www.glfw.org/).
-* [X] Load geometry of [glTF 2.0 files](https://www.khronos.org/gltf/) using [tiny_gltf library](https://github.com/syoyo/tinygltf).
-* [X] Load animations of [glTF 2.0 files](https://www.khronos.org/gltf/) using [tiny_gltf library](https://github.com/syoyo/tinygltf).
-* [ ] Load textures of [glTF 2.0 files](https://www.khronos.org/gltf/) using [tiny_gltf library](https://github.com/syoyo/tinygltf).
-* [ ] Render [glTF 2.0 files](https://www.khronos.org/gltf/) with textures and animations
-* [X] Basic camera class.
-* [ ] [Bézier curves](https://en.wikipedia.org/wiki/B%C3%A9zier_curve).
+[Initialisation and glTF2 demo (0.1 alpha), April 12th, 2020](https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.1)
 
+Next planned releases:
 
-### Threadpool demo (0.2 alpha) (date not set)
+### Threadpool demo (0.2 alpha) (est. April 26th, 2020)
 * [ ] Implement `-threads <N>` command line argument.
 * [ ] Refactor `render_frame` method: Account for N buffering (prefer triple buffering).
 * [X] Create a threadpool using C++17.
