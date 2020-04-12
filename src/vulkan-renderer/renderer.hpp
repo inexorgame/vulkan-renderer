@@ -1,15 +1,9 @@
 ﻿#pragma once
 
-#ifdef _WIN32
-#ifndef VK_USE_PLATFORM_WIN32_KHR
-#define VK_USE_PLATFORM_WIN32_KHR
-#endif
-#endif
-
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "../../third_party/vma/vk_mem_alloc.h"
+#include "../../third_party/vma/vma_usage.h"
 
 #include "error-handling/error_handling.hpp"
 #include "gpu-info/gpu_info.hpp"

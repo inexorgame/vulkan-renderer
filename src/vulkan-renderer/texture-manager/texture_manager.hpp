@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "../../../third_party/vma/vk_mem_alloc.h"
+#include "../../../third_party/vma/vma_usage.h"
 
 // JSON for modern C++11 library.
 // https://github.com/nlohmann/json
@@ -30,24 +30,26 @@
 #include <memory>
 
 
-namespace inexor {
-namespace vulkan_renderer {
-
-	
-	// TODO: 2D textures, 3D textures and cube maps.
-	// TODO: Scan asset directory automatically.
-	// TODO: Create multiple textures from file and submit them in 1 command buffer for performance reasons.
-	
-	/// @class VulkanTextureManager
-	/// @brief A manager class for textures.
-	/// @note We do not support linear tiled textures because it is not advisable to do so!
-	class VulkanTextureManager : public ManagerClassTemplate<InexorTexture>,
-                                 public SingleTimeCommandBufferRecorder
+namespace inexor
+{
+	namespace vulkan_renderer
 	{
-		private:
-			
+
+
+		// TODO: 2D textures, 3D textures and cube maps.
+		// TODO: Scan asset directory automatically.
+		// TODO: Create multiple textures from file and submit them in 1 command buffer for performance reasons.
+
+		/// @class VulkanTextureManager
+		/// @brief A manager class for textures.
+		/// @note We do not support linear tiled textures because it is not advisable to do so!
+		class VulkanTextureManager : public ManagerClassTemplate<InexorTexture>,
+			public SingleTimeCommandBufferRecorder
+		{
+			private:
+
 			bool texture_manager_initialised = false;
-			
+
 			VmaAllocator vma_allocator;
 
 			VkPhysicalDevice graphics_card = VK_NULL_HANDLE;
@@ -55,15 +57,15 @@ namespace vulkan_renderer {
 			uint32_t transfer_queue_family_index = 0;
 
 
-		public:
+			public:
 
 			VulkanTextureManager() = default;
-			
+
 			~VulkanTextureManager() = default;
 
 
-		private:
-			
+			private:
+
 			/// @brief Creates the texture manager command pool which is neccesary for copying data to GPU memory.
 			VkResult create_texture_manager_command_pool();
 
@@ -75,8 +77,8 @@ namespace vulkan_renderer {
 			/// @param buffer_usage [in] The buffer usage flags.
 			/// @param memory_usage [in] The VMA memory usage flags.
 			VkResult create_texture_buffer(std::shared_ptr<InexorTexture> texture, InexorBuffer& buffer_object, const VkDeviceSize& buffer_size, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage);
-			
-			
+
+
 			/// @brief Creates a texture image.
 			/// @param texture [in] The texture for which an image will be created.
 			/// @param format [in] The image format.
@@ -85,8 +87,8 @@ namespace vulkan_renderer {
 			/// @param memory_usage [in] The VMA memory usage flags.
 			/// @param image_usage_flags [in] The image usage flags.
 			VkResult create_texture_image(std::shared_ptr<InexorTexture> texture, const VkFormat& format, const VkImageTiling& tiling, const VkBufferUsageFlags& buffer_usage, const VmaMemoryUsage& memory_usage, const VkImageUsageFlags& image_usage_flags);
-			
-			
+
+
 			/// @brief Creates a texture image view.
 			/// @param texture [in] The texture for which a buffer will be created.
 			/// @param format [in] The image format.
@@ -115,7 +117,7 @@ namespace vulkan_renderer {
 
 
 
-		public:
+			public:
 
 			/// @brief Initialises texture manager by passing some pointers that we need.
 			/// @param device [in] The Vulkan device.
@@ -124,7 +126,7 @@ namespace vulkan_renderer {
 			/// @param vma_allocator [in] An instance of the Vulkan memory allocator library.
 			/// @param transfer_queue_family_index [in] The queue family index of the data transfer queue (could be distinct queue or graphics queue).
 			/// @param data_transfer_queue [in] The data transfer queue (could be distinct queue or graphics queue).
-			VkResult initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,  const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue);
+			VkResult initialise(const VkDevice& device, const VkPhysicalDevice& graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator& vma_allocator, const uint32_t& transfer_queue_family_index, const VkQueue& data_transfer_queue);
 
 
 			/// @brief Creates a texture from a file of supported format.
@@ -134,7 +136,7 @@ namespace vulkan_renderer {
 			/// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
 			VkResult create_texture_from_file(const std::string& internal_texture_name, const std::string& texture_file_name, std::shared_ptr<InexorTexture> output_texture);
 
-			
+
 			/// @brief Create a texture from an unsigned char buffer.
 			/// @param internal_texture_name [in] The internal name which will be used inside the engine.
 			/// @param texture_memory [in] The Inexor texture buffer which will be created for this texture.
@@ -147,19 +149,19 @@ namespace vulkan_renderer {
 			/// @param internal_texture_name [in] The internal name which will be used inside the engine.
 			/// @param gltf_image [in] The glTF 2.0 image.
 			/// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
-			VkResult create_texture_from_glTF2_image(const std::string& internal_texture_name, tinygltf::Image &gltf_image, std::shared_ptr<InexorTexture> output_texture);
-		
+			VkResult create_texture_from_glTF2_image(const std::string& internal_texture_name, tinygltf::Image& gltf_image, std::shared_ptr<InexorTexture> output_texture);
+
 
 			/// @brief Returns a certain texture by internal name (key).
 			/// @param internal_texture_name [in] The internal name of the texture
 			/// @return A std::optional shared pointer to the texture instance.
 			std::optional<std::shared_ptr<InexorTexture>> get_texture(const std::string& internal_texture_name);
 
-			
+
 			/// @brief Returns the view of a certain texture by name.
 			/// @param internal_texture_name [in] The name of the texture.
 			std::optional<VkImageView> get_texture_view(const std::string& internal_texture_name);
-			
+
 
 			/// @brief Returns the sampler of a certain texture by name.
 			/// @param internal_texture_name [in] The name of the texture.
@@ -170,8 +172,8 @@ namespace vulkan_renderer {
 			void shutdown_textures();
 
 
+		};
+
+
 	};
-
-
-};
 };

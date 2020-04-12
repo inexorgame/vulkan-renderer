@@ -83,7 +83,7 @@ endif ()
 # Otherwise Visual Studio can't find any files like shaders or textures.
 if (WIN32)
     set_property(TARGET inexor-vulkan-renderer PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-    target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+    #target_compile_definitions(inexor-vulkan-renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
 
 target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
@@ -102,7 +102,7 @@ target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 # Otherwise Visual Studio can't find any files like shaders or textures.
 if (WIN32)
     set_property(TARGET inexor-vulkan-renderer PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-    target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+    #target_compile_definitions(inexor-vulkan-renderer-tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
 
 target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
@@ -119,7 +119,7 @@ target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 
 if (WIN32)
     set_property(TARGET inexor-vulkan-renderer-benchmarks PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-    target_compile_definitions(inexor-vulkan-renderer-benchmarks PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+    #target_compile_definitions(inexor-vulkan-renderer-benchmarks PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif ()
 
 target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
