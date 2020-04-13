@@ -546,7 +546,7 @@ namespace inexor
 
 			// If the user specified command line argument "-vsync", the presentation engine waits
 			// for the next vertical blanking period to update the current image.
-			std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-nostats");
+			std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-vsync");
 
 			if(enable_vertical_synchronisation.has_value())
 			{
