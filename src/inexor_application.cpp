@@ -312,6 +312,8 @@ namespace inexor
 				// Update fps by changing window name.
 				std::string window_title = "Inexor Vulkan API renderer demo - " + std::to_string(fps_value.value()) + " FPS";
 				glfwSetWindowTitle(window, window_title.c_str());
+
+				spdlog::debug("FPS: {}, window size: {} x {}.", fps_value.value(), window_width, window_height);
 			}
 
 
@@ -381,7 +383,7 @@ namespace inexor
 			// We do not want to use the OpenGL API.
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-			glfwWindowHint(GLFW_VISIBLE, true);
+			glfwWindowHint(GLFW_VISIBLE, false);
 
 			glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
@@ -700,7 +702,7 @@ namespace inexor
 
 			spdlog::debug("Showing window.");
 
-			//glfwShowWindow(window);
+			glfwShowWindow(window);
 
 			// We must store the window user pointer to be able to call the window resize callback.
 			// TODO: Use window queue instead?
