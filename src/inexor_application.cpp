@@ -541,6 +541,27 @@ namespace inexor
 				}
 			}
 
+
+			spdlog::debug("Checking for -vsync command line argument.");
+
+			// If the user specified command line argument "-vsync", the presentation engine waits
+			// for the next vertical blanking period to update the current image.
+			std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-nostats");
+
+			if(enable_vertical_synchronisation.has_value())
+			{
+				if(enable_vertical_synchronisation.value())
+				{
+					spdlog::debug("V-sync enabled!.");
+					vsync_enabled = true;
+				}
+				else
+				{
+					spdlog::debug("V-sync disabled!");
+					vsync_enabled = false;
+				}
+			}
+
 			if(display_graphics_card_info)
 			{
 				spdlog::debug("Displaying extended information about graphics cards.");

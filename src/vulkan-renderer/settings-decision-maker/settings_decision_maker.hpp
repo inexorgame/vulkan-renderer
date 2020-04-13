@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "../error-handling/error_handling.hpp"
 
@@ -13,26 +13,28 @@
 #include <vulkan/vulkan.h>
 
 
-namespace inexor {
-namespace vulkan_renderer {
-
-
-	/// @class VulkanSettingsDecisionMaker
-	/// @brief This class makes automatic decisions which are relevant to setting up Vulkan:
-	/// - Which graphics card will be used if more than 1 is available?
-	/// - Which surface color format should be used?
-	/// - Which graphics card's queue families should be used?
-	/// - Which presentation modes should be used?
-	class VulkanSettingsDecisionMaker
+namespace inexor
+{
+	namespace vulkan_renderer
 	{
-		public:
-			
+
+
+		/// @class VulkanSettingsDecisionMaker
+		/// @brief This class makes automatic decisions which are relevant to setting up Vulkan:
+		/// - Which graphics card will be used if more than 1 is available?
+		/// - Which surface color format should be used?
+		/// - Which graphics card's queue families should be used?
+		/// - Which presentation modes should be used?
+		class VulkanSettingsDecisionMaker
+		{
+			public:
+
 			VulkanSettingsDecisionMaker() = default;
 
 			~VulkanSettingsDecisionMaker() = default;
 
 
-		private:
+			private:
 
 			/// @brief Rates a graphcs card by its features.
 			/// @param graphics_card The graphics card.
@@ -40,9 +42,9 @@ namespace vulkan_renderer {
 			std::size_t rate_graphics_card(const VkPhysicalDevice& graphics_card);
 
 
-		public:
+			public:
 
-			
+
 			/// @brief Automatically decides if a graphics card is suitable for this application's purposes.
 			/// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
 			/// - It must support a swapchain.
@@ -54,9 +56,10 @@ namespace vulkan_renderer {
 			/// @return True if the graphics card is suitable, false otherwise.
 			/// @warning Do not discriminate graphics cards which are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
 			/// because this would deny some players to run Inexor on their machines!
-			VkBool32 is_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			VkBool32 is_graphics_card_is_suitable(const VkPhysicalDevice& graphics_card,
+												  const VkSurfaceKHR& surface);
 
-			
+
 			/// @brief Gets the VkPhysicalDeviceType of a graphics card.
 			/// @param graphics_card The graphics card.
 			/// @return The graphics_card of the graphics card.
@@ -69,30 +72,37 @@ namespace vulkan_renderer {
 			/// @param vulkan_instance A pointer to the Vulkan instance handle.
 			/// @param preferred_graphics_card_index The preferred graphics card (by array index).
 			/// @return The physical device which was chosen to be the best one.
-			std::optional<VkPhysicalDevice> decide_which_graphics_card_to_use(const VkInstance& vulkan_instance, const VkSurfaceKHR& surface, const std::optional<uint32_t>& preferred_graphics_card_index = std::nullopt);
+			std::optional<VkPhysicalDevice> decide_which_graphics_card_to_use(const VkInstance& vulkan_instance,
+																			  const VkSurfaceKHR& surface,
+																			  const std::optional<uint32_t>& preferred_graphics_card_index = std::nullopt);
 
-			
+
 			/// @brief Automatically decides how many images will be used in the swap chain.
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The selected (window) surface.
 			/// @return The number of images that will be used in swap chain.
-			uint32_t decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
-			
+			uint32_t decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice& graphics_card,
+																const VkSurfaceKHR& surface);
+
 
 			/// @brief Automatically decides whcih surface color to use in swapchain.
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The window surface.
 			/// @param color_format The chosen color format.
 			/// @param color_space The chosen color space.
-			std::optional<VkSurfaceFormatKHR> decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			std::optional<VkSurfaceFormatKHR> decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card,
+																									const VkSurfaceKHR& surface);
 
 
 			/// @brief Automatically decides which surface color format to use in swapchain.
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The window surface.
-			/// @param window_width The width of the window.
-			/// @param window_height The height of the window.
-			void decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, uint32_t& image_width, uint32_t& image_height);
+			/// @param window_width [out] The width of the window.
+			/// @param window_height [out] The height of the window.
+			void decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice& graphics_card,
+																	   const VkSurfaceKHR& surface,
+																	   uint32_t& image_width,
+																	   uint32_t& image_height);
 
 
 			/// @brief Automatically decides which width and height to use as swapchain extent.
@@ -101,20 +111,26 @@ namespace vulkan_renderer {
 			/// @param window_width The width of the window.
 			/// @param window_height The height of the window.
 			/// @param swapchain_extent The extent of the swapchain.
-			void decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface, uint32_t& window_width, uint32_t& window_height, VkExtent2D& swapchain_extent);
+			void decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice& graphics_card,
+															 const VkSurfaceKHR& surface,
+															 uint32_t& window_width,
+															 uint32_t& window_height,
+															 VkExtent2D& swapchain_extent);
 
 
 			/// @brief Automatically finds the transform, relative to the presentation engine's natural orientation, applied to the image content prior to presentation.
 			/// @param graphics_card The selected graphics card.
 			/// @param surface [in] The window surface.
 			/// @return The image transform.
-			VkSurfaceTransformFlagsKHR decide_which_image_transformation_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
-			
+			VkSurfaceTransformFlagsKHR decide_which_image_transformation_to_use(const VkPhysicalDevice& graphics_card,
+																				const VkSurfaceKHR& surface);
+
 
 			/// @brief Finds a supported composite alpha format.
 			/// @param graphics_card [in] The selected graphics card.
 			/// @param surface [in] The window surface.
-			VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(VkPhysicalDevice& selected_graphics_card, VkSurfaceKHR& surface);
+			VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(VkPhysicalDevice& selected_graphics_card,
+																	VkSurfaceKHR& surface);
 
 
 			/// @brief Automatically decides which presentation mode the presentation engine will be using.
@@ -124,7 +140,9 @@ namespace vulkan_renderer {
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The selected (window) surface.
 			/// @return The presentation mode which will be used by the presentation engine.
-			std::optional<VkPresentModeKHR> decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			std::optional<VkPresentModeKHR> decide_which_presentation_mode_to_use(const VkPhysicalDevice& graphics_card,
+																				  const VkSurfaceKHR& surface,
+																				  bool vsync = false);
 
 
 			/// @brief Decides which graphics queue family index to use in case it is not possible to use one for both graphics and presentation.
@@ -132,19 +150,21 @@ namespace vulkan_renderer {
 			/// @param graphics_card [in] The selected graphics card.
 			/// @return The index of the queue family which can be used for graphics.
 			std::optional<uint32_t> find_graphics_queue_family(const VkPhysicalDevice& graphics_card);
-			
-			
+
+
 			/// @brief Decides which presentation queue family index to use in case it is not possible to use one for both graphics and presentation.
 			/// @warning This function should only be used when it is not possible to use one queue family for both graphics and presentation!
 			/// @param graphics_card The selected graphics card.
 			/// @param surface The selected (window) surface.
 			/// @return The index of the queue family which can be used for presentation.
-			std::optional<uint32_t> find_presentation_queue_family(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
-			
+			std::optional<uint32_t> find_presentation_queue_family(const VkPhysicalDevice& graphics_card,
+																   const VkSurfaceKHR& surface);
+
 
 			/// @brief Checks if there is a queue family (index) which can be used for both graphics and presentation.
 			/// @return The queue family index which can be used for both graphics and presentation (if existent), std::nullopt otherwise.
-			std::optional<uint32_t> find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card, const VkSurfaceKHR& surface);
+			std::optional<uint32_t> find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice& graphics_card,
+																						 const VkSurfaceKHR& surface);
 
 
 			/// @brief Tries to find a queue family which has VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT.
@@ -169,9 +189,12 @@ namespace vulkan_renderer {
 
 			/// 
 			/// 
-			std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice& graphics_card, const std::vector<VkFormat>& formats, VkImageTiling tiling, VkFormatFeatureFlags feature_flags);
+			std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice& graphics_card,
+															 const std::vector<VkFormat>& formats,
+															 const VkImageTiling tiling,
+															 const VkFormatFeatureFlags feature_flags);
+
+		};
 
 	};
-
-};
 };

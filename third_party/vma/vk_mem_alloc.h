@@ -1835,10 +1835,6 @@ available through VmaAllocatorCreateInfo::pRecordSettings.
     #include <vulkan/vulkan.h>
 #endif
 
-#if VMA_RECORDING_ENABLED
-    #include <windows.h>
-#endif
-
 // Define this macro to declare maximum supported Vulkan version in format AAABBBCCC,
 // where AAA = major, BBB = minor, CCC = patch.
 // If you want to use version > 1.0, it still needs to be enabled via VmaAllocatorCreateInfo::vulkanApiVersion.

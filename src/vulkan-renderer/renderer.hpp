@@ -205,6 +205,8 @@ namespace inexor
 
 			InexorMSAATarget msaa_target_buffer;
 
+			bool vsync_enabled = false;
+
 
 			struct InexorGlobalDescriptorBundle
 			{

@@ -444,7 +444,7 @@ namespace inexor
 
 			// VMA memory recording and replay.
 			VmaRecordSettings vma_record_settings;
-#ifdef _WIN32
+
 			const std::string vma_replay_file = "vma-replays/vma_replay.csv";
 
 			std::ofstream replay_file_test;
@@ -465,12 +465,13 @@ namespace inexor
 			// We flush the stream after every write operation because we are expecting unforseen program crashes.
 			// This might has a negative effect on the application's performance but it's worth it for now.
 			vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
-#endif
+
 			VmaAllocatorCreateInfo allocator_info = {};
 
 			allocator_info.physicalDevice = selected_graphics_card;
 			allocator_info.device = device;
 			allocator_info.pRecordSettings = &vma_record_settings;
+			allocator_info.instance = instance;
 
 			// Create an instance of Vulkan memory allocator.
 			VkResult result = vmaCreateAllocator(&allocator_info, &vma_allocator);
@@ -640,7 +641,7 @@ namespace inexor
 
 			// TODO: Remove std::optional from this method!
 			// Select a present mode for the swapchain.
-			std::optional<VkPresentModeKHR> present_mode = settings_decision_maker->decide_which_presentation_mode_to_use(selected_graphics_card, surface);
+			std::optional<VkPresentModeKHR> present_mode = settings_decision_maker->decide_which_presentation_mode_to_use(selected_graphics_card, surface, vsync_enabled);
 
 			assert(present_mode.has_value());
 
