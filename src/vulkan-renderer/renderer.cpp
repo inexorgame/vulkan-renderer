@@ -84,8 +84,10 @@ namespace inexor
 			// The extensions that we would like to enable.
 			std::vector<const char*> instance_extension_wishlist =
 			{
+#if defined(_DEBUG)
 				VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 				VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+#endif
 				// TODO: Add more instance extensions here.
 			};
 
@@ -137,7 +139,7 @@ namespace inexor
 			/// It comes with many useful debugging functions!
 			/// https://renderdoc.org/
 			/// https://github.com/baldurk/renderdoc
-#ifdef _DEBUG
+#if defined _DEBUG
 			if(enable_renderdoc_instance_layer)
 			{
 				const char renderdoc_layer_name[] = "VK_LAYER_RENDERDOC_Capture";
@@ -151,7 +153,7 @@ namespace inexor
 			// If validation is requested, we need to add the validation layer as instance extension!
 			// For more information on Vulkan validation layers see:
 			// https://vulkan.lunarg.com/doc/view/1.0.39.0/windows/layers.html
-#ifdef _DEBUG
+#if defined _DEBUG
 			if(enable_validation_instance_layers)
 			{
 				const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
@@ -175,6 +177,13 @@ namespace inexor
 				}
 				else
 				{
+#if !defined(_DEBUG)
+					if(0 == std::string(current_layer).compare(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
+					{
+						display_warning_message("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
+					}
+#endif
+
 					std::string error_message = "Error: Instance layer '" + std::string(current_layer) + "' is not available!";
 					display_error_message(error_message);
 				}
@@ -284,12 +293,13 @@ namespace inexor
 
 			spdlog::debug("Initialising debug marker manager.");
 
-			// TODO: Add C++ standard macro #if not debug mode.
+#if defined(_DEBUG)
 			if(!enable_debug_markers)
 			{
 				spdlog::warn("Vulkan debug markers are not enabled!");
 				spdlog::warn("This will be of disadvantage when debugging the application with e.g. RenderDoc.");
 			}
+#endif
 
 			debug_marker_manager->initialise(device, selected_graphics_card, enable_debug_markers);
 

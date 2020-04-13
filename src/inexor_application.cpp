@@ -412,11 +412,15 @@ namespace inexor
 
 			if(enable_renderdoc.has_value())
 			{
+#if !defined(_DEBUG)
+				spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
+#else
 				if(enable_renderdoc.value())
 				{
 					spdlog::debug("RenderDoc command line argument specified.");
 					enable_renderdoc_instance_layer = true;
 				}
+#endif
 			}
 
 			spdlog::debug("Checking for '-novalidation' command line argument.");
@@ -441,6 +445,7 @@ namespace inexor
 			result = create_vulkan_instance(application_name, engine_name, application_version, engine_version, enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 			vulkan_error_check(result);
 
+#if defined(_DEBUG)
 			// Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
 			if(enable_khronos_validation_instance_layer)
 			{
@@ -485,6 +490,7 @@ namespace inexor
 			{
 				spdlog::warn("Khronos validation layer is DISABLED.");
 			}
+#endif
 
 			spdlog::debug("Creating window surface.");
 
@@ -546,7 +552,7 @@ namespace inexor
 
 			// If the user specified command line argument "-vsync", the presentation engine waits
 			// for the next vertical blanking period to update the current image.
-			std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-vsync");
+			std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-nostats");
 
 			if(enable_vertical_synchronisation.has_value())
 			{

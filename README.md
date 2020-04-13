@@ -7,8 +7,6 @@ A new rendering engine based on [Vulkan API](https://www.khronos.org/vulkan/)
 
 ![Add frontbanner here](https://raw.githubusercontent.com/inexorgame/artwork/179e891a10f8ee1cd4c0f777aff40485f0212c76/vulkan/readme/front_banner_1.jpg)
 
-![Front banner here]()
-
 ## What is Vulkan?
 ![Vulkan API logo here..](https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/500px-Vulkan.svg.png)
 
