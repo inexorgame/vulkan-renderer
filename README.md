@@ -1,8 +1,14 @@
 # vulkan-renderer
+![Discord](https://img.shields.io/discord/698219248954376256)
 [![Build Status](https://travis-ci.org/inexorgame/vulkan-renderer.svg?branch=master)](https://travis-ci.org/inexorgame/vulkan-renderer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 ![Issues](https://img.shields.io/github/issues/inexorgame/vulkan-renderer)
+![Contributors](https://img.shields.io/github/contributors/inexorgame/vulkan-renderer)
+![Downloads](https://img.shields.io/github/downloads/inexorgame/vulkan-renderer/total)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://github.com/inexorgame/vulkan-renderer)
+![Last Commit](https://img.shields.io/github/last-commit/inexorgame/vulkan-renderer)
+![Code Size](https://img.shields.io/github/languages/code-size/inexorgame/vulkan-renderer)
+![Commit Frequency](https://img.shields.io/github/commit-activity/w/inexorgame/vulkan-renderer)
 
 A new rendering engine based on [Vulkan API](https://www.khronos.org/vulkan/)
 
