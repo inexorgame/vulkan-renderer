@@ -9,7 +9,7 @@
 ![Last Commit](https://img.shields.io/github/last-commit/inexorgame/vulkan-renderer)
 ![Code Size](https://img.shields.io/github/languages/code-size/inexorgame/vulkan-renderer)
 
-A new rendering engine based on [Vulkan API](https://www.khronos.org/vulkan/)
+A new octree-based game+engine using [Vulkan API](https://www.khronos.org/vulkan/) and C++17.
 
 ![Add frontbanner here](https://raw.githubusercontent.com/inexorgame/artwork/179e891a10f8ee1cd4c0f777aff40485f0212c76/vulkan/readme/front_banner_1.jpg)
 
