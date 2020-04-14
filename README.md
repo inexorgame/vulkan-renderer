@@ -1,6 +1,6 @@
 # vulkan-renderer
 [![Build Status](https://travis-ci.org/inexorgame/vulkan-renderer.svg?branch=master)](https://travis-ci.org/inexorgame/vulkan-renderer)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 ![Issues](https://img.shields.io/github/issues/inexorgame/vulkan-renderer)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://github.com/inexorgame/vulkan-renderer)
 
