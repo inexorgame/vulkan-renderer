@@ -13,3 +13,6 @@ Join our telegram group: https://t.me/inexor
 
 [Croydon](https://github.com/Croydon)
 * Advice on [conan package manager](https://conan.io/).
+
+[uilianries](https://github.com/uilianries)
+* [Travis CI setup](https://stackoverflow.com/questions/61209668/travis-ci-reports-linker-errors-for-gcc-7-for-a-vulkan-project)
