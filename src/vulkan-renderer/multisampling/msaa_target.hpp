@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../image-buffer/image_buffer.hpp"
+#include "vulkan-renderer/image-buffer/image_buffer.hpp"
 
 
 namespace inexor {

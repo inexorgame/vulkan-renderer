@@ -9,24 +9,24 @@
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
 
-#include "gltf_model_bounding_box.hpp"
-#include "gltf_model_material.hpp"
-#include "gltf_model_primitive.hpp"
-#include "gltf_model_mesh.hpp"
-#include "gltf_model_skin.hpp"
-#include "gltf_model_animation.hpp"
-#include "gltf_model_animation_channel.hpp"
-#include "gltf_model_animation_sampler.hpp"
-#include "gltf_model_texture_sampler.hpp"
-#include "gltf_model_vertex.hpp"
-#include "gltf_model_dimensions.hpp"
-#include "gltf_model.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_bounding_box.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_material.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_primitive.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_mesh.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_skin.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_animation.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_animation_channel.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_animation_sampler.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_texture_sampler.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_vertex.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_dimensions.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model.hpp"
 
-#include "../class-templates/manager_template.hpp"
-#include "../texture-manager/texture_manager.hpp"
-#include "../uniform-buffer-manager/uniform_buffer_manager.hpp"
-#include "../mesh-buffer-manager/mesh_buffer_manager.hpp"
-#include "../descriptor-manager/descriptor_manager.hpp"
+#include "vulkan-renderer/class-templates/manager_template.hpp"
+#include "vulkan-renderer/texture-manager/texture_manager.hpp"
+#include "vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.hpp"
+#include "vulkan-renderer/mesh-buffer-manager/mesh_buffer_manager.hpp"
+#include "vulkan-renderer/descriptor-manager/descriptor_manager.hpp"
 
 
 // JSON for modern C++11 library.

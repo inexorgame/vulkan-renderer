@@ -1,4 +1,4 @@
-#include "camera.hpp"
+#include "vulkan-renderer/camera/camera.hpp"
 
 
 namespace inexor {

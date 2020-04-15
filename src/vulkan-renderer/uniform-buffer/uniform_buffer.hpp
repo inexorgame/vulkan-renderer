@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../gpu-memory-buffer/gpu_memory_buffer.hpp"
+#include "vulkan-renderer/gpu-memory-buffer/gpu_memory_buffer.hpp"
 
 
 namespace inexor {

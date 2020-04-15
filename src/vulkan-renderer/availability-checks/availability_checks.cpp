@@ -1,4 +1,4 @@
-#include "availability_checks.hpp"
+#include "vulkan-renderer/availability-checks/availability_checks.hpp"
 
 
 namespace inexor {

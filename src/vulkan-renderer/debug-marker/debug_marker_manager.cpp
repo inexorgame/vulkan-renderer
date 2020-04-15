@@ -1,4 +1,4 @@
-#include "debug_marker_manager.hpp"
+#include "vulkan-renderer/debug-marker/debug_marker_manager.hpp"
 
 
 namespace inexor {

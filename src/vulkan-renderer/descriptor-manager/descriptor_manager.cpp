@@ -1,4 +1,4 @@
-#include "descriptor_manager.hpp"
+#include "vulkan-renderer/descriptor-manager/descriptor_manager.hpp"
 
 
 namespace inexor {

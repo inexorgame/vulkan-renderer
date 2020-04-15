@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../texture/texture.hpp"
+#include "vulkan-renderer/texture/texture.hpp"
 
 #include <vulkan/vulkan.h>
 

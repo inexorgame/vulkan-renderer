@@ -1,4 +1,4 @@
-#include "shader_manager.hpp"
+#include "vulkan-renderer/shader-manager/shader_manager.hpp"
 
 
 namespace inexor {

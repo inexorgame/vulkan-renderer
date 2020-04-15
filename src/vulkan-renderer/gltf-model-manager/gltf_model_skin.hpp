@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "../gltf-model-manager/gltf_model_node.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_node.hpp"
 
 
 namespace inexor {

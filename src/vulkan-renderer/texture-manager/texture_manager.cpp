@@ -1,4 +1,4 @@
-#include "texture_manager.hpp"
+#include "vulkan-renderer/texture-manager/texture_manager.hpp"
 
 // stb single-file public domain libraries for C/C++
 // https://github.com/nothings/stb
@@ -398,7 +398,7 @@ namespace vulkan_renderer {
 		// can simply use coordinates within the [0, texWidth) and [0, texHeight)
 		// range. If it is VK_FALSE, then the texels are addressed using the [0, 1) range
 		// on all axes. Real-world applications almost always use normalized coordinates,
-		// because then it’s possible to use textures of varying resolutions with the exact
+		// because then itï¿½s possible to use textures of varying resolutions with the exact
 		// same coordinates.
 		sampler_create_info.unnormalizedCoordinates = VK_FALSE;
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "gltf_model_bounding_box.hpp"
-#include "gltf_model_primitive.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_bounding_box.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_primitive.hpp"
 
-#include "../uniform-buffer-manager/uniform_buffer_manager.hpp"
-#include "../gltf-model-manager/gltf_model_uniform_buffer.hpp"
-#include "../uniform-buffer/uniform_buffer.hpp"
+#include "vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_uniform_buffer.hpp"
+#include "vulkan-renderer/uniform-buffer/uniform_buffer.hpp"
 
 #include <vector>
 #include <memory>

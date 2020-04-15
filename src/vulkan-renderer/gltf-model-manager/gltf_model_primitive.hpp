@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gltf_model_bounding_box.hpp"
-#include "gltf_model_material.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_bounding_box.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_material.hpp"
 
 #include <glm/glm.hpp>
 

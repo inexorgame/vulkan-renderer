@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gltf_model_animation_channel.hpp"
-#include "gltf_model_animation_sampler.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_animation_channel.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_animation_sampler.hpp"
 
 #include <string>
 #include <vector>

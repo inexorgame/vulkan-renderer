@@ -1,4 +1,4 @@
-#include "semaphore_manager.hpp"
+#include "vulkan-renderer/semaphore-manager/semaphore_manager.hpp"
 
 
 namespace inexor {

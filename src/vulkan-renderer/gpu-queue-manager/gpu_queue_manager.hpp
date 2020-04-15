@@ -8,7 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "../settings-decision-maker/settings_decision_maker.hpp"
+#include "vulkan-renderer/settings-decision-maker/settings_decision_maker.hpp"
 
 
 namespace inexor {

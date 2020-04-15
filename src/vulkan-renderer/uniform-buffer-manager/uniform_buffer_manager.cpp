@@ -1,4 +1,4 @@
-#include "uniform_buffer_manager.hpp"
+#include "vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.hpp"
 
 
 namespace inexor {

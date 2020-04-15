@@ -1,4 +1,4 @@
-#include "gpu_queue_manager.hpp"
+#include "vulkan-renderer/gpu-queue-manager/gpu_queue_manager.hpp"
 
 
 namespace inexor {

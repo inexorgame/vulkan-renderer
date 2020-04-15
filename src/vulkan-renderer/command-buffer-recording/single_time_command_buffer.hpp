@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../debug-marker/debug_marker_manager.hpp"
-#include "../error-handling/error_handling.hpp"
+#include "vulkan-renderer/debug-marker/debug_marker_manager.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
 
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>

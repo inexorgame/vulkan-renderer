@@ -1,15 +1,15 @@
 #pragma once
 
-#include "gltf_model_dimensions.hpp"
-#include "gltf_model_node.hpp"
-#include "gltf_model_animation.hpp"
-#include "../texture/texture.hpp"
-#include "../mesh-buffer/mesh_buffer.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_dimensions.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_node.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_animation.hpp"
+#include "vulkan-renderer/texture/texture.hpp"
+#include "vulkan-renderer/mesh-buffer/mesh_buffer.hpp"
 
 // Header only C++ tiny glTF library(loader/saver).
 // https://github.com/syoyo/tinygltf
 // License: MIT.
-#include "../../../third_party/tiny_gltf/tiny_gltf.h"
+#include "tiny_gltf/tiny_gltf.h"
 
 #include <string>
 #include <vector>

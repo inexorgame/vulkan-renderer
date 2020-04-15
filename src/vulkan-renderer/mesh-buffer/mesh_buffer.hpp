@@ -1,13 +1,13 @@
 ﻿#pragma once
 
-#include "../gpu-memory-buffer/gpu_memory_buffer.hpp"
+#include "vulkan-renderer/gpu-memory-buffer/gpu_memory_buffer.hpp"
 
 #include <vulkan/vulkan.h>
 
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT
-#include "../../../third_party/vma/vma_usage.h"
+#include "vma/vma_usage.h"
 
 
 namespace inexor

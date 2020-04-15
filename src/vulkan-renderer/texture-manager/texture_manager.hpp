@@ -3,7 +3,7 @@
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "../../../third_party/vma/vma_usage.h"
+#include "vma/vma_usage.h"
 
 // JSON for modern C++11 library.
 // https://github.com/nlohmann/json
@@ -14,14 +14,14 @@
 // Header only C++ tiny glTF library(loader/saver).
 // https://github.com/syoyo/tinygltf
 // License: MIT.
-#include "../../../third_party/tiny_gltf/tiny_gltf.h"
+#include "tiny_gltf/tiny_gltf.h"
 
-#include "../gpu-memory-buffer/gpu_memory_buffer.hpp"
-#include "../texture/texture.hpp"
-#include "../class-templates/manager_template.hpp"
-#include "../debug-marker/debug_marker_manager.hpp"
-#include "../command-buffer-recording/single_time_command_buffer.hpp"
-#include "../error-handling/error_handling.hpp"
+#include "vulkan-renderer/gpu-memory-buffer/gpu_memory_buffer.hpp"
+#include "vulkan-renderer/texture/texture.hpp"
+#include "vulkan-renderer/class-templates/manager_template.hpp"
+#include "vulkan-renderer/debug-marker/debug_marker_manager.hpp"
+#include "vulkan-renderer/command-buffer-recording/single_time_command_buffer.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
 
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>

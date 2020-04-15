@@ -1,11 +1,11 @@
-#include "gltf_model_manager.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_manager.hpp"
 
 // Header only C++ tiny glTF library(loader/saver).
 // https://github.com/syoyo/tinygltf
 // License: MIT.
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
-#include "../../../third_party/tiny_gltf/tiny_gltf.h"
+#include "tiny_gltf/tiny_gltf.h"
 
 
 namespace inexor {

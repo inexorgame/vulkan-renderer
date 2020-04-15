@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gltf_model_node.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_node.hpp"
 
 #include <memory>
 

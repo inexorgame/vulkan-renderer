@@ -73,9 +73,14 @@ assign_source_group(${TEST_SOURCE_FILES})
 assign_source_group(${BENCHMARK_SOURCE_FILES})
 
 add_executable(inexor-vulkan-renderer src/main.cpp ${NORMAL_SOURCE_FILES})
+target_include_directories(
+    inexor-vulkan-renderer PRIVATE
+    Vulkan::Vulkan
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/third_party
+)
 conan_target_link_libraries(inexor-vulkan-renderer)
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
-target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
 
 # Use multiple threads to generate code.

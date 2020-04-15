@@ -1,4 +1,4 @@
-#include "fence_manager.hpp"
+#include "vulkan-renderer/fence-manager/fence_manager.hpp"
 
 
 namespace inexor {

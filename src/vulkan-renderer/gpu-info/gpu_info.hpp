@@ -8,8 +8,8 @@
 
 #include <vulkan/vulkan.h>
 
-#include "../error-handling/error_handling.hpp"
-#include "../helpers/surface_formats.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
+#include "vulkan-renderer/helpers/surface_formats.hpp"
 
 
 namespace inexor {
