@@ -100,7 +100,7 @@ file(
 )
 
 add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${TEST_SOURCE_FILES})
-conan_target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
+conan_target_link_libraries(inexor-vulkan-renderer-tests)
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
@@ -117,7 +117,7 @@ if (MSVC)
 endif ()
 
 add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${BENCHMARK_SOURCE_FILES})
-conan_target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
+conan_target_link_libraries(inexor-vulkan-renderer-benchmarks)
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
 target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
