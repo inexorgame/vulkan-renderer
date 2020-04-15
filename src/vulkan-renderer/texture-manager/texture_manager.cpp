@@ -4,7 +4,7 @@
 // https://github.com/nothings/stb
 // License: Public Domain
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb_image.h>
 
 
 namespace inexor {

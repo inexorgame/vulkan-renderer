@@ -7,7 +7,7 @@
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT
-#include "vma/vma_usage.h"
+#include <vma/vma_usage.h>
 
 
 namespace inexor

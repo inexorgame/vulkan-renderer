@@ -5,7 +5,7 @@
 // License: MIT.
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
-#include "tiny_gltf/tiny_gltf.h"
+#include <tiny_gltf/tiny_gltf.h>
 
 
 namespace inexor {

@@ -9,7 +9,7 @@
 // Header only C++ tiny glTF library(loader/saver).
 // https://github.com/syoyo/tinygltf
 // License: MIT.
-#include "tiny_gltf/tiny_gltf.h"
+#include <tiny_gltf/tiny_gltf.h>
 
 #include <string>
 #include <vector>

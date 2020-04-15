@@ -3,18 +3,18 @@
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "vma/vma_usage.h"
+#include <vma/vma_usage.h>
 
 // JSON for modern C++11 library.
 // https://github.com/nlohmann/json
 /// License: MIT.
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 #define TINYGLTF_NO_INCLUDE_JSON
 
 // Header only C++ tiny glTF library(loader/saver).
 // https://github.com/syoyo/tinygltf
 // License: MIT.
-#include "tiny_gltf/tiny_gltf.h"
+#include <tiny_gltf/tiny_gltf.h>
 
 #include "vulkan-renderer/gpu-memory-buffer/gpu_memory_buffer.hpp"
 #include "vulkan-renderer/texture/texture.hpp"

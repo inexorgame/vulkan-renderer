@@ -31,7 +31,7 @@
 
 // JSON for modern C++11 library.
 // https://github.com/nlohmann/json
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 #define TINYGLTF_NO_INCLUDE_JSON
 
 

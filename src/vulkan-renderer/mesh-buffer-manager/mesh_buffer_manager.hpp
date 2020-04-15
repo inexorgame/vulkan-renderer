@@ -3,7 +3,7 @@
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "vma/vma_usage.h"
+#include <vma/vma_usage.h>
 
 #include "vulkan-renderer/mesh-buffer/mesh_buffer.hpp"
 #include "vulkan-renderer/error-handling/error_handling.hpp"
