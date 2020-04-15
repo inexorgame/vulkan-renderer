@@ -20,8 +20,8 @@ namespace inexor
 			// The time point of the last render call.
 			std::chrono::time_point<std::chrono::high_resolution_clock> last_time;
 
-			// The time point of program start.
-			std::chrono::time_point<std::chrono::high_resolution_clock> program_start_time;
+			// The time point of initialisation.
+			std::chrono::time_point<std::chrono::high_resolution_clock> initialisation_time;
 
 			public:
 
@@ -36,8 +36,8 @@ namespace inexor
 
 
 			/// @brief Returns a scaling factor which corresponds to the
-			/// time which has passed since program start and now.
-			float get_program_start_time_step();
+			/// time which has passed since initialisation and now.
+			float get_time_step_since_initialisation();
 
 
 		};

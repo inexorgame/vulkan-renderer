@@ -9,7 +9,7 @@ namespace inexor
 
 		InexorTimeStep::InexorTimeStep()
 		{
-			program_start_time = std::chrono::high_resolution_clock::now();
+			initialisation_time = std::chrono::high_resolution_clock::now();
 
 			last_time = std::chrono::high_resolution_clock::now();
 		}
@@ -27,11 +27,11 @@ namespace inexor
 		}
 
 
-		float InexorTimeStep::get_program_start_time_step()
+		float InexorTimeStep::get_time_step_since_initialisation()
 		{
 			auto current_time = std::chrono::high_resolution_clock::now();
 
-			auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - program_start_time).count();
+			auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - initialisation_time).count();
 
 			return time_duration;
 		}

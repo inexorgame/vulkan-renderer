@@ -749,7 +749,7 @@ namespace inexor
 
 		VkResult InexorApplication::update_uniform_buffers(const std::size_t current_image)
 		{
-			float time = time_step.get_program_start_time_step();
+			float time = time_step.get_time_step_since_initialisation();
 
 			UniformBufferObject ubo = {};
 
