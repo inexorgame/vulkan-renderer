@@ -58,8 +58,6 @@ include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
 conan_check(VERSION 1.19.1 REQUIRED)
 
-message(STATUS "Targets:" ${TARGETS})
-
 conan_cmake_run(
     CONANFILE conanfile.py
     BASIC_SETUP
@@ -74,15 +72,11 @@ assign_source_group(${NORMAL_SOURCE_FILES})
 assign_source_group(${TEST_SOURCE_FILES})
 assign_source_group(${BENCHMARK_SOURCE_FILES})
 
-message(STATUS "LIBS..::")
-message(STATUS ${CONAN_FOUND_LIBRARY})
-
 add_executable(inexor-vulkan-renderer src/main.cpp ${NORMAL_SOURCE_FILES})
 conan_target_link_libraries(inexor-vulkan-renderer)
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
-
 target_include_directories(inexor-vulkan-renderer PRIVATE Vulkan::Vulkan)
-target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan fmt spdlog)
+target_link_libraries(inexor-vulkan-renderer Vulkan::Vulkan)
 
 # Use multiple threads to generate code.
 if (MSVC)
@@ -101,11 +95,10 @@ file(
 )
 
 add_executable(inexor-vulkan-renderer-tests ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${TEST_SOURCE_FILES})
-conan_target_link_libraries(inexor-vulkan-renderer-tests)
+conan_target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
-
 target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
-target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan spdlog)
+target_link_libraries(inexor-vulkan-renderer-tests Vulkan::Vulkan)
 
 # Use root folder of the repository as working directory in Visual Studio debugger!
 # Otherwise Visual Studio can't find any files like shaders or textures.
@@ -119,12 +112,10 @@ if (MSVC)
 endif ()
 
 add_executable(inexor-vulkan-renderer-benchmarks ${NORMAL_SOURCE_FILES_WITHOUT_MAIN} ${BENCHMARK_SOURCE_FILES})
-conan_target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan spdlog)
+conan_target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
-
-target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vulkan)
-target_link_libraries(inexor-vulkan-renderer-benchmarks spdlog gtest)
+target_link_libraries(inexor-vulkan-renderer-benchmarks Vulkan::Vulkan)
 
 if (WIN32)
     set_property(TARGET inexor-vulkan-renderer-benchmarks PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
