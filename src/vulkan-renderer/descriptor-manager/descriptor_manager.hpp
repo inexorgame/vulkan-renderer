@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../class-templates/manager_template.hpp"
-#include "../descriptor-set/descriptor_bundle.hpp"
-#include "../error-handling/error_handling.hpp"
-#include "../descriptor-pool/descriptor_pool.hpp"
-#include "../debug-marker/debug_marker_manager.hpp"
+#include "vulkan-renderer/class-templates/manager_template.hpp"
+#include "vulkan-renderer/descriptor-set/descriptor_bundle.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
+#include "vulkan-renderer/descriptor-pool/descriptor_pool.hpp"
+#include "vulkan-renderer/debug-marker/debug_marker_manager.hpp"
 
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>

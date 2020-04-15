@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "../error-handling/error_handling.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
 
 #include <map>
 #include <vector>

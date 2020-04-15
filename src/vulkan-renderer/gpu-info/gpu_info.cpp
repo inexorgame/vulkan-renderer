@@ -1,4 +1,4 @@
-#include "gpu_info.hpp"
+#include "vulkan-renderer/gpu-info/gpu_info.hpp"
 
 
 namespace inexor {

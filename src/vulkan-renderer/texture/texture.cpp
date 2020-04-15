@@ -1,4 +1,4 @@
-#include "texture.hpp"
+#include "vulkan-renderer/texture/texture.hpp"
 
 
 namespace inexor {

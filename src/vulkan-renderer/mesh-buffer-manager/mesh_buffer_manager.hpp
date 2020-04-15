@@ -3,15 +3,15 @@
 // Vulkan Memory Allocator library.
 // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
 // License: MIT.
-#include "../../../third_party/vma/vma_usage.h"
+#include <vma/vma_usage.h>
 
-#include "../mesh-buffer/mesh_buffer.hpp"
-#include "../error-handling/error_handling.hpp"
-#include "../class-templates/manager_template.hpp"
-#include "../gltf-model-manager/gltf_model_vertex.hpp"
-#include "../debug-marker/debug_marker_manager.hpp"
-#include "../gltf-model-manager/gltf_model_vertex.hpp"
-#include "../gltf-model-manager/gltf_model_vertex.hpp"
+#include "vulkan-renderer/mesh-buffer/mesh_buffer.hpp"
+#include "vulkan-renderer/error-handling/error_handling.hpp"
+#include "vulkan-renderer/class-templates/manager_template.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_vertex.hpp"
+#include "vulkan-renderer/debug-marker/debug_marker_manager.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_vertex.hpp"
+#include "vulkan-renderer/gltf-model-manager/gltf_model_vertex.hpp"
 
 #include <vector>
 #include <shared_mutex>
