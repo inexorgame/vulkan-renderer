@@ -45,8 +45,8 @@ namespace vulkan_renderer {
 		command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		command_buffer_begin_info.pNext = nullptr;
 
-		// We�re only going to use the command buffer once and wait with returning from the function until
-		// the copy operation has finished executing. It�s good practice to tell the driver about our intent
+		// We're only going to use the command buffer once and wait with returning from the function until
+		// the copy operation has finished executing. It's good practice to tell the driver about our intent
 		// using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 		command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 

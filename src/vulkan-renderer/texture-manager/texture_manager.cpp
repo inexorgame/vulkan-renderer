@@ -398,7 +398,7 @@ namespace vulkan_renderer {
 		// can simply use coordinates within the [0, texWidth) and [0, texHeight)
 		// range. If it is VK_FALSE, then the texels are addressed using the [0, 1) range
 		// on all axes. Real-world applications almost always use normalized coordinates,
-		// because then it�s possible to use textures of varying resolutions with the exact
+		// because then it's possible to use textures of varying resolutions with the exact
 		// same coordinates.
 		sampler_create_info.unnormalizedCoordinates = VK_FALSE;
 

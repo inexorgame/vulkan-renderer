@@ -76,7 +76,7 @@ namespace vulkan_renderer {
 			error_string = "A requested format is not supported on this device.";
 			break;
 			case VK_ERROR_FRAGMENTED_POOL:
-			error_string = "A pool allocation has failed due to fragmentation of the pool�s memory. This must only be returned if no attempt to allocate host or device memory was made to accommodate the new allocation. This should be returned in preference to VK_ERROR_OUT_OF_POOL_MEMORY, but only if the implementation is certain that the pool allocation failure was due to fragmentation.";
+			error_string = "A pool allocation has failed due to fragmentation of the pool's memory. This must only be returned if no attempt to allocate host or device memory was made to accommodate the new allocation. This should be returned in preference to VK_ERROR_OUT_OF_POOL_MEMORY, but only if the implementation is certain that the pool allocation failure was due to fragmentation.";
 			break;
 			case VK_ERROR_SURFACE_LOST_KHR:
 			error_string = "A surface is no longer available.";
@@ -106,7 +106,7 @@ namespace vulkan_renderer {
 			error_string = "A buffer creation failed because the requested address is not available.";
 			break;
 			case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
-			error_string = "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent reasons, outside of the application�s control.";
+			error_string = "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent reasons, outside of the application's control.";
 			break;
 			default:
 			error_string = "Unknown error";
