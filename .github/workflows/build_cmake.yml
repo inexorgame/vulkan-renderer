@@ -26,11 +26,6 @@ jobs:
             os: ubuntu-latest,
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
-        - {
-            name: "macOS Latest Clang", artifact: "macOS.tar.xz",
-            os: macos-latest,
-            build_type: "Release", cc: "clang", cxx: "clang++"
-          }
 
     steps:
     - uses: actions/checkout@v1
@@ -45,6 +40,8 @@ jobs:
            wget -O vulkansdk-linux-x86_64-$VK_VERSION.tar.gz https://sdk.lunarg.com/sdk/download/$VK_VERSION/linux/vulkansdk-linux-x86_64-$VK_VERSION.tar.gz
            tar zxf vulkansdk-linux-x86_64-$VK_VERSION.tar.gz
            export VULKAN_SDK=$TRAVIS_BUILD_DIR/$VK_VERSION/x86_64
+           export Vulkan_LIBRARY=$TRAVIS_BUILD_DIR/$VK_VERSION/x86_64/Lib
+           export Vulkan_INCLUDE=$TRAVIS_BUILD_DIR/$VK_VERSION/x86_64/Include
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja
@@ -63,11 +60,6 @@ jobs:
           set(ninja_suffix "linux.zip")
           set(cmake_suffix "Linux-x86_64.tar.gz")
           set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
-        elseif ("${{ runner.os }}" STREQUAL "macOS")
-          set(ninja_suffix "mac.zip")
-          set(cmake_suffix "Darwin-x86_64.tar.gz")
-          set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
-        endif()
 
         set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
         file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
@@ -221,10 +213,6 @@ jobs:
           }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
-            os: ubuntu-latest
-          }
-        - {
-            name: "macOS Latest Clang", artifact: "macOS.tar.xz",
             os: ubuntu-latest
           }
     needs: release
