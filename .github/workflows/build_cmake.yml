@@ -111,8 +111,8 @@ jobs:
             -B build
             -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
             -G Ninja
-            -DVULKAN_SDK_INCLUDES $VULKAN_SDK/includes
-            -DVULKAN_SDK_LIBRARIES $VULKAN_SDK/Lib
+            -DVULKAN_SDK_INCLUDES=$VULKAN_SDK/includes
+            -DVULKAN_SDK_LIBRARIES=$VULKAN_SDK/Lib
             -D CMAKE_MAKE_PROGRAM=${ninja_program}
           RESULT_VARIABLE result
         )
