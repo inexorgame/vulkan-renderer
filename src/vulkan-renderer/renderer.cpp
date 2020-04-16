@@ -8,9 +8,6 @@
 #pragma warning(disable: 4005)
 #endif
 
-// Enable VMA memory recording and replay.
-#define VMA_RECORDING_ENABLED 1
-
 // It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
 // Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
 // Memory is automatically mapped and unmapped if necessary.
@@ -480,7 +477,9 @@ namespace inexor
 
 			allocator_info.physicalDevice = selected_graphics_card;
 			allocator_info.device = device;
+#if VMA_RECORDING_ENABLED
 			allocator_info.pRecordSettings = &vma_record_settings;
+#endif
 			allocator_info.instance = instance;
 
 			// Create an instance of Vulkan memory allocator.

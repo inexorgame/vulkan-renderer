@@ -17,6 +17,8 @@ message(STATUS "CXX Compiler executable: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Linker executable: ${CMAKE_LINKER}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+option(INEXOR_USE_VMA_RECORDING "Use VulkanMemoryAllocator recording feature" ON)
+
 file(
     GLOB_RECURSE source_files
     "src/*.hpp"
@@ -83,6 +85,9 @@ target_link_libraries(
     inexor-vulkan-renderer
     ${CONAN_LIBS}
     Vulkan::Vulkan
+)
+target_compile_definitions(inexor-vulkan-renderer PRIVATE
+        VMA_RECORDING_ENABLED=$<BOOL:${INEXOR_USE_VMA_RECORDING}>
 )
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 # Use multiple threads to generate code.
