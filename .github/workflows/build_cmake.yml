@@ -49,6 +49,10 @@ jobs:
     - name: Download Conan package manager.
       run: |
            pip install conan
+           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+           conan profile new default --detect
+           conan profile update settings.compiler.libcxx=libstdc++11 default
+           conan install .
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja
