@@ -1,5 +1,8 @@
 ﻿#include <spdlog/spdlog.h>
 
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
 #include "inexor_application.hpp"
 
 using namespace inexor::vulkan_renderer;
@@ -9,11 +12,20 @@ InexorApplication renderer;
 
 int main(int argc, char* argv[])
 {
-	// Set the global log level to debug.
-	// We can change this upon release to display only messages which have more important log levels (like errors).
-	spdlog::set_level(spdlog::level::debug);
+	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+	auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("vulkan-renderer-logfile.txt", true);
 
-	spdlog::set_pattern("%t %H:%M:%S.%f %^%l%$ %v");
+	spdlog::sinks_init_list sink_list = { file_sink, console_sink };
+
+	spdlog::logger logger("vulkan-renderer", sink_list.begin(), sink_list.end());
+	logger.set_level(spdlog::level::trace);
+
+	auto vulkan_renderer_log = std::make_shared<spdlog::logger>("vulkan-renderer", spdlog::sinks_init_list({console_sink, file_sink}));
+
+	vulkan_renderer_log->set_level(spdlog::level::trace);
+	vulkan_renderer_log->set_pattern("%t %H:%M:%S.%f %^%l%$ %v");
+
+	spdlog::set_default_logger(vulkan_renderer_log);
 
 	spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 
