@@ -26,6 +26,11 @@ jobs:
             os: ubuntu-latest,
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
+        - {
+            name: "Ubuntu Latest clang", artifact: "Linux.tar.xz",
+            os: ubuntu-latest,
+            build_type: "Release", cc: "clang", cxx: "clang"
+          }
 
     steps:
     - uses: actions/checkout@v1
@@ -60,6 +65,7 @@ jobs:
           set(ninja_suffix "linux.zip")
           set(cmake_suffix "Linux-x86_64.tar.gz")
           set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
+        endif()
 
         set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
         file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
@@ -213,6 +219,10 @@ jobs:
           }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
+            os: ubuntu-latest
+          }
+        - {
+            name: "Ubuntu Latest clang", artifact: "Linux.tar.xz",
             os: ubuntu-latest
           }
     needs: release
