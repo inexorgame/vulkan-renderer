@@ -10,7 +10,6 @@
 #include "vulkan-renderer/error-handling/error_handling.hpp"
 #include "vulkan-renderer/tools/argument-parser/cla_parser.hpp"
 #include "vulkan-renderer/debug-callback/debug_callback.hpp"
-#include "vulkan-renderer/keyboard/keyboard_input.hpp"
 #include "vulkan-renderer/uniform-buffer/standard_ubo.hpp"
 #include "vulkan-renderer/thread-pool/thread_pool.hpp"
 #include "vulkan-renderer/mesh-buffer/mesh_buffer.hpp"
@@ -28,9 +27,7 @@ namespace inexor
 	{
 
 
-		class InexorApplication : public VulkanRenderer,
-			public InexorKeyboardInputHandler,
-			public tools::InexorCommandLineArgumentParser
+		class InexorApplication : public VulkanRenderer, public tools::InexorCommandLineArgumentParser
 		{
 			public:
 
@@ -109,6 +106,9 @@ namespace inexor
 			/// @brief Implementation of the uniform buffer update method.
 			/// @param current_image [in] The current image index.
 			VkResult update_uniform_buffers(const std::size_t current_image);
+			
+			
+			VkResult update_keyboard_input();
 
 
 			public:

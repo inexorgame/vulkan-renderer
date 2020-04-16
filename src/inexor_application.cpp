@@ -23,21 +23,6 @@ namespace inexor
 		}
 
 
-		/// @brief Static callback for window resize events.
-		/// @note Because GLFW is a C-style API, we can't pass a poiner to a class method, so we have to do it this way!
-		/// @param window [in] The glfw window.
-		/// @param key [in] The key which was pressed or released.
-		/// @param scancode [in] The system-specific scancode of the key.
-		/// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT. 
-		/// @param mods [in] Bit field describing which modifier keys were held down.
-		/// @TODO Avoid static methods! Poll the events manually in the render loop!
-		static void keyboard_input_callback_reloader(GLFWwindow* window, int key, int scancode, int action, int mods)
-		{
-			auto app = reinterpret_cast<InexorApplication*>(glfwGetWindowUserPointer(window));
-			app->keyboard_input_callback(window, key, scancode, action, mods);
-		}
-
-
 		VkResult InexorApplication::load_TOML_configuration_file(const std::string& TOML_file_name)
 		{
 			spdlog::debug("Loading TOML configuration file: '{}'.", TOML_file_name);
@@ -735,8 +720,6 @@ namespace inexor
 			// TODO: Use window queue instead?
 			glfwSetWindowUserPointer(window, this);
 
-			InexorKeyboardInputHandler::initialise(window, keyboard_input_callback_reloader);
-
 			game_camera_1.set_position(glm::vec3(0.0f, 5.0f, -2.0f));
 			game_camera_1.set_direction(glm::vec3(0.0f, 1.0f, 0.0f));
 			game_camera_1.set_speed(1.0f);
@@ -769,36 +752,20 @@ namespace inexor
 		}
 
 
-		void InexorApplication::keyboard_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+		VkResult InexorApplication::update_keyboard_input()
 		{
-			// TODO: Abstract this!
+			int key_w_status = glfwGetKey(window, GLFW_KEY_W);
 
-			// Move camera forwards.
-			if(GLFW_KEY_W == key)
+			if(GLFW_PRESS == key_w_status)
 			{
-				if(GLFW_PRESS == action)
-				{
-					game_camera_1.start_camera_movement();
-				}
-				if(GLFW_RELEASE == action)
-				{
-					game_camera_1.end_camera_movement();
-				}
+				game_camera_1.start_camera_movement();
+			}
+			if(GLFW_RELEASE == key_w_status)
+			{
+				game_camera_1.end_camera_movement();
 			}
 
-			// Move camera backwards.
-			if(GLFW_KEY_S == key)
-			{
-				if(GLFW_PRESS == action)
-				{
-					// true because we're moving backwards.
-					game_camera_1.start_camera_movement(true);
-				}
-				if(GLFW_RELEASE == action)
-				{
-					game_camera_1.end_camera_movement();
-				}
-			}
+			return VK_SUCCESS;
 		}
 
 
@@ -815,8 +782,8 @@ namespace inexor
 				// TODO: Merge into one update_game_data() method?
 				update_cameras();
 
-				// TODO!
-				//update_keyboard();
+				update_keyboard_input();
+
 				time_passed = stopwatch.get_time_step();
 			}
 		}
