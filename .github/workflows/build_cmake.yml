@@ -36,7 +36,7 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: Download Vulkan SDK.
-    - run: |
+      run: |
            wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha11/premake-5.0.0-alpha11-linux.tar.gz?Human=true -O premake-5.0.0-alpha11-linux.tar.gz
            tar -xzvf premake-5.0.0-alpha11-linux.tar.gz
            sudo apt-get update -qq
