@@ -49,7 +49,6 @@ jobs:
     - name: Download Conan package manager.
       run: |
            pip install conan
-           conan user
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja
