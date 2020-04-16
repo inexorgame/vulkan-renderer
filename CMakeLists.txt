@@ -54,10 +54,10 @@ assign_source_group(${NORMAL_SOURCE_FILES})
 assign_source_group(${TEST_SOURCE_FILES})
 assign_source_group(${BENCHMARK_SOURCE_FILES})
 
-if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
-    message(STATUS "Using module to find Vulkan")
-    find_package(Vulkan REQUIRED)
-endif ()
+#if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
+#    message(STATUS "Using module to find Vulkan")
+#    find_package(Vulkan REQUIRED)
+#endif ()
 
 # dependency setup with conan
 include(${PROJECT_SOURCE_DIR}/cmake/conan_setup.cmake)
@@ -70,14 +70,14 @@ add_executable(
 )
 target_include_directories(
     inexor-vulkan-renderer PRIVATE
-    Vulkan::Vulkan
+    ${VULKAN_SDK_INCLUDES}
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/third_party
 )
 target_link_libraries(
     inexor-vulkan-renderer
     ${CONAN_LIBS}
-    Vulkan::Vulkan
+	 ${VULKAN_SDK_LIBRARIES}
 )
 target_compile_features(inexor-vulkan-renderer PRIVATE cxx_std_17)
 # Use multiple threads to generate code.
@@ -106,7 +106,7 @@ target_include_directories(inexor-vulkan-renderer-tests PRIVATE Vulkan::Vulkan)
 target_link_libraries(
     inexor-vulkan-renderer-tests
     ${CONAN_LIBS}
-    Vulkan::Vulkan
+    ${VULKAN_SDK_LIBRARIES}
 )
 target_compile_features(inexor-vulkan-renderer-tests PRIVATE cxx_std_17)
 if (MSVC)
@@ -130,7 +130,7 @@ target_include_directories(inexor-vulkan-renderer-benchmarks PRIVATE Vulkan::Vul
 target_link_libraries(
     inexor-vulkan-renderer-benchmarks
     ${CONAN_LIBS}
-    Vulkan::Vulkan
+	 ${VULKAN_SDK_LIBRARIES}
 )
 target_compile_features(inexor-vulkan-renderer-benchmarks PRIVATE cxx_std_17)
 # Use multiple threads to compile the code.
