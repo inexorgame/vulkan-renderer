@@ -37,6 +37,7 @@ jobs:
 
     - name: Download Conan package manager.
       run: |
+           sudo apt-get -y install python3-pip
            pip3 install --user conan
            sudo ln -s ~/.local/bin/conan /usr/bin/conan
            export PATH=$PATH:$HOME/.local/bin; conan
