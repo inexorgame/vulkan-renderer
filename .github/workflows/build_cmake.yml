@@ -37,11 +37,8 @@ jobs:
 
     - name: Download Conan package manager.
       run: |
-           pip install wheel
-           pip install -v conan
-           export PATH=$PATH:$HOME/.local/bin/conan
-           echo $PATH
-           export PATH=$PATH:/home/runner/.local/bin
+           pip install conan
+           conan --version
 
     - name: Download Vulkan SDK.
       run: |
