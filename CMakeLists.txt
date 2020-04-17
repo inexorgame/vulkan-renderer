@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 3.4)
 # stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
+# options
+option(INEXOR_BUILD_DOC "build documentation" OFF)
+
+message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
+
 project(inexor-vulkan-renderer)
 
 message(STATUS "CMAKE_VERSION = ${CMAKE_VERSION}")
@@ -140,4 +145,9 @@ endif ()
 
 if (WIN32)
     set_property(TARGET inexor-vulkan-renderer-benchmarks PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif ()
+
+# documentation
+if (${INEXOR_BUILD_DOC})
+    add_subdirectory(${PROJECT_SOURCE_DIR}/documentation)
 endif ()

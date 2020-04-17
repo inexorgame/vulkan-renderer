@@ -1,0 +1,41 @@
+@import url("theme.css");
+
+/* use the whole width of the screen */
+html {
+    overflow-x: visible;
+}
+
+body {
+    overflow-x: visible;
+}
+
+.wy-nav-content {
+    max-width: 100%;
+}
+
+/* stronger red .. warning:: directive */
+.admonition.warning {
+    background: #ffd4cc;
+}
+.wy-alert.wy-alert-warning .wy-alert-title, .rst-content .wy-alert-warning.note .wy-alert-title, .rst-content .attention .wy-alert-title, .rst-content .caution .wy-alert-title, .rst-content .wy-alert-warning.danger .wy-alert-title, .rst-content .wy-alert-warning.error .wy-alert-title, .rst-content .wy-alert-warning.hint .wy-alert-title, .rst-content .wy-alert-warning.important .wy-alert-title, .rst-content .wy-alert-warning.tip .wy-alert-title, .rst-content .warning .wy-alert-title, .rst-content .wy-alert-warning.seealso .wy-alert-title, .rst-content .admonition-todo .wy-alert-title, .rst-content .wy-alert-warning.admonition .wy-alert-title, .wy-alert.wy-alert-warning .rst-content .admonition-title, .rst-content .wy-alert.wy-alert-warning .admonition-title, .rst-content .wy-alert-warning.note .admonition-title, .rst-content .attention .admonition-title, .rst-content .caution .admonition-title, .rst-content .wy-alert-warning.danger .admonition-title, .rst-content .wy-alert-warning.error .admonition-title, .rst-content .wy-alert-warning.hint .admonition-title, .rst-content .wy-alert-warning.important .admonition-title, .rst-content .wy-alert-warning.tip .admonition-title, .rst-content .warning .admonition-title, .rst-content .wy-alert-warning.seealso .admonition-title, .rst-content .admonition-todo .admonition-title, .rst-content .wy-alert-warning.admonition .admonition-title {
+    background: #ff7e82;
+}
+
+/* mermaid path highlighting on hover and click support */
+.svg-highlight.path {
+    stroke: red !important;
+    stroke-width: 2.5px !important;
+}
+
+.svg-highlight.arrowheadPath {
+    fill: red !important;
+}
+
+.svg-highlight-hover.path {
+    stroke: orange !important;
+    stroke-width: 3px !important;
+}
+
+.svg-highlight-hover.arrowheadPath {
+    fill: orange !important;
+}
