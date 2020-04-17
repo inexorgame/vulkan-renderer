@@ -1,12 +1,12 @@
 We are always open for suggestios or pull requests.
 
-Join our telegram group: https://t.me/inexor
+Join our discord server: https://discord.gg/acUW8k7.
 
 [Iceflower](https://github.com/IceflowRE)
-
 * Threadpool improvements.
 * Advice on thread safety and code design.
 * CMake improvements and feedback.
+* Feedback on Travis CI and Github actions.
 
 [Shikijo](https://github.com/Shikijo)
 * Pointed out broken glsl compiler batch script on Windows.
@@ -16,3 +16,11 @@ Join our telegram group: https://t.me/inexor
 
 [uilianries](https://github.com/uilianries)
 * [Travis CI setup](https://stackoverflow.com/questions/61209668/travis-ci-reports-linker-errors-for-gcc-7-for-a-vulkan-project)
+
+[yeetari](https://github.com/yeetari)
+* Building and testing vulkan-renderer on Linux.
+* Added USE_VMA_RECORDING CMake option so vulkan-renderer can be build on Linux until VMA recording has been ported.
+* Feedback on Travis CI and Github actions.
+
+[joetoth](https://github.com/joetoth)
+* Help with Discord server.

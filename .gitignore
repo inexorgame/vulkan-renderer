@@ -49,3 +49,6 @@ documentation/html
 # auto generated documentations paths
 documentation/doxygen-output/
 documentation/source/exhale-generated/
+
+# logfiles
+*.log
