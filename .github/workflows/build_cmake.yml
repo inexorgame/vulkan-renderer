@@ -40,11 +40,7 @@ jobs:
            pip install wheel
            pip install -v --user conan
            export PATH=$PATH:$HOME/.local/bin/conan
-
-    - name: Find Conan
-      run: |
            echo $PATH
-           find / -name 'conan'
 
     - name: Download Vulkan SDK.
       run: |
