@@ -125,6 +125,7 @@ jobs:
             -DVULKAN_SDK_INCLUDES=$VULKAN_SDK/includes
             -DVULKAN_SDK_LIBRARIES=$VULKAN_SDK/Lib
             -D CMAKE_MAKE_PROGRAM=${ninja_program}
+            -DCONAN_CMAKE_PROGRAM=/home/runner/.local/bin/conan
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
