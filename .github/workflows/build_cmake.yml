@@ -37,7 +37,7 @@ jobs:
 
     - name: Download Conan package manager.
       run: |
-           python pip install --user conan
+           pip install --user conan
            export PATH=$PATH:$HOME/.local/bin; conan
 
     - name: Download Vulkan SDK.
