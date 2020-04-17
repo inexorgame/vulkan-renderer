@@ -1,4 +1,6 @@
-add_library(inexor-vulkan-renderer
+add_library(
+    inexor-vulkan-renderer
+
     vulkan-renderer/availability-checks/availability_checks.cpp
     vulkan-renderer/availability-checks/availability_checks_benchmarks.cpp
     vulkan-renderer/availability-checks/availability_checks_tests.cpp
@@ -24,26 +26,47 @@ add_library(inexor-vulkan-renderer
     vulkan-renderer/tools/file-loader/File.cpp
     vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.cpp
     vulkan-renderer/renderer.cpp
-    inexor_application.cpp)
+    inexor_application.cpp
+)
 
-set_target_properties(inexor-vulkan-renderer PROPERTIES
+set_target_properties(
+    inexor-vulkan-renderer PROPERTIES
+
     CXX_EXTENSIONS OFF
     CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
+    CXX_STANDARD_REQUIRED ON
+)
 
-# TODO: Move GLFW and GLM definitions here
-target_compile_definitions(inexor-vulkan-renderer PRIVATE
-    VMA_RECORDING_ENABLED=$<BOOL:${INEXOR_USE_VMA_RECORDING}>)
+target_compile_definitions(
+    inexor-vulkan-renderer
+
+    PRIVATE
+    GLFW_INCLUDE_VULKAN
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_FORCE_RADIANS
+    VMA_RECORDING_ENABLED=$<BOOL:${INEXOR_USE_VMA_RECORDING}>
+)
 
 if(MSVC)
     target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
-    set_property(TARGET inexor-vulkan-renderer PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    set_property(
+        TARGET inexor-vulkan-renderer
+        PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    )
 endif()
 
-target_include_directories(inexor-vulkan-renderer PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/third_party)
+target_include_directories(
+    inexor-vulkan-renderer
 
-target_link_libraries(inexor-vulkan-renderer PUBLIC
+    PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/third_party
+)
+
+target_link_libraries(
+    inexor-vulkan-renderer
+
+    PUBLIC
     ${CONAN_LIBS}
-    Vulkan::Vulkan)
+    Vulkan::Vulkan
+)

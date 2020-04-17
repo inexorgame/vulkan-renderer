@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.7)
 project(inexor-vulkan-renderer)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
 # Stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # Options
 option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
@@ -20,7 +20,10 @@ message(STATUS "CXX Compiler executable: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Linker executable: ${CMAKE_LINKER}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
+message(STATUS "INEXOR_BUILD_EXAMPLE = ${INEXOR_BUILD_EXAMPLE}")
+message(STATUS "INEXOR_BUILD_TESTS= ${INEXOR_BUILD_TESTS}")
 message(STATUS "INEXOR_USE_VMA_RECORDING = ${INEXOR_USE_VMA_RECORDING}")
 
 find_package(Vulkan REQUIRED)
