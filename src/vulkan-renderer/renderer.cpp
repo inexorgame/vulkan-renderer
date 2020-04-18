@@ -81,7 +81,7 @@ namespace inexor
 			// The extensions that we would like to enable.
 			std::vector<const char*> instance_extension_wishlist =
 			{
-#if defined(_DEBUG)
+#ifndef NDEBUG
 				VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 				VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
 #endif
@@ -130,13 +130,11 @@ namespace inexor
 				// TODO: Add instance layers if neccesary..
 			};
 
-			// TODO: Is #ifdef _DEBUG C++ standard ?
-
 			/// RenderDoc is a modern graphics debugger written by Baldur Karlsson.
 			/// It comes with many useful debugging functions!
 			/// https://renderdoc.org/
 			/// https://github.com/baldurk/renderdoc
-#if defined _DEBUG
+#ifndef NDEBUG
 			if(enable_renderdoc_instance_layer)
 			{
 				const char renderdoc_layer_name[] = "VK_LAYER_RENDERDOC_Capture";
@@ -150,7 +148,7 @@ namespace inexor
 			// If validation is requested, we need to add the validation layer as instance extension!
 			// For more information on Vulkan validation layers see:
 			// https://vulkan.lunarg.com/doc/view/1.0.39.0/windows/layers.html
-#if defined _DEBUG
+#ifndef NDEBUG
 			if(enable_validation_instance_layers)
 			{
 				const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
@@ -174,7 +172,7 @@ namespace inexor
 				}
 				else
 				{
-#if !defined(_DEBUG)
+#ifdef NDEBUG
 					if(0 == std::string(current_layer).compare(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 					{
 						display_warning_message("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
@@ -290,7 +288,7 @@ namespace inexor
 
 			spdlog::debug("Initialising debug marker manager.");
 
-#if defined(_DEBUG)
+#ifndef NDEBUG
 			if(!enable_debug_markers)
 			{
 				spdlog::warn("Vulkan debug markers are not enabled!");
