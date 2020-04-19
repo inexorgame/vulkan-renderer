@@ -6,8 +6,6 @@
 #include "vulkan-renderer/class-templates/manager_template.hpp"
 #include "vulkan-renderer/uniform-buffer/uniform_buffer.hpp"
 
-#define GLM_FORCE_RADIANS
-
 // This will force GLM to use a version of vec2 and mat4 that has the alignment requirements already specified for us.
 /// @warning Unfortunately this method can break down if you start using nested structures.
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES

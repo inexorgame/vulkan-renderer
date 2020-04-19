@@ -21,9 +21,21 @@ Available CMake options
 - INEXOR_CONAN_PROFILE
     To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``. The building type will be overriden by CMake.
     Default: ``default``
+- INEXOR_BUILD_BENCHMARKS
+    Builds inexor-renderer-benchmarks.
+    Default: ``OFF``
 - INEXOR_BUILD_DOC
-   To build the documentation enable it.
-   Default: ``OFF``
+    To build the documentation enable it.
+    Default: ``OFF``
+- INEXOR_BUILD_EXAMPLE
+    Builds inexor-renderer-example.
+    Default: ``ON``
+- INEXOR_BUILD_TESTS
+    Builds inexor-renderer tests.
+    Default: ``OFF``
+- INEXOR_USE_VMA_RECORDING
+    Enables or disables VulkanMemoryAllocator's recording feature.
+    Default: ``ON``
 
 .. note::
     When building a VS solution add ``--config Debug/Release`` to define the build type.

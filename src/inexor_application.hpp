@@ -15,7 +15,6 @@
 #include "vulkan-renderer/mesh-buffer/mesh_buffer.hpp"
 #include "vulkan-renderer/camera/camera.hpp"
 
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <spdlog/spdlog.h>

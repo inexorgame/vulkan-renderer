@@ -1,16 +1,7 @@
-# https://eb2.co/blog/2012/03/sphinx-and-cmake-beautiful-documentation-for-c---projects/
-cmake_minimum_required(VERSION 3.12)
-
-find_package(Doxygen)
-if (NOT Doxygen_FOUND)
-    message(FATAL_ERROR "Doxygen not found")
-endif ()
+find_package(Doxygen REQUIRED)
 message(STATUS "Found Doxygen: ${DOXYGEN_EXECUTABLE}")
 
-find_package(Sphinx REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
-if (NOT Sphinx_FOUND)
-    message(FATAL_ERROR "Sphinx not found")
-endif ()
+find_package(Sphinx REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH REQUIRED)
 message(STATUS "Found Sphinx: ${SPHINX_EXECUTABLE}")
 
 # Sphinx cache with pickled ReST documents
