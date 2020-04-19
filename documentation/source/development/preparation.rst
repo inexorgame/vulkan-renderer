@@ -19,6 +19,9 @@ Required Software
 Optional Software
 -----------------
 
+`Ninja Build System <https://ninja-build.org/>`__
+    Improve your build times with ninja.
+
 `Doxygen <http://www.doxygen.nl/download.html>`__
     Required by the documentation. Must be available from command line.
 
