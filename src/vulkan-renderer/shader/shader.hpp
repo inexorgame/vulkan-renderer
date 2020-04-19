@@ -6,30 +6,23 @@
 
 #include <string>
 
-
 namespace inexor {
 namespace vulkan_renderer {
 
+class InexorShader : public tools::InexorFile {
+public:
+    InexorShader() = default;
 
-	class InexorShader : public tools::InexorFile
-	{
-		public:
+    ~InexorShader() = default;
 
-			InexorShader() = default;
+    std::string name;
 
-			~InexorShader() = default;
+    std::string entry_name;
 
-			std::string name;
-			
-			std::string entry_name;
-		
-			VkShaderStageFlagBits type;
-		
-			VkShaderModule module;
+    VkShaderStageFlagBits type;
 
-
-	};
-
-
+    VkShaderModule module;
 };
-};
+
+}; // namespace vulkan_renderer
+}; // namespace inexor

@@ -1,33 +1,26 @@
 ﻿#include "vulkan-renderer/fps-counter/fps_counter.hpp"
 
+namespace inexor {
+namespace vulkan_renderer {
 
-namespace inexor
-{
-	namespace vulkan_renderer
-	{
+std::optional<uint32_t> InexorFPSCounter::update() {
+    auto current_time = std::chrono::high_resolution_clock::now();
 
+    auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
 
-		std::optional<uint32_t> InexorFPSCounter::update()
-		{
-			auto current_time = std::chrono::high_resolution_clock::now();
+    if (time_duration >= fps_update_interval) {
+        uint32_t fps_value = static_cast<uint32_t>(frames / time_duration);
 
-			auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
+        last_time = current_time;
+        frames = 0;
 
-			if(time_duration >= fps_update_interval)
-			{
-				uint32_t fps_value = static_cast<uint32_t>(frames / time_duration);
+        return fps_value;
+    }
 
-				last_time = current_time;
-				frames = 0;
+    frames++;
 
-				return fps_value;
-			}
+    return std::nullopt;
+}
 
-			frames++;
-
-			return std::nullopt;
-		}
-
-
-	};
-};
+}; // namespace vulkan_renderer
+}; // namespace inexor
