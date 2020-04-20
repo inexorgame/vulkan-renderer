@@ -3,61 +3,47 @@
 #include "vulkan-renderer/gltf-model-manager/gltf_model_bounding_box.hpp"
 #include "vulkan-renderer/gltf-model-manager/gltf_model_primitive.hpp"
 
-#include "vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.hpp"
 #include "vulkan-renderer/gltf-model-manager/gltf_model_uniform_buffer.hpp"
+#include "vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.hpp"
 #include "vulkan-renderer/uniform-buffer/uniform_buffer.hpp"
 
-#include <vector>
 #include <memory>
-
+#include <vector>
 
 namespace inexor {
 namespace vulkan_renderer {
 
+struct InexorModelMesh {
 
-	struct InexorModelMesh
-	{
+    std::vector<std::shared_ptr<InexorModelPrimitive>> primitives;
 
-		std::vector<std::shared_ptr<InexorModelPrimitive>> primitives;
+    BoundingBox bb;
 
+    BoundingBox aabb;
 
-		BoundingBox bb;
+    std::shared_ptr<InexorUniformBuffer> uniform_buffer;
 
+    InexorModelStandardUniformBufferBlock uniform_block;
 
-		BoundingBox aabb;
+    InexorModelMesh() = default;
 
+    ~InexorModelMesh() = default;
 
-		std::shared_ptr<InexorUniformBuffer> uniform_buffer;
+    // TODO: Refactor!
 
-		
-		InexorModelStandardUniformBufferBlock uniform_block;
+    /// @brief Sets the model matrix.
+    /// @param mat [in] The input matrix.
+    void set_matrix(const glm::mat4 &mat) { uniform_block.matrix = mat; }
 
-
-		InexorModelMesh() = default;
-
-
-		~InexorModelMesh() = default;
-
-		// TODO: Refactor!
-		
-		/// @brief Sets the model matrix.
-		/// @param mat [in] The input matrix.
-		void set_matrix(const glm::mat4& mat)
-		{
-			uniform_block.matrix = mat;
-		}
-
-
-		/// @brief Sets the bounding box of the model.
-		/// @param min [in] The minimum vector (edge of the bounding box)
-		/// @param max [in] The maximum vector (edge of the bounding box)
-		void set_bounding_box(glm::vec3 min, glm::vec3 max)
-		{
-			bb.min = min;
-			bb.max = max;
-			bb.valid = true;
-		}
-	};
-
+    /// @brief Sets the bounding box of the model.
+    /// @param min [in] The minimum vector (edge of the bounding box)
+    /// @param max [in] The maximum vector (edge of the bounding box)
+    void set_bounding_box(glm::vec3 min, glm::vec3 max) {
+        bb.min = min;
+        bb.max = max;
+        bb.valid = true;
+    }
 };
-};
+
+}; // namespace vulkan_renderer
+}; // namespace inexor
