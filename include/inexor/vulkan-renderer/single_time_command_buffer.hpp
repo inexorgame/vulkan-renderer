@@ -35,7 +35,7 @@ protected:
     /// @brief Initialises single time command buffer recording.
     /// @param device [in] The Vulkan device.
     /// @param debug_marker_manager [in] A pointer to the debug marker manager instance.
-    VkResult init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VkQueue &data_transfer_queue);
+    VkResult init(const VkDevice &device, std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VkQueue &data_transfer_queue);
 
     ///
     VkResult start_recording_of_single_time_command_buffer();
