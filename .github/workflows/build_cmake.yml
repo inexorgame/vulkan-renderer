@@ -1,0 +1,82 @@
+name: CMake Build
+
+on: [push]
+
+jobs:
+  linux:
+    name: ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+          name: "Ubuntu Latest CLang",
+          artifact: "linux-clang.tar.xz",
+          build_type: "Release", cc: "clang", cxx: "clang++",
+          vulkan_version: "1.2.131.1",
+          vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
+          conan_path: "$HOME/.local/bin"
+        }
+        - {
+            name: "Ubuntu Latest GCC",
+            artifact: "linux-gcc.tar.xz",
+            build_type: "Release", cc: "gcc", cxx: "g++",
+            vulkan_version: "1.2.131.1",
+            vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
+            conan_path: "$HOME/.local/bin"
+          }
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Update environment
+      shell: bash
+      run: |
+        sudo apt update -qq
+        sudo apt install -y libglm-dev libxcb-dri3-0 libxcb-present0 libpciaccess0 libpng-dev libxcb-keysyms1-dev libxcb-dri3-dev libx11-dev  libmirclient-dev libwayland-dev libxrandr-dev libxcb-ewmh-dev
+        sudo apt install -y cmake ninja-build clang-tidy
+        pip3 install wheel setuptools
+        pip3 install conan
+
+    - name: Download Vulkan SDK
+      shell: bash
+      run: |
+        wget -O vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ matrix.config.vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ matrix.config.vulkan_version }}.tar.gz
+        mkdir "${{ matrix.config.vulkan_sdk }}"
+        tar zxf vulkansdk.tar.gz -C "${{ matrix.config.vulkan_sdk }}"
+
+    - name: Create CMake
+      shell: bash
+      run: |
+        CC=${{ matrix.config.cc }}
+        CXX=${{ matrix.config.cxx }}
+        export PATH="${{ matrix.config.conan_path }}":$PATH
+        export VULKAN_SDK="${{ matrix.config.vulkan_sdk }}/${{ matrix.config.vulkan_version }}/x86_64"
+        export PATH=$VULKAN_SDK/bin:$PATH
+        export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+        export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+        cmake -G Ninja -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D CMAKE_EXPORT_COMPILE_COMMANDS=ON ./
+
+    - name: Build
+      shell: bash
+      run: |
+        cmake --build ./build/
+
+    - name: Analyze
+      if: matrix.config.name == 'Ubuntu Latest CLang'
+      shell: bash
+      run: |
+        clang-tidy -dump-config
+        clang-tidy -p ./build/ ./src/*.cpp ./example/*.cpp ./tests/*.cpp ./benchmarks/*.cpp
+
+    - name: Prepare upload
+      run: |
+        tar czvf ./${{ matrix.config.artifact }} ./build/
+
+    - name: Upload
+      uses: actions/upload-artifact@v1
+      with:
+        path: ./${{ matrix.config.artifact }}
+        name: ${{ matrix.config.artifact }}
