@@ -1,5 +1,4 @@
 #include "vulkan-renderer/tools/file-loader/File.hpp"
-using namespace std;
 
 namespace inexor {
 namespace vulkan_renderer {
