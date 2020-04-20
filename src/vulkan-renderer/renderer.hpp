@@ -41,7 +41,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
 
 // The maximum number of images to process simultaneously.
 // TODO: Refactoring! That is triple buffering essentially!
