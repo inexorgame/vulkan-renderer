@@ -1,7 +1,6 @@
 #include "vulkan-renderer/shader-manager/shader_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanShaderManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
@@ -141,5 +140,4 @@ std::vector<std::shared_ptr<InexorShader>> VulkanShaderManager::get_all_shaders(
     return get_all_values();
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

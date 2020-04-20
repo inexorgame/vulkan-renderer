@@ -46,8 +46,7 @@
 // TODO: Refactoring! That is triple buffering essentially!
 #define INEXOR_MAX_FRAMES_IN_FLIGHT 3
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 public:
@@ -282,5 +281,4 @@ protected:
     VkResult shutdown_vulkan();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

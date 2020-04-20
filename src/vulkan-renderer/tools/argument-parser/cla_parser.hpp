@@ -7,9 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace inexor {
-namespace vulkan_renderer {
-namespace tools {
+namespace inexor::vulkan_renderer::tools {
 
 /// @brief Defines the type of an accepted command line argument.
 enum INEXOR_COMMAND_LINE_ARGUMENT_TYPE {
@@ -128,6 +126,4 @@ public:
     const std::optional<std::uint32_t> get_command_line_argument_uint32_t(const std::string &argument_name);
 };
 
-}; // namespace tools
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer::tools

@@ -6,8 +6,7 @@
 
 #include <string>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class InexorTexture {
 public:
@@ -64,5 +63,4 @@ public:
     void update_descriptor();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -5,8 +5,7 @@
 // Changing this value here also requires changing it in the vertex shader.
 #define MAX_NUM_JOINTS 128u
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorModelStandardUniformBuffer
 /// @brief Inexor's standard uniform buffer block for glTF 2.0 models.
@@ -18,5 +17,4 @@ struct InexorModelStandardUniformBufferBlock {
     float joint_count{0};
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

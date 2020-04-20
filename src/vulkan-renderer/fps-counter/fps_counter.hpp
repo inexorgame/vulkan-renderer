@@ -3,8 +3,7 @@
 #include <chrono>
 #include <optional>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class InexorFPSCounter {
 private:
@@ -22,5 +21,4 @@ public:
     std::optional<uint32_t> update();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

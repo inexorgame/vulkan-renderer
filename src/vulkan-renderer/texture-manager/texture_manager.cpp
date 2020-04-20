@@ -6,8 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanTextureManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card,
                                     const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator &vma_allocator,
@@ -557,5 +556,4 @@ void VulkanTextureManager::shutdown_textures() {
     destroy_command_pool();
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

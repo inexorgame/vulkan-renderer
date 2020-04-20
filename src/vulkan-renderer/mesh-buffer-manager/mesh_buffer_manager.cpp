@@ -1,7 +1,6 @@
 ﻿#include "vulkan-renderer/mesh-buffer-manager/mesh_buffer_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult InexorMeshBufferManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
                                        const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
@@ -515,5 +514,4 @@ void InexorMeshBufferManager::shutdown_vertex_and_index_buffers() {
     list_of_meshes.clear();
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

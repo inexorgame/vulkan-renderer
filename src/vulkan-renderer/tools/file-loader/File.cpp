@@ -1,9 +1,7 @@
 #include "vulkan-renderer/tools/file-loader/File.hpp"
 using namespace std;
 
-namespace inexor {
-namespace vulkan_renderer {
-namespace tools {
+namespace inexor::vulkan_renderer::tools {
 
 const std::size_t InexorFile::get_file_size() const { return file_size; }
 
@@ -44,6 +42,4 @@ bool InexorFile::load_file(const std::string &file_name) {
     return true;
 }
 
-}; // namespace tools
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer::tools

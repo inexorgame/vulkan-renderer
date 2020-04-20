@@ -1,7 +1,6 @@
 #include "vulkan-renderer/semaphore-manager/semaphore_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanSemaphoreManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
@@ -97,5 +96,4 @@ void VulkanSemaphoreManager::shutdown_semaphores() {
     delete_all_entries();
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

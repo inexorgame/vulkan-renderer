@@ -2,8 +2,7 @@
 
 #include <chrono>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorTimeStep
 /// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
@@ -31,5 +30,4 @@ public:
     float get_time_step_since_initialisation();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

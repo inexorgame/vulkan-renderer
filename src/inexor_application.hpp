@@ -19,8 +19,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class InexorApplication : public VulkanRenderer, public tools::InexorCommandLineArgumentParser {
 public:
@@ -106,5 +105,4 @@ public:
     void cleanup();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -1,7 +1,6 @@
 #include "vulkan-renderer/debug-marker/debug_marker_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers) {
     if (enable_debug_markers) {
@@ -135,5 +134,4 @@ void VulkanDebugMarkerManager::end_region(const VkCommandBuffer &command_buffer)
     }
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

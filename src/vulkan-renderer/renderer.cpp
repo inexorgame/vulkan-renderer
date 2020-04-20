@@ -24,8 +24,7 @@
 // License: MIT.
 #include <vma/vk_mem_alloc.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const uint32_t application_version,
                                                 const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer) {
@@ -1917,5 +1916,4 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     return VK_SUCCESS;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

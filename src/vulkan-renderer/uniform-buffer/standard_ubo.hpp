@@ -2,8 +2,7 @@
 
 #include <glm/glm.hpp>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class UniformBufferObject
 /// @note We can exactly match the definition in the shader using data types in GLM.
@@ -15,5 +14,4 @@ struct UniformBufferObject {
     glm::mat4 proj;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

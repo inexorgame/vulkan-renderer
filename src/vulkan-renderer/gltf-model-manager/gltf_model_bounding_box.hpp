@@ -2,8 +2,7 @@
 
 #include <glm/glm.hpp>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 struct BoundingBox {
@@ -46,5 +45,4 @@ struct BoundingBox {
     }
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

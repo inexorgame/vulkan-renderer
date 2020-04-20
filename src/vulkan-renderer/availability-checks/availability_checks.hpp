@@ -8,8 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class InexorAvailabilityChecksManager {
 private:
@@ -88,5 +87,4 @@ public:
     bool is_swapchain_available(const VkPhysicalDevice &graphics_card);
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

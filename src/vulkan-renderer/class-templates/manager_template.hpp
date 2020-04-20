@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class ManagerClassTemplate
 /// @brief A manager class template for type managers.
@@ -197,5 +196,4 @@ protected:
     }
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

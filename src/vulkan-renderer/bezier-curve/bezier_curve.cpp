@@ -1,7 +1,6 @@
 #include "bezier_curve.h"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 uint32_t BezierCurve::binomial_coefficient(uint32_t n, const uint32_t k) {
     uint32_t r = 1;
@@ -129,5 +128,4 @@ void BezierCurve::calculate_bezier_curve(const float curve_precision) {
     curve_generated = true;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -1,7 +1,6 @@
 ﻿#include "vulkan-renderer/fps-counter/fps_counter.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 std::optional<uint32_t> InexorFPSCounter::update() {
     auto current_time = std::chrono::high_resolution_clock::now();
@@ -22,5 +21,4 @@ std::optional<uint32_t> InexorFPSCounter::update() {
     return std::nullopt;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

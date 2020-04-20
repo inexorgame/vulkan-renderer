@@ -1,7 +1,6 @@
 #include "vulkan-renderer/gpu-queue-manager/gpu_queue_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanQueueManager::init(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker) {
     // TODO: Add mutex.
@@ -255,5 +254,4 @@ std::vector<VkDeviceQueueCreateInfo> VulkanQueueManager::get_queues_to_create() 
     return device_queues_to_create;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

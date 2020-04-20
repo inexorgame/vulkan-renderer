@@ -163,4 +163,4 @@ auto InexorThreadPool::execute(F function, Args &&... args) {
     return std::move(future);
 }
 
-}; // namespace inexor
+} // namespace inexor

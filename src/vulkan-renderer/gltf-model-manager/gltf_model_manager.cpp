@@ -7,8 +7,7 @@
 #define TINYGLTF_IMPLEMENTATION
 #include <tiny_gltf/tiny_gltf.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult InexorModelManager::init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
                                   const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
@@ -1134,5 +1133,4 @@ std::shared_ptr<InexorModelNode> InexorModelManager::node_from_index(std::shared
     return node_found;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

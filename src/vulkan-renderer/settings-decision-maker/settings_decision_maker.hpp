@@ -12,8 +12,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class VulkanSettingsDecisionMaker
 /// @brief This class makes automatic decisions which are relevant to setting up Vulkan:
@@ -153,5 +152,4 @@ public:
                                                      const VkFormatFeatureFlags feature_flags);
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

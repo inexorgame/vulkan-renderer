@@ -1,7 +1,6 @@
 #include "vulkan-renderer/command-buffer-recording/single_time_command_buffer.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult SingleTimeCommandBufferRecorder::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
                                                const VkQueue &data_transfer_queue) {
@@ -100,5 +99,4 @@ void SingleTimeCommandBufferRecorder::destroy_command_pool() {
     vkDestroyCommandPool(device, data_transfer_command_pool, nullptr);
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

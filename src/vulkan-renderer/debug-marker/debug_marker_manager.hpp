@@ -9,8 +9,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 // Predefined color markers.
 // These colors will be visible in RenderDoc.
@@ -71,5 +70,4 @@ public:
     void end_region(const VkCommandBuffer &command_buffer);
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

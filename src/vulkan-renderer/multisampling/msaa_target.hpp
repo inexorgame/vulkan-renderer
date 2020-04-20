@@ -2,8 +2,7 @@
 
 #include "vulkan-renderer/image-buffer/image_buffer.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 ///
@@ -16,5 +15,4 @@ struct InexorMSAATarget {
     InexorImageBuffer depth;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

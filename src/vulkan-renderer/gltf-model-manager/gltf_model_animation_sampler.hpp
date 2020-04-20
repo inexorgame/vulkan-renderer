@@ -5,8 +5,7 @@
 #include <memory>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 struct InexorModelAnimationSampler {
@@ -19,5 +18,4 @@ struct InexorModelAnimationSampler {
     std::vector<glm::vec4> outputsVec4;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

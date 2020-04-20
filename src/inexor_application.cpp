@@ -1,7 +1,6 @@
 ﻿#include "inexor_application.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @brief Static callback for window resize events.
 /// @note Because GLFW is a C-style API, we can't pass a poiner to a class method, so we have to do it this way!
@@ -724,5 +723,4 @@ void InexorApplication::cleanup() {
     gltf_model_files.clear();
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

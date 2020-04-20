@@ -2,8 +2,7 @@
 
 using namespace std;
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
     assert(graphics_card);
@@ -831,5 +830,4 @@ std::optional<VkFormat> VulkanSettingsDecisionMaker::find_depth_buffer_format(co
     return std::nullopt;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

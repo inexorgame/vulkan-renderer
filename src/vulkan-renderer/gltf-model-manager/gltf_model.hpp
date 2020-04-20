@@ -19,8 +19,7 @@
 
 #include <glm/glm.hpp>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 struct InexorModel {
     tinygltf::Model gltf2_container;
@@ -56,5 +55,4 @@ struct InexorModel {
     std::size_t uniform_buffer_index = 0;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

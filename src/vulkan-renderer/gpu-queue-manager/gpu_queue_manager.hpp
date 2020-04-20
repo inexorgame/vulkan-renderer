@@ -10,8 +10,7 @@
 
 #include "vulkan-renderer/settings-decision-maker/settings_decision_maker.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class VulkanQueueManager {
 public:
@@ -94,5 +93,4 @@ public:
     std::vector<VkDeviceQueueCreateInfo> get_queues_to_create();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

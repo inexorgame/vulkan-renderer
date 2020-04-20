@@ -13,8 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 struct InexorModelNode;
 
@@ -112,5 +111,4 @@ struct InexorModelNode {
     }
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

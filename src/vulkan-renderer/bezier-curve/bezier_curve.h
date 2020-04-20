@@ -35,8 +35,7 @@
 #include <cmath>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @brief Those are the points that we pass into the bezier curve generator.
 /// Every bezier curve will be generated from a list of BezierInputPoint.
@@ -95,5 +94,4 @@ public:
     bool is_curve_generated();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer
