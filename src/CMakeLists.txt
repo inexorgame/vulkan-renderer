@@ -49,10 +49,6 @@ target_compile_definitions(
 
 if(MSVC)
     target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
-    set_property(
-        TARGET inexor-vulkan-renderer
-        PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    )
 endif()
 
 target_include_directories(

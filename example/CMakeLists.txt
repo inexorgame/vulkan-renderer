@@ -12,6 +12,14 @@ set_target_properties(
     CXX_STANDARD_REQUIRED ON
 )
 
+if(MSVC)
+    target_compile_options(inexor-vulkan-renderer-example PRIVATE "/MP")
+    set_property(
+        TARGET inexor-vulkan-renderer-example
+        PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    )
+endif()
+
 target_link_libraries(
     inexor-vulkan-renderer-example
 
