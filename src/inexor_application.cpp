@@ -113,8 +113,8 @@ VkResult InexorApplication::load_textures() {
     assert(debug_marker_manager);
     assert(vma_allocator);
 
-    VkResult result = texture_manager->initialise(device, selected_graphics_card, debug_marker_manager, vma_allocator,
-                                                  gpu_queue_manager->get_graphics_family_index().value(), gpu_queue_manager->get_graphics_queue());
+    VkResult result = texture_manager->init(device, selected_graphics_card, debug_marker_manager, vma_allocator,
+                                            gpu_queue_manager->get_graphics_family_index().value(), gpu_queue_manager->get_graphics_queue());
     vulkan_error_check(result);
 
     // TODO: Refactor! use key from TOML file as name!
@@ -305,7 +305,7 @@ VkResult InexorApplication::check_application_specific_features() {
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::initialise() {
+VkResult InexorApplication::init() {
     spdlog::debug("Initialising vulkan-renderer.");
 
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
@@ -516,7 +516,7 @@ VkResult InexorApplication::initialise() {
         }
     }
 
-    result = gpu_queue_manager->initialise(settings_decision_maker);
+    result = gpu_queue_manager->init(settings_decision_maker);
     vulkan_error_check(result);
 
     result = gpu_queue_manager->prepare_queues(selected_graphics_card, surface, use_distinct_data_transfer_queue);
@@ -549,7 +549,7 @@ VkResult InexorApplication::initialise() {
     // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
     // debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
 
-    result = gltf_model_manager->initialise(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
+    result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
     vulkan_error_check(result);
 
     result = check_application_specific_features();
@@ -559,7 +559,7 @@ VkResult InexorApplication::initialise() {
     result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
     vulkan_error_check(result);
 
-    result = shader_manager->initialise(device, debug_marker_manager);
+    result = shader_manager->init(device, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_vma_allocator();
@@ -582,7 +582,7 @@ VkResult InexorApplication::initialise() {
     result = load_shaders();
     vulkan_error_check(result);
 
-    result = descriptor_manager->initialise(device, number_of_images_in_swapchain, debug_marker_manager);
+    result = descriptor_manager->init(device, number_of_images_in_swapchain, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_descriptor_pool();
@@ -600,14 +600,14 @@ VkResult InexorApplication::initialise() {
     result = create_frame_buffers();
     vulkan_error_check(result);
 
-    result = mesh_buffer_manager->initialise(device, debug_marker_manager, vma_allocator, gpu_queue_manager->get_data_transfer_queue_family_index().value(),
-                                             gpu_queue_manager->get_data_transfer_queue());
+    result = mesh_buffer_manager->init(device, debug_marker_manager, vma_allocator, gpu_queue_manager->get_data_transfer_queue_family_index().value(),
+                                       gpu_queue_manager->get_data_transfer_queue());
     vulkan_error_check(result);
 
     result = create_command_pool();
     vulkan_error_check(result);
 
-    result = uniform_buffer_manager->initialise(device, vma_allocator, debug_marker_manager);
+    result = uniform_buffer_manager->init(device, vma_allocator, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_uniform_buffers();
@@ -631,10 +631,10 @@ VkResult InexorApplication::initialise() {
     result = record_command_buffers();
     vulkan_error_check(result);
 
-    result = fence_manager->initialise(device, debug_marker_manager);
+    result = fence_manager->init(device, debug_marker_manager);
     vulkan_error_check(result);
 
-    result = semaphore_manager->initialise(device, debug_marker_manager);
+    result = semaphore_manager->init(device, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_synchronisation_objects();

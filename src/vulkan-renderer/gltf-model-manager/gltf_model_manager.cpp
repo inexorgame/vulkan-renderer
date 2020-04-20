@@ -10,10 +10,10 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult InexorModelManager::initialise(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
-                                        const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
-                                        const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
-                                        const std::shared_ptr<InexorDescriptorManager> descriptor_manager) {
+VkResult InexorModelManager::init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
+                                  const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
+                                  const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
+                                  const std::shared_ptr<InexorDescriptorManager> descriptor_manager) {
     assert(texture_manager);
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);

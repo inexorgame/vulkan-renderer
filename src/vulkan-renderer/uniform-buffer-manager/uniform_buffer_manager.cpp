@@ -3,8 +3,8 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult VulkanUniformBufferManager::initialise(const VkDevice &device, const VmaAllocator &vma_allocator,
-                                                const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
+VkResult VulkanUniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
+                                          const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
     assert(vma_allocator);
     assert(debug_marker_manager);

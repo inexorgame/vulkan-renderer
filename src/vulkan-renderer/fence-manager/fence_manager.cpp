@@ -3,7 +3,7 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult VulkanFenceManager::initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
+VkResult VulkanFenceManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
     assert(debug_marker_manager);
 

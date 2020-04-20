@@ -108,8 +108,8 @@ public:
     /// @param vma_allocator [in] An instance of the Vulkan memory allocator library.
     /// @param transfer_queue_family_index [in] The queue family index of the data transfer queue (could be distinct queue or graphics queue).
     /// @param data_transfer_queue [in] The data transfer queue (could be distinct queue or graphics queue).
-    VkResult initialise(const VkDevice &device, const VkPhysicalDevice &graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
-                        const VmaAllocator &vma_allocator, const uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue);
+    VkResult init(const VkDevice &device, const VkPhysicalDevice &graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
+                  const VmaAllocator &vma_allocator, const uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue);
 
     /// @brief Creates a texture from a file of supported format.
     /// @note Since we are using STB library, we can load any image format which is supported by it: JPG, PNG, BMP, TGA (and more).

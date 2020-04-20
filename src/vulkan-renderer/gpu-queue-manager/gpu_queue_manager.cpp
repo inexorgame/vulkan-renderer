@@ -3,7 +3,7 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult VulkanQueueManager::initialise(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker) {
+VkResult VulkanQueueManager::init(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker) {
     // TODO: Add mutex.
     this->settings_decision_maker = settings_decision_maker;
 

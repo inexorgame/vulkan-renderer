@@ -3,8 +3,8 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult SingleTimeCommandBufferRecorder::initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
-                                                     const VkQueue &data_transfer_queue) {
+VkResult SingleTimeCommandBufferRecorder::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
+                                               const VkQueue &data_transfer_queue) {
     assert(device);
     assert(debug_marker_manager);
 

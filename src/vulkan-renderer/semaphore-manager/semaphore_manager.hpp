@@ -33,7 +33,7 @@ public:
     /// @brief Initialises Vulkan semaphore manager.
     /// @param device [in] The Vulkan device.
     /// @param debug_marker_manager [in] A pointer to the debug marker manager.
-    VkResult initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
+    VkResult init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
     /// @brief Checks if a semaphore with this name already exists.
     /// @param semaphore_name The name of the semaphore.

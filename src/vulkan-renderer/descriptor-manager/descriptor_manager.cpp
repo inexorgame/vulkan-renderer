@@ -3,8 +3,8 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult InexorDescriptorManager::initialise(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
-                                             const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
+VkResult InexorDescriptorManager::init(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
+                                       const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(!descriptor_manager_initialised);
     assert(device);
     assert(debug_marker_manager);

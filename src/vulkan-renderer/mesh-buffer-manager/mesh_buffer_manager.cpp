@@ -3,9 +3,8 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult InexorMeshBufferManager::initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
-                                             const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index,
-                                             const VkQueue &data_transfer_queue) {
+VkResult InexorMeshBufferManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
+                                       const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(data_transfer_queue);

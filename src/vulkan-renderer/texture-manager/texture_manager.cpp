@@ -9,9 +9,9 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-VkResult VulkanTextureManager::initialise(const VkDevice &device, const VkPhysicalDevice &graphics_card,
-                                          const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator &vma_allocator,
-                                          const uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue) {
+VkResult VulkanTextureManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card,
+                                    const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator &vma_allocator,
+                                    const uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(data_transfer_queue);
@@ -24,7 +24,7 @@ VkResult VulkanTextureManager::initialise(const VkDevice &device, const VkPhysic
     this->transfer_queue_family_index = transfer_queue_family_index;
 
     // Initialise base class.
-    SingleTimeCommandBufferRecorder::initialise(device, debug_marker_manager, data_transfer_queue);
+    SingleTimeCommandBufferRecorder::init(device, debug_marker_manager, data_transfer_queue);
 
     spdlog::debug("Initialising Vulkan texture buffer manager.");
     spdlog::debug("Creating command pool for texture buffer manager.");

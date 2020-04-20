@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     // We use some simple command line argument parser we wrote ourselves.
     renderer.parse_command_line_arguments(argc, argv);
 
-    VkResult result = renderer.initialise();
+    VkResult result = renderer.init();
 
     if (VK_SUCCESS == result) {
         renderer.run();

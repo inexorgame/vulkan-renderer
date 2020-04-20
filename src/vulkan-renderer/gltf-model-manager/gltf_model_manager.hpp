@@ -70,9 +70,9 @@ public:
     /// @param texture_manager [in] A shared pointer to the texture manager.
     /// @param uniform_buffer_manager [in] A shared pointer to the uniform buffer manager.
     /// @param mesh_buffer_manager [in] mesh_buffer_manager A shared pointer to the mesh buffer manager.
-    VkResult initialise(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
-                        const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
-                        const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager, const std::shared_ptr<InexorDescriptorManager> descriptor_manager);
+    VkResult init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
+                  const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager, const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
+                  const std::shared_ptr<InexorDescriptorManager> descriptor_manager);
 
     /// @brief Loads a glTF 2.0 file.
     /// @param internal_model_name [in] The internal name of the glTF 2.0 model which is used inside of the engine.

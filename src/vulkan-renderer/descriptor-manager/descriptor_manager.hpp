@@ -46,8 +46,8 @@ public:
     /// @param device [in] The Vulkan device which is being used.
     /// @param number_of_images_in_swapchain [in] The number of images in swapchain.
     /// @param debug_marker_manager [in] The debug marker manager.
-    VkResult initialise(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
-                        const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
+    VkResult init(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
+                  const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
     /// @brief Creates a new descriptor pool.
     /// @param internal_descriptor_pool_name [in] The internal name of the descriptor pool.

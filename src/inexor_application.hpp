@@ -91,7 +91,7 @@ private:
     VkResult update_keyboard_input();
 
 public:
-    VkResult initialise();
+    VkResult init();
 
     /// @brief Keyboard input callback.
     /// @param window [in] The glfw window.

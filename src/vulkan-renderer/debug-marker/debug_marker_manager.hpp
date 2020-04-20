@@ -50,7 +50,7 @@ public:
     /// @param device [in] The Vulkan device.
     /// @param graphics_card [in] The graphics card.
     /// @brief enable_debug_markers [in] True if debug markers are enabled, false otherwise.
-    void initialise(const VkDevice &device, const VkPhysicalDevice &graphics_card, const bool enable_debug_markers = true);
+    void init(const VkDevice &device, const VkPhysicalDevice &graphics_card, const bool enable_debug_markers = true);
 
     /// @brief Sets the debug name of an object.
     /// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function along with the object type

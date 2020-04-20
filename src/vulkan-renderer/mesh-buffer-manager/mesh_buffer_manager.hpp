@@ -74,8 +74,8 @@ public:
     /// @param vma_allocator [in] The Vulkan Memory Allocator library's allocator.
     /// @param data_transfer_queue_index [in] The data transfer queue family index.
     /// @param data_transfer_queue [in] The data transfer queue.
-    VkResult initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator &vma_allocator,
-                        const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue);
+    VkResult init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator &vma_allocator,
+                  const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue);
 
     /// @brief Creates a new vertex buffer of any Vertex structure type.
     /// @warning Creating a vertex buffer without index buffer is a bad idea because this decreases performance significantly!

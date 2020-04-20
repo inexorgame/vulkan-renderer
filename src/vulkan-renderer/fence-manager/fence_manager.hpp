@@ -32,7 +32,7 @@ public:
     /// @brief Initialises Vulkan fence manager.
     /// @param device [in] The Vulkan device.
     /// @param debug_marker_manager [in] A pointer to the debug marker manager.
-    VkResult initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
+    VkResult init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
     /// @brief Checks if a fence with this name already exists.
     /// @param fence_name [in] The name of the fence.

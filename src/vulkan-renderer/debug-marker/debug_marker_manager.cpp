@@ -3,7 +3,7 @@
 namespace inexor {
 namespace vulkan_renderer {
 
-void VulkanDebugMarkerManager::initialise(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers) {
+void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers) {
     if (enable_debug_markers) {
         // Check if the debug marker extension is present (which is the case if run from a graphics debugger)
         uint32_t extensionCount;

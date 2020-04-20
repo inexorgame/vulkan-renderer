@@ -61,7 +61,7 @@ private:
 public:
     /// @brief Initialises Vulkan queue manager.
     /// @param
-    VkResult initialise(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker);
+    VkResult init(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker);
 
     ///
     VkResult setup_queues(const VkDevice &device);

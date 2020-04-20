@@ -41,7 +41,7 @@ private:
 
 public:
     /// @param debug_marker_manager_instance The VulkanDebugMarkerManager instance.
-    VkResult initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
+    VkResult init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
     /// @brief Creates a new shader from SPIR-V byte buffer.
     /// @param vulkan_device The Vulkan device.

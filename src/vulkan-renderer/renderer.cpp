@@ -262,7 +262,7 @@ VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug
     }
 #endif
 
-    debug_marker_manager->initialise(device, selected_graphics_card, enable_debug_markers);
+    debug_marker_manager->init(device, selected_graphics_card, enable_debug_markers);
 
     return VK_SUCCESS;
 }
