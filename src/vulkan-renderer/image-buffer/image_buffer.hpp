@@ -7,32 +7,25 @@
 // License: MIT
 #include <vma/vma_usage.h>
 
+namespace inexor {
+namespace vulkan_renderer {
 
-namespace inexor
-{
-	namespace vulkan_renderer
-	{
+///
+///
+///
+struct InexorImageBuffer {
+    VmaAllocation allocation = VK_NULL_HANDLE;
 
+    VmaAllocationInfo allocation_info = {};
 
-		/// 
-		/// 
-		/// 
-		struct InexorImageBuffer
-		{
-			VmaAllocation allocation = VK_NULL_HANDLE;
+    VmaAllocationCreateInfo allocation_create_info = {};
 
-			VmaAllocationInfo allocation_info = {};
+    VkImage image = VK_NULL_HANDLE;
 
-			VmaAllocationCreateInfo allocation_create_info = {};
+    VkImageView image_view = VK_NULL_HANDLE;
 
-			VkImage image = VK_NULL_HANDLE;
-
-			VkImageView image_view = VK_NULL_HANDLE;
-
-			VkFormat format;
-
-		};
-
-
-	};
+    VkFormat format;
 };
+
+}; // namespace vulkan_renderer
+}; // namespace inexor

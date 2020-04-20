@@ -1,159 +1,145 @@
 #include "vulkan-renderer/shader-manager/shader_manager.hpp"
 
-
 namespace inexor {
 namespace vulkan_renderer {
 
-	
-	VkResult VulkanShaderManager::initialise(const VkDevice& device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager)
-	{
-		assert(device);
-		assert(debug_marker_manager);
+VkResult VulkanShaderManager::initialise(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
+    assert(device);
+    assert(debug_marker_manager);
 
-		spdlog::debug("Initialising shader manager.");
+    spdlog::debug("Initialising shader manager.");
 
-		this->debug_marker_manager = debug_marker_manager;
-		this->device = device;
+    this->debug_marker_manager = debug_marker_manager;
+    this->device = device;
 
-		shader_manager_initialised = true;
+    shader_manager_initialised = true;
 
-		return VK_SUCCESS;
-	}
+    return VK_SUCCESS;
+}
 
-	
-	VkResult VulkanShaderManager::create_shader_module(const std::vector<char>& SPIRV_shader_bytes, VkShaderModule* shader_module)
-	{
-		assert(shader_manager_initialised);
-		assert(device);
-		assert(debug_marker_manager);
-		assert(!SPIRV_shader_bytes.empty());
-		
-		spdlog::debug("SPIR-V shader byte size: {}.", SPIRV_shader_bytes.size());
+VkResult VulkanShaderManager::create_shader_module(const std::vector<char> &SPIRV_shader_bytes, VkShaderModule *shader_module) {
+    assert(shader_manager_initialised);
+    assert(device);
+    assert(debug_marker_manager);
+    assert(!SPIRV_shader_bytes.empty());
 
-		VkShaderModuleCreateInfo shader_create_info = {};
-	
-		shader_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		shader_create_info.pNext    = nullptr;
-		shader_create_info.flags    = 0;
-		shader_create_info.codeSize = SPIRV_shader_bytes.size();
+    spdlog::debug("SPIR-V shader byte size: {}.", SPIRV_shader_bytes.size());
 
-		// When you perform a cast like this, you also need to ensure that the data satisfies the alignment requirements of uint32_t.
-		// Lucky for us, the data is stored in an std::vector where the default allocator already ensures that the data satisfies the worst case alignment requirements.
-		shader_create_info.pCode    = reinterpret_cast<const uint32_t*>(SPIRV_shader_bytes.data());
+    VkShaderModuleCreateInfo shader_create_info = {};
 
-		VkResult result = vkCreateShaderModule(device, &shader_create_info, nullptr, shader_module);
-		vulkan_error_check(result);
+    shader_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_create_info.pNext = nullptr;
+    shader_create_info.flags = 0;
+    shader_create_info.codeSize = SPIRV_shader_bytes.size();
 
-		return VK_SUCCESS;
-	}
+    // When you perform a cast like this, you also need to ensure that the data satisfies the alignment requirements of uint32_t.
+    // Lucky for us, the data is stored in an std::vector where the default allocator already ensures that the data satisfies the worst case alignment
+    // requirements.
+    shader_create_info.pCode = reinterpret_cast<const uint32_t *>(SPIRV_shader_bytes.data());
 
+    VkResult result = vkCreateShaderModule(device, &shader_create_info, nullptr, shader_module);
+    vulkan_error_check(result);
 
-	VkResult VulkanShaderManager::create_shader_from_memory(const std::string& internal_shader_name, const VkShaderStageFlagBits& shader_type, const std::vector<char>& SPIRV_shader_bytes, const std::string& shader_entry_point)
-	{
-		assert(device);
-		assert(debug_marker_manager);
-		assert(shader_manager_initialised);
-		assert(!internal_shader_name.empty());
-		assert(!SPIRV_shader_bytes.empty());
+    return VK_SUCCESS;
+}
 
-		spdlog::debug("Creating shader '{}' from memory.", internal_shader_name.c_str());
-		
-		std::shared_ptr<InexorShader> new_shader = std::make_shared<InexorShader>();
+VkResult VulkanShaderManager::create_shader_from_memory(const std::string &internal_shader_name, const VkShaderStageFlagBits &shader_type,
+                                                        const std::vector<char> &SPIRV_shader_bytes, const std::string &shader_entry_point) {
+    assert(device);
+    assert(debug_marker_manager);
+    assert(shader_manager_initialised);
+    assert(!internal_shader_name.empty());
+    assert(!SPIRV_shader_bytes.empty());
 
-		new_shader->type = shader_type;
-		new_shader->name = internal_shader_name;
-		new_shader->entry_name = shader_entry_point;
+    spdlog::debug("Creating shader '{}' from memory.", internal_shader_name.c_str());
 
-		// Create the shader module from the SPIR-V byte buffer.
-		VkShaderModule shader_module;
-		VkResult result = create_shader_module(SPIRV_shader_bytes, &shader_module);
-		if(VK_SUCCESS != result)
-		{
-			vulkan_error_check(result);
-			return result;
-		}
-		
-		// Store the generated shader module.
-		new_shader->module = shader_module;
-		
-		// Call template base class method.
-		add_entry(internal_shader_name, new_shader);
-		
-		return VK_SUCCESS;
-	}
+    std::shared_ptr<InexorShader> new_shader = std::make_shared<InexorShader>();
 
+    new_shader->type = shader_type;
+    new_shader->name = internal_shader_name;
+    new_shader->entry_name = shader_entry_point;
 
-	VkResult VulkanShaderManager::create_shader_from_file(const VkShaderStageFlagBits& shader_type, const std::string& SPIRV_shader_file_name, const std::string& internal_shader_name, const std::string& shader_entry_point)
-	{
-		assert(device);
-		assert(debug_marker_manager);
-		assert(shader_manager_initialised);
-		assert(!SPIRV_shader_file_name.empty());
-		
-		spdlog::debug("Creating shader '{}' from file.", SPIRV_shader_file_name.c_str());
+    // Create the shader module from the SPIR-V byte buffer.
+    VkShaderModule shader_module;
+    VkResult result = create_shader_module(SPIRV_shader_bytes, &shader_module);
+    if (VK_SUCCESS != result) {
+        vulkan_error_check(result);
+        return result;
+    }
 
-		std::shared_ptr<InexorShader>  new_shader = std::make_shared<InexorShader>();
+    // Store the generated shader module.
+    new_shader->module = shader_module;
 
-		// Load the fragment shader into memory.
-		new_shader->load_file(SPIRV_shader_file_name);
+    // Call template base class method.
+    add_entry(internal_shader_name, new_shader);
 
-		VkShaderModule new_shader_module;
-		
-		// Create a Vulkan shader module.
-		VkResult result = create_shader_module(new_shader->get_file_data(), &new_shader_module);
-		if(VK_SUCCESS != result)
-		{
-			vulkan_error_check(result);
-			return result;
-		}
+    return VK_SUCCESS;
+}
 
-		std::string shader_debug_marker_name = "Shader module '"+ SPIRV_shader_file_name +"'.";
+VkResult VulkanShaderManager::create_shader_from_file(const VkShaderStageFlagBits &shader_type, const std::string &SPIRV_shader_file_name,
+                                                      const std::string &internal_shader_name, const std::string &shader_entry_point) {
+    assert(device);
+    assert(debug_marker_manager);
+    assert(shader_manager_initialised);
+    assert(!SPIRV_shader_file_name.empty());
 
-		// Give this shader an appropriate name.
-		debug_marker_manager->set_object_name(device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, internal_shader_name.c_str());
+    spdlog::debug("Creating shader '{}' from file.", SPIRV_shader_file_name.c_str());
 
-		// Store the generated shader in memory.
-		new_shader->entry_name = shader_entry_point;
-		new_shader->name = internal_shader_name;
-		new_shader->type = shader_type;
-		new_shader->module = new_shader_module;
-		
-		// Call template base class method.
-		add_entry(internal_shader_name, new_shader);
+    std::shared_ptr<InexorShader> new_shader = std::make_shared<InexorShader>();
 
-		return VK_SUCCESS;
-	}
+    // Load the fragment shader into memory.
+    new_shader->load_file(SPIRV_shader_file_name);
 
+    VkShaderModule new_shader_module;
 
-	void VulkanShaderManager::shutdown_shaders()
-	{
-		assert(device);
-		assert(shader_manager_initialised);
+    // Create a Vulkan shader module.
+    VkResult result = create_shader_module(new_shader->get_file_data(), &new_shader_module);
+    if (VK_SUCCESS != result) {
+        vulkan_error_check(result);
+        return result;
+    }
 
-		spdlog::debug("Shutting down shader manager.");
-		
-		// Call template base class method.
-		auto shaders = get_all_values();
+    std::string shader_debug_marker_name = "Shader module '" + SPIRV_shader_file_name + "'.";
 
-		for(const auto& shader : shaders)
-		{
-			spdlog::debug("Destroying shader module '{}'.", shader->name);
-			
-			vkDestroyShaderModule(device, shader->module, nullptr);
-		}
+    // Give this shader an appropriate name.
+    debug_marker_manager->set_object_name(device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, internal_shader_name.c_str());
 
-		delete_all_entries();
-	}
+    // Store the generated shader in memory.
+    new_shader->entry_name = shader_entry_point;
+    new_shader->name = internal_shader_name;
+    new_shader->type = shader_type;
+    new_shader->module = new_shader_module;
 
+    // Call template base class method.
+    add_entry(internal_shader_name, new_shader);
 
-	std::vector<std::shared_ptr<InexorShader>> VulkanShaderManager::get_all_shaders()
-	{
-		assert(shader_manager_initialised);
+    return VK_SUCCESS;
+}
 
-		// Call template base class method.
-		return get_all_values();
-	}
+void VulkanShaderManager::shutdown_shaders() {
+    assert(device);
+    assert(shader_manager_initialised);
 
+    spdlog::debug("Shutting down shader manager.");
 
-};
-};
+    // Call template base class method.
+    auto shaders = get_all_values();
+
+    for (const auto &shader : shaders) {
+        spdlog::debug("Destroying shader module '{}'.", shader->name);
+
+        vkDestroyShaderModule(device, shader->module, nullptr);
+    }
+
+    delete_all_entries();
+}
+
+std::vector<std::shared_ptr<InexorShader>> VulkanShaderManager::get_all_shaders() {
+    assert(shader_manager_initialised);
+
+    // Call template base class method.
+    return get_all_values();
+}
+
+}; // namespace vulkan_renderer
+}; // namespace inexor
