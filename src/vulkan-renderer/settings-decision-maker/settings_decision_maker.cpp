@@ -1,7 +1,5 @@
 ﻿#include "vulkan-renderer/settings-decision-maker/settings_decision_maker.hpp"
 
-using namespace std;
-
 namespace inexor::vulkan_renderer {
 
 uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
