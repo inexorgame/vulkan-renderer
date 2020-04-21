@@ -1,7 +1,6 @@
 #include "vulkan-renderer/gpu-info/gpu_info.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
     // The version of the available Vulkan API is encoded as a 32 bit integer.
@@ -680,5 +679,4 @@ void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &
     }
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

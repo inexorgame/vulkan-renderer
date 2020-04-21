@@ -3,8 +3,7 @@
 #include <array>
 #include <glm/glm.hpp>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 struct InexorModelVertex {
     glm::vec3 pos;
@@ -64,5 +63,4 @@ struct InexorModelVertex {
     }
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

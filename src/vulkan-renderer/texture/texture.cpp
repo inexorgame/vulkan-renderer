@@ -1,7 +1,6 @@
 #include "vulkan-renderer/texture/texture.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 void InexorTexture::destroy_texture(const VkDevice &device, const VmaAllocator &vma_allocator) {
     vkDestroySampler(device, sampler, nullptr);
@@ -37,5 +36,4 @@ void InexorTexture::update_descriptor() {
     descriptor.imageLayout = image_layout;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

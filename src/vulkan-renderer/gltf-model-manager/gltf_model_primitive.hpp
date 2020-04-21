@@ -5,8 +5,7 @@
 
 #include <glm/glm.hpp>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 struct InexorModelPrimitive {
     uint32_t first_index;
@@ -39,5 +38,4 @@ struct InexorModelPrimitive {
     }
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -2,8 +2,7 @@
 
 #include "vulkan-renderer/gpu-memory-buffer/gpu_memory_buffer.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 ///
@@ -16,5 +15,4 @@ struct InexorUniformBuffer : public InexorBuffer {
     VkDescriptorSet descriptor_set;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace vulkan_renderer

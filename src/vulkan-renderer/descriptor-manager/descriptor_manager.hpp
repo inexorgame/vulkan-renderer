@@ -14,8 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorDescriptorManager.
 /// @brief A manager class for descriptor pools, descriptor set layouts and descriptor sets.
@@ -94,5 +93,4 @@ public:
     VkResult shutdown_descriptors(bool clear_descriptor_layout_bindings = false);
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

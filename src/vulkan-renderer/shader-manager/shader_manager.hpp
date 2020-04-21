@@ -11,8 +11,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class VulkanShaderManager
 /// @brief A class for managing SPIR-V shaders.
@@ -71,5 +70,4 @@ public:
     void shutdown_shaders();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

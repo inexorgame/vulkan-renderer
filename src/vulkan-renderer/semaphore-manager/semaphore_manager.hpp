@@ -11,8 +11,7 @@
 
 #include <cassert>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @brief VulkanSemaphoreManager
 class VulkanSemaphoreManager : public ManagerClassTemplate<VkSemaphore> {
@@ -55,5 +54,4 @@ public:
     void shutdown_semaphores();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

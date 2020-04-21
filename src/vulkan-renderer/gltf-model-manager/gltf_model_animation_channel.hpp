@@ -4,8 +4,7 @@
 
 #include <memory>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 struct InexorModelAnimationChannel {
@@ -18,5 +17,4 @@ struct InexorModelAnimationChannel {
     uint32_t samplerIndex;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

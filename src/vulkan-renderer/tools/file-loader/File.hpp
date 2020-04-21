@@ -8,9 +8,7 @@
 
 #include <cassert>
 
-namespace inexor {
-namespace vulkan_renderer {
-namespace tools {
+namespace inexor::vulkan_renderer::tools {
 
 /// @class InexorFile
 /// @brief A class for loading files into memory.
@@ -39,6 +37,4 @@ public:
     bool load_file(const std::string &file_name);
 };
 
-}; // namespace tools
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer::tools

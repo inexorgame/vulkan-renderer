@@ -2,8 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorTextureSampler
 struct InexorTextureSampler {
@@ -14,5 +13,4 @@ struct InexorTextureSampler {
     VkSamplerAddressMode addressModeW;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -6,8 +6,7 @@
 
 #include <string>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class InexorShader : public tools::InexorFile {
 public:
@@ -24,5 +23,4 @@ public:
     VkShaderModule module;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

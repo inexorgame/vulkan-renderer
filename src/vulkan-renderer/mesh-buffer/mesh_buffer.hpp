@@ -9,8 +9,7 @@
 // License: MIT
 #include <vma/vma_usage.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorMeshBuffer
 /// @brief A structure which bundles vertex buffer and index buffer (if existent).
@@ -38,5 +37,4 @@ struct InexorMeshBuffer {
     bool index_buffer_available = false;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

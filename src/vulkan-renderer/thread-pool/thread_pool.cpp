@@ -101,4 +101,4 @@ void InexorThreadPool::start_thread() {
         }));
 }
 
-}; // namespace inexor
+} // namespace inexor

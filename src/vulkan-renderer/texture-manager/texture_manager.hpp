@@ -29,8 +29,7 @@
 #include <memory>
 #include <string>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 // TODO: 2D textures, 3D textures and cube maps.
 // TODO: Scan asset directory automatically.
@@ -151,5 +150,4 @@ public:
     void shutdown_textures();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -8,8 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 ///
@@ -36,5 +35,4 @@ public:
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

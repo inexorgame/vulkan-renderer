@@ -1,7 +1,6 @@
 #include "vulkan-renderer/fence-manager/fence_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanFenceManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
@@ -90,5 +89,4 @@ void VulkanFenceManager::shutdown_fences() {
     delete_all_entries();
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

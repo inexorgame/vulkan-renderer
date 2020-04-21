@@ -1,7 +1,6 @@
 ﻿#include "vulkan-renderer/time-step/time_step.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 InexorTimeStep::InexorTimeStep() {
     initialisation_time = std::chrono::high_resolution_clock::now();
@@ -27,5 +26,4 @@ float InexorTimeStep::get_time_step_since_initialisation() {
     return time_duration;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

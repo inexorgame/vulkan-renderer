@@ -33,8 +33,7 @@
 #include <nlohmann/json.hpp>
 #define TINYGLTF_NO_INCLUDE_JSON
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorModelManager
 /// TODO: Make InexorModelLoader and inherit!
@@ -157,5 +156,4 @@ private:
     std::shared_ptr<InexorModelNode> node_from_index(std::shared_ptr<InexorModel> model, const uint32_t index);
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

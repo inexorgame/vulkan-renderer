@@ -1,7 +1,6 @@
 #include "vulkan-renderer/availability-checks/availability_checks.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult InexorAvailabilityChecksManager::create_instance_extensions_cache() {
     // First ask Vulkan how many instance extensions are available on the system.
@@ -198,5 +197,4 @@ bool InexorAvailabilityChecksManager::is_swapchain_available(const VkPhysicalDev
     return is_device_extension_available(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

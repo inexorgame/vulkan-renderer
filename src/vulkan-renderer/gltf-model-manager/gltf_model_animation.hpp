@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 struct InexorModelAnimation {
@@ -22,5 +21,4 @@ struct InexorModelAnimation {
     float end = std::numeric_limits<float>::min();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

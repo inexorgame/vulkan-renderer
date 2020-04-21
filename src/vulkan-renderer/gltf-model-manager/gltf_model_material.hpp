@@ -6,8 +6,7 @@
 
 #include <glm/glm.hpp>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 enum InexorModelMaterialAlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
@@ -61,5 +60,4 @@ struct InexorModelMaterial {
     VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

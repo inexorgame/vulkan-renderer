@@ -1,7 +1,6 @@
 #include "vulkan-renderer/descriptor-manager/descriptor_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult InexorDescriptorManager::init(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
                                        const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
@@ -230,5 +229,4 @@ VkResult InexorDescriptorManager::shutdown_descriptors(bool clear_descriptor_lay
     return VK_SUCCESS;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

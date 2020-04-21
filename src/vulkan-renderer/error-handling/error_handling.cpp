@@ -4,8 +4,7 @@
 #include <Windows.h>
 #endif
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @brief Returns a user friendly error description text.
 /// @param result_code The error code.
@@ -167,5 +166,4 @@ void vulkan_error_check(const VkResult &result) {
     }
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -8,8 +8,7 @@
 
 #include <cassert>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class CommandBufferRecorder
 /// @brief A class for managing the recording of single time command buffers.
@@ -49,5 +48,4 @@ protected:
     void destroy_command_pool();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

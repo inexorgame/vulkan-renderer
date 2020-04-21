@@ -7,8 +7,7 @@
 // License: MIT
 #include <vma/vma_usage.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 ///
@@ -27,5 +26,4 @@ struct InexorImageBuffer {
     VkFormat format;
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

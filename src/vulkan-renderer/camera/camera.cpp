@@ -1,7 +1,6 @@
 #include "vulkan-renderer/camera/camera.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 void InexorCamera::set_position(const glm::vec3 &position) {
     this->position = position;
@@ -128,5 +127,4 @@ glm::vec3 InexorCamera::get_front() const { return this->world_front; }
 
 glm::vec3 InexorCamera::get_right() const { return this->world_right; }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

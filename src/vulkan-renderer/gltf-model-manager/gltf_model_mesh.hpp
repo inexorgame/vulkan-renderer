@@ -10,8 +10,7 @@
 #include <memory>
 #include <vector>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 struct InexorModelMesh {
 
@@ -45,5 +44,4 @@ struct InexorModelMesh {
     }
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

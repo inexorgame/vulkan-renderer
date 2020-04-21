@@ -19,8 +19,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 class VulkanUniformBufferManager : public ManagerClassTemplate<InexorUniformBuffer> {
 private:
@@ -85,5 +84,4 @@ public:
     VkResult shutdown_uniform_buffers();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

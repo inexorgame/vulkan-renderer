@@ -6,8 +6,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 // These functions help to abstract error handling in Vulkan.
 
@@ -35,5 +34,4 @@ void display_warning_message(const std::string &warning_message, const std::stri
 // @param result The result which is to be validated.
 void vulkan_error_check(const VkResult &result);
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

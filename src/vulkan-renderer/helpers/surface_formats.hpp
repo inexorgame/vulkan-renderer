@@ -2,8 +2,7 @@
 
 #include <unordered_map>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 // Since VkSurfaceFormatKHR::format only contains an unsigned integer
 // which describes the format, we cannot get the format name without
@@ -250,5 +249,4 @@ const std::unordered_map<int, std::string> surface_format_names = {{0, "VK_FORMA
                                                                    {1000066012, "VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK_EXT"},
                                                                    {1000066013, "VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT"}};
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

@@ -11,8 +11,7 @@
 #include "vulkan-renderer/error-handling/error_handling.hpp"
 #include "vulkan-renderer/helpers/surface_formats.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class VulkanGraphicsCardInfoViewer
 /// @brief Prints information related to graphics card's capabilities and limits.
@@ -85,5 +84,4 @@ public:
     void print_all_physical_devices(const VkInstance &vulkan_instance, const VkSurfaceKHR &vulkan_surface);
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

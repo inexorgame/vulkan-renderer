@@ -10,8 +10,7 @@
 #include <memory>
 #include <mutex>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 ///
 class VulkanFenceManager : public ManagerClassTemplate<VkFence> {
@@ -55,5 +54,4 @@ public:
     void shutdown_fences();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

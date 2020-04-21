@@ -8,8 +8,7 @@
 #include <cstddef>
 #include <string>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorStagingBuffer
 /// @brief An abstraction class for the creation of staging buffers.
@@ -31,5 +30,4 @@ struct InexorBuffer {
     VmaAllocationCreateInfo allocation_create_info = {};
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

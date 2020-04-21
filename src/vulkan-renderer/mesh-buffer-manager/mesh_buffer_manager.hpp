@@ -18,8 +18,7 @@
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorMeshBufferManager.
 /// @brief A manager class for vertex buffers and index buffers.
@@ -111,5 +110,4 @@ public:
     void shutdown_vertex_and_index_buffers();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

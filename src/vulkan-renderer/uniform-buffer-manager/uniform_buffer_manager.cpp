@@ -1,7 +1,6 @@
 #include "vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.hpp"
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 VkResult VulkanUniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
                                           const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
@@ -159,5 +158,4 @@ VkResult VulkanUniformBufferManager::shutdown_uniform_buffers() {
     return VK_SUCCESS;
 }
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer

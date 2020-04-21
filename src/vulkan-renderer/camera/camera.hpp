@@ -8,8 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace inexor {
-namespace vulkan_renderer {
+namespace inexor::vulkan_renderer {
 
 /// @class InexorCamera
 /// TODO: Add mutex!
@@ -209,5 +208,4 @@ public:
     glm::mat4 get_projection_matrix();
 };
 
-}; // namespace vulkan_renderer
-}; // namespace inexor
+} // namespace inexor::vulkan_renderer
