@@ -1,7 +1,6 @@
 #include <benchmark/benchmark.h>
 
 #include <iostream>
-using namespace std;
 
 int main(int argc, char **argv) {
     ::benchmark::Initialize(&argc, argv);
@@ -10,5 +9,5 @@ int main(int argc, char **argv) {
     }
     ::benchmark::RunSpecifiedBenchmarks();
 
-    cin.get();
+    std::cin.get();
 }
