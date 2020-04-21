@@ -1,6 +1,6 @@
 name: CMake Build
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   linux:
@@ -11,20 +11,20 @@ jobs:
       matrix:
         config:
         - {
-          name: "Ubuntu Latest CLang",
+          name: "Ubuntu CLang",
           artifact: "linux-clang.tar.xz",
           build_type: "Release", cc: "clang", cxx: "clang++",
           vulkan_version: "1.2.131.1",
           vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
-          conan_path: "$HOME/.local/bin"
+          conan_path: "$HOME/.local/bin",
         }
         - {
-            name: "Ubuntu Latest GCC",
+            name: "Ubuntu GCC",
             artifact: "linux-gcc.tar.xz",
             build_type: "Release", cc: "gcc", cxx: "g++",
             vulkan_version: "1.2.131.1",
             vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
-            conan_path: "$HOME/.local/bin"
+            conan_path: "$HOME/.local/bin",
           }
 
     steps:
@@ -40,7 +40,7 @@ jobs:
         pip3 install wheel setuptools
         pip3 install conan
 
-    - name: Download Vulkan SDK
+    - name: Install Vulkan SDK
       shell: bash
       run: |
         wget -O vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ matrix.config.vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ matrix.config.vulkan_version }}.tar.gz
@@ -57,7 +57,9 @@ jobs:
         export PATH=$VULKAN_SDK/bin:$PATH
         export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
         export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
-        cmake -G Ninja -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D CMAKE_EXPORT_COMPILE_COMMANDS=ON ./
+        conan profile new default --detect
+        conan profile update settings.compiler.libcxx=libstdc++11 default
+        cmake -G Ninja -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D INEXOR_USE_VMA_RECORDING=OFF ./
 
     - name: Build
       shell: bash
@@ -65,7 +67,7 @@ jobs:
         cmake --build ./build/
 
     - name: Analyze
-      if: matrix.config.name == 'Ubuntu Latest CLang'
+      if: matrix.config.name == 'Ubuntu CLang'
       shell: bash
       run: |
         clang-tidy -dump-config
@@ -80,3 +82,69 @@ jobs:
       with:
         path: ./${{ matrix.config.artifact }}
         name: ${{ matrix.config.artifact }}
+
+  windows:
+    name: ${{ matrix.config.name }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "Windows MSVC",
+            artifact: "windows-msvc.zip",
+            build_type: "Release", cc: "cl.exe", cxx: "cl.exe",
+            vulkan_version: "1.2.131.1",
+            vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
+            conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=16 default',
+            cmake_options: '-G "Visual Studio 16 2019" -A x64',
+            cmake_build_options: '--config Release',
+          }
+          - {
+            name: "Windows MinGW",
+            artifact: "windows-mingw.zip",
+            build_type: "Release", cc: "gcc", cxx: "g++",
+            vulkan_version: "1.2.131.1",
+            vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
+            conan_profile_update: 'conan profile update settings.compiler=gcc default; conan profile remove settings.compiler.version default; conan profile update settings.compiler.libcxx=libstdc++11 default',
+            cmake_options: '-G Ninja',
+          }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Update environment
+        run: |
+          pip3 install wheel setuptools
+          pip3 install conan
+          choco install ninja
+
+      - name: Install Vulkan SDK
+        run: |
+          curl -L -S -o vulkansdk.exe https://vulkan.lunarg.com/sdk/download/${{ matrix.config.vulkan_version }}/windows/VulkanSDK-${{ matrix.config.vulkan_version }}-Installer.exe?Human=true
+          7z x vulkansdk.exe -o"${{ matrix.config.vulkan_sdk }}"
+
+      - name: Create CMake
+        run: |
+          $CC="${{ matrix.config.cc }}"
+          $CXX="${{ matrix.config.cxx }}"
+          $env:Path += ";${{ matrix.config.vulkan_sdk }}\"
+          conan profile new default --detect --force
+          ${{ matrix.config.conan_profile_update }}
+          cmake ${{ matrix.config.cmake_options }} -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ./
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build ./build/ ${{ matrix.config.cmake_build_options }}
+
+      - name: Prepare upload
+        run: |
+          7z a -tzip ./${{ matrix.config.artifact }} ./build/*
+
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          path: ./${{ matrix.config.artifact }}
+          name: ${{ matrix.config.artifact }}
