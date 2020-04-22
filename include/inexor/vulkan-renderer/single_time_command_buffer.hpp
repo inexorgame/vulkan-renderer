@@ -10,7 +10,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class CommandBufferRecorder
 /// @brief A class for managing the recording of single time command buffers.
 /// This will be used by the texture manager to record copy operations of texture data from CPU to GPU.
 class SingleTimeCommandBufferRecorder {

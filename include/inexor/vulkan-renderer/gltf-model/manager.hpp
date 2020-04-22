@@ -31,7 +31,6 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-/// @class Manager
 /// TODO: Make ModelLoader and inherit!
 /// @brief A manager class for model in glTF 2.0 format.
 /// https://www.khronos.org/gltf/

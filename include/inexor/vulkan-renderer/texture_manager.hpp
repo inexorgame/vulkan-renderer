@@ -23,7 +23,6 @@ namespace inexor::vulkan_renderer {
 // TODO: Scan asset directory automatically.
 // TODO: Create multiple textures from file and submit them in 1 command buffer for performance reasons.
 
-/// @class VulkanTextureManager
 /// @brief A manager class for textures.
 /// @note We do not support linear tiled textures because it is not advisable to do so!
 class VulkanTextureManager : public ManagerClassTemplate<Texture>, public SingleTimeCommandBufferRecorder {

@@ -18,7 +18,6 @@ namespace inexor::vulkan_renderer {
 #define INEXOR_DEBUG_MARKER_GREEN glm::vec4(40 / 255, 210 / 255, 0.0f, 1.0f)
 #define INEXOR_DEBUG_MARKER_ORANGE glm::vec4(1.0f, 100 / 255, 0.0f, 1.0f)
 
-/// @class VulkanDebugMarkerManager
 /// @brief A manager class for Vulkan debug markers.
 /// Debug markers are very useful because they allow single steps of the
 /// rendering process to be tracked by external debugging tools like RenderDoc.

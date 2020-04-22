@@ -19,7 +19,6 @@ enum COMMAND_LINE_ARGUMENT_TYPE {
     // TODO: Add more
 };
 
-/// @class CommandLineArgumentTemplate
 /// @brief A command line argument template class.
 /// @noe This class does not contain any data yet!
 struct CommandLineArgumentTemplate {
@@ -33,7 +32,6 @@ struct CommandLineArgumentTemplate {
     COMMAND_LINE_ARGUMENT_TYPE argument_type;
 };
 
-/// @class CommandLineArgumentValue
 /// @brief Contains the actual command line data.
 struct CommandLineArgumentValue {
     COMMAND_LINE_ARGUMENT_TYPE type;
@@ -44,7 +42,6 @@ struct CommandLineArgumentValue {
     bool value_bool;
 };
 
-/// @class CommandLineArgumentParser
 /// @brief A simple command line argument parser.
 /// @todo What if an argumen gets specified twice?
 class CommandLineArgumentParser {

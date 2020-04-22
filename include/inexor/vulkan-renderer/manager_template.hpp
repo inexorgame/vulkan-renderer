@@ -7,7 +7,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class ManagerClassTemplate
 /// @brief A manager class template for type managers.
 /// In the Inexor engine, it is very common to have an unordered map of
 /// key/value pairs for various data types. In most cases, std::string is the

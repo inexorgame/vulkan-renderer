@@ -31,7 +31,6 @@ namespace inexor {
 // TODO: Maximum number of threads.
 // TODO: Method for changing the number of threads at runtime.
 
-/// @class ThreadPool
 /// @brief A C++17 threadpool implementation.
 class ThreadPool {
 public:
@@ -66,7 +65,6 @@ private:
     //  object (such as the packaged_task declared in execute) - because a lambda
     //  capturing a non-CopyConstructible object is not CopyConstructible.
 
-    /// @class TaskContainerBase
     ///
     class TaskContainerBase {
     public:

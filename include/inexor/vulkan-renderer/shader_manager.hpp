@@ -13,7 +13,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class VulkanShaderManager
 /// @brief A class for managing SPIR-V shaders.
 class VulkanShaderManager : public ManagerClassTemplate<Shader> {
 public:

@@ -16,7 +16,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class DescriptorManager.
 /// @brief A manager class for descriptor pools, descriptor set layouts and descriptor sets.
 class DescriptorManager : public ManagerClassTemplate<DescriptorPool>, public ManagerClassTemplate<DescriptorBundle> {
 private:

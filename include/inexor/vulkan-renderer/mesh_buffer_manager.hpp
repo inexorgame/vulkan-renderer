@@ -16,7 +16,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class MeshBufferManager.
 /// @brief A manager class for vertex buffers and index buffers.
 /// @note Buffers in Vulkan are regions of memory used for storing arbitrary data that can be read by the graphics card.
 class MeshBufferManager : public ManagerClassTemplate<MeshBuffer> {

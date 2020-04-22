@@ -12,7 +12,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class VulkanGraphicsCardInfoViewer
 /// @brief Prints information related to graphics card's capabilities and limits.
 class VulkanGraphicsCardInfoViewer {
 public:

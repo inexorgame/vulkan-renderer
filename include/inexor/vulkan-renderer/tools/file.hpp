@@ -9,7 +9,6 @@
 
 namespace inexor::vulkan_renderer::tools {
 
-/// @class InexorFile
 /// @brief A class for loading files into memory.
 class File {
 private:

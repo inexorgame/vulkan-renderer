@@ -14,7 +14,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class VulkanSettingsDecisionMaker
 /// @brief This class makes automatic decisions which are relevant to setting up Vulkan:
 /// - Which graphics card will be used if more than 1 is available?
 /// - Which surface color format should be used?

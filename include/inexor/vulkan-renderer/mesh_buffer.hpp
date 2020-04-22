@@ -7,7 +7,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class MeshBuffer
 /// @brief A structure which bundles vertex buffer and index buffer (if existent).
 /// It contains all data which are related to memory allocations for these buffers.
 /// @todo Driver developers recommend that you store multiple

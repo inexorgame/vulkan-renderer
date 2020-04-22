@@ -4,7 +4,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class TimeStep
 /// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
 /// Since every machine has slightly different speed, it is neccesary to the timestep when animating something.
 /// @todo Implement time step for every thread?

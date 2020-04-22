@@ -7,7 +7,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class Buffer
 /// @brief An abstraction class for the creation of staging buffers.
 /// @note We can't add a std::mutex in here because that would force Buffer to be uncopyable!
 struct Buffer {

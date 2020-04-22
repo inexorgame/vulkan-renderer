@@ -9,7 +9,6 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class Camera
 /// TODO: Add mutex!
 /// TODO: Because this camera class will be used by scripting as well, runtime errors should be expected.
 class Camera {
