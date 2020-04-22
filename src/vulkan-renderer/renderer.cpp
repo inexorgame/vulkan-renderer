@@ -493,7 +493,7 @@ VkResult VulkanRenderer::record_command_buffers() {
 
         // TODO: Fix debug marker regions in RenderDoc.
         // Start binding the region with Vulkan debug markers.
-        debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering.", INEXOR_DEBUG_MARKER_GREEN);
+        debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering.", DEBUG_MARKER_GREEN);
 
         VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
         if (VK_SUCCESS != result)
@@ -548,7 +548,7 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
 
     // TODO: Add method to create several fences/semaphores.
 
-    for (std::size_t i = 0; i < INEXOR_MAX_FRAMES_IN_FLIGHT; i++) {
+    for (std::size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         // Here we create the semaphores and fences which are neccesary for synchronisation.
         // Cleanup will be handled by VulkanSynchronisationManager.
         std::string image_available_semaphore_name = "image_available_semaphores_" + std::to_string(i);
