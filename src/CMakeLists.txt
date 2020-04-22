@@ -1,32 +1,33 @@
 add_library(
     inexor-vulkan-renderer
 
-    vulkan-renderer/availability-checks/availability_checks.cpp
-    vulkan-renderer/availability-checks/availability_checks_benchmarks.cpp
-    vulkan-renderer/availability-checks/availability_checks_tests.cpp
-    vulkan-renderer/camera/camera.cpp
-    vulkan-renderer/command-buffer-recording/single_time_command_buffer.cpp
-    vulkan-renderer/debug-marker/debug_marker_manager.cpp
-    vulkan-renderer/descriptor-manager/descriptor_manager.cpp
-    vulkan-renderer/error-handling/error_handling.cpp
-    vulkan-renderer/fence-manager/fence_manager.cpp
-    vulkan-renderer/fps-counter/fps_counter.cpp
-    vulkan-renderer/gltf-model-manager/gltf_model_manager.cpp
-    vulkan-renderer/gpu-info/gpu_info.cpp
-    vulkan-renderer/gpu-queue-manager/gpu_queue_manager.cpp
-    vulkan-renderer/mesh-buffer-manager/mesh_buffer_manager.cpp
-    vulkan-renderer/semaphore-manager/semaphore_manager.cpp
-    vulkan-renderer/settings-decision-maker/settings_decision_maker.cpp
-    vulkan-renderer/shader-manager/shader_manager.cpp
-    vulkan-renderer/texture/texture.cpp
-    vulkan-renderer/texture-manager/texture_manager.cpp
-    vulkan-renderer/thread-pool/thread_pool.cpp
-    vulkan-renderer/time-step/time_step.cpp
-    vulkan-renderer/tools/argument-parser/cla_parser.cpp
-    vulkan-renderer/tools/file-loader/File.cpp
-    vulkan-renderer/uniform-buffer-manager/uniform_buffer_manager.cpp
+    vulkan-renderer/availability_checks.cpp
+    vulkan-renderer/bezier_curve.cpp
+    vulkan-renderer/camera.cpp
+    vulkan-renderer/single_time_command_buffer.cpp
+    vulkan-renderer/debug_marker_manager.cpp
+    vulkan-renderer/descriptor_manager.cpp
+    vulkan-renderer/error_handling.cpp
+    vulkan-renderer/fence_manager.cpp
+    vulkan-renderer/fps_counter.cpp
+    vulkan-renderer/gpu_info.cpp
+    vulkan-renderer/gpu_queue_manager.cpp
+    vulkan-renderer/application.cpp
+    vulkan-renderer/mesh_buffer_manager.cpp
+    vulkan-renderer/semaphore_manager.cpp
+    vulkan-renderer/settings_decision_maker.cpp
+    vulkan-renderer/shader_manager.cpp
+    vulkan-renderer/texture.cpp
+    vulkan-renderer/texture_manager.cpp
+    vulkan-renderer/thread_pool.cpp
+    vulkan-renderer/time_step.cpp
+    vulkan-renderer/uniform_buffer_manager.cpp
     vulkan-renderer/renderer.cpp
-    inexor_application.cpp
+
+    vulkan-renderer/gltf-model/manager.cpp
+
+    vulkan-renderer/tools/cla_parser.cpp
+    vulkan-renderer/tools/file.cpp
 )
 
 set_target_properties(
@@ -55,7 +56,7 @@ target_include_directories(
     inexor-vulkan-renderer
 
     PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/third_party
 )
 
