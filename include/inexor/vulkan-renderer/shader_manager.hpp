@@ -15,7 +15,7 @@ namespace inexor::vulkan_renderer {
 
 /// @class VulkanShaderManager
 /// @brief A class for managing SPIR-V shaders.
-class VulkanShaderManager : public ManagerClassTemplate<InexorShader> {
+class VulkanShaderManager : public ManagerClassTemplate<Shader> {
 public:
     VulkanShaderManager() = default;
 
@@ -64,7 +64,7 @@ public:
 
     /// @brief Returns all the shaders which have been loaded.
     /// @return A const vector of InexorVulkanShader instances.
-    std::vector<std::shared_ptr<InexorShader>> get_all_shaders();
+    std::vector<std::shared_ptr<Shader>> get_all_shaders();
 
     /// @brief Destroys all shader objects.
     void shutdown_shaders();

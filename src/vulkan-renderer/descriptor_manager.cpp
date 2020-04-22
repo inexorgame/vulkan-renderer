@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult InexorDescriptorManager::init(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
+VkResult DescriptorManager::init(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
                                        const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(!descriptor_manager_initialised);
     assert(device);
@@ -18,8 +18,8 @@ VkResult InexorDescriptorManager::init(const VkDevice &device, const std::size_t
     return VK_SUCCESS;
 }
 
-VkResult InexorDescriptorManager::create_descriptor_pool(const std::string &internal_descriptor_pool_name, const std::vector<VkDescriptorPoolSize> &pool_sizes,
-                                                         std::shared_ptr<InexorDescriptorPool> &descriptor_pool) {
+VkResult DescriptorManager::create_descriptor_pool(const std::string &internal_descriptor_pool_name, const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                                                         std::shared_ptr<DescriptorPool> &descriptor_pool) {
     assert(descriptor_manager_initialised);
     assert(number_of_images_in_swapchain > 0);
     assert(!internal_descriptor_pool_name.empty());
@@ -28,12 +28,12 @@ VkResult InexorDescriptorManager::create_descriptor_pool(const std::string &inte
 
     // Make sure to call the correct template base class method here!
     // Otherwise, we would look up the descriptor pool name in descriptor set manager!
-    if (ManagerClassTemplate<InexorDescriptorPool>::does_key_exist(internal_descriptor_pool_name)) {
+    if (ManagerClassTemplate<DescriptorPool>::does_key_exist(internal_descriptor_pool_name)) {
         spdlog::error("A descriptor pool with internal name '{}' already exists!");
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    descriptor_pool = std::make_shared<InexorDescriptorPool>(internal_descriptor_pool_name, pool_sizes);
+    descriptor_pool = std::make_shared<DescriptorPool>(internal_descriptor_pool_name, pool_sizes);
 
     spdlog::debug("Creating new descriptor pool.");
 
@@ -54,20 +54,20 @@ VkResult InexorDescriptorManager::create_descriptor_pool(const std::string &inte
                                           debug_marker_name.c_str());
 
     // Keep this descriptor pool stored in the manager base class.
-    ManagerClassTemplate<InexorDescriptorPool>::add_entry(internal_descriptor_pool_name, descriptor_pool);
+    ManagerClassTemplate<DescriptorPool>::add_entry(internal_descriptor_pool_name, descriptor_pool);
 
     return VK_SUCCESS;
 }
 
-VkResult InexorDescriptorManager::create_descriptor_bundle(const std::string &internal_descriptor_name, std::shared_ptr<InexorDescriptorPool> &descriptor_pool,
-                                                           std::shared_ptr<InexorDescriptorBundle> &descriptor_bundle) {
+VkResult DescriptorManager::create_descriptor_bundle(const std::string &internal_descriptor_name, std::shared_ptr<DescriptorPool> &descriptor_pool,
+                                                           std::shared_ptr<DescriptorBundle> &descriptor_bundle) {
     assert(descriptor_manager_initialised);
     assert(number_of_images_in_swapchain > 0);
     assert(!internal_descriptor_name.empty());
     assert(descriptor_pool);
     assert(!descriptor_bundle);
 
-    if (ManagerClassTemplate<InexorDescriptorBundle>::does_key_exist(internal_descriptor_name)) {
+    if (ManagerClassTemplate<DescriptorBundle>::does_key_exist(internal_descriptor_name)) {
         spdlog::error("A descriptor set with internal name '{}' already exists!");
         return VK_ERROR_INITIALIZATION_FAILED;
     }
@@ -76,14 +76,14 @@ VkResult InexorDescriptorManager::create_descriptor_bundle(const std::string &in
 
     // Allocate a shared pointer for the new descriptor.
     // The internal name and descriptor pool of the new descriptor can't be changed anymore after this.
-    descriptor_bundle = std::make_shared<InexorDescriptorBundle>(internal_descriptor_name, descriptor_pool);
+    descriptor_bundle = std::make_shared<DescriptorBundle>(internal_descriptor_name, descriptor_pool);
 
     // The new descriptor set will only be added to the base class storage after building it.
 
     return VK_SUCCESS;
 }
 
-VkResult InexorDescriptorManager::add_descriptor_set_layout_binding(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle,
+VkResult DescriptorManager::add_descriptor_set_layout_binding(std::shared_ptr<DescriptorBundle> descriptor_bundle,
                                                                     const VkDescriptorSetLayoutBinding &descriptor_set_layout_binding) {
     assert(descriptor_manager_initialised);
     assert(descriptor_bundle);
@@ -96,7 +96,7 @@ VkResult InexorDescriptorManager::add_descriptor_set_layout_binding(std::shared_
     return VK_SUCCESS;
 }
 
-VkResult InexorDescriptorManager::add_write_descriptor_set(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle,
+VkResult DescriptorManager::add_write_descriptor_set(std::shared_ptr<DescriptorBundle> descriptor_bundle,
                                                            const VkWriteDescriptorSet &write_descriptor_set) {
     assert(descriptor_manager_initialised);
     assert(descriptor_bundle);
@@ -109,7 +109,7 @@ VkResult InexorDescriptorManager::add_write_descriptor_set(std::shared_ptr<Inexo
     return VK_SUCCESS;
 }
 
-VkResult InexorDescriptorManager::create_descriptor_set_layouts(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle) {
+VkResult DescriptorManager::create_descriptor_set_layouts(std::shared_ptr<DescriptorBundle> descriptor_bundle) {
     assert(descriptor_manager_initialised);
     assert(descriptor_bundle);
     assert(!descriptor_bundle->descriptor_set_layout_bindings.empty());
@@ -135,7 +135,7 @@ VkResult InexorDescriptorManager::create_descriptor_set_layouts(std::shared_ptr<
     return VK_SUCCESS;
 }
 
-VkResult InexorDescriptorManager::create_descriptor_sets(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle) {
+VkResult DescriptorManager::create_descriptor_sets(std::shared_ptr<DescriptorBundle> descriptor_bundle) {
     assert(descriptor_manager_initialised);
     assert(descriptor_bundle);
     assert(!descriptor_bundle->write_descriptor_sets.empty());
@@ -183,16 +183,16 @@ VkResult InexorDescriptorManager::create_descriptor_sets(std::shared_ptr<InexorD
     spdlog::debug("Storing descriptor bundle '{}'.", descriptor_bundle->name);
 
     // Store the descriptor bundle!
-    ManagerClassTemplate<InexorDescriptorBundle>::add_entry(descriptor_bundle->name, descriptor_bundle);
+    ManagerClassTemplate<DescriptorBundle>::add_entry(descriptor_bundle->name, descriptor_bundle);
 
     return VK_SUCCESS;
 }
 
-std::optional<std::shared_ptr<InexorDescriptorBundle>> InexorDescriptorManager::get_descriptor_bundle(const std::string &internal_descriptor_name) {
+std::optional<std::shared_ptr<DescriptorBundle>> DescriptorManager::get_descriptor_bundle(const std::string &internal_descriptor_name) {
     assert(descriptor_manager_initialised);
 
-    if (ManagerClassTemplate<InexorDescriptorBundle>::does_key_exist(internal_descriptor_name)) {
-        auto descriptor_bundle = ManagerClassTemplate<InexorDescriptorBundle>::get_entry(internal_descriptor_name);
+    if (ManagerClassTemplate<DescriptorBundle>::does_key_exist(internal_descriptor_name)) {
+        auto descriptor_bundle = ManagerClassTemplate<DescriptorBundle>::get_entry(internal_descriptor_name);
 
         return descriptor_bundle;
     }
@@ -200,13 +200,13 @@ std::optional<std::shared_ptr<InexorDescriptorBundle>> InexorDescriptorManager::
     return std::nullopt;
 }
 
-VkResult InexorDescriptorManager::shutdown_descriptors(bool clear_descriptor_layout_bindings) {
+VkResult DescriptorManager::shutdown_descriptors(bool clear_descriptor_layout_bindings) {
     assert(descriptor_manager_initialised);
     assert(device);
 
     spdlog::debug("Destroying descriptors sets and descriptor pools.");
 
-    auto descriptor_bundles = ManagerClassTemplate<InexorDescriptorBundle>::get_all_values();
+    auto descriptor_bundles = ManagerClassTemplate<DescriptorBundle>::get_all_values();
 
     for (auto &descriptor_bundle : descriptor_bundles) {
         vkDestroyDescriptorSetLayout(device, descriptor_bundle->descriptor_set_layout, nullptr);
@@ -223,8 +223,8 @@ VkResult InexorDescriptorManager::shutdown_descriptors(bool clear_descriptor_lay
         }
     }
 
-    ManagerClassTemplate<InexorDescriptorBundle>::delete_all_entries();
-    ManagerClassTemplate<InexorDescriptorPool>::delete_all_entries();
+    ManagerClassTemplate<DescriptorBundle>::delete_all_entries();
+    ManagerClassTemplate<DescriptorPool>::delete_all_entries();
 
     return VK_SUCCESS;
 }

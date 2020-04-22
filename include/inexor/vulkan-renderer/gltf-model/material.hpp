@@ -9,11 +9,11 @@
 namespace inexor::vulkan_renderer::gltf_model {
 
 ///
-enum InexorModelMaterialAlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
+enum MaterialAlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
 
 ///
-struct InexorModelMaterial {
-    InexorModelMaterialAlphaMode alphaMode = ALPHAMODE_OPAQUE;
+struct Material {
+    MaterialAlphaMode alphaMode = ALPHAMODE_OPAQUE;
 
     float alphaCutoff = 1.0f;
     float metallicFactor = 1.0f;
@@ -22,11 +22,11 @@ struct InexorModelMaterial {
     glm::vec4 baseColorFactor = glm::vec4(1.0f);
     glm::vec4 emissiveFactor = glm::vec4(1.0f);
 
-    std::shared_ptr<InexorTexture> baseColorTexture;
-    std::shared_ptr<InexorTexture> metallicRoughnessTexture;
-    std::shared_ptr<InexorTexture> normalTexture;
-    std::shared_ptr<InexorTexture> occlusionTexture;
-    std::shared_ptr<InexorTexture> emissiveTexture;
+    std::shared_ptr<Texture> baseColorTexture;
+    std::shared_ptr<Texture> metallicRoughnessTexture;
+    std::shared_ptr<Texture> normalTexture;
+    std::shared_ptr<Texture> occlusionTexture;
+    std::shared_ptr<Texture> emissiveTexture;
 
     struct TexCoordSets {
         uint8_t baseColor = 0;
@@ -39,15 +39,15 @@ struct InexorModelMaterial {
 
     TexCoordSets texCoordSets;
 
-    struct InexorModelExtension {
-        std::shared_ptr<InexorTexture> specularGlossinessTexture;
-        std::shared_ptr<InexorTexture> diffuseTexture;
+    struct ModelExtension {
+        std::shared_ptr<Texture> specularGlossinessTexture;
+        std::shared_ptr<Texture> diffuseTexture;
 
         glm::vec4 diffuseFactor = glm::vec4(1.0f);
         glm::vec3 specularFactor = glm::vec3(0.0f);
     };
 
-    InexorModelExtension extension;
+    ModelExtension extension;
 
     struct PbrWorkflows {
         bool metallicRoughness = true;
@@ -56,7 +56,7 @@ struct InexorModelMaterial {
 
     PbrWorkflows pbrWorkflows;
 
-    // TODO: Should this be part of InexorTexture?
+    // TODO: Should this be part of Texture?
     VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 };
 

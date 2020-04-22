@@ -8,11 +8,11 @@
 
 namespace inexor::vulkan_renderer {
 
-class InexorShader : public tools::InexorFile {
+class Shader : public tools::File {
 public:
-    InexorShader() = default;
+    Shader() = default;
 
-    ~InexorShader() = default;
+    ~Shader() = default;
 
     std::string name;
 

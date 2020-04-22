@@ -2,7 +2,7 @@
 
 namespace inexor {
 
-InexorThreadPool::InexorThreadPool(std::size_t thread_count) {
+ThreadPool::ThreadPool(std::size_t thread_count) {
     // Try to estimate the number of CPU cores available on the system.
     std::size_t number_of_cpu_cores = std::thread::hardware_concurrency();
 
@@ -40,7 +40,7 @@ InexorThreadPool::InexorThreadPool(std::size_t thread_count) {
     }
 }
 
-InexorThreadPool::~InexorThreadPool() {
+ThreadPool::~ThreadPool() {
     // spdlog::debug("Shutting down worker threads.");
 
     stop_threads = true;
@@ -55,12 +55,12 @@ InexorThreadPool::~InexorThreadPool() {
     // spdlog::debug("All worker threads closed successfully.");
 }
 
-void InexorThreadPool::start_thread() {
+void ThreadPool::start_thread() {
     // TODO: Do we need additional locks here?
     // spdlog::debug("Starting new worker thread.");
 
     // Start waiting for threads.
-    // Working threads listen for new tasks through InexorThreadPool's condition_variable.
+    // Working threads listen for new tasks through ThreadPool's condition_variable.
     threads.emplace_back(
 
         std::thread([&]() {

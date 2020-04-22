@@ -2,13 +2,13 @@
 
 namespace inexor::vulkan_renderer {
 
-InexorTimeStep::InexorTimeStep() {
+TimeStep::TimeStep() {
     initialisation_time = std::chrono::high_resolution_clock::now();
 
     last_time = std::chrono::high_resolution_clock::now();
 }
 
-float InexorTimeStep::get_time_step() {
+float TimeStep::get_time_step() {
     auto current_time = std::chrono::high_resolution_clock::now();
 
     auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
@@ -18,7 +18,7 @@ float InexorTimeStep::get_time_step() {
     return time_duration;
 }
 
-float InexorTimeStep::get_time_step_since_initialisation() {
+float TimeStep::get_time_step_since_initialisation() {
     auto current_time = std::chrono::high_resolution_clock::now();
 
     auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - initialisation_time).count();

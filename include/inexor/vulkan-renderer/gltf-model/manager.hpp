@@ -31,16 +31,16 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-/// @class InexorModelManager
-/// TODO: Make InexorModelLoader and inherit!
+/// @class Manager
+/// TODO: Make ModelLoader and inherit!
 /// @brief A manager class for model in glTF 2.0 format.
 /// https://www.khronos.org/gltf/
-struct InexorModelManager : ManagerClassTemplate<InexorModel> {
+struct Manager : ManagerClassTemplate<Model> {
 
 public:
-    InexorModelManager() = default;
+    Manager() = default;
 
-    ~InexorModelManager() = default;
+    ~Manager() = default;
 
 private:
     VkDevice device;
@@ -49,14 +49,14 @@ private:
 
     std::shared_ptr<VulkanTextureManager> texture_manager;
 
-    std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager;
+    std::shared_ptr<UniformBufferManager> uniform_buffer_manager;
 
-    std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager;
+    std::shared_ptr<MeshBufferManager> mesh_buffer_manager;
 
-    std::shared_ptr<InexorDescriptorManager> descriptor_manager;
+    std::shared_ptr<DescriptorManager> descriptor_manager;
 
     // The global descriptor bundle for glTF 2.0 models.
-    std::shared_ptr<InexorDescriptorBundle> gltf_global_descriptor_bundle;
+    std::shared_ptr<DescriptorBundle> gltf_global_descriptor_bundle;
 
 public:
     /// @brief Initialises Vulkan glTF 2.0 model manager.
@@ -66,8 +66,8 @@ public:
     /// @param uniform_buffer_manager [in] A shared pointer to the uniform buffer manager.
     /// @param mesh_buffer_manager [in] mesh_buffer_manager A shared pointer to the mesh buffer manager.
     VkResult init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
-                  const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager, const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
-                  const std::shared_ptr<InexorDescriptorManager> descriptor_manager);
+                  const std::shared_ptr<UniformBufferManager> uniform_buffer_manager, const std::shared_ptr<MeshBufferManager> mesh_buffer_manager,
+                  const std::shared_ptr<DescriptorManager> descriptor_manager);
 
     /// @brief Loads a glTF 2.0 file.
     /// @param internal_model_name [in] The internal name of the glTF 2.0 model which is used inside of the engine.
@@ -98,25 +98,25 @@ public:
 private:
     /// @brief Sets up descriptor sets for glTF model nodes.
     /// @param node [in] A glTF model node.
-    VkResult setup_node_descriptor_set(std::shared_ptr<InexorModelNode> node);
+    VkResult setup_node_descriptor_set(std::shared_ptr<ModelNode> node);
 
     ///
     ///
     ///
-    VkResult load_model_from_file(const std::string &file_name, std::shared_ptr<InexorModel> &new_model, const float scale = 1.0f);
+    VkResult load_model_from_file(const std::string &file_name, std::shared_ptr<Model> &new_model, const float scale = 1.0f);
 
     ///
     void destroy();
 
     ///
-    void load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, const uint32_t nodeIndex, std::shared_ptr<InexorModel> model,
+    void load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, const uint32_t nodeIndex, std::shared_ptr<Model> model,
                    const float globalscale);
 
     ///
-    void load_skins(std::shared_ptr<InexorModel> model);
+    void load_skins(std::shared_ptr<Model> model);
 
     ///
-    void load_textures(std::shared_ptr<InexorModel> model);
+    void load_textures(std::shared_ptr<Model> model);
 
     ///
     VkSamplerAddressMode get_wrap_mode(const int32_t wrapMode);
@@ -125,31 +125,31 @@ private:
     VkFilter get_filter_mode(const int32_t filterMode);
 
     ///
-    void load_texture_samplers(std::shared_ptr<InexorModel> model);
+    void load_texture_samplers(std::shared_ptr<Model> model);
 
     ///
-    void load_materials(std::shared_ptr<InexorModel> model);
+    void load_materials(std::shared_ptr<Model> model);
 
     ///
-    void load_animations(std::shared_ptr<InexorModel> model);
+    void load_animations(std::shared_ptr<Model> model);
 
     ///
-    void render_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
+    void render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
 
     ///
-    void calculate_bounding_box(std::shared_ptr<InexorModel> model, std::shared_ptr<InexorModelNode> node, std::shared_ptr<InexorModelNode> parent);
+    void calculate_bounding_box(std::shared_ptr<Model> model, std::shared_ptr<ModelNode> node, std::shared_ptr<ModelNode> parent);
 
     ///
-    void get_scene_dimensions(std::shared_ptr<InexorModel> model);
+    void get_scene_dimensions(std::shared_ptr<Model> model);
 
     ///
-    void update_animation(std::shared_ptr<InexorModel> model, const uint32_t index, const float time);
+    void update_animation(std::shared_ptr<Model> model, const uint32_t index, const float time);
 
     ///
-    std::shared_ptr<InexorModelNode> find_node(std::shared_ptr<InexorModelNode> parent, const uint32_t index);
+    std::shared_ptr<ModelNode> find_node(std::shared_ptr<ModelNode> parent, const uint32_t index);
 
     ///
-    std::shared_ptr<InexorModelNode> node_from_index(std::shared_ptr<InexorModel> model, const uint32_t index);
+    std::shared_ptr<ModelNode> node_from_index(std::shared_ptr<Model> model, const uint32_t index);
 };
 
 } // namespace inexor::vulkan_renderer::gltf_model

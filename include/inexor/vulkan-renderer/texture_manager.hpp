@@ -26,7 +26,7 @@ namespace inexor::vulkan_renderer {
 /// @class VulkanTextureManager
 /// @brief A manager class for textures.
 /// @note We do not support linear tiled textures because it is not advisable to do so!
-class VulkanTextureManager : public ManagerClassTemplate<InexorTexture>, public SingleTimeCommandBufferRecorder {
+class VulkanTextureManager : public ManagerClassTemplate<Texture>, public SingleTimeCommandBufferRecorder {
 private:
     bool texture_manager_initialised = false;
 
@@ -51,7 +51,7 @@ private:
     /// @param buffer_size [in] The size of the buffer.
     /// @param buffer_usage [in] The buffer usage flags.
     /// @param memory_usage [in] The VMA memory usage flags.
-    VkResult create_texture_buffer(std::shared_ptr<InexorTexture> texture, InexorBuffer &buffer_object, const VkDeviceSize &buffer_size,
+    VkResult create_texture_buffer(std::shared_ptr<Texture> texture, Buffer &buffer_object, const VkDeviceSize &buffer_size,
                                    const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage);
 
     /// @brief Creates a texture image.
@@ -61,13 +61,13 @@ private:
     /// @param buffer_usage [in] The buffer usage flags.
     /// @param memory_usage [in] The VMA memory usage flags.
     /// @param image_usage_flags [in] The image usage flags.
-    VkResult create_texture_image(std::shared_ptr<InexorTexture> texture, const VkFormat &format, const VkImageTiling &tiling,
+    VkResult create_texture_image(std::shared_ptr<Texture> texture, const VkFormat &format, const VkImageTiling &tiling,
                                   const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage, const VkImageUsageFlags &image_usage_flags);
 
     /// @brief Creates a texture image view.
     /// @param texture [in] The texture for which a buffer will be created.
     /// @param format [in] The image format.
-    VkResult create_texture_image_view(std::shared_ptr<InexorTexture> texture, const VkFormat &format);
+    VkResult create_texture_image_view(std::shared_ptr<Texture> texture, const VkFormat &format);
 
     /// @brief Copies an image to a buffer
     /// @param buffer [in] The target buffer.
@@ -85,7 +85,7 @@ private:
 
     /// @brief Creates a texture sampler so shaders can access image data.
     /// @param texture [in] The texture for which a texture sampler will be created.
-    VkResult create_texture_sampler(std::shared_ptr<InexorTexture> texture);
+    VkResult create_texture_sampler(std::shared_ptr<Texture> texture);
 
 public:
     /// @brief Initialises texture manager by passing some pointers that we need.
@@ -104,7 +104,7 @@ public:
     /// @param texture_file_name [in] The name of the texture file.
     /// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
     VkResult create_texture_from_file(const std::string &internal_texture_name, const std::string &texture_file_name,
-                                      std::shared_ptr<InexorTexture> output_texture);
+                                      std::shared_ptr<Texture> output_texture);
 
     /// @brief Create a texture from an unsigned char buffer.
     /// @param internal_texture_name [in] The internal name which will be used inside the engine.
@@ -112,19 +112,19 @@ public:
     /// @param texture_memory_size [in] The size of the texture's memory.
     /// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
     VkResult create_texture_from_memory(const std::string &internal_texture_name, void *texture_memory, const VkDeviceSize &texture_memory_size,
-                                        std::shared_ptr<InexorTexture> output_texture);
+                                        std::shared_ptr<Texture> output_texture);
 
     /// @brief Creates a new texture from a glTF 2.0 file.
     /// @param internal_texture_name [in] The internal name which will be used inside the engine.
     /// @param gltf_image [in] The glTF 2.0 image.
     /// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
     VkResult create_texture_from_glTF2_image(const std::string &internal_texture_name, tinygltf::Image &gltf_image,
-                                             std::shared_ptr<InexorTexture> output_texture);
+                                             std::shared_ptr<Texture> output_texture);
 
     /// @brief Returns a certain texture by internal name (key).
     /// @param internal_texture_name [in] The internal name of the texture
     /// @return A std::optional shared pointer to the texture instance.
-    std::optional<std::shared_ptr<InexorTexture>> get_texture(const std::string &internal_texture_name);
+    std::optional<std::shared_ptr<Texture>> get_texture(const std::string &internal_texture_name);
 
     /// @brief Returns the view of a certain texture by name.
     /// @param internal_texture_name [in] The name of the texture.

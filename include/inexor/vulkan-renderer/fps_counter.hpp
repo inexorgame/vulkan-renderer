@@ -5,7 +5,7 @@
 
 namespace inexor::vulkan_renderer {
 
-class InexorFPSCounter {
+class FPSCounter {
 private:
     std::size_t frames = 0;
 
@@ -14,9 +14,9 @@ private:
     float fps_update_interval = 1.0f;
 
 public:
-    InexorFPSCounter() = default;
+    FPSCounter() = default;
 
-    ~InexorFPSCounter() = default;
+    ~FPSCounter() = default;
 
     std::optional<uint32_t> update();
 };

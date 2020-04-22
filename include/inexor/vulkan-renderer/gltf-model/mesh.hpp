@@ -11,21 +11,21 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-struct InexorModelMesh {
+struct Mesh {
 
-    std::vector<std::shared_ptr<InexorModelPrimitive>> primitives;
+    std::vector<std::shared_ptr<Primitive>> primitives;
 
     BoundingBox bb;
 
     BoundingBox aabb;
 
-    std::shared_ptr<InexorUniformBuffer> uniform_buffer;
+    std::shared_ptr<UniformBuffer> uniform_buffer;
 
-    InexorModelStandardUniformBufferBlock uniform_block;
+    StandardUniformBufferBlock uniform_block;
 
-    InexorModelMesh() = default;
+    Mesh() = default;
 
-    ~InexorModelMesh() = default;
+    ~Mesh() = default;
 
     // TODO: Refactor!
 

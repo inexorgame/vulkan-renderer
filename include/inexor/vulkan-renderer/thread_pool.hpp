@@ -31,25 +31,25 @@ namespace inexor {
 // TODO: Maximum number of threads.
 // TODO: Method for changing the number of threads at runtime.
 
-/// @class InexorThreadPool
+/// @class ThreadPool
 /// @brief A C++17 threadpool implementation.
-class InexorThreadPool {
+class ThreadPool {
 public:
     /// @brief Standard constructor.
     /// @param thread_count [in] The number of threads to create for the threadpool.
     /// It is advisable to create as many threads as there are processor cores available,
     /// hence we are using std::thread::hardware_concurrency() as standard argument value.
     /// @warning You should not create too many threads because this increases overhead!
-    InexorThreadPool(std::size_t thread_count = std::thread::hardware_concurrency());
+    ThreadPool(std::size_t thread_count = std::thread::hardware_concurrency());
 
     // @brief The default destructor destroys all threads.
-    ~InexorThreadPool();
+    ~ThreadPool();
 
     /// @brief Because std::thread is not copiable, we need to delete the copy constructor!
-    InexorThreadPool(const InexorThreadPool &) = delete;
+    ThreadPool(const ThreadPool &) = delete;
 
     /// @brief Because std::thread is not copiable, we need to delete the assign operator as well!
-    InexorThreadPool &operator=(const InexorThreadPool &) = delete;
+    ThreadPool &operator=(const ThreadPool &) = delete;
 
     /// @brief Spawns a new worker thread.
     void start_thread();
@@ -66,11 +66,11 @@ private:
     //  object (such as the packaged_task declared in execute) - because a lambda
     //  capturing a non-CopyConstructible object is not CopyConstructible.
 
-    /// @class InexorTaskContainerBase
+    /// @class TaskContainerBase
     ///
-    class InexorTaskContainerBase {
+    class TaskContainerBase {
     public:
-        virtual ~InexorTaskContainerBase(){};
+        virtual ~TaskContainerBase(){};
 
         virtual void operator()() = 0;
     };
@@ -83,7 +83,7 @@ private:
     ///
     ///
     ///
-    template <typename F> class InexorTaskContainer : public InexorTaskContainerBase {
+    template <typename F> class TaskContainer : public TaskContainerBase {
     public:
         // here, std::forward is needed because we need the construction of _f *not* to
         //  bind an lvalue reference - it is not a guarantee that an object of type F is
@@ -92,7 +92,7 @@ private:
         ///
         ///
         ///
-        InexorTaskContainer(F &&func) : _f(std::forward<F>(func)) {}
+        TaskContainer(F &&func) : _f(std::forward<F>(func)) {}
 
         ///
         ///
@@ -103,21 +103,21 @@ private:
         F _f;
     };
 
-    /// @brief Returns a unique pointer to a InexorWork container that wraps around a given function
-    template <typename InexorWork> static std::unique_ptr<InexorTaskContainerBase> allocate_task_container(InexorWork &&f) {
+    /// @brief Returns a unique pointer to a Task container that wraps around a given function
+    template <typename Task> static std::unique_ptr<TaskContainerBase> allocate_task_container(Task &&f) {
         spdlog::debug("Allocating task container.");
 
         // in the construction of the _task_container, f must be std::forward'ed because
         //  it may not be CopyConstructible - the only requirement for an instantiation
         //  of a _task_container is that the parameter is of a MoveConstructible type.
-        return std::make_unique<InexorTaskContainer<InexorWork>>(std::forward<InexorWork>(f));
+        return std::make_unique<TaskContainer<Task>>(std::forward<Task>(f));
     }
 
     // The threads.
     std::vector<std::thread> threads;
 
     /// The tasklist contains the list of work that should be done.
-    std::queue<std::unique_ptr<InexorTaskContainerBase>> tasklist;
+    std::queue<std::unique_ptr<TaskContainerBase>> tasklist;
 
     /// This mutex locks tasklist access.
     std::mutex tasklist_mutex;
@@ -128,7 +128,7 @@ private:
 };
 
 template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int>>
-auto InexorThreadPool::execute(F function, Args &&... args) {
+auto ThreadPool::execute(F function, Args &&... args) {
     spdlog::warn("Executing task from task list.");
 
     // Lock the task list so we can add the new task.
@@ -148,7 +148,7 @@ auto InexorThreadPool::execute(F function, Args &&... args) {
     // This lambda move-captures the packaged_task declared above.
     // Since the packaged_task type is not CopyConstructible, the
     // function is not CopyConstructible either, hence the need
-    // for a InexorTaskContainer to wrap around it.
+    // for a TaskContainer to wrap around it.
     tasklist.emplace(allocate_task_container(std::move(task_package)));
 
     //

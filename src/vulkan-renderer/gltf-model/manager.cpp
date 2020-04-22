@@ -6,10 +6,10 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-VkResult InexorModelManager::init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
-                                  const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager,
-                                  const std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager,
-                                  const std::shared_ptr<InexorDescriptorManager> descriptor_manager) {
+VkResult Manager::init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
+                                  const std::shared_ptr<UniformBufferManager> uniform_buffer_manager,
+                                  const std::shared_ptr<MeshBufferManager> mesh_buffer_manager,
+                                  const std::shared_ptr<DescriptorManager> descriptor_manager) {
     assert(texture_manager);
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);
@@ -30,7 +30,7 @@ VkResult InexorModelManager::init(const VkDevice &device, const std::shared_ptr<
     return VK_SUCCESS;
 }
 
-void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<InexorModel> model,
+void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<Model> model,
                                    float globalscale) {
     assert(model_manager_initialised);
     assert(texture_manager);
@@ -39,7 +39,7 @@ void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, cons
     assert(model);
     assert(globalscale > 0.0f);
 
-    std::shared_ptr<InexorModelNode> newNode = std::make_shared<InexorModelNode>();
+    std::shared_ptr<ModelNode> newNode = std::make_shared<ModelNode>();
 
     newNode->index = node_index;
     newNode->parent = parent;
@@ -84,14 +84,14 @@ void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, cons
     if (node.mesh > -1) {
         const tinygltf::Mesh mesh = model->gltf2_container.meshes[node.mesh];
 
-        std::shared_ptr<InexorModelMesh> newMesh = std::make_shared<InexorModelMesh>();
+        std::shared_ptr<Mesh> newMesh = std::make_shared<Mesh>();
 
         std::string gltf_model_name = "glTF 2.0 model '" + model->name + "', Node: " + std::to_string(model->uniform_buffer_index) + ".";
 
         model->uniform_buffer_index++;
 
         // Allocate uniform buffers!
-        uniform_buffer_manager->create_uniform_buffer(gltf_model_name, sizeof(InexorModelStandardUniformBufferBlock), newMesh->uniform_buffer);
+        uniform_buffer_manager->create_uniform_buffer(gltf_model_name, sizeof(StandardUniformBufferBlock), newMesh->uniform_buffer);
 
         // newMesh->set_matrix(newNode->matrix);
 
@@ -193,7 +193,7 @@ void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, cons
                 hasSkin = (bufferJoints && bufferWeights);
 
                 for (std::size_t v = 0; v < posAccessor.count; v++) {
-                    InexorModelVertex vert{};
+                    ModelVertex vert{};
 
                     vert.pos = glm::vec4(glm::make_vec3(&bufferPos[v * posByteStride]), 1.0f);
                     vert.normal = glm::normalize(glm::vec3(bufferNormals ? glm::make_vec3(&bufferNormals[v * normByteStride]) : glm::vec3(0.0f)));
@@ -251,7 +251,7 @@ void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, cons
                 }
             }
 
-            std::shared_ptr<InexorModelPrimitive> new_primitive = std::make_shared<InexorModelPrimitive>(
+            std::shared_ptr<Primitive> new_primitive = std::make_shared<Primitive>(
                 index_start, index_count, vertex_count, primitive.material > -1 ? model->materials[primitive.material] : model->materials.back());
 
             new_primitive->set_bounding_box(posMin, posMax);
@@ -281,8 +281,8 @@ void InexorModelManager::load_node(std::shared_ptr<InexorModelNode> parent, cons
     model->linear_nodes.push_back(newNode);
 }
 
-void InexorModelManager::load_skins(std::shared_ptr<InexorModel> model) {
-    spdlog::debug("InexorModelManager::load_skins");
+void Manager::load_skins(std::shared_ptr<Model> model) {
+    spdlog::debug("ModelManager::load_skins");
 
     assert(model_manager_initialised);
     assert(texture_manager);
@@ -291,7 +291,7 @@ void InexorModelManager::load_skins(std::shared_ptr<InexorModel> model) {
     assert(model);
 
     for (tinygltf::Skin &source : model->gltf2_container.skins) {
-        std::shared_ptr<InexorModelSkin> newSkin = std::make_shared<InexorModelSkin>();
+        std::shared_ptr<ModelSkin> newSkin = std::make_shared<ModelSkin>();
 
         newSkin->name = source.name;
 
@@ -302,7 +302,7 @@ void InexorModelManager::load_skins(std::shared_ptr<InexorModel> model) {
 
         // Find joint nodes.
         for (int joint_index : source.joints) {
-            std::shared_ptr<InexorModelNode> node = node_from_index(model, joint_index);
+            std::shared_ptr<ModelNode> node = node_from_index(model, joint_index);
 
             if (node) {
                 newSkin->joints.push_back(node_from_index(model, joint_index));
@@ -324,7 +324,7 @@ void InexorModelManager::load_skins(std::shared_ptr<InexorModel> model) {
     }
 }
 
-void InexorModelManager::load_textures(std::shared_ptr<InexorModel> model) {
+void Manager::load_textures(std::shared_ptr<Model> model) {
     spdlog::debug("loadTextures");
 
     assert(model_manager_initialised);
@@ -336,7 +336,7 @@ void InexorModelManager::load_textures(std::shared_ptr<InexorModel> model) {
     for (tinygltf::Texture &tex : model->gltf2_container.textures) {
         tinygltf::Image image = model->gltf2_container.images[tex.source];
 
-        InexorTextureSampler texture_sampler;
+        TextureSampler texture_sampler;
 
         if (-1 == tex.sampler) {
             // No sampler specified, use a default one.
@@ -349,7 +349,7 @@ void InexorModelManager::load_textures(std::shared_ptr<InexorModel> model) {
             texture_sampler = model->texture_samplers[tex.sampler];
         }
 
-        std::shared_ptr<InexorTexture> new_texture;
+        std::shared_ptr<Texture> new_texture;
 
         // Let's just use a random name for now.
         // TODO: Fix this!
@@ -362,7 +362,7 @@ void InexorModelManager::load_textures(std::shared_ptr<InexorModel> model) {
     }
 }
 
-VkSamplerAddressMode InexorModelManager::get_wrap_mode(const int32_t wrapMode) {
+VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrapMode) {
     spdlog::debug("getVkWrapMode");
 
     assert(model_manager_initialised);
@@ -383,7 +383,7 @@ VkSamplerAddressMode InexorModelManager::get_wrap_mode(const int32_t wrapMode) {
 }
 
 // TODO: std::optional!
-VkFilter InexorModelManager::get_filter_mode(const int32_t filterMode) {
+VkFilter Manager::get_filter_mode(const int32_t filterMode) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -407,8 +407,8 @@ VkFilter InexorModelManager::get_filter_mode(const int32_t filterMode) {
     return VK_FILTER_MAX_ENUM;
 }
 
-void InexorModelManager::load_texture_samplers(std::shared_ptr<InexorModel> model) {
-    spdlog::debug("InexorModelManager::load_texture_samplers");
+void Manager::load_texture_samplers(std::shared_ptr<Model> model) {
+    spdlog::debug("ModelManager::load_texture_samplers");
 
     assert(model_manager_initialised);
     assert(texture_manager);
@@ -417,7 +417,7 @@ void InexorModelManager::load_texture_samplers(std::shared_ptr<InexorModel> mode
     assert(model);
 
     for (tinygltf::Sampler smpl : model->gltf2_container.samplers) {
-        InexorTextureSampler sampler{};
+        TextureSampler sampler{};
 
         sampler.minFilter = get_filter_mode(smpl.minFilter);
         sampler.magFilter = get_filter_mode(smpl.magFilter);
@@ -429,7 +429,7 @@ void InexorModelManager::load_texture_samplers(std::shared_ptr<InexorModel> mode
     }
 }
 
-void InexorModelManager::load_materials(std::shared_ptr<InexorModel> model) {
+void Manager::load_materials(std::shared_ptr<Model> model) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -437,7 +437,7 @@ void InexorModelManager::load_materials(std::shared_ptr<InexorModel> model) {
     assert(model);
 
     for (tinygltf::Material &mat : model->gltf2_container.materials) {
-        InexorModelMaterial material{};
+        Material material{};
 
         if (mat.values.find("baseColorTexture") != mat.values.end()) {
             material.baseColorTexture = model->textures[mat.values["baseColorTexture"].TextureIndex()];
@@ -472,12 +472,12 @@ void InexorModelManager::load_materials(std::shared_ptr<InexorModel> model) {
             tinygltf::Parameter param = mat.additionalValues["alphaMode"];
 
             if (param.string_value == "BLEND") {
-                material.alphaMode = InexorModelMaterialAlphaMode::ALPHAMODE_BLEND;
+                material.alphaMode = MaterialAlphaMode::ALPHAMODE_BLEND;
             }
 
             if (param.string_value == "MASK") {
                 material.alphaCutoff = 0.5f;
-                material.alphaMode = InexorModelMaterialAlphaMode::ALPHAMODE_MASK;
+                material.alphaMode = MaterialAlphaMode::ALPHAMODE_MASK;
             }
         }
 
@@ -534,10 +534,10 @@ void InexorModelManager::load_materials(std::shared_ptr<InexorModel> model) {
     }
 
     // Push a default material at the end of the list for meshes with no material assigned.
-    model->materials.push_back(InexorModelMaterial());
+    model->materials.push_back(Material());
 }
 
-void InexorModelManager::load_animations(std::shared_ptr<InexorModel> model) {
+void Manager::load_animations(std::shared_ptr<Model> model) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -545,7 +545,7 @@ void InexorModelManager::load_animations(std::shared_ptr<InexorModel> model) {
     assert(model);
 
     for (tinygltf::Animation &anim : model->gltf2_container.animations) {
-        InexorModelAnimation animation{};
+        Animation animation{};
         animation.name = anim.name;
 
         if (anim.name.empty()) {
@@ -554,18 +554,18 @@ void InexorModelManager::load_animations(std::shared_ptr<InexorModel> model) {
 
         // Samplers.
         for (auto &samp : anim.samplers) {
-            InexorModelAnimationSampler sampler{};
+            AnimationSampler sampler{};
 
             if (samp.interpolation == "LINEAR") {
-                sampler.interpolation = InexorModelAnimationSampler::InterpolationType::LINEAR;
+                sampler.interpolation = AnimationSampler::InterpolationType::LINEAR;
             }
 
             if (samp.interpolation == "STEP") {
-                sampler.interpolation = InexorModelAnimationSampler::InterpolationType::STEP;
+                sampler.interpolation = AnimationSampler::InterpolationType::STEP;
             }
 
             if (samp.interpolation == "CUBICSPLINE") {
-                sampler.interpolation = InexorModelAnimationSampler::InterpolationType::CUBICSPLINE;
+                sampler.interpolation = AnimationSampler::InterpolationType::CUBICSPLINE;
             }
 
             // Read sampler input time values.
@@ -632,18 +632,18 @@ void InexorModelManager::load_animations(std::shared_ptr<InexorModel> model) {
 
         // Channels
         for (auto &source : anim.channels) {
-            InexorModelAnimationChannel channel{};
+            AnimationChannel channel{};
 
             if (source.target_path == "rotation") {
-                channel.path = InexorModelAnimationChannel::PathType::ROTATION;
+                channel.path = AnimationChannel::PathType::ROTATION;
             }
 
             if (source.target_path == "translation") {
-                channel.path = InexorModelAnimationChannel::PathType::TRANSLATION;
+                channel.path = AnimationChannel::PathType::TRANSLATION;
             }
 
             if (source.target_path == "scale") {
-                channel.path = InexorModelAnimationChannel::PathType::SCALE;
+                channel.path = AnimationChannel::PathType::SCALE;
             }
 
             if (source.target_path == "weights") {
@@ -665,7 +665,7 @@ void InexorModelManager::load_animations(std::shared_ptr<InexorModel> model) {
     }
 }
 
-VkResult InexorModelManager::load_model_from_file(const std::string &file_name, std::shared_ptr<InexorModel> &new_model, const float scale) {
+VkResult Manager::load_model_from_file(const std::string &file_name, std::shared_ptr<Model> &new_model, const float scale) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -747,7 +747,7 @@ VkResult InexorModelManager::load_model_from_file(const std::string &file_name, 
     new_model->extensions = new_model->gltf2_container.extensionsUsed;
 
     // Create a new vertex buffer and a new index buffer for the model!
-    std::size_t vertex_buffer_size = new_model->vertex_buffer_cache.size() * sizeof(InexorModelVertex);
+    std::size_t vertex_buffer_size = new_model->vertex_buffer_cache.size() * sizeof(ModelVertex);
     std::size_t index_buffer_size = new_model->index_buffer_cache.size() * sizeof(uint32_t);
 
     spdlog::debug("Vertex buffer size: {}.", vertex_buffer_size);
@@ -770,13 +770,13 @@ VkResult InexorModelManager::load_model_from_file(const std::string &file_name, 
     if (number_of_indices > 0) {
         // Create a vertex buffer with an index buffer, as it should always be!
         VkResult result = mesh_buffer_manager->create_vertex_buffer_with_index_buffer(
-            file_name, new_model->vertex_buffer_cache.data(), sizeof(InexorModelVertex), new_model->vertex_buffer_cache.size(),
+            file_name, new_model->vertex_buffer_cache.data(), sizeof(ModelVertex), new_model->vertex_buffer_cache.size(),
             new_model->index_buffer_cache.data(), sizeof(uint32_t), number_of_indices, new_model->mesh);
         vulkan_error_check(result);
     } else {
         // Always make sure you use a model which has indices.
         // Not using an index buffer decreases performance significantly!
-        VkResult result = mesh_buffer_manager->create_vertex_buffer(file_name, new_model->vertex_buffer_cache.data(), sizeof(InexorModelVertex),
+        VkResult result = mesh_buffer_manager->create_vertex_buffer(file_name, new_model->vertex_buffer_cache.data(), sizeof(ModelVertex),
                                                                     new_model->vertex_buffer_cache.size(), new_model->mesh);
         vulkan_error_check(result);
     }
@@ -788,7 +788,7 @@ VkResult InexorModelManager::load_model_from_file(const std::string &file_name, 
     return VK_SUCCESS;
 }
 
-void InexorModelManager::render_node(std::shared_ptr<InexorModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout,
+void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout,
                                      std::size_t current_image_index) {
     assert(model_manager_initialised);
     assert(texture_manager);
@@ -814,7 +814,7 @@ void InexorModelManager::render_node(std::shared_ptr<InexorModelNode> node, VkCo
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<uint32_t>(descriptor_sets.size()),
                                     descriptor_sets.data(), 0, NULL);
 
-            // TODO! InexorPushConstantsManager
+            // TODO! PushConstantsManager
             // vkCmdPushConstants
 
             if (primitive->hasIndices) {
@@ -830,7 +830,7 @@ void InexorModelManager::render_node(std::shared_ptr<InexorModelNode> node, VkCo
     }
 }
 
-VkResult InexorModelManager::render_model(const std::string &internal_model_name, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout,
+VkResult Manager::render_model(const std::string &internal_model_name, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout,
                                           std::size_t current_image_index) {
     assert(model_manager_initialised);
     assert(texture_manager);
@@ -861,8 +861,8 @@ VkResult InexorModelManager::render_model(const std::string &internal_model_name
     return VK_SUCCESS;
 }
 
-void InexorModelManager::calculate_bounding_box(std::shared_ptr<InexorModel> model, std::shared_ptr<InexorModelNode> node,
-                                                std::shared_ptr<InexorModelNode> parent) {
+void Manager::calculate_bounding_box(std::shared_ptr<Model> model, std::shared_ptr<ModelNode> node,
+                                                std::shared_ptr<ModelNode> parent) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -893,7 +893,7 @@ void InexorModelManager::calculate_bounding_box(std::shared_ptr<InexorModel> mod
     }
 }
 
-void InexorModelManager::get_scene_dimensions(std::shared_ptr<InexorModel> model) {
+void Manager::get_scene_dimensions(std::shared_ptr<Model> model) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -925,7 +925,7 @@ void InexorModelManager::get_scene_dimensions(std::shared_ptr<InexorModel> model
     model->aabb[3][2] = model->dimensions.min[2];
 }
 
-void InexorModelManager::update_animation(std::shared_ptr<InexorModel> model, const uint32_t index, const float time) {
+void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t index, const float time) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -942,12 +942,12 @@ void InexorModelManager::update_animation(std::shared_ptr<InexorModel> model, co
         return;
     }
 
-    InexorModelAnimation &animation = model->animations[index];
+    Animation &animation = model->animations[index];
 
     bool updated = false;
 
     for (auto &channel : animation.channels) {
-        InexorModelAnimationSampler &sampler = animation.samplers[channel.samplerIndex];
+        AnimationSampler &sampler = animation.samplers[channel.samplerIndex];
 
         if (sampler.inputs.size() > sampler.outputsVec4.size()) {
             continue;
@@ -959,17 +959,17 @@ void InexorModelManager::update_animation(std::shared_ptr<InexorModel> model, co
 
                 if (u <= 1.0f) {
                     switch (channel.path) {
-                    case InexorModelAnimationChannel::PathType::TRANSLATION: {
+                    case AnimationChannel::PathType::TRANSLATION: {
                         glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
                         channel.node->translation = glm::vec3(trans);
                         break;
                     }
-                    case InexorModelAnimationChannel::PathType::SCALE: {
+                    case AnimationChannel::PathType::SCALE: {
                         glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
                         channel.node->scale = glm::vec3(trans);
                         break;
                     }
-                    case InexorModelAnimationChannel::PathType::ROTATION: {
+                    case AnimationChannel::PathType::ROTATION: {
                         glm::quat q1;
                         q1.x = sampler.outputsVec4[i].x;
                         q1.y = sampler.outputsVec4[i].y;
@@ -999,7 +999,7 @@ void InexorModelManager::update_animation(std::shared_ptr<InexorModel> model, co
     }
 }
 
-VkResult InexorModelManager::load_model_from_glTF2_file(const std::string &internal_model_name, const std::string &glTF2_file_name) {
+VkResult Manager::load_model_from_glTF2_file(const std::string &internal_model_name, const std::string &glTF2_file_name) {
     assert(model_manager_initialised);
 
     if (does_key_exist(internal_model_name)) {
@@ -1007,7 +1007,7 @@ VkResult InexorModelManager::load_model_from_glTF2_file(const std::string &inter
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    std::shared_ptr<InexorModel> new_model = std::make_shared<InexorModel>();
+    std::shared_ptr<Model> new_model = std::make_shared<Model>();
 
     VkResult result = load_model_from_file(glTF2_file_name, new_model);
     vulkan_error_check(result);
@@ -1017,13 +1017,13 @@ VkResult InexorModelManager::load_model_from_glTF2_file(const std::string &inter
     return VK_SUCCESS;
 }
 
-std::shared_ptr<InexorModelNode> InexorModelManager::find_node(std::shared_ptr<InexorModelNode> parent, const uint32_t index) {
+std::shared_ptr<ModelNode> Manager::find_node(std::shared_ptr<ModelNode> parent, const uint32_t index) {
     assert(model_manager_initialised);
     assert(parent);
 
     spdlog::debug("Finding node by id {}.", index);
 
-    std::shared_ptr<InexorModelNode> node_found = nullptr;
+    std::shared_ptr<ModelNode> node_found = nullptr;
 
     if (parent->index == index) {
         return parent;
@@ -1039,7 +1039,7 @@ std::shared_ptr<InexorModelNode> InexorModelManager::find_node(std::shared_ptr<I
     return node_found;
 }
 
-VkResult InexorModelManager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index) {
+VkResult Manager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index) {
     assert(model_manager_initialised);
 
     const auto models = get_all_values();
@@ -1070,9 +1070,9 @@ VkResult InexorModelManager::render_all_models(VkCommandBuffer command_buffer, V
     return VK_SUCCESS;
 }
 
-VkResult InexorModelManager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) { return VK_SUCCESS; }
+VkResult Manager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) { return VK_SUCCESS; }
 
-VkResult InexorModelManager::setup_node_descriptor_set(std::shared_ptr<InexorModelNode> node) {
+VkResult Manager::setup_node_descriptor_set(std::shared_ptr<ModelNode> node) {
     if (node->mesh) {
         // TODO!
         /*
@@ -1106,19 +1106,19 @@ VkResult InexorModelManager::setup_node_descriptor_set(std::shared_ptr<InexorMod
     return VK_SUCCESS;
 }
 
-std::size_t InexorModelManager::get_model_count() {
+std::size_t Manager::get_model_count() {
     assert(model_manager_initialised);
 
     return get_entry_count();
 }
 
-std::shared_ptr<InexorModelNode> InexorModelManager::node_from_index(std::shared_ptr<InexorModel> model, const uint32_t index) {
+std::shared_ptr<ModelNode> Manager::node_from_index(std::shared_ptr<Model> model, const uint32_t index) {
     assert(model_manager_initialised);
     assert(model);
 
     spdlog::debug("Looking up node from index for model '{}' index {}.", model->name, index);
 
-    std::shared_ptr<InexorModelNode> node_found = nullptr;
+    std::shared_ptr<ModelNode> node_found = nullptr;
 
     for (auto &node : model->nodes) {
         node_found = find_node(node, index);

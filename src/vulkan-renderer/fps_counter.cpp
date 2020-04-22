@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-std::optional<uint32_t> InexorFPSCounter::update() {
+std::optional<uint32_t> FPSCounter::update() {
     auto current_time = std::chrono::high_resolution_clock::now();
 
     auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();

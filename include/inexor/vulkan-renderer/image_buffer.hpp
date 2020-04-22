@@ -9,7 +9,7 @@ namespace inexor::vulkan_renderer {
 ///
 ///
 ///
-struct InexorImageBuffer {
+struct ImageBuffer {
     VmaAllocation allocation = VK_NULL_HANDLE;
 
     VmaAllocationInfo allocation_info = {};

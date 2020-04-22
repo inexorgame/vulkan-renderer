@@ -61,7 +61,7 @@ public:
     float time_passed = 0.0f;
 
     //
-    InexorTimeStep stopwatch;
+    TimeStep stopwatch;
 
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
@@ -75,23 +75,23 @@ protected:
 
     std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
 
-    std::shared_ptr<InexorDescriptorManager> descriptor_manager = std::make_shared<InexorDescriptorManager>();
+    std::shared_ptr<DescriptorManager> descriptor_manager = std::make_shared<DescriptorManager>();
 
-    std::shared_ptr<InexorDescriptorPool> global_descriptor_pool;
+    std::shared_ptr<DescriptorPool> global_descriptor_pool;
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
-    std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager = std::make_shared<VulkanUniformBufferManager>();
+    std::shared_ptr<UniformBufferManager> uniform_buffer_manager = std::make_shared<UniformBufferManager>();
 
     std::shared_ptr<VulkanTextureManager> texture_manager = std::make_shared<VulkanTextureManager>();
 
-    std::shared_ptr<InexorMeshBufferManager> mesh_buffer_manager = std::make_shared<InexorMeshBufferManager>();
+    std::shared_ptr<MeshBufferManager> mesh_buffer_manager = std::make_shared<MeshBufferManager>();
 
     std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
 
-    std::shared_ptr<gltf_model::InexorModelManager> gltf_model_manager = std::make_shared<gltf_model::InexorModelManager>();
+    std::shared_ptr<gltf_model::Manager> gltf_model_manager = std::make_shared<gltf_model::Manager>();
 
-    std::shared_ptr<InexorAvailabilityChecksManager> availability_checks_manager = std::make_shared<InexorAvailabilityChecksManager>();
+    std::shared_ptr<AvailabilityChecksManager> availability_checks_manager = std::make_shared<AvailabilityChecksManager>();
 
     std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker = std::make_shared<VulkanSettingsDecisionMaker>();
 
@@ -151,13 +151,13 @@ protected:
 
     bool debug_report_callback_initialised = false;
 
-    InexorImageBuffer depth_buffer;
+    ImageBuffer depth_buffer;
 
-    InexorImageBuffer depth_stencil;
+    ImageBuffer depth_stencil;
 
     uint32_t vma_dump_index = 0;
 
-    InexorTimeStep time_step;
+    TimeStep time_step;
 
     uint32_t window_width = 0;
 
@@ -167,15 +167,15 @@ protected:
 
     GLFWwindow *window = nullptr;
 
-    InexorCamera game_camera_1;
+    Camera game_camera_1;
 
-    InexorFPSCounter fps_counter;
+    FPSCounter fps_counter;
 
     // TODO: Refactor this!
     VkDescriptorBufferInfo uniform_buffer_info = {};
     VkDescriptorImageInfo image_info = {};
 
-    std::shared_ptr<InexorUniformBuffer> matrices;
+    std::shared_ptr<UniformBuffer> matrices;
 
     VkPipelineCache pipeline_cache;
 
@@ -184,14 +184,14 @@ protected:
 
     VkSampleCountFlagBits multisampling_sample_count = VK_SAMPLE_COUNT_4_BIT;
 
-    InexorMSAATarget msaa_target_buffer;
+    MSAATarget msaa_target_buffer;
 
     bool vsync_enabled = false;
 
-    struct InexorGlobalDescriptorBundle {
-        std::shared_ptr<InexorDescriptorBundle> scene;
-        std::shared_ptr<InexorDescriptorBundle> material;
-        std::shared_ptr<InexorDescriptorBundle> node;
+    struct GlobalDescriptorBundle {
+        std::shared_ptr<DescriptorBundle> scene;
+        std::shared_ptr<DescriptorBundle> material;
+        std::shared_ptr<DescriptorBundle> node;
     } descriptor_bundles;
 
 public:

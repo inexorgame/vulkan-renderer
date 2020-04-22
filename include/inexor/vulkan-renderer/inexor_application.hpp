@@ -16,11 +16,11 @@
 
 namespace inexor::vulkan_renderer {
 
-class InexorApplication : public VulkanRenderer, public tools::InexorCommandLineArgumentParser {
+class Application : public VulkanRenderer, public tools::CommandLineArgumentParser {
 public:
-    InexorApplication() = default;
+    Application() = default;
 
-    ~InexorApplication() = default;
+    ~Application() = default;
 
 private:
     std::string application_name = "";
@@ -35,14 +35,14 @@ private:
     // C++17 threadpool implementation which spawns worker threads.
     // A task system is used to distribute work over worker threads.
     // Call thread_pool->execute(); to order new tasks to be worked on.
-    std::shared_ptr<InexorThreadPool> thread_pool;
+    std::shared_ptr<ThreadPool> thread_pool;
 
-    std::vector<std::shared_ptr<InexorTexture>> textures;
+    std::vector<std::shared_ptr<Texture>> textures;
 
     std::size_t current_frame = 0;
 
     // TODO: Refactor into a manger class.
-    struct InexorShaderSetup {
+    struct ShaderSetup {
         VkShaderStageFlagBits shader_type;
         std::string shader_file_name;
     };

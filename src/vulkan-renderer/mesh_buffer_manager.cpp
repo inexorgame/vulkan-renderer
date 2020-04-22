@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult InexorMeshBufferManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
+VkResult MeshBufferManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
                                        const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
@@ -27,7 +27,7 @@ VkResult InexorMeshBufferManager::init(const VkDevice &device, const std::shared
     return VK_SUCCESS;
 }
 
-VkResult InexorMeshBufferManager::create_buffer(std::string buffer_description, InexorBuffer &buffer_object, const VkDeviceSize &buffer_size,
+VkResult MeshBufferManager::create_buffer(std::string buffer_description, Buffer &buffer_object, const VkDeviceSize &buffer_size,
                                                 const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage) {
     assert(mesh_buffer_manager_initialised);
     assert(vma_allocator);
@@ -52,7 +52,7 @@ VkResult InexorMeshBufferManager::create_buffer(std::string buffer_description, 
     return result;
 }
 
-VkResult InexorMeshBufferManager::create_command_pool() {
+VkResult MeshBufferManager::create_command_pool() {
     VkCommandPoolCreateInfo command_pool_create_info = {};
 
     command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -92,7 +92,7 @@ VkResult InexorMeshBufferManager::create_command_pool() {
     return VK_SUCCESS;
 }
 
-VkResult InexorMeshBufferManager::upload_data_to_gpu() {
+VkResult MeshBufferManager::upload_data_to_gpu() {
     assert(mesh_buffer_manager_initialised);
     assert(data_transfer_queue);
     assert(debug_marker_manager);
@@ -122,9 +122,9 @@ VkResult InexorMeshBufferManager::upload_data_to_gpu() {
     return result;
 }
 
-VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
+VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
                                                        const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices,
-                                                       std::shared_ptr<InexorMeshBuffer> &output_mesh_buffer) {
+                                                       std::shared_ptr<MeshBuffer> &output_mesh_buffer) {
     assert(mesh_buffer_manager_initialised);
     assert(size_of_vertex_structure > 0);
     assert(number_of_vertices > 0);
@@ -150,10 +150,10 @@ VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string &intern
 
     spdlog::debug("Creating staging buffer for vertex data.");
 
-    // TODO: Implement a InexorStagingBuffer class?
+    // TODO: Implement a StagingBuffer class?
 
     // Create a staging vertex buffer.
-    InexorBuffer staging_vertex_buffer;
+    Buffer staging_vertex_buffer;
 
     std::size_t vertex_buffer_size = size_of_vertex_structure * number_of_vertices;
 
@@ -183,7 +183,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string &intern
 
     spdlog::debug("Creating vertex buffer.");
 
-    InexorBuffer vertex_buffer;
+    Buffer vertex_buffer;
 
     result = create_buffer(internal_mesh_buffer_name, vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                            VMA_MEMORY_USAGE_CPU_ONLY);
@@ -243,7 +243,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string &intern
 
     spdlog::debug("Storing mesh buffer in output.");
 
-    std::shared_ptr<InexorMeshBuffer> new_mesh_buffer = std::make_shared<InexorMeshBuffer>();
+    std::shared_ptr<MeshBuffer> new_mesh_buffer = std::make_shared<MeshBuffer>();
 
     // Store the vertex buffer.
     new_mesh_buffer->vertex_buffer = vertex_buffer;
@@ -269,11 +269,11 @@ VkResult InexorMeshBufferManager::create_vertex_buffer(const std::string &intern
     return VK_SUCCESS;
 }
 
-VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
+VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
                                                                          const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices,
                                                                          const void *indices, const std::size_t size_of_index_structure,
                                                                          const std::size_t number_of_indices,
-                                                                         std::shared_ptr<InexorMeshBuffer> &mesh_buffer_output) {
+                                                                         std::shared_ptr<MeshBuffer> &mesh_buffer_output) {
     assert(mesh_buffer_manager_initialised);
     assert(!internal_mesh_buffer_name.empty());
     assert(vertices);
@@ -308,7 +308,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const s
     spdlog::debug("Creating staging vertex buffer for '{}'.", internal_mesh_buffer_name);
 
     // Create a staging vertex buffer.
-    InexorBuffer staging_vertex_buffer;
+    Buffer staging_vertex_buffer;
 
     std::string staging_vertex_buffer_name = "Staging vertex buffer " + internal_mesh_buffer_name;
 
@@ -331,8 +331,8 @@ VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const s
 
     spdlog::debug("Creating staging index buffer for {}.", internal_mesh_buffer_name);
 
-    // TODO: InexorStagingBuffer ?
-    InexorBuffer staging_index_buffer;
+    // TODO: StagingBuffer ?
+    Buffer staging_index_buffer;
 
     std::string staging_index_buffer_name = "Staging index buffer '" + internal_mesh_buffer_name + "'.";
 
@@ -351,7 +351,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const s
     // Copy the index data to the staging index buffer.
     std::memcpy(staging_index_buffer.allocation_info.pMappedData, indices, index_buffer_size);
 
-    InexorBuffer vertex_buffer;
+    Buffer vertex_buffer;
 
     std::string vertex_buffer_name = "Vertex buffer '" + internal_mesh_buffer_name + "'.";
 
@@ -366,7 +366,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const s
     //
     debug_marker_manager->set_object_name(device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
 
-    InexorBuffer index_buffer;
+    Buffer index_buffer;
 
     std::string index_buffer_name = "Index buffer '" + internal_mesh_buffer_name + "'.";
 
@@ -443,7 +443,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const s
 
     spdlog::debug("Storing mesh buffer in output.");
 
-    std::shared_ptr<InexorMeshBuffer> new_mesh_buffer = std::make_shared<InexorMeshBuffer>();
+    std::shared_ptr<MeshBuffer> new_mesh_buffer = std::make_shared<MeshBuffer>();
 
     // Store the vertex buffer.
     new_mesh_buffer->vertex_buffer = vertex_buffer;
@@ -479,7 +479,7 @@ VkResult InexorMeshBufferManager::create_vertex_buffer_with_index_buffer(const s
     return result;
 }
 
-void InexorMeshBufferManager::shutdown_vertex_and_index_buffers() {
+void MeshBufferManager::shutdown_vertex_and_index_buffers() {
     assert(mesh_buffer_manager_initialised);
     assert(device);
     assert(vma_allocator);
@@ -505,7 +505,7 @@ void InexorMeshBufferManager::shutdown_vertex_and_index_buffers() {
         }
     }
 
-    spdlog::debug("Destroying InexorMeshBufferManager command pool.");
+    spdlog::debug("Destroying MeshBufferManager command pool.");
 
     vkDestroyCommandPool(device, data_transfer_command_pool, nullptr);
 

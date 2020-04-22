@@ -10,7 +10,7 @@
 
 namespace inexor::vulkan_renderer {
 
-class InexorAvailabilityChecksManager {
+class AvailabilityChecksManager {
 private:
     uint32_t number_of_available_instance_extensions = 0;
 
@@ -37,9 +37,9 @@ private:
     VkResult create_instance_extensions_cache();
 
 public:
-    InexorAvailabilityChecksManager() = default;
+    AvailabilityChecksManager() = default;
 
-    ~InexorAvailabilityChecksManager() = default;
+    ~AvailabilityChecksManager() = default;
 
     /// @brief Checks if a certain Vulkan instance layer is available on the system.
     /// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateInstanceLayerProperties.html

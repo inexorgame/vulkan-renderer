@@ -8,11 +8,11 @@
 
 namespace inexor::vulkan_renderer {
 
-class InexorTexture {
+class Texture {
 public:
-    InexorTexture() = default;
+    Texture() = default;
 
-    ~InexorTexture() = default;
+    ~Texture() = default;
 
 public:
     std::string name = "";

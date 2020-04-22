@@ -9,12 +9,12 @@
 namespace inexor::vulkan_renderer::gltf_model {
 
 ///
-struct InexorModelAnimation {
+struct Animation {
     std::string name;
 
-    std::vector<InexorModelAnimationSampler> samplers;
+    std::vector<AnimationSampler> samplers;
 
-    std::vector<InexorModelAnimationChannel> channels;
+    std::vector<AnimationChannel> channels;
 
     float start = std::numeric_limits<float>::max();
 

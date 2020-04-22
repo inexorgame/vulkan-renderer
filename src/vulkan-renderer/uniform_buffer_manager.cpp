@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanUniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
+VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
                                           const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
     assert(vma_allocator);
@@ -24,8 +24,8 @@ VkResult VulkanUniformBufferManager::init(const VkDevice &device, const VmaAlloc
     return VK_SUCCESS;
 }
 
-VkResult VulkanUniformBufferManager::create_buffer(std::string &internal_buffer_name, const VkDeviceSize &buffer_size,
-                                                   std::shared_ptr<InexorUniformBuffer> &buffer_object) {
+VkResult UniformBufferManager::create_buffer(std::string &internal_buffer_name, const VkDeviceSize &buffer_size,
+                                                   std::shared_ptr<UniformBuffer> &buffer_object) {
     assert(uniform_buffer_initialised);
     assert(vma_allocator);
     assert(debug_marker_manager);
@@ -49,8 +49,8 @@ VkResult VulkanUniformBufferManager::create_buffer(std::string &internal_buffer_
     return result;
 }
 
-VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string &internal_uniform_buffer_name, const VkDeviceSize &uniform_buffer_size,
-                                                           std::shared_ptr<InexorUniformBuffer> &uniform_buffer) {
+VkResult UniformBufferManager::create_uniform_buffer(const std::string &internal_uniform_buffer_name, const VkDeviceSize &uniform_buffer_size,
+                                                           std::shared_ptr<UniformBuffer> &uniform_buffer) {
     assert(uniform_buffer_initialised);
     assert(uniform_buffer_size > 0);
     assert(!internal_uniform_buffer_name.empty());
@@ -62,7 +62,7 @@ VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string &in
 
     spdlog::debug("Creating uniform buffer '{}'", internal_uniform_buffer_name);
 
-    uniform_buffer = std::make_shared<InexorUniformBuffer>();
+    uniform_buffer = std::make_shared<UniformBuffer>();
 
     // Automatically iterate the naming of the uniform buffers.
     std::string uniform_buffer_description = "Uniform buffer '" + internal_uniform_buffer_name + ".";
@@ -83,7 +83,7 @@ VkResult VulkanUniformBufferManager::create_uniform_buffer(const std::string &in
     return VK_SUCCESS;
 }
 
-VkResult VulkanUniformBufferManager::update_uniform_buffer(const std::string &internal_uniform_buffer_name, void *data_source_address,
+VkResult UniformBufferManager::update_uniform_buffer(const std::string &internal_uniform_buffer_name, void *data_source_address,
                                                            const std::size_t uniform_buffer_size) {
     assert(uniform_buffer_initialised);
     assert(!internal_uniform_buffer_name.empty());
@@ -113,7 +113,7 @@ VkResult VulkanUniformBufferManager::update_uniform_buffer(const std::string &in
     return VK_SUCCESS;
 }
 
-VkResult VulkanUniformBufferManager::update_uniform_buffer(std::shared_ptr<InexorUniformBuffer> &uniform_buffer, void *uniform_buffer_new_data_source,
+VkResult UniformBufferManager::update_uniform_buffer(std::shared_ptr<UniformBuffer> &uniform_buffer, void *uniform_buffer_new_data_source,
                                                            const std::size_t uniform_buffer_size) {
     assert(uniform_buffer_initialised);
     assert(uniform_buffer_new_data_source);
@@ -130,7 +130,7 @@ VkResult VulkanUniformBufferManager::update_uniform_buffer(std::shared_ptr<Inexo
     return VK_SUCCESS;
 }
 
-VkResult VulkanUniformBufferManager::destroy_uniform_buffers() {
+VkResult UniformBufferManager::destroy_uniform_buffers() {
     auto all_uniform_buffers = get_all_values();
 
     // Lock write access.
@@ -144,7 +144,7 @@ VkResult VulkanUniformBufferManager::destroy_uniform_buffers() {
     return VK_SUCCESS;
 }
 
-VkResult VulkanUniformBufferManager::shutdown_uniform_buffers() {
+VkResult UniformBufferManager::shutdown_uniform_buffers() {
     assert(uniform_buffer_initialised);
     assert(vma_allocator);
 

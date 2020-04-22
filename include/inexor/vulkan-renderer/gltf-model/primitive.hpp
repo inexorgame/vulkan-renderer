@@ -7,14 +7,14 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-struct InexorModelPrimitive {
+struct Primitive {
     uint32_t first_index;
 
     uint32_t index_count;
 
     uint32_t vertex_count;
 
-    InexorModelMaterial &material;
+    Material &material;
 
     bool hasIndices;
 
@@ -23,7 +23,7 @@ struct InexorModelPrimitive {
     ///
     ///
     ///
-    InexorModelPrimitive(uint32_t firstIndex, uint32_t indexCount, uint32_t vertexCount, InexorModelMaterial &material)
+    Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t vertexCount, Material &material)
         : first_index(firstIndex), index_count(indexCount), vertex_count(vertexCount), material(material) {
         hasIndices = indexCount > 0;
     };

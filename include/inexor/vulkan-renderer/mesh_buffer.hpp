@@ -7,7 +7,7 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class InexorMeshBuffer
+/// @class MeshBuffer
 /// @brief A structure which bundles vertex buffer and index buffer (if existent).
 /// It contains all data which are related to memory allocations for these buffers.
 /// @todo Driver developers recommend that you store multiple
@@ -18,10 +18,10 @@ namespace inexor::vulkan_renderer {
 /// used during the same render operations, provided that their data is refreshed,
 /// of course. This is known as aliasing and some Vulkan functions have explicit
 /// flags to specify that you want to do this.
-struct InexorMeshBuffer {
-    InexorBuffer vertex_buffer;
+struct MeshBuffer {
+    Buffer vertex_buffer;
 
-    InexorBuffer index_buffer;
+    Buffer index_buffer;
 
     uint32_t number_of_vertices = 0;
 

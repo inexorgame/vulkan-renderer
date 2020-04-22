@@ -13,18 +13,18 @@ namespace inexor::vulkan_renderer {
 ///
 ///
 ///
-struct InexorDescriptorBundle {
+struct DescriptorBundle {
 public:
     /// Force use of the overloaded constructor!
-    InexorDescriptorBundle() = delete;
+    DescriptorBundle() = delete;
 
     /// @brief Allow name and descriptor pool to be set in constructor only!
-    InexorDescriptorBundle(const std::string &internal_descriptor_set_name, std::shared_ptr<InexorDescriptorPool> descriptor_pool)
+    DescriptorBundle(const std::string &internal_descriptor_set_name, std::shared_ptr<DescriptorPool> descriptor_pool)
         : name(internal_descriptor_set_name), associated_descriptor_pool(descriptor_pool) {}
 
     const std::string name;
 
-    const std::shared_ptr<InexorDescriptorPool> associated_descriptor_pool;
+    const std::shared_ptr<DescriptorPool> associated_descriptor_pool;
 
     VkDescriptorSetLayout descriptor_set_layout;
 

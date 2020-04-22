@@ -17,7 +17,7 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-struct InexorModel {
+struct Model {
     tinygltf::Model gltf2_container;
 
     std::string name = "";
@@ -26,27 +26,27 @@ struct InexorModel {
 
     std::vector<uint32_t> index_buffer_cache;
 
-    std::vector<InexorModelVertex> vertex_buffer_cache;
+    std::vector<ModelVertex> vertex_buffer_cache;
 
-    std::shared_ptr<InexorMeshBuffer> mesh;
+    std::shared_ptr<MeshBuffer> mesh;
 
-    std::vector<std::shared_ptr<InexorModelNode>> nodes;
+    std::vector<std::shared_ptr<ModelNode>> nodes;
 
-    std::vector<std::shared_ptr<InexorModelNode>> linear_nodes;
+    std::vector<std::shared_ptr<ModelNode>> linear_nodes;
 
-    std::vector<std::shared_ptr<InexorModelSkin>> skins;
+    std::vector<std::shared_ptr<ModelSkin>> skins;
 
-    std::vector<std::shared_ptr<InexorTexture>> textures;
+    std::vector<std::shared_ptr<Texture>> textures;
 
-    std::vector<InexorTextureSampler> texture_samplers;
+    std::vector<TextureSampler> texture_samplers;
 
-    std::vector<InexorModelMaterial> materials;
+    std::vector<Material> materials;
 
-    std::vector<InexorModelAnimation> animations;
+    std::vector<Animation> animations;
 
     std::vector<std::string> extensions;
 
-    InexorDimensions dimensions;
+    Dimensions dimensions;
 
     std::size_t uniform_buffer_index = 0;
 };

@@ -9,10 +9,10 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class InexorCamera
+/// @class Camera
 /// TODO: Add mutex!
 /// TODO: Because this camera class will be used by scripting as well, runtime errors should be expected.
-class InexorCamera {
+class Camera {
 private:
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -61,9 +61,9 @@ private:
     void update_projection_matrix();
 
 public:
-    InexorCamera() = default;
+    Camera() = default;
 
-    ~InexorCamera() = default;
+    ~Camera() = default;
 
     /// @brief Updates all matrices.
     void update_matrices();

@@ -10,33 +10,33 @@
 namespace inexor::vulkan_renderer::tools {
 
 /// @brief Defines the type of an accepted command line argument.
-enum INEXOR_COMMAND_LINE_ARGUMENT_TYPE {
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE,
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE_STRING,
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE_INT64,
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE_UINT32,
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE_BOOL
+enum COMMAND_LINE_ARGUMENT_TYPE {
+    COMMAND_LINE_ARGUMENT_TYPE_NONE,
+    COMMAND_LINE_ARGUMENT_TYPE_STRING,
+    COMMAND_LINE_ARGUMENT_TYPE_INT64,
+    COMMAND_LINE_ARGUMENT_TYPE_UINT32,
+    COMMAND_LINE_ARGUMENT_TYPE_BOOL
     // TODO: Add more
 };
 
 /// @class CommandLineArgumentTemplate
 /// @brief A command line argument template class.
 /// @noe This class does not contain any data yet!
-struct InexorCommandLineArgumentTemplate {
-    InexorCommandLineArgumentTemplate(const INEXOR_COMMAND_LINE_ARGUMENT_TYPE param_type, std::string param_name) {
+struct CommandLineArgumentTemplate {
+    CommandLineArgumentTemplate(const COMMAND_LINE_ARGUMENT_TYPE param_type, std::string param_name) {
         argument_type = param_type;
         argument_name = param_name;
     }
 
     std::string argument_name;
 
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE argument_type;
+    COMMAND_LINE_ARGUMENT_TYPE argument_type;
 };
 
 /// @class CommandLineArgumentValue
 /// @brief Contains the actual command line data.
-struct InexorCommandLineArgumentValue {
-    INEXOR_COMMAND_LINE_ARGUMENT_TYPE type;
+struct CommandLineArgumentValue {
+    COMMAND_LINE_ARGUMENT_TYPE type;
 
     std::string value_str;
     std::int64_t value_int64;
@@ -47,41 +47,41 @@ struct InexorCommandLineArgumentValue {
 /// @class CommandLineArgumentParser
 /// @brief A simple command line argument parser.
 /// @todo What if an argumen gets specified twice?
-class InexorCommandLineArgumentParser {
+class CommandLineArgumentParser {
 public:
-    InexorCommandLineArgumentParser() = default;
+    CommandLineArgumentParser() = default;
 
-    ~InexorCommandLineArgumentParser() = default;
+    ~CommandLineArgumentParser() = default;
 
 private:
     /// @brief This defines the list of acceptable command line arguments with their corresponding types.
-    const std::vector<InexorCommandLineArgumentTemplate> list_of_accepted_command_line_arguments{
+    const std::vector<CommandLineArgumentTemplate> list_of_accepted_command_line_arguments{
         /// Defines which GPU to use (by array index).
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_UINT32, "-gpu"},
+        {COMMAND_LINE_ARGUMENT_TYPE_UINT32, "-gpu"},
 
         /// Defines if we will print stats about graphics cards.
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-nostats"},
+        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-nostats"},
 
         // Use vertical synchronisation.
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-vsync"},
+        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-vsync"},
 
         // Use RenderDoc layer.
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-renderdoc"},
+        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-renderdoc"},
 
         // Disable Khronos validation layer.
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-novalidation"},
+        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-novalidation"},
 
         // Do not use distinct data transfer queue, use graphics queue.
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_separate_data_queue"},
+        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_separate_data_queue"},
 
         // Disable debug markers (even if -renderdoc is specified)
-        {INEXOR_COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_vk_debug_markers"}
+        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_vk_debug_markers"}
 
         /// TODO: Add more command line argumetns here!
     };
 
     /// The parsed arguments.
-    std::unordered_map<std::string, InexorCommandLineArgumentValue> parsed_command_line_arguments;
+    std::unordered_map<std::string, CommandLineArgumentValue> parsed_command_line_arguments;
 
     /// The number of command line arguments.
     std::int64_t number_of_parsed_command_line_arguments = 0;
@@ -102,7 +102,7 @@ public:
 
     /// @brief Returns the type of a command line argument.
     /// @param argument_name The name of the command line argument.
-    const std::optional<INEXOR_COMMAND_LINE_ARGUMENT_TYPE> get_argument_template_type(const std::string &argument_name);
+    const std::optional<COMMAND_LINE_ARGUMENT_TYPE> get_argument_template_type(const std::string &argument_name);
 
     /// @brief Returns the value of a boolean command line argument (if existent).
     /// @param argument_name The name of the command line argument.

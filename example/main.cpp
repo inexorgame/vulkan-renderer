@@ -7,7 +7,7 @@
 
 using namespace inexor::vulkan_renderer;
 
-InexorApplication renderer;
+Application renderer;
 
 int main(int argc, char *argv[]) {
     spdlog::init_thread_pool(8192, 2);

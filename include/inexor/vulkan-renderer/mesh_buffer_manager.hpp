@@ -16,10 +16,10 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class InexorMeshBufferManager.
+/// @class MeshBufferManager.
 /// @brief A manager class for vertex buffers and index buffers.
 /// @note Buffers in Vulkan are regions of memory used for storing arbitrary data that can be read by the graphics card.
-class InexorMeshBufferManager : public ManagerClassTemplate<InexorMeshBuffer> {
+class MeshBufferManager : public ManagerClassTemplate<MeshBuffer> {
 private:
     std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager;
 
@@ -55,13 +55,13 @@ private:
     /// The default value for vertex and index buffers is VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT.
     /// @param memory_usage [in] The VMA memory usage flags.
     /// The default value for staging buffers and normal buffers is VMA_MEMORY_USAGE_CPU_ONLY.
-    VkResult create_buffer(std::string buffer_description, InexorBuffer &buffer, const VkDeviceSize &buffer_size, const VkBufferUsageFlags &buffer_usage,
+    VkResult create_buffer(std::string buffer_description, Buffer &buffer, const VkDeviceSize &buffer_size, const VkBufferUsageFlags &buffer_usage,
                            const VmaMemoryUsage &memory_usage);
 
 public:
-    InexorMeshBufferManager() = default;
+    MeshBufferManager() = default;
 
-    ~InexorMeshBufferManager() = default;
+    ~MeshBufferManager() = default;
 
     /// @brief Initialises mesh buffer manager.
     /// @param device [in] The Vulkan device.
@@ -80,7 +80,7 @@ public:
     /// @param number_of_vertices [in] The number of vertices.
     /// @param output_mesh_buffer [out] The mesh buffer which will be created.
     VkResult create_vertex_buffer(const std::string &internal_mesh_buffer_name, const void *vertices, const std::size_t size_of_vertex_structure,
-                                  const std::size_t number_of_vertices, std::shared_ptr<InexorMeshBuffer> &output_mesh_buffer);
+                                  const std::size_t number_of_vertices, std::shared_ptr<MeshBuffer> &output_mesh_buffer);
 
     /// @brief Creates a new vertex buffer and a corresponding index buffer.
     /// @param internal_mesh_buffer_name [in] The internal name of the vertex buffer
@@ -96,7 +96,7 @@ public:
     VkResult create_vertex_buffer_with_index_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
                                                     const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices, const void *indices,
                                                     const std::size_t size_of_index_structure, const std::size_t number_of_indices,
-                                                    std::shared_ptr<InexorMeshBuffer> &mesh_buffer_output);
+                                                    std::shared_ptr<MeshBuffer> &mesh_buffer_output);
 
     // TODO: Overload those methods for established vertex data structures if desired.
     // TODO: Recycle buffers! Allocation of memory at during rendertime is expensive!

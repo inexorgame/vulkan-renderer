@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-void InexorTexture::destroy_texture(const VkDevice &device, const VmaAllocator &vma_allocator) {
+void Texture::destroy_texture(const VkDevice &device, const VmaAllocator &vma_allocator) {
     vkDestroySampler(device, sampler, nullptr);
 
     vmaDestroyImage(vma_allocator, image, allocation);
@@ -30,7 +30,7 @@ void InexorTexture::destroy_texture(const VkDevice &device, const VmaAllocator &
     uint32_t texture_height = 0;
 }
 
-void InexorTexture::update_descriptor() {
+void Texture::update_descriptor() {
     descriptor.sampler = sampler;
     descriptor.imageView = image_view;
     descriptor.imageLayout = image_layout;

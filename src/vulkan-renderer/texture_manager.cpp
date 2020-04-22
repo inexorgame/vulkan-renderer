@@ -77,7 +77,7 @@ VkResult VulkanTextureManager::create_texture_manager_command_pool() {
     return VK_SUCCESS;
 }
 
-VkResult VulkanTextureManager::create_texture_buffer(std::shared_ptr<InexorTexture> texture, InexorBuffer &buffer_object, const VkDeviceSize &buffer_size,
+VkResult VulkanTextureManager::create_texture_buffer(std::shared_ptr<Texture> texture, Buffer &buffer_object, const VkDeviceSize &buffer_size,
                                                      const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage) {
     assert(vma_allocator);
     assert(debug_marker_manager);
@@ -107,7 +107,7 @@ VkResult VulkanTextureManager::create_texture_buffer(std::shared_ptr<InexorTextu
     return result;
 }
 
-VkResult VulkanTextureManager::create_texture_image(std::shared_ptr<InexorTexture> texture, const VkFormat &format, const VkImageTiling &tiling,
+VkResult VulkanTextureManager::create_texture_image(std::shared_ptr<Texture> texture, const VkFormat &format, const VkImageTiling &tiling,
                                                     const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage,
                                                     const VkImageUsageFlags &image_usage_flags) {
     assert(texture->width > 0);
@@ -150,7 +150,7 @@ VkResult VulkanTextureManager::create_texture_image(std::shared_ptr<InexorTextur
 }
 
 // TODO: Overload this method for more control if necessary!
-VkResult VulkanTextureManager::create_texture_image_view(std::shared_ptr<InexorTexture> texture, const VkFormat &format) {
+VkResult VulkanTextureManager::create_texture_image_view(std::shared_ptr<Texture> texture, const VkFormat &format) {
     texture->view_create_info = {};
 
     texture->view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -178,9 +178,9 @@ VkResult VulkanTextureManager::create_texture_image_view(std::shared_ptr<InexorT
 }
 
 VkResult VulkanTextureManager::create_texture_from_memory(const std::string &internal_texture_name, void *texture_memory,
-                                                          const VkDeviceSize &texture_memory_size, std::shared_ptr<InexorTexture> output_texture) {
+                                                          const VkDeviceSize &texture_memory_size, std::shared_ptr<Texture> output_texture) {
     // This buffer is used as a transfer source for the buffer copy.
-    InexorBuffer staging_buffer_for_texture;
+    Buffer staging_buffer_for_texture;
 
     // Create a staging buffer for the texture data.
     VkResult result =
@@ -221,7 +221,7 @@ VkResult VulkanTextureManager::create_texture_from_memory(const std::string &int
 }
 
 VkResult VulkanTextureManager::create_texture_from_file(const std::string &internal_texture_name, const std::string &texture_file_name,
-                                                        std::shared_ptr<InexorTexture> output_texture) {
+                                                        std::shared_ptr<Texture> output_texture) {
     assert(texture_manager_initialised);
     assert(!internal_texture_name.empty());
     assert(!texture_file_name.empty());
@@ -258,7 +258,7 @@ VkResult VulkanTextureManager::create_texture_from_file(const std::string &inter
     // We need 4 times the size since we have 4 channels: red, green, blue and alpha channel.
     VkDeviceSize texture_memory_size = 4 * texture_width * texture_height;
 
-    std::shared_ptr<InexorTexture> new_texture = std::make_shared<InexorTexture>();
+    std::shared_ptr<Texture> new_texture = std::make_shared<Texture>();
 
     new_texture->name = texture_file_name;
     new_texture->format = format;
@@ -285,7 +285,7 @@ VkResult VulkanTextureManager::create_texture_from_file(const std::string &inter
 }
 
 VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string &internal_texture_name, tinygltf::Image &gltf_image,
-                                                               std::shared_ptr<InexorTexture> output_texture) {
+                                                               std::shared_ptr<Texture> output_texture) {
     assert(texture_manager_initialised);
     assert(!internal_texture_name.empty());
 
@@ -295,7 +295,7 @@ VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    std::shared_ptr<InexorTexture> new_texture = std::make_shared<InexorTexture>();
+    std::shared_ptr<Texture> new_texture = std::make_shared<Texture>();
 
     unsigned char *texture_buffer = nullptr;
 
@@ -351,7 +351,7 @@ VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string
     return VK_SUCCESS;
 }
 
-VkResult VulkanTextureManager::create_texture_sampler(std::shared_ptr<InexorTexture> texture) {
+VkResult VulkanTextureManager::create_texture_sampler(std::shared_ptr<Texture> texture) {
     VkSamplerCreateInfo sampler_create_info = {};
 
     sampler_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -492,7 +492,7 @@ VkResult VulkanTextureManager::copy_buffer_to_image(VkBuffer buffer, VkImage ima
     return VK_SUCCESS;
 }
 
-std::optional<std::shared_ptr<InexorTexture>> VulkanTextureManager::get_texture(const std::string &internal_texture_name) {
+std::optional<std::shared_ptr<Texture>> VulkanTextureManager::get_texture(const std::string &internal_texture_name) {
     if (!does_key_exist(internal_texture_name)) {
         spdlog::error("Could not find texture '{}'!", internal_texture_name);
         return std::nullopt;

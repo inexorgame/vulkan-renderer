@@ -15,34 +15,34 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-struct InexorModelNode;
+struct ModelNode;
 
 ///
-struct InexorModelSkin {
+struct ModelSkin {
     std::string name;
 
-    std::shared_ptr<InexorModelNode> skeletonRoot = nullptr;
+    std::shared_ptr<ModelNode> skeletonRoot = nullptr;
 
     std::vector<glm::mat4> inverseBindMatrices;
 
-    std::vector<std::shared_ptr<InexorModelNode>> joints;
+    std::vector<std::shared_ptr<ModelNode>> joints;
 };
 
 ///
-struct InexorModelNode {
-    std::shared_ptr<InexorModelNode> parent;
+struct ModelNode {
+    std::shared_ptr<ModelNode> parent;
 
     uint32_t index;
 
-    std::vector<std::shared_ptr<InexorModelNode>> children;
+    std::vector<std::shared_ptr<ModelNode>> children;
 
     glm::mat4 matrix;
 
     std::string name;
 
-    std::shared_ptr<InexorModelMesh> mesh;
+    std::shared_ptr<Mesh> mesh;
 
-    std::shared_ptr<InexorModelSkin> skin;
+    std::shared_ptr<ModelSkin> skin;
 
     int32_t skinIndex = -1;
 
@@ -61,7 +61,7 @@ struct InexorModelNode {
     glm::mat4 getMatrix() {
         glm::mat4 m = localMatrix();
 
-        std::shared_ptr<InexorModelNode> p = parent;
+        std::shared_ptr<ModelNode> p = parent;
 
         while (p) {
             m = p->localMatrix() * m;
@@ -71,7 +71,7 @@ struct InexorModelNode {
         return m;
     }
 
-    void update(const std::shared_ptr<VulkanUniformBufferManager> uniform_buffer_manager) {
+    void update(const std::shared_ptr<UniformBufferManager> uniform_buffer_manager) {
         if (mesh) {
             glm::mat4 m = getMatrix();
 
@@ -84,7 +84,7 @@ struct InexorModelNode {
                 size_t numJoints = std::min((uint32_t)skin->joints.size(), MAX_NUM_JOINTS);
 
                 for (size_t i = 0; i < numJoints; i++) {
-                    std::shared_ptr<InexorModelNode> jointNode = skin->joints[i];
+                    std::shared_ptr<ModelNode> jointNode = skin->joints[i];
 
                     glm::mat4 jointMat = jointNode->getMatrix() * skin->inverseBindMatrices[i];
                     jointMat = inverseTransform * jointMat;

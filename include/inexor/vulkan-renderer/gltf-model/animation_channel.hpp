@@ -7,12 +7,12 @@
 namespace inexor::vulkan_renderer::gltf_model {
 
 ///
-struct InexorModelAnimationChannel {
+struct AnimationChannel {
     enum PathType { TRANSLATION, ROTATION, SCALE };
 
     PathType path;
 
-    std::shared_ptr<InexorModelNode> node;
+    std::shared_ptr<ModelNode> node;
 
     uint32_t samplerIndex;
 };

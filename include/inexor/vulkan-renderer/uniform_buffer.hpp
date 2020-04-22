@@ -7,7 +7,7 @@ namespace inexor::vulkan_renderer {
 ///
 ///
 ///
-struct InexorUniformBuffer : public InexorBuffer {
+struct UniformBuffer : public Buffer {
     //
     VkDescriptorBufferInfo descriptor_buffer_info;
 

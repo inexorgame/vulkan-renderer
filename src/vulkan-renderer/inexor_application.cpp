@@ -16,7 +16,7 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->frame_buffer_resized = true;
 }
 
-VkResult InexorApplication::load_TOML_configuration_file(const std::string &TOML_file_name) {
+VkResult Application::load_TOML_configuration_file(const std::string &TOML_file_name) {
     spdlog::debug("Loading TOML configuration file: '{}'.", TOML_file_name);
 
     std::ifstream toml_file;
@@ -106,7 +106,7 @@ VkResult InexorApplication::load_TOML_configuration_file(const std::string &TOML
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::load_textures() {
+VkResult Application::load_textures() {
     assert(device);
     assert(selected_graphics_card);
     assert(debug_marker_manager);
@@ -123,7 +123,7 @@ VkResult InexorApplication::load_textures() {
         std::string texture_name = "example_texture_" + std::to_string(texture_number);
         texture_number++;
 
-        std::shared_ptr<InexorTexture> new_texture;
+        std::shared_ptr<Texture> new_texture;
 
         // TODO: Find duplicate loads!
         // TOOD: Specify assets folder!
@@ -136,7 +136,7 @@ VkResult InexorApplication::load_textures() {
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::load_shaders() {
+VkResult Application::load_shaders() {
     assert(device);
 
     spdlog::debug("Loading vertex shaders.");
@@ -184,7 +184,7 @@ VkResult InexorApplication::load_shaders() {
 
 /// TODO: Refactor rendering method!
 /// TODO: Finish present call using transfer queue.
-VkResult InexorApplication::render_frame() {
+VkResult Application::render_frame() {
     assert(device);
     assert(gpu_queue_manager->get_graphics_queue());
     assert(gpu_queue_manager->get_present_queue());
@@ -272,7 +272,7 @@ VkResult InexorApplication::render_frame() {
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::load_models() {
+VkResult Application::load_models() {
     assert(debug_marker_manager);
 
     spdlog::debug("Loading models.");
@@ -285,7 +285,7 @@ VkResult InexorApplication::load_models() {
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::check_application_specific_features() {
+VkResult Application::check_application_specific_features() {
     assert(selected_graphics_card);
 
     VkPhysicalDeviceFeatures graphics_card_features;
@@ -304,7 +304,7 @@ VkResult InexorApplication::check_application_specific_features() {
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::init() {
+VkResult Application::init() {
     spdlog::debug("Initialising vulkan-renderer.");
 
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
@@ -312,7 +312,7 @@ VkResult InexorApplication::init() {
     // TOOD: Implement -threads <N> command line argument.
 
     // Initialise Inexor thread-pool.
-    thread_pool = std::make_shared<InexorThreadPool>();
+    thread_pool = std::make_shared<ThreadPool>();
 
     // Load the configuration from the TOML file.
     VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
@@ -335,7 +335,7 @@ VkResult InexorApplication::init() {
 
     spdlog::debug("Storing GLFW window user pointer.");
 
-    // Store the current InexorApplication instance in the GLFW window user pointer.
+    // Store the current Application instance in the GLFW window user pointer.
     // Since GLFW is a C-style API, we can't use a class method as callback for window resize!
     // TODO: Refactor! Don't use callback functions! use manual polling in the render loop instead.
     glfwSetWindowUserPointer(window, this);
@@ -658,7 +658,7 @@ VkResult InexorApplication::init() {
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::update_uniform_buffers(const std::size_t current_image) {
+VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     float time = time_step.get_time_step_since_initialisation();
 
     UniformBufferObject ubo = {};
@@ -678,7 +678,7 @@ VkResult InexorApplication::update_uniform_buffers(const std::size_t current_ima
     return VK_SUCCESS;
 }
 
-VkResult InexorApplication::update_keyboard_input() {
+VkResult Application::update_keyboard_input() {
     int key_w_status = glfwGetKey(window, GLFW_KEY_W);
 
     if (GLFW_PRESS == key_w_status) {
@@ -691,8 +691,8 @@ VkResult InexorApplication::update_keyboard_input() {
     return VK_SUCCESS;
 }
 
-void InexorApplication::run() {
-    spdlog::debug("Running InexorApplication.");
+void Application::run() {
+    spdlog::debug("Running Application.");
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -708,8 +708,8 @@ void InexorApplication::run() {
     }
 }
 
-void InexorApplication::cleanup() {
-    spdlog::debug("Cleaning up InexorApplication.");
+void Application::cleanup() {
+    spdlog::debug("Cleaning up Application.");
 
     shutdown_vulkan();
 

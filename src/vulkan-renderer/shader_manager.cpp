@@ -52,7 +52,7 @@ VkResult VulkanShaderManager::create_shader_from_memory(const std::string &inter
 
     spdlog::debug("Creating shader '{}' from memory.", internal_shader_name.c_str());
 
-    std::shared_ptr<InexorShader> new_shader = std::make_shared<InexorShader>();
+    std::shared_ptr<Shader> new_shader = std::make_shared<Shader>();
 
     new_shader->type = shader_type;
     new_shader->name = internal_shader_name;
@@ -84,7 +84,7 @@ VkResult VulkanShaderManager::create_shader_from_file(const VkShaderStageFlagBit
 
     spdlog::debug("Creating shader '{}' from file.", SPIRV_shader_file_name.c_str());
 
-    std::shared_ptr<InexorShader> new_shader = std::make_shared<InexorShader>();
+    std::shared_ptr<Shader> new_shader = std::make_shared<Shader>();
 
     // Load the fragment shader into memory.
     new_shader->load_file(SPIRV_shader_file_name);
@@ -133,7 +133,7 @@ void VulkanShaderManager::shutdown_shaders() {
     delete_all_entries();
 }
 
-std::vector<std::shared_ptr<InexorShader>> VulkanShaderManager::get_all_shaders() {
+std::vector<std::shared_ptr<Shader>> VulkanShaderManager::get_all_shaders() {
     assert(shader_manager_initialised);
 
     // Call template base class method.

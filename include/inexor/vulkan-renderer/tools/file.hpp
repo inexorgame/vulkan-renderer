@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer::tools {
 
 /// @class InexorFile
 /// @brief A class for loading files into memory.
-class InexorFile {
+class File {
 private:
     /// The file data.
     std::vector<char> file_data;
@@ -20,9 +20,9 @@ private:
     std::size_t file_size;
 
 public:
-    InexorFile() = default;
+    File() = default;
 
-    ~InexorFile() = default;
+    ~File() = default;
 
     /// @brief Returns the size of the file.
     const std::size_t get_file_size() const;

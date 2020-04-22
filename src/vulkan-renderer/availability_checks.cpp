@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult InexorAvailabilityChecksManager::create_instance_extensions_cache() {
+VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
     // First ask Vulkan how many instance extensions are available on the system.
     VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &number_of_available_instance_extensions, NULL);
     vulkan_error_check(result);
@@ -25,7 +25,7 @@ VkResult InexorAvailabilityChecksManager::create_instance_extensions_cache() {
     return VK_SUCCESS;
 }
 
-bool InexorAvailabilityChecksManager::is_instance_extension_available(const std::string &instance_extension_name) {
+bool AvailabilityChecksManager::is_instance_extension_available(const std::string &instance_extension_name) {
     assert(!instance_extension_name.empty());
 
     if (instance_extensions_cache.empty()) {
@@ -45,7 +45,7 @@ bool InexorAvailabilityChecksManager::is_instance_extension_available(const std:
     return false;
 }
 
-VkResult InexorAvailabilityChecksManager::create_instance_layers_cache() {
+VkResult AvailabilityChecksManager::create_instance_layers_cache() {
     // First ask Vulkan how many instance layers are available on the system.
     VkResult result = vkEnumerateInstanceLayerProperties(&number_of_available_instance_layers, nullptr);
     vulkan_error_check(result);
@@ -68,7 +68,7 @@ VkResult InexorAvailabilityChecksManager::create_instance_layers_cache() {
     return VK_SUCCESS;
 }
 
-bool InexorAvailabilityChecksManager::is_instance_layer_available(const std::string &instance_layer_name) {
+bool AvailabilityChecksManager::is_instance_layer_available(const std::string &instance_layer_name) {
     assert(!instance_layer_name.empty());
 
     if (instance_layers_cache.empty()) {
@@ -88,7 +88,7 @@ bool InexorAvailabilityChecksManager::is_instance_layer_available(const std::str
     return false;
 }
 
-VkResult InexorAvailabilityChecksManager::create_device_layers_cache(const VkPhysicalDevice &graphics_card) {
+VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device layers are available on the system.
     VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_available_device_layers, nullptr);
     vulkan_error_check(result);
@@ -111,7 +111,7 @@ VkResult InexorAvailabilityChecksManager::create_device_layers_cache(const VkPhy
     return VK_SUCCESS;
 }
 
-bool InexorAvailabilityChecksManager::is_device_layer_available(const VkPhysicalDevice &graphics_card, const std::string &device_layer_name) {
+bool AvailabilityChecksManager::is_device_layer_available(const VkPhysicalDevice &graphics_card, const std::string &device_layer_name) {
     assert(graphics_card);
     assert(!device_layer_name.empty());
 
@@ -131,7 +131,7 @@ bool InexorAvailabilityChecksManager::is_device_layer_available(const VkPhysical
     return false;
 }
 
-VkResult InexorAvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalDevice &graphics_card) {
+VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device extensions are available on the system.
     VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr);
     vulkan_error_check(result);
@@ -154,7 +154,7 @@ VkResult InexorAvailabilityChecksManager::create_device_extensions_cache(const V
     return VK_SUCCESS;
 }
 
-bool InexorAvailabilityChecksManager::is_device_extension_available(const VkPhysicalDevice &graphics_card, const std::string &device_extension_name) {
+bool AvailabilityChecksManager::is_device_extension_available(const VkPhysicalDevice &graphics_card, const std::string &device_extension_name) {
     assert(graphics_card);
     assert(!device_extension_name.empty());
 
@@ -174,7 +174,7 @@ bool InexorAvailabilityChecksManager::is_device_extension_available(const VkPhys
     return false;
 }
 
-bool InexorAvailabilityChecksManager::is_presentation_available(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
+bool AvailabilityChecksManager::is_presentation_available(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -192,7 +192,7 @@ bool InexorAvailabilityChecksManager::is_presentation_available(const VkPhysical
     return presentation_available;
 }
 
-bool InexorAvailabilityChecksManager::is_swapchain_available(const VkPhysicalDevice &graphics_card) {
+bool AvailabilityChecksManager::is_swapchain_available(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
     return is_device_extension_available(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }

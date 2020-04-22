@@ -4,11 +4,11 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class InexorTimeStep
+/// @class TimeStep
 /// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
 /// Since every machine has slightly different speed, it is neccesary to the timestep when animating something.
 /// @todo Implement time step for every thread?
-class InexorTimeStep {
+class TimeStep {
 private:
     // The time point of the last render call.
     std::chrono::time_point<std::chrono::high_resolution_clock> last_time;
@@ -17,9 +17,9 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> initialisation_time;
 
 public:
-    InexorTimeStep();
+    TimeStep();
 
-    ~InexorTimeStep() = default;
+    ~TimeStep() = default;
 
     /// @brief Returns a scaling factor which corresponds to the
     /// time which has passed since last render call and now.

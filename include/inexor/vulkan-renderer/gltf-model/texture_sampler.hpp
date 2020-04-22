@@ -4,8 +4,8 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-/// @class InexorTextureSampler
-struct InexorTextureSampler {
+/// @class TextureSampler
+struct TextureSampler {
     VkFilter magFilter;
     VkFilter minFilter;
     VkSamplerAddressMode addressModeU;

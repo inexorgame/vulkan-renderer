@@ -7,9 +7,8 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-/// @class InexorModelStandardUniformBuffer
 /// @brief Inexor's standard uniform buffer block for glTF 2.0 models.
-struct InexorModelStandardUniformBufferBlock {
+struct StandardUniformBufferBlock {
     glm::mat4 matrix;
 
     glm::mat4 joint_matrix[MAX_NUM_JOINTS]{};

@@ -7,10 +7,10 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class InexorStagingBuffer
+/// @class Buffer
 /// @brief An abstraction class for the creation of staging buffers.
-/// @note We can't add a std::mutex in here because that would force InexorBuffer to be uncopyable!
-struct InexorBuffer {
+/// @note We can't add a std::mutex in here because that would force Buffer to be uncopyable!
+struct Buffer {
     // TODO: Inherit to make access unified in syntax!
     // TODO: Map/Unmap memory.
 

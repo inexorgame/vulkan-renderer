@@ -1151,8 +1151,8 @@ VkResult VulkanRenderer::create_pipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 
-    auto vertex_binding_description = gltf_model::InexorModelVertex::get_vertex_binding_description();
-    auto attribute_binding_description = gltf_model::InexorModelVertex::get_attribute_binding_description();
+    auto vertex_binding_description = gltf_model::ModelVertex::get_vertex_binding_description();
+    auto attribute_binding_description = gltf_model::ModelVertex::get_attribute_binding_description();
 
     vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertex_input_create_info.pNext = nullptr;
@@ -1184,7 +1184,7 @@ VkResult VulkanRenderer::create_pipeline() {
     scissor.offset = {0, 0};
     scissor.extent = {window_width, window_height};
 
-    // TODO: Multiple viewports (and scissors) - InexorViewportManager and InexorRenderSceneManager
+    // TODO: Multiple viewports (and scissors) - ViewportManager and RenderSceneManager
     VkPipelineViewportStateCreateInfo pipeline_viewport_viewport_state_info = {};
 
     pipeline_viewport_viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -1485,8 +1485,8 @@ VkResult VulkanRenderer::create_pipeline() {
 
     };
 
-    // TODO: Wrap all this into InexorRenderingPipelineManager instead of loading from TOML file?
-    // InexorRenderingPipelineManager could verify if all structures were filled correctly.
+    // TODO: Wrap all this into RenderingPipelineManager instead of loading from TOML file?
+    // RenderingPipelineManager could verify if all structures were filled correctly.
 
     VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {};
 
@@ -1558,7 +1558,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
     VkResult result;
 
     // MSAA setup.
-    // TODO: Pack all this to InexorMultisamplingManager?
+    // TODO: Pack all this to MultisamplingManager?
     if (multisampling_enabled) {
         // Check if device supports requested sample count for color and depth frame buffer
         // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) && (deviceProperties.limits.framebufferDepthSampleCounts >=

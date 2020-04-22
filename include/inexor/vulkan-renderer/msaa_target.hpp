@@ -7,12 +7,12 @@ namespace inexor::vulkan_renderer {
 ///
 ///
 ///
-struct InexorMSAATarget {
+struct MSAATarget {
     // The color buffer.
-    InexorImageBuffer color;
+    ImageBuffer color;
 
     // The depth buffer.
-    InexorImageBuffer depth;
+    ImageBuffer depth;
 };
 
 } // namespace inexor::vulkan_renderer

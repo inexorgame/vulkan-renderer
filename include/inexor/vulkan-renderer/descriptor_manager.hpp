@@ -16,9 +16,9 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @class InexorDescriptorManager.
+/// @class DescriptorManager.
 /// @brief A manager class for descriptor pools, descriptor set layouts and descriptor sets.
-class InexorDescriptorManager : public ManagerClassTemplate<InexorDescriptorPool>, public ManagerClassTemplate<InexorDescriptorBundle> {
+class DescriptorManager : public ManagerClassTemplate<DescriptorPool>, public ManagerClassTemplate<DescriptorBundle> {
 private:
     VkDevice device;
 
@@ -37,9 +37,9 @@ private:
     VkResult destroy_descriptor_sets();
 
 public:
-    InexorDescriptorManager() = default;
+    DescriptorManager() = default;
 
-    ~InexorDescriptorManager() = default;
+    ~DescriptorManager() = default;
 
     /// @brief Initialises descriptor manager.
     /// @param device [in] The Vulkan device which is being used.
@@ -53,38 +53,38 @@ public:
     /// @param pool_sizes [in] The size of the descriptor pool data.
     /// @param descriptor_pool [in] A reference of a shared pointer to the descriptor pool which will be created.
     VkResult create_descriptor_pool(const std::string &internal_descriptor_pool_name, const std::vector<VkDescriptorPoolSize> &pool_sizes,
-                                    std::shared_ptr<InexorDescriptorPool> &descriptor_pool);
+                                    std::shared_ptr<DescriptorPool> &descriptor_pool);
 
     /// @brief Starts building a new descriptor.
     /// @param
     /// @param
     /// @param
-    VkResult create_descriptor_bundle(const std::string &internal_descriptor_name, std::shared_ptr<InexorDescriptorPool> &descriptor_pool,
-                                      std::shared_ptr<InexorDescriptorBundle> &descriptor_bundle);
+    VkResult create_descriptor_bundle(const std::string &internal_descriptor_name, std::shared_ptr<DescriptorPool> &descriptor_pool,
+                                      std::shared_ptr<DescriptorBundle> &descriptor_bundle);
 
     ///
     ///
     ///
-    VkResult add_descriptor_set_layout_binding(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle,
+    VkResult add_descriptor_set_layout_binding(std::shared_ptr<DescriptorBundle> descriptor_bundle,
                                                const VkDescriptorSetLayoutBinding &descriptor_set_layout_binding);
 
     ///
     ///
     ///
-    VkResult add_write_descriptor_set(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle, const VkWriteDescriptorSet &write_descriptor_set);
+    VkResult add_write_descriptor_set(std::shared_ptr<DescriptorBundle> descriptor_bundle, const VkWriteDescriptorSet &write_descriptor_set);
 
     ///
     ///
-    VkResult create_descriptor_set_layouts(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle);
+    VkResult create_descriptor_set_layouts(std::shared_ptr<DescriptorBundle> descriptor_bundle);
 
     ///
     ///
-    VkResult create_descriptor_sets(std::shared_ptr<InexorDescriptorBundle> descriptor_bundle);
+    VkResult create_descriptor_sets(std::shared_ptr<DescriptorBundle> descriptor_bundle);
 
     ///
     ///
     ///
-    std::optional<std::shared_ptr<InexorDescriptorBundle>> get_descriptor_bundle(const std::string &internal_descriptor_name);
+    std::optional<std::shared_ptr<DescriptorBundle>> get_descriptor_bundle(const std::string &internal_descriptor_name);
 
     /// @brief Destroys all descriptor sets and descriptor pools.
     /// @param clear_descriptor_layout_bindings [in] True if descriptor set layout bindings should be cleared as well.
