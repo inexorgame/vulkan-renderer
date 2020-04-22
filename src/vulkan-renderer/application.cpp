@@ -1,4 +1,4 @@
-﻿#include "inexor/vulkan-renderer/inexor_application.hpp"
+﻿#include "inexor/vulkan-renderer/application.hpp"
 
 namespace inexor::vulkan_renderer {
 

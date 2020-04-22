@@ -1,4 +1,4 @@
-﻿#include "inexor/vulkan-renderer/inexor_application.hpp"
+﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>

@@ -12,7 +12,7 @@ add_library(
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/gpu_queue_manager.cpp
-    vulkan-renderer/inexor_application.cpp
+    vulkan-renderer/application.cpp
     vulkan-renderer/mesh_buffer_manager.cpp
     vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
