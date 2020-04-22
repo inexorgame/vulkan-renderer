@@ -1,4 +1,4 @@
-﻿#include "vulkan-renderer/renderer.hpp"
+﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
@@ -1151,8 +1151,8 @@ VkResult VulkanRenderer::create_pipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 
-    auto vertex_binding_description = InexorModelVertex::get_vertex_binding_description();
-    auto attribute_binding_description = InexorModelVertex::get_attribute_binding_description();
+    auto vertex_binding_description = gltf_model::InexorModelVertex::get_vertex_binding_description();
+    auto attribute_binding_description = gltf_model::InexorModelVertex::get_attribute_binding_description();
 
     vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertex_input_create_info.pNext = nullptr;
