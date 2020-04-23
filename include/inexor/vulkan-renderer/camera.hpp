@@ -76,7 +76,7 @@ public:
 
     /// @brief Updates camera movement.
     /// @brief timestep [in] A float which scales with the amount of time which has passed since last rendering.
-    void update(const float timestep);
+    void update(float timestep);
 
     /// @brief Sets the camera position.
     /// @param position [in] The position of the camera.
@@ -87,7 +87,7 @@ public:
 
     /// @brief Sets the relative speed of the camera.
     /// @param speed [in] The velocity of the camera movement.
-    void set_speed(const float camera_speed);
+    void set_speed(float camera_speed);
 
     /// @brief Returns the camera speed.
     float get_speed() const;
@@ -107,27 +107,27 @@ public:
 
     /// @brief Moves the camera along the x-axis.
     /// @param y [in] The distance on the x-axis.
-    void move_camera_x(const float x);
+    void move_camera_x(float x);
 
     /// @brief Moves the camera along the y-axis.
     /// @param y [in] The distance on the y-axis.
-    void move_camera_y(const float y);
+    void move_camera_y(float y);
 
     /// @brief Moves the camera along the z-axis.
     /// @param y [in] The distance on the z-axis.
-    void move_camera_z(const float z);
+    void move_camera_z(float z);
 
     /// @brief Sets the yaw rotation angle.
     /// @param yaw [in] The yaw angle.
-    void set_yaw(const float yaw);
+    void set_yaw(float yaw);
 
     /// @brief Sets the pitch rotation angle.
     /// @param pitch [in] The pitch angle.
-    void set_pitch(const float pitch);
+    void set_pitch(float pitch);
 
     /// @brief Sets the roll rotation angle.
     /// @param roll [in] The roll angle.
-    void set_roll(const float roll);
+    void set_roll(float roll);
 
     /// @brief Returns the yaw rotation angle.
     float get_yaw() const;
@@ -140,21 +140,21 @@ public:
 
     /// @brief Sets the near plane for calculating the projection matrix.
     /// @param near_plane [in] The z-distance to the near plane.
-    void set_near_plane(const float near_plane);
+    void set_near_plane(float near_plane);
 
     /// @brief Returns the near plane.
     float get_near_plane() const;
 
     /// @brief Sets the far plane for calculating the projection matrix.
     /// @param far_plane [in] The z-distance to the far plane.
-    void set_far_plane(const float far_plane);
+    void set_far_plane(float far_plane);
 
     /// @brief Returns the far plane.
     float get_far_plane() const;
 
     /// @brief Sets the aspect ratio.
     /// @param aspect_ratio [in] The aspect ratio.
-    void set_aspect_ratio(const float aspect_ratio);
+    void set_aspect_ratio(float aspect_ratio);
 
     /// @brief Returns the aspect ratio.
     float get_aspect_ratio() const;
@@ -163,7 +163,7 @@ public:
     /// @param yaw [in] The yaw angle.
     /// @param pitch [in] The pitch angle.
     /// @param roll [in] The roll angle.
-    void set_rotation(const float yaw, const float pitch, const float roll);
+    void set_rotation(float yaw, float pitch, float roll);
 
     /// @brief Rotates the Camera around a certain center.
     /// @brief rotation_center [in] The center of rotation.
@@ -189,11 +189,11 @@ public:
     /// @param x The angle on the x-axis.
     /// @param y The angle on the y-axis.
     /// @todo
-    void pan(const float x, const float y);
+    void pan(float x, float y);
 
     /// @brief Sets the zoom of the camera.
     /// @param zoom [in] The camera zoom.
-    void set_zoom(const float zoom);
+    void set_zoom(float zoom);
 
     // TODO: min/max zoom!
     /// @brief Returns the camera zoom.
