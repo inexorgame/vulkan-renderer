@@ -29,12 +29,12 @@ name = "Inexor-Vulkan-Renderer"
 [shaders]
 [shaders.vertex]
 files = [
-	"shaders/vertexshader.spv",
+	"shaders/vertexshader.vert.spv",
 ]
 
 [shaders.fragment]
 files = [
-	"shaders/fragmentshader.spv",
+	"shaders/fragmentshader.frag.spv",
 ]
 
 # TODO: Use key/value pairs and give textures user friendly names.

@@ -31,6 +31,7 @@ find_package(Vulkan REQUIRED)
 # Dependency setup with conan
 include(conan_setup)
 
+add_subdirectory(shaders)
 add_subdirectory(src)
 
 if(${INEXOR_BUILD_BENCHMARKS})
