@@ -30,6 +30,8 @@ add_library(
     vulkan-renderer/tools/file.cpp
 )
 
+add_dependencies(inexor-vulkan-renderer inexor-shaders)
+
 set_target_properties(
     inexor-vulkan-renderer PROPERTIES
 
