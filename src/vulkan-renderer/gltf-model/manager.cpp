@@ -472,12 +472,12 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
             tinygltf::Parameter param = mat.additionalValues["alphaMode"];
 
             if (param.string_value == "BLEND") {
-                material.alphaMode = MaterialAlphaMode::ALPHAMODE_BLEND;
+                material.alphaMode = AlphaMode::blend;
             }
 
             if (param.string_value == "MASK") {
                 material.alphaCutoff = 0.5f;
-                material.alphaMode = MaterialAlphaMode::ALPHAMODE_MASK;
+                material.alphaMode = AlphaMode::mask;
             }
         }
 
@@ -557,15 +557,11 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
             AnimationSampler sampler{};
 
             if (samp.interpolation == "LINEAR") {
-                sampler.interpolation = AnimationSampler::InterpolationType::LINEAR;
-            }
-
-            if (samp.interpolation == "STEP") {
-                sampler.interpolation = AnimationSampler::InterpolationType::STEP;
-            }
-
-            if (samp.interpolation == "CUBICSPLINE") {
-                sampler.interpolation = AnimationSampler::InterpolationType::CUBICSPLINE;
+                sampler.interpolation = AnimationSampler::InterpolationType::linear;
+            } else if (samp.interpolation == "STEP") {
+                sampler.interpolation = AnimationSampler::InterpolationType::step;
+            } else if (samp.interpolation == "CUBICSPLINE") {
+                sampler.interpolation = AnimationSampler::InterpolationType::cubic_spline;
             }
 
             // Read sampler input time values.
@@ -635,15 +631,15 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
             AnimationChannel channel{};
 
             if (source.target_path == "rotation") {
-                channel.path = AnimationChannel::PathType::ROTATION;
+                channel.path = AnimationChannel::PathType::rotation;
             }
 
             if (source.target_path == "translation") {
-                channel.path = AnimationChannel::PathType::TRANSLATION;
+                channel.path = AnimationChannel::PathType::translation;
             }
 
             if (source.target_path == "scale") {
-                channel.path = AnimationChannel::PathType::SCALE;
+                channel.path = AnimationChannel::PathType::scale;
             }
 
             if (source.target_path == "weights") {
@@ -959,17 +955,17 @@ void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t inde
 
                 if (u <= 1.0f) {
                     switch (channel.path) {
-                    case AnimationChannel::PathType::TRANSLATION: {
+                    case AnimationChannel::PathType::translation: {
                         glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
                         channel.node->translation = glm::vec3(trans);
                         break;
                     }
-                    case AnimationChannel::PathType::SCALE: {
+                    case AnimationChannel::PathType::scale: {
                         glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
                         channel.node->scale = glm::vec3(trans);
                         break;
                     }
-                    case AnimationChannel::PathType::ROTATION: {
+                    case AnimationChannel::PathType::rotation: {
                         glm::quat q1;
                         q1.x = sampler.outputsVec4[i].x;
                         q1.y = sampler.outputsVec4[i].y;

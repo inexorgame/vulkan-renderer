@@ -9,7 +9,7 @@ namespace inexor::vulkan_renderer::gltf_model {
 
 ///
 struct AnimationSampler {
-    enum InterpolationType { LINEAR, STEP, CUBICSPLINE };
+    enum class InterpolationType { linear, step, cubic_spline };
 
     InterpolationType interpolation;
 

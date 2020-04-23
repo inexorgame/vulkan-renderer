@@ -9,11 +9,11 @@
 namespace inexor::vulkan_renderer::gltf_model {
 
 ///
-enum MaterialAlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
+enum class AlphaMode { opaque, mask, blend };
 
 ///
 struct Material {
-    MaterialAlphaMode alphaMode = ALPHAMODE_OPAQUE;
+    AlphaMode alphaMode = AlphaMode::opaque;
 
     float alphaCutoff = 1.0f;
     float metallicFactor = 1.0f;

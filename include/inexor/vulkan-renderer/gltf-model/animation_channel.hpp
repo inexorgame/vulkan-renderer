@@ -8,7 +8,7 @@ namespace inexor::vulkan_renderer::gltf_model {
 
 ///
 struct AnimationChannel {
-    enum PathType { TRANSLATION, ROTATION, SCALE };
+    enum class PathType { translation, rotation, scale };
 
     PathType path;
 

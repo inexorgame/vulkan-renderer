@@ -10,31 +10,31 @@
 namespace inexor::vulkan_renderer::tools {
 
 /// @brief Defines the type of an accepted command line argument.
-enum COMMAND_LINE_ARGUMENT_TYPE {
-    COMMAND_LINE_ARGUMENT_TYPE_NONE,
-    COMMAND_LINE_ARGUMENT_TYPE_STRING,
-    COMMAND_LINE_ARGUMENT_TYPE_INT64,
-    COMMAND_LINE_ARGUMENT_TYPE_UINT32,
-    COMMAND_LINE_ARGUMENT_TYPE_BOOL
+enum class CommandLineArgumentType {
+    none,
+    string,
+    int64,
+    uint32,
+    boolean,
     // TODO: Add more
 };
 
 /// @brief A command line argument template class.
 /// @noe This class does not contain any data yet!
 struct CommandLineArgumentTemplate {
-    CommandLineArgumentTemplate(const COMMAND_LINE_ARGUMENT_TYPE param_type, std::string param_name) {
+    CommandLineArgumentTemplate(const CommandLineArgumentType param_type, std::string param_name) {
         argument_type = param_type;
         argument_name = param_name;
     }
 
     std::string argument_name;
 
-    COMMAND_LINE_ARGUMENT_TYPE argument_type;
+    CommandLineArgumentType argument_type;
 };
 
 /// @brief Contains the actual command line data.
 struct CommandLineArgumentValue {
-    COMMAND_LINE_ARGUMENT_TYPE type;
+    CommandLineArgumentType type;
 
     std::string value_str;
     std::int64_t value_int64;
@@ -54,25 +54,25 @@ private:
     /// @brief This defines the list of acceptable command line arguments with their corresponding types.
     const std::vector<CommandLineArgumentTemplate> list_of_accepted_command_line_arguments{
         /// Defines which GPU to use (by array index).
-        {COMMAND_LINE_ARGUMENT_TYPE_UINT32, "-gpu"},
+        {CommandLineArgumentType::uint32, "-gpu"},
 
         /// Defines if we will print stats about graphics cards.
-        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-nostats"},
+        {CommandLineArgumentType::none, "-nostats"},
 
         // Use vertical synchronisation.
-        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-vsync"},
+        {CommandLineArgumentType::none, "-vsync"},
 
         // Use RenderDoc layer.
-        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-renderdoc"},
+        {CommandLineArgumentType::none, "-renderdoc"},
 
         // Disable Khronos validation layer.
-        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-novalidation"},
+        {CommandLineArgumentType::none, "-novalidation"},
 
         // Do not use distinct data transfer queue, use graphics queue.
-        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_separate_data_queue"},
+        {CommandLineArgumentType::none, "-no_separate_data_queue"},
 
         // Disable debug markers (even if -renderdoc is specified)
-        {COMMAND_LINE_ARGUMENT_TYPE_NONE, "-no_vk_debug_markers"}
+        {CommandLineArgumentType::none, "-no_vk_debug_markers"}
 
         /// TODO: Add more command line argumetns here!
     };
@@ -99,7 +99,7 @@ public:
 
     /// @brief Returns the type of a command line argument.
     /// @param argument_name The name of the command line argument.
-    const std::optional<COMMAND_LINE_ARGUMENT_TYPE> get_argument_template_type(const std::string &argument_name);
+    const std::optional<CommandLineArgumentType> get_argument_template_type(const std::string &argument_name);
 
     /// @brief Returns the value of a boolean command line argument (if existent).
     /// @param argument_name The name of the command line argument.

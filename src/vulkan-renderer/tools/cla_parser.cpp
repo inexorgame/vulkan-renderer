@@ -29,7 +29,7 @@ std::optional<bool> CommandLineArgumentParser::is_command_line_argument_specifie
     return std::nullopt;
 }
 
-const std::optional<COMMAND_LINE_ARGUMENT_TYPE> CommandLineArgumentParser::get_argument_template_type(const std::string &argument_name) {
+const std::optional<CommandLineArgumentType> CommandLineArgumentParser::get_argument_template_type(const std::string &argument_name) {
     if (does_command_line_argument_template_exist(argument_name)) {
         for (const auto &argument_template : list_of_accepted_command_line_arguments) {
             if (0 == argument_template.argument_name.compare(argument_name)) {
@@ -52,9 +52,9 @@ void CommandLineArgumentParser::parse_command_line_arguments(std::size_t argumen
 
             auto command_line_type = get_argument_template_type(argument_name).value();
 
-            if (COMMAND_LINE_ARGUMENT_TYPE_NONE == command_line_type) {
+            if (CommandLineArgumentType::none == command_line_type) {
                 // No follow-up argument required.
-                new_parsed_value.type = COMMAND_LINE_ARGUMENT_TYPE_NONE;
+                new_parsed_value.type = CommandLineArgumentType::none;
             } else {
                 // Check if the next argument can be accepted as index for the value.
                 if ((i + 1) < argument_count) {
@@ -63,23 +63,23 @@ void CommandLineArgumentParser::parse_command_line_arguments(std::size_t argumen
                     // Yes, this is an argument that the application supports.
                     // Now let's try to parse the argument.
                     switch (command_line_type) {
-                    case COMMAND_LINE_ARGUMENT_TYPE_STRING: {
-                        new_parsed_value.type = COMMAND_LINE_ARGUMENT_TYPE_STRING;
+                    case CommandLineArgumentType::string: {
+                        new_parsed_value.type = CommandLineArgumentType::string;
                         new_parsed_value.value_str = std::string(argument_value);
                         break;
                     }
-                    case COMMAND_LINE_ARGUMENT_TYPE_UINT32: {
-                        new_parsed_value.type = COMMAND_LINE_ARGUMENT_TYPE_UINT32;
+                    case CommandLineArgumentType::uint32: {
+                        new_parsed_value.type = CommandLineArgumentType::uint32;
                         new_parsed_value.value_uint32 = static_cast<uint32_t>(std::stoi(argument_value));
                         break;
                     }
-                    case COMMAND_LINE_ARGUMENT_TYPE_INT64: {
-                        new_parsed_value.type = COMMAND_LINE_ARGUMENT_TYPE_INT64;
+                    case CommandLineArgumentType::int64: {
+                        new_parsed_value.type = CommandLineArgumentType::int64;
                         new_parsed_value.value_int64 = static_cast<std::int64_t>(std::stoi(argument_value));
                         break;
                     }
-                    case COMMAND_LINE_ARGUMENT_TYPE_BOOL: {
-                        new_parsed_value.type = COMMAND_LINE_ARGUMENT_TYPE_BOOL;
+                    case CommandLineArgumentType::boolean: {
+                        new_parsed_value.type = CommandLineArgumentType::boolean;
 
                         if (std::stoi(argument_value) > 0) {
                             new_parsed_value.value_bool = true;
@@ -101,7 +101,7 @@ void CommandLineArgumentParser::parse_command_line_arguments(std::size_t argumen
             number_of_parsed_command_line_arguments++;
 
             // This was the parameter value for the argument, therefore move on!
-            if (COMMAND_LINE_ARGUMENT_TYPE_NONE != new_parsed_value.type) {
+            if (CommandLineArgumentType::none != new_parsed_value.type) {
                 i++;
             }
         } else {
@@ -119,7 +119,7 @@ const std::optional<bool> CommandLineArgumentParser::get_command_line_argument_b
     if (does_command_line_argument_template_exist(argument_name)) {
         if (is_command_line_argument_specified(argument_name)) {
             auto return_value = parsed_command_line_arguments[argument_name];
-            if (COMMAND_LINE_ARGUMENT_TYPE_BOOL == return_value.type) {
+            if (CommandLineArgumentType::boolean == return_value.type) {
                 return return_value.value_bool;
             }
         }
@@ -132,7 +132,7 @@ const std::optional<std::string> CommandLineArgumentParser::get_command_line_arg
     if (does_command_line_argument_template_exist(argument_name)) {
         if (is_command_line_argument_specified(argument_name)) {
             auto return_value = parsed_command_line_arguments[argument_name];
-            if (COMMAND_LINE_ARGUMENT_TYPE_STRING == return_value.type) {
+            if (CommandLineArgumentType::string == return_value.type) {
                 return return_value.value_str;
             }
         }
@@ -145,7 +145,7 @@ const std::optional<std::int64_t> CommandLineArgumentParser::get_command_line_ar
     if (does_command_line_argument_template_exist(argument_name)) {
         if (is_command_line_argument_specified(argument_name)) {
             auto return_value = parsed_command_line_arguments[argument_name];
-            if (COMMAND_LINE_ARGUMENT_TYPE_INT64 == return_value.type) {
+            if (CommandLineArgumentType::int64 == return_value.type) {
                 return return_value.value_int64;
             }
         }
@@ -158,7 +158,7 @@ const std::optional<std::uint32_t> CommandLineArgumentParser::get_command_line_a
     if (does_command_line_argument_template_exist(argument_name)) {
         if (is_command_line_argument_specified(argument_name)) {
             auto return_value = parsed_command_line_arguments[argument_name];
-            if (COMMAND_LINE_ARGUMENT_TYPE_UINT32 == return_value.type) {
+            if (CommandLineArgumentType::uint32 == return_value.type) {
                 return return_value.value_uint32;
             }
         }
