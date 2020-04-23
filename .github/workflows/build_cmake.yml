@@ -38,20 +38,20 @@ jobs:
         sudo apt install -y libglm-dev libxcb-dri3-0 libxcb-present0 libpciaccess0 libpng-dev libxcb-keysyms1-dev libxcb-dri3-dev libx11-dev  libmirclient-dev libwayland-dev libxrandr-dev libxcb-ewmh-dev
         sudo apt install -y cmake ninja-build clang-tidy
         pip3 install wheel setuptools
-        pip3 install conan
+        pip3 install conan mako
 
     - name: Install Vulkan SDK
       shell: bash
       run: |
-        wget -O vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ matrix.config.vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ matrix.config.vulkan_version }}.tar.gz
+        curl -L -S -o vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ matrix.config.vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ matrix.config.vulkan_version }}.tar.gz
         mkdir "${{ matrix.config.vulkan_sdk }}"
         tar zxf vulkansdk.tar.gz -C "${{ matrix.config.vulkan_sdk }}"
 
     - name: Create CMake
       shell: bash
       run: |
-        CC=${{ matrix.config.cc }}
-        CXX=${{ matrix.config.cxx }}
+        export CC=${{ matrix.config.cc }}
+        export CXX=${{ matrix.config.cxx }}
         export PATH="${{ matrix.config.conan_path }}":$PATH
         export VULKAN_SDK="${{ matrix.config.vulkan_sdk }}/${{ matrix.config.vulkan_version }}/x86_64"
         export PATH=$VULKAN_SDK/bin:$PATH
@@ -59,7 +59,7 @@ jobs:
         export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
         conan profile new default --detect
         conan profile update settings.compiler.libcxx=libstdc++11 default
-        cmake -G Ninja -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D INEXOR_USE_VMA_RECORDING=OFF ./
+        cmake -G Ninja -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D INEXOR_CONAN_PROFILE=default -D INEXOR_USE_VMA_RECORDING=OFF ./
 
     - name: Build
       shell: bash
@@ -93,7 +93,7 @@ jobs:
           - {
             name: "Windows MSVC",
             artifact: "windows-msvc.zip",
-            build_type: "Release", cc: "cl.exe", cxx: "cl.exe",
+            build_type: "Release", cc: "cl", cxx: "cl",
             vulkan_version: "1.2.131.1",
             vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
             conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=16 default',
@@ -106,7 +106,7 @@ jobs:
             build_type: "Release", cc: "gcc", cxx: "g++",
             vulkan_version: "1.2.131.1",
             vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/",
-            conan_profile_update: 'conan profile update settings.compiler=gcc default; conan profile remove settings.compiler.version default; conan profile update settings.compiler.libcxx=libstdc++11 default',
+            conan_profile_update: 'conan profile update settings.compiler.libcxx=libstdc++11 default',
             cmake_options: '-G Ninja',
           }
 
@@ -115,31 +115,35 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Update environment
+        shell: pwsh
         run: |
           pip3 install wheel setuptools
           pip3 install conan
           choco install ninja
 
       - name: Install Vulkan SDK
+        shell: pwsh
         run: |
           curl -L -S -o vulkansdk.exe https://vulkan.lunarg.com/sdk/download/${{ matrix.config.vulkan_version }}/windows/VulkanSDK-${{ matrix.config.vulkan_version }}-Installer.exe?Human=true
           7z x vulkansdk.exe -o"${{ matrix.config.vulkan_sdk }}"
 
       - name: Create CMake
+        shell: pwsh
         run: |
-          $CC="${{ matrix.config.cc }}"
-          $CXX="${{ matrix.config.cxx }}"
+          $env:CC="${{ matrix.config.cc }}"
+          $env:CXX="${{ matrix.config.cxx }}"
           $env:Path += ";${{ matrix.config.vulkan_sdk }}\"
           conan profile new default --detect --force
           ${{ matrix.config.conan_profile_update }}
-          cmake ${{ matrix.config.cmake_options }} -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ./
+          cmake ${{ matrix.config.cmake_options }} -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D INEXOR_CONAN_PROFILE=default ./
 
       - name: Build
-        shell: bash
+        shell: pwsh
         run: |
           cmake --build ./build/ ${{ matrix.config.cmake_build_options }}
 
       - name: Prepare upload
+        shell: pwsh
         run: |
           7z a -tzip ./${{ matrix.config.artifact }} ./build/*
 
