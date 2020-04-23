@@ -3,7 +3,7 @@
 namespace inexor::vulkan_renderer {
 
 VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
-                                          const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
+                                    const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
     assert(vma_allocator);
     assert(debug_marker_manager);
@@ -25,7 +25,7 @@ VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &
 }
 
 VkResult UniformBufferManager::create_buffer(std::string &internal_buffer_name, const VkDeviceSize &buffer_size,
-                                                   std::shared_ptr<UniformBuffer> &buffer_object) {
+                                             std::shared_ptr<UniformBuffer> &buffer_object) {
     assert(uniform_buffer_initialised);
     assert(vma_allocator);
     assert(debug_marker_manager);
@@ -50,7 +50,7 @@ VkResult UniformBufferManager::create_buffer(std::string &internal_buffer_name, 
 }
 
 VkResult UniformBufferManager::create_uniform_buffer(const std::string &internal_uniform_buffer_name, const VkDeviceSize &uniform_buffer_size,
-                                                           std::shared_ptr<UniformBuffer> &uniform_buffer) {
+                                                     std::shared_ptr<UniformBuffer> &uniform_buffer) {
     assert(uniform_buffer_initialised);
     assert(uniform_buffer_size > 0);
     assert(!internal_uniform_buffer_name.empty());
@@ -84,7 +84,7 @@ VkResult UniformBufferManager::create_uniform_buffer(const std::string &internal
 }
 
 VkResult UniformBufferManager::update_uniform_buffer(const std::string &internal_uniform_buffer_name, void *data_source_address,
-                                                           const std::size_t uniform_buffer_size) {
+                                                     const std::size_t uniform_buffer_size) {
     assert(uniform_buffer_initialised);
     assert(!internal_uniform_buffer_name.empty());
     assert(data_source_address);
@@ -114,7 +114,7 @@ VkResult UniformBufferManager::update_uniform_buffer(const std::string &internal
 }
 
 VkResult UniformBufferManager::update_uniform_buffer(std::shared_ptr<UniformBuffer> &uniform_buffer, void *uniform_buffer_new_data_source,
-                                                           const std::size_t uniform_buffer_size) {
+                                                     const std::size_t uniform_buffer_size) {
     assert(uniform_buffer_initialised);
     assert(uniform_buffer_new_data_source);
     assert(uniform_buffer_size > 0);

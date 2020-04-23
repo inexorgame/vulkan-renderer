@@ -125,8 +125,7 @@ private:
     std::atomic<bool> stop_threads = false;
 };
 
-template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int>>
-auto ThreadPool::execute(F function, Args &&... args) {
+template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int>> auto ThreadPool::execute(F function, Args &&... args) {
     spdlog::warn("Executing task from task list.");
 
     // Lock the task list so we can add the new task.

@@ -3,7 +3,7 @@
 namespace inexor::vulkan_renderer {
 
 VkResult MeshBufferManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
-                                       const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
+                                 const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(data_transfer_queue);
@@ -28,7 +28,7 @@ VkResult MeshBufferManager::init(const VkDevice &device, const std::shared_ptr<V
 }
 
 VkResult MeshBufferManager::create_buffer(std::string buffer_description, Buffer &buffer_object, const VkDeviceSize &buffer_size,
-                                                const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage) {
+                                          const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage) {
     assert(mesh_buffer_manager_initialised);
     assert(vma_allocator);
     assert(debug_marker_manager);
@@ -122,9 +122,8 @@ VkResult MeshBufferManager::upload_data_to_gpu() {
     return result;
 }
 
-VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
-                                                       const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices,
-                                                       std::shared_ptr<MeshBuffer> &output_mesh_buffer) {
+VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mesh_buffer_name, const void *vertices, const std::size_t size_of_vertex_structure,
+                                                 const std::size_t number_of_vertices, std::shared_ptr<MeshBuffer> &output_mesh_buffer) {
     assert(mesh_buffer_manager_initialised);
     assert(size_of_vertex_structure > 0);
     assert(number_of_vertices > 0);
@@ -270,10 +269,9 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
 }
 
 VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::string &internal_mesh_buffer_name, const void *vertices,
-                                                                         const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices,
-                                                                         const void *indices, const std::size_t size_of_index_structure,
-                                                                         const std::size_t number_of_indices,
-                                                                         std::shared_ptr<MeshBuffer> &mesh_buffer_output) {
+                                                                   const std::size_t size_of_vertex_structure, const std::size_t number_of_vertices,
+                                                                   const void *indices, const std::size_t size_of_index_structure,
+                                                                   const std::size_t number_of_indices, std::shared_ptr<MeshBuffer> &mesh_buffer_output) {
     assert(mesh_buffer_manager_initialised);
     assert(!internal_mesh_buffer_name.empty());
     assert(vertices);

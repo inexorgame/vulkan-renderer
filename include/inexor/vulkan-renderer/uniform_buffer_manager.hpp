@@ -75,8 +75,7 @@ public:
     /// @param uniform_buffer_new_data_source [in] A pointer to the new uniform buffer data.
     /// @param uniform_buffer_size [in] The size of the uniform buffer to copy from.
     /// @warning The size of the source memory must not be greater than the size of the target memory!
-    VkResult update_uniform_buffer(std::shared_ptr<UniformBuffer> &uniform_buffer, void *uniform_buffer_new_data_source,
-                                   const std::size_t uniform_buffer_size);
+    VkResult update_uniform_buffer(std::shared_ptr<UniformBuffer> &uniform_buffer, void *uniform_buffer_new_data_source, const std::size_t uniform_buffer_size);
 
     /// @brief Destroys all uniform buffers.
     VkResult shutdown_uniform_buffers();
