@@ -3,7 +3,7 @@
 namespace inexor::vulkan_renderer {
 
 VkResult DescriptorManager::init(const VkDevice &device, const std::size_t number_of_images_in_swapchain,
-                                       const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
+                                 const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(!descriptor_manager_initialised);
     assert(device);
     assert(debug_marker_manager);
@@ -19,7 +19,7 @@ VkResult DescriptorManager::init(const VkDevice &device, const std::size_t numbe
 }
 
 VkResult DescriptorManager::create_descriptor_pool(const std::string &internal_descriptor_pool_name, const std::vector<VkDescriptorPoolSize> &pool_sizes,
-                                                         std::shared_ptr<DescriptorPool> &descriptor_pool) {
+                                                   std::shared_ptr<DescriptorPool> &descriptor_pool) {
     assert(descriptor_manager_initialised);
     assert(number_of_images_in_swapchain > 0);
     assert(!internal_descriptor_pool_name.empty());
@@ -60,7 +60,7 @@ VkResult DescriptorManager::create_descriptor_pool(const std::string &internal_d
 }
 
 VkResult DescriptorManager::create_descriptor_bundle(const std::string &internal_descriptor_name, std::shared_ptr<DescriptorPool> &descriptor_pool,
-                                                           std::shared_ptr<DescriptorBundle> &descriptor_bundle) {
+                                                     std::shared_ptr<DescriptorBundle> &descriptor_bundle) {
     assert(descriptor_manager_initialised);
     assert(number_of_images_in_swapchain > 0);
     assert(!internal_descriptor_name.empty());
@@ -84,7 +84,7 @@ VkResult DescriptorManager::create_descriptor_bundle(const std::string &internal
 }
 
 VkResult DescriptorManager::add_descriptor_set_layout_binding(std::shared_ptr<DescriptorBundle> descriptor_bundle,
-                                                                    const VkDescriptorSetLayoutBinding &descriptor_set_layout_binding) {
+                                                              const VkDescriptorSetLayoutBinding &descriptor_set_layout_binding) {
     assert(descriptor_manager_initialised);
     assert(descriptor_bundle);
 
@@ -96,8 +96,7 @@ VkResult DescriptorManager::add_descriptor_set_layout_binding(std::shared_ptr<De
     return VK_SUCCESS;
 }
 
-VkResult DescriptorManager::add_write_descriptor_set(std::shared_ptr<DescriptorBundle> descriptor_bundle,
-                                                           const VkWriteDescriptorSet &write_descriptor_set) {
+VkResult DescriptorManager::add_write_descriptor_set(std::shared_ptr<DescriptorBundle> descriptor_bundle, const VkWriteDescriptorSet &write_descriptor_set) {
     assert(descriptor_manager_initialised);
     assert(descriptor_bundle);
 

@@ -7,9 +7,8 @@
 namespace inexor::vulkan_renderer::gltf_model {
 
 VkResult Manager::init(const VkDevice &device, const std::shared_ptr<VulkanTextureManager> texture_manager,
-                                  const std::shared_ptr<UniformBufferManager> uniform_buffer_manager,
-                                  const std::shared_ptr<MeshBufferManager> mesh_buffer_manager,
-                                  const std::shared_ptr<DescriptorManager> descriptor_manager) {
+                       const std::shared_ptr<UniformBufferManager> uniform_buffer_manager, const std::shared_ptr<MeshBufferManager> mesh_buffer_manager,
+                       const std::shared_ptr<DescriptorManager> descriptor_manager) {
     assert(texture_manager);
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);
@@ -30,8 +29,7 @@ VkResult Manager::init(const VkDevice &device, const std::shared_ptr<VulkanTextu
     return VK_SUCCESS;
 }
 
-void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<Model> model,
-                                   float globalscale) {
+void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<Model> model, float globalscale) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -766,8 +764,8 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
     if (number_of_indices > 0) {
         // Create a vertex buffer with an index buffer, as it should always be!
         VkResult result = mesh_buffer_manager->create_vertex_buffer_with_index_buffer(
-            file_name, new_model->vertex_buffer_cache.data(), sizeof(ModelVertex), new_model->vertex_buffer_cache.size(),
-            new_model->index_buffer_cache.data(), sizeof(uint32_t), number_of_indices, new_model->mesh);
+            file_name, new_model->vertex_buffer_cache.data(), sizeof(ModelVertex), new_model->vertex_buffer_cache.size(), new_model->index_buffer_cache.data(),
+            sizeof(uint32_t), number_of_indices, new_model->mesh);
         vulkan_error_check(result);
     } else {
         // Always make sure you use a model which has indices.
@@ -784,8 +782,7 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
     return VK_SUCCESS;
 }
 
-void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout,
-                                     std::size_t current_image_index) {
+void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -827,7 +824,7 @@ void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer comma
 }
 
 VkResult Manager::render_model(const std::string &internal_model_name, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout,
-                                          std::size_t current_image_index) {
+                               std::size_t current_image_index) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -857,8 +854,7 @@ VkResult Manager::render_model(const std::string &internal_model_name, VkCommand
     return VK_SUCCESS;
 }
 
-void Manager::calculate_bounding_box(std::shared_ptr<Model> model, std::shared_ptr<ModelNode> node,
-                                                std::shared_ptr<ModelNode> parent) {
+void Manager::calculate_bounding_box(std::shared_ptr<Model> model, std::shared_ptr<ModelNode> node, std::shared_ptr<ModelNode> parent) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -1066,7 +1062,9 @@ VkResult Manager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLa
     return VK_SUCCESS;
 }
 
-VkResult Manager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) { return VK_SUCCESS; }
+VkResult Manager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) {
+    return VK_SUCCESS;
+}
 
 VkResult Manager::setup_node_descriptor_set(std::shared_ptr<ModelNode> node) {
     if (node->mesh) {

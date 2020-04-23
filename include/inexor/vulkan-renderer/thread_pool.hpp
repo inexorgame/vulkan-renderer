@@ -55,7 +55,8 @@ public:
 
     /// @brief Executes a task from the tasklist.
     /// @note We only accept invokable arguments in the template.
-    template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int> = 0> auto execute(F, Args &&...);
+    template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int> = 0>
+    auto execute(F, Args &&...);
 
 private:
     //_task_container_base and _task_container exist simply as a wrapper around a
@@ -81,7 +82,8 @@ private:
     ///
     ///
     ///
-    template <typename F> class TaskContainer : public TaskContainerBase {
+    template <typename F>
+    class TaskContainer : public TaskContainerBase {
     public:
         // here, std::forward is needed because we need the construction of _f *not* to
         //  bind an lvalue reference - it is not a guarantee that an object of type F is
@@ -95,14 +97,17 @@ private:
         ///
         ///
         ///
-        void operator()() override { _f(); }
+        void operator()() override {
+            _f();
+        }
 
     private:
         F _f;
     };
 
     /// @brief Returns a unique pointer to a Task container that wraps around a given function
-    template <typename Task> static std::unique_ptr<TaskContainerBase> allocate_task_container(Task &&f) {
+    template <typename Task>
+    static std::unique_ptr<TaskContainerBase> allocate_task_container(Task &&f) {
         spdlog::debug("Allocating task container.");
 
         // in the construction of the _task_container, f must be std::forward'ed because

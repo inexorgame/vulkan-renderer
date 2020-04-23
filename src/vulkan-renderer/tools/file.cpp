@@ -2,9 +2,13 @@
 
 namespace inexor::vulkan_renderer::tools {
 
-const std::size_t File::get_file_size() const { return file_size; }
+const std::size_t File::get_file_size() const {
+    return file_size;
+}
 
-const std::vector<char> &File::get_file_data() const { return file_data; }
+const std::vector<char> &File::get_file_data() const {
+    return file_data;
+}
 
 bool File::load_file(const std::string &file_name) {
     assert(file_name.size() > 0);

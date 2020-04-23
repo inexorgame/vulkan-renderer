@@ -60,8 +60,8 @@ private:
     /// @param buffer_usage [in] The buffer usage flags.
     /// @param memory_usage [in] The VMA memory usage flags.
     /// @param image_usage_flags [in] The image usage flags.
-    VkResult create_texture_image(std::shared_ptr<Texture> texture, const VkFormat &format, const VkImageTiling &tiling,
-                                  const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage, const VkImageUsageFlags &image_usage_flags);
+    VkResult create_texture_image(std::shared_ptr<Texture> texture, const VkFormat &format, const VkImageTiling &tiling, const VkBufferUsageFlags &buffer_usage,
+                                  const VmaMemoryUsage &memory_usage, const VkImageUsageFlags &image_usage_flags);
 
     /// @brief Creates a texture image view.
     /// @param texture [in] The texture for which a buffer will be created.
@@ -102,8 +102,7 @@ public:
     /// @param internal_texture_name [in] The internal name which will be used inside the engine.
     /// @param texture_file_name [in] The name of the texture file.
     /// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
-    VkResult create_texture_from_file(const std::string &internal_texture_name, const std::string &texture_file_name,
-                                      std::shared_ptr<Texture> output_texture);
+    VkResult create_texture_from_file(const std::string &internal_texture_name, const std::string &texture_file_name, std::shared_ptr<Texture> output_texture);
 
     /// @brief Create a texture from an unsigned char buffer.
     /// @param internal_texture_name [in] The internal name which will be used inside the engine.
@@ -117,8 +116,7 @@ public:
     /// @param internal_texture_name [in] The internal name which will be used inside the engine.
     /// @param gltf_image [in] The glTF 2.0 image.
     /// @param output_texture [out] The texture which will be created. It can be nullptr if creating the texture fails.
-    VkResult create_texture_from_glTF2_image(const std::string &internal_texture_name, tinygltf::Image &gltf_image,
-                                             std::shared_ptr<Texture> output_texture);
+    VkResult create_texture_from_glTF2_image(const std::string &internal_texture_name, tinygltf::Image &gltf_image, std::shared_ptr<Texture> output_texture);
 
     /// @brief Returns a certain texture by internal name (key).
     /// @param internal_texture_name [in] The internal name of the texture
