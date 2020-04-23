@@ -16,7 +16,6 @@ conan_add_remote(
     URL https://api.bintray.com/conan/bincrafters/public-conan
 )
 
-option(INEXOR_CONAN_PROFILE "conan profile" default)
 conan_cmake_run(
     CONANFILE conanfile.py
     BASIC_SETUP
