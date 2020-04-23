@@ -7,8 +7,6 @@
 
 using namespace inexor::vulkan_renderer;
 
-Application renderer;
-
 int main(int argc, char *argv[]) {
     spdlog::init_thread_pool(8192, 2);
 
@@ -23,9 +21,9 @@ int main(int argc, char *argv[]) {
     spdlog::set_default_logger(vulkan_renderer_log);
 
     spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
-
     spdlog::debug("Parsing command line arguments.");
 
+    Application renderer;
     // We use some simple command line argument parser we wrote ourselves.
     renderer.parse_command_line_arguments(argc, argv);
 
