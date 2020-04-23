@@ -12,9 +12,11 @@
 #include <type_traits>
 #include <vector>
 
+namespace inexor {
+
 // We should at least create 6 worker threads.
 // Most systems nowadays have at least 8 cores.
-constexpr unsigned int INEXOR_THREADPOOL_MIN_THREAD_COUNT = 6;
+constexpr unsigned int THREADPOOL_MIN_THREAD_COUNT = 6;
 
 // The maximum number of threads is not limitex here,
 // but should not exceede std::thread::hardware_concurrency();
@@ -23,9 +25,7 @@ constexpr unsigned int INEXOR_THREADPOOL_MIN_THREAD_COUNT = 6;
 // The function should be interpreted as a hint only! In that case,
 // let's use just 8 threads. In the worst case we generate more
 // threads than cpu cores are available, generating overhead.
-constexpr unsigned int INEXOR_THREADPOOL_BACKUP_CPU_CORE_COUNT = 8;
-
-namespace inexor {
+constexpr unsigned int THREADPOOL_BACKUP_CPU_CORE_COUNT = 8;
 
 // TODO: Minimum number of threads.
 // TODO: Maximum number of threads.

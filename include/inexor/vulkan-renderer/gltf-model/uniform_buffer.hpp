@@ -2,10 +2,10 @@
 
 #include <glm/glm.hpp>
 
-// Changing this value here also requires changing it in the vertex shader.
-#define MAX_NUM_JOINTS 128u
-
 namespace inexor::vulkan_renderer::gltf_model {
+
+// Changing this value here also requires changing it in the vertex shader.
+constexpr uint32_t MAX_NUM_JOINTS = 128u;
 
 /// @brief Inexor's standard uniform buffer block for glTF 2.0 models.
 struct StandardUniformBufferBlock {

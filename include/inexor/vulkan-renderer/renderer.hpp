@@ -40,11 +40,11 @@
 #include <string>
 #include <vector>
 
+namespace inexor::vulkan_renderer {
+
 // The maximum number of images to process simultaneously.
 // TODO: Refactoring! That is triple buffering essentially!
-#define INEXOR_MAX_FRAMES_IN_FLIGHT 3
-
-namespace inexor::vulkan_renderer {
+constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3;
 
 class VulkanRenderer {
 public:

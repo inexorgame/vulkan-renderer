@@ -11,7 +11,7 @@ ThreadPool::ThreadPool(std::size_t thread_count) {
         spdlog::warn("Number of CPU cores could not be determined!");
 
         // Let's just use the standard number of threads then.
-        number_of_cpu_cores = INEXOR_THREADPOOL_BACKUP_CPU_CORE_COUNT;
+        number_of_cpu_cores = THREADPOOL_BACKUP_CPU_CORE_COUNT;
 
         spdlog::warn("Using {} threads!", number_of_cpu_cores);
     } else {
@@ -20,12 +20,12 @@ ThreadPool::ThreadPool(std::size_t thread_count) {
 
     spdlog::debug("Constructing threads.");
 
-    if (thread_count < INEXOR_THREADPOOL_MIN_THREAD_COUNT) {
+    if (thread_count < THREADPOOL_MIN_THREAD_COUNT) {
         spdlog::warn("The desired number of threads to create is too small for the engine to run!");
-        spdlog::warn("Creating {} threads ", INEXOR_THREADPOOL_MIN_THREAD_COUNT);
+        spdlog::warn("Creating {} threads ", THREADPOOL_MIN_THREAD_COUNT);
 
         // Let's just use the minimum number of threads then.
-        thread_count = INEXOR_THREADPOOL_MIN_THREAD_COUNT;
+        thread_count = THREADPOOL_MIN_THREAD_COUNT;
     }
 
     // If the number of threads exceedes the number of cpu cores,

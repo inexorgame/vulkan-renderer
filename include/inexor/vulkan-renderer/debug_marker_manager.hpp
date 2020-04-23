@@ -11,12 +11,12 @@ namespace inexor::vulkan_renderer {
 
 // Predefined color markers.
 // These colors will be visible in RenderDoc.
-#define INEXOR_DEBUG_MARKER_BLUE glm::vec4(0.0f, 148 / 255, 1.0f, 1.0f)
-#define INEXOR_DEBUG_MARKER_RED glm::vec4(1.0f, 0.0f, 21 / 255, 1.0f)
-#define INEXOR_DEBUG_MARKER_YELLOW glm::vec4(1.0f, 1.0f, 0.0f, 1.0f)
-#define INEXOR_DEBUG_MARKER_PURPLE glm::vec4(1.0f, 0.0f, 180 / 255, 1.0f)
-#define INEXOR_DEBUG_MARKER_GREEN glm::vec4(40 / 255, 210 / 255, 0.0f, 1.0f)
-#define INEXOR_DEBUG_MARKER_ORANGE glm::vec4(1.0f, 100 / 255, 0.0f, 1.0f)
+constexpr glm::vec4 DEBUG_MARKER_BLUE = glm::vec4(0.0f, 148 / 255, 1.0f, 1.0f);
+constexpr glm::vec4 DEBUG_MARKER_RED = glm::vec4(1.0f, 0.0f, 21 / 255, 1.0f);
+constexpr glm::vec4 DEBUG_MARKER_YELLOW = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+constexpr glm::vec4 DEBUG_MARKER_PURPLE = glm::vec4(1.0f, 0.0f, 180 / 255, 1.0f);
+constexpr glm::vec4 DEBUG_MARKER_GREEN = glm::vec4(40 / 255, 210 / 255, 0.0f, 1.0f);
+constexpr glm::vec4 DEBUG_MARKER_ORANGE = glm::vec4(1.0f, 100 / 255, 0.0f, 1.0f);
 
 /// @brief A manager class for Vulkan debug markers.
 /// Debug markers are very useful because they allow single steps of the

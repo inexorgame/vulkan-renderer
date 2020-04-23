@@ -257,7 +257,7 @@ VkResult Application::render_frame() {
         recreate_swapchain();
     }
 
-    current_frame = (current_frame + 1) % INEXOR_MAX_FRAMES_IN_FLIGHT;
+    current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 
     auto fps_value = fps_counter.update();
 
