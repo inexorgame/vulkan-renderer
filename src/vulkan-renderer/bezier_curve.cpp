@@ -19,16 +19,22 @@ float BezierCurve::bernstein_polynomial(uint32_t n, uint32_t k, const float curv
     return binomial_coefficient(n, k) * static_cast<float>(pow(curve_precision, k)) * static_cast<float>(pow(1 - curve_precision, n - k)) * coordinate_value;
 }
 
-void BezierCurve::clear_output() { std::vector<BezierOutputPoint> output_points; }
+void BezierCurve::clear_output() {
+    std::vector<BezierOutputPoint> output_points;
+}
 
-void BezierCurve::clear_input() { std::vector<BezierInputPoint> input_points; }
+void BezierCurve::clear_input() {
+    std::vector<BezierInputPoint> input_points;
+}
 
 void BezierCurve::clear() {
     clear_input();
     clear_output();
 }
 
-bool BezierCurve::is_curve_generated() { return curve_generated; }
+bool BezierCurve::is_curve_generated() {
+    return curve_generated;
+}
 
 std::vector<BezierOutputPoint> BezierCurve::get_output_points() {
     assert(curve_generated);

@@ -12,7 +12,8 @@ namespace inexor::vulkan_renderer {
 /// key/value pairs for various data types. In most cases, std::string is the
 /// key. The value however can be of an arbitrary data type. This template class
 /// bundles common add/get/update/delete methods in a thread safe enviroment.
-template <typename T> class ManagerClassTemplate {
+template <typename T>
+class ManagerClassTemplate {
 private:
     std::unordered_map<std::string, std::shared_ptr<T>> stored_types;
 

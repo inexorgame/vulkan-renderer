@@ -31,7 +31,9 @@ struct Mesh {
 
     /// @brief Sets the model matrix.
     /// @param mat [in] The input matrix.
-    void set_matrix(const glm::mat4 &mat) { uniform_block.matrix = mat; }
+    void set_matrix(const glm::mat4 &mat) {
+        uniform_block.matrix = mat;
+    }
 
     /// @brief Sets the bounding box of the model.
     /// @param min [in] The minimum vector (edge of the bounding box)

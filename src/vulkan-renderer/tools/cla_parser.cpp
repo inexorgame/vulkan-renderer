@@ -113,7 +113,9 @@ void CommandLineArgumentParser::parse_command_line_arguments(std::size_t argumen
     }
 }
 
-const std::int64_t CommandLineArgumentParser::get_number_of_parsed_command_line_arguments() { return number_of_parsed_command_line_arguments; }
+const std::int64_t CommandLineArgumentParser::get_number_of_parsed_command_line_arguments() {
+    return number_of_parsed_command_line_arguments;
+}
 
 const std::optional<bool> CommandLineArgumentParser::get_command_line_argument_bool(const std::string &argument_name) {
     if (does_command_line_argument_template_exist(argument_name)) {

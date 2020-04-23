@@ -1066,7 +1066,9 @@ VkResult Manager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLa
     return VK_SUCCESS;
 }
 
-VkResult Manager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) { return VK_SUCCESS; }
+VkResult Manager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) {
+    return VK_SUCCESS;
+}
 
 VkResult Manager::setup_node_descriptor_set(std::shared_ptr<ModelNode> node) {
     if (node->mesh) {
