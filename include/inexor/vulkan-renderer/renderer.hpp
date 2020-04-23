@@ -107,7 +107,7 @@ protected:
 
     VkPresentModeKHR selected_present_mode;
 
-    VkSwapchainKHR swapchain;
+    VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 
     uint32_t number_of_images_in_swapchain = 0;
 
