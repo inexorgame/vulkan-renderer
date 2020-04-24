@@ -1046,11 +1046,8 @@ VkResult Manager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLa
             vkCmdBindIndexBuffer(command_buffer, model->mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
+        // TODO:
         // Opaque primitives first.
-        for (auto node : model->nodes) {
-            render_node(node, command_buffer, pipeline_layout, current_image_index);
-        }
-
         // Alpha masked primitives.
         for (auto node : model->nodes) {
             render_node(node, command_buffer, pipeline_layout, current_image_index);
@@ -1063,34 +1060,15 @@ VkResult Manager::render_all_models(VkCommandBuffer command_buffer, VkPipelineLa
 }
 
 VkResult Manager::create_model_descriptors(const std::size_t number_of_images_in_swapchain) {
+    
+    // TODO!
+
     return VK_SUCCESS;
 }
 
 VkResult Manager::setup_node_descriptor_set(std::shared_ptr<ModelNode> node) {
     if (node->mesh) {
-        // TODO!
-        /*
-        VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-
-        descriptorSetAllocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        descriptorSetAllocInfo.descriptorPool     = descriptor_pool;
-        descriptorSetAllocInfo.pSetLayouts        = &descriptor_set_for_gltf_model_nodes;
-        descriptorSetAllocInfo.descriptorSetCount = 1;
-
-        VkResult result = vkAllocateDescriptorSets(device, &descriptorSetAllocInfo, &node->mesh->uniform_buffer->descriptor_set);
-        vulkan_error_check(result);
-
-        VkWriteDescriptorSet writeDescriptorSet{};
-
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.dstSet = node->mesh->uniform_buffer->descriptor_set;
-        writeDescriptorSet.dstBinding = 0;
-        writeDescriptorSet.pBufferInfo = &node->mesh->uniform_buffer->descriptor_buffer_info;
-
-        vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
-        */
+        // TODO
     }
 
     for (auto &child : node->children) {
