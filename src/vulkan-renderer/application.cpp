@@ -16,57 +16,44 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->frame_buffer_resized = true;
 }
 
-VkResult Application::load_TOML_configuration_file(const std::string &TOML_file_name) {
-    spdlog::debug("Loading TOML configuration file: '{}'.", TOML_file_name);
+VkResult Application::load_toml_configuration(const std::string &file_name) {
+    spdlog::debug("Loading TOML configuration file: '{}'", file_name);
 
-    std::ifstream toml_file;
-
-    // Check if this file exists.
-    toml_file.open(TOML_file_name.c_str(), std::ios::in);
-
-    if (!toml_file.is_open()) {
-        spdlog::error("Could not open configuration file: '{}'!", TOML_file_name);
+    std::ifstream file(file_name, std::ios::in);
+    if (!file) {
+        spdlog::error("Could not open configuration file: '{}'!", file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    toml_file.close();
-
     // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(TOML_file_name);
+    auto renderer_configuration = toml::parse(file);
 
     // Search for the title of the configuration file and print it to debug output.
     auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
     spdlog::debug("Title: '{}'", configuration_title);
 
     window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
-    window_height = toml::find<int>(renderer_configuration, "application", "window", "width");
+    window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
     window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
-
     spdlog::debug("Window: '{}', {} x {}", window_title, window_width, window_height);
 
     application_name = toml::find<std::string>(renderer_configuration, "application", "name");
     engine_name = toml::find<std::string>(renderer_configuration, "application", "engine", "name");
-
-    spdlog::debug("Application name: '{}'.", application_name);
-
-    spdlog::debug("engine name: '{}'", engine_name);
+    spdlog::debug("Application name: '{}'", application_name);
+    spdlog::debug("Engine name: '{}'", engine_name);
 
     int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
     int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor");
     int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
-
     spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
-
-    // Generate an uint32_t value from the major, minor and patch version info.
-    application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
 
     int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
     int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
     int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
-
     spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
 
     // Generate an uint32_t value from the major, minor and patch version info.
+    application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
     engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
 
     texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
@@ -315,7 +302,7 @@ VkResult Application::init() {
     thread_pool = std::make_shared<ThreadPool>();
 
     // Load the configuration from the TOML file.
-    VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
+    VkResult result = load_toml_configuration("configuration/renderer.toml");
     vulkan_error_check(result);
 
     spdlog::debug("Creating window.");
