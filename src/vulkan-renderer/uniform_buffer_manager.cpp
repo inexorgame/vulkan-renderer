@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
+VkResult UniformBufferManager::init(const VkDevice &device, const uint32_t number_of_images_in_swapchain, const VmaAllocator &vma_allocator,
                                     const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
     assert(vma_allocator);
@@ -15,6 +15,7 @@ VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &
     this->device = device;
     this->debug_marker_manager = debug_marker_manager;
     this->vma_allocator = vma_allocator;
+    this->number_of_images_in_swapchain = number_of_images_in_swapchain;
 
     spdlog::debug("Clearing uniform buffer storage.");
 

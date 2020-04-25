@@ -606,7 +606,7 @@ VkResult Application::init() {
     result = create_command_pool();
     vulkan_error_check(result);
 
-    result = uniform_buffer_manager->init(device, vma_allocator, debug_marker_manager);
+    result = uniform_buffer_manager->init(device, number_of_images_in_swapchain, vma_allocator, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_uniform_buffers();
