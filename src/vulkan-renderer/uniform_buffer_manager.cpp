@@ -15,7 +15,6 @@ VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &
     this->device = device;
     this->debug_marker_manager = debug_marker_manager;
     this->vma_allocator = vma_allocator;
-    this->number_of_images_in_swapchain = number_of_images_in_swapchain;
 
     spdlog::debug("Clearing uniform buffer storage.");
 
