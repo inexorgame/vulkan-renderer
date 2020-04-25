@@ -141,7 +141,7 @@ VkResult Application::load_shaders() {
 
     spdlog::debug("Loading vertex shaders.");
 
-    if (0 == vertex_shader_files.size()) {
+    if (vertex_shader_files.empty()) {
         spdlog::error("No vertex shaders to load!");
     }
 
@@ -160,7 +160,7 @@ VkResult Application::load_shaders() {
 
     spdlog::debug("Loading fragment shaders.");
 
-    if (0 == fragment_shader_files.size()) {
+    if (fragment_shader_files.empty()) {
         spdlog::error("No fragment shaders to load!");
     }
 
