@@ -1,13 +1,4 @@
-//
-// Created by moritz on 21.04.20.
-//
-
-#include "Cube.h"
-//
-// Created by moritz on 16.04.20.
-//
-
-#include "Cube.h"
+#include <inexor/vulkan-renderer/world/Cube.hpp>
 
 using namespace inexor::world;
 

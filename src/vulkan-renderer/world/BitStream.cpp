@@ -1,8 +1,4 @@
-//
-// Created by moritz on 21.04.20.
-//
-
-#include "BitStream.h"
+#include <inexor/vulkan-renderer/world/BitStream.hpp>
 
 using namespace inexor;
 

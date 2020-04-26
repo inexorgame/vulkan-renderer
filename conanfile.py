@@ -11,6 +11,7 @@ class InexorConan(ConanFile):
 
     requires = (
         "benchmark/1.5.0",
+#        "boost/1.72.0", # TODO: Correctly include boost.
         "glm/0.9.9.7",
         "gtest/1.10.0",
         "spdlog/1.5.0",

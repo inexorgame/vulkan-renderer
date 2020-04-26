@@ -2,9 +2,8 @@
 // Created by moritz on 21.04.20.
 //
 
-#ifndef INEXOR_VULKAN_RENDERER_CUBE_H
-#define INEXOR_VULKAN_RENDERER_CUBE_H
-
+#ifndef INEXOR_VULKAN_RENDERER_CUBE_HPP
+#define INEXOR_VULKAN_RENDERER_CUBE_HPP
 
 #include <optional>
 #include <iostream>
@@ -15,7 +14,7 @@
 
 #include <glm/vec3.hpp>
 
-#include "BitStream.h"
+#include "BitStream.hpp"
 
 using std::array;
 using std::vector;
@@ -372,4 +371,4 @@ private:
 };
 }
 
-#endif // INEXOR_VULKAN_RENDERER_CUBE_H
+#endif // INEXOR_VULKAN_RENDERER_CUBE_HPP

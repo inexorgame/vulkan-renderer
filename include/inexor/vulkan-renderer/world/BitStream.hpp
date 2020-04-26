@@ -2,11 +2,10 @@
 // Created by moritz on 21.04.20.
 //
 
-#ifndef INEXOR_VULKAN_RENDERER_BITSTREAM_H
-#define INEXOR_VULKAN_RENDERER_BITSTREAM_H
+#ifndef INEXOR_VULKAN_RENDERER_BITSTREAM_HPP
+#define INEXOR_VULKAN_RENDERER_BITSTREAM_HPP
 
 #include <cstdint>
-#include <GL/glew.h>
 #include <fstream>
 #include <cassert>
 #include <vector>
@@ -68,4 +67,4 @@ private:
 };
 }
 
-#endif // INEXOR_VULKAN_RENDERER_BITSTREAM_H
+#endif // INEXOR_VULKAN_RENDERER_BITSTREAM_HPP
