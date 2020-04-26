@@ -515,6 +515,15 @@ VkResult VulkanRenderer::record_command_buffers() {
 
             vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
+            vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, global_descriptor->descriptor_sets.data(), 0,
+                                    nullptr);
+
+            VkBuffer vertexBuffers[] = {octree_mesh->vertex_buffer.buffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
+
+            vkCmdDraw(command_buffers[i], octree_mesh->number_of_vertices, 1, 0, 0);
+
             // TODO: This does not specify the order of rendering!
             // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
 
@@ -1019,13 +1028,10 @@ VkResult VulkanRenderer::recreate_swapchain() {
 VkResult VulkanRenderer::create_descriptor_pool() {
     std::vector<VkDescriptorPoolSize> pool_sizes = {};
 
-    pool_sizes.resize(2);
+    pool_sizes.resize(1);
 
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     pool_sizes[0].descriptorCount = number_of_images_in_swapchain;
-
-    pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
     // Create the descriptor pool first.
     VkResult result = descriptor_manager->create_descriptor_pool("global_descriptor_pool", pool_sizes, global_descriptor_pool);
@@ -1036,7 +1042,7 @@ VkResult VulkanRenderer::create_descriptor_pool() {
 
 VkResult VulkanRenderer::create_descriptor_set_layouts() {
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layouts;
-    descriptor_set_layouts.resize(2);
+    descriptor_set_layouts.resize(1);
 
     descriptor_set_layouts[0].binding = 0;
     descriptor_set_layouts[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1044,27 +1050,21 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
     descriptor_set_layouts[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     descriptor_set_layouts[0].pImmutableSamplers = nullptr;
 
-    descriptor_set_layouts[1].binding = 1;
-    descriptor_set_layouts[1].descriptorCount = 1;
-    descriptor_set_layouts[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_set_layouts[1].pImmutableSamplers = nullptr;
-    descriptor_set_layouts[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
     VkResult result;
 
     for (const auto &descriptor_set_layout : descriptor_set_layouts) {
-        result = descriptor_manager->add_descriptor_set_layout_binding(descriptor_bundles.scene, descriptor_set_layout);
+        result = descriptor_manager->add_descriptor_set_layout_binding(global_descriptor, descriptor_set_layout);
         vulkan_error_check(result);
     }
 
-    result = descriptor_manager->create_descriptor_set_layouts(descriptor_bundles.scene);
+    result = descriptor_manager->create_descriptor_set_layouts(global_descriptor);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_descriptor_writes() {
-    std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+    std::array<VkWriteDescriptorSet, 1> descriptor_writes = {};
 
     uniform_buffer_info.buffer = matrices->buffer;
     uniform_buffer_info.offset = 0;
@@ -1078,29 +1078,14 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &uniform_buffer_info;
 
-    VkResult result = descriptor_manager->add_write_descriptor_set(descriptor_bundles.scene, descriptor_writes[0]);
-    vulkan_error_check(result);
-
-    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    image_info.imageView = texture_manager->get_texture_view("example_texture_1").value();
-    image_info.sampler = texture_manager->get_texture_sampler("example_texture_1").value();
-
-    descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[1].dstSet = 0; // This will be overwritten automatically by descriptor_set_builder.
-    descriptor_writes[1].dstBinding = 1;
-    descriptor_writes[1].dstArrayElement = 0;
-    descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_writes[1].descriptorCount = 1;
-    descriptor_writes[1].pImageInfo = &image_info;
-
-    result = descriptor_manager->add_write_descriptor_set(descriptor_bundles.scene, descriptor_writes[1]);
+    VkResult result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[0]);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_descriptor_sets() {
-    VkResult result = descriptor_manager->create_descriptor_sets(descriptor_bundles.scene);
+    VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
@@ -1112,6 +1097,7 @@ VkResult VulkanRenderer::create_uniform_buffers() {
     // The uniform buffer for the world matrices.
     VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
 
+    // TODO: Create 3 uniform buffers for triple buffering!
     VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, matrices);
     vulkan_error_check(result);
 
@@ -1119,7 +1105,6 @@ VkResult VulkanRenderer::create_uniform_buffers() {
 }
 
 VkResult VulkanRenderer::create_pipeline() {
-    // TODO: Support multisampling!
     // TODO: VulkanPipelineManager!
     assert(device);
     assert(debug_marker_manager);
@@ -1151,8 +1136,11 @@ VkResult VulkanRenderer::create_pipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
 
-    auto vertex_binding_description = gltf_model::ModelVertex::get_vertex_binding_description();
-    auto attribute_binding_description = gltf_model::ModelVertex::get_attribute_binding_description();
+    // auto vertex_binding_description = gltf_model::ModelVertex::get_vertex_binding_description();
+    // auto attribute_binding_description = gltf_model::ModelVertex::get_attribute_binding_description();
+
+    auto vertex_binding_description = OctreeVertex::get_vertex_binding_description();
+    auto attribute_binding_description = OctreeVertex::get_attribute_binding_description();
 
     vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertex_input_create_info.pNext = nullptr;
@@ -1266,11 +1254,7 @@ VkResult VulkanRenderer::create_pipeline() {
     color_blend_state_create_info.blendConstants[2] = 0.0f;
     color_blend_state_create_info.blendConstants[3] = 0.0f;
 
-    const std::vector<VkDescriptorSetLayout> set_layouts = {
-        descriptor_bundles.scene->descriptor_set_layout,
-        // descriptor_bundles.material->descriptor_set_layout,
-        // descriptor_bundles.node->descriptor_set_layout,
-    };
+    const std::vector<VkDescriptorSetLayout> set_layouts = {global_descriptor->descriptor_set_layout};
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 

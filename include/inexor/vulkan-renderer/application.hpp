@@ -73,6 +73,9 @@ private:
     VkResult load_models();
 
     ///
+    VkResult load_octree_geometry();
+
+    ///
     VkResult check_application_specific_features();
 
     ///

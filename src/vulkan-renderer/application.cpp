@@ -272,15 +272,27 @@ VkResult Application::render_frame() {
     return VK_SUCCESS;
 }
 
+VkResult Application::load_octree_geometry() {
+
+    spdlog::debug("Creating octree geometry.");
+
+    std::vector<OctreeVertex> octree_vertices = {
+        {{0.5f, 0.2f, 0.3f}, {1.0f, 0.0f, 0.0f}}, {{-0.0f, 0.4f, 0.2f}, {1.0f, 1.0f, 0.0f}}, {{-0.1f, -0.6f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+
+    VkResult result =
+        mesh_buffer_manager->create_vertex_buffer("octree_geometry_example", octree_vertices.data(), sizeof(OctreeVertex), octree_vertices.size(), octree_mesh);
+    vulkan_error_check(result);
+
+    return VK_SUCCESS;
+}
+
 VkResult Application::load_models() {
     assert(debug_marker_manager);
 
     spdlog::debug("Loading models.");
 
     // TODO: Load models from TOML list.
-
-    // glTF 2 is disabled for now. The development will continue in a separate branch until glTF is ready.
-    //gltf_model_manager->load_model_from_glTF2_file("inexor_logo", "assets/models/inexor/inexor_2.gltf");
+    // TODO: Load glTF 2 models here.
 
     spdlog::debug("Loading models finished.");
 
@@ -550,9 +562,9 @@ VkResult Application::init() {
     // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
     // debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
 
-    // 
-    //result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
-    //vulkan_error_check(result);
+    //
+    // result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
+    // vulkan_error_check(result);
 
     result = check_application_specific_features();
     vulkan_error_check(result);
@@ -590,7 +602,7 @@ VkResult Application::init() {
     result = create_descriptor_pool();
     vulkan_error_check(result);
 
-    result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, descriptor_bundles.scene);
+    result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor);
     vulkan_error_check(result);
 
     result = create_descriptor_set_layouts();
@@ -627,8 +639,8 @@ VkResult Application::init() {
     result = load_models();
     vulkan_error_check(result);
 
-    //result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
-    //vulkan_error_check(result);
+    result = load_octree_geometry();
+    vulkan_error_check(result);
 
     result = record_command_buffers();
     vulkan_error_check(result);

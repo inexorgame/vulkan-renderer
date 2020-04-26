@@ -20,6 +20,7 @@
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer_manager.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
+#include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/shader_manager.hpp"
@@ -188,11 +189,9 @@ protected:
 
     bool vsync_enabled = false;
 
-    struct GlobalDescriptorBundle {
-        std::shared_ptr<DescriptorBundle> scene;
-        std::shared_ptr<DescriptorBundle> material;
-        std::shared_ptr<DescriptorBundle> node;
-    } descriptor_bundles;
+    std::shared_ptr<DescriptorBundle> global_descriptor;
+
+    std::shared_ptr<MeshBuffer> octree_mesh;
 
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.

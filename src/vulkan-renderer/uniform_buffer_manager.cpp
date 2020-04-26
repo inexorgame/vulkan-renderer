@@ -83,6 +83,8 @@ VkResult UniformBufferManager::create_uniform_buffer(const std::string &internal
     return VK_SUCCESS;
 }
 
+// TODO: Create 3 uniform buffers for triple buffering and update by current_image_index!
+// TODO: Abstract N-buffering!
 VkResult UniformBufferManager::update_uniform_buffer(const std::string &internal_uniform_buffer_name, void *data_source_address,
                                                      const std::size_t uniform_buffer_size) {
     assert(uniform_buffer_initialised);
