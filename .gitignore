@@ -38,11 +38,11 @@
 # End of https://www.gitignore.io/api/c++
 
 # custom ignores
-cmake-build-*
-build
+.idea/
+cmake-build-*/
+build/
 *.spv
 vma-dumps/*.json
-documentation/html
 *.ini
 *.csv
 
