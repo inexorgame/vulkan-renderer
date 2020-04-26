@@ -12,7 +12,7 @@ vulkan-renderer
 
 A new octree-based game+engine using `Vulkan API <https://www.khronos.org/vulkan/>`__ and `C++17 <https://stackoverflow.com/questions/38060436/what-are-the-new-features-in-c17>`__.
 
-Our very first tech demo ``v0.1-alpha.1`` can be downloaded `here <https://github.com/inexorgame/vulkan-renderer/releases>`__. Please send your logfiles to info@inexor.org.
+Our current octree demo ``v0.1-alpha.2`` can be downloaded `here <https://github.com/inexorgame/vulkan-renderer/releases>`__. Please send your logfiles to info@inexor.org.
 
 Please visit `inexor.org <https://inexor.org>`__ and join our `discord <https://discord.gg/acUW8k7>`__.
 
