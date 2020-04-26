@@ -27,12 +27,7 @@ optional<boost::dynamic_bitset<>> BitStream::get_bitset(uint8_t size) {
 optional<uint8_t> BitStream::get(uint8_t size) {
     // Inexor Octree does not use any data types larger than 8 bits.
     assert(size && size < 9);
-    cout << "Bitstream::get - " << (unsigned int) size << " bits." << endl;
-
-    if (!this->bytes_left) {
-        cout << "No bytes left!" << endl;
-        return nullopt;
-    }
+    assert(this->bytes_left);
 
     auto current = static_cast<uint8_t>(*this->data);
     if(!this->offset) {
@@ -63,9 +58,6 @@ optional<uint8_t> BitStream::get(uint8_t size) {
     this->bytes_left -= 1;
     this->data++;
 
-    if (!this->bytes_left) {
-        cout << "NO BYTES LEFT WHILE REQUIRED!" << endl;
-        return nullopt;
-    }
+    assert(this->bytes_left);
     return current | this->get(overflow).value();
 }
