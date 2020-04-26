@@ -205,7 +205,7 @@ uint64_t Cube::leaves() {
             }
             return i;
     }
-    assert(false);
+    assert(false); // This point should never be reached, as we handled all types already.
     return 0;
 }
 
@@ -232,6 +232,8 @@ array<array<glm::vec3, 3>, 12> Cube::_full_polygons(array<glm::vec3, 8> &v) {
 }
 
 array<array<glm::vec3, 3>, 12> Cube::_full_polygons() {
+    assert(this->_type == CubeType::FULL);
+
     array<glm::vec3, 8> v = this->_vertices();
     return this->_full_polygons(v);
 }
@@ -242,48 +244,41 @@ array<array<glm::vec3, 3>, 12> Cube::_indented_polygons() {
     array<glm::vec3, 8> v = this->_vertices();
 
     array<array<glm::vec3, 3>, 12> vertices = this->_full_polygons(v);
-    auto v0 = this->indentations.value()[0].vec();
-    auto v1 = this->indentations.value()[1].vec();
-    auto v2 = this->indentations.value()[2].vec();
-    auto v3 = this->indentations.value()[3].vec();
-    auto v4 = this->indentations.value()[4].vec();
-    auto v5 = this->indentations.value()[5].vec();
-    auto v6 = this->indentations.value()[6].vec();
-    auto v7 = this->indentations.value()[7].vec();
+    array<glm::tvec3<uint8_t>, 8> in = this->_indentation_levels();
 
     // Check for each side if the side is convex, rotate the hypotenuse so it becomes convex!
     // x = 0
-    if (v0.x + v3.x < v1.x + v2.x) {
+    if (in[0].x + in[3].x < in[1].x + in[2].x) {
         vertices[0] = {{ v[0], v[2], v[3] }};
         vertices[1] = {{ v[0], v[3], v[1] }};
     }
 
     // x = 1
-    if (v4.x + v7.x < v5.x + v6.x) {
+    if (in[4].x + in[7].x < in[5].x + in[6].x) {
         vertices[2] = {{ v[4], v[7], v[6] }};
         vertices[3] = {{ v[4], v[5], v[7] }};
     }
 
     // y = 0
-    if (v0.y + v5.y < v1.y + v4.y) {
+    if (in[0].y + in[5].y < in[1].y + in[4].y) {
         vertices[4] = {{ v[0], v[1], v[5] }};
         vertices[5] = {{ v[0], v[5], v[4] }};
     }
 
     // y = 1
-    if (v2.y + v7.y < v3.y + v6.y) {
+    if (in[2].y + in[7].y < in[3].y + in[6].y) {
         vertices[6] = {{ v[2], v[7], v[3] }};
         vertices[7] = {{ v[2], v[6], v[7] }};
     }
 
     // z = 0
-    if (v0.z + v6.z < v2.z + v4.z) {
+    if (in[0].z + in[6].z < in[2].z + in[4].z) {
         vertices[8] = {{ v[0], v[4], v[6] }};
         vertices[9] = {{ v[0], v[6], v[2] }};
     }
 
     // z = 1
-    if (v1.z + v7.z < v3.z + v6.z) {
+    if (in[1].z + in[7].z < in[3].z + in[6].z) {
         vertices[10] = {{ v[1], v[3], v[7] }};
         vertices[11] = {{ v[1], v[7], v[5] }};
     }
@@ -311,27 +306,19 @@ array<glm::vec3, 8> Cube::_vertices() {
     }
     assert(this->_type == CubeType::INDENTED);
     const float step = this->_size / MAX_INDENTATION;
-    // TODO: Implement Indentation copy-constructor without the signal or as shared_ptr to the signal?
-    auto &i = this->indentations.value();
-    const glm::tvec3<float> i0 = i[0].vec();
-    const glm::tvec3<float> i1 = i[1].vec();
-    const glm::tvec3<float> i2 = i[2].vec();
-    const glm::tvec3<float> i3 = i[3].vec();
-    const glm::tvec3<float> i4 = i[4].vec();
-    const glm::tvec3<float> i5 = i[5].vec();
-    const glm::tvec3<float> i6 = i[6].vec();
-    const glm::tvec3<float> i7 = i[7].vec();
+
+    array<glm::tvec3<uint8_t>, 8> in = this->_indentation_levels();
 
     // Calculate the vertex-positions with respect to the indentation level.
     return array<glm::vec3, 8>{{
-        {p.x + step * i0.x, p.y + step * i0.y, p.z + step * i0.z},
-        {p.x + step * i1.x, p.y + step * i1.y, f.z - step * i1.z},
-        {p.x + step * i2.x, f.y - step * i2.y, p.z + step * i2.z},
-        {p.x + step * i3.x, f.y - step * i3.y, f.z - step * i3.z},
-        {f.x - step * i4.x, p.y + step * i4.y, p.z + step * i4.z},
-        {f.x - step * i5.x, p.y + step * i5.y, f.z - step * i5.z},
-        {f.x - step * i6.x, f.y - step * i6.y, p.z + step * i6.z},
-        {f.x - step * i7.x, f.y - step * i7.y, f.z - step * i7.z}
+        {p.x + step * in[0].x, p.y + step * in[0].y, p.z + step * in[0].z},
+        {p.x + step * in[1].x, p.y + step * in[1].y, f.z - step * in[1].z},
+        {p.x + step * in[2].x, f.y - step * in[2].y, p.z + step * in[2].z},
+        {p.x + step * in[3].x, f.y - step * in[3].y, f.z - step * in[3].z},
+        {f.x - step * in[4].x, p.y + step * in[4].y, p.z + step * in[4].z},
+        {f.x - step * in[5].x, p.y + step * in[5].y, f.z - step * in[5].z},
+        {f.x - step * in[6].x, f.y - step * in[6].y, p.z + step * in[6].z},
+        {f.x - step * in[7].x, f.y - step * in[7].y, f.z - step * in[7].z}
     }};
 }
 
@@ -346,4 +333,12 @@ void Cube::_change() {
 
 void Cube::_change(Indentation *indentation) {
     this->_change();
+}
+array<glm::tvec3<uint8_t>, 8> Cube::_indentation_levels() {
+    array<glm::tvec3<uint8_t>, 8> in;
+    auto &indents = this->indentations.value();
+    for (size_t i = 0; i < in.size(); i++) {
+        in[i] = indents[i].vec();
+    }
+    return in;
 }

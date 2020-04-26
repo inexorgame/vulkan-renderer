@@ -351,6 +351,12 @@ private:
     array<array<glm::vec3, 3>, 12> _indented_polygons();
 
     /**
+     * Get the indentation levels for each side of the cube.
+     * @return The indentation lebvels for each side of the cube.
+     */
+    array<glm::tvec3<uint8_t>, 8> _indentation_levels();
+
+    /**
      * Cache of this cubes polygons. Not of its octants (i.e., empty of the cube is of type CubeType::OCTANTS).
      */
     array<array<glm::vec3, 3>, 12> _polygons_cache = {}; // Vertices of this cube (not its octants)
