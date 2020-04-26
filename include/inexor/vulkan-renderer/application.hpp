@@ -9,6 +9,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/thread_pool.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/world/Cube.hpp"
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>

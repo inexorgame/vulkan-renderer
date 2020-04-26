@@ -276,8 +276,26 @@ VkResult Application::load_octree_geometry() {
 
     spdlog::debug("Creating octree geometry.");
 
-    std::vector<OctreeVertex> octree_vertices = {
-        {{0.5f, 0.2f, 0.3f}, {1.0f, 0.0f, 0.0f}}, {{-0.0f, 0.4f, 0.2f}, {1.0f, 1.0f, 0.0f}}, {{-0.1f, -0.6f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+    std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0x00, 0x00, 0x00};
+
+    inexor::world::Cube cube = inexor::world::Cube::parse(test);
+    cube.octants.value()[6]->indentations.value()[4].set_z(4);
+    vector<array<glm::vec3, 3>> polygons = cube.polygons();
+    std::vector<OctreeVertex> octree_vertices;
+    octree_vertices.resize(polygons.size()*3);
+    OctreeVertex* current_vertex = octree_vertices.data();
+
+    for (auto triangle: polygons) {
+        for (auto vertex: triangle) {
+            glm::vec3 color = {
+                static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
+                static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
+                static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
+            };
+            *current_vertex = {vertex, color};
+            current_vertex++;
+        }
+    }
 
     VkResult result =
         mesh_buffer_manager->create_vertex_buffer("octree_geometry_example", octree_vertices.data(), sizeof(OctreeVertex), octree_vertices.size(), octree_mesh);
