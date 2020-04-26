@@ -278,7 +278,9 @@ VkResult Application::load_models() {
     spdlog::debug("Loading models.");
 
     // TODO: Load models from TOML list.
-    gltf_model_manager->load_model_from_glTF2_file("inexor_logo", "assets/models/inexor/inexor_2.gltf");
+
+    // glTF 2 is disabled for now. The development will continue in a separate branch until glTF is ready.
+    //gltf_model_manager->load_model_from_glTF2_file("inexor_logo", "assets/models/inexor/inexor_2.gltf");
 
     spdlog::debug("Loading models finished.");
 
@@ -548,8 +550,9 @@ VkResult Application::init() {
     // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
     // debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
 
-    result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
-    vulkan_error_check(result);
+    // 
+    //result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
+    //vulkan_error_check(result);
 
     result = check_application_specific_features();
     vulkan_error_check(result);
@@ -624,8 +627,8 @@ VkResult Application::init() {
     result = load_models();
     vulkan_error_check(result);
 
-    result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
-    vulkan_error_check(result);
+    //result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
+    //vulkan_error_check(result);
 
     result = record_command_buffers();
     vulkan_error_check(result);

@@ -516,7 +516,7 @@ VkResult VulkanRenderer::record_command_buffers() {
             vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
             // TODO: This does not specify the order of rendering!
-            gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
+            // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
 
             // TODO: Draw imgui user interface.
         }
