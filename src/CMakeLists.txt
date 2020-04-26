@@ -23,11 +23,13 @@ add_library(
     vulkan-renderer/time_step.cpp
     vulkan-renderer/uniform_buffer_manager.cpp
     vulkan-renderer/renderer.cpp
-
     vulkan-renderer/gltf-model/manager.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
+
+    vulkan-renderer/world/BitStream.cpp
+    vulkan-renderer/world/Cube.cpp
 )
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)
