@@ -338,6 +338,13 @@ private:
     array<array<glm::vec3, 3>, 12> _full_polygons();
 
     /**
+     * Get the vertices in a structure which is ordered in triangles of the order of a full cube.
+     * @param v The vertices of the the sides of a cube.
+     * @return polygons of this cube in the order of a full cube.
+     */
+    array<array<glm::vec3, 3>, 12> _full_polygons(array<glm::vec3, 8> &v);
+
+    /**
      * Get the polygons of this cube (only when it is an indented cube).
      * @return polygons of this cube
      */

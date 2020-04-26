@@ -209,52 +209,39 @@ uint64_t Cube::leaves() {
     return 0;
 }
 
-array<array<glm::vec3, 3>, 12> Cube::_full_polygons() {
-    array<glm::vec3, 8> v = this->_vertices();
+array<array<glm::vec3, 3>, 12> Cube::_full_polygons(array<glm::vec3, 8> &v) {
     return {{
-        {{ v[0], v[1], v[2] }}, // x = 0
+        {{ v[0], v[2], v[1] }}, // x = 0
         {{ v[1], v[2], v[3] }}, // x = 0
 
         {{ v[4], v[5], v[6] }}, // x = 1
-        {{ v[5], v[6], v[7] }}, // x = 1
+        {{ v[5], v[7], v[6] }}, // x = 1
 
         {{ v[0], v[1], v[4] }}, // y = 0
-        {{ v[1], v[4], v[5] }}, // y = 0
+        {{ v[1], v[5], v[4] }}, // y = 0
 
-        {{ v[2], v[3], v[6] }}, // y = 1
+        {{ v[2], v[6], v[3] }}, // y = 1
         {{ v[3], v[6], v[7] }}, // y = 1
 
-        {{ v[0], v[2], v[4] }}, // z = 0
-        {{ v[2], v[6], v[4] }}, // z = 0
+        {{ v[0], v[4], v[2] }}, // z = 0
+        {{ v[2], v[4], v[6] }}, // z = 0
 
         {{ v[1], v[3], v[5] }}, // z = 1
         {{ v[3], v[7], v[5] }}, // z = 1
     }};
 }
 
+array<array<glm::vec3, 3>, 12> Cube::_full_polygons() {
+    array<glm::vec3, 8> v = this->_vertices();
+    return this->_full_polygons(v);
+}
+
 array<array<glm::vec3, 3>, 12> Cube::_indented_polygons() {
     assert(this->_type == CubeType::INDENTED);
 
     array<glm::vec3, 8> v = this->_vertices();
-    array<array<glm::vec3, 3>, 12> vertices = {{
-        {{ v[0], v[2], v[3] }}, // x = 0
-        {{ v[0], v[1], v[3] }}, // x = 0
 
-        {{ v[4], v[6], v[7] }}, // x = 1
-        {{ v[4], v[5], v[7] }}, // x = 1
-
-        {{ v[0], v[1], v[5] }}, // y = 0
-        {{ v[1], v[5], v[4] }}, // y = 0
-
-        {{ v[2], v[3], v[7] }}, // y = 1
-        {{ v[2], v[7], v[6] }}, // y = 1
-
-        {{ v[0], v[6], v[4] }}, // z = 0
-        {{ v[0], v[2], v[6] }}, // z = 0
-
-        {{ v[1], v[3], v[7] }}, // z = 1
-        {{ v[1], v[7], v[5] }}  // z = 1
-    }};
+    array<array<glm::vec3, 3>, 12> vertices = this->_full_polygons(v);
     auto v0 = this->indentations.value()[0].vec();
     auto v1 = this->indentations.value()[1].vec();
     auto v2 = this->indentations.value()[2].vec();
@@ -266,39 +253,39 @@ array<array<glm::vec3, 3>, 12> Cube::_indented_polygons() {
 
     // Check for each side if the side is convex, rotate the hypotenuse so it becomes convex!
     // x = 0
-    if (v0.x + v3.x >= v1.x + v2.x) {
-        vertices[0] = {{ v[0], v[1], v[2] }};
-        vertices[1] = {{ v[1], v[2], v[3] }};
+    if (v0.x + v3.x < v1.x + v2.x) {
+        vertices[0] = {{ v[0], v[2], v[3] }};
+        vertices[1] = {{ v[0], v[3], v[1] }};
     }
 
     // x = 1
-    if (v4.x + v7.x >= v5.x + v6.x) {
-        vertices[2] = {{ v[4], v[5], v[6] }};
-        vertices[3] = {{ v[5], v[6], v[7] }};
+    if (v4.x + v7.x < v5.x + v6.x) {
+        vertices[2] = {{ v[4], v[7], v[6] }};
+        vertices[3] = {{ v[4], v[5], v[7] }};
     }
 
     // y = 0
-    if (v0.y + v5.y >= v1.y + v4.y) {
-        vertices[4] = {{ v[0], v[1], v[4] }};
-        vertices[5] = {{ v[0], v[1], v[4] }};
+    if (v0.y + v5.y < v1.y + v4.y) {
+        vertices[4] = {{ v[0], v[1], v[5] }};
+        vertices[5] = {{ v[0], v[5], v[4] }};
     }
 
     // y = 1
-    if (v2.y + v7.y >= v3.y + v6.y) {
-        vertices[6] = {{ v[2], v[3], v[6] }};
-        vertices[7] = {{ v[3], v[6], v[7] }};
+    if (v2.y + v7.y < v3.y + v6.y) {
+        vertices[6] = {{ v[2], v[7], v[3] }};
+        vertices[7] = {{ v[2], v[6], v[7] }};
     }
 
     // z = 0
-    if (v0.z + v6.z >= v2.z + v4.z) {
-        vertices[8] = {{ v[0], v[2], v[4] }};
-        vertices[9] = {{ v[2], v[6], v[4] }};
+    if (v0.z + v6.z < v2.z + v4.z) {
+        vertices[8] = {{ v[0], v[4], v[6] }};
+        vertices[9] = {{ v[0], v[6], v[2] }};
     }
 
     // z = 1
-    if (v1.z + v7.z >= v3.z + v6.z) {
-        vertices[10] = {{ v[1], v[3], v[5] }};
-        vertices[11] = {{ v[3], v[7], v[5] }};
+    if (v1.z + v7.z < v3.z + v6.z) {
+        vertices[10] = {{ v[1], v[3], v[7] }};
+        vertices[11] = {{ v[1], v[7], v[5] }};
     }
     return vertices;
 }

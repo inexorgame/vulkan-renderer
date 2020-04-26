@@ -1195,7 +1195,7 @@ VkResult VulkanRenderer::create_pipeline() {
     // Because the pipeline in Vulkan is immutable, this guides us to record a second command line with wireframe enabled.
     pipeline_rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
     pipeline_rasterization_state_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
-    pipeline_rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    pipeline_rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     pipeline_rasterization_state_create_info.depthBiasEnable = VK_FALSE;
     pipeline_rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
     pipeline_rasterization_state_create_info.depthBiasClamp = 0.0f;
