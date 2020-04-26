@@ -282,15 +282,15 @@ VkResult Application::load_octree_geometry() {
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
     vector<array<glm::vec3, 3>> polygons = cube.polygons();
     std::vector<OctreeVertex> octree_vertices;
-    octree_vertices.resize(polygons.size()*3);
-    OctreeVertex* current_vertex = octree_vertices.data();
+    octree_vertices.resize(polygons.size() * 3);
+    OctreeVertex *current_vertex = octree_vertices.data();
 
-    for (auto triangle: polygons) {
-        for (auto vertex: triangle) {
+    for (auto triangle : polygons) {
+        for (auto vertex : triangle) {
             glm::vec3 color = {
-                static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
-                static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
-                static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
+                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
             };
             *current_vertex = {vertex, color};
             current_vertex++;
@@ -682,12 +682,6 @@ VkResult Application::init() {
     // TODO: Use window queue instead?
     glfwSetWindowUserPointer(window, this);
 
-    game_camera_1.set_position(glm::vec3(0.0f, 5.0f, -2.0f));
-    game_camera_1.set_direction(glm::vec3(0.0f, 1.0f, 0.0f));
-    game_camera_1.set_speed(1.0f);
-
-    game_camera_1.update(time_passed);
-
     return VK_SUCCESS;
 }
 
@@ -699,9 +693,8 @@ VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     // Rotate the model as a function of time.
     ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    ubo.view = game_camera_1.get_view_matrix();
-    ubo.proj = game_camera_1.get_projection_matrix();
-
+    ubo.view = game_camera.matrices.view;
+    ubo.proj = game_camera.matrices.perspective;
     ubo.proj[1][1] *= -1;
 
     // Update the world matrices!
@@ -711,15 +704,41 @@ VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     return VK_SUCCESS;
 }
 
+VkResult Application::update_mouse_input() {
+
+    double current_cursor_x;
+    double current_cursor_y;
+
+    glfwGetCursorPos(window, &current_cursor_x, &current_cursor_y);
+
+    double cursor_delta_x = current_cursor_x - cursor_x;
+    double cursor_delta_y = current_cursor_y - cursor_y;
+
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
+    if (GLFW_PRESS == state) {
+        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotationSpeed, -cursor_delta_x * game_camera.rotationSpeed, 0.0f));
+    }
+
+    state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+
+    cursor_x = current_cursor_x;
+    cursor_y = current_cursor_y;
+
+    return VK_SUCCESS;
+}
+
 VkResult Application::update_keyboard_input() {
     int key_w_status = glfwGetKey(window, GLFW_KEY_W);
 
+    /*
     if (GLFW_PRESS == key_w_status) {
-        game_camera_1.start_camera_movement();
+        //game_camera_1.start_camera_movement();
     }
     if (GLFW_RELEASE == key_w_status) {
-        game_camera_1.end_camera_movement();
+        //game_camera_1.end_camera_movement();
     }
+    */
 
     return VK_SUCCESS;
 }
@@ -733,9 +752,10 @@ void Application::run() {
 
         // TODO: Run this in a separated thread?
         // TODO: Merge into one update_game_data() method?
-        update_cameras();
-
         update_keyboard_input();
+        update_mouse_input();
+
+        update_cameras();
 
         time_passed = stopwatch.get_time_step();
     }

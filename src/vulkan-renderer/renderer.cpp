@@ -896,7 +896,8 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 }
 
 VkResult VulkanRenderer::update_cameras() {
-    game_camera_1.update(time_passed);
+
+    game_camera.update(time_passed);
 
     return VK_SUCCESS;
 }
@@ -1014,8 +1015,14 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     vkDeviceWaitIdle(device);
 
-    game_camera_1.set_aspect_ratio(aspect_ratio);
-    game_camera_1.update_matrices();
+    // Setup game camera.
+    game_camera.type = Camera::CameraType::lookat;
+
+    game_camera.setPerspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
+    game_camera.rotationSpeed = 0.25f;
+    game_camera.movementSpeed = 0.1f;
+    game_camera.setPosition({0.0f, 0.0f, 5.0f});
+    game_camera.setRotation({0.0f, 0.0f, 0.0f});
 
     result = record_command_buffers();
     vulkan_error_check(result);

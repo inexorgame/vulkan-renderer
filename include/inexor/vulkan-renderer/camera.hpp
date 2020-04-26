@@ -3,207 +3,186 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <spdlog/spdlog.h>
-
-#include <mutex>
 
 namespace inexor::vulkan_renderer {
 
-/// TODO: Add mutex!
-/// TODO: Because this camera class will be used by scripting as well, runtime errors should be expected.
+// TODO: Refactor method naming!
 class Camera {
 private:
-    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+    float fov;
+    float znear, zfar;
 
-    glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
+    void updateViewMatrix() {
+        glm::mat4 rotM = glm::mat4(1.0f);
+        glm::mat4 transM;
 
-    float camera_speed = 1.0f;
+        rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    // TODO: Change with respect to window resolution!
-    float aspect_ratio = 800 / 600;
+        transM = glm::translate(glm::mat4(1.0f), position * glm::vec3(1.0f, 1.0f, -1.0f));
 
-    float yaw = 0.0f;
+        if (type == CameraType::firstperson) {
+            matrices.view = rotM * transM;
+        } else {
+            matrices.view = transM * rotM;
+        }
 
-    float pitch = 0.0f;
-
-    float roll = 0.0f;
-
-    float near_plane = 0.1f;
-
-    float far_plane = 10.0f;
-
-    float zoom = 45.0f;
-
-    bool camera_is_moving = false;
-
-    bool moving_backwards = false;
-
-    glm::vec3 world_up = glm::vec3(0.0f, 0.0f, 1.0f);
-
-    glm::vec3 world_front = glm::vec3(1.0f, 0.0f, 0.0f);
-
-    glm::vec3 world_right = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    glm::mat4 view_matrix = glm::mat4();
-
-    glm::mat4 projection_matrix = glm::mat4();
-
-    /// Neccesary for taking into account the relative speed of the system's CPU.
-    /// The timestep will be calculated in the main loop and will be passed on when update() is called.
-    float timestep;
-
-private:
-    /// @brief Updates the view matrix.
-    void update_view_matrix();
-
-    /// @brief Updates the projection matrix.
-    void update_projection_matrix();
+        updated = true;
+    };
 
 public:
-    Camera() = default;
+    enum CameraType { lookat, firstperson };
+    CameraType type = CameraType::lookat;
 
-    ~Camera() = default;
+    glm::vec3 rotation = glm::vec3();
+    glm::vec3 position = glm::vec3();
 
-    /// @brief Updates all matrices.
-    void update_matrices();
+    float rotationSpeed = 1.0f;
+    float movementSpeed = 1.0f;
 
-    /// @brief Start moving the camera every time update() is called.
-    /// @param moving_backwards [in] True if the camera is moving backwards, false otherwise.
-    void start_camera_movement(bool moving_backwards = false);
+    bool updated = false;
 
-    /// @brief Ends moving the camera every time update() is called.
-    void end_camera_movement();
+    struct {
+        glm::mat4 perspective;
+        glm::mat4 view;
+    } matrices;
 
-    /// @brief Updates camera movement.
-    /// @brief timestep [in] A float which scales with the amount of time which has passed since last rendering.
-    void update(float timestep);
+    struct {
+        bool left = false;
+        bool right = false;
+        bool up = false;
+        bool down = false;
+    } keys;
 
-    /// @brief Sets the camera position.
-    /// @param position [in] The position of the camera.
-    void set_position(const glm::vec3 &position);
+    bool moving() {
+        return keys.left || keys.right || keys.up || keys.down;
+    }
 
-    /// @brief Returns he current camera position.
-    glm::vec3 get_position() const;
+    float getNearClip() {
+        return znear;
+    }
 
-    /// @brief Sets the relative speed of the camera.
-    /// @param speed [in] The velocity of the camera movement.
-    void set_speed(float camera_speed);
+    float getFarClip() {
+        return zfar;
+    }
 
-    /// @brief Returns the camera speed.
-    float get_speed() const;
+    void setPerspective(float fov, float aspect, float znear, float zfar) {
+        this->fov = fov;
+        this->znear = znear;
+        this->zfar = zfar;
+        matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+    };
 
-    /// @brief
-    /// @param direction [in] The direction in which we look.
-    void set_direction(const glm::vec3 &direction);
+    void updateAspectRatio(float aspect) {
+        matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+    }
 
-    /// @brief Returns the direction in which the camera is looking.
-    glm::vec3 get_direction() const;
+    void setPosition(glm::vec3 position) {
+        this->position = position;
+        updateViewMatrix();
+    }
 
-    /// @brief Moves the camera forwards with respect to the relative camera speed.
-    void move_forwards();
+    void setRotation(glm::vec3 rotation) {
+        this->rotation = rotation;
+        updateViewMatrix();
+    };
 
-    /// @brief Moves the camera backwards with respect to the relative camera speed.
-    void move_backwards();
+    void rotate(glm::vec3 delta) {
+        this->rotation += delta;
+        updateViewMatrix();
+    }
 
-    /// @brief Moves the camera along the x-axis.
-    /// @param y [in] The distance on the x-axis.
-    void move_camera_x(float x);
+    void setTranslation(glm::vec3 translation) {
+        this->position = translation;
+        updateViewMatrix();
+    };
 
-    /// @brief Moves the camera along the y-axis.
-    /// @param y [in] The distance on the y-axis.
-    void move_camera_y(float y);
+    void translate(glm::vec3 delta) {
+        this->position += delta;
+        updateViewMatrix();
+    }
 
-    /// @brief Moves the camera along the z-axis.
-    /// @param y [in] The distance on the z-axis.
-    void move_camera_z(float z);
+    void update(float deltaTime) {
+        updated = false;
+        if (type == CameraType::firstperson) {
+            if (moving()) {
+                glm::vec3 camFront;
+                camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
+                camFront.y = sin(glm::radians(rotation.x));
+                camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+                camFront = glm::normalize(camFront);
 
-    /// @brief Sets the yaw rotation angle.
-    /// @param yaw [in] The yaw angle.
-    void set_yaw(float yaw);
+                float moveSpeed = deltaTime * movementSpeed;
 
-    /// @brief Sets the pitch rotation angle.
-    /// @param pitch [in] The pitch angle.
-    void set_pitch(float pitch);
+                if (keys.up)
+                    position += camFront * moveSpeed;
+                if (keys.down)
+                    position -= camFront * moveSpeed;
+                if (keys.left)
+                    position -= glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
+                if (keys.right)
+                    position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
 
-    /// @brief Sets the roll rotation angle.
-    /// @param roll [in] The roll angle.
-    void set_roll(float roll);
+                updateViewMatrix();
+            }
+        }
+    };
 
-    /// @brief Returns the yaw rotation angle.
-    float get_yaw() const;
+    // Update camera passing separate axis data (gamepad)
+    // Returns true if view or position has been changed
+    bool updatePad(glm::vec2 axisLeft, glm::vec2 axisRight, float deltaTime) {
+        bool retVal = false;
 
-    /// @brief Returns the pitch rotation angle.
-    float get_pitch() const;
+        if (type == CameraType::firstperson) {
+            // Use the common console thumbstick layout
+            // Left = view, right = move
 
-    /// @brief Returns the roll rotation angle.
-    float get_roll() const;
+            const float deadZone = 0.0015f;
+            const float range = 1.0f - deadZone;
 
-    /// @brief Sets the near plane for calculating the projection matrix.
-    /// @param near_plane [in] The z-distance to the near plane.
-    void set_near_plane(float near_plane);
+            glm::vec3 camFront;
+            camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
+            camFront.y = sin(glm::radians(rotation.x));
+            camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+            camFront = glm::normalize(camFront);
 
-    /// @brief Returns the near plane.
-    float get_near_plane() const;
+            float moveSpeed = deltaTime * movementSpeed * 2.0f;
+            float rotSpeed = deltaTime * rotationSpeed * 50.0f;
 
-    /// @brief Sets the far plane for calculating the projection matrix.
-    /// @param far_plane [in] The z-distance to the far plane.
-    void set_far_plane(float far_plane);
+            // Move
+            if (fabsf(axisLeft.y) > deadZone) {
+                float pos = (fabsf(axisLeft.y) - deadZone) / range;
+                position -= camFront * pos * ((axisLeft.y < 0.0f) ? -1.0f : 1.0f) * moveSpeed;
+                retVal = true;
+            }
+            if (fabsf(axisLeft.x) > deadZone) {
+                float pos = (fabsf(axisLeft.x) - deadZone) / range;
+                position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * pos * ((axisLeft.x < 0.0f) ? -1.0f : 1.0f) * moveSpeed;
+                retVal = true;
+            }
 
-    /// @brief Returns the far plane.
-    float get_far_plane() const;
+            // Rotate
+            if (fabsf(axisRight.x) > deadZone) {
+                float pos = (fabsf(axisRight.x) - deadZone) / range;
+                rotation.y += pos * ((axisRight.x < 0.0f) ? -1.0f : 1.0f) * rotSpeed;
+                retVal = true;
+            }
+            if (fabsf(axisRight.y) > deadZone) {
+                float pos = (fabsf(axisRight.y) - deadZone) / range;
+                rotation.x -= pos * ((axisRight.y < 0.0f) ? -1.0f : 1.0f) * rotSpeed;
+                retVal = true;
+            }
+        } else {
+            // todo: move code from example base class for look-at
+        }
 
-    /// @brief Sets the aspect ratio.
-    /// @param aspect_ratio [in] The aspect ratio.
-    void set_aspect_ratio(float aspect_ratio);
+        if (retVal) {
+            updateViewMatrix();
+        }
 
-    /// @brief Returns the aspect ratio.
-    float get_aspect_ratio() const;
-
-    /// @brief Sets the rotation of the camera matrix.
-    /// @param yaw [in] The yaw angle.
-    /// @param pitch [in] The pitch angle.
-    /// @param roll [in] The roll angle.
-    void set_rotation(float yaw, float pitch, float roll);
-
-    /// @brief Rotates the Camera around a certain center.
-    /// @brief rotation_center [in] The center of rotation.
-    /// @brief angle_x [in] The angle around x-axis.
-    /// @brief angle_y [in] The angle around y-axis.
-    /// @todo
-    void rotate(const glm::vec3 &rotation_center, float angle_x, float angle_y);
-
-    /// @brief Returns the rotation vector of the camera relative to the up vector.
-    /// @todo
-    glm::vec3 get_rotation() const;
-
-    /// @brief Returns the up vector.
-    glm::vec3 get_up() const;
-
-    /// @brief Returns the front vector.
-    glm::vec3 get_front() const;
-
-    /// @brief Returns the right vector.
-    glm::vec3 get_right() const;
-
-    /// @brief Pan function (translate both camera eye and lookat point).
-    /// @param x The angle on the x-axis.
-    /// @param y The angle on the y-axis.
-    /// @todo
-    void pan(float x, float y);
-
-    /// @brief Sets the zoom of the camera.
-    /// @param zoom [in] The camera zoom.
-    void set_zoom(float zoom);
-
-    // TODO: min/max zoom!
-    /// @brief Returns the camera zoom.
-    float get_zoom() const;
-
-    /// @brief Returns the view matrix.
-    glm::mat4 get_view_matrix();
-
-    /// @brief Returns the projection matrix.
-    glm::mat4 get_projection_matrix();
+        return retVal;
+    }
 };
 
 } // namespace inexor::vulkan_renderer

@@ -168,8 +168,6 @@ protected:
 
     GLFWwindow *window = nullptr;
 
-    Camera game_camera_1;
-
     FPSCounter fps_counter;
 
     // TODO: Refactor this!
@@ -192,6 +190,8 @@ protected:
     std::shared_ptr<DescriptorBundle> global_descriptor;
 
     std::shared_ptr<MeshBuffer> octree_mesh;
+
+    Camera game_camera;
 
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.

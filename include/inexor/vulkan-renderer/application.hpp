@@ -88,6 +88,11 @@ private:
 
     VkResult update_keyboard_input();
 
+    VkResult update_mouse_input();
+
+    // TODO: Refactor!
+    double cursor_x, cursor_y;
+
 public:
     VkResult init();
 
