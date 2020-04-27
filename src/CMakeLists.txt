@@ -36,8 +36,8 @@ add_library(
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
-    vulkan-renderer/world/BitStream.cpp
-    vulkan-renderer/world/Cube.cpp
+    vulkan-renderer/world/bit_stream.cpp
+    vulkan-renderer/world/cube.cpp
 )
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)

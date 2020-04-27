@@ -14,7 +14,7 @@
 
 #include <glm/vec3.hpp>
 
-#include "BitStream.hpp"
+#include "bit_stream.hpp"
 
 using std::array;
 using std::vector;

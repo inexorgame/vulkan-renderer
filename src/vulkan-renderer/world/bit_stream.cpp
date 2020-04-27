@@ -1,4 +1,4 @@
-#include <inexor/vulkan-renderer/world/BitStream.hpp>
+#include <inexor/vulkan-renderer/world/bit_stream.hpp>
 
 using namespace inexor;
 
