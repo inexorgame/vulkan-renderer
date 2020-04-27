@@ -8,10 +8,8 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-///
 enum class AlphaMode { opaque, mask, blend };
 
-///
 struct Material {
     AlphaMode alphaMode = AlphaMode::opaque;
 

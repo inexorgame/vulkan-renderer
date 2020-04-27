@@ -17,7 +17,6 @@ namespace inexor::vulkan_renderer::gltf_model {
 
 struct ModelNode;
 
-///
 struct ModelSkin {
     std::string name;
 
@@ -28,7 +27,6 @@ struct ModelSkin {
     std::vector<std::shared_ptr<ModelNode>> joints;
 };
 
-///
 struct ModelNode {
     std::shared_ptr<ModelNode> parent;
 

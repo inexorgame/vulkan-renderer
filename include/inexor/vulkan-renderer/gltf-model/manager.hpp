@@ -88,7 +88,6 @@ public:
     /// @param current_image_index [in] The current frame index.
     VkResult render_all_models(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
 
-    ///
     VkResult create_model_descriptors(const std::size_t number_of_images_in_swapchain);
 
     /// @brief Returns the number of existing models.
@@ -99,55 +98,37 @@ private:
     /// @param node [in] A glTF model node.
     VkResult setup_node_descriptor_set(std::shared_ptr<ModelNode> node);
 
-    ///
-    ///
-    ///
     VkResult load_model_from_file(const std::string &file_name, std::shared_ptr<Model> &new_model, const float scale = 1.0f);
 
-    ///
     void destroy();
 
-    ///
     void load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, const uint32_t nodeIndex, std::shared_ptr<Model> model,
                    const float globalscale);
 
-    ///
     void load_skins(std::shared_ptr<Model> model);
 
-    ///
     void load_textures(std::shared_ptr<Model> model);
 
-    ///
     VkSamplerAddressMode get_wrap_mode(const int32_t wrapMode);
 
-    ///
     VkFilter get_filter_mode(const int32_t filterMode);
 
-    ///
     void load_texture_samplers(std::shared_ptr<Model> model);
 
-    ///
     void load_materials(std::shared_ptr<Model> model);
 
-    ///
     void load_animations(std::shared_ptr<Model> model);
 
-    ///
     void render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
 
-    ///
     void calculate_bounding_box(std::shared_ptr<Model> model, std::shared_ptr<ModelNode> node, std::shared_ptr<ModelNode> parent);
 
-    ///
     void get_scene_dimensions(std::shared_ptr<Model> model);
 
-    ///
     void update_animation(std::shared_ptr<Model> model, const uint32_t index, const float time);
 
-    ///
     std::shared_ptr<ModelNode> find_node(std::shared_ptr<ModelNode> parent, const uint32_t index);
 
-    ///
     std::shared_ptr<ModelNode> node_from_index(std::shared_ptr<Model> model, const uint32_t index);
 };
 

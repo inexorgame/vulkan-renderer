@@ -19,14 +19,8 @@ std::string get_error_description_text(const VkResult &result_code);
 // @param message_box_title The title of the message box.
 void display_error_message(const std::string &error_message, const std::string &message_box_title = "Error");
 
-///
-///
-///
 void display_fatal_error_message(const std::string &error_message, const std::string &message_box_title = "Fatal Error");
 
-///
-///
-///
 void display_warning_message(const std::string &warning_message, const std::string &message_box_title = "Warning");
 
 // @brief Generalises error handling.

@@ -4,7 +4,6 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-///
 struct BoundingBox {
     glm::vec3 min;
 

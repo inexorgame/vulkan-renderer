@@ -64,22 +64,16 @@ private:
     /// @note It was collectively decided not to use JSON for configuration files.
     VkResult load_TOML_configuration_file(const std::string &TOML_file_name);
 
-    ///
     VkResult load_textures();
 
-    ///
     VkResult load_shaders();
 
-    ///
     VkResult load_models();
 
-    ///
     VkResult load_octree_geometry();
 
-    ///
     VkResult check_application_specific_features();
 
-    ///
     VkResult render_frame();
 
     /// @brief Implementation of the uniform buffer update method.

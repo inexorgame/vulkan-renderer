@@ -12,7 +12,6 @@
 
 namespace inexor::vulkan_renderer {
 
-///
 class VulkanFenceManager : public ManagerClassTemplate<VkFence> {
 private:
     bool fence_manager_initialised = false;

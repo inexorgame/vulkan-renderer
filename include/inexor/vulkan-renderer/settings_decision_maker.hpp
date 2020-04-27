@@ -37,7 +37,6 @@ public:
     /// - It must support a swapchain.
     /// - It must support presentation.
     /// - Add more here if you want..
-    ///
     /// @note Add more checks to the validation mechanism if neccesary, e.h. check for geometry shader support.
     /// @param graphics_card The graphics card which will be checked for suitability.
     /// @return True if the graphics card is suitable, false otherwise.
@@ -145,8 +144,6 @@ public:
     /// @return The index of the queue family which can be used for data transfer.
     std::optional<uint32_t> find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card);
 
-    ///
-    ///
     std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice &graphics_card, const std::vector<VkFormat> &formats, const VkImageTiling tiling,
                                                      const VkFormatFeatureFlags feature_flags);
 };

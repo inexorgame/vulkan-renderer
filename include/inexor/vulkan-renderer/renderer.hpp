@@ -223,7 +223,6 @@ protected:
     /// @brief Initialises glTF 2.0 model manager.
     VkResult initialise_glTF2_model_manager();
 
-    ///
     VkResult update_cameras();
 
     /// @brief Initialise allocator of Vulkan Memory Allocator library.
@@ -250,13 +249,10 @@ protected:
     /// @brief Creates the uniform buffers.
     VkResult create_uniform_buffers();
 
-    ///
     VkResult create_descriptor_pool();
 
-    ///
     VkResult create_descriptor_set_layouts();
 
-    ///
     VkResult create_descriptor_writes();
 
     /// @brief Creates the descriptor set.
