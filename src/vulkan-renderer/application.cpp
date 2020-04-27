@@ -279,9 +279,9 @@ VkResult Application::load_octree_geometry() {
 
     std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0x00, 0x00, 0x00};
 
-    inexor::world::Cube cube = inexor::world::Cube::parse(test);
+    world::Cube cube = world::Cube::parse(test);
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
-    vector<array<glm::vec3, 3>> polygons = cube.polygons();
+    std::vector<std::array<glm::vec3, 3>> polygons = cube.polygons();
     std::vector<OctreeVertex> octree_vertices;
     octree_vertices.resize(polygons.size() * 3);
     OctreeVertex *current_vertex = octree_vertices.data();
