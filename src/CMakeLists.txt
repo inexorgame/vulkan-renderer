@@ -1,27 +1,30 @@
 add_library(
     inexor-vulkan-renderer
 
+    vulkan-renderer/application.cpp
     vulkan-renderer/availability_checks.cpp
     vulkan-renderer/bezier_curve.cpp
-    vulkan-renderer/single_time_command_buffer.cpp
+    vulkan-renderer/camera.cpp
     vulkan-renderer/debug_marker_manager.cpp
     vulkan-renderer/descriptor_manager.cpp
+    vulkan-renderer/descriptor_pool.cpp
     vulkan-renderer/error_handling.cpp
     vulkan-renderer/fence_manager.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/gpu_queue_manager.cpp
-    vulkan-renderer/application.cpp
     vulkan-renderer/mesh_buffer_manager.cpp
+    vulkan-renderer/octree_vertex.cpp
+    vulkan-renderer/renderer.cpp
     vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/shader_manager.cpp
+    vulkan-renderer/single_time_command_buffer.cpp
     vulkan-renderer/texture.cpp
     vulkan-renderer/texture_manager.cpp
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
     vulkan-renderer/uniform_buffer_manager.cpp
-    vulkan-renderer/renderer.cpp
 
     vulkan-renderer/gltf-model/bounding_box.cpp
     vulkan-renderer/gltf-model/manager.cpp

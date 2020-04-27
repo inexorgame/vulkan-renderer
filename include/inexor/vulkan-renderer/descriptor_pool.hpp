@@ -12,8 +12,7 @@ struct DescriptorPool {
     /// Force use of the overloaded constructor!
     DescriptorPool() = delete;
 
-    DescriptorPool(const std::string &internal_descriptor_pool_name, const std::vector<VkDescriptorPoolSize> &pool_sizes)
-        : name(internal_descriptor_pool_name), sizes(pool_sizes) {}
+    DescriptorPool(const std::string &internal_descriptor_pool_name, const std::vector<VkDescriptorPoolSize> &pool_sizes);
 
     const std::string name;
 

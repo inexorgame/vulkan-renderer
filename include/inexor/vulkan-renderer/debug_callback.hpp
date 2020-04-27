@@ -6,7 +6,7 @@
 namespace inexor::vulkan_renderer {
 
 /// @brief Vulkan validation layer callback.
-static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugMessageCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, uint64_t object,
+static VKAPI_ATTR VkBool32 VKAPI_CALL vulkan_debug_message_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, uint64_t object,
                                                                  size_t location, int32_t message_code, const char *layer_prefix, const char *message,
                                                                  void *user_data) {
     if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
@@ -23,5 +23,4 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugMessageCallback(VkDebugReportFl
 
     return VK_FALSE;
 }
-
 } // namespace inexor::vulkan_renderer

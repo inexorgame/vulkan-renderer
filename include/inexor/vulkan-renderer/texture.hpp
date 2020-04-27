@@ -8,6 +8,20 @@
 
 namespace inexor::vulkan_renderer {
 
+template <typename T>
+struct A {
+    int a() {
+        return 42;
+    }
+};
+
+template <typename T>
+struct B {
+    int b(A<T> *p) {
+        return p->template A<T>::a();
+    }
+};
+
 class Texture {
 public:
     Texture() = default;
