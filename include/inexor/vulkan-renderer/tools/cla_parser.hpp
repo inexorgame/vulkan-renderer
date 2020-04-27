@@ -11,11 +11,11 @@ namespace inexor::vulkan_renderer::tools {
 
 /// @brief Defines the type of an accepted command line argument.
 enum class CommandLineArgumentType {
-    none,
-    string,
-    int64,
-    uint32,
-    boolean,
+    NONE,
+    STRING,
+    INT64,
+    UINT32,
+    BOOL,
     // TODO: Add more
 };
 
@@ -54,25 +54,25 @@ private:
     /// @brief This defines the list of acceptable command line arguments with their corresponding types.
     const std::vector<CommandLineArgumentTemplate> list_of_accepted_command_line_arguments{
         /// Defines which GPU to use (by array index).
-        {CommandLineArgumentType::uint32, "-gpu"},
+        {CommandLineArgumentType::UINT32, "-gpu"},
 
         /// Defines if we will print stats about graphics cards.
-        {CommandLineArgumentType::none, "-nostats"},
+        {CommandLineArgumentType::NONE, "-nostats"},
 
         // Use vertical synchronisation.
-        {CommandLineArgumentType::none, "-vsync"},
+        {CommandLineArgumentType::NONE, "-vsync"},
 
         // Use RenderDoc layer.
-        {CommandLineArgumentType::none, "-renderdoc"},
+        {CommandLineArgumentType::NONE, "-renderdoc"},
 
         // Disable Khronos validation layer.
-        {CommandLineArgumentType::none, "-novalidation"},
+        {CommandLineArgumentType::NONE, "-novalidation"},
 
         // Do not use distinct data transfer queue, use graphics queue.
-        {CommandLineArgumentType::none, "-no_separate_data_queue"},
+        {CommandLineArgumentType::NONE, "-no_separate_data_queue"},
 
         // Disable debug markers (even if -renderdoc is specified)
-        {CommandLineArgumentType::none, "-no_vk_debug_markers"}
+        {CommandLineArgumentType::NONE, "-no_vk_debug_markers"}
 
         /// TODO: Add more command line argumetns here!
     };

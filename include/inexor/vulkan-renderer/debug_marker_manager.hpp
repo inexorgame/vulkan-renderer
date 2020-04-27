@@ -27,15 +27,15 @@ private:
 
     bool extension_present = false;
 
-    PFN_vkDebugMarkerSetObjectTagEXT vkDebugMarkerSetObjectTag = VK_NULL_HANDLE;
+    PFN_vkDebugMarkerSetObjectTagEXT marker_set_object_tag = VK_NULL_HANDLE;
 
-    PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectName = VK_NULL_HANDLE;
+    PFN_vkDebugMarkerSetObjectNameEXT marker_set_object_name = VK_NULL_HANDLE;
 
-    PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBegin = VK_NULL_HANDLE;
+    PFN_vkCmdDebugMarkerBeginEXT cmd_marker_begin = VK_NULL_HANDLE;
 
-    PFN_vkCmdDebugMarkerInsertEXT vkCmdDebugMarkerInsert = VK_NULL_HANDLE;
+    PFN_vkCmdDebugMarkerInsertEXT cmd_marker_insert = VK_NULL_HANDLE;
 
-    PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEnd = VK_NULL_HANDLE;
+    PFN_vkCmdDebugMarkerEndEXT cmd_marker_end = VK_NULL_HANDLE;
 
 public:
     VulkanDebugMarkerManager() = default;

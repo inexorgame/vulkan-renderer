@@ -16,23 +16,23 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->frame_buffer_resized = true;
 }
 
-VkResult Application::load_TOML_configuration_file(const std::string &TOML_file_name) {
-    spdlog::debug("Loading TOML configuration file: '{}'.", TOML_file_name);
+VkResult Application::load_toml_configuration_file(const std::string &file_name) {
+    spdlog::debug("Loading TOML configuration file: '{}'.", file_name);
 
     std::ifstream toml_file;
 
     // Check if this file exists.
-    toml_file.open(TOML_file_name.c_str(), std::ios::in);
+    toml_file.open(file_name.c_str(), std::ios::in);
 
     if (!toml_file.is_open()) {
-        spdlog::error("Could not open configuration file: '{}'!", TOML_file_name);
+        spdlog::error("Could not open configuration file: '{}'!", file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
     toml_file.close();
 
     // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(TOML_file_name);
+    auto renderer_configuration = toml::parse(file_name);
 
     // Search for the title of the configuration file and print it to debug output.
     auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
@@ -347,7 +347,7 @@ VkResult Application::init() {
     thread_pool = std::make_shared<ThreadPool>();
 
     // Load the configuration from the TOML file.
-    VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
+    VkResult result = load_toml_configuration_file("configuration/renderer.toml");
     vulkan_error_check(result);
 
     spdlog::debug("Creating window.");
@@ -422,7 +422,7 @@ VkResult Application::init() {
     if (enable_khronos_validation_instance_layer) {
         spdlog::debug("Khronos validation layer is enabled.");
 
-        if (availability_checks_manager->is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
+        if (availability_checks_manager->has_instance_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
             VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 
             debug_report_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -717,7 +717,7 @@ VkResult Application::update_mouse_input() {
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 
     if (GLFW_PRESS == state) {
-        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotationSpeed, -cursor_delta_x * game_camera.rotationSpeed, 0.0f));
+        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
     }
 
     state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);

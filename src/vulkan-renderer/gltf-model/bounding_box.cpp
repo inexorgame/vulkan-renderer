@@ -5,7 +5,7 @@
 namespace inexor::vulkan_renderer::gltf_model {
 BoundingBox::BoundingBox(glm::vec3 min, glm::vec3 max) : min(min), max(max) {}
 
-BoundingBox BoundingBox::getAABB(glm::mat4 m) {
+BoundingBox BoundingBox::get_aabb(glm::mat4 m) {
     glm::vec3 min = glm::vec3(m[3]);
     glm::vec3 max = min;
     glm::vec3 v0, v1;

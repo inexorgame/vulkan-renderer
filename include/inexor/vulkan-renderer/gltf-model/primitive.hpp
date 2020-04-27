@@ -16,11 +16,11 @@ struct Primitive {
 
     Material &material;
 
-    bool hasIndices;
+    bool has_indices;
 
     BoundingBox bb;
 
-    Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t vertexCount, Material &material);
+    Primitive(uint32_t first_index, uint32_t index_count, uint32_t vertex_count, Material &material);
 
     /// @brief Sets the bounding box of the primitive.
     /// @param min [in] The minimum vector (edge of the bounding box)

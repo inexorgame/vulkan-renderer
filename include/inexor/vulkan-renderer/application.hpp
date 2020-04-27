@@ -62,7 +62,7 @@ private:
     /// @brief Loads the configuration of the renderer from a TOML configuration file.
     /// @brief TOML_file_name [in] The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
-    VkResult load_TOML_configuration_file(const std::string &TOML_file_name);
+    VkResult load_toml_configuration_file(const std::string &file_name);
 
     VkResult load_textures();
 
@@ -93,10 +93,10 @@ public:
     /// @brief Keyboard input callback.
     /// @param window [in] The glfw window.
     /// @param key [in] The key which was pressed or released.
-    /// @param scancode [in] The system-specific scancode of the key.
+    /// @param scan_code [in] The system-specific scancode of the key.
     /// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
     /// @param mods [in] Bit field describing which modifier keys were held down.
-    void keyboard_input_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+    void keyboard_input_callback(GLFWwindow *window, int key, int scan_code, int action, int mods);
 
     void run();
 

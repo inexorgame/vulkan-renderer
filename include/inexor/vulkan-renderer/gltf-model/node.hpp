@@ -20,9 +20,9 @@ struct ModelNode;
 struct ModelSkin {
     std::string name;
 
-    std::shared_ptr<ModelNode> skeletonRoot = nullptr;
+    std::shared_ptr<ModelNode> skeleton_root = nullptr;
 
-    std::vector<glm::mat4> inverseBindMatrices;
+    std::vector<glm::mat4> inverse_bind_matrices;
 
     std::vector<std::shared_ptr<ModelNode>> joints;
 };
@@ -42,7 +42,7 @@ struct ModelNode {
 
     std::shared_ptr<ModelSkin> skin;
 
-    int32_t skinIndex = -1;
+    int32_t skin_index = -1;
 
     glm::vec3 translation{};
 
@@ -54,9 +54,9 @@ struct ModelNode {
 
     BoundingBox aabb;
 
-    glm::mat4 localMatrix();
+    glm::mat4 local_matrix();
 
-    glm::mat4 getMatrix();
+    glm::mat4 get_matrix();
 
     void update(const std::shared_ptr<UniformBufferManager> uniform_buffer_manager);
 };

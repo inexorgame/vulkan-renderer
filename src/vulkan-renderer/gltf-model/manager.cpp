@@ -29,20 +29,20 @@ VkResult Manager::init(const VkDevice &device, const std::shared_ptr<VulkanTextu
     return VK_SUCCESS;
 }
 
-void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<Model> model, float globalscale) {
+void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<Model> model, float global_scale) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);
     assert(model);
-    assert(globalscale > 0.0f);
+    assert(global_scale > 0.0f);
 
     std::shared_ptr<ModelNode> newNode = std::make_shared<ModelNode>();
 
     newNode->index = node_index;
     newNode->parent = parent;
     newNode->name = node.name;
-    newNode->skinIndex = node.skin;
+    newNode->skin_index = node.skin;
     newNode->matrix = glm::mat4(1.0f);
 
     // Generate local node matrix
@@ -74,7 +74,7 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
     // Node with children
     if (node.children.size() > 0) {
         for (std::size_t i = 0; i < node.children.size(); i++) {
-            load_node(newNode, model->gltf2_container.nodes[node.children[i]], node.children[i], model, globalscale);
+            load_node(newNode, model->gltf2_container.nodes[node.children[i]], node.children[i], model, global_scale);
         }
     }
 
@@ -295,7 +295,7 @@ void Manager::load_skins(std::shared_ptr<Model> model) {
 
         // Find skeleton root node.
         if (source.skeleton > -1) {
-            newSkin->skeletonRoot = node_from_index(model, source.skeleton);
+            newSkin->skeleton_root = node_from_index(model, source.skeleton);
         }
 
         // Find joint nodes.
@@ -313,9 +313,9 @@ void Manager::load_skins(std::shared_ptr<Model> model) {
             const tinygltf::BufferView &bufferView = model->gltf2_container.bufferViews[accessor.bufferView];
             const tinygltf::Buffer &buffer = model->gltf2_container.buffers[bufferView.buffer];
 
-            newSkin->inverseBindMatrices.resize(accessor.count);
+            newSkin->inverse_bind_matrices.resize(accessor.count);
 
-            std::memcpy(newSkin->inverseBindMatrices.data(), &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(glm::mat4));
+            std::memcpy(newSkin->inverse_bind_matrices.data(), &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(glm::mat4));
         }
 
         model->skins.push_back(newSkin);
@@ -338,11 +338,11 @@ void Manager::load_textures(std::shared_ptr<Model> model) {
 
         if (-1 == tex.sampler) {
             // No sampler specified, use a default one.
-            texture_sampler.magFilter = VK_FILTER_LINEAR;
-            texture_sampler.minFilter = VK_FILTER_LINEAR;
-            texture_sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            texture_sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            texture_sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            texture_sampler.mag_filter = VK_FILTER_LINEAR;
+            texture_sampler.min_filter = VK_FILTER_LINEAR;
+            texture_sampler.address_mode_u = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            texture_sampler.address_mode_v = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            texture_sampler.address_mode_w = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         } else {
             texture_sampler = model->texture_samplers[tex.sampler];
         }
@@ -360,7 +360,7 @@ void Manager::load_textures(std::shared_ptr<Model> model) {
     }
 }
 
-VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrapMode) {
+VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrap_mode) {
     spdlog::debug("getVkWrapMode");
 
     assert(model_manager_initialised);
@@ -368,7 +368,7 @@ VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrapMode) {
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);
 
-    switch (wrapMode) {
+    switch (wrap_mode) {
     case 10497:
         return VK_SAMPLER_ADDRESS_MODE_REPEAT;
     case 33071:
@@ -381,13 +381,13 @@ VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrapMode) {
 }
 
 // TODO: std::optional!
-VkFilter Manager::get_filter_mode(const int32_t filterMode) {
+VkFilter Manager::get_filter_mode(const int32_t filter_mode) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);
 
-    switch (filterMode) {
+    switch (filter_mode) {
     case 9728:
         return VK_FILTER_NEAREST;
     case 9729:
@@ -417,11 +417,11 @@ void Manager::load_texture_samplers(std::shared_ptr<Model> model) {
     for (tinygltf::Sampler smpl : model->gltf2_container.samplers) {
         TextureSampler sampler{};
 
-        sampler.minFilter = get_filter_mode(smpl.minFilter);
-        sampler.magFilter = get_filter_mode(smpl.magFilter);
-        sampler.addressModeU = get_wrap_mode(smpl.wrapS);
-        sampler.addressModeV = get_wrap_mode(smpl.wrapT);
-        sampler.addressModeW = sampler.addressModeV;
+        sampler.min_filter = get_filter_mode(smpl.minFilter);
+        sampler.mag_filter = get_filter_mode(smpl.magFilter);
+        sampler.address_mode_u = get_wrap_mode(smpl.wrapS);
+        sampler.address_mode_v = get_wrap_mode(smpl.wrapT);
+        sampler.address_mode_w = sampler.address_mode_v;
 
         model->texture_samplers.push_back(sampler);
     }
@@ -438,54 +438,54 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
         Material material{};
 
         if (mat.values.find("baseColorTexture") != mat.values.end()) {
-            material.baseColorTexture = model->textures[mat.values["baseColorTexture"].TextureIndex()];
-            material.texCoordSets.baseColor = mat.values["baseColorTexture"].TextureTexCoord();
+            material.base_color_texture = model->textures[mat.values["baseColorTexture"].TextureIndex()];
+            material.tex_coord_sets.base_color = mat.values["baseColorTexture"].TextureTexCoord();
         }
         if (mat.values.find("metallicRoughnessTexture") != mat.values.end()) {
-            material.metallicRoughnessTexture = model->textures[mat.values["metallicRoughnessTexture"].TextureIndex()];
-            material.texCoordSets.metallicRoughness = mat.values["metallicRoughnessTexture"].TextureTexCoord();
+            material.metallic_roughness_texture = model->textures[mat.values["metallicRoughnessTexture"].TextureIndex()];
+            material.tex_coord_sets.metallic_roughness = mat.values["metallicRoughnessTexture"].TextureTexCoord();
         }
         if (mat.values.find("roughnessFactor") != mat.values.end()) {
-            material.roughnessFactor = static_cast<float>(mat.values["roughnessFactor"].Factor());
+            material.roughness_factor = static_cast<float>(mat.values["roughnessFactor"].Factor());
         }
         if (mat.values.find("metallicFactor") != mat.values.end()) {
-            material.metallicFactor = static_cast<float>(mat.values["metallicFactor"].Factor());
+            material.metallic_factor = static_cast<float>(mat.values["metallicFactor"].Factor());
         }
         if (mat.values.find("baseColorFactor") != mat.values.end()) {
-            material.baseColorFactor = glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
+            material.base_color_factor = glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
         }
         if (mat.additionalValues.find("normalTexture") != mat.additionalValues.end()) {
-            material.normalTexture = model->textures[mat.additionalValues["normalTexture"].TextureIndex()];
-            material.texCoordSets.normal = mat.additionalValues["normalTexture"].TextureTexCoord();
+            material.normal_texture = model->textures[mat.additionalValues["normalTexture"].TextureIndex()];
+            material.tex_coord_sets.normal = mat.additionalValues["normalTexture"].TextureTexCoord();
         }
         if (mat.additionalValues.find("emissiveTexture") != mat.additionalValues.end()) {
-            material.emissiveTexture = model->textures[mat.additionalValues["emissiveTexture"].TextureIndex()];
-            material.texCoordSets.emissive = mat.additionalValues["emissiveTexture"].TextureTexCoord();
+            material.emissive_texture = model->textures[mat.additionalValues["emissiveTexture"].TextureIndex()];
+            material.tex_coord_sets.emissive = mat.additionalValues["emissiveTexture"].TextureTexCoord();
         }
         if (mat.additionalValues.find("occlusionTexture") != mat.additionalValues.end()) {
-            material.occlusionTexture = model->textures[mat.additionalValues["occlusionTexture"].TextureIndex()];
-            material.texCoordSets.occlusion = mat.additionalValues["occlusionTexture"].TextureTexCoord();
+            material.occlusion_texture = model->textures[mat.additionalValues["occlusionTexture"].TextureIndex()];
+            material.tex_coord_sets.occlusion = mat.additionalValues["occlusionTexture"].TextureTexCoord();
         }
         if (mat.additionalValues.find("alphaMode") != mat.additionalValues.end()) {
             tinygltf::Parameter param = mat.additionalValues["alphaMode"];
 
             if (param.string_value == "BLEND") {
-                material.alphaMode = AlphaMode::blend;
+                material.alpha_mode = AlphaMode::BLEND;
             }
 
             if (param.string_value == "MASK") {
-                material.alphaCutoff = 0.5f;
-                material.alphaMode = AlphaMode::mask;
+                material.alpha_cutoff = 0.5f;
+                material.alpha_mode = AlphaMode::MASK;
             }
         }
 
         if (mat.additionalValues.find("alphaCutoff") != mat.additionalValues.end()) {
-            material.alphaCutoff = static_cast<float>(mat.additionalValues["alphaCutoff"].Factor());
+            material.alpha_cutoff = static_cast<float>(mat.additionalValues["alphaCutoff"].Factor());
         }
 
         if (mat.additionalValues.find("emissiveFactor") != mat.additionalValues.end()) {
-            material.emissiveFactor = glm::vec4(glm::make_vec3(mat.additionalValues["emissiveFactor"].ColorFactor().data()), 1.0);
-            material.emissiveFactor = glm::vec4(0.0f);
+            material.emissive_factor = glm::vec4(glm::make_vec3(mat.additionalValues["emissiveFactor"].ColorFactor().data()), 1.0);
+            material.emissive_factor = glm::vec4(0.0f);
         }
 
         // Extensions.
@@ -496,17 +496,17 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
             if (ext->second.Has("specularGlossinessTexture")) {
                 auto index = ext->second.Get("specularGlossinessTexture").Get("index");
 
-                material.extension.specularGlossinessTexture = model->textures[index.Get<int>()];
+                material.extension.specular_glossiness_texture = model->textures[index.Get<int>()];
 
                 auto texCoordSet = ext->second.Get("specularGlossinessTexture").Get("texCoord");
 
-                material.texCoordSets.specularGlossiness = texCoordSet.Get<int>();
-                material.pbrWorkflows.specularGlossiness = true;
+                material.tex_coord_sets.specular_glossiness = texCoordSet.Get<int>();
+                material.pbr_workflow.specular_glossiness = true;
             }
 
             if (ext->second.Has("diffuseTexture")) {
                 auto index = ext->second.Get("diffuseTexture").Get("index");
-                material.extension.diffuseTexture = model->textures[index.Get<int>()];
+                material.extension.diffuse_texture = model->textures[index.Get<int>()];
             }
 
             if (ext->second.Has("diffuseFactor")) {
@@ -514,7 +514,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
 
                 for (uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
-                    material.extension.diffuseFactor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                    material.extension.diffuse_factor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
                 }
             }
 
@@ -523,7 +523,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
 
                 for (uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
-                    material.extension.specularFactor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                    material.extension.specular_factor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
                 }
             }
         }
@@ -555,11 +555,11 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
             AnimationSampler sampler{};
 
             if (samp.interpolation == "LINEAR") {
-                sampler.interpolation = AnimationSampler::InterpolationType::linear;
+                sampler.interpolation = AnimationSampler::InterpolationType::LINEAR;
             } else if (samp.interpolation == "STEP") {
-                sampler.interpolation = AnimationSampler::InterpolationType::step;
+                sampler.interpolation = AnimationSampler::InterpolationType::STEP;
             } else if (samp.interpolation == "CUBICSPLINE") {
-                sampler.interpolation = AnimationSampler::InterpolationType::cubic_spline;
+                sampler.interpolation = AnimationSampler::InterpolationType::CUBIC_SPLINE;
             }
 
             // Read sampler input time values.
@@ -602,7 +602,7 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
                     const glm::vec3 *buf = static_cast<const glm::vec3 *>(dataPtr);
 
                     for (size_t index = 0; index < accessor.count; index++) {
-                        sampler.outputsVec4.push_back(glm::vec4(buf[index], 0.0f));
+                        sampler.outputs_vec4.push_back(glm::vec4(buf[index], 0.0f));
                     }
                     break;
                 }
@@ -610,7 +610,7 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
                     const glm::vec4 *buf = static_cast<const glm::vec4 *>(dataPtr);
 
                     for (size_t index = 0; index < accessor.count; index++) {
-                        sampler.outputsVec4.push_back(buf[index]);
+                        sampler.outputs_vec4.push_back(buf[index]);
                     }
                     break;
                 }
@@ -629,15 +629,15 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
             AnimationChannel channel{};
 
             if (source.target_path == "rotation") {
-                channel.path = AnimationChannel::PathType::rotation;
+                channel.path = AnimationChannel::PathType::ROTATION;
             }
 
             if (source.target_path == "translation") {
-                channel.path = AnimationChannel::PathType::translation;
+                channel.path = AnimationChannel::PathType::TRANSLATION;
             }
 
             if (source.target_path == "scale") {
-                channel.path = AnimationChannel::PathType::scale;
+                channel.path = AnimationChannel::PathType::SCALE;
             }
 
             if (source.target_path == "weights") {
@@ -727,8 +727,8 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
 
         for (auto node : new_model->linear_nodes) {
             // Assign skins.
-            if (node->skinIndex > -1) {
-                node->skin = new_model->skins[node->skinIndex];
+            if (node->skin_index > -1) {
+                node->skin = new_model->skins[node->skin_index];
             }
 
             // Initial pose.
@@ -782,13 +782,13 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
     return VK_SUCCESS;
 }
 
-void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index) {
+void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
     assert(mesh_buffer_manager);
     assert(node);
-    assert(commandBuffer);
+    assert(command_buffer);
 
     if (node->mesh) {
         for (auto primitive : node->mesh->primitives) {
@@ -804,22 +804,22 @@ void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer comma
             };
 
             // TODO: Encapsulate this by descriptor set manager?
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<uint32_t>(descriptor_sets.size()),
+            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<uint32_t>(descriptor_sets.size()),
                                     descriptor_sets.data(), 0, NULL);
 
             // TODO! PushConstantsManager
             // vkCmdPushConstants
 
-            if (primitive->hasIndices) {
-                vkCmdDrawIndexed(commandBuffer, primitive->index_count, 1, primitive->first_index, 0, 0);
+            if (primitive->has_indices) {
+                vkCmdDrawIndexed(command_buffer, primitive->index_count, 1, primitive->first_index, 0, 0);
             } else {
-                vkCmdDraw(commandBuffer, primitive->vertex_count, 1, 0, 0);
+                vkCmdDraw(command_buffer, primitive->vertex_count, 1, 0, 0);
             }
         }
     }
 
     for (auto &child : node->children) {
-        render_node(child, commandBuffer, pipeline_layout, current_image_index);
+        render_node(child, command_buffer, pipeline_layout, current_image_index);
     }
 }
 
@@ -866,7 +866,7 @@ void Manager::calculate_bounding_box(std::shared_ptr<Model> model, std::shared_p
 
     if (node->mesh) {
         if (node->mesh->bb.valid) {
-            node->aabb = node->mesh->bb.getAABB(node->getMatrix());
+            node->aabb = node->mesh->bb.get_aabb(node->get_matrix());
 
             if (node->children.size() == 0) {
                 node->bvh.min = node->aabb.min;
@@ -941,7 +941,7 @@ void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t inde
     for (auto &channel : animation.channels) {
         AnimationSampler &sampler = animation.samplers[channel.samplerIndex];
 
-        if (sampler.inputs.size() > sampler.outputsVec4.size()) {
+        if (sampler.inputs.size() > sampler.outputs_vec4.size()) {
             continue;
         }
 
@@ -951,28 +951,28 @@ void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t inde
 
                 if (u <= 1.0f) {
                     switch (channel.path) {
-                    case AnimationChannel::PathType::translation: {
-                        glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
+                    case AnimationChannel::PathType::TRANSLATION: {
+                        glm::vec4 trans = glm::mix(sampler.outputs_vec4[i], sampler.outputs_vec4[i + 1], u);
                         channel.node->translation = glm::vec3(trans);
                         break;
                     }
-                    case AnimationChannel::PathType::scale: {
-                        glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
+                    case AnimationChannel::PathType::SCALE: {
+                        glm::vec4 trans = glm::mix(sampler.outputs_vec4[i], sampler.outputs_vec4[i + 1], u);
                         channel.node->scale = glm::vec3(trans);
                         break;
                     }
-                    case AnimationChannel::PathType::rotation: {
+                    case AnimationChannel::PathType::ROTATION: {
                         glm::quat q1;
-                        q1.x = sampler.outputsVec4[i].x;
-                        q1.y = sampler.outputsVec4[i].y;
-                        q1.z = sampler.outputsVec4[i].z;
-                        q1.w = sampler.outputsVec4[i].w;
+                        q1.x = sampler.outputs_vec4[i].x;
+                        q1.y = sampler.outputs_vec4[i].y;
+                        q1.z = sampler.outputs_vec4[i].z;
+                        q1.w = sampler.outputs_vec4[i].w;
 
                         glm::quat q2;
-                        q2.x = sampler.outputsVec4[i + 1].x;
-                        q2.y = sampler.outputsVec4[i + 1].y;
-                        q2.z = sampler.outputsVec4[i + 1].z;
-                        q2.w = sampler.outputsVec4[i + 1].w;
+                        q2.x = sampler.outputs_vec4[i + 1].x;
+                        q2.y = sampler.outputs_vec4[i + 1].y;
+                        q2.z = sampler.outputs_vec4[i + 1].z;
+                        q2.w = sampler.outputs_vec4[i + 1].w;
 
                         channel.node->rotation = glm::normalize(glm::slerp(q1, q2, u));
                         break;
@@ -991,7 +991,7 @@ void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t inde
     }
 }
 
-VkResult Manager::load_model_from_glTF2_file(const std::string &internal_model_name, const std::string &glTF2_file_name) {
+VkResult Manager::load_model_from_glTF2_file(const std::string &internal_model_name, const std::string &gltf2_file_name) {
     assert(model_manager_initialised);
 
     if (does_key_exist(internal_model_name)) {
@@ -1001,7 +1001,7 @@ VkResult Manager::load_model_from_glTF2_file(const std::string &internal_model_n
 
     std::shared_ptr<Model> new_model = std::make_shared<Model>();
 
-    VkResult result = load_model_from_file(glTF2_file_name, new_model);
+    VkResult result = load_model_from_file(gltf2_file_name, new_model);
     vulkan_error_check(result);
 
     add_entry(internal_model_name, new_model);

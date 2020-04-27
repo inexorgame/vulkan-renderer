@@ -97,7 +97,7 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
     for (const auto &instance_extension : instance_extension_wishlist) {
         // TODO: Why is this taking so long?
         // TODO: Limit the number of function calls?
-        if (availability_checks_manager->is_instance_extension_available(instance_extension)) {
+        if (availability_checks_manager->has_instance_extension(instance_extension)) {
             spdlog::debug("Adding '{}' to instance extension wishlist.", instance_extension);
             enabled_instance_extensions.push_back(instance_extension);
         } else {
@@ -143,7 +143,7 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
     // We now have to check which instance layers of our wishlist are really supported on the current system!
     // Loop through the wishlist and check for availabiliy.
     for (auto current_layer : instance_layers_wishlist) {
-        if (availability_checks_manager->is_instance_layer_available(current_layer)) {
+        if (availability_checks_manager->has_instance_layer(current_layer)) {
             spdlog::debug("Instance layer '{}' is supported.", current_layer);
 
             // This instance layer is available!
@@ -214,7 +214,7 @@ VkResult VulkanRenderer::create_physical_device(const VkPhysicalDevice &graphics
     std::vector<const char *> enabled_device_extensions;
 
     for (auto device_extension_name : device_extensions_wishlist) {
-        if (availability_checks_manager->is_device_extension_available(graphics_card, device_extension_name)) {
+        if (availability_checks_manager->has_device_extension(graphics_card, device_extension_name)) {
             spdlog::debug("Device extension '{}' is supported!", device_extension_name);
 
             // This device layer is supported!
@@ -1016,13 +1016,13 @@ VkResult VulkanRenderer::recreate_swapchain() {
     vkDeviceWaitIdle(device);
 
     // Setup game camera.
-    game_camera.type = Camera::CameraType::lookat;
+    game_camera.type = Camera::CameraType::LOOKAT;
 
-    game_camera.setPerspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
-    game_camera.rotationSpeed = 0.25f;
-    game_camera.movementSpeed = 0.1f;
-    game_camera.setPosition({0.0f, 0.0f, 5.0f});
-    game_camera.setRotation({0.0f, 0.0f, 0.0f});
+    game_camera.set_perspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
+    game_camera.rotation_speed = 0.25f;
+    game_camera.movement_speed = 0.1f;
+    game_camera.set_position({0.0f, 0.0f, 5.0f});
+    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
 
     result = record_command_buffers();
     vulkan_error_check(result);

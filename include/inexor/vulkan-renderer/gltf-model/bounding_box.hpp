@@ -14,7 +14,7 @@ struct BoundingBox {
     BoundingBox() = default;
     BoundingBox(glm::vec3 min, glm::vec3 max);
 
-    BoundingBox getAABB(glm::mat4 m);
+    BoundingBox get_aabb(glm::mat4 m);
 };
 
 } // namespace inexor::vulkan_renderer::gltf_model

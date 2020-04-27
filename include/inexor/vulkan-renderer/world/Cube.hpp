@@ -162,29 +162,29 @@ private:
     /**
      * Run on-change events.
      */
-    void _change();
+    void change();
 
     /**
      * Parse one axis from a BitStream.
      * @param stream The BitStream to parse one axis from.
      * @return The indentation level on that axis.
      */
-    static uint8_t _parse_one(BitStream &stream);
+    static uint8_t parse_one(BitStream &stream);
 
     /**
      * Indentation level on the x-axis.
      */
-    uint8_t _x = 0;
+    uint8_t x_level = 0;
 
     /**
      * Indentation level on the y-axis.
      */
-    uint8_t _y = 0;
+    uint8_t y_level = 0;
 
     /**
      * Indentation level on the z-axis.
      */
-    uint8_t _z = 0;
+    uint8_t z_level = 0;
 };
 
 class Cube {
@@ -313,74 +313,74 @@ private:
      * Insert all polygons into memory.
      * @param polygons Pointer to the memory where the polygons should be saved to.
      */
-    void _all_polygons(array<glm::vec3, 3>* &polygons);
+    void all_polygons(array<glm::vec3, 3>* &polygons);
 
     /**
      * Run on-change events.
      */
-    void _change();
+    void change();
 
     /**
      * Run on-change events.
      */
-    void _change(Indentation *indentation);
+    void change(Indentation *indentation);
 
     /**
      * Get all vertices of this cube (not its children).
      * @return vertices of this cube.
      */
-    [[nodiscard]] array<glm::vec3, 8> _vertices();
+    [[nodiscard]] array<glm::vec3, 8> vertices();
 
     /**
      * Get the polygons of this cube as if it is a full cube.
      * @return polygons of this cube as if it is a full cube
      */
-    array<array<glm::vec3, 3>, 12> _full_polygons();
+    array<array<glm::vec3, 3>, 12> full_polygons();
 
     /**
      * Get the vertices in a structure which is ordered in triangles of the order of a full cube.
      * @param v The vertices of the the sides of a cube.
      * @return polygons of this cube in the order of a full cube.
      */
-    array<array<glm::vec3, 3>, 12> _full_polygons(array<glm::vec3, 8> &v);
+    array<array<glm::vec3, 3>, 12> full_polygons(array<glm::vec3, 8> &v);
 
     /**
      * Get the polygons of this cube (only when it is an indented cube).
      * @return polygons of this cube
      */
-    array<array<glm::vec3, 3>, 12> _indented_polygons();
+    array<array<glm::vec3, 3>, 12> indented_polygons();
 
     /**
      * Get the indentation levels for each side of the cube.
      * @return The indentation lebvels for each side of the cube.
      */
-    array<glm::tvec3<uint8_t>, 8> _indentation_levels();
+    array<glm::tvec3<uint8_t>, 8> indentation_levels();
 
     /**
      * Cache of this cubes polygons. Not of its octants (i.e., empty of the cube is of type CubeType::OCTANTS).
      */
-    array<array<glm::vec3, 3>, 12> _polygons_cache = {}; // Vertices of this cube (not its octants)
+    array<array<glm::vec3, 3>, 12> polygons_cache = {}; // Vertices of this cube (not its octants)
 
     /**
      * Whether this->_polygons_cache is valid and might be used.
      */
-    bool _valid_cache = false;
+    bool valid_cache = false;
 
     /**
      * Type of the cube.
      */
-    CubeType _type = CubeType::EMPTY;
+    CubeType cube_type = CubeType::EMPTY;
 
     /**
      * The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
      * x, y, and z-axis).
      */
-    glm::vec3 _position = {0.0f, 0.0f, 0.0f};
+    glm::vec3 cube_position = {0.0f, 0.0f, 0.0f};
 
     /**
      * The maximum size of the cube (i.e. if the cube is not indented).
      */
-    float _size = 32;
+    float cube_size = 32;
 };
 }
 

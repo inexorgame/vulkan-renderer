@@ -70,8 +70,8 @@ public:
 
     /// @brief Loads a glTF 2.0 file.
     /// @param internal_model_name [in] The internal name of the glTF 2.0 model which is used inside of the engine.
-    /// @param glTF2_file_name [in] The filename of the glTF 2.0 file.
-    VkResult load_model_from_glTF2_file(const std::string &internal_model_name, const std::string &glTF2_file_name);
+    /// @param gltf2_file_name [in] The filename of the glTF 2.0 file.
+    VkResult load_model_from_glTF2_file(const std::string &internal_model_name, const std::string &gltf2_file_name);
 
     /// @brief Renders a certain model during the recording of a command buffer.
     /// @param internal_model_name [in] The internal name of the glTF 2.0 model.
@@ -102,16 +102,16 @@ private:
 
     void destroy();
 
-    void load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, const uint32_t nodeIndex, std::shared_ptr<Model> model,
-                   const float globalscale);
+    void load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, const uint32_t node_index, std::shared_ptr<Model> model,
+                   const float global_scale);
 
     void load_skins(std::shared_ptr<Model> model);
 
     void load_textures(std::shared_ptr<Model> model);
 
-    VkSamplerAddressMode get_wrap_mode(const int32_t wrapMode);
+    VkSamplerAddressMode get_wrap_mode(const int32_t wrap_mode);
 
-    VkFilter get_filter_mode(const int32_t filterMode);
+    VkFilter get_filter_mode(const int32_t filter_mode);
 
     void load_texture_samplers(std::shared_ptr<Model> model);
 
@@ -119,7 +119,7 @@ private:
 
     void load_animations(std::shared_ptr<Model> model);
 
-    void render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer commandBuffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
+    void render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, std::size_t current_image_index);
 
     void calculate_bounding_box(std::shared_ptr<Model> model, std::shared_ptr<ModelNode> node, std::shared_ptr<ModelNode> parent);
 

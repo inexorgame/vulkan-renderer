@@ -1,17 +1,17 @@
 #include "inexor/vulkan-renderer/gltf-model/node.hpp"
 
 namespace inexor::vulkan_renderer::gltf_model {
-glm::mat4 ModelNode::localMatrix() {
+glm::mat4 ModelNode::local_matrix() {
     return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.0f), scale) * matrix;
 }
 
-glm::mat4 ModelNode::getMatrix() {
-    glm::mat4 m = localMatrix();
+glm::mat4 ModelNode::get_matrix() {
+    glm::mat4 m = local_matrix();
 
     std::shared_ptr<ModelNode> p = parent;
 
     while (p) {
-        m = p->localMatrix() * m;
+        m = p->local_matrix() * m;
         p = p->parent;
     }
 
@@ -20,7 +20,7 @@ glm::mat4 ModelNode::getMatrix() {
 
 void ModelNode::update(std::shared_ptr<UniformBufferManager> uniform_buffer_manager) {
     if (mesh) {
-        glm::mat4 m = getMatrix();
+        glm::mat4 m = get_matrix();
 
         if (skin) {
             mesh->uniform_block.matrix = m;
@@ -33,7 +33,7 @@ void ModelNode::update(std::shared_ptr<UniformBufferManager> uniform_buffer_mana
             for (size_t i = 0; i < numJoints; i++) {
                 std::shared_ptr<ModelNode> jointNode = skin->joints[i];
 
-                glm::mat4 jointMat = jointNode->getMatrix() * skin->inverseBindMatrices[i];
+                glm::mat4 jointMat = jointNode->get_matrix() * skin->inverse_bind_matrices[i];
                 jointMat = inverseTransform * jointMat;
                 mesh->uniform_block.joint_matrix[i] = jointMat;
             }

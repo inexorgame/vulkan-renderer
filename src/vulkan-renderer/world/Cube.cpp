@@ -17,54 +17,51 @@ const static glm::vec3 DEFAULT_CUBE_POSITION = {0., 0., 0.};
 
 void Indentation::set(optional<uint8_t> x, optional<uint8_t> y, optional<uint8_t> z) {
     if (x != nullopt) {
-        this->_x = x.value();
+        this->x_level = x.value();
     }
     if (y != nullopt) {
-        this->_y = y.value();
+        this->y_level = y.value();
     }
     if (z != nullopt) {
-        this->_z = z.value();
+        this->z_level = z.value();
     }
-    this->_change();
+    this->change();
 }
 
 void Indentation::set_x(uint8_t x) {
-    this->_x = x;
-    this->_change();
+    this->x_level = x;
+    this->change();
 }
 
 void Indentation::set_y(uint8_t y) {
-    this->_y = y;
-    this->_change();
+    this->y_level = y;
+    this->change();
 }
 
 void Indentation::set_z(uint8_t z) {
-    this->_z = z;
-    this->_change();
+    this->z_level = z;
+    this->change();
 }
 
-uint8_t Indentation::x() const { return this->_x; }
-uint8_t Indentation::y() const { return this->_y; }
-uint8_t Indentation::z() const { return this->_z; }
+uint8_t Indentation::x() const { return this->x_level; }
+uint8_t Indentation::y() const { return this->y_level; }
+uint8_t Indentation::z() const { return this->z_level; }
 
 Indentation Indentation::parse(BitStream &stream) {
     // Parse each indentation level one by one.
-    return Indentation(
-        Indentation::_parse_one(stream),
-        Indentation::_parse_one(stream),
-        Indentation::_parse_one(stream)
+    return Indentation(Indentation::parse_one(stream), Indentation::parse_one(stream), Indentation::parse_one(stream)
     );
 }
 
 Indentation::Indentation() = default;
 
 Indentation::Indentation(uint8_t x, uint8_t y, uint8_t z) {
-    this->_x = x;
-    this->_y = y;
-    this->_z = z;
+    this->x_level = x;
+    this->y_level = y;
+    this->z_level = z;
 }
 
-uint8_t Indentation::_parse_one(BitStream &stream) {
+uint8_t Indentation::parse_one(BitStream &stream) {
     bool indented = stream.get(1).value();
     if (indented) {
         return static_cast<uint8_t>(stream.get(3).value());
@@ -73,17 +70,17 @@ uint8_t Indentation::_parse_one(BitStream &stream) {
 }
 
 glm::tvec3<uint8_t> Indentation::vec() const {
-    return { this->_x, this->_y, this->_z };
+    return { this->x_level, this->y_level, this->z_level};
 }
 
-void Indentation::_change() {
+void Indentation::change() {
     this->on_change(this);
 }
 
 Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
-    this->_type = type;
-    this->_size = size;
-    this->_position = position;
+    this->cube_type = type;
+    this->cube_size = size;
+    this->cube_position = position;
 }
 
 Cube::Cube(array<Indentation, 8> &indentations, float size, const glm::vec3 &position):
@@ -148,7 +145,7 @@ Cube Cube::parse(BitStream &stream, float size, const glm::vec3 &position) {
 }
 
 CubeType Cube::type() {
-    return this->_type;
+    return this->cube_type;
 }
 
 vector<array<glm::vec3, 3>> Cube::polygons() {
@@ -159,40 +156,40 @@ vector<array<glm::vec3, 3>> Cube::polygons() {
     polygons.resize(this->leaves() * 12);
 
     auto polygons_pointer = polygons.data();
-    this->_all_polygons(polygons_pointer);
+    this->all_polygons(polygons_pointer);
     return polygons;
 }
 
-void Cube::_all_polygons(array<glm::vec3, 3>* &polygons) {
-    if (this->_type == CubeType::EMPTY) {
+void Cube::all_polygons(array<glm::vec3, 3>* &polygons) {
+    if (this->cube_type == CubeType::EMPTY) {
         return;
     }
-    if (this->_type == CubeType::OCTANTS) {
+    if (this->cube_type == CubeType::OCTANTS) {
         for (const auto &octant: this->octants.value()) {
-            octant->_all_polygons(polygons);
+            octant->all_polygons(polygons);
         }
         return;
     }
 
     // _type == (FULL or INDENTED)
-    if (!this->_valid_cache) {
-        if (this->_type == CubeType::FULL) {
-            this->_polygons_cache = this->_full_polygons();
+    if (!this->valid_cache) {
+        if (this->cube_type == CubeType::FULL) {
+            this->polygons_cache = this->full_polygons();
         } else {
-            this->_polygons_cache = this->_indented_polygons();
+            this->polygons_cache = this->indented_polygons();
         }
-        this->_valid_cache = true;
+        this->valid_cache = true;
     }
 
     // TODO: Let polygons return array of pointers to cache instead of copying the value.
-    for (const auto polygon: this->_polygons_cache) {
+    for (const auto polygon: this->polygons_cache) {
         *polygons = polygon;
         polygons++;
     }
 }
 
 uint64_t Cube::leaves() {
-    switch(this->_type) {
+    switch(this->cube_type) {
         case CubeType::EMPTY:
             return 0;
         case CubeType::FULL:
@@ -209,7 +206,7 @@ uint64_t Cube::leaves() {
     return 0;
 }
 
-array<array<glm::vec3, 3>, 12> Cube::_full_polygons(array<glm::vec3, 8> &v) {
+array<array<glm::vec3, 3>, 12> Cube::full_polygons(array<glm::vec3, 8> &v) {
     return {{
         {{ v[0], v[2], v[1] }}, // x = 0
         {{ v[1], v[2], v[3] }}, // x = 0
@@ -231,20 +228,20 @@ array<array<glm::vec3, 3>, 12> Cube::_full_polygons(array<glm::vec3, 8> &v) {
     }};
 }
 
-array<array<glm::vec3, 3>, 12> Cube::_full_polygons() {
-    assert(this->_type == CubeType::FULL);
+array<array<glm::vec3, 3>, 12> Cube::full_polygons() {
+    assert(this->cube_type == CubeType::FULL);
 
-    array<glm::vec3, 8> v = this->_vertices();
-    return this->_full_polygons(v);
+    array<glm::vec3, 8> v = this->vertices();
+    return this->full_polygons(v);
 }
 
-array<array<glm::vec3, 3>, 12> Cube::_indented_polygons() {
-    assert(this->_type == CubeType::INDENTED);
+array<array<glm::vec3, 3>, 12> Cube::indented_polygons() {
+    assert(this->cube_type == CubeType::INDENTED);
 
-    array<glm::vec3, 8> v = this->_vertices();
+    array<glm::vec3, 8> v = this->vertices();
 
-    array<array<glm::vec3, 3>, 12> vertices = this->_full_polygons(v);
-    array<glm::tvec3<uint8_t>, 8> in = this->_indentation_levels();
+    array<array<glm::vec3, 3>, 12> vertices = this->full_polygons(v);
+    array<glm::tvec3<uint8_t>, 8> in = this->indentation_levels();
 
     // Check for each side if the side is convex, rotate the hypotenuse so it becomes convex!
     // x = 0
@@ -285,14 +282,14 @@ array<array<glm::vec3, 3>, 12> Cube::_indented_polygons() {
     return vertices;
 }
 
-array<glm::vec3, 8> Cube::_vertices() {
-    assert(this->_type == CubeType::FULL || this->_type == CubeType::INDENTED);
-    glm::vec3 &p = this->_position;
+array<glm::vec3, 8> Cube::vertices() {
+    assert(this->cube_type == CubeType::FULL || this->cube_type == CubeType::INDENTED);
+    glm::vec3 &p = this->cube_position;
 
     // Most distant corner of a "full" cube (from p)
-    glm::vec3 f = {p.x + this->_size, p.y + this->_size, p.z + this->_size };
+    glm::vec3 f = {p.x + this->cube_size, p.y + this->cube_size, p.z + this->cube_size};
 
-    if (this->_type == CubeType::FULL) {
+    if (this->cube_type == CubeType::FULL) {
         return array<glm::vec3, 8>{{
             {p.x, p.y, p.z},
             {p.x, p.y, f.z},
@@ -304,10 +301,10 @@ array<glm::vec3, 8> Cube::_vertices() {
             {f.x, f.y, f.z}
         }};
     }
-    assert(this->_type == CubeType::INDENTED);
-    const float step = this->_size / MAX_INDENTATION;
+    assert(this->cube_type == CubeType::INDENTED);
+    const float step = this->cube_size / MAX_INDENTATION;
 
-    array<glm::tvec3<uint8_t>, 8> in = this->_indentation_levels();
+    array<glm::tvec3<uint8_t>, 8> in = this->indentation_levels();
 
     // Calculate the vertex-positions with respect to the indentation level.
     return array<glm::vec3, 8>{{
@@ -323,18 +320,18 @@ array<glm::vec3, 8> Cube::_vertices() {
 }
 
 void Cube::invalidate_cache() {
-    this->_valid_cache = false;
+    this->valid_cache = false;
 }
 
-void Cube::_change() {
+void Cube::change() {
     this->invalidate_cache();
     this->on_change(this);
 }
 
-void Cube::_change(Indentation *indentation) {
-    this->_change();
+void Cube::change(Indentation *indentation) {
+    this->change();
 }
-array<glm::tvec3<uint8_t>, 8> Cube::_indentation_levels() {
+array<glm::tvec3<uint8_t>, 8> Cube::indentation_levels() {
     array<glm::tvec3<uint8_t>, 8> in;
     auto &indents = this->indentations.value();
     for (size_t i = 0; i < in.size(); i++) {
