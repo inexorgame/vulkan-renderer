@@ -1,4 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
+#include "inexor/vulkan-renderer/debug_callback.hpp"
 
 namespace inexor::vulkan_renderer {
 
@@ -428,7 +429,7 @@ VkResult Application::init() {
             debug_report_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
             debug_report_create_info.flags =
                 VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
-            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&VulkanDebugMessageCallback;
+            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
