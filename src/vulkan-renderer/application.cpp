@@ -17,11 +17,11 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->frame_buffer_resized = true;
 }
 
-VkResult Application::load_toml_configuration(const std::string &file_name) {
+VkResult Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Loading TOML configuration file: '{}'", file_name);
 
-    std::ifstream file(file_name, std::ios::in);
-    if (!file) {
+    std::ifstream toml_file(file_name, std::ios::in);
+    if (!toml_file) {
         spdlog::error("Could not open configuration file: '{}'!", file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
