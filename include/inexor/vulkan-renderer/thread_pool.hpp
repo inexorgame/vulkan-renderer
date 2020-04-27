@@ -66,7 +66,6 @@ private:
     //  object (such as the packaged_task declared in execute) - because a lambda
     //  capturing a non-CopyConstructible object is not CopyConstructible.
 
-    ///
     class TaskContainerBase {
     public:
         virtual ~TaskContainerBase(){};
@@ -79,9 +78,6 @@ private:
     //  bind object with no placeholders.
     //  F may or may not be CopyConstructible.
 
-    ///
-    ///
-    ///
     template <typename F>
     class TaskContainer : public TaskContainerBase {
     public:
@@ -89,14 +85,8 @@ private:
         //  bind an lvalue reference - it is not a guarantee that an object of type F is
         //  CopyConstructible, only that it is MoveConstructible.
 
-        ///
-        ///
-        ///
         TaskContainer(F &&func) : _f(std::forward<F>(func)) {}
 
-        ///
-        ///
-        ///
         void operator()() override {
             _f();
         }

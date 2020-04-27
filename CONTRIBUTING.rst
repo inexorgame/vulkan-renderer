@@ -8,12 +8,12 @@ Join our discord server: https://discord.gg/acUW8k7.
     - CMake improvements and feedback.
     - Feedback on Travis CI and Github actions.
     - Support for `Exhale <https://exhale.readthedocs.io/en/latest/>`__.
-	- Overall contributions to CI (Travis/Github actions).
-	- Replaced unscoped enums with scoped enums.
-	- Replaced macros with constexpr's.
-	- Improvement of overall project structure.
-	- Overall code cleanup.
-	- Read the docs support.
+    - Overall contributions to CI (Travis/Github actions).
+    - Replaced unscoped enums with scoped enums.
+    - Replaced macros with constexpr's.
+    - Improvement of overall project structure.
+    - Overall code cleanup.
+    - Read the docs support.
 
 `Shikijo <https://github.com/Shikijo>`__
     - Pointed out broken glsl compiler batch script on Windows.
@@ -36,7 +36,6 @@ Join our discord server: https://discord.gg/acUW8k7.
     - Getting vulkan-renderer compile and run on Linux.
     - Overall CMake expertise.
     - Compiling SPIR-V shaders through CMake setup.
-	
-	
+
 `joetoth <https://github.com/joetoth>`__
     - Help with Discord server.

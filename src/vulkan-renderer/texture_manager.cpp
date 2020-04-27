@@ -10,7 +10,7 @@ namespace inexor::vulkan_renderer {
 
 VkResult VulkanTextureManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card,
                                     const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VmaAllocator &vma_allocator,
-                                    const uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue) {
+                                    const std::uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(data_transfer_queue);
@@ -54,7 +54,7 @@ VkResult VulkanTextureManager::create_texture_manager_command_pool() {
     vulkan_error_check(result);
 
     // Give this command pool an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT,
                                           "Command pool for VulkanTextureManager.");
 
     VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
@@ -71,7 +71,7 @@ VkResult VulkanTextureManager::create_texture_manager_command_pool() {
     vulkan_error_check(result);
 
     // Give this command pool an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                           "Command buffer for VulkanTextureManager.");
 
     return VK_SUCCESS;
@@ -102,7 +102,7 @@ VkResult VulkanTextureManager::create_texture_buffer(std::shared_ptr<Texture> te
     const std::string data_buffer_name = "Data buffer for texture '" + texture->name + "'.";
 
     // Give this texture buffer an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(buffer_object.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, data_buffer_name.c_str());
 
     return result;
 }
@@ -144,7 +144,7 @@ VkResult VulkanTextureManager::create_texture_image(std::shared_ptr<Texture> tex
     std::string image_name = "Image for texture '" + texture->name + "'.";
 
     // Assign an appropriate name to this image view.
-    debug_marker_manager->set_object_name(device, (uint64_t)(texture->image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, image_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(texture->image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, image_name.c_str());
 
     return VK_SUCCESS;
 }
@@ -172,7 +172,7 @@ VkResult VulkanTextureManager::create_texture_image_view(std::shared_ptr<Texture
     std::string debug_marker_name = "Image view for texture '" + texture->name + "'";
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(texture->image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, debug_marker_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(texture->image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, debug_marker_name.c_str());
 
     return VK_SUCCESS;
 }
@@ -314,8 +314,8 @@ VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string
 
         unsigned char *rgb = &gltf_image.image[0];
 
-        for (int32_t i = 0; i < gltf_image.width * gltf_image.height; ++i) {
-            for (int32_t j = 0; j < 3; ++j) {
+        for (std::int32_t i = 0; i < gltf_image.width * gltf_image.height; ++i) {
+            for (std::int32_t j = 0; j < 3; ++j) {
                 rgba[j] = rgb[j];
             }
 
@@ -334,7 +334,7 @@ VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string
     new_texture->format = format;
     new_texture->width = gltf_image.width;
     new_texture->height = gltf_image.height;
-    new_texture->mip_levels = 1; // static_cast<uint32_t>(floor(log2(std::max(new_texture->width, new_texture->height))) + 1.0);
+    new_texture->mip_levels = 1; // static_cast<std::uint32_t>(floor(log2(std::max(new_texture->width, new_texture->height))) + 1.0);
 
     // Now that we have loaded the texture's memory, we can simply call this method to continue!
     VkResult result = create_texture_from_memory(internal_texture_name, texture_buffer, texture_memory_size, new_texture);
@@ -416,7 +416,7 @@ VkResult VulkanTextureManager::create_texture_sampler(std::shared_ptr<Texture> t
     const std::string texture_sampler_name = "Texture sampler for texture '" + texture->name + "'.";
 
     // Give this texture sampler an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(texture->sampler), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, texture_sampler_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(texture->sampler), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, texture_sampler_name.c_str());
 
     return VK_SUCCESS;
 }
@@ -470,7 +470,7 @@ VkResult VulkanTextureManager::transition_image_layout(VkImage &image, VkFormat 
     return VK_SUCCESS;
 }
 
-VkResult VulkanTextureManager::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+VkResult VulkanTextureManager::copy_buffer_to_image(VkBuffer buffer, VkImage image, std::uint32_t width, std::uint32_t height) {
     start_recording_of_single_time_command_buffer();
 
     VkBufferImageCopy buffer_image_region = {};

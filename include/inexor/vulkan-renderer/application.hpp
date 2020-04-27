@@ -9,7 +9,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/thread_pool.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
-#include "inexor/vulkan-renderer/world/Cube.hpp"
+#include "inexor/vulkan-renderer/world/cube.hpp"
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
@@ -28,9 +28,9 @@ private:
 
     std::string engine_name = "";
 
-    uint32_t application_version = 0;
+    std::uint32_t application_version = 0;
 
-    uint32_t engine_version = 0;
+    std::uint32_t engine_version = 0;
 
     // The core concept of paralellization in Inexor is to use a
     // C++17 threadpool implementation which spawns worker threads.
@@ -62,24 +62,18 @@ private:
     /// @brief Loads the configuration of the renderer from a TOML configuration file.
     /// @brief TOML_file_name [in] The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
-    VkResult load_TOML_configuration_file(const std::string &TOML_file_name);
+    VkResult load_toml_configuration_file(const std::string &file_name);
 
-    ///
     VkResult load_textures();
 
-    ///
     VkResult load_shaders();
 
-    ///
     VkResult load_models();
 
-    ///
     VkResult load_octree_geometry();
 
-    ///
     VkResult check_application_specific_features();
 
-    ///
     VkResult render_frame();
 
     /// @brief Implementation of the uniform buffer update method.
@@ -99,10 +93,10 @@ public:
     /// @brief Keyboard input callback.
     /// @param window [in] The glfw window.
     /// @param key [in] The key which was pressed or released.
-    /// @param scancode [in] The system-specific scancode of the key.
+    /// @param scan_code [in] The system-specific scancode of the key.
     /// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
     /// @param mods [in] Bit field describing which modifier keys were held down.
-    void keyboard_input_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+    void keyboard_input_callback(GLFWwindow *window, int key, int scan_code, int action, int mods);
 
     void run();
 

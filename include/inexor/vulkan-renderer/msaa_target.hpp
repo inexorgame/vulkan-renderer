@@ -4,9 +4,6 @@
 
 namespace inexor::vulkan_renderer {
 
-///
-///
-///
 struct MSAATarget {
     // The color buffer.
     ImageBuffer color;

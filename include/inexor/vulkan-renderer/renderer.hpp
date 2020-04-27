@@ -110,7 +110,7 @@ protected:
 
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 
-    uint32_t number_of_images_in_swapchain = 0;
+    std::uint32_t number_of_images_in_swapchain = 0;
 
     VkSubmitInfo submit_info;
 
@@ -156,13 +156,13 @@ protected:
 
     ImageBuffer depth_stencil;
 
-    uint32_t vma_dump_index = 0;
+    std::uint32_t vma_dump_index = 0;
 
     TimeStep time_step;
 
-    uint32_t window_width = 0;
+    std::uint32_t window_width = 0;
 
-    uint32_t window_height = 0;
+    std::uint32_t window_height = 0;
 
     std::string window_title = "";
 
@@ -204,8 +204,8 @@ protected:
     /// @param application_version The version of the application encoded as an unsigned 32 bit integer.
     /// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
     /// @param enable_validation_layers True if validation is enabled.
-    VkResult create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const uint32_t application_version,
-                                    const uint32_t engine_version, bool enable_validation_instance_layers = true, bool enable_renderdoc_instance_layer = false);
+    VkResult create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
+                                    const std::uint32_t engine_version, bool enable_validation_instance_layers = true, bool enable_renderdoc_instance_layer = false);
 
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.
@@ -223,7 +223,6 @@ protected:
     /// @brief Initialises glTF 2.0 model manager.
     VkResult initialise_glTF2_model_manager();
 
-    ///
     VkResult update_cameras();
 
     /// @brief Initialise allocator of Vulkan Memory Allocator library.
@@ -250,13 +249,10 @@ protected:
     /// @brief Creates the uniform buffers.
     VkResult create_uniform_buffers();
 
-    ///
     VkResult create_descriptor_pool();
 
-    ///
     VkResult create_descriptor_set_layouts();
 
-    ///
     VkResult create_descriptor_writes();
 
     /// @brief Creates the descriptor set.

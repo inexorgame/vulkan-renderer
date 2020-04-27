@@ -1,4 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
+#include "inexor/vulkan-renderer/debug_callback.hpp"
 
 namespace inexor::vulkan_renderer {
 
@@ -16,23 +17,23 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->frame_buffer_resized = true;
 }
 
-VkResult Application::load_TOML_configuration_file(const std::string &TOML_file_name) {
-    spdlog::debug("Loading TOML configuration file: '{}'.", TOML_file_name);
+VkResult Application::load_toml_configuration_file(const std::string &file_name) {
+    spdlog::debug("Loading TOML configuration file: '{}'.", file_name);
 
     std::ifstream toml_file;
 
     // Check if this file exists.
-    toml_file.open(TOML_file_name.c_str(), std::ios::in);
+    toml_file.open(file_name.c_str(), std::ios::in);
 
     if (!toml_file.is_open()) {
-        spdlog::error("Could not open configuration file: '{}'!", TOML_file_name);
+        spdlog::error("Could not open configuration file: '{}'!", file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
     toml_file.close();
 
     // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(TOML_file_name);
+    auto renderer_configuration = toml::parse(file_name);
 
     // Search for the title of the configuration file and print it to debug output.
     auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
@@ -57,7 +58,7 @@ VkResult Application::load_TOML_configuration_file(const std::string &TOML_file_
 
     spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
 
-    // Generate an uint32_t value from the major, minor and patch version info.
+    // Generate an std::uint32_t value from the major, minor and patch version info.
     application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
 
     int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
@@ -66,7 +67,7 @@ VkResult Application::load_TOML_configuration_file(const std::string &TOML_file_
 
     spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
 
-    // Generate an uint32_t value from the major, minor and patch version info.
+    // Generate an std::uint32_t value from the major, minor and patch version info.
     engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
 
     texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
@@ -191,7 +192,7 @@ VkResult Application::render_frame() {
 
     vkWaitForFences(device, 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
 
-    uint32_t image_index = 0;
+    std::uint32_t image_index = 0;
     VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, *image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
 
     if (VK_NULL_HANDLE != images_in_flight[image_index]) {
@@ -278,9 +279,9 @@ VkResult Application::load_octree_geometry() {
 
     std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0x00, 0x00, 0x00};
 
-    inexor::world::Cube cube = inexor::world::Cube::parse(test);
+    world::Cube cube = world::Cube::parse(test);
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
-    vector<array<glm::vec3, 3>> polygons = cube.polygons();
+    std::vector<std::array<glm::vec3, 3>> polygons = cube.polygons();
     std::vector<OctreeVertex> octree_vertices;
     octree_vertices.resize(polygons.size() * 3);
     OctreeVertex *current_vertex = octree_vertices.data();
@@ -347,7 +348,7 @@ VkResult Application::init() {
     thread_pool = std::make_shared<ThreadPool>();
 
     // Load the configuration from the TOML file.
-    VkResult result = load_TOML_configuration_file("configuration/renderer.toml");
+    VkResult result = load_toml_configuration_file("configuration/renderer.toml");
     vulkan_error_check(result);
 
     spdlog::debug("Creating window.");
@@ -422,13 +423,13 @@ VkResult Application::init() {
     if (enable_khronos_validation_instance_layer) {
         spdlog::debug("Khronos validation layer is enabled.");
 
-        if (availability_checks_manager->is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
+        if (availability_checks_manager->has_instance_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
             VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 
             debug_report_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
             debug_report_create_info.flags =
                 VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
-            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&VulkanDebugMessageCallback;
+            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
@@ -468,7 +469,7 @@ VkResult Application::init() {
     spdlog::debug("Checking for -gpu command line argument.");
 
     // The user can specify with "-gpu <number>" which graphics card to prefer.
-    std::optional<uint32_t> prefered_graphics_card = get_command_line_argument_uint32_t("-gpu");
+    std::optional<std::uint32_t> prefered_graphics_card = get_command_line_argument_uint32("-gpu");
 
     if (prefered_graphics_card.has_value()) {
         spdlog::debug("Preferential graphics card index {} specified.", prefered_graphics_card.value());
@@ -578,7 +579,7 @@ VkResult Application::init() {
 
     // Assign an appropriate name to the central Vulkan device.
     // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
-    // debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
+    // debug_marker_manager->set_object_name(device, (std::uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
 
     //
     // result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
@@ -717,7 +718,7 @@ VkResult Application::update_mouse_input() {
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 
     if (GLFW_PRESS == state) {
-        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotationSpeed, -cursor_delta_x * game_camera.rotationSpeed, 0.0f));
+        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
     }
 
     state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);

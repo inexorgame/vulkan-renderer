@@ -10,36 +10,19 @@ namespace inexor::vulkan_renderer {
 class Camera {
 private:
     float fov;
-    float znear, zfar;
+    float z_near, z_far;
 
-    void updateViewMatrix() {
-        glm::mat4 rotM = glm::mat4(1.0f);
-        glm::mat4 transM;
-
-        rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
-        transM = glm::translate(glm::mat4(1.0f), position * glm::vec3(1.0f, 1.0f, -1.0f));
-
-        if (type == CameraType::firstperson) {
-            matrices.view = rotM * transM;
-        } else {
-            matrices.view = transM * rotM;
-        }
-
-        updated = true;
-    };
+    void update_view_matrix();
 
 public:
-    enum CameraType { lookat, firstperson };
-    CameraType type = CameraType::lookat;
+    enum CameraType { LOOKAT, FIRSTPERSON };
+    CameraType type = CameraType::LOOKAT;
 
     glm::vec3 rotation = glm::vec3();
     glm::vec3 position = glm::vec3();
 
-    float rotationSpeed = 1.0f;
-    float movementSpeed = 1.0f;
+    float rotation_speed = 1.0f;
+    float movement_speed = 1.0f;
 
     bool updated = false;
 
@@ -55,134 +38,31 @@ public:
         bool down = false;
     } keys;
 
-    bool moving() {
-        return keys.left || keys.right || keys.up || keys.down;
-    }
+    bool moving();
 
-    float getNearClip() {
-        return znear;
-    }
+    float get_near_clip();
 
-    float getFarClip() {
-        return zfar;
-    }
+    float get_far_clip();
 
-    void setPerspective(float fov, float aspect, float znear, float zfar) {
-        this->fov = fov;
-        this->znear = znear;
-        this->zfar = zfar;
-        matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
-    };
+    void set_perspective(float fov, float aspect, float z_near, float z_far);
 
-    void updateAspectRatio(float aspect) {
-        matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
-    }
+    void update_aspect_ratio(float aspect);
 
-    void setPosition(glm::vec3 position) {
-        this->position = position;
-        updateViewMatrix();
-    }
+    void set_position(glm::vec3 position);
 
-    void setRotation(glm::vec3 rotation) {
-        this->rotation = rotation;
-        updateViewMatrix();
-    };
+    void set_rotation(glm::vec3 rotation);
 
-    void rotate(glm::vec3 delta) {
-        this->rotation += delta;
-        updateViewMatrix();
-    }
+    void rotate(glm::vec3 delta);
 
-    void setTranslation(glm::vec3 translation) {
-        this->position = translation;
-        updateViewMatrix();
-    };
+    void set_translation(glm::vec3 translation);
 
-    void translate(glm::vec3 delta) {
-        this->position += delta;
-        updateViewMatrix();
-    }
+    void translate(glm::vec3 delta);
 
-    void update(float deltaTime) {
-        updated = false;
-        if (type == CameraType::firstperson) {
-            if (moving()) {
-                glm::vec3 camFront;
-                camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
-                camFront.y = sin(glm::radians(rotation.x));
-                camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
-                camFront = glm::normalize(camFront);
-
-                float moveSpeed = deltaTime * movementSpeed;
-
-                if (keys.up)
-                    position += camFront * moveSpeed;
-                if (keys.down)
-                    position -= camFront * moveSpeed;
-                if (keys.left)
-                    position -= glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
-                if (keys.right)
-                    position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
-
-                updateViewMatrix();
-            }
-        }
-    };
+    void update(float delta_time);
 
     // Update camera passing separate axis data (gamepad)
     // Returns true if view or position has been changed
-    bool updatePad(glm::vec2 axisLeft, glm::vec2 axisRight, float deltaTime) {
-        bool retVal = false;
-
-        if (type == CameraType::firstperson) {
-            // Use the common console thumbstick layout
-            // Left = view, right = move
-
-            const float deadZone = 0.0015f;
-            const float range = 1.0f - deadZone;
-
-            glm::vec3 camFront;
-            camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
-            camFront.y = sin(glm::radians(rotation.x));
-            camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
-            camFront = glm::normalize(camFront);
-
-            float moveSpeed = deltaTime * movementSpeed * 2.0f;
-            float rotSpeed = deltaTime * rotationSpeed * 50.0f;
-
-            // Move
-            if (fabsf(axisLeft.y) > deadZone) {
-                float pos = (fabsf(axisLeft.y) - deadZone) / range;
-                position -= camFront * pos * ((axisLeft.y < 0.0f) ? -1.0f : 1.0f) * moveSpeed;
-                retVal = true;
-            }
-            if (fabsf(axisLeft.x) > deadZone) {
-                float pos = (fabsf(axisLeft.x) - deadZone) / range;
-                position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * pos * ((axisLeft.x < 0.0f) ? -1.0f : 1.0f) * moveSpeed;
-                retVal = true;
-            }
-
-            // Rotate
-            if (fabsf(axisRight.x) > deadZone) {
-                float pos = (fabsf(axisRight.x) - deadZone) / range;
-                rotation.y += pos * ((axisRight.x < 0.0f) ? -1.0f : 1.0f) * rotSpeed;
-                retVal = true;
-            }
-            if (fabsf(axisRight.y) > deadZone) {
-                float pos = (fabsf(axisRight.y) - deadZone) / range;
-                rotation.x -= pos * ((axisRight.y < 0.0f) ? -1.0f : 1.0f) * rotSpeed;
-                retVal = true;
-            }
-        } else {
-            // todo: move code from example base class for look-at
-        }
-
-        if (retVal) {
-            updateViewMatrix();
-        }
-
-        return retVal;
-    }
+    bool update_pad(glm::vec2 axis_left, glm::vec2 axis_right, float delta_time);
 };
 
 } // namespace inexor::vulkan_renderer

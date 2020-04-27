@@ -24,7 +24,7 @@ struct Model {
 
     glm::mat4 aabb;
 
-    std::vector<uint32_t> index_buffer_cache;
+    std::vector<std::uint32_t> index_buffer_cache;
 
     std::vector<ModelVertex> vertex_buffer_cache;
 

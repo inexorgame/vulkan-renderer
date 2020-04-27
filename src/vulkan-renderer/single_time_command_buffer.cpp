@@ -50,7 +50,7 @@ VkResult SingleTimeCommandBufferRecorder::start_recording_of_single_time_command
     vulkan_error_check(result);
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                           "Command buffer for ?.");
 
     return result;

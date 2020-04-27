@@ -54,7 +54,7 @@ VkResult VulkanQueueManager::prepare_queues(const VkPhysicalDevice &graphics_car
     device_queues_to_create.clear();
 
     // Check if there is one queue family which can be used for both graphics and presentation.
-    std::optional<uint32_t> queue_family_index_for_both_graphics_and_presentation =
+    std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
         settings_decision_maker->find_queue_family_for_both_graphics_and_presentation(graphics_card, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation.has_value()) {
@@ -70,7 +70,7 @@ VkResult VulkanQueueManager::prepare_queues(const VkPhysicalDevice &graphics_car
         VkDeviceQueueCreateInfo device_queue_create_info = {};
 
         // For now, we only need one queue family.
-        uint32_t number_of_combined_queues_to_use = 1;
+        std::uint32_t number_of_combined_queues_to_use = 1;
 
         device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         device_queue_create_info.pNext = nullptr;
@@ -110,7 +110,7 @@ VkResult VulkanQueueManager::prepare_queues(const VkPhysicalDevice &graphics_car
         VkDeviceQueueCreateInfo device_queue_create_info_for_graphics_queue = {};
 
         // For now, we only need one queue family.
-        uint32_t number_of_graphics_queues_to_use = 1;
+        std::uint32_t number_of_graphics_queues_to_use = 1;
 
         device_queue_create_info_for_graphics_queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         device_queue_create_info_for_graphics_queue.pNext = nullptr;
@@ -125,7 +125,7 @@ VkResult VulkanQueueManager::prepare_queues(const VkPhysicalDevice &graphics_car
         VkDeviceQueueCreateInfo device_queue_create_info_for_presentation_queue = {};
 
         // For now, we only need one queue family.
-        uint32_t number_of_present_queues_to_use = 1;
+        std::uint32_t number_of_present_queues_to_use = 1;
 
         device_queue_create_info_for_presentation_queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         device_queue_create_info_for_presentation_queue.pNext = nullptr;
@@ -150,7 +150,7 @@ VkResult VulkanQueueManager::prepare_queues(const VkPhysicalDevice &graphics_car
         VkDeviceQueueCreateInfo device_queue_for_data_transfer_create_info = {};
 
         // For now, we only need one queue family.
-        uint32_t number_of_queues_to_use = 1;
+        std::uint32_t number_of_queues_to_use = 1;
 
         device_queue_for_data_transfer_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         device_queue_for_data_transfer_create_info.pNext = nullptr;
@@ -187,13 +187,13 @@ VkResult VulkanQueueManager::prepare_swapchain_creation(VkSwapchainCreateInfoKHR
     } else {
         // In this case, we can't use the same queue family for both graphics and presentation.
         // We must use 2 separate queue families!
-        const std::vector<uint32_t> queue_family_indices = {graphics_queue_family_index.value(), present_queue_family_index.value()};
+        const std::vector<std::uint32_t> queue_family_indices = {graphics_queue_family_index.value(), present_queue_family_index.value()};
 
         // It is important to note that we can't use VK_SHARING_MODE_EXCLUSIVE in this case.
         // VK_SHARING_MODE_CONCURRENT may result in lower performance access to the buffer or image than VK_SHARING_MODE_EXCLUSIVE.
         swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchain_create_info.pQueueFamilyIndices = queue_family_indices.data();
-        swapchain_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
+        swapchain_create_info.queueFamilyIndexCount = static_cast<std::uint32_t>(queue_family_indices.size());
     }
 
     return VK_SUCCESS;
@@ -226,21 +226,21 @@ VkQueue VulkanQueueManager::get_data_transfer_queue() {
     return graphics_queue;
 }
 
-std::optional<uint32_t> VulkanQueueManager::get_graphics_family_index() {
+std::optional<std::uint32_t> VulkanQueueManager::get_graphics_family_index() {
     assert(queue_manager_initialised);
     assert(graphics_queue_family_index.has_value());
 
     return graphics_queue_family_index;
 }
 
-std::optional<uint32_t> VulkanQueueManager::get_present_queue_family_index() {
+std::optional<std::uint32_t> VulkanQueueManager::get_present_queue_family_index() {
     assert(queue_manager_initialised);
     assert(present_queue_family_index.has_value());
 
     return present_queue_family_index;
 }
 
-std::optional<uint32_t> VulkanQueueManager::get_data_transfer_queue_family_index() {
+std::optional<std::uint32_t> VulkanQueueManager::get_data_transfer_queue_family_index() {
     assert(queue_manager_initialised);
     assert(data_transfer_queue_family_index.has_value());
 

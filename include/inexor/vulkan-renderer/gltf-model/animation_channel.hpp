@@ -6,15 +6,14 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-///
 struct AnimationChannel {
-    enum class PathType { translation, rotation, scale };
+    enum class PathType { TRANSLATION, ROTATION, SCALE };
 
     PathType path;
 
     std::shared_ptr<ModelNode> node;
 
-    uint32_t samplerIndex;
+    std::uint32_t samplerIndex;
 };
 
 } // namespace inexor::vulkan_renderer::gltf_model
