@@ -37,10 +37,8 @@ protected:
     /// @param debug_marker_manager [in] A pointer to the debug marker manager instance.
     VkResult init(const VkDevice &device, std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager, const VkQueue &data_transfer_queue);
 
-    ///
     VkResult start_recording_of_single_time_command_buffer();
 
-    ///
     VkResult end_recording_of_single_time_command_buffer();
 
     /// @brief Destroys the command pool.

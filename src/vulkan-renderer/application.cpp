@@ -1,4 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
+#include "inexor/vulkan-renderer/debug_callback.hpp"
 
 namespace inexor::vulkan_renderer {
 
@@ -24,9 +25,11 @@ VkResult Application::load_toml_configuration(const std::string &file_name) {
         spdlog::error("Could not open configuration file: '{}'!", file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
+    
+    toml_file.close();
 
     // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(file);
+    auto renderer_configuration = toml::parse(file_name);
 
     // Search for the title of the configuration file and print it to debug output.
     auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
@@ -47,13 +50,15 @@ VkResult Application::load_toml_configuration(const std::string &file_name) {
     int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
     spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
 
+    // Generate an std::uint32_t value from the major, minor and patch version info.
+    application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
+    
     int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
     int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
     int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
     spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
 
-    // Generate an uint32_t value from the major, minor and patch version info.
-    application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
+    // Generate an std::uint32_t value from the major, minor and patch version info.
     engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
 
     texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
@@ -128,7 +133,7 @@ VkResult Application::load_shaders() {
 
     spdlog::debug("Loading vertex shaders.");
 
-    if (0 == vertex_shader_files.size()) {
+    if (vertex_shader_files.empty()) {
         spdlog::error("No vertex shaders to load!");
     }
 
@@ -147,7 +152,7 @@ VkResult Application::load_shaders() {
 
     spdlog::debug("Loading fragment shaders.");
 
-    if (0 == fragment_shader_files.size()) {
+    if (fragment_shader_files.empty()) {
         spdlog::error("No fragment shaders to load!");
     }
 
@@ -178,7 +183,7 @@ VkResult Application::render_frame() {
 
     vkWaitForFences(device, 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
 
-    uint32_t image_index = 0;
+    std::uint32_t image_index = 0;
     VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, *image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
 
     if (VK_NULL_HANDLE != images_in_flight[image_index]) {
@@ -259,13 +264,45 @@ VkResult Application::render_frame() {
     return VK_SUCCESS;
 }
 
+VkResult Application::load_octree_geometry() {
+
+    spdlog::debug("Creating octree geometry.");
+
+    std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0x00, 0x00, 0x00};
+
+    world::Cube cube = world::Cube::parse(test);
+    cube.octants.value()[6]->indentations.value()[4].set_z(4);
+    std::vector<std::array<glm::vec3, 3>> polygons = cube.polygons();
+    std::vector<OctreeVertex> octree_vertices;
+    octree_vertices.resize(polygons.size() * 3);
+    OctreeVertex *current_vertex = octree_vertices.data();
+
+    for (auto triangle : polygons) {
+        for (auto vertex : triangle) {
+            glm::vec3 color = {
+                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+            };
+            *current_vertex = {vertex, color};
+            current_vertex++;
+        }
+    }
+
+    VkResult result =
+        mesh_buffer_manager->create_vertex_buffer("octree_geometry_example", octree_vertices.data(), sizeof(OctreeVertex), octree_vertices.size(), octree_mesh);
+    vulkan_error_check(result);
+
+    return VK_SUCCESS;
+}
+
 VkResult Application::load_models() {
     assert(debug_marker_manager);
 
     spdlog::debug("Loading models.");
 
     // TODO: Load models from TOML list.
-    gltf_model_manager->load_model_from_glTF2_file("inexor_logo", "assets/models/inexor/inexor_2.gltf");
+    // TODO: Load glTF 2 models here.
 
     spdlog::debug("Loading models finished.");
 
@@ -302,7 +339,8 @@ VkResult Application::init() {
     thread_pool = std::make_shared<ThreadPool>();
 
     // Load the configuration from the TOML file.
-    VkResult result = load_toml_configuration("configuration/renderer.toml");
+    VkResult result = load_toml_configuration_file("configuration/renderer.toml");
+
     vulkan_error_check(result);
 
     spdlog::debug("Creating window.");
@@ -377,13 +415,13 @@ VkResult Application::init() {
     if (enable_khronos_validation_instance_layer) {
         spdlog::debug("Khronos validation layer is enabled.");
 
-        if (availability_checks_manager->is_instance_extension_available(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
+        if (availability_checks_manager->has_instance_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
             VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 
             debug_report_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
             debug_report_create_info.flags =
                 VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
-            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&VulkanDebugMessageCallback;
+            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
@@ -423,7 +461,7 @@ VkResult Application::init() {
     spdlog::debug("Checking for -gpu command line argument.");
 
     // The user can specify with "-gpu <number>" which graphics card to prefer.
-    std::optional<uint32_t> prefered_graphics_card = get_command_line_argument_uint32_t("-gpu");
+    std::optional<std::uint32_t> prefered_graphics_card = get_command_line_argument_uint32("-gpu");
 
     if (prefered_graphics_card.has_value()) {
         spdlog::debug("Preferential graphics card index {} specified.", prefered_graphics_card.value());
@@ -533,10 +571,11 @@ VkResult Application::init() {
 
     // Assign an appropriate name to the central Vulkan device.
     // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
-    // debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
+    // debug_marker_manager->set_object_name(device, (std::uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
 
-    result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
-    vulkan_error_check(result);
+    //
+    // result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
+    // vulkan_error_check(result);
 
     result = check_application_specific_features();
     vulkan_error_check(result);
@@ -574,7 +613,7 @@ VkResult Application::init() {
     result = create_descriptor_pool();
     vulkan_error_check(result);
 
-    result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, descriptor_bundles.scene);
+    result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor);
     vulkan_error_check(result);
 
     result = create_descriptor_set_layouts();
@@ -593,7 +632,7 @@ VkResult Application::init() {
     result = create_command_pool();
     vulkan_error_check(result);
 
-    result = uniform_buffer_manager->init(device, vma_allocator, debug_marker_manager);
+    result = uniform_buffer_manager->init(device, number_of_images_in_swapchain, vma_allocator, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_uniform_buffers();
@@ -611,7 +650,7 @@ VkResult Application::init() {
     result = load_models();
     vulkan_error_check(result);
 
-    result = gltf_model_manager->create_model_descriptors(number_of_images_in_swapchain);
+    result = load_octree_geometry();
     vulkan_error_check(result);
 
     result = record_command_buffers();
@@ -636,12 +675,6 @@ VkResult Application::init() {
     // TODO: Use window queue instead?
     glfwSetWindowUserPointer(window, this);
 
-    game_camera_1.set_position(glm::vec3(0.0f, 5.0f, -2.0f));
-    game_camera_1.set_direction(glm::vec3(0.0f, 1.0f, 0.0f));
-    game_camera_1.set_speed(1.0f);
-
-    game_camera_1.update(time_passed);
-
     return VK_SUCCESS;
 }
 
@@ -653,9 +686,8 @@ VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     // Rotate the model as a function of time.
     ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    ubo.view = game_camera_1.get_view_matrix();
-    ubo.proj = game_camera_1.get_projection_matrix();
-
+    ubo.view = game_camera.matrices.view;
+    ubo.proj = game_camera.matrices.perspective;
     ubo.proj[1][1] *= -1;
 
     // Update the world matrices!
@@ -665,15 +697,41 @@ VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     return VK_SUCCESS;
 }
 
+VkResult Application::update_mouse_input() {
+
+    double current_cursor_x;
+    double current_cursor_y;
+
+    glfwGetCursorPos(window, &current_cursor_x, &current_cursor_y);
+
+    double cursor_delta_x = current_cursor_x - cursor_x;
+    double cursor_delta_y = current_cursor_y - cursor_y;
+
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
+    if (GLFW_PRESS == state) {
+        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
+    }
+
+    state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+
+    cursor_x = current_cursor_x;
+    cursor_y = current_cursor_y;
+
+    return VK_SUCCESS;
+}
+
 VkResult Application::update_keyboard_input() {
     int key_w_status = glfwGetKey(window, GLFW_KEY_W);
 
+    /*
     if (GLFW_PRESS == key_w_status) {
-        game_camera_1.start_camera_movement();
+        //game_camera_1.start_camera_movement();
     }
     if (GLFW_RELEASE == key_w_status) {
-        game_camera_1.end_camera_movement();
+        //game_camera_1.end_camera_movement();
     }
+    */
 
     return VK_SUCCESS;
 }
@@ -687,9 +745,10 @@ void Application::run() {
 
         // TODO: Run this in a separated thread?
         // TODO: Merge into one update_game_data() method?
-        update_cameras();
-
         update_keyboard_input();
+        update_mouse_input();
+
+        update_cameras();
 
         time_passed = stopwatch.get_time_step();
     }

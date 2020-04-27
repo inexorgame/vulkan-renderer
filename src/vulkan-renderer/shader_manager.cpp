@@ -31,10 +31,10 @@ VkResult VulkanShaderManager::create_shader_module(const std::vector<char> &SPIR
     shader_create_info.flags = 0;
     shader_create_info.codeSize = SPIRV_shader_bytes.size();
 
-    // When you perform a cast like this, you also need to ensure that the data satisfies the alignment requirements of uint32_t.
+    // When you perform a cast like this, you also need to ensure that the data satisfies the alignment requirements of std::uint32_t.
     // Lucky for us, the data is stored in an std::vector where the default allocator already ensures that the data satisfies the worst case alignment
     // requirements.
-    shader_create_info.pCode = reinterpret_cast<const uint32_t *>(SPIRV_shader_bytes.data());
+    shader_create_info.pCode = reinterpret_cast<const std::uint32_t *>(SPIRV_shader_bytes.data());
 
     VkResult result = vkCreateShaderModule(device, &shader_create_info, nullptr, shader_module);
     vulkan_error_check(result);
@@ -101,7 +101,7 @@ VkResult VulkanShaderManager::create_shader_from_file(const VkShaderStageFlagBit
     std::string shader_debug_marker_name = "Shader module '" + SPIRV_shader_file_name + "'.";
 
     // Give this shader an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, internal_shader_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(new_shader_module), VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, internal_shader_name.c_str());
 
     // Store the generated shader in memory.
     new_shader->entry_name = shader_entry_point;

@@ -27,15 +27,15 @@ private:
 
     bool extension_present = false;
 
-    PFN_vkDebugMarkerSetObjectTagEXT vkDebugMarkerSetObjectTag = VK_NULL_HANDLE;
+    PFN_vkDebugMarkerSetObjectTagEXT marker_set_object_tag = VK_NULL_HANDLE;
 
-    PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectName = VK_NULL_HANDLE;
+    PFN_vkDebugMarkerSetObjectNameEXT marker_set_object_name = VK_NULL_HANDLE;
 
-    PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBegin = VK_NULL_HANDLE;
+    PFN_vkCmdDebugMarkerBeginEXT cmd_marker_begin = VK_NULL_HANDLE;
 
-    PFN_vkCmdDebugMarkerInsertEXT vkCmdDebugMarkerInsert = VK_NULL_HANDLE;
+    PFN_vkCmdDebugMarkerInsertEXT cmd_marker_insert = VK_NULL_HANDLE;
 
-    PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEnd = VK_NULL_HANDLE;
+    PFN_vkCmdDebugMarkerEndEXT cmd_marker_end = VK_NULL_HANDLE;
 
 public:
     VulkanDebugMarkerManager() = default;
@@ -50,11 +50,11 @@ public:
 
     /// @brief Sets the debug name of an object.
     /// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function along with the object type
-    void set_object_name(const VkDevice &device, const uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const char *name);
+    void set_object_name(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const char *name);
 
     /// @brief Sets the tag for an object.
     /// @note We can link a memory block of arbitrary size to an object.
-    void set_object_tag(const VkDevice &device, const uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const uint64_t &name,
+    void set_object_tag(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const std::uint64_t &name,
                         const std::size_t &tag_size, const void *tag);
 
     /// Starts a new debug marker region.

@@ -8,7 +8,6 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
-///
 struct Animation {
     std::string name;
 

@@ -10,9 +10,6 @@
 
 namespace inexor::vulkan_renderer {
 
-///
-///
-///
 struct DescriptorBundle {
 public:
     /// Force use of the overloaded constructor!

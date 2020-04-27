@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult UniformBufferManager::init(const VkDevice &device, const VmaAllocator &vma_allocator,
+VkResult UniformBufferManager::init(const VkDevice &device, const std::uint32_t number_of_images_in_swapchain, const VmaAllocator &vma_allocator,
                                     const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {
     assert(device);
     assert(vma_allocator);
@@ -73,7 +73,7 @@ VkResult UniformBufferManager::create_uniform_buffer(const std::string &internal
 
     // Give this uniform buffer an appropriate name using a Vulkan debug marker.
     // TODO: FIX!
-    // debug_marker_manager->set_object_name(device, (uint64_t)(&uniform_buffer->buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
+    // debug_marker_manager->set_object_name(device, (std::uint64_t)(&uniform_buffer->buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
     // uniform_buffer_description.c_str());
 
     // Store the new uniform buffer in the map.
@@ -83,6 +83,8 @@ VkResult UniformBufferManager::create_uniform_buffer(const std::string &internal
     return VK_SUCCESS;
 }
 
+// TODO: Create 3 uniform buffers for triple buffering and update by current_image_index!
+// TODO: Abstract N-buffering!
 VkResult UniformBufferManager::update_uniform_buffer(const std::string &internal_uniform_buffer_name, void *data_source_address,
                                                      const std::size_t uniform_buffer_size) {
     assert(uniform_buffer_initialised);

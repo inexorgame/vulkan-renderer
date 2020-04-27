@@ -4,7 +4,7 @@ vulkan-renderer
 
 |programming language| |license|
 
-|travis ci| |readthedocs|
+|github actions| |travis ci| |readthedocs|
 
 |issues| |last commit| |code size| |contributors| |downloads|
 
@@ -12,13 +12,13 @@ vulkan-renderer
 
 A new octree-based game+engine using `Vulkan API <https://www.khronos.org/vulkan/>`__ and `C++17 <https://stackoverflow.com/questions/38060436/what-are-the-new-features-in-c17>`__.
 
-Our very first tech demo ``v0.1-alpha.1`` can be downloaded `here <https://github.com/inexorgame/vulkan-renderer/releases>`__. Please send your logfiles to info@inexor.org.
+Our current octree demo ``v0.1-alpha.2`` can be downloaded `here <https://github.com/inexorgame/vulkan-renderer/releases>`__. Please send your logfiles to info@inexor.org.
 
 Please visit `inexor.org <https://inexor.org>`__ and join our `discord <https://discord.gg/acUW8k7>`__.
 
 ----
 
-.. image:: https://raw.githubusercontent.com/inexorgame/artwork/179e891a10f8ee1cd4c0f777aff40485f0212c76/vulkan/readme/front_banner_1.jpg
+.. image:: https://raw.githubusercontent.com/inexorgame/artwork/2c479edcf7a1782d082a9d807b0f1e860ddd398c/vulkan/readme/front_banner_2.jpg
 
 What is Vulkan?
 ###############
@@ -66,42 +66,37 @@ Why use Vulkan?
 - Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies. It is not being developed by one company only (like DirectX by Microsoft). As Vulkan's motto states, it really is `industry-forged`.
 - The `ending of the OpenGL era <https://www.reddit.com/r/opengl/comments/b44tyu/apple_is_deprecating_opengl/>`__ has begun.
 
-Roadmap
-#######
+Releases
+########
 
-`Initialisation and glTF2 demo (0.1 alpha), April 12th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.1>`__
+`Initialisation and glTF2 demo (v0.1-alpha.1), April 12th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.1>`__
 
-Next planned releases:
+`Octree demo (v0.1-alpha.2), April 26th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.2>`__
 
-`Threadpool <https://en.wikipedia.org/wiki/Thread_pool>`__ demo (0.2 alpha) (est. April 26th, 2020)
----------------------------------------------------------------------------------------------------
+Upcoming releases
+#################
 
-- [ ] Implement `-threads <N>` command line argument.
-- [ ] Refactor `render_frame` method: Account for N buffering (prefer triple buffering).
-- [X] Create a threadpool using C++17.
-- [ ] Refactor the engine so it loads resources with worker threads. Use C++17 synchronisation techniques.
-- [ ] Abstract command buffer recording into manager classes.
-- [ ] Abstract pipeline creation into manager classes.
-- [ ] Record command buffers on demand using separate thread.
-- [ ] Update uniform buffers in separate thread.
-- [ ] Poll window events in separate thread.
-- [ ] Implement Vulkan pipeline statistics.
-- [ ] Create new threads on demand.
-- [ ] Give threadpool tasks a name.
-- [ ] Use `std::chrono` to measure how long a task took to finish.
+`Threadpool <https://en.wikipedia.org/wiki/Thread_pool>`__ demo (v0.1-alpha.3) (est. May 10th, 2020)
+----------------------------------------------------------------------------------------------------
 
-`imgui <https://github.com/ocornut/imgui>`__ demo (0.3 alpha) (date not set)
+- Implement ``-threads <N>`` command line argument.
+- Refactor ``render_frame`` method: Account for N buffering (prefer triple buffering).
+- Create a threadpool using C++17.
+- Refactor the engine so it loads resources with worker threads. Use C++17 synchronisation techniques.
+- Abstract command buffer recording into manager classes.
+- Abstract pipeline creation into manager classes.
+- Record command buffers on demand using separate thread.
+- Update uniform buffers in separate thread.
+- Poll window events in separate thread.
+- Implement Vulkan pipeline statistics.
+- Create new threads on demand.
+- Give threadpool tasks a name.
+- Use ``std::chrono`` to measure how long a task took to finish.
+
+`imgui <https://github.com/ocornut/imgui>`__ demo (0.4 alpha) (date not set)
 ----------------------------------------------------------------------------
 
-- [ ] Add `imgui <https://github.com/ocornut/imgui>`__ support.
-
-Octree demo (0.4 alpha) (date not set)
----------------------------------------
-
-- [ ] Suggest implementation for inexor octree file format.
-- [ ] Load octree data from a file.
-- [ ] Render some world geometry which was generated from octree data.
-
+- Add `imgui <https://github.com/ocornut/imgui>`__ support.
 
 How to build
 ############
@@ -214,6 +209,9 @@ MoltenVK
 - https://moltengl.com/moltenvk/
 
 .. Badges.
+
+.. |github actions| image:: https://github.com/inexorgame/vulkan-renderer/workflows/CMake%20Build/badge.svg
+   :target: https://github.com/inexorgame/vulkan-renderer/actions
 
 .. |license| image:: https://img.shields.io/badge/License-MIT-brightgreen.svg
    :target: https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE.rst

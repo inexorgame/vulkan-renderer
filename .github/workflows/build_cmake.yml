@@ -132,7 +132,7 @@ jobs:
         run: |
           $env:CC="${{ matrix.config.cc }}"
           $env:CXX="${{ matrix.config.cxx }}"
-          $env:Path += ";${{ matrix.config.vulkan_sdk }}\"
+          $env:Path += ";${{ matrix.config.vulkan_sdk }}\;${{ matrix.config.vulkan_sdk }}\Bin\"
           conan profile new default --detect --force
           ${{ matrix.config.conan_profile_update }}
           cmake ${{ matrix.config.cmake_options }} -B ./build/ -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -D INEXOR_CONAN_PROFILE=default ./

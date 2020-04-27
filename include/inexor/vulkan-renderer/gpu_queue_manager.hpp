@@ -24,13 +24,13 @@ private:
     bool use_distinct_data_transfer_queue = true;
 
     //
-    std::optional<uint32_t> graphics_queue_family_index = std::nullopt;
+    std::optional<std::uint32_t> graphics_queue_family_index = std::nullopt;
 
     //
-    std::optional<uint32_t> present_queue_family_index = std::nullopt;
+    std::optional<std::uint32_t> present_queue_family_index = std::nullopt;
 
     //
-    std::optional<uint32_t> data_transfer_queue_family_index = std::nullopt;
+    std::optional<std::uint32_t> data_transfer_queue_family_index = std::nullopt;
 
     //
     VkQueue graphics_queue = VK_NULL_HANDLE;
@@ -60,34 +60,24 @@ public:
     /// @param
     VkResult init(const std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker);
 
-    ///
     VkResult setup_queues(const VkDevice &device);
 
-    ///
     VkResult prepare_queues(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface, bool use_distinct_data_transfer_queue_if_available);
 
-    ///
     VkResult prepare_swapchain_creation(VkSwapchainCreateInfoKHR &swapchain_create_info);
 
-    ///
     VkQueue get_graphics_queue();
 
-    ///
     VkQueue get_present_queue();
 
-    ///
     VkQueue get_data_transfer_queue();
 
-    ///
-    std::optional<uint32_t> get_graphics_family_index();
+    std::optional<std::uint32_t> get_graphics_family_index();
 
-    ///
-    std::optional<uint32_t> get_present_queue_family_index();
+    std::optional<std::uint32_t> get_present_queue_family_index();
 
-    ///
-    std::optional<uint32_t> get_data_transfer_queue_family_index();
+    std::optional<std::uint32_t> get_data_transfer_queue_family_index();
 
-    ///
     std::vector<VkDeviceQueueCreateInfo> get_queues_to_create();
 };
 

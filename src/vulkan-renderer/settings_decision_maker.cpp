@@ -2,13 +2,13 @@
 
 namespace inexor::vulkan_renderer {
 
-uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
+std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
     spdlog::debug("Deciding automatically how many images in swapchain to use.");
 
-    uint32_t number_of_images_in_swapchain = 0;
+    std::uint32_t number_of_images_in_swapchain = 0;
 
     VkSurfaceCapabilitiesKHR surface_capabilities = {};
 
@@ -35,7 +35,7 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
 
     spdlog::debug("Deciding automatically which surface color format in swapchain to use.");
 
-    uint32_t number_of_available_surface_formats = 0;
+    std::uint32_t number_of_available_surface_formats = 0;
 
     // First check how many surface formats are available.
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr);
@@ -129,7 +129,7 @@ VkBool32 VulkanSettingsDecisionMaker::is_graphics_card_is_suitable(const VkPhysi
 
     bool swapchain_is_supported = false;
 
-    uint32_t number_of_available_device_extensions = 0;
+    std::uint32_t number_of_available_device_extensions = 0;
 
     VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr);
     vulkan_error_check(result);
@@ -223,13 +223,13 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevi
 }
 
 std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
-                                                                                               const std::optional<uint32_t> &preferred_graphics_card_index) {
+                                                                                               const std::optional<std::uint32_t> &preferred_graphics_card_index) {
     assert(vulkan_instance);
     assert(surface);
 
     // Do not assert preferred_graphics_card_index because this classifies as runtime error!
 
-    uint32_t number_of_available_graphics_cards = 0;
+    std::uint32_t number_of_available_graphics_cards = 0;
 
     // First check how many graphics cards are available.
     VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards, nullptr);
@@ -525,7 +525,7 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presen
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    uint32_t number_of_available_present_modes = 0;
+    std::uint32_t number_of_available_present_modes = 0;
 
     // First check how many present modes are available for the selected combination of graphics card and window surface.
     VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, nullptr);
@@ -604,7 +604,7 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presen
 }
 
 void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                                                              uint32_t &window_width, uint32_t &window_height, VkExtent2D &swapchain_extent) {
+                                                                              std::uint32_t &window_width, std::uint32_t &window_height, VkExtent2D &swapchain_extent) {
     assert(graphics_card);
     assert(surface);
 
@@ -627,10 +627,10 @@ void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(co
     }
 }
 
-std::optional<uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice &graphics_card) {
+std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
-    uint32_t number_of_available_queue_families = 0;
+    std::uint32_t number_of_available_queue_families = 0;
 
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
@@ -649,7 +649,7 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_family(
             // Check if this queue family supports graphics.
             if (available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 // Ok this queue family supports graphics!
-                return static_cast<uint32_t>(i);
+                return static_cast<std::uint32_t>(i);
             }
         }
     }
@@ -658,11 +658,11 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_family(
     return std::nullopt;
 }
 
-std::optional<uint32_t> VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
+std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
-    uint32_t number_of_available_queue_families = 0;
+    std::uint32_t number_of_available_queue_families = 0;
 
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
@@ -678,7 +678,7 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_presentation_queue_fam
     // Loop through all available queue families and look for a suitable one.
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
         if (available_queue_families[i].queueCount > 0) {
-            uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+            std::uint32_t this_queue_family_index = static_cast<std::uint32_t>(i);
 
             VkBool32 presentation_available = false;
 
@@ -696,10 +696,10 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_presentation_queue_fam
     return std::nullopt;
 }
 
-std::optional<uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
+std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
-    uint32_t number_of_available_queue_families = 0;
+    std::uint32_t number_of_available_queue_families = 0;
 
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
@@ -718,7 +718,7 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_transfer
             // A distinct transfer queue has a transfer bit set but no graphics bit.
             if (!(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
                 if (available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
-                    uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+                    std::uint32_t this_queue_family_index = static_cast<std::uint32_t>(i);
                     return this_queue_family_index;
                 }
             }
@@ -729,10 +729,10 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_transfer
     return std::nullopt;
 }
 
-std::optional<uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
+std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
-    uint32_t number_of_available_queue_families = 0;
+    std::uint32_t number_of_available_queue_families = 0;
 
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
@@ -751,7 +751,7 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer_queu
             // All we care about is VK_QUEUE_TRANSFER_BIT.
             // It is very likely that this queue family has VK_QUEUE_GRAPHICS_BIT as well!
             if (available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
-                uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+                std::uint32_t this_queue_family_index = static_cast<std::uint32_t>(i);
                 return this_queue_family_index;
             }
         }
@@ -762,12 +762,12 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer_queu
     return std::nullopt;
 }
 
-std::optional<uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card,
+std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card,
                                                                                                           const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
-    uint32_t number_of_available_queue_families = 0;
+    std::uint32_t number_of_available_queue_families = 0;
 
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
@@ -789,7 +789,7 @@ std::optional<uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_both_
                 // Now let's check if it supports presentation.
                 VkBool32 presentation_available = false;
 
-                uint32_t this_queue_family_index = static_cast<uint32_t>(i);
+                std::uint32_t this_queue_family_index = static_cast<std::uint32_t>(i);
 
                 // Query if presentation is supported.
                 VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface, &presentation_available);

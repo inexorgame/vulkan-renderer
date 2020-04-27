@@ -60,28 +60,15 @@ public:
     VkResult create_descriptor_bundle(const std::string &internal_descriptor_name, std::shared_ptr<DescriptorPool> &descriptor_pool,
                                       std::shared_ptr<DescriptorBundle> &descriptor_bundle);
 
-    ///
-    ///
-    ///
     VkResult add_descriptor_set_layout_binding(std::shared_ptr<DescriptorBundle> descriptor_bundle,
                                                const VkDescriptorSetLayoutBinding &descriptor_set_layout_binding);
 
-    ///
-    ///
-    ///
     VkResult add_write_descriptor_set(std::shared_ptr<DescriptorBundle> descriptor_bundle, const VkWriteDescriptorSet &write_descriptor_set);
 
-    ///
-    ///
     VkResult create_descriptor_set_layouts(std::shared_ptr<DescriptorBundle> descriptor_bundle);
 
-    ///
-    ///
     VkResult create_descriptor_sets(std::shared_ptr<DescriptorBundle> descriptor_bundle);
 
-    ///
-    ///
-    ///
     std::optional<std::shared_ptr<DescriptorBundle>> get_descriptor_bundle(const std::string &internal_descriptor_name);
 
     /// @brief Destroys all descriptor sets and descriptor pools.
