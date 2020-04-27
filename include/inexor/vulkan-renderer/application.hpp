@@ -60,7 +60,7 @@ private:
 
 private:
     /// @brief Loads the configuration of the renderer from a TOML configuration file.
-    /// @brief TOML_file_name [in] The TOML configuration file.
+    /// @brief file_name [in] The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
     VkResult load_toml_configuration_file(const std::string &file_name);
 
