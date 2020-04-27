@@ -70,7 +70,7 @@ void CommandLineArgumentParser::parse_command_line_arguments(std::size_t argumen
                     }
                     case CommandLineArgumentType::UINT32: {
                         new_parsed_value.type = CommandLineArgumentType::UINT32;
-                        new_parsed_value.value_uint32 = static_cast<uint32_t>(std::stoi(argument_value));
+                        new_parsed_value.value_uint32 = static_cast<std::uint32_t>(std::stoi(argument_value));
                         break;
                     }
                     case CommandLineArgumentType::INT64: {
@@ -156,7 +156,7 @@ const std::optional<std::int64_t> CommandLineArgumentParser::get_command_line_ar
     return std::nullopt;
 }
 
-const std::optional<std::uint32_t> CommandLineArgumentParser::get_command_line_argument_uint32_t(const std::string &argument_name) {
+const std::optional<std::uint32_t> CommandLineArgumentParser::get_command_line_argument_uint32(const std::string &argument_name) {
     if (does_command_line_argument_template_exist(argument_name)) {
         if (is_command_line_argument_specified(argument_name)) {
             auto return_value = parsed_command_line_arguments[argument_name];

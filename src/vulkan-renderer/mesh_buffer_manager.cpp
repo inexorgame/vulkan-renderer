@@ -3,7 +3,7 @@
 namespace inexor::vulkan_renderer {
 
 VkResult MeshBufferManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
-                                 const VmaAllocator &vma_allocator, const uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
+                                 const VmaAllocator &vma_allocator, const std::uint32_t data_transfer_queue_family_index, const VkQueue &data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(data_transfer_queue);
@@ -67,7 +67,7 @@ VkResult MeshBufferManager::create_command_pool() {
     vulkan_error_check(result);
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(data_transfer_command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT,
                                           "Command pool for VulkanMeshBufferManager.");
 
     spdlog::debug("Creating command pool for mesh buffer manager.");
@@ -86,7 +86,7 @@ VkResult MeshBufferManager::create_command_pool() {
     vulkan_error_check(result);
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(data_transfer_command_buffer), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                           "Command buffer for VulkanMeshBufferManager.");
 
     return VK_SUCCESS;
@@ -168,7 +168,7 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
     std::string staging_vertex_buffer_name = "Staging vertex buffer '" + internal_mesh_buffer_name + "'.";
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
                                           staging_vertex_buffer_name.c_str());
 
     spdlog::debug("Copying mesh data from RAM to staging buffer for vertex data");
@@ -194,7 +194,7 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
     std::string vertex_buffer_name = "Vertex buffer '" + internal_mesh_buffer_name + "'";
 
     // Give this vertex buffer an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
 
     spdlog::debug("Specifying copy region of vertex data's staging buffer.");
 
@@ -251,7 +251,7 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
     new_mesh_buffer->index_buffer_available = false;
 
     // Store the number of vertices and indices.
-    new_mesh_buffer->number_of_vertices = static_cast<uint32_t>(number_of_vertices);
+    new_mesh_buffer->number_of_vertices = static_cast<std::uint32_t>(number_of_vertices);
 
     // Store the internal description of this buffer.
     new_mesh_buffer->description = internal_mesh_buffer_name;
@@ -317,7 +317,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
         return result;
     }
 
-    debug_marker_manager->set_object_name(device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
                                           staging_vertex_buffer_name.c_str());
 
     spdlog::debug("Copying mesh data from RAM to staging index buffer for {}.", internal_mesh_buffer_name);
@@ -341,7 +341,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
     }
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT,
                                           staging_index_buffer_name.c_str());
 
     spdlog::debug("Copying mesh data from RAM to staging index buffer for '{}'.", internal_mesh_buffer_name);
@@ -362,7 +362,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
     }
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(staging_vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
 
     Buffer index_buffer;
 
@@ -376,7 +376,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
     }
 
     //
-    debug_marker_manager->set_object_name(device, (uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, index_buffer_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(staging_index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, index_buffer_name.c_str());
 
     spdlog::debug("Specifying copy region of staging vertex buffer for {}.", internal_mesh_buffer_name);
 
@@ -419,13 +419,13 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
 
     vkCmdCopyBuffer(data_transfer_command_buffer, staging_vertex_buffer.buffer, vertex_buffer.buffer, 1, &vertex_buffer_copy_region);
 
-    debug_marker_manager->set_object_name(device, (uint64_t)(vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(vertex_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, vertex_buffer_name.c_str());
 
     spdlog::debug("Specifying index buffer copy operation in command buffer.");
 
     vkCmdCopyBuffer(data_transfer_command_buffer, staging_index_buffer.buffer, index_buffer.buffer, 1, &index_buffer_copy_region);
 
-    debug_marker_manager->set_object_name(device, (uint64_t)(index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, index_buffer_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(index_buffer.buffer), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, index_buffer_name.c_str());
 
     spdlog::debug("Ending command buffer recording for copy commands.");
 
@@ -453,8 +453,8 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
     new_mesh_buffer->index_buffer = index_buffer;
 
     // Store the number of vertices and indices.
-    new_mesh_buffer->number_of_vertices = static_cast<uint32_t>(number_of_vertices);
-    new_mesh_buffer->number_of_indices = static_cast<uint32_t>(number_of_indices);
+    new_mesh_buffer->number_of_vertices = static_cast<std::uint32_t>(number_of_vertices);
+    new_mesh_buffer->number_of_indices = static_cast<std::uint32_t>(number_of_indices);
 
     // Store the internal description of this buffer.
     new_mesh_buffer->description = internal_mesh_buffer_name;

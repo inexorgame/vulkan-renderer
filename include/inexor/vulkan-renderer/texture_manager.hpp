@@ -33,7 +33,7 @@ private:
 
     VkPhysicalDevice graphics_card = VK_NULL_HANDLE;
 
-    uint32_t transfer_queue_family_index = 0;
+    std::uint32_t transfer_queue_family_index = 0;
 
 public:
     VulkanTextureManager() = default;
@@ -73,7 +73,7 @@ private:
     /// @param image [in] The image.
     /// @param width [in] The width of the image.
     /// @param width [in] The height of the image.
-    VkResult copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+    VkResult copy_buffer_to_image(VkBuffer buffer, VkImage image, std::uint32_t width, std::uint32_t height);
 
     /// @brief
     /// @param
@@ -95,7 +95,7 @@ public:
     /// @param transfer_queue_family_index [in] The queue family index of the data transfer queue (could be distinct queue or graphics queue).
     /// @param data_transfer_queue [in] The data transfer queue (could be distinct queue or graphics queue).
     VkResult init(const VkDevice &device, const VkPhysicalDevice &graphics_card, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager,
-                  const VmaAllocator &vma_allocator, const uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue);
+                  const VmaAllocator &vma_allocator, const std::uint32_t &transfer_queue_family_index, const VkQueue &data_transfer_queue);
 
     /// @brief Creates a texture from a file of supported format.
     /// @note Since we are using STB library, we can load any image format which is supported by it: JPG, PNG, BMP, TGA (and more).

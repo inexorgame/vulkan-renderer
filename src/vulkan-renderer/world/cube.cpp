@@ -1,7 +1,7 @@
 #include <inexor/vulkan-renderer/world/cube.hpp>
 
 namespace inexor::vulkan_renderer::world {
-void Indentation::set(std::optional<uint8_t> x, std::optional<uint8_t> y, std::optional<uint8_t> z) {
+void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z) {
     if (x != std::nullopt) {
         this->x_level = x.value();
     }
@@ -14,28 +14,28 @@ void Indentation::set(std::optional<uint8_t> x, std::optional<uint8_t> y, std::o
     this->change();
 }
 
-void Indentation::set_x(uint8_t x) {
+void Indentation::set_x(std::uint8_t x) {
     this->x_level = x;
     this->change();
 }
 
-void Indentation::set_y(uint8_t y) {
+void Indentation::set_y(std::uint8_t y) {
     this->y_level = y;
     this->change();
 }
 
-void Indentation::set_z(uint8_t z) {
+void Indentation::set_z(std::uint8_t z) {
     this->z_level = z;
     this->change();
 }
 
-uint8_t Indentation::x() const {
+std::uint8_t Indentation::x() const {
     return this->x_level;
 }
-uint8_t Indentation::y() const {
+std::uint8_t Indentation::y() const {
     return this->y_level;
 }
-uint8_t Indentation::z() const {
+std::uint8_t Indentation::z() const {
     return this->z_level;
 }
 
@@ -46,21 +46,21 @@ Indentation Indentation::parse(BitStream &stream) {
 
 Indentation::Indentation() = default;
 
-Indentation::Indentation(uint8_t x, uint8_t y, uint8_t z) {
+Indentation::Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z) {
     this->x_level = x;
     this->y_level = y;
     this->z_level = z;
 }
 
-uint8_t Indentation::parse_one(BitStream &stream) {
+std::uint8_t Indentation::parse_one(BitStream &stream) {
     bool indented = stream.get(1).value();
     if (indented) {
-        return static_cast<uint8_t>(stream.get(3).value());
+        return static_cast<std::uint8_t>(stream.get(3).value());
     }
     return 0;
 }
 
-glm::tvec3<uint8_t> Indentation::vec() const {
+glm::tvec3<std::uint8_t> Indentation::vec() const {
     return {this->x_level, this->y_level, this->z_level};
 }
 
@@ -104,7 +104,7 @@ Cube Cube::parse(BitStream &stream, float size, const glm::vec3 &position) {
     if (type == CubeType::INDENTED) {
         // Parse indentations
         std::array<Indentation, 8> indentations;
-        for (uint8_t i = 0; i < 8; i++) {
+        for (std::uint8_t i = 0; i < 8; i++) {
             indentations[i] = Indentation::parse(stream);
         }
         return Cube(indentations, size, position);
@@ -134,7 +134,7 @@ CubeType Cube::type() {
 std::vector<std::array<glm::vec3, 3>> Cube::polygons() {
     std::vector<std::array<glm::vec3, 3>> polygons;
 
-    uint64_t i = 0;
+    std::uint64_t i = 0;
 
     polygons.resize(this->leaves() * 12);
 
@@ -171,7 +171,7 @@ void Cube::all_polygons(std::array<glm::vec3, 3> *&polygons) {
     }
 }
 
-uint64_t Cube::leaves() {
+std::uint64_t Cube::leaves() {
     switch (this->cube_type) {
     case CubeType::EMPTY:
         return 0;
@@ -179,7 +179,7 @@ uint64_t Cube::leaves() {
     case CubeType::INDENTED:
         return 1;
     case CubeType::OCTANT:
-        uint64_t i = 0;
+        std::uint64_t i = 0;
         for (const auto &octant : this->octants.value()) {
             i += octant->leaves();
         }
@@ -224,7 +224,7 @@ std::array<std::array<glm::vec3, 3>, 12> Cube::indented_polygons() {
     std::array<glm::vec3, 8> v = this->vertices();
 
     std::array<std::array<glm::vec3, 3>, 12> vertices = this->full_polygons(v);
-    std::array<glm::tvec3<uint8_t>, 8> in = this->indentation_levels();
+    std::array<glm::tvec3<std::uint8_t>, 8> in = this->indentation_levels();
 
     // Check for each side if the side is convex, rotate the hypotenuse so it becomes convex!
     // x = 0
@@ -279,7 +279,7 @@ std::array<glm::vec3, 8> Cube::vertices() {
     assert(this->cube_type == CubeType::INDENTED);
     const float step = this->cube_size / MAX_INDENTATION;
 
-    std::array<glm::tvec3<uint8_t>, 8> in = this->indentation_levels();
+    std::array<glm::tvec3<std::uint8_t>, 8> in = this->indentation_levels();
 
     // Calculate the vertex-positions with respect to the indentation level.
     return std::array<glm::vec3, 8>{{{p.x + step * in[0].x, p.y + step * in[0].y, p.z + step * in[0].z},
@@ -304,8 +304,8 @@ void Cube::change() {
 void Cube::change(Indentation *indentation) {
     this->change();
 }
-std::array<glm::tvec3<uint8_t>, 8> Cube::indentation_levels() {
-    std::array<glm::tvec3<uint8_t>, 8> in;
+std::array<glm::tvec3<std::uint8_t>, 8> Cube::indentation_levels() {
+    std::array<glm::tvec3<std::uint8_t>, 8> in;
     auto &indents = this->indentations.value();
     for (std::size_t i = 0; i < in.size(); i++) {
         in[i] = indents[i].vec();

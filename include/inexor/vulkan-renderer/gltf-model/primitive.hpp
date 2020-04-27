@@ -8,11 +8,11 @@
 namespace inexor::vulkan_renderer::gltf_model {
 
 struct Primitive {
-    uint32_t first_index;
+    std::uint32_t first_index;
 
-    uint32_t index_count;
+    std::uint32_t index_count;
 
-    uint32_t vertex_count;
+    std::uint32_t vertex_count;
 
     Material &material;
 
@@ -20,7 +20,7 @@ struct Primitive {
 
     BoundingBox bb;
 
-    Primitive(uint32_t first_index, uint32_t index_count, uint32_t vertex_count, Material &material);
+    Primitive(std::uint32_t first_index, std::uint32_t index_count, std::uint32_t vertex_count, Material &material);
 
     /// @brief Sets the bounding box of the primitive.
     /// @param min [in] The minimum vector (edge of the bounding box)

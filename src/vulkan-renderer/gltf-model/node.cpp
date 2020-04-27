@@ -28,9 +28,9 @@ void ModelNode::update(std::shared_ptr<UniformBufferManager> uniform_buffer_mana
             // Update join matrices.
             glm::mat4 inverseTransform = glm::inverse(m);
 
-            size_t numJoints = std::min((uint32_t)skin->joints.size(), MAX_NUM_JOINTS);
+            std::size_t numJoints = std::min((std::uint32_t)skin->joints.size(), MAX_NUM_JOINTS);
 
-            for (size_t i = 0; i < numJoints; i++) {
+            for (std::size_t i = 0; i < numJoints; i++) {
                 std::shared_ptr<ModelNode> jointNode = skin->joints[i];
 
                 glm::mat4 jointMat = jointNode->get_matrix() * skin->inverse_bind_matrices[i];

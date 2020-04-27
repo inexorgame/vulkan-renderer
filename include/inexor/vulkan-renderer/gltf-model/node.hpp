@@ -30,7 +30,7 @@ struct ModelSkin {
 struct ModelNode {
     std::shared_ptr<ModelNode> parent;
 
-    uint32_t index;
+    std::uint32_t index;
 
     std::vector<std::shared_ptr<ModelNode>> children;
 
@@ -42,7 +42,7 @@ struct ModelNode {
 
     std::shared_ptr<ModelSkin> skin;
 
-    int32_t skin_index = -1;
+    std::int32_t skin_index = -1;
 
     glm::vec3 translation{};
 

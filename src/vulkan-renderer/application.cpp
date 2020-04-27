@@ -58,7 +58,7 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 
     spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
 
-    // Generate an uint32_t value from the major, minor and patch version info.
+    // Generate an std::uint32_t value from the major, minor and patch version info.
     application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
 
     int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
@@ -67,7 +67,7 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 
     spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
 
-    // Generate an uint32_t value from the major, minor and patch version info.
+    // Generate an std::uint32_t value from the major, minor and patch version info.
     engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
 
     texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
@@ -192,7 +192,7 @@ VkResult Application::render_frame() {
 
     vkWaitForFences(device, 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
 
-    uint32_t image_index = 0;
+    std::uint32_t image_index = 0;
     VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, *image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
 
     if (VK_NULL_HANDLE != images_in_flight[image_index]) {
@@ -469,7 +469,7 @@ VkResult Application::init() {
     spdlog::debug("Checking for -gpu command line argument.");
 
     // The user can specify with "-gpu <number>" which graphics card to prefer.
-    std::optional<uint32_t> prefered_graphics_card = get_command_line_argument_uint32_t("-gpu");
+    std::optional<std::uint32_t> prefered_graphics_card = get_command_line_argument_uint32("-gpu");
 
     if (prefered_graphics_card.has_value()) {
         spdlog::debug("Preferential graphics card index {} specified.", prefered_graphics_card.value());
@@ -579,7 +579,7 @@ VkResult Application::init() {
 
     // Assign an appropriate name to the central Vulkan device.
     // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
-    // debug_marker_manager->set_object_name(device, (uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
+    // debug_marker_manager->set_object_name(device, (std::uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
 
     //
     // result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);

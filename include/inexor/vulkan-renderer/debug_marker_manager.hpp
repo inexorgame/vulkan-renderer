@@ -50,11 +50,11 @@ public:
 
     /// @brief Sets the debug name of an object.
     /// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function along with the object type
-    void set_object_name(const VkDevice &device, const uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const char *name);
+    void set_object_name(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const char *name);
 
     /// @brief Sets the tag for an object.
     /// @note We can link a memory block of arbitrary size to an object.
-    void set_object_tag(const VkDevice &device, const uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const uint64_t &name,
+    void set_object_tag(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const std::uint64_t &name,
                         const std::size_t &tag_size, const void *tag);
 
     /// Starts a new debug marker region.

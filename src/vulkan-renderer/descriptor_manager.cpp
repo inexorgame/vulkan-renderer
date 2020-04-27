@@ -40,9 +40,9 @@ VkResult DescriptorManager::create_descriptor_pool(const std::string &internal_d
     VkDescriptorPoolCreateInfo pool_create_info = {};
 
     pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_create_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
+    pool_create_info.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
     pool_create_info.pPoolSizes = pool_sizes.data();
-    pool_create_info.maxSets = static_cast<uint32_t>(number_of_images_in_swapchain);
+    pool_create_info.maxSets = static_cast<std::uint32_t>(number_of_images_in_swapchain);
 
     VkResult result = vkCreateDescriptorPool(device, &pool_create_info, nullptr, &descriptor_pool->pool);
     vulkan_error_check(result);
@@ -50,7 +50,7 @@ VkResult DescriptorManager::create_descriptor_pool(const std::string &internal_d
     std::string debug_marker_name = "Descriptor pool '" + internal_descriptor_pool_name + "'.";
 
     // Assign an appropriate debug marker name to this descriptor pool.
-    debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_pool->pool), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_pool->pool), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT,
                                           debug_marker_name.c_str());
 
     // Keep this descriptor pool stored in the manager base class.
@@ -119,7 +119,7 @@ VkResult DescriptorManager::create_descriptor_set_layouts(std::shared_ptr<Descri
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {};
 
     descriptor_set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptor_set_layout_create_info.bindingCount = static_cast<uint32_t>(descriptor_bundle->descriptor_set_layout_bindings.size());
+    descriptor_set_layout_create_info.bindingCount = static_cast<std::uint32_t>(descriptor_bundle->descriptor_set_layout_bindings.size());
     descriptor_set_layout_create_info.pBindings = descriptor_bundle->descriptor_set_layout_bindings.data();
 
     VkResult result = vkCreateDescriptorSetLayout(device, &descriptor_set_layout_create_info, nullptr, &descriptor_bundle->descriptor_set_layout);
@@ -128,7 +128,7 @@ VkResult DescriptorManager::create_descriptor_set_layouts(std::shared_ptr<Descri
     std::string debug_marker_name = "Descriptor set layout for descriptor bundle '" + descriptor_bundle->name + "'.";
 
     // Assign an appropriate debug marker name to this descriptor pool.
-    debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_bundle->descriptor_set_layout), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_bundle->descriptor_set_layout), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
                                           debug_marker_name.c_str());
 
     return VK_SUCCESS;
@@ -148,7 +148,7 @@ VkResult DescriptorManager::create_descriptor_sets(std::shared_ptr<DescriptorBun
 
     descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     descriptor_set_alloc_info.descriptorPool = descriptor_bundle->associated_descriptor_pool->pool;
-    descriptor_set_alloc_info.descriptorSetCount = static_cast<uint32_t>(number_of_images_in_swapchain);
+    descriptor_set_alloc_info.descriptorSetCount = static_cast<std::uint32_t>(number_of_images_in_swapchain);
     descriptor_set_alloc_info.pSetLayouts = descriptor_set_layouts.data();
 
     // TODO: Do we need this for recreation of swapchain?
@@ -164,18 +164,18 @@ VkResult DescriptorManager::create_descriptor_sets(std::shared_ptr<DescriptorBun
     // Iterate through all descriptor sets.
     for (auto &descriptor_set : descriptor_bundle->descriptor_sets) {
         // Assign an appropriate debug marker name to these descriptor sets.
-        debug_marker_manager->set_object_name(device, (uint64_t)(descriptor_set), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, debug_marker_name.c_str());
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_set), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, debug_marker_name.c_str());
     }
 
     for (std::size_t i = 0; i < number_of_images_in_swapchain; i++) {
         spdlog::debug("Updating descriptor set '{}' #{}", descriptor_bundle->name, i);
 
         for (std::size_t j = 0; j < descriptor_bundle->write_descriptor_sets.size(); j++) {
-            descriptor_bundle->write_descriptor_sets[j].dstBinding = static_cast<uint32_t>(j);
+            descriptor_bundle->write_descriptor_sets[j].dstBinding = static_cast<std::uint32_t>(j);
             descriptor_bundle->write_descriptor_sets[j].dstSet = descriptor_bundle->descriptor_sets[i];
         }
 
-        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptor_bundle->write_descriptor_sets.size()), descriptor_bundle->write_descriptor_sets.data(),
+        vkUpdateDescriptorSets(device, static_cast<std::uint32_t>(descriptor_bundle->write_descriptor_sets.size()), descriptor_bundle->write_descriptor_sets.data(),
                                0, nullptr);
     }
 

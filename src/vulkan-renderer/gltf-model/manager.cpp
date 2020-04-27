@@ -29,7 +29,7 @@ VkResult Manager::init(const VkDevice &device, const std::shared_ptr<VulkanTextu
     return VK_SUCCESS;
 }
 
-void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, uint32_t node_index, std::shared_ptr<Model> model, float global_scale) {
+void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, std::uint32_t node_index, std::shared_ptr<Model> model, float global_scale) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -96,11 +96,11 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
         for (std::size_t j = 0; j < mesh.primitives.size(); j++) {
             const tinygltf::Primitive &primitive = mesh.primitives[j];
 
-            uint32_t index_start = static_cast<uint32_t>(model->index_buffer_cache.size());
-            uint32_t vertex_start = static_cast<uint32_t>(model->vertex_buffer_cache.size());
+            std::uint32_t index_start = static_cast<std::uint32_t>(model->index_buffer_cache.size());
+            std::uint32_t vertex_start = static_cast<std::uint32_t>(model->vertex_buffer_cache.size());
 
-            uint32_t index_count = 0;
-            uint32_t vertex_count = 0;
+            std::uint32_t index_count = 0;
+            std::uint32_t vertex_count = 0;
 
             glm::vec3 posMin{};
             glm::vec3 posMax{};
@@ -114,7 +114,7 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
                 const float *bufferNormals = nullptr;
                 const float *bufferTexCoordSet0 = nullptr;
                 const float *bufferTexCoordSet1 = nullptr;
-                const uint16_t *bufferJoints = nullptr;
+                const std::uint16_t *bufferJoints = nullptr;
                 const float *bufferWeights = nullptr;
 
                 int posByteStride;
@@ -136,7 +136,7 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
                 posMin = glm::vec3(posAccessor.minValues[0], posAccessor.minValues[1], posAccessor.minValues[2]);
                 posMax = glm::vec3(posAccessor.maxValues[0], posAccessor.maxValues[1], posAccessor.maxValues[2]);
 
-                vertex_count = static_cast<uint32_t>(posAccessor.count);
+                vertex_count = static_cast<std::uint32_t>(posAccessor.count);
 
                 posByteStride =
                     posAccessor.ByteStride(posView) ? (posAccessor.ByteStride(posView) / sizeof(float)) : tinygltf::GetTypeSizeInBytes(TINYGLTF_TYPE_VEC3);
@@ -173,7 +173,7 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
                 if (primitive.attributes.find("JOINTS_0") != primitive.attributes.end()) {
                     const tinygltf::Accessor &jointAccessor = model->gltf2_container.accessors[primitive.attributes.find("JOINTS_0")->second];
                     const tinygltf::BufferView &jointView = model->gltf2_container.bufferViews[jointAccessor.bufferView];
-                    bufferJoints = reinterpret_cast<const uint16_t *>(
+                    bufferJoints = reinterpret_cast<const std::uint16_t *>(
                         &(model->gltf2_container.buffers[jointView.buffer].data[jointAccessor.byteOffset + jointView.byteOffset]));
                     jointByteStride = jointAccessor.ByteStride(jointView) ? (jointAccessor.ByteStride(jointView) / sizeof(bufferJoints[0]))
                                                                           : tinygltf::GetTypeSizeInBytes(TINYGLTF_TYPE_VEC4);
@@ -216,28 +216,28 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
                 const tinygltf::BufferView &bufferView = model->gltf2_container.bufferViews[accessor.bufferView];
                 const tinygltf::Buffer &buffer = model->gltf2_container.buffers[bufferView.buffer];
 
-                index_count = static_cast<uint32_t>(accessor.count);
+                index_count = static_cast<std::uint32_t>(accessor.count);
 
                 const void *dataPtr = &(buffer.data[accessor.byteOffset + bufferView.byteOffset]);
 
                 switch (accessor.componentType) {
                 case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
-                    const uint32_t *buf = static_cast<const uint32_t *>(dataPtr);
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    const std::uint32_t *buf = static_cast<const std::uint32_t *>(dataPtr);
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         model->index_buffer_cache.push_back(buf[index] + vertex_start);
                     }
                     break;
                 }
                 case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
-                    const uint16_t *buf = static_cast<const uint16_t *>(dataPtr);
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    const std::uint16_t *buf = static_cast<const std::uint16_t *>(dataPtr);
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         model->index_buffer_cache.push_back(buf[index] + vertex_start);
                     }
                     break;
                 }
                 case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
-                    const uint8_t *buf = static_cast<const uint8_t *>(dataPtr);
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    const std::uint8_t *buf = static_cast<const std::uint8_t *>(dataPtr);
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         model->index_buffer_cache.push_back(buf[index] + vertex_start);
                     }
                     break;
@@ -360,7 +360,7 @@ void Manager::load_textures(std::shared_ptr<Model> model) {
     }
 }
 
-VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrap_mode) {
+VkSamplerAddressMode Manager::get_wrap_mode(const std::int32_t wrap_mode) {
     spdlog::debug("getVkWrapMode");
 
     assert(model_manager_initialised);
@@ -381,7 +381,7 @@ VkSamplerAddressMode Manager::get_wrap_mode(const int32_t wrap_mode) {
 }
 
 // TODO: std::optional!
-VkFilter Manager::get_filter_mode(const int32_t filter_mode) {
+VkFilter Manager::get_filter_mode(const std::int32_t filter_mode) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -512,7 +512,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
             if (ext->second.Has("diffuseFactor")) {
                 auto factor = ext->second.Get("diffuseFactor");
 
-                for (uint32_t i = 0; i < factor.ArrayLen(); i++) {
+                for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
                     material.extension.diffuse_factor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
                 }
@@ -521,7 +521,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
             if (ext->second.Has("specularFactor")) {
                 auto factor = ext->second.Get("specularFactor");
 
-                for (uint32_t i = 0; i < factor.ArrayLen(); i++) {
+                for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
                     material.extension.specular_factor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
                 }
@@ -573,7 +573,7 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
                 const void *dataPtr = &buffer.data[accessor.byteOffset + bufferView.byteOffset];
                 const float *buf = static_cast<const float *>(dataPtr);
 
-                for (size_t index = 0; index < accessor.count; index++) {
+                for (std::size_t index = 0; index < accessor.count; index++) {
                     sampler.inputs.push_back(buf[index]);
                 }
 
@@ -601,7 +601,7 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
                 case TINYGLTF_TYPE_VEC3: {
                     const glm::vec3 *buf = static_cast<const glm::vec3 *>(dataPtr);
 
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         sampler.outputs_vec4.push_back(glm::vec4(buf[index], 0.0f));
                     }
                     break;
@@ -609,7 +609,7 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
                 case TINYGLTF_TYPE_VEC4: {
                     const glm::vec4 *buf = static_cast<const glm::vec4 *>(dataPtr);
 
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         sampler.outputs_vec4.push_back(buf[index]);
                     }
                     break;
@@ -673,7 +673,7 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
     std::string warning_message;
 
     bool is_binary_file = false;
-    size_t extpos = file_name.rfind('.', file_name.length());
+    std::size_t extpos = file_name.rfind('.', file_name.length());
 
     if (extpos != std::string::npos) {
         // TODO: Move to tools:: find_file_extension?
@@ -713,7 +713,7 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
         const tinygltf::Scene &scene =
             new_model->gltf2_container.scenes[new_model->gltf2_container.defaultScene > -1 ? new_model->gltf2_container.defaultScene : 0];
 
-        for (size_t i = 0; i < scene.nodes.size(); i++) {
+        for (std::size_t i = 0; i < scene.nodes.size(); i++) {
             const tinygltf::Node node = new_model->gltf2_container.nodes[scene.nodes[i]];
 
             load_node(nullptr, node, scene.nodes[i], new_model, scale);
@@ -742,13 +742,13 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
 
     // Create a new vertex buffer and a new index buffer for the model!
     std::size_t vertex_buffer_size = new_model->vertex_buffer_cache.size() * sizeof(ModelVertex);
-    std::size_t index_buffer_size = new_model->index_buffer_cache.size() * sizeof(uint32_t);
+    std::size_t index_buffer_size = new_model->index_buffer_cache.size() * sizeof(std::uint32_t);
 
     spdlog::debug("Vertex buffer size: {}.", vertex_buffer_size);
     spdlog::debug("Index buffer size: {}.", index_buffer_size);
 
     // Store how many indices are available.
-    std::size_t indices_count = static_cast<uint32_t>(new_model->index_buffer_cache.size());
+    std::size_t indices_count = static_cast<std::uint32_t>(new_model->index_buffer_cache.size());
 
     spdlog::debug("glTF 2.0 model '{}' has {} indices.", file_name, indices_count);
 
@@ -765,7 +765,7 @@ VkResult Manager::load_model_from_file(const std::string &file_name, std::shared
         // Create a vertex buffer with an index buffer, as it should always be!
         VkResult result = mesh_buffer_manager->create_vertex_buffer_with_index_buffer(
             file_name, new_model->vertex_buffer_cache.data(), sizeof(ModelVertex), new_model->vertex_buffer_cache.size(), new_model->index_buffer_cache.data(),
-            sizeof(uint32_t), number_of_indices, new_model->mesh);
+            sizeof(std::uint32_t), number_of_indices, new_model->mesh);
         vulkan_error_check(result);
     } else {
         // Always make sure you use a model which has indices.
@@ -804,7 +804,7 @@ void Manager::render_node(std::shared_ptr<ModelNode> node, VkCommandBuffer comma
             };
 
             // TODO: Encapsulate this by descriptor set manager?
-            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<uint32_t>(descriptor_sets.size()),
+            vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, static_cast<std::uint32_t>(descriptor_sets.size()),
                                     descriptor_sets.data(), 0, NULL);
 
             // TODO! PushConstantsManager
@@ -917,7 +917,7 @@ void Manager::get_scene_dimensions(std::shared_ptr<Model> model) {
     model->aabb[3][2] = model->dimensions.min[2];
 }
 
-void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t index, const float time) {
+void Manager::update_animation(std::shared_ptr<Model> model, const std::uint32_t index, const float time) {
     assert(model_manager_initialised);
     assert(texture_manager);
     assert(uniform_buffer_manager);
@@ -929,7 +929,7 @@ void Manager::update_animation(std::shared_ptr<Model> model, const uint32_t inde
         return;
     }
 
-    if (index > static_cast<uint32_t>(model->animations.size()) - 1) {
+    if (index > static_cast<std::uint32_t>(model->animations.size()) - 1) {
         spdlog::error("glTF 2.0 Model file '{}': No animation with index {}.", model->name, index);
         return;
     }
@@ -1009,7 +1009,7 @@ VkResult Manager::load_model_from_glTF2_file(const std::string &internal_model_n
     return VK_SUCCESS;
 }
 
-std::shared_ptr<ModelNode> Manager::find_node(std::shared_ptr<ModelNode> parent, const uint32_t index) {
+std::shared_ptr<ModelNode> Manager::find_node(std::shared_ptr<ModelNode> parent, const std::uint32_t index) {
     assert(model_manager_initialised);
     assert(parent);
 
@@ -1084,7 +1084,7 @@ std::size_t Manager::get_model_count() {
     return get_entry_count();
 }
 
-std::shared_ptr<ModelNode> Manager::node_from_index(std::shared_ptr<Model> model, const uint32_t index) {
+std::shared_ptr<ModelNode> Manager::node_from_index(std::shared_ptr<Model> model, const std::uint32_t index) {
     assert(model_manager_initialised);
     assert(model);
 

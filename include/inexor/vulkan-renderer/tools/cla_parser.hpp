@@ -120,7 +120,7 @@ public:
     /// @brief Returns the value of a std::uint32_t command line argument (if existent).
     /// @parm argument_name The name of the command line argument.
     /// @return The std::uint32_t value of the command line argument.
-    const std::optional<std::uint32_t> get_command_line_argument_uint32_t(const std::string &argument_name);
+    const std::optional<std::uint32_t> get_command_line_argument_uint32(const std::string &argument_name);
 };
 
 } // namespace inexor::vulkan_renderer::tools

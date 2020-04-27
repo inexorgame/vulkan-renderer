@@ -26,20 +26,20 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const uint32_t application_version,
-                                                const uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer) {
+VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
+                                                const std::uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
     // Get the major, minor and patch version of the application.
-    uint32_t app_major = VK_VERSION_MAJOR(application_version);
-    uint32_t app_minor = VK_VERSION_MINOR(application_version);
-    uint32_t app_patch = VK_VERSION_PATCH(application_version);
+    std::uint32_t app_major = VK_VERSION_MAJOR(application_version);
+    std::uint32_t app_minor = VK_VERSION_MINOR(application_version);
+    std::uint32_t app_patch = VK_VERSION_PATCH(application_version);
 
     // Get the major, minor and patch version of the engine.
-    uint32_t engine_major = VK_VERSION_MAJOR(engine_version);
-    uint32_t engine_minor = VK_VERSION_MINOR(engine_version);
-    uint32_t engine_patch = VK_VERSION_PATCH(engine_version);
+    std::uint32_t engine_major = VK_VERSION_MAJOR(engine_version);
+    std::uint32_t engine_minor = VK_VERSION_MINOR(engine_version);
+    std::uint32_t engine_patch = VK_VERSION_PATCH(engine_version);
 
     spdlog::debug("Initialising Vulkan instance.");
     spdlog::debug("Application name: '{}'", application_name.c_str());
@@ -81,7 +81,7 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
     };
 
     // Query which extensions are needed by GLFW.
-    uint32_t number_of_GLFW_extensions = 0;
+    std::uint32_t number_of_GLFW_extensions = 0;
 
     auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_GLFW_extensions);
 
@@ -169,9 +169,9 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
     instance_create_info.flags = 0;
     instance_create_info.pApplicationInfo = &app_info;
     instance_create_info.ppEnabledExtensionNames = enabled_instance_extensions.data();
-    instance_create_info.enabledExtensionCount = static_cast<uint32_t>(enabled_instance_extensions.size());
+    instance_create_info.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());
     instance_create_info.ppEnabledLayerNames = enabled_instance_layers.data();
-    instance_create_info.enabledLayerCount = static_cast<uint32_t>(enabled_instance_layers.size());
+    instance_create_info.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
 
     VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance);
     vulkan_error_check(result);
@@ -234,11 +234,11 @@ VkResult VulkanRenderer::create_physical_device(const VkPhysicalDevice &graphics
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.pNext = nullptr;
     device_create_info.flags = 0;
-    device_create_info.queueCreateInfoCount = static_cast<uint32_t>(queues_to_create.size());
+    device_create_info.queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size());
     device_create_info.pQueueCreateInfos = queues_to_create.data();
     device_create_info.enabledLayerCount = 0;
     device_create_info.ppEnabledLayerNames = nullptr;
-    device_create_info.enabledExtensionCount = static_cast<uint32_t>(enabled_device_extensions.size());
+    device_create_info.enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size());
     device_create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
     device_create_info.pEnabledFeatures = &used_features;
 
@@ -284,7 +284,7 @@ VkResult VulkanRenderer::create_command_pool() {
     vulkan_error_check(result);
 
     // Give this command pool an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Core engine command pool.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Core engine command pool.");
 
     return VK_SUCCESS;
 }
@@ -338,7 +338,7 @@ VkResult VulkanRenderer::create_depth_buffer() {
     vulkan_error_check(result);
 
     // Give this depth buffer image an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "Depth buffer image.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "Depth buffer image.");
 
     VkImageViewCreateInfo view_info = {};
 
@@ -356,7 +356,7 @@ VkResult VulkanRenderer::create_depth_buffer() {
     vulkan_error_check(result);
 
     // Give this buffer image view an appropriate name.
-    debug_marker_manager->set_object_name(device, (uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "Depth buffer image view.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "Depth buffer image view.");
 
     return VK_SUCCESS;
 }
@@ -386,7 +386,7 @@ VkResult VulkanRenderer::create_command_buffers() {
     for (std::size_t i = 0; i < command_buffers.size(); i++) {
         std::string command_buffer_name = "Command buffer " + std::to_string(i) + " for core engine.";
 
-        debug_marker_manager->set_object_name(device, (uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                               command_buffer_name.c_str());
     }
 
@@ -473,7 +473,7 @@ VkResult VulkanRenderer::record_command_buffers() {
     render_pass_begin_info.renderPass = render_pass;
     render_pass_begin_info.renderArea.offset = {0, 0};
     render_pass_begin_info.renderArea.extent = {window_width, window_height};
-    render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
+    render_pass_begin_info.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
     render_pass_begin_info.pClearValues = clear_values.data();
 
     VkViewport viewport{};
@@ -690,7 +690,7 @@ VkResult VulkanRenderer::create_swapchain() {
         std::string debug_marker_name = "Swapchain image #" + std::to_string(i);
 
         // Assign an appropriate debug marker name to the swapchain images.
-        debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, debug_marker_name.c_str());
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, debug_marker_name.c_str());
     }
 
     spdlog::debug("Creating swapchainm image views.");
@@ -728,7 +728,7 @@ VkResult VulkanRenderer::create_swapchain() {
         std::string swapchain_image_view_name = "Swapchain image view #" + std::to_string(i) + ".";
 
         // Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
-        debug_marker_manager->set_object_name(device, (uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
                                               swapchain_image_view_name.c_str());
     }
 
@@ -820,7 +820,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     // We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
     if (command_buffers.size() > 0) {
         // The size of the command buffer is equal to the number of image in swapchain.
-        vkFreeCommandBuffers(device, command_pool, static_cast<uint32_t>(command_buffers.size()), command_buffers.data());
+        vkFreeCommandBuffers(device, command_pool, static_cast<std::uint32_t>(command_buffers.size()), command_buffers.data());
 
         command_buffers.clear();
     }
@@ -1154,7 +1154,7 @@ VkResult VulkanRenderer::create_pipeline() {
     vertex_input_create_info.flags = 0;
     vertex_input_create_info.vertexBindingDescriptionCount = 1;
     vertex_input_create_info.pVertexBindingDescriptions = &vertex_binding_description;
-    vertex_input_create_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_binding_description.size());
+    vertex_input_create_info.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_binding_description.size());
     vertex_input_create_info.pVertexAttributeDescriptions = attribute_binding_description.data();
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = {};
@@ -1268,7 +1268,7 @@ VkResult VulkanRenderer::create_pipeline() {
     pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_create_info.pNext = nullptr;
     pipeline_layout_create_info.flags = 0;
-    pipeline_layout_create_info.setLayoutCount = static_cast<uint32_t>(set_layouts.size());
+    pipeline_layout_create_info.setLayoutCount = static_cast<std::uint32_t>(set_layouts.size());
     pipeline_layout_create_info.pSetLayouts = set_layouts.data();
     pipeline_layout_create_info.pushConstantRangeCount = 0;
     pipeline_layout_create_info.pPushConstantRanges = nullptr;
@@ -1280,7 +1280,7 @@ VkResult VulkanRenderer::create_pipeline() {
         return result;
 
     // Use Vulkan debug markers to assign an appropriate name to this pipeline.
-    debug_marker_manager->set_object_name(device, (uint64_t)(pipeline_layout), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(pipeline_layout), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
                                           "Pipeline layout for core engine.");
 
     if (multisampling_enabled) {
@@ -1375,7 +1375,7 @@ VkResult VulkanRenderer::create_pipeline() {
         VkRenderPassCreateInfo renderpass_create_info = {};
 
         renderpass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderpass_create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderpass_create_info.attachmentCount = static_cast<std::uint32_t>(attachments.size());
         renderpass_create_info.pAttachments = attachments.data();
         renderpass_create_info.subpassCount = 1;
         renderpass_create_info.pSubpasses = &subpass;
@@ -1455,11 +1455,11 @@ VkResult VulkanRenderer::create_pipeline() {
         VkRenderPassCreateInfo renderpass_create_info{};
 
         renderpass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderpass_create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderpass_create_info.attachmentCount = static_cast<std::uint32_t>(attachments.size());
         renderpass_create_info.pAttachments = attachments.data();
         renderpass_create_info.subpassCount = 1;
         renderpass_create_info.pSubpasses = &subpassDescription;
-        renderpass_create_info.dependencyCount = static_cast<uint32_t>(dependencies.size());
+        renderpass_create_info.dependencyCount = static_cast<std::uint32_t>(dependencies.size());
         renderpass_create_info.pDependencies = dependencies.data();
 
         spdlog::debug("Creating renderpass.");
@@ -1469,7 +1469,7 @@ VkResult VulkanRenderer::create_pipeline() {
     }
 
     // Use Vulkan debug markers to assign an appropriate name to this renderpass.
-    debug_marker_manager->set_object_name(device, (uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
 
     // Tell Vulkan that we want to change viewport and scissor during runtime so it's a dynamic state.
     const std::vector<VkDynamicState> enabled_dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR
@@ -1483,14 +1483,14 @@ VkResult VulkanRenderer::create_pipeline() {
 
     dynamic_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamic_state_create_info.pDynamicStates = enabled_dynamic_states.data();
-    dynamic_state_create_info.dynamicStateCount = static_cast<uint32_t>(enabled_dynamic_states.size());
+    dynamic_state_create_info.dynamicStateCount = static_cast<std::uint32_t>(enabled_dynamic_states.size());
 
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
 
     graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     graphics_pipeline_create_info.pNext = nullptr;
     graphics_pipeline_create_info.flags = 0;
-    graphics_pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
+    graphics_pipeline_create_info.stageCount = static_cast<std::uint32_t>(shader_stages.size());
     graphics_pipeline_create_info.pStages = shader_stages.data();
     graphics_pipeline_create_info.pVertexInputState = &vertex_input_create_info;
     graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_create_info;
@@ -1530,7 +1530,7 @@ VkResult VulkanRenderer::create_pipeline() {
         return result;
 
     // Use Vulkan debug markers to assign an appropriate name to this pipeline.
-    debug_marker_manager->set_object_name(device, (uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "Graphics pipeline for core engine.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "Graphics pipeline for core engine.");
 
     // TODO: We could destroy shader modules here already.
     // TODO: Create alpha blend pipeline.
@@ -1732,7 +1732,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
         std::string frame_buffer_name = "Frame buffer #" + std::to_string(i) + ".";
 
         // Use Vulkan debug markers to assign an appropriate name to this frame buffer.
-        debug_marker_manager->set_object_name(device, (uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
     }
 
     return VK_SUCCESS;

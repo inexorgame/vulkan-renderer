@@ -28,9 +28,9 @@ private:
 
     std::string engine_name = "";
 
-    uint32_t application_version = 0;
+    std::uint32_t application_version = 0;
 
-    uint32_t engine_version = 0;
+    std::uint32_t engine_version = 0;
 
     // The core concept of paralellization in Inexor is to use a
     // C++17 threadpool implementation which spawns worker threads.

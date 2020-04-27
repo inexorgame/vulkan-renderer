@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/gltf-model/primitive.hpp"
 
 namespace inexor::vulkan_renderer::gltf_model {
-Primitive::Primitive(uint32_t first_index, uint32_t index_count, uint32_t vertex_count, Material &material)
+Primitive::Primitive(std::uint32_t first_index, std::uint32_t index_count, std::uint32_t vertex_count, Material &material)
     : first_index(first_index), index_count(index_count), vertex_count(vertex_count), material(material) {
     has_indices = index_count > 0;
 }

@@ -12,7 +12,7 @@
 
 namespace inexor::vulkan_renderer::world {
 /// How often a cube can be indented, results in MAX_INDENTATION+1 steps.
-constexpr uint8_t MAX_INDENTATION = 8;
+constexpr std::uint8_t MAX_INDENTATION = 8;
 /// The default size of a cube / the octree size boundaries.
 constexpr float DEFAULT_CUBE_SIZE = 1;
 /// The default position of the cube in the coordinate system.
@@ -39,16 +39,16 @@ private:
     /// Parse one axis from a BitStream.
     /// @param stream The BitStream to parse one axis from.
     /// @return The indentation level on that axis.
-    static uint8_t parse_one(BitStream &stream);
+    static std::uint8_t parse_one(BitStream &stream);
 
     /// Indentation level on the x-axis.
-    uint8_t x_level = 0;
+    std::uint8_t x_level = 0;
 
     /// Indentation level on the y-axis.
-    uint8_t y_level = 0;
+    std::uint8_t y_level = 0;
 
     /// Indentation level on the z-axis.
-    uint8_t z_level = 0;
+    std::uint8_t z_level = 0;
 
 public:
     /// Create an Indentation to assign to a cube corner.
@@ -58,7 +58,7 @@ public:
     /// @param x Indentation leven on the x-axis
     /// @param y Indentation leven on the y-axis
     /// @param z Indentation leven on the z-axis
-    explicit Indentation(uint8_t x, uint8_t y, uint8_t z);
+    explicit Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z);
 
     /// Signal emitted when one of the indentation levels changes.
     /// Argument: the indentation emitting the signal ("this").
@@ -68,19 +68,19 @@ public:
     /// @param x Indentation leven on the x-axis.
     /// @param y Indentation leven on the y-axis.
     /// @param z Indentation leven on the z-axis.
-    void set(std::optional<uint8_t> x, std::optional<uint8_t> y, std::optional<uint8_t> z);
+    void set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z);
 
     /// Set the indentation level for the x axis.
     /// @param x Indentation level on the x axis.
-    void set_x(uint8_t x);
+    void set_x(std::uint8_t x);
 
     /// Set the indentation level for the y axis.
     /// @param x Indentation level on the y axis.
-    void set_y(uint8_t y);
+    void set_y(std::uint8_t y);
 
     /// Set the indentation level for the z axis.
     /// @param x Indentation level on the z axis.
-    void set_z(uint8_t z);
+    void set_z(std::uint8_t z);
 
     /// Parse an indentation from a bitstream.
     /// @param stream The stream to extract the bitstream from.
@@ -89,19 +89,19 @@ public:
 
     /// Get the x-axis indentation level.
     /// @return the x-axis indentation level.
-    [[nodiscard]] uint8_t x() const;
+    [[nodiscard]] std::uint8_t x() const;
 
     /// Get the y-axis indentation level.
     /// @return the y-axis indentation level.
-    [[nodiscard]] uint8_t y() const;
+    [[nodiscard]] std::uint8_t y() const;
 
     /// Get the z-axis indentation level.
     /// @return the z-axis indentation level.
-    [[nodiscard]] uint8_t z() const;
+    [[nodiscard]] std::uint8_t z() const;
 
-    /// Get the indentation levels on all three axes as a glm::tvec3<uint8_t>.
-    /// @return all three axes as a glm::tvec3<uint8_t>
-    [[nodiscard]] glm::tvec3<uint8_t> vec() const;
+    /// Get the indentation levels on all three axes as a glm::tvec3<std::uint8_t>.
+    /// @return all three axes as a glm::tvec3<std::uint8_t>
+    [[nodiscard]] glm::tvec3<std::uint8_t> vec() const;
 
     // TODO: Get bits from values.
     // [[nodiscard]] dynamic_bitset<> bits();
@@ -163,7 +163,7 @@ private:
 
     /// Get the indentation levels for each side of the cube.
     /// @return The indentation lebvels for each side of the cube.
-    std::array<glm::tvec3<uint8_t>, 8> indentation_levels();
+    std::array<glm::tvec3<std::uint8_t>, 8> indentation_levels();
 
     /// Cache of this cubes polygons. Not of its octants (i.e., empty of the cube is of type CubeType::OCTANTS).
     std::array<std::array<glm::vec3, 3>, 12> polygons_cache = {}; // Vertices of this cube (not its octants)
@@ -257,7 +257,7 @@ public:
     /// Get the number of leaves, this octree contains.
     /// Leaves are cubes of CubeType::INDENTED or CubeTYPE::FULL.
     /// @return Number of leaves, this octree contains.
-    [[nodiscard]] uint64_t leaves();
+    [[nodiscard]] std::uint64_t leaves();
 
     // [[nodiscard]] dynamic_bitset<> bits(); // Bit representation of this cube
     // [[nodiscard]] vector<array<glm::vec3, 8>> vertices(); // All vertices this cube contains.

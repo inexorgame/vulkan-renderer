@@ -2,12 +2,12 @@
 
 namespace inexor::vulkan_renderer {
 
-uint32_t BezierCurve::binomial_coefficient(uint32_t n, const uint32_t k) {
-    uint32_t r = 1;
+std::uint32_t BezierCurve::binomial_coefficient(std::uint32_t n, const std::uint32_t k) {
+    std::uint32_t r = 1;
     if (k > n)
         return 0;
 
-    for (uint32_t d = 1; d <= k; d++) {
+    for (std::uint32_t d = 1; d <= k; d++) {
         r *= n--;
         r /= d;
     }
@@ -15,7 +15,7 @@ uint32_t BezierCurve::binomial_coefficient(uint32_t n, const uint32_t k) {
     return r;
 }
 
-float BezierCurve::bernstein_polynomial(uint32_t n, uint32_t k, const float curve_precision, const float coordinate_value) {
+float BezierCurve::bernstein_polynomial(std::uint32_t n, std::uint32_t k, const float curve_precision, const float coordinate_value) {
     return binomial_coefficient(n, k) * static_cast<float>(pow(curve_precision, k)) * static_cast<float>(pow(1 - curve_precision, n - k)) * coordinate_value;
 }
 
@@ -61,13 +61,13 @@ void BezierCurve::add_input_point(const glm::vec3 &position, const float weight)
 BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precision) {
     BezierOutputPoint temp_output;
 
-    uint32_t n = static_cast<uint32_t>(input_points.size() - 1);
+    std::uint32_t n = static_cast<std::uint32_t>(input_points.size() - 1);
 
     // Calculate the coordinates of the output points of the bezier curve.
     for (std::size_t i = 0; i < input_points.size(); i++) {
         auto current_point = input_points[i];
 
-        uint32_t index = static_cast<uint32_t>(i);
+        std::uint32_t index = static_cast<std::uint32_t>(i);
 
         // Compute bezier curve coordinates using bernstein polynomials.
         temp_output.pos.x += bernstein_polynomial(n, index, curve_precision, current_point.pos.x);
@@ -86,7 +86,7 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
         auto current_point = input_points[i];
         auto next_point = input_points[i + 1];
 
-        uint32_t index = static_cast<uint32_t>(i);
+        std::uint32_t index = static_cast<std::uint32_t>(i);
 
         // Compute bezier curve point's first derivative.
         temp_output.tangent.x += bernstein_polynomial(n - 1, index, curve_precision, current_point.pos.x);

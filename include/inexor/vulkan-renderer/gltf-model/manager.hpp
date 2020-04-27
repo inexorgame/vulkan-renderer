@@ -102,16 +102,16 @@ private:
 
     void destroy();
 
-    void load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, const uint32_t node_index, std::shared_ptr<Model> model,
+    void load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node &node, const std::uint32_t node_index, std::shared_ptr<Model> model,
                    const float global_scale);
 
     void load_skins(std::shared_ptr<Model> model);
 
     void load_textures(std::shared_ptr<Model> model);
 
-    VkSamplerAddressMode get_wrap_mode(const int32_t wrap_mode);
+    VkSamplerAddressMode get_wrap_mode(const std::int32_t wrap_mode);
 
-    VkFilter get_filter_mode(const int32_t filter_mode);
+    VkFilter get_filter_mode(const std::int32_t filter_mode);
 
     void load_texture_samplers(std::shared_ptr<Model> model);
 
@@ -125,11 +125,11 @@ private:
 
     void get_scene_dimensions(std::shared_ptr<Model> model);
 
-    void update_animation(std::shared_ptr<Model> model, const uint32_t index, const float time);
+    void update_animation(std::shared_ptr<Model> model, const std::uint32_t index, const float time);
 
-    std::shared_ptr<ModelNode> find_node(std::shared_ptr<ModelNode> parent, const uint32_t index);
+    std::shared_ptr<ModelNode> find_node(std::shared_ptr<ModelNode> parent, const std::uint32_t index);
 
-    std::shared_ptr<ModelNode> node_from_index(std::shared_ptr<Model> model, const uint32_t index);
+    std::shared_ptr<ModelNode> node_from_index(std::shared_ptr<Model> model, const std::uint32_t index);
 };
 
 } // namespace inexor::vulkan_renderer::gltf_model

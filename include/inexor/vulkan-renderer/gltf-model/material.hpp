@@ -29,12 +29,12 @@ struct Material {
     std::shared_ptr<Texture> emissive_texture;
 
     struct TexCoordSets {
-        uint8_t base_color = 0;
-        uint8_t metallic_roughness = 0;
-        uint8_t specular_glossiness = 0;
-        uint8_t normal = 0;
-        uint8_t occlusion = 0;
-        uint8_t emissive = 0;
+        std::uint8_t base_color = 0;
+        std::uint8_t metallic_roughness = 0;
+        std::uint8_t specular_glossiness = 0;
+        std::uint8_t normal = 0;
+        std::uint8_t occlusion = 0;
+        std::uint8_t emissive = 0;
     };
 
     TexCoordSets tex_coord_sets;

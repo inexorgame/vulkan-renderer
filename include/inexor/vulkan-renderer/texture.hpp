@@ -43,13 +43,13 @@ public:
 
     VkSampler sampler = {};
 
-    uint32_t layer_count = 0;
+    std::uint32_t layer_count = 0;
 
-    uint32_t mip_levels = 0;
+    std::uint32_t mip_levels = 0;
 
-    uint32_t width = 0;
+    std::uint32_t width = 0;
 
-    uint32_t height = 0;
+    std::uint32_t height = 0;
 
 public:
     // TODO: Refactoring: Remove methods! only let VulkanTextureManager change data.

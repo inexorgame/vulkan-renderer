@@ -21,13 +21,13 @@ void Texture::destroy_texture(const VkDevice &device, const VmaAllocator &vma_al
 
     sampler = VK_NULL_HANDLE;
 
-    uint32_t layer_count = 0;
+    std::uint32_t layer_count = 0;
 
-    uint32_t mip_levels = 0;
+    std::uint32_t mip_levels = 0;
 
-    uint32_t texture_width = 0;
+    std::uint32_t texture_width = 0;
 
-    uint32_t texture_height = 0;
+    std::uint32_t texture_height = 0;
 }
 
 void Texture::update_descriptor() {

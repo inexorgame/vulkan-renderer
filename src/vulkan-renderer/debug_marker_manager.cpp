@@ -5,7 +5,7 @@ namespace inexor::vulkan_renderer {
 void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers) {
     if (enable_debug_markers) {
         // Check if the debug marker extension is present (which is the case if run from a graphics debugger)
-        uint32_t extensionCount;
+        std::uint32_t extensionCount;
 
         vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &extensionCount, nullptr);
 
@@ -46,7 +46,7 @@ void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevi
     }
 }
 
-void VulkanDebugMarkerManager::set_object_name(const VkDevice &device, const uint64_t &object, const VkDebugReportObjectTypeEXT &object_type,
+void VulkanDebugMarkerManager::set_object_name(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type,
                                                const char *name) {
     assert(device);
     assert(name);
@@ -66,8 +66,8 @@ void VulkanDebugMarkerManager::set_object_name(const VkDevice &device, const uin
     }
 }
 
-void VulkanDebugMarkerManager::set_object_tag(const VkDevice &device, const uint64_t &object, const VkDebugReportObjectTypeEXT &object_type,
-                                              const uint64_t &name, const std::size_t &tag_size, const void *tag) {
+void VulkanDebugMarkerManager::set_object_tag(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type,
+                                              const std::uint64_t &name, const std::size_t &tag_size, const void *tag) {
     assert(device);
 
     // Check for valid function pointer (may not be present if not running in a debugging application)

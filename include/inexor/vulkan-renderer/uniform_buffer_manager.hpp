@@ -50,7 +50,7 @@ public:
     /// @param device [in] The Vulkan device.
     /// @param vma_allocator [in] The Vulkam memory allocator handle.
     /// @param debug_marker_manager [in] A pointer to the debug marker manager.
-    VkResult init(const VkDevice &device, const uint32_t number_of_images_in_swapchain, const VmaAllocator &vma_allocator, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
+    VkResult init(const VkDevice &device, const std::uint32_t number_of_images_in_swapchain, const VmaAllocator &vma_allocator, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager);
 
     /// @brief Creates a new uniform buffer.
     /// @param internal_uniform_buffer_name [in] The internal name of the uniform buffer.

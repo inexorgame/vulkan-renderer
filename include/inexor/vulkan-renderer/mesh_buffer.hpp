@@ -22,9 +22,9 @@ struct MeshBuffer {
 
     Buffer index_buffer;
 
-    uint32_t number_of_vertices = 0;
+    std::uint32_t number_of_vertices = 0;
 
-    uint32_t number_of_indices = 0;
+    std::uint32_t number_of_indices = 0;
 
     std::string description = "";
 

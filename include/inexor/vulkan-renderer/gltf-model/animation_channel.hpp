@@ -13,7 +13,7 @@ struct AnimationChannel {
 
     std::shared_ptr<ModelNode> node;
 
-    uint32_t samplerIndex;
+    std::uint32_t samplerIndex;
 };
 
 } // namespace inexor::vulkan_renderer::gltf_model

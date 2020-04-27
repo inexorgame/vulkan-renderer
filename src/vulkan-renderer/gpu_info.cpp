@@ -5,7 +5,7 @@ namespace inexor::vulkan_renderer {
 void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
     // The version of the available Vulkan API is encoded as a 32 bit integer.
     // https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#extendingvulkan-coreversions-versionnumbers
-    uint32_t api_version = 0;
+    std::uint32_t api_version = 0;
 
     // The Vulkan version number comprises three parts indicating the major, minor and patch version of the Vulkan API Specification.
     // The major version indicates a significant change in the API, which will encompass a wholly new version of the specification.
@@ -15,9 +15,9 @@ void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
     vulkan_error_check(result);
 
     // Extract major, minor and patch version of the Vulkan API available.
-    uint16_t api_major_version = VK_VERSION_MAJOR(api_version);
-    uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
-    uint16_t api_version_patch = VK_VERSION_PATCH(api_version);
+    std::uint16_t api_major_version = VK_VERSION_MAJOR(api_version);
+    std::uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
+    std::uint16_t api_version_patch = VK_VERSION_PATCH(api_version);
 
     spdlog::debug("------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Supported Vulkan API version: {}.{}.{}", api_major_version, api_minor_version, api_version_patch);
@@ -28,7 +28,7 @@ void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const Vk
     assert(graphics_card);
 
     // The number of available queue families.
-    uint32_t number_of_queue_families = 0;
+    std::uint32_t number_of_queue_families = 0;
 
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, nullptr);
 
@@ -63,9 +63,9 @@ void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const Vk
             if (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT)
                 spdlog::debug("VK_QUEUE_PROTECTED_BIT");
 
-            uint32_t width = queue_family_properties[i].minImageTransferGranularity.width;
-            uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
-            uint32_t depth = queue_family_properties[i].minImageTransferGranularity.depth;
+            std::uint32_t width = queue_family_properties[i].minImageTransferGranularity.width;
+            std::uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
+            std::uint32_t depth = queue_family_properties[i].minImageTransferGranularity.depth;
 
             spdlog::debug("Min Image Timestamp Granularity: {}, {}, {}", width, height, depth);
         }
@@ -73,7 +73,7 @@ void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const Vk
 }
 
 void VulkanGraphicsCardInfoViewer::print_instance_layers() {
-    uint32_t number_of_instance_layers = 0;
+    std::uint32_t number_of_instance_layers = 0;
 
     // First check how many instance layers are available.
     VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
@@ -95,9 +95,9 @@ void VulkanGraphicsCardInfoViewer::print_instance_layers() {
 
         // Loop through all available instance layers and print information about them.
         for (auto instance_layer : instance_layers) {
-            uint32_t spec_major = VK_VERSION_MAJOR(instance_layer.specVersion);
-            uint32_t spec_minor = VK_VERSION_MINOR(instance_layer.specVersion);
-            uint32_t spec_patch = VK_VERSION_PATCH(instance_layer.specVersion);
+            std::uint32_t spec_major = VK_VERSION_MAJOR(instance_layer.specVersion);
+            std::uint32_t spec_minor = VK_VERSION_MINOR(instance_layer.specVersion);
+            std::uint32_t spec_patch = VK_VERSION_PATCH(instance_layer.specVersion);
 
             spdlog::debug("Name: {}", instance_layer.layerName);
             spdlog::debug("Spec Version: {}", spec_major, spec_minor, spec_patch);
@@ -108,7 +108,7 @@ void VulkanGraphicsCardInfoViewer::print_instance_layers() {
 }
 
 void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
-    uint32_t number_of_instance_extensions = 0;
+    std::uint32_t number_of_instance_extensions = 0;
 
     // First check how many instance extensions are available.
     VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, nullptr);
@@ -130,9 +130,9 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
 
         // Loop through all available instance extensions and print information about them.
         for (auto extension : extensions) {
-            uint32_t spec_major = VK_VERSION_MAJOR(extension.specVersion);
-            uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
-            uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
+            std::uint32_t spec_major = VK_VERSION_MAJOR(extension.specVersion);
+            std::uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
+            std::uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
 
             spdlog::debug("Spec version: {}.{}.{}\t Name: {}", spec_major, spec_minor, spec_patch, extension.extensionName);
         }
@@ -142,7 +142,7 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
 void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
-    uint32_t number_of_device_layers = 0;
+    std::uint32_t number_of_device_layers = 0;
 
     // First check how many device layers are available.
     VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
@@ -164,9 +164,9 @@ void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &g
 
         // Loop through all available device layers and print information about them.
         for (auto device_layer : device_layers) {
-            uint32_t spec_major = VK_VERSION_MAJOR(device_layer.specVersion);
-            uint32_t spec_minor = VK_VERSION_MINOR(device_layer.specVersion);
-            uint32_t spec_patch = VK_VERSION_PATCH(device_layer.specVersion);
+            std::uint32_t spec_major = VK_VERSION_MAJOR(device_layer.specVersion);
+            std::uint32_t spec_minor = VK_VERSION_MINOR(device_layer.specVersion);
+            std::uint32_t spec_patch = VK_VERSION_PATCH(device_layer.specVersion);
 
             spdlog::debug("Name: {}", device_layer.layerName);
             spdlog::debug("Spec Version: {}", spec_major, spec_minor, spec_patch);
@@ -179,7 +179,7 @@ void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &g
 void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
-    uint32_t number_of_device_extensions = 0;
+    std::uint32_t number_of_device_extensions = 0;
 
     // First check how many device extensions are available.
     VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
@@ -201,9 +201,9 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
 
         // Loop through all available device extensions and print information about them.
         for (auto device_extension : device_extensions) {
-            uint32_t spec_major = VK_VERSION_MAJOR(device_extension.specVersion);
-            uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
-            uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
+            std::uint32_t spec_major = VK_VERSION_MAJOR(device_extension.specVersion);
+            std::uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
+            std::uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
 
             spdlog::debug("Spec version: {}.{}.{}\t Name: {}", spec_major, spec_minor, spec_patch, device_extension.extensionName);
         }
@@ -240,7 +240,7 @@ void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysi
     assert(graphics_card);
     assert(vulkan_surface);
 
-    uint32_t number_of_supported_formats = 0;
+    std::uint32_t number_of_supported_formats = 0;
 
     // First check how many formats are supported.
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
@@ -276,7 +276,7 @@ void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevi
     assert(graphics_card);
     assert(vulkan_surface);
 
-    uint32_t number_of_present_modes = 0;
+    std::uint32_t number_of_present_modes = 0;
 
     // First check how many presentation modes are available.
     VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
@@ -329,18 +329,18 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
     spdlog::debug("Graphics card: {}", graphics_card_properties.deviceName);
 
     // Get the major, minor and patch version of the Vulkan API version.
-    uint32_t VulkanAPIversion = graphics_card_properties.apiVersion;
-    uint32_t vulkan_version_major = VK_VERSION_MAJOR(VulkanAPIversion);
-    uint32_t vulkan_version_minor = VK_VERSION_MINOR(VulkanAPIversion);
-    uint32_t vulkan_version_patch = VK_VERSION_MAJOR(VulkanAPIversion);
+    std::uint32_t VulkanAPIversion = graphics_card_properties.apiVersion;
+    std::uint32_t vulkan_version_major = VK_VERSION_MAJOR(VulkanAPIversion);
+    std::uint32_t vulkan_version_minor = VK_VERSION_MINOR(VulkanAPIversion);
+    std::uint32_t vulkan_version_patch = VK_VERSION_MAJOR(VulkanAPIversion);
 
     // The Vulkan version which is supported by the graphics card.
     spdlog::debug("Vulkan API supported version: {}.{}.{}", vulkan_version_major, vulkan_version_minor, vulkan_version_patch);
 
     // Get the major, minor and patch version of the driver version.
-    uint32_t driver_version_major = VK_VERSION_MAJOR(graphics_card_properties.driverVersion);
-    uint32_t driver_version_minor = VK_VERSION_MINOR(graphics_card_properties.driverVersion);
-    uint32_t driver_version_patch = VK_VERSION_PATCH(graphics_card_properties.driverVersion);
+    std::uint32_t driver_version_major = VK_VERSION_MAJOR(graphics_card_properties.driverVersion);
+    std::uint32_t driver_version_minor = VK_VERSION_MINOR(graphics_card_properties.driverVersion);
+    std::uint32_t driver_version_patch = VK_VERSION_PATCH(graphics_card_properties.driverVersion);
 
     // The driver version.
     // Always keep your graphics drivers up to date!
@@ -643,7 +643,7 @@ void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &
     assert(vulkan_surface);
     assert(vulkan_instance);
 
-    uint32_t number_of_graphics_cards = 0;
+    std::uint32_t number_of_graphics_cards = 0;
 
     VkResult result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, nullptr);
     vulkan_error_check(result);

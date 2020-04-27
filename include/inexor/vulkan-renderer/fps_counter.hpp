@@ -18,7 +18,7 @@ public:
 
     ~FPSCounter() = default;
 
-    std::optional<uint32_t> update();
+    std::optional<std::uint32_t> update();
 };
 
 } // namespace inexor::vulkan_renderer
