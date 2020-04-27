@@ -20,22 +20,12 @@ struct Primitive {
 
     BoundingBox bb;
 
-    ///
-    ///
-    ///
-    Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t vertexCount, Material &material)
-        : first_index(firstIndex), index_count(indexCount), vertex_count(vertexCount), material(material) {
-        hasIndices = indexCount > 0;
-    };
+    Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t vertexCount, Material &material);
 
     /// @brief Sets the bounding box of the primitive.
     /// @param min [in] The minimum vector (edge of the bounding box)
     /// @param max [in] The maximum vector (edge of the bounding box)
-    void set_bounding_box(glm::vec3 min, glm::vec3 max) {
-        bb.min = min;
-        bb.max = max;
-        bb.valid = true;
-    }
+    void set_bounding_box(glm::vec3 min, glm::vec3 max);
 };
 
 } // namespace inexor::vulkan_renderer::gltf_model
