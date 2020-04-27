@@ -67,20 +67,20 @@ Why use Vulkan?
 - The `ending of the OpenGL era <https://www.reddit.com/r/opengl/comments/b44tyu/apple_is_deprecating_opengl/>`__ has begun.
 
 Releases
-#######
+########
 
 `Initialisation and glTF2 demo (v0.1-alpha.1), April 12th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.1>`__
 
 `Octree demo (v0.1-alpha.2), April 26th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.2>`__
 
-Upcoming releases:
-#######
+Upcoming releases
+#################
 
 `Threadpool <https://en.wikipedia.org/wiki/Thread_pool>`__ demo (v0.1-alpha.3) (est. May 10th, 2020)
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
-- Implement `-threads <N>` command line argument.
-- Refactor `render_frame` method: Account for N buffering (prefer triple buffering).
+- Implement ``-threads <N>`` command line argument.
+- Refactor ``render_frame`` method: Account for N buffering (prefer triple buffering).
 - Create a threadpool using C++17.
 - Refactor the engine so it loads resources with worker threads. Use C++17 synchronisation techniques.
 - Abstract command buffer recording into manager classes.
@@ -91,14 +91,12 @@ Upcoming releases:
 - Implement Vulkan pipeline statistics.
 - Create new threads on demand.
 - Give threadpool tasks a name.
-- Use `std::chrono` to measure how long a task took to finish.
+- Use ``std::chrono`` to measure how long a task took to finish.
 
 `imgui <https://github.com/ocornut/imgui>`__ demo (0.4 alpha) (date not set)
 ----------------------------------------------------------------------------
 
 - Add `imgui <https://github.com/ocornut/imgui>`__ support.
-
-
 
 How to build
 ############
