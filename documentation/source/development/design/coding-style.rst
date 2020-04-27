@@ -22,23 +22,4 @@ Other styles which cannot be applied automatically are listed below:
 Naming Convention
 -----------------
 
-enum
-    PascalCase
-enum members
-    UPPERCASE
-enum class
-    PascalCase
-enum class members
-    snake_case
-class
-    PascalCase
-class members
-    snake_case
-class methods
-    snake_case
-functions
-    snake_case
-constexpr
-    SNAKE_CASE
-namespace
-    snake_case
+In the ``.clang-tidy`` file and search for ``readability-identifier-naming`` to get the naming convention used by this project.
