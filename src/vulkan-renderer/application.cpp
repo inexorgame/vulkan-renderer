@@ -675,7 +675,7 @@ VkResult Application::init() {
     // TODO: Use window queue instead?
     glfwSetWindowUserPointer(window, this);
 
-    return VK_SUCCESS;
+    return recreate_swapchain();
 }
 
 VkResult Application::update_uniform_buffers(const std::size_t current_image) {
