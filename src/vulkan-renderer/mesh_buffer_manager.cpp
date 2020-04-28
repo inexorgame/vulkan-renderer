@@ -160,7 +160,7 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
 
     VkResult result =
         create_buffer(internal_staging_buffer_name, staging_vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -186,7 +186,7 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
 
     result = create_buffer(internal_mesh_buffer_name, vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                            VMA_MEMORY_USAGE_CPU_ONLY);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -232,7 +232,7 @@ VkResult MeshBufferManager::create_vertex_buffer(const std::string &internal_mes
 
     // End command buffer recording.
     result = vkEndCommandBuffer(data_transfer_command_buffer);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -312,7 +312,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
 
     VkResult result =
         create_buffer(staging_vertex_buffer_name, staging_vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -335,7 +335,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
     std::string staging_index_buffer_name = "Staging index buffer '" + internal_mesh_buffer_name + "'.";
 
     result = create_buffer(staging_index_buffer_name, staging_index_buffer, index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -356,7 +356,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
     // TODO: Centralize buffer management? Should we really do it?
     result = create_buffer(vertex_buffer_name, vertex_buffer, vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                            VMA_MEMORY_USAGE_CPU_ONLY);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -370,7 +370,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
 
     result = create_buffer(internal_mesh_buffer_name, index_buffer, index_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                            VMA_MEMORY_USAGE_CPU_ONLY);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -431,7 +431,7 @@ VkResult MeshBufferManager::create_vertex_buffer_with_index_buffer(const std::st
 
     // End command buffer recording.
     result = vkEndCommandBuffer(data_transfer_command_buffer);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }

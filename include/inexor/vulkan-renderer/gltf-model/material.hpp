@@ -9,7 +9,9 @@
 
 namespace inexor::vulkan_renderer::gltf_model {
 
+#ifdef WIN32
 #undef OPAQUE // defined by wingdi.h, which is included by windows.h under MINGW
+#endif
 enum class AlphaMode { OPAQUE, MASK, BLEND };
 
 struct Material {

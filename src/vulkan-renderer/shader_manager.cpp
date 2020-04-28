@@ -61,7 +61,7 @@ VkResult VulkanShaderManager::create_shader_from_memory(const std::string &inter
     // Create the shader module from the SPIR-V byte buffer.
     VkShaderModule shader_module;
     VkResult result = create_shader_module(SPIRV_shader_bytes, &shader_module);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -93,7 +93,7 @@ VkResult VulkanShaderManager::create_shader_from_file(const VkShaderStageFlagBit
 
     // Create a Vulkan shader module.
     VkResult result = create_shader_module(new_shader->get_file_data(), &new_shader_module);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }

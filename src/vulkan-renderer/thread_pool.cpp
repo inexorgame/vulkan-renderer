@@ -7,7 +7,7 @@ ThreadPool::ThreadPool(std::size_t thread_count) {
     std::size_t number_of_cpu_cores = std::thread::hardware_concurrency();
 
     // Yes, this might be the case because std::thread::hardware_concurrency() is only a hint!
-    if (0 == number_of_cpu_cores) {
+    if (number_of_cpu_cores == 0) {
         spdlog::warn("Number of CPU cores could not be determined!");
 
         // Let's just use the standard number of threads then.
@@ -79,8 +79,9 @@ void ThreadPool::start_thread() {
                 // spdlog::debug("Starting a new task!.");
 
                 // Check if we should finish the task.
-                if (stop_threads && tasklist.empty())
+                if (stop_threads && tasklist.empty()) {
                     return;
+                }
 
                 // To initialise the task, we must move the unique pointer
                 // from the queue to the loal stakc. Since a unique pointer

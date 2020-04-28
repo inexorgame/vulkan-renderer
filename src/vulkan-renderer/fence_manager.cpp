@@ -47,7 +47,7 @@ std::optional<std::shared_ptr<VkFence>> VulkanFenceManager::create_fence(const s
     std::shared_ptr<VkFence> new_fence = std::make_shared<VkFence>();
 
     VkResult result = vkCreateFence(device, &fence_create_info, nullptr, &(*new_fence));
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return std::nullopt;
     }

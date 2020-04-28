@@ -7,7 +7,7 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
     VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &available_instance_extensions, NULL);
     vulkan_error_check(result);
 
-    if (0 == available_instance_extensions) {
+    if (available_instance_extensions == 0) {
         // It should be a very rare case that no instance extensions are available at all. Still we have to consider this!
         display_error_message("Error: No Vulkan instance extensions available!");
 
@@ -35,7 +35,7 @@ bool AvailabilityChecksManager::has_instance_extension(const std::string &instan
     // Loop through all available instance extensions and search for the requested one.
     for (const VkExtensionProperties &instance_extension : instance_extensions_cache) {
         // Compare the name of the current instance extension with the requested one.
-        if (0 == strcmp(instance_extension.extensionName, instance_extension_name.c_str())) {
+        if (strcmp(instance_extension.extensionName, instance_extension_name.c_str()) == 0) {
             // Yes, this instance extension is supported!
             return true;
         }
@@ -50,20 +50,19 @@ VkResult AvailabilityChecksManager::create_instance_layers_cache() {
     VkResult result = vkEnumerateInstanceLayerProperties(&available_instance_layers, nullptr);
     vulkan_error_check(result);
 
-    if (0 == available_instance_layers) {
+    if (available_instance_layers == 0) {
         // It should be a very rare case that no instance layers are available at all. Still we have to consider this!
         display_error_message("Error: No Vulkan instance layers available!");
 
         // Since there are no instance layers available at all, the desired one is not supported either.
         return VK_ERROR_INITIALIZATION_FAILED;
-    } else {
-        // Preallocate memory for layer properties.
-        instance_layers_cache.resize(available_instance_layers);
-
-        // Get the information about the available instance layers.
-        result = vkEnumerateInstanceLayerProperties(&available_instance_layers, instance_layers_cache.data());
-        vulkan_error_check(result);
     }
+    // Preallocate memory for layer properties.
+    instance_layers_cache.resize(available_instance_layers);
+
+    // Get the information about the available instance layers.
+    result = vkEnumerateInstanceLayerProperties(&available_instance_layers, instance_layers_cache.data());
+    vulkan_error_check(result);
 
     return VK_SUCCESS;
 }
@@ -78,7 +77,7 @@ bool AvailabilityChecksManager::has_instance_layer(const std::string &instance_l
     // Loop through all available instance layers and search for the requested one.
     for (const VkLayerProperties &instance_layer : instance_layers_cache) {
         // Compare the name of the current instance extension with the requested one.
-        if (0 == strcmp(instance_layer.layerName, instance_layer_name.c_str())) {
+        if (strcmp(instance_layer.layerName, instance_layer_name.c_str()) == 0) {
             // Yes, this instance extension is supported!
             return true;
         }
@@ -93,20 +92,19 @@ VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalD
     VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, nullptr);
     vulkan_error_check(result);
 
-    if (0 == available_device_layers) {
+    if (available_device_layers == 0) {
         // It should be a very rare case that no device layers are available at all. Still we have to consider this!
         display_error_message("Error: No Vulkan device layers available!");
 
         // Since there are no device layers available at all, the desired one is not supported either.
         return VK_ERROR_INITIALIZATION_FAILED;
-    } else {
-        // Preallocate memory for device layers.
-        device_layer_properties_cache.resize(available_device_layers);
-
-        // Get the information about the available device layers.
-        result = vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, device_layer_properties_cache.data());
-        vulkan_error_check(result);
     }
+    // Preallocate memory for device layers.
+    device_layer_properties_cache.resize(available_device_layers);
+
+    // Get the information about the available device layers.
+    result = vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, device_layer_properties_cache.data());
+    vulkan_error_check(result);
 
     return VK_SUCCESS;
 }

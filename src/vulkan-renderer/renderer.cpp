@@ -81,13 +81,13 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
     };
 
     // Query which extensions are needed by GLFW.
-    std::uint32_t number_of_GLFW_extensions = 0;
+    std::uint32_t number_of_glfw_extensions = 0;
 
-    auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_GLFW_extensions);
+    auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_glfw_extensions);
 
     spdlog::debug("Required GLFW instance extensions:");
 
-    for (std::size_t i = 0; i < number_of_GLFW_extensions; i++) {
+    for (std::size_t i = 0; i < number_of_glfw_extensions; i++) {
         spdlog::debug(glfw_extensions[i]);
 
         // Add instance extensions required by GLFW to our wishlist.
@@ -126,12 +126,10 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
         spdlog::debug("Adding '{}' to instance extension wishlist.", renderdoc_layer_name);
         instance_layers_wishlist.push_back(renderdoc_layer_name);
     }
-#endif
 
     // If validation is requested, we need to add the validation layer as instance extension!
     // For more information on Vulkan validation layers see:
     // https://vulkan.lunarg.com/doc/view/1.0.39.0/windows/layers.html
-#ifndef NDEBUG
     if (enable_validation_instance_layers) {
         const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
 
@@ -151,12 +149,11 @@ VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_n
             enabled_instance_layers.push_back(current_layer);
         } else {
 #ifdef NDEBUG
-            if (0 == std::string(current_layer).compare(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
+            if (std::string(current_layer).compare(VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0) {
                 display_warning_message(
                     "You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
             }
 #endif
-
             std::string error_message = "Error: Instance layer '" + std::string(current_layer) + "' is not available!";
             display_error_message(error_message);
         }
@@ -284,7 +281,7 @@ VkResult VulkanRenderer::create_command_pool() {
     vulkan_error_check(result);
 
     // Give this command pool an appropriate name.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(command_pool), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Core engine command pool.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)command_pool, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Core engine command pool.");
 
     return VK_SUCCESS;
 }

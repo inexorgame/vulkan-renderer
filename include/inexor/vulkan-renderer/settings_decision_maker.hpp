@@ -42,7 +42,7 @@ public:
     /// @return True if the graphics card is suitable, false otherwise.
     /// @warning Do not discriminate graphics cards which are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
     /// because this would deny some players to run Inexor on their machines!
-    VkBool32 is_graphics_card_is_suitable(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
+    bool is_graphics_card_suitable(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
 
     /// @brief Gets the VkPhysicalDeviceType of a graphics card.
     /// @param graphics_card The graphics card.

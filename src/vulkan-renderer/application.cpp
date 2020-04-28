@@ -1,4 +1,4 @@
-﻿#include "inexor/vulkan-renderer/application.hpp"
+#include "inexor/vulkan-renderer/application.hpp"
 #include "inexor/vulkan-renderer/debug_callback.hpp"
 
 namespace inexor::vulkan_renderer {
@@ -186,7 +186,7 @@ VkResult Application::render_frame() {
     std::uint32_t image_index = 0;
     VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, *image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
 
-    if (VK_NULL_HANDLE != images_in_flight[image_index]) {
+    if (images_in_flight[image_index] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &*images_in_flight[image_index], VK_TRUE, UINT64_MAX);
     }
 
@@ -197,7 +197,7 @@ VkResult Application::render_frame() {
     images_in_flight[image_index] = in_flight_fences[current_frame];
 
     // Is it time to regenerate the swapchain because window has been resized or minimized?
-    if (VK_ERROR_OUT_OF_DATE_KHR == result) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         // VK_ERROR_OUT_OF_DATE_KHR: The swap chain has become incompatible with the surface
         // and can no longer be used for rendering. Usually happens after a window resize.
         return recreate_swapchain();
@@ -206,7 +206,7 @@ VkResult Application::render_frame() {
     // Did something else fail?
     // VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
     // to the surface, but the surface properties are no longer matched exactly.
-    if (VK_SUCCESS != result && VK_SUBOPTIMAL_KHR != result) {
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         std::string error_message = "Error: Failed to acquire swapchain image!";
         display_error_message(error_message);
         exit(-1);
@@ -227,8 +227,9 @@ VkResult Application::render_frame() {
     vkResetFences(device, 1, &*in_flight_fences[current_frame]);
 
     result = vkQueueSubmit(gpu_queue_manager->get_graphics_queue(), 1, &submit_info, *in_flight_fences[current_frame]);
-    if (VK_SUCCESS != result)
+    if (result != VK_SUCCESS) {
         return result;
+    }
 
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = nullptr;
@@ -244,7 +245,7 @@ VkResult Application::render_frame() {
     // Some notes on frame_buffer_resized:
     // It is important to do this after vkQueuePresentKHR to ensure that the semaphores are
     // in a consistent state, otherwise a signalled semaphore may never be properly waited upon.
-    if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result || frame_buffer_resized) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frame_buffer_resized) {
         frame_buffer_resized = false;
         recreate_swapchain();
     }
@@ -397,11 +398,9 @@ VkResult Application::init() {
     // For debug builds, this is not advisable! Always use validation layers during development!
     std::optional<bool> disable_validation = is_command_line_argument_specified("-novalidation");
 
-    if (disable_validation.has_value()) {
-        if (disable_validation.value()) {
-            spdlog::warn("Vulkan validation layers DISABLED by command line argument -novalidation!.");
-            enable_khronos_validation_instance_layer = false;
-        }
+    if (disable_validation.has_value() && disable_validation.value()) {
+        spdlog::warn("Vulkan validation layers DISABLED by command line argument -novalidation!.");
+        enable_khronos_validation_instance_layer = false;
     }
 
     spdlog::debug("Creating Vulkan instance.");
@@ -453,7 +452,7 @@ VkResult Application::init() {
     // The window surface needs to be created right after the instance creation,
     // because it can actually influence the physical device selection.
     result = create_window_surface(instance, window, surface);
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
     }
@@ -489,11 +488,9 @@ VkResult Application::init() {
     // displayed about all the graphics cards which are available on the system.
     std::optional<bool> hide_gpu_stats = is_command_line_argument_specified("-nostats");
 
-    if (hide_gpu_stats.has_value()) {
-        if (hide_gpu_stats.value()) {
-            spdlog::debug("No extended information about graphics cards will be shown.");
-            display_graphics_card_info = false;
-        }
+    if (hide_gpu_stats.has_value() && hide_gpu_stats.value()) {
+        spdlog::debug("No extended information about graphics cards will be shown.");
+        display_graphics_card_info = false;
     }
 
     spdlog::debug("Checking for -vsync command line argument.");
@@ -502,14 +499,12 @@ VkResult Application::init() {
     // for the next vertical blanking period to update the current image.
     std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-nostats");
 
-    if (enable_vertical_synchronisation.has_value()) {
-        if (enable_vertical_synchronisation.value()) {
-            spdlog::debug("V-sync enabled!.");
-            vsync_enabled = true;
-        } else {
-            spdlog::debug("V-sync disabled!");
-            vsync_enabled = false;
-        }
+    if (enable_vertical_synchronisation.has_value() && enable_vertical_synchronisation.value()) {
+        spdlog::debug("V-sync enabled!.");
+        vsync_enabled = true;
+    } else {
+        spdlog::debug("V-sync disabled!");
+        vsync_enabled = false;
     }
 
     if (display_graphics_card_info) {
@@ -531,13 +526,11 @@ VkResult Application::init() {
 
     bool use_distinct_data_transfer_queue = true;
 
-    if (forbid_distinct_data_transfer_queue.has_value()) {
-        if (forbid_distinct_data_transfer_queue.value()) {
-            spdlog::warn("Command line argument -no_separate_data_queue specified.");
-            spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
-            spdlog::warn("Performance loss might be a result of this!");
-            use_distinct_data_transfer_queue = false;
-        }
+    if (forbid_distinct_data_transfer_queue.has_value() && forbid_distinct_data_transfer_queue.value()) {
+        spdlog::warn("Command line argument -no_separate_data_queue specified.");
+        spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
+        spdlog::warn("Performance loss might be a result of this!");
+        use_distinct_data_transfer_queue = false;
     }
 
     result = gpu_queue_manager->init(settings_decision_maker);
@@ -559,11 +552,9 @@ VkResult Application::init() {
     // Those are only available if RenderDoc instance layer is enabled!
     std::optional<bool> no_vulkan_debug_markers = is_command_line_argument_specified("-no_vk_debug_markers");
 
-    if (no_vulkan_debug_markers.has_value()) {
-        if (no_vulkan_debug_markers.value()) {
-            spdlog::warn("Vulkan debug markers are disabled because -no_vk_debug_markers was specified.");
-            enable_debug_marker_device_extension = false;
-        }
+    if (no_vulkan_debug_markers.has_value() && no_vulkan_debug_markers.value()) {
+        spdlog::warn("Vulkan debug markers are disabled because -no_vk_debug_markers was specified.");
+        enable_debug_marker_device_extension = false;
     }
 
     result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
@@ -709,7 +700,7 @@ VkResult Application::update_mouse_input() {
 
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 
-    if (GLFW_PRESS == state) {
+    if (state == GLFW_PRESS) {
         game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
     }
 
@@ -725,10 +716,10 @@ VkResult Application::update_keyboard_input() {
     int key_w_status = glfwGetKey(window, GLFW_KEY_W);
 
     /*
-    if (GLFW_PRESS == key_w_status) {
+    if (key_w_status == GLFW_PRESS) {
         //game_camera_1.start_camera_movement();
     }
-    if (GLFW_RELEASE == key_w_status) {
+    if (key_w_status == GLFW_RELEASE) {
         //game_camera_1.end_camera_movement();
     }
     */

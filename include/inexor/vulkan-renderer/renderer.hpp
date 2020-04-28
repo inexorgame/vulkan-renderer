@@ -1,10 +1,5 @@
 ﻿#pragma once
 
-// Vulkan Memory Allocator library.
-// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-// License: MIT.
-#include <vma/vma_usage.h>
-
 #include "availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/debug_marker_manager.hpp"
@@ -35,6 +30,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <spdlog/spdlog.h>
+#include <vma/vma_usage.h>
 
 #include <chrono>
 #include <iostream>
@@ -211,7 +207,7 @@ protected:
     /// @param vulkan_instance The instance of Vulkan.
     /// @param window The GLFW window.
     /// @param vulkan_surface The Vulkan (window) surface.
-    VkResult create_window_surface(const VkInstance &vulkan_instance, GLFWwindow *window, VkSurfaceKHR &vulkan_surface);
+    static VkResult create_window_surface(const VkInstance &vulkan_instance, GLFWwindow *window, VkSurfaceKHR &vulkan_surface);
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.

@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 
+#include <array>
+
 namespace inexor::vulkan_renderer {
 
 void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
@@ -52,16 +54,21 @@ void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const Vk
             spdlog::debug("Queue Count: {}", queue_family_properties[i].queueCount);
             spdlog::debug("Timestamp Valid Bits: {}", queue_family_properties[i].timestampValidBits);
 
-            if (queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if (queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 spdlog::debug("VK_QUEUE_GRAPHICS_BIT");
-            if (queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
+            }
+            if (queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
                 spdlog::debug("VK_QUEUE_COMPUTE_BIT");
-            if (queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
+            }
+            if (queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
                 spdlog::debug("VK_QUEUE_TRANSFER_BIT");
-            if (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT)
+            }
+            if (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) {
                 spdlog::debug("VK_QUEUE_SPARSE_BINDING_BIT");
-            if (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT)
+            }
+            if (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) {
                 spdlog::debug("VK_QUEUE_PROTECTED_BIT");
+            }
 
             std::uint32_t width = queue_family_properties[i].minImageTransferGranularity.width;
             std::uint32_t height = queue_family_properties[i].minImageTransferGranularity.width;
@@ -259,7 +266,7 @@ void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysi
         vulkan_error_check(result);
 
         for (std::size_t i = 0; i < number_of_supported_formats; i++) {
-            std::unordered_map<int, std::string>::const_iterator surface_format_lookup = surface_format_names.find(surface_formats[i].format);
+            auto surface_format_lookup = surface_format_names.find(surface_formats[i].format);
 
             if (surface_format_lookup == surface_format_names.end()) {
                 // Name not found, print number instead.
@@ -303,7 +310,7 @@ void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevi
                                                                          {1000111001, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}};
 
         for (std::size_t i = 0; i < number_of_present_modes; i++) {
-            std::unordered_map<int, std::string>::const_iterator present_mode_lookup = present_mode_names.find(present_modes[i]);
+            auto present_mode_lookup = present_mode_names.find(present_modes[i]);
 
             if (present_mode_lookup == present_mode_names.end()) {
                 // Name not found, print number instead.
@@ -329,10 +336,10 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
     spdlog::debug("Graphics card: {}", graphics_card_properties.deviceName);
 
     // Get the major, minor and patch version of the Vulkan API version.
-    std::uint32_t VulkanAPIversion = graphics_card_properties.apiVersion;
-    std::uint32_t vulkan_version_major = VK_VERSION_MAJOR(VulkanAPIversion);
-    std::uint32_t vulkan_version_minor = VK_VERSION_MINOR(VulkanAPIversion);
-    std::uint32_t vulkan_version_patch = VK_VERSION_MAJOR(VulkanAPIversion);
+    std::uint32_t vulkan_api_version = graphics_card_properties.apiVersion;
+    std::uint32_t vulkan_version_major = VK_VERSION_MAJOR(vulkan_api_version);
+    std::uint32_t vulkan_version_minor = VK_VERSION_MINOR(vulkan_api_version);
+    std::uint32_t vulkan_version_patch = VK_VERSION_MAJOR(vulkan_api_version);
 
     // The Vulkan version which is supported by the graphics card.
     spdlog::debug("Vulkan API supported version: {}.{}.{}", vulkan_version_major, vulkan_version_minor, vulkan_version_patch);
@@ -351,15 +358,15 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
 
     // Graphics card types.
     // TODO: Is there any other way to get the graphics card type name by id?
-    const std::string graphics_card_types[] = {
+    std::array<std::string, 5> graphics_card_types = {
         "VK_PHYSICAL_DEVICE_TYPE_OTHER",        "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
         "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU", "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU",
-        "VK_PHYSICAL_DEVICE_TYPE_CPU",
+        "VK_PHYSICAL_DEVICE_TYPE_CPU"
     };
 
     // Check if array index is in bounds.
     if (graphics_card_properties.deviceType <= 4) {
-        spdlog::debug("Device type: {}", graphics_card_types[graphics_card_properties.deviceType]);
+        spdlog::debug("Device type: {}", graphics_card_types.at(graphics_card_properties.deviceType));
     }
 }
 
@@ -382,36 +389,46 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_memory_properties(const V
     for (std::size_t i = 0; i < graphics_card_memory_properties.memoryTypeCount; i++) {
         spdlog::debug("[{}] Heap index: {}", i, graphics_card_memory_properties.memoryTypes[i].heapIndex);
 
-        auto &propertyFlag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
+        auto &property_flag = graphics_card_memory_properties.memoryTypes[i].propertyFlags;
 
-        if (propertyFlag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+        if (property_flag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
             spdlog::debug("VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT");
-        if (propertyFlag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
             spdlog::debug("VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT");
-        if (propertyFlag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
             spdlog::debug("VK_MEMORY_PROPERTY_HOST_COHERENT_BIT");
-        if (propertyFlag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) {
             spdlog::debug("VK_MEMORY_PROPERTY_HOST_CACHED_BIT");
-        if (propertyFlag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) {
             spdlog::debug("VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT");
-        if (propertyFlag & VK_MEMORY_PROPERTY_PROTECTED_BIT)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_PROTECTED_BIT) {
             spdlog::debug("VK_MEMORY_PROPERTY_PROTECTED_BIT");
-        if (propertyFlag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) {
             spdlog::debug("VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD");
-        if (propertyFlag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
+        }
+        if (property_flag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) {
             spdlog::debug("VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD");
+        }
     }
 
     // Loop through all memory heaps.
     for (std::size_t i = 0; i < graphics_card_memory_properties.memoryHeapCount; i++) {
         spdlog::debug("Heap [{}], memory size: {}", i, graphics_card_memory_properties.memoryHeaps[i].size / (1000 * 1000));
 
-        auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
+        auto &property_flag = graphics_card_memory_properties.memoryHeaps[i].flags;
 
-        if (propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+        if (property_flag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
             spdlog::debug("VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ");
-        if (propertyFlag & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT)
+        }
+        if (property_flag & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT) {
             spdlog::debug("VK_MEMORY_HEAP_MULTI_INSTANCE_BIT");
+        }
     }
 }
 

@@ -52,7 +52,7 @@ std::optional<std::shared_ptr<VkSemaphore>> VulkanSemaphoreManager::create_semap
 
     // TODO: Does that work?
     VkResult result = vkCreateSemaphore(device, &semaphore_create_info, nullptr, &(*new_semaphore));
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return std::nullopt;
     }

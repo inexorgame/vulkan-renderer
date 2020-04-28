@@ -14,7 +14,6 @@ public:
 
     ~Texture() = default;
 
-public:
     std::string name = "";
 
     std::string file_name = "";
@@ -51,7 +50,6 @@ public:
 
     std::uint32_t height = 0;
 
-public:
     // TODO: Refactoring: Remove methods! only let VulkanTextureManager change data.
 
     /// @brief Destroys a texture.

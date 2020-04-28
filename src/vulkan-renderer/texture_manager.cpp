@@ -244,7 +244,7 @@ VkResult VulkanTextureManager::create_texture_from_file(const std::string &inter
     // Force stb_image to load an alpha channel as well.
     stbi_uc *pixels = stbi_load(texture_file_name.c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
 
-    if (!pixels) {
+    if (pixels == nullptr) {
         spdlog::error("Texture file '{}' could not be loaded!", texture_file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
@@ -303,7 +303,7 @@ VkResult VulkanTextureManager::create_texture_from_glTF2_image(const std::string
 
     VkDeviceSize texture_memory_size = 0;
 
-    if (3 == gltf_image.component) {
+    if (gltf_image.component == 3) {
         // Most devices don't support RGB only on Vulkan so convert if necessary
         // TODO: Check actual format support and transform only if required
         texture_memory_size = gltf_image.width * gltf_image.height * 4;
@@ -438,8 +438,8 @@ VkResult VulkanTextureManager::transition_image_layout(VkImage &image, VkFormat 
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
-    VkPipelineStageFlags source_stage;
-    VkPipelineStageFlags destination_stage;
+    VkPipelineStageFlags source_stage = 0;
+    VkPipelineStageFlags destination_stage = 0;
 
     // TODO: Refactor!
     if (VK_IMAGE_LAYOUT_UNDEFINED == old_layout && VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == new_layout) {
@@ -503,9 +503,8 @@ std::optional<std::shared_ptr<Texture>> VulkanTextureManager::get_texture(const 
     if (texture.has_value()) {
         // Return the texture's image view.
         return texture.value();
-    } else {
-        spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
     }
+    spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
 
     return std::nullopt;
 }
@@ -521,9 +520,8 @@ std::optional<VkImageView> VulkanTextureManager::get_texture_view(const std::str
     if (texture.has_value()) {
         // Return the texture's image view.
         return texture.value()->image_view;
-    } else {
-        spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
     }
+    spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
 
     return std::nullopt;
 }
@@ -539,9 +537,8 @@ std::optional<VkSampler> VulkanTextureManager::get_texture_sampler(const std::st
     if (texture.has_value()) {
         // Return the texture's image sampler.
         return texture.value()->sampler;
-    } else {
-        spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
     }
+    spdlog::error("Manager class returned std::nullopt for get_entry('{}')!", internal_texture_name);
 
     return std::nullopt;
 }

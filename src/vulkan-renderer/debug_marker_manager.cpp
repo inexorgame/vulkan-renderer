@@ -13,7 +13,7 @@ void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevi
 
         vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &extensionCount, extensions.data());
         for (const auto &extension : extensions) {
-            if (0 == strcmp(extension.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
+            if (strcmp(extension.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0) {
                 active = true;
                 extension_present = true;
                 break;
