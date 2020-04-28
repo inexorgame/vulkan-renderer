@@ -5,6 +5,7 @@ add_library(
     vulkan-renderer/availability_checks.cpp
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
+    vulkan-renderer/debug_callback.cpp
     vulkan-renderer/debug_marker_manager.cpp
     vulkan-renderer/descriptor_manager.cpp
     vulkan-renderer/descriptor_pool.cpp
