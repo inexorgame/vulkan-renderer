@@ -160,7 +160,7 @@ void display_warning_message(const std::string &warning_message, const std::stri
 }
 
 void vulkan_error_check(const VkResult &result) {
-    if (VK_SUCCESS != result) {
+    if (result != VK_SUCCESS) {
         std::string error_message = "Error: " + get_error_description_text(result);
         display_error_message(error_message);
     }

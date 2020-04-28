@@ -71,27 +71,29 @@ void Camera::translate(glm::vec3 delta) {
 void Camera::update(float delta_time) {
     {
         updated = false;
-        if (type == CameraType::FIRSTPERSON) {
-            if (moving()) {
-                glm::vec3 cam_front;
-                cam_front.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
-                cam_front.y = sin(glm::radians(rotation.x));
-                cam_front.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
-                cam_front = glm::normalize(cam_front);
+        if (type == CameraType::FIRSTPERSON && moving()) {
+            glm::vec3 cam_front;
+            cam_front.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
+            cam_front.y = sin(glm::radians(rotation.x));
+            cam_front.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+            cam_front = glm::normalize(cam_front);
 
-                float moveSpeed = delta_time * movement_speed;
+            float move_speed = delta_time * movement_speed;
 
-                if (keys.up)
-                    position += cam_front * moveSpeed;
-                if (keys.down)
-                    position -= cam_front * moveSpeed;
-                if (keys.left)
-                    position -= glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
-                if (keys.right)
-                    position += glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
-
-                update_view_matrix();
+            if (keys.up) {
+                position += cam_front * move_speed;
             }
+            if (keys.down) {
+                position -= cam_front * move_speed;
+            }
+            if (keys.left) {
+                position -= glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * move_speed;
+            }
+            if (keys.right) {
+                position += glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * move_speed;
+            }
+
+            update_view_matrix();
         }
     }
 }

@@ -8,7 +8,7 @@ std::optional<std::uint32_t> FPSCounter::update() {
     auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
 
     if (time_duration >= fps_update_interval) {
-        std::uint32_t fps_value = static_cast<std::uint32_t>(frames / time_duration);
+        auto fps_value = static_cast<std::uint32_t>(frames / time_duration);
 
         last_time = current_time;
         frames = 0;

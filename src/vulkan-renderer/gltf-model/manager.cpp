@@ -48,26 +48,26 @@ void Manager::load_node(std::shared_ptr<ModelNode> parent, const tinygltf::Node 
     // Generate local node matrix
     glm::vec3 translation = glm::vec3(0.0f);
 
-    if (3 == node.translation.size()) {
+    if (node.translation.size() == 3) {
         translation = glm::make_vec3(node.translation.data());
         newNode->translation = translation;
     }
 
     glm::mat4 rotation = glm::mat4(1.0f);
 
-    if (4 == node.rotation.size()) {
+    if (node.rotation.size() == 4) {
         glm::quat q = glm::make_quat(node.rotation.data());
         newNode->rotation = glm::mat4(q);
     }
 
     glm::vec3 scale = glm::vec3(1.0f);
 
-    if (3 == node.scale.size()) {
+    if (node.scale.size() == 3) {
         scale = glm::make_vec3(node.scale.data());
         newNode->scale = scale;
     }
 
-    if (16 == node.matrix.size()) {
+    if (node.matrix.size() == 16) {
         newNode->matrix = glm::make_mat4x4(node.matrix.data());
     };
 
@@ -334,9 +334,9 @@ void Manager::load_textures(std::shared_ptr<Model> model) {
     for (tinygltf::Texture &tex : model->gltf2_container.textures) {
         tinygltf::Image image = model->gltf2_container.images[tex.source];
 
-        TextureSampler texture_sampler;
+        TextureSampler texture_sampler{};
 
-        if (-1 == tex.sampler) {
+        if (tex.sampler == -1) {
             // No sampler specified, use a default one.
             texture_sampler.mag_filter = VK_FILTER_LINEAR;
             texture_sampler.min_filter = VK_FILTER_LINEAR;
@@ -414,7 +414,7 @@ void Manager::load_texture_samplers(std::shared_ptr<Model> model) {
     assert(mesh_buffer_manager);
     assert(model);
 
-    for (tinygltf::Sampler smpl : model->gltf2_container.samplers) {
+    for (const tinygltf::Sampler& smpl : model->gltf2_container.samplers) {
         TextureSampler sampler{};
 
         sampler.min_filter = get_filter_mode(smpl.minFilter);
@@ -498,9 +498,9 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
 
                 material.extension.specular_glossiness_texture = model->textures[index.Get<int>()];
 
-                auto texCoordSet = ext->second.Get("specularGlossinessTexture").Get("texCoord");
+                auto tex_coord_set = ext->second.Get("specularGlossinessTexture").Get("texCoord");
 
-                material.tex_coord_sets.specular_glossiness = texCoordSet.Get<int>();
+                material.tex_coord_sets.specular_glossiness = tex_coord_set.Get<int>();
                 material.pbr_workflow.specular_glossiness = true;
             }
 
@@ -514,7 +514,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
 
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
-                    material.extension.diffuse_factor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                    material.extension.diffuse_factor[i] = static_cast<float>(val.IsNumber() ? val.Get<double>() : val.Get<int>());
                 }
             }
 
@@ -523,7 +523,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
 
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
-                    material.extension.specular_factor[i] = val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                    material.extension.specular_factor[i] = static_cast<float>(val.IsNumber() ? val.Get<double>() : val.Get<int>());
                 }
             }
         }
@@ -532,7 +532,7 @@ void Manager::load_materials(std::shared_ptr<Model> model) {
     }
 
     // Push a default material at the end of the list for meshes with no material assigned.
-    model->materials.push_back(Material());
+    model->materials.emplace_back();
 }
 
 void Manager::load_animations(std::shared_ptr<Model> model) {
@@ -565,13 +565,13 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
             // Read sampler input time values.
             {
                 const tinygltf::Accessor &accessor = model->gltf2_container.accessors[samp.input];
-                const tinygltf::BufferView &bufferView = model->gltf2_container.bufferViews[accessor.bufferView];
-                const tinygltf::Buffer &buffer = model->gltf2_container.buffers[bufferView.buffer];
+                const tinygltf::BufferView &buffer_view = model->gltf2_container.bufferViews[accessor.bufferView];
+                const tinygltf::Buffer &buffer = model->gltf2_container.buffers[buffer_view.buffer];
 
                 assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
 
-                const void *dataPtr = &buffer.data[accessor.byteOffset + bufferView.byteOffset];
-                const float *buf = static_cast<const float *>(dataPtr);
+                const void *dataPtr = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
+                const auto *buf = static_cast<const float *>(dataPtr);
 
                 for (std::size_t index = 0; index < accessor.count; index++) {
                     sampler.inputs.push_back(buf[index]);
@@ -599,18 +599,18 @@ void Manager::load_animations(std::shared_ptr<Model> model) {
 
                 switch (accessor.type) {
                 case TINYGLTF_TYPE_VEC3: {
-                    const glm::vec3 *buf = static_cast<const glm::vec3 *>(dataPtr);
+                    const auto *buf = static_cast<const glm::vec3 *>(dataPtr);
 
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        sampler.outputs_vec4.push_back(glm::vec4(buf[index], 0.0f));
+                        sampler.outputs_vec4.emplace_back(buf[index], 0.0f);
                     }
                     break;
                 }
                 case TINYGLTF_TYPE_VEC4: {
-                    const glm::vec4 *buf = static_cast<const glm::vec4 *>(dataPtr);
+                    const auto *buf = static_cast<const glm::vec4 *>(dataPtr);
 
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        sampler.outputs_vec4.push_back(buf[index]);
+                        sampler.outputs_vec4.emplace_back(buf[index]);
                     }
                     break;
                 }

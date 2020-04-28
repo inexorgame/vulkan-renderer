@@ -1,6 +1,9 @@
 ﻿#include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 
 namespace inexor::vulkan_renderer::tools {
+CommandLineArgumentTemplate::CommandLineArgumentTemplate(CommandLineArgumentType param_type, std::string param_name) : argument_type(param_type), argument_name(param_name) {
+
+}
 
 bool CommandLineArgumentParser::does_command_line_argument_template_exist(const std::string argument_name) {
     for (const auto &accepted_argument : list_of_accepted_command_line_arguments) {
@@ -168,5 +171,4 @@ const std::optional<std::uint32_t> CommandLineArgumentParser::get_command_line_a
 
     return std::nullopt;
 }
-
 } // namespace inexor::vulkan_renderer::tools

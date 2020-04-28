@@ -22,10 +22,7 @@ enum class CommandLineArgumentType {
 /// @brief A command line argument template class.
 /// @noe This class does not contain any data yet!
 struct CommandLineArgumentTemplate {
-    CommandLineArgumentTemplate(const CommandLineArgumentType param_type, std::string param_name) {
-        argument_type = param_type;
-        argument_name = param_name;
-    }
+    CommandLineArgumentTemplate(const CommandLineArgumentType param_type, std::string param_name);
 
     std::string argument_name;
 

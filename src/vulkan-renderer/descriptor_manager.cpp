@@ -128,8 +128,8 @@ VkResult DescriptorManager::create_descriptor_set_layouts(std::shared_ptr<Descri
     std::string debug_marker_name = "Descriptor set layout for descriptor bundle '" + descriptor_bundle->name + "'.";
 
     // Assign an appropriate debug marker name to this descriptor pool.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_bundle->descriptor_set_layout), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
-                                          debug_marker_name.c_str());
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_bundle->descriptor_set_layout),
+                                          VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, debug_marker_name.c_str());
 
     return VK_SUCCESS;
 }
@@ -164,7 +164,8 @@ VkResult DescriptorManager::create_descriptor_sets(std::shared_ptr<DescriptorBun
     // Iterate through all descriptor sets.
     for (auto &descriptor_set : descriptor_bundle->descriptor_sets) {
         // Assign an appropriate debug marker name to these descriptor sets.
-        debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_set), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, debug_marker_name.c_str());
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(descriptor_set), VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT,
+                                              debug_marker_name.c_str());
     }
 
     for (std::size_t i = 0; i < number_of_images_in_swapchain; i++) {
@@ -175,8 +176,8 @@ VkResult DescriptorManager::create_descriptor_sets(std::shared_ptr<DescriptorBun
             descriptor_bundle->write_descriptor_sets[j].dstSet = descriptor_bundle->descriptor_sets[i];
         }
 
-        vkUpdateDescriptorSets(device, static_cast<std::uint32_t>(descriptor_bundle->write_descriptor_sets.size()), descriptor_bundle->write_descriptor_sets.data(),
-                               0, nullptr);
+        vkUpdateDescriptorSets(device, static_cast<std::uint32_t>(descriptor_bundle->write_descriptor_sets.size()),
+                               descriptor_bundle->write_descriptor_sets.data(), 0, nullptr);
     }
 
     spdlog::debug("Storing descriptor bundle '{}'.", descriptor_bundle->name);
@@ -211,7 +212,7 @@ VkResult DescriptorManager::shutdown_descriptors(bool clear_descriptor_layout_bi
         vkDestroyDescriptorSetLayout(device, descriptor_bundle->descriptor_set_layout, nullptr);
         descriptor_bundle->descriptor_set_layout = VK_NULL_HANDLE;
 
-        if (VK_NULL_HANDLE != descriptor_bundle->associated_descriptor_pool) {
+        if (descriptor_bundle->associated_descriptor_pool != VK_NULL_HANDLE) {
             vkDestroyDescriptorPool(device, descriptor_bundle->associated_descriptor_pool->pool, nullptr);
             descriptor_bundle->associated_descriptor_pool->pool = VK_NULL_HANDLE;
         }
