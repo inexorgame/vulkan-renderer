@@ -1,0 +1,106 @@
+# TODO: Add clang-analyze and clang-check
+
+name: Code Style
+on: [push, pull_request]
+
+jobs:
+  clang-format:
+    name: Clang Format
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: "noninteractive"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Update environment
+        shell: bash
+        run: |
+          # Update package lists
+          apt update -qq
+          # Install tools
+          apt install -y \
+            clang-format \
+            git
+
+      - name: Style check
+        shell: bash
+        run: |
+          find benchmarks example include src tests \
+            \( -name '*.cpp' -o -name '*.hpp' \) -exec clang-format -i '{}' \;
+          git diff | tee format-diff
+          if [ -s format-diff ]; then exit 1; fi
+
+  clang-tidy:
+    name: Clang Tidy
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: "noninteractive"
+      inexor_build_type: "Release"
+      inexor_conan_path: "$HOME/.local/bin"
+      inexor_vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/"
+      inexor_vulkan_version: "1.2.131.1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Update environment
+        shell: bash
+        run: |
+          # Update package lists
+          apt update -qq
+          # Install tools
+          apt install -y \
+            clang-tidy \
+            cmake \
+            curl \
+            pkg-config \
+            python3 \
+            python3-pip
+
+          pip3 install wheel setuptools
+          pip3 install conan mako
+
+      - name: Install Vulkan SDK
+        shell: bash
+        run: |
+          # Download Vulkan SDK
+          curl -LS -o vulkansdk.tar.gz \
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
+
+          # Create Vulkan SDK directory and extract
+          mkdir "${{ env.inexor_vulkan_sdk }}"
+          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
+
+      - name: Build compile commands
+        shell: bash
+        run: |
+          # TODO: Cleanup
+          export CC=gcc
+          export CXX=g++
+          export PATH="${{ env.inexor_conan_path }}":$PATH
+          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
+          export PATH=$VULKAN_SDK/bin:$PATH
+          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+
+          # Setup conan
+          # Note: libstdc++11 is needed to use new libc++ ABI
+          conan profile new default --detect
+          conan profile update settings.compiler.libcxx=libstdc++11 default
+
+          cmake . \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Style check
+        shell: bash
+        run: |
+          # Download clang-tidy helper script
+          curl -LS -o run-clang-tidy.py \
+            https://raw.githubusercontent.com/llvm/llvm-project/master/clang-tools-extra/clang-tidy/tool/run-clang-tidy.py
+          chmod +x run-clang-tidy.py
+          python3 run-clang-tidy.py -p build
