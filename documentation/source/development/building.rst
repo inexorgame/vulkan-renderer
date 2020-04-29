@@ -122,12 +122,13 @@ Install dependencies and tools:
 |        |                                      |
 |        |     emerge dev-util/ninja            |
 +--------+--------------------------------------+
-| Other  | `We are working on it.`__            |
+| Other  | Planned. `We would love to see a     |
+|        | pull request on this file if you get |
+|        | it running on other                  |
+|        | distributions.`__                    |
 +--------+--------------------------------------+
 
-.. _`Get vulkan-renderer running on Linux`: https://github.com/inexorgame/vulkan-renderer/issues/19
-
-__ `Get vulkan-renderer running on Linux`_
+__ https://github.com/inexorgame/vulkan-renderer/edit/master/documentation/source/development/building.rst
 
 Clone the repository:
 
