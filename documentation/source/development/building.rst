@@ -72,27 +72,63 @@ Windows
 Linux
 ^^^^^
 
-Gentoo
-""""""
-
 Install dependencies and tools:
 
-.. code-block:: bash
++--------+--------------------------------------+
+| Ubuntu | .. code-block:: bash                 |
+|        |                                      |
+|        |                                      |
+|        |     sudo apt install -y \            |
+|        |       libglm-dev \                   |
+|        |       libxcb-dri3-0 \                |
+|        |       libxcb-present0 \              |
+|        |       libpciaccess0 \                |
+|        |       libpng-dev \                   |
+|        |       libxcb-keysyms1-dev \          |
+|        |       libxcb-dri3-dev \              |
+|        |       libx11-dev  \                  |
+|        |       libmirclient-dev \             |
+|        |       libwayland-dev \               |
+|        |       libxrandr-dev \                |
+|        |       libxcb-ewmh-dev                |
+|        |     sudo apt install -y \            |
+|        |       cmake \                        |
+|        |       ninja-build \                  |
+|        |       clang-tidy \                   |
+|        |       vulkan-sdk                     |
+|        |     pip3 install \                   |
+|        |       wheel \                        |
+|        |       setuptools \                   |
+|        |       conan                          |
++--------+--------------------------------------+
+| Gentoo | .. code-block:: bash                 |
+|        |                                      |
+|        |                                      |
+|        |     emerge \                         |
+|        |      dev-util/cmake \                |
+|        |      dev-util/conan \                |
+|        |      dev-util/vulkan-headers \       |
+|        |      dev-util/vulkan-tools \         |
+|        |      dev-vcs/git \                   |
+|        |      media-libs/vulkan-layers \      |
+|        |      media-libs/vulkan-loader        |
+|        |                                      |
+|        |                                      |
+|        | Install ninja build tool (optional): |
+|        |                                      |
+|        |                                      |
+|        | .. code-block:: bash                 |
+|        |                                      |
+|        |                                      |
+|        |     emerge dev-util/ninja            |
++--------+--------------------------------------+
+| Other  | Planned. `We would love to see a     |
+|        | pull request on this file if you get |
+|        | it running on other                  |
+|        | distributions.`__                    |
++--------+--------------------------------------+
 
-    emerge \
-     dev-util/cmake \
-     dev-util/conan \
-     dev-util/vulkan-headers \
-     dev-util/vulkan-tools \
-     dev-vcs/git \
-     media-libs/vulkan-layers \
-     media-libs/vulkan-loader
-
-Install ninja build tool (optional):
-
-.. code-block:: bash
-
-    emerge dev-util/ninja
+__ https://github.com/inexorgame/vulkan-renderer/edit/master/documentation/source/development/building.rst
 
 Clone the repository:
 
@@ -129,12 +165,6 @@ Build and run:
     cd ..
     cmake --build build --target inexor-vulkan-renderer-example
     ./build/bin/inexor-vulkan-renderer-example
-
-
-Other distributions
-"""""""""""""""""""
-
-`We are working on it <https://github.com/inexorgame/vulkan-renderer/issues/19)>`__
 
 Mac
 ^^^
