@@ -1,11 +1,13 @@
-name: CMake Build
+name: Build
 on: [push, pull_request]
 
 jobs:
   linux:
     name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
+    container: ubuntu:20.04
     env:
+      DEBIAN_FRONTEND: "noninteractive"
       inexor_build_type: "Release"
       inexor_conan_path: "$HOME/.local/bin"
       inexor_vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/"
@@ -34,12 +36,18 @@ jobs:
         shell: bash
         run: |
           # Update package lists
-          sudo apt update -qq
+          apt update -qq
           # Install build tools
-          sudo apt install -y \
+          apt install -y \
+            clang \
             cmake \
+            curl \
+            libx11-dev \
             lld \
-            ninja-build
+            ninja-build \
+            pkg-config \
+            python3 \
+            python3-pip
 
           pip3 install wheel setuptools
           pip3 install conan mako
