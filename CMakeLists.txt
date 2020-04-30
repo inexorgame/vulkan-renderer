@@ -36,18 +36,18 @@ include(conan_setup)
 add_subdirectory(shaders)
 add_subdirectory(src)
 
-if(${INEXOR_BUILD_BENCHMARKS})
+if(INEXOR_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-if(${INEXOR_BUILD_DOC})
+if(INEXOR_BUILD_DOC)
     add_subdirectory(documentation)
 endif()
 
-if(${INEXOR_BUILD_EXAMPLE})
+if(INEXOR_BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
 
-if(${INEXOR_BUILD_TESTS})
+if(INEXOR_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
