@@ -269,7 +269,7 @@ VkResult Application::load_octree_geometry() {
 
     spdlog::debug("Creating octree geometry.");
 
-    std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0x00, 0x00, 0x00};
+    std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0xC0, 0x00, 0x00};
 
     world::Cube cube = world::Cube::parse(test);
     cube.octants.value()[6]->indentations.value()[4].set_z(4);

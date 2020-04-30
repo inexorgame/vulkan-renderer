@@ -52,6 +52,6 @@ std::optional<std::uint8_t> BitStream::get(std::uint8_t size) {
     this->data++;
 
     assert(this->bytes_left);
-    return current | this->get(overflow).value();
+    return current << overflow | this->get(overflow).value();
 }
 } // namespace inexor::vulkan_renderer::world
