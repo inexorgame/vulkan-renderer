@@ -55,7 +55,9 @@ Indentation::Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z) {
 std::uint8_t Indentation::parse_one(BitStream &stream) {
     bool indented = stream.get(1).value();
     if (indented) {
-        return stream.get(3).value();;
+        // If it is indented it cannot be 0.
+        // Thus the format saves the real value - 1.
+        return stream.get(3).value() + 1;
     }
     return 0;
 }
