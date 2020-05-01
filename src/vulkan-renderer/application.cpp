@@ -272,7 +272,14 @@ VkResult Application::load_octree_geometry() {
     std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0xC0, 0x00, 0x00};
 
     world::Cube cube = world::Cube::parse(test);
+    cube.make_reactive();
+
+    cube.on_change.connect([](world::Cube* c) {
+        spdlog::debug("THE WORLD (octree) HAS CHANGED!");
+    });
+
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
+
     std::vector<std::array<glm::vec3, 3>> polygons = cube.polygons();
     std::vector<OctreeVertex> octree_vertices;
     octree_vertices.resize(polygons.size() * 3);

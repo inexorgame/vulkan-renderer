@@ -2,6 +2,7 @@
 
 namespace inexor::vulkan_renderer::world {
 void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z) {
+    assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
     if (x != std::nullopt) {
         this->x_level = x.value();
     }
@@ -15,16 +16,19 @@ void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t>
 }
 
 void Indentation::set_x(std::uint8_t x) {
+    assert(x <= MAX_INDENTATION);
     this->x_level = x;
     this->change();
 }
 
 void Indentation::set_y(std::uint8_t y) {
+    assert(y <= MAX_INDENTATION);
     this->y_level = y;
     this->change();
 }
 
 void Indentation::set_z(std::uint8_t z) {
+    assert(z <= MAX_INDENTATION);
     this->z_level = z;
     this->change();
 }
@@ -47,6 +51,7 @@ Indentation Indentation::parse(BitStream &stream) {
 Indentation::Indentation() = default;
 
 Indentation::Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z) {
+    assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
     this->x_level = x;
     this->y_level = y;
     this->z_level = z;
@@ -79,8 +84,26 @@ Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
 Cube::Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position) : Cube(CubeType::INDENTED, size, position) {
     // Parse indentations to std::optional<...>
     this->indentations = {static_cast<std::array<Indentation, 8> &&>(indentations)};
-    for (auto &indentation : this->indentations.value()) {
-        // indentation.on_change.connect([this] { this->_change(); });
+}
+
+void Cube::make_reactive(bool force) {
+    if (!force && this->is_reactive) {
+        return;
+    }
+    if (this->indentations != std::nullopt) {
+        for (auto &indentation : this->indentations.value()) {
+            indentation.on_change.connect([this](Indentation* i) {
+              this->change(i);
+            });
+        }
+    }
+    if (this->octants != std::nullopt) {
+        for (auto &octant : this->octants.value()) {
+            octant->make_reactive(force);
+            octant->on_change.connect([this](Cube* o) {
+              this->change();
+            });
+        }
     }
 }
 

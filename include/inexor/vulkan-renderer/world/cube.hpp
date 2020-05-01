@@ -100,7 +100,7 @@ public:
     [[nodiscard]] std::uint8_t z() const;
 
     /// Get the indentation levels on all three axes as a glm::tvec3<std::uint8_t>.
-    /// @return all three axes as a glm::tvec3<std::uint8_t>
+    /// @return indentation levels on all three axes
     [[nodiscard]] glm::tvec3<std::uint8_t> vec() const;
 
     // TODO: Get bits from values.
@@ -170,6 +170,9 @@ private:
 
     /// Whether this->_polygons_cache is valid and might be used.
     bool valid_cache = false;
+
+    /// Whether this octree is reactive (i.e. updates when childs update).
+    bool is_reactive = false;
 
     /// Type of the cube.
     CubeType cube_type = CubeType::EMPTY;
@@ -268,5 +271,9 @@ public:
 
     /// Invalidate the cache of this cube / octree (not its children).
     void invalidate_cache();
+
+    /// Make this octree reactive (update its values when one of its attributes changes).
+    /// @param force Whether to make it reactive again even though the connections were established before.
+    void make_reactive(bool force = false);
 };
 } // namespace inexor::vulkan_renderer::world
