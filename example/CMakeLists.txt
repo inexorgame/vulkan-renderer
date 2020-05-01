@@ -1,8 +1,4 @@
-add_executable(
-    inexor-vulkan-renderer-example
-
-    main.cpp
-)
+add_executable(inexor-vulkan-renderer-example main.cpp)
 
 set_target_properties(
     inexor-vulkan-renderer-example PROPERTIES

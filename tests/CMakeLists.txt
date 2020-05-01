@@ -1,8 +1,4 @@
-add_executable(
-    inexor-vulkan-renderer-tests
-
-    unit_tests_main.cpp
-)
+add_executable(inexor-vulkan-renderer-tests unit_tests_main.cpp)
 
 set_target_properties(
     inexor-vulkan-renderer-tests PROPERTIES

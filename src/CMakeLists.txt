@@ -54,7 +54,7 @@ set_target_properties(
 target_compile_definitions(
     inexor-vulkan-renderer
 
-    PRIVATE
+    PUBLIC
     GLFW_INCLUDE_VULKAN
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
