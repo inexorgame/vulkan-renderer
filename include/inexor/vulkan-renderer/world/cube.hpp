@@ -60,9 +60,21 @@ public:
     /// @param z Indentation leven on the z-axis
     explicit Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z);
 
+    Indentation(Indentation& indentation);
+    Indentation(Indentation &&indentation) noexcept;
+
     /// Signal emitted when one of the indentation levels changes.
     /// Argument: the indentation emitting the signal ("this").
     boost::signals2::signal<void(Indentation *)> on_change;
+
+    Indentation& operator=(Indentation&& other) noexcept;
+    Indentation& operator=(const Indentation& rhs);
+    Indentation& operator=(const glm::tvec3<uint8_t>& rhs);
+    Indentation& operator+=(const glm::tvec3<int8_t>& other);
+    Indentation& operator-=(const glm::tvec3<int8_t>& other);
+
+    [[nodiscard]] bool equal_values(const Indentation &other) const;
+    [[nodiscard]] bool equal_values(const glm::tvec3<uint8_t> &other) const;
 
     /// Set the indentations depth for the axis.
     /// @param x Indentation leven on the x-axis.
@@ -168,7 +180,7 @@ private:
     /// Cache of this cubes polygons. Not of its octants (i.e., empty of the cube is of type CubeType::OCTANTS).
     std::array<std::array<glm::vec3, 3>, 12> polygons_cache = {}; // Vertices of this cube (not its octants)
 
-    /// Whether this->_polygons_cache is valid and might be used.
+    /// Whether this->polygons_cache is valid and might be used.
     bool valid_cache = false;
 
     /// Whether this octree is reactive (i.e. updates when childs update).
