@@ -75,6 +75,69 @@ void Indentation::change() {
     this->on_change(this);
 }
 
+Indentation& Indentation::operator=(const Indentation& rhs) {
+    if (!this->equal_values(rhs)) {
+        this->x_level = rhs.x_level;
+        this->y_level = rhs.y_level;
+        this->z_level = rhs.z_level;
+        this->on_change(this);
+    }
+    return *this;
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "cppcoreguidelines-pro-type-union-access"
+bool Indentation::equal_values(const glm::tvec3<uint8_t> &other) const {
+    return this->x_level != other.x && this->y_level != other.y && this->z_level != other.z;
+}
+
+bool Indentation::equal_values(const Indentation &other) const {
+    return this->x_level == other.x_level && this->y_level == other.y_level && this->z_level == other.z_level;
+}
+
+Indentation& Indentation::operator=(const glm::tvec3<uint8_t>& rhs) {
+    assert(rhs.x >= 0 && rhs.x <= MAX_INDENTATION);
+    assert(rhs.y >= 0 && rhs.y <= MAX_INDENTATION);
+    assert(rhs.z >= 0 && rhs.z <= MAX_INDENTATION);
+    if (!this->equal_values(rhs)) {
+        this->x_level = rhs.x;
+        this->y_level = rhs.y;
+        this->z_level = rhs.z;
+        this->on_change(this);
+    }
+    return *this;
+}
+
+Indentation &Indentation::operator+=(const glm::tvec3<int8_t> &other) {
+    if (other.x != 0 || other.y != 0 || other.z != 0) {
+        this->x_level = std::clamp(this->x_level + other.x, 0, static_cast<int>(MAX_INDENTATION));
+        this->y_level = std::clamp(this->y_level + other.y, 0, static_cast<int>(MAX_INDENTATION));
+        this->z_level = std::clamp(this->z_level + other.z, 0, static_cast<int>(MAX_INDENTATION));
+        this->on_change(this);
+    }
+    return *this;
+}
+
+Indentation &Indentation::operator-=(const glm::tvec3<int8_t> &other) {
+    return (*this += {-other.x, -other.y, -other.z});
+}
+
+Indentation &Indentation::operator=(Indentation&& lhs) noexcept {
+    bool s1 = this != &lhs;
+    bool equal = this->equal_values(lhs);
+    if (this != &lhs && !this->equal_values(lhs)) {
+        this->x_level = lhs.x_level;
+        this->y_level = lhs.y_level;
+        this->z_level = lhs.z_level;
+        this->on_change(this);
+    }
+    return *this;
+}
+Indentation::Indentation(Indentation& indentation): Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
+Indentation::Indentation(Indentation&& indentation) noexcept : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
+
+#pragma clang diagnostic pop
+
 Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
     this->cube_type = type;
     this->cube_size = size;
@@ -83,7 +146,7 @@ Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
 
 Cube::Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position) : Cube(CubeType::INDENTED, size, position) {
     // Parse indentations to std::optional<...>
-    this->indentations = {static_cast<std::array<Indentation, 8> &&>(indentations)};
+    this->indentations = {indentations};
 }
 
 void Cube::make_reactive(bool force) {

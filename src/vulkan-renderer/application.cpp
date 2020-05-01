@@ -279,6 +279,7 @@ VkResult Application::load_octree_geometry() {
     });
 
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
+    cube.octants.value()[6]->indentations.value()[4] += {1, 1, -3};
 
     std::vector<std::array<glm::vec3, 3>> polygons = cube.polygons();
     std::vector<OctreeVertex> octree_vertices;
