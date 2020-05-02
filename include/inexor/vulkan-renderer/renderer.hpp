@@ -18,11 +18,13 @@
 #include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-#include "inexor/vulkan-renderer/shader_manager.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/texture_manager.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/uniform_buffer_manager.hpp"
+
+// Those components have been refactored to fulfill RAII idioms.
+#include "inexor/vulkan-renderer/shader.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -63,8 +65,6 @@ public:
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
-
-    std::shared_ptr<VulkanShaderManager> shader_manager = std::make_shared<VulkanShaderManager>();
 
     std::shared_ptr<VulkanFenceManager> fence_manager = std::make_shared<VulkanFenceManager>();
 
@@ -189,6 +189,8 @@ protected:
 
     Camera game_camera;
 
+    std::vector<Shader> shaders;
+
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.
     VkResult calculate_memory_budget();
@@ -201,7 +203,8 @@ protected:
     /// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
     /// @param enable_validation_layers True if validation is enabled.
     VkResult create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
-                                    const std::uint32_t engine_version, bool enable_validation_instance_layers = true, bool enable_renderdoc_instance_layer = false);
+                                    const std::uint32_t engine_version, bool enable_validation_instance_layers = true,
+                                    bool enable_renderdoc_instance_layer = false);
 
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.
