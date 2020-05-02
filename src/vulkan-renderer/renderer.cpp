@@ -1815,6 +1815,9 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
+    // TODO(yeetari): Remove once this class is RAII-ified
+    shaders.clear();
+
     cleanup_swapchain();
 
     spdlog::debug("Destroying swapchain images.");

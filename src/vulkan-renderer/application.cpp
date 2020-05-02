@@ -147,7 +147,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
-        shaders.emplace_back(device, vma_allocator, VK_SHADER_STAGE_VERTEX_BIT, vertex_shader_file, "unnamed vertex shader");
+        shaders.emplace_back(device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
     }
 
     spdlog::debug("Loading fragment shaders.");
@@ -161,7 +161,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
-        shaders.emplace_back(device, vma_allocator, VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader_file, "unnamed vertex shader");
+        shaders.emplace_back(device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader", fragment_shader_file);
     }
 
     spdlog::debug("Loading shaders finished.");
