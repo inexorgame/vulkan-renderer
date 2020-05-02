@@ -60,7 +60,7 @@ public:
     /// @param z Indentation leven on the z-axis
     explicit Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z);
 
-    Indentation(Indentation& indentation);
+    Indentation(const Indentation& indentation);
     Indentation(Indentation &&indentation) noexcept;
 
     /// Signal emitted when one of the indentation levels changes.
