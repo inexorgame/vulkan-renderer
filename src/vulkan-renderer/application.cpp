@@ -139,9 +139,6 @@ VkResult Application::load_shaders() {
 
     auto total_number_of_shaders = vertex_shader_files.size() + fragment_shader_files.size();
 
-    // Allocate memory for shaders before insertion.
-    // shaders.resize(total_number_of_shaders);
-
     // Loop through the list of vertex shaders and initialise all of them.
     for (const auto &vertex_shader_file : vertex_shader_files) {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);

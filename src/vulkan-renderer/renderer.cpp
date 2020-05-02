@@ -1133,11 +1133,7 @@ VkResult VulkanRenderer::create_pipeline() {
         shader_stage_create_info.stage = shader.get_type();
         shader_stage_create_info.module = shader.get_module();
         shader_stage_create_info.pSpecializationInfo = nullptr;
-
-        // Attention! pName is not the internal "name" of the shader,
-        // but the name of the shader's entry point in the SPIR-V code!
-        // TODO: Why can't we use shader.get_entry_point().c_str() ?
-        shader_stage_create_info.pName = "main";
+        shader_stage_create_info.pName = shader.get_entry_point().c_str();
 
         shader_stages.push_back(shader_stage_create_info);
     }
