@@ -133,7 +133,7 @@ Indentation &Indentation::operator=(Indentation&& lhs) noexcept {
     }
     return *this;
 }
-Indentation::Indentation(Indentation& indentation): Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
+Indentation::Indentation(const Indentation& indentation): Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
 Indentation::Indentation(Indentation&& indentation) noexcept : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
 
 #pragma clang diagnostic pop
