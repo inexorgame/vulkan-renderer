@@ -19,7 +19,7 @@ add_library(
     vulkan-renderer/renderer.cpp
     vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
-    vulkan-renderer/shader_manager.cpp
+    vulkan-renderer/shader.cpp
     vulkan-renderer/single_time_command_buffer.cpp
     vulkan-renderer/texture.cpp
     vulkan-renderer/texture_manager.cpp

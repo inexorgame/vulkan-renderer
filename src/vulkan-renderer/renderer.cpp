@@ -27,7 +27,8 @@
 namespace inexor::vulkan_renderer {
 
 VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
-                                                const std::uint32_t engine_version, bool enable_validation_instance_layers, bool enable_renderdoc_instance_layer) {
+                                                const std::uint32_t engine_version, bool enable_validation_instance_layers,
+                                                bool enable_renderdoc_instance_layer) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
@@ -353,7 +354,8 @@ VkResult VulkanRenderer::create_depth_buffer() {
     vulkan_error_check(result);
 
     // Give this buffer image view an appropriate name.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "Depth buffer image view.");
+    debug_marker_manager->set_object_name(device, (std::uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+                                          "Depth buffer image view.");
 
     return VK_SUCCESS;
 }
@@ -1117,23 +1119,25 @@ VkResult VulkanRenderer::create_pipeline() {
 
     shader_stages.clear();
 
-    // Loop through all shaders in Vulkan shader manager's list and add them to the setup.
-    auto list_of_shaders = shader_manager->get_all_shaders();
-
-    assert(!list_of_shaders.empty());
+    assert(!shaders.empty());
 
     spdlog::debug("Setting up shader stages.");
 
-    for (const auto &shader : list_of_shaders) {
+    // Loop through all shaders in Vulkan shader manager's list and add them to the setup.
+    for (const auto &shader : shaders) {
         VkPipelineShaderStageCreateInfo shader_stage_create_info = {};
 
         shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shader_stage_create_info.pNext = nullptr;
         shader_stage_create_info.flags = 0;
-        shader_stage_create_info.stage = shader->type;
-        shader_stage_create_info.module = shader->module;
-        shader_stage_create_info.pName = shader->entry_name.c_str();
+        shader_stage_create_info.stage = shader.get_type();
+        shader_stage_create_info.module = shader.get_module();
         shader_stage_create_info.pSpecializationInfo = nullptr;
+
+        // Attention! pName is not the internal "name" of the shader,
+        // but the name of the shader's entry point in the SPIR-V code!
+        // TODO: Why can't we use shader.get_entry_point().c_str() ?
+        shader_stage_create_info.pName = "main";
 
         shader_stages.push_back(shader_stage_create_info);
     }
@@ -1469,9 +1473,7 @@ VkResult VulkanRenderer::create_pipeline() {
     debug_marker_manager->set_object_name(device, (std::uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
 
     // Tell Vulkan that we want to change viewport and scissor during runtime so it's a dynamic state.
-    const std::vector<VkDynamicState> enabled_dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR
-
-    };
+    const std::vector<VkDynamicState> enabled_dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
     // TODO: Wrap all this into RenderingPipelineManager instead of loading from TOML file?
     // RenderingPipelineManager could verify if all structures were filled correctly.
@@ -1729,7 +1731,8 @@ VkResult VulkanRenderer::create_frame_buffers() {
         std::string frame_buffer_name = "Frame buffer #" + std::to_string(i) + ".";
 
         // Use Vulkan debug markers to assign an appropriate name to this frame buffer.
-        debug_marker_manager->set_object_name(device, (std::uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
+        debug_marker_manager->set_object_name(device, (std::uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT,
+                                              frame_buffer_name.c_str());
     }
 
     return VK_SUCCESS;
@@ -1812,6 +1815,9 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
+    // TODO(yeetari): Remove once this class is RAII-ified
+    shaders.clear();
+
     cleanup_swapchain();
 
     spdlog::debug("Destroying swapchain images.");
@@ -1840,9 +1846,6 @@ VkResult VulkanRenderer::shutdown_vulkan() {
 
     spdlog::debug("Destroying fences.");
     fence_manager->shutdown_fences();
-
-    spdlog::debug("Destroying Vulkan shader objects.");
-    shader_manager->shutdown_shaders();
 
     spdlog::debug("Destroying window surface.");
     if (VK_NULL_HANDLE != surface) {

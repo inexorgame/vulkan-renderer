@@ -25,7 +25,7 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
         spdlog::error("Could not open configuration file: '{}'!", file_name);
         return VK_ERROR_INITIALIZATION_FAILED;
     }
-    
+
     toml_file.close();
 
     // Load the TOML file using toml11.
@@ -52,7 +52,7 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 
     // Generate an std::uint32_t value from the major, minor and patch version info.
     application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
-    
+
     int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
     int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
     int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
@@ -137,17 +137,17 @@ VkResult Application::load_shaders() {
         spdlog::error("No vertex shaders to load!");
     }
 
-    // Loop through the list of vertex shaders and initialise all of them.
-    for (const auto &vertex_shader : vertex_shader_files) {
-        spdlog::debug("Loading vertex shader file {}.", vertex_shader);
+    auto total_number_of_shaders = vertex_shader_files.size() + fragment_shader_files.size();
 
-        VkResult result = shader_manager->create_shader_from_file(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, vertex_shader, "main");
-        if (VK_SUCCESS != result) {
-            vulkan_error_check(result);
-            std::string error_message = "Error: Could not initialise vertex shader " + vertex_shader;
-            display_error_message(error_message);
-            exit(-1);
-        }
+    // Allocate memory for shaders before insertion.
+    // shaders.resize(total_number_of_shaders);
+
+    // Loop through the list of vertex shaders and initialise all of them.
+    for (const auto &vertex_shader_file : vertex_shader_files) {
+        spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
+
+        // Insert the new shader into the list of shaders.
+        shaders.emplace_back(device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
     }
 
     spdlog::debug("Loading fragment shaders.");
@@ -157,16 +157,11 @@ VkResult Application::load_shaders() {
     }
 
     // Loop through the list of fragment shaders and initialise all of them.
-    for (const auto &fragment_shader : fragment_shader_files) {
-        spdlog::debug("Loading fragment shader file {}.", fragment_shader);
+    for (const auto &fragment_shader_file : fragment_shader_files) {
+        spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
-        VkResult result = shader_manager->create_shader_from_file(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, fragment_shader, "main");
-        if (VK_SUCCESS != result) {
-            vulkan_error_check(result);
-            std::string error_message = "Error: Could not initialise fragment shader " + fragment_shader;
-            display_error_message(error_message);
-            exit(-1);
-        }
+        // Insert the new shader into the list of shaders.
+        shaders.emplace_back(device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader", fragment_shader_file);
     }
 
     spdlog::debug("Loading shaders finished.");
@@ -573,9 +568,6 @@ VkResult Application::init() {
 
     // Vulkan debug markes will be very useful when debugging with RenderDoc!
     result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
-    vulkan_error_check(result);
-
-    result = shader_manager->init(device, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_vma_allocator();
