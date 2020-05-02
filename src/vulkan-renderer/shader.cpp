@@ -30,6 +30,13 @@ std::vector<char> read_binary(const std::string &file_name) {
 
 namespace inexor::vulkan_renderer {
 
+Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::string &file_name, const std::string &entry_point)
+    : Shader(device, type, name, read_binary(file_name), entry_point) {}
+
+Shader::Shader(Shader &&shader) noexcept
+    : device(shader.device), type(shader.type), name(std::move(shader.name)), entry_point(std::move(shader.entry_point)),
+      shader_module(std::exchange(shader.shader_module, nullptr)) {}
+
 Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::vector<char> &code, const std::string &entry_point)
     : device(device), type(type), name(name), entry_point(entry_point) {
     assert(device);
@@ -69,13 +76,6 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
         }
     }
 }
-
-Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::string &file_name, const std::string &entry_point)
-    : Shader(device, type, name, read_binary(file_name), entry_point) {}
-
-Shader::Shader(Shader &&shader) noexcept
-    : device(shader.device), type(shader.type), name(std::move(shader.name)), entry_point(std::move(shader.entry_point)),
-      shader_module(std::exchange(shader.shader_module, nullptr)) {}
 
 Shader::~Shader() {
     vkDestroyShaderModule(device, shader_module, nullptr);
