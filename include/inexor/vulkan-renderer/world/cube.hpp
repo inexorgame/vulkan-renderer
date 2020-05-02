@@ -36,6 +36,11 @@ private:
     /// Run on-change events.
     void change();
 
+    /// Copy the values from another indentation to this one.
+    /// @param indentation The indentation to copy the values from.
+    /// @return Whether any value has changed.
+    bool copy_values(const Indentation &indentation);
+
     /// Parse one axis from a BitStream.
     /// @param stream The BitStream to parse one axis from.
     /// @return The indentation level on that axis.
@@ -67,7 +72,7 @@ public:
     /// Argument: the indentation emitting the signal ("this").
     boost::signals2::signal<void(Indentation *)> on_change;
 
-    Indentation& operator=(Indentation&& other) noexcept;
+    Indentation& operator=(Indentation&& lhs) noexcept;
     Indentation& operator=(const Indentation& rhs);
     Indentation& operator=(const glm::tvec3<uint8_t>& rhs);
     Indentation& operator+=(const glm::tvec3<int8_t>& other);
@@ -146,6 +151,14 @@ public:
 /// | 6.    | higher | axis   | axis   |
 class Cube {
 private:
+    Cube(
+        CubeType type,
+        float size,
+        const glm::vec3 &position,
+        const std::optional<std::array<Indentation, 8>> &indentations,
+        std::optional<std::array<std::shared_ptr<Cube>, 8>> octants
+        );
+
     /// Insert all polygons into memory.
     /// @param polygons Pointer to the memory where the polygons should be saved to.
     void all_polygons(std::array<glm::vec3, 3> *&polygons);
@@ -155,6 +168,11 @@ private:
 
     /// Run on-change events.
     void change(Indentation *indentation);
+
+    /// Copy the values from another cube to this one.
+    /// @param cube The cube to copy the values from.
+    /// @return Whether any value has changed (this != &cube).
+    bool copy_values(const Cube &cube);
 
     /// Get all vertices of this cube (not its children).
     /// @return vertices of this cube.
@@ -246,6 +264,12 @@ public:
     /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
     /// x, y, and z-axis).
     Cube(std::array<std::shared_ptr<Cube>, 8> &octants, float size, const glm::vec3 &position);
+
+    Cube(const Cube& cube);
+    Cube(Cube &&cube) noexcept;
+
+    Cube& operator=(Cube&& lhs) noexcept;
+    Cube& operator=(const Cube& rhs);
 
     /// Parse an octree from binary data.
     /// @param data The data to parse the octree from.

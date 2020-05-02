@@ -1,4 +1,5 @@
 #include <inexor/vulkan-renderer/world/cube.hpp>
+#include <utility>
 
 namespace inexor::vulkan_renderer::world {
 void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z) {
@@ -36,25 +37,19 @@ void Indentation::set_z(std::uint8_t z) {
 std::uint8_t Indentation::x() const {
     return this->x_level;
 }
+
 std::uint8_t Indentation::y() const {
     return this->y_level;
 }
+
 std::uint8_t Indentation::z() const {
     return this->z_level;
 }
 
 Indentation Indentation::parse(BitStream &stream) {
     // Parse each indentation level one by one.
-    return Indentation(Indentation::parse_one(stream), Indentation::parse_one(stream), Indentation::parse_one(stream));
-}
-
-Indentation::Indentation() = default;
-
-Indentation::Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z) {
-    assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
-    this->x_level = x;
-    this->y_level = y;
-    this->z_level = z;
+    return Indentation(Indentation::parse_one(stream), Indentation::parse_one(stream),
+                       Indentation::parse_one(stream));
 }
 
 std::uint8_t Indentation::parse_one(BitStream &stream) {
@@ -67,26 +62,32 @@ std::uint8_t Indentation::parse_one(BitStream &stream) {
     return 0;
 }
 
+Indentation::Indentation() = default;
+
+Indentation::Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z) {
+    assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
+    this->x_level = x;
+    this->y_level = y;
+    this->z_level = z;
+}
+
+Indentation::Indentation(const Indentation &indentation) : Indentation(indentation.x_level, indentation.y_level,
+                                                                       indentation.z_level) {}
+
+Indentation::Indentation(Indentation &&indentation) noexcept: Indentation(indentation.x_level, indentation.y_level,
+                                                                          indentation.z_level) {}
+
 glm::tvec3<std::uint8_t> Indentation::vec() const {
     return {this->x_level, this->y_level, this->z_level};
 }
 
-void Indentation::change() {
-    this->on_change(this);
-}
-
-Indentation& Indentation::operator=(const Indentation& rhs) {
-    if (!this->equal_values(rhs)) {
-        this->x_level = rhs.x_level;
-        this->y_level = rhs.y_level;
-        this->z_level = rhs.z_level;
+Indentation &Indentation::operator=(const Indentation &rhs) {
+    if (this->copy_values(rhs)) {
         this->on_change(this);
     }
     return *this;
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "cppcoreguidelines-pro-type-union-access"
 bool Indentation::equal_values(const glm::tvec3<uint8_t> &other) const {
     return this->x_level != other.x && this->y_level != other.y && this->z_level != other.z;
 }
@@ -95,7 +96,21 @@ bool Indentation::equal_values(const Indentation &other) const {
     return this->x_level == other.x_level && this->y_level == other.y_level && this->z_level == other.z_level;
 }
 
-Indentation& Indentation::operator=(const glm::tvec3<uint8_t>& rhs) {
+void Indentation::change() {
+    this->on_change(this);
+}
+
+bool Indentation::copy_values(const Indentation &indentation) {
+    if (this != &indentation && !this->equal_values(indentation)) {
+        this->x_level = indentation.x_level;
+        this->y_level = indentation.y_level;
+        this->z_level = indentation.z_level;
+        return true;
+    }
+    return false;
+}
+
+Indentation &Indentation::operator=(const glm::tvec3<uint8_t> &rhs) {
     assert(rhs.x >= 0 && rhs.x <= MAX_INDENTATION);
     assert(rhs.y >= 0 && rhs.y <= MAX_INDENTATION);
     assert(rhs.z >= 0 && rhs.z <= MAX_INDENTATION);
@@ -103,6 +118,13 @@ Indentation& Indentation::operator=(const glm::tvec3<uint8_t>& rhs) {
         this->x_level = rhs.x;
         this->y_level = rhs.y;
         this->z_level = rhs.z;
+        this->on_change(this);
+    }
+    return *this;
+}
+
+Indentation &Indentation::operator=(Indentation &&lhs) noexcept {
+    if (this->copy_values(lhs)) {
         this->on_change(this);
     }
     return *this;
@@ -122,21 +144,16 @@ Indentation &Indentation::operator-=(const glm::tvec3<int8_t> &other) {
     return (*this += {-other.x, -other.y, -other.z});
 }
 
-Indentation &Indentation::operator=(Indentation&& lhs) noexcept {
-    bool s1 = this != &lhs;
-    bool equal = this->equal_values(lhs);
-    if (this != &lhs && !this->equal_values(lhs)) {
-        this->x_level = lhs.x_level;
-        this->y_level = lhs.y_level;
-        this->z_level = lhs.z_level;
-        this->on_change(this);
-    }
-    return *this;
-}
-Indentation::Indentation(const Indentation& indentation): Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
-Indentation::Indentation(Indentation&& indentation) noexcept : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
 
-#pragma clang diagnostic pop
+Cube::Cube(CubeType type, float size, const glm::vec3 &position,
+           const std::optional<std::array<Indentation, 8>> &indentations,
+           std::optional<std::array<std::shared_ptr<Cube>, 8>> octants) {
+    this->cube_type = type;
+    this->cube_size = size;
+    this->cube_position = position;
+    this->indentations = indentations;
+    this->octants = std::move(octants);
+}
 
 Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
     this->cube_type = type;
@@ -144,9 +161,46 @@ Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
     this->cube_position = position;
 }
 
-Cube::Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position) : Cube(CubeType::INDENTED, size, position) {
+Cube::Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position) : Cube(
+    CubeType::INDENTED, size, position) {
     // Parse indentations to std::optional<...>
     this->indentations = {indentations};
+}
+
+Cube::Cube(std::array<std::shared_ptr<Cube>, 8> &octants, float size, const glm::vec3 &position) : Cube(
+    CubeType::OCTANT, size, position) {
+    // Parse octants to std::optional<...>
+    this->octants = {static_cast<std::array<std::shared_ptr<Cube>, 8> &&>(octants)};
+}
+
+Cube::Cube(const Cube &cube): Cube(cube.cube_type, cube.cube_size, cube.cube_position, cube.indentations, cube.octants) {}
+
+Cube::Cube(Cube &&cube) noexcept: Cube(cube.cube_type, cube.cube_size, cube.cube_position, cube.indentations, cube.octants) {}
+
+Cube &Cube::operator=(Cube &&lhs) noexcept {
+    if (this->copy_values(lhs)) {
+        this->on_change(this);
+    }
+    return *this;
+}
+
+Cube &Cube::operator=(const Cube &rhs) {
+    if (this->copy_values(rhs)) {
+        this->on_change(this);
+    }
+    return *this;
+}
+
+bool Cube::copy_values(const Cube &cube) {
+    if (this != &cube) {
+        this->cube_position = cube.cube_position;
+        this->cube_size = cube.cube_size;
+        this->cube_type = cube.cube_type;
+        this->octants = cube.octants;
+        this->indentations = cube.indentations;
+        return true;
+    }
+    return false;
 }
 
 void Cube::make_reactive(bool force) {
@@ -155,24 +209,19 @@ void Cube::make_reactive(bool force) {
     }
     if (this->indentations != std::nullopt) {
         for (auto &indentation : this->indentations.value()) {
-            indentation.on_change.connect([this](Indentation* i) {
-              this->change(i);
+            indentation.on_change.connect([this](Indentation *i) {
+                this->change(i);
             });
         }
     }
     if (this->octants != std::nullopt) {
         for (auto &octant : this->octants.value()) {
             octant->make_reactive(force);
-            octant->on_change.connect([this](Cube* o) {
-              this->change();
+            octant->on_change.connect([this](Cube *o) {
+                this->change();
             });
         }
     }
-}
-
-Cube::Cube(std::array<std::shared_ptr<Cube>, 8> &octants, float size, const glm::vec3 &position) : Cube(CubeType::OCTANT, size, position) {
-    // Parse octants to std::optional<...>
-    this->octants = {static_cast<std::array<std::shared_ptr<Cube>, 8> &&>(octants)};
 }
 
 Cube Cube::parse(std::vector<unsigned char> &data) {
@@ -208,10 +257,14 @@ Cube Cube::parse(BitStream &stream, float size, const glm::vec3 &position) {
     const float yh = y + half;
     const float zh = z + half;
     std::array<std::shared_ptr<Cube>, 8> octants = {
-        std::make_shared<Cube>(Cube::parse(stream, half, {x, y, z})),   std::make_shared<Cube>(Cube::parse(stream, half, {x, y, zh})),
-        std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, z})),  std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, zh})),
-        std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, z})),  std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, zh})),
-        std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, z})), std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, zh}))};
+        std::make_shared<Cube>(Cube::parse(stream, half, {x, y, z})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {x, y, zh})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, z})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, zh})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, z})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, zh})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, z})),
+        std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, zh}))};
     return Cube(octants, size, position);
 }
 
@@ -261,17 +314,17 @@ void Cube::all_polygons(std::array<glm::vec3, 3> *&polygons) {
 
 std::uint64_t Cube::leaves() {
     switch (this->cube_type) {
-    case CubeType::EMPTY:
-        return 0;
-    case CubeType::FULL:
-    case CubeType::INDENTED:
-        return 1;
-    case CubeType::OCTANT:
-        std::uint64_t i = 0;
-        for (const auto &octant : this->octants.value()) {
-            i += octant->leaves();
-        }
-        return i;
+        case CubeType::EMPTY:
+            return 0;
+        case CubeType::FULL:
+        case CubeType::INDENTED:
+            return 1;
+        case CubeType::OCTANT:
+            std::uint64_t i = 0;
+            for (const auto &octant : this->octants.value()) {
+                i += octant->leaves();
+            }
+            return i;
     }
     assert(false); // This point should never be reached, as we handled all types already.
     return 0;
@@ -279,24 +332,24 @@ std::uint64_t Cube::leaves() {
 
 std::array<std::array<glm::vec3, 3>, 12> Cube::full_polygons(std::array<glm::vec3, 8> &v) {
     return {{
-        {{v[0], v[2], v[1]}}, // x = 0
-        {{v[1], v[2], v[3]}}, // x = 0
+                {{v[0], v[2], v[1]}}, // x = 0
+                {{v[1], v[2], v[3]}}, // x = 0
 
-        {{v[4], v[5], v[6]}}, // x = 1
-        {{v[5], v[7], v[6]}}, // x = 1
+                {{v[4], v[5], v[6]}}, // x = 1
+                {{v[5], v[7], v[6]}}, // x = 1
 
-        {{v[0], v[1], v[4]}}, // y = 0
-        {{v[1], v[5], v[4]}}, // y = 0
+                {{v[0], v[1], v[4]}}, // y = 0
+                {{v[1], v[5], v[4]}}, // y = 0
 
-        {{v[2], v[6], v[3]}}, // y = 1
-        {{v[3], v[6], v[7]}}, // y = 1
+                {{v[2], v[6], v[3]}}, // y = 1
+                {{v[3], v[6], v[7]}}, // y = 1
 
-        {{v[0], v[4], v[2]}}, // z = 0
-        {{v[2], v[4], v[6]}}, // z = 0
+                {{v[0], v[4], v[2]}}, // z = 0
+                {{v[2], v[4], v[6]}}, // z = 0
 
-        {{v[1], v[3], v[5]}}, // z = 1
-        {{v[3], v[7], v[5]}}, // z = 1
-    }};
+                {{v[1], v[3], v[5]}}, // z = 1
+                {{v[3], v[7], v[5]}}, // z = 1
+            }};
 }
 
 std::array<std::array<glm::vec3, 3>, 12> Cube::full_polygons() {
@@ -371,13 +424,13 @@ std::array<glm::vec3, 8> Cube::vertices() {
 
     // Calculate the vertex-positions with respect to the indentation level.
     return std::array<glm::vec3, 8>{{{p.x + step * in[0].x, p.y + step * in[0].y, p.z + step * in[0].z},
-                                {p.x + step * in[1].x, p.y + step * in[1].y, f.z - step * in[1].z},
-                                {p.x + step * in[2].x, f.y - step * in[2].y, p.z + step * in[2].z},
-                                {p.x + step * in[3].x, f.y - step * in[3].y, f.z - step * in[3].z},
-                                {f.x - step * in[4].x, p.y + step * in[4].y, p.z + step * in[4].z},
-                                {f.x - step * in[5].x, p.y + step * in[5].y, f.z - step * in[5].z},
-                                {f.x - step * in[6].x, f.y - step * in[6].y, p.z + step * in[6].z},
-                                {f.x - step * in[7].x, f.y - step * in[7].y, f.z - step * in[7].z}}};
+                                        {p.x + step * in[1].x, p.y + step * in[1].y, f.z - step * in[1].z},
+                                        {p.x + step * in[2].x, f.y - step * in[2].y, p.z + step * in[2].z},
+                                        {p.x + step * in[3].x, f.y - step * in[3].y, f.z - step * in[3].z},
+                                        {f.x - step * in[4].x, p.y + step * in[4].y, p.z + step * in[4].z},
+                                        {f.x - step * in[5].x, p.y + step * in[5].y, f.z - step * in[5].z},
+                                        {f.x - step * in[6].x, f.y - step * in[6].y, p.z + step * in[6].z},
+                                        {f.x - step * in[7].x, f.y - step * in[7].y, f.z - step * in[7].z}}};
 }
 
 void Cube::invalidate_cache() {
@@ -392,6 +445,7 @@ void Cube::change() {
 void Cube::change(Indentation *indentation) {
     this->change();
 }
+
 std::array<glm::tvec3<std::uint8_t>, 8> Cube::indentation_levels() {
     std::array<glm::tvec3<std::uint8_t>, 8> in;
     auto &indents = this->indentations.value();
@@ -400,4 +454,4 @@ std::array<glm::tvec3<std::uint8_t>, 8> Cube::indentation_levels() {
     }
     return in;
 }
-} // namespace inexor::vulkan_render::world
+}// namespace inexor::vulkan_render::world
