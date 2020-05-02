@@ -14,7 +14,7 @@ std::vector<char> read_binary(const std::string &file_name) {
     std::ifstream file(file_name.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
 
     if (!file) {
-        throw std::runtime_error("Error: Could not pen file " + file_name + "!");
+        throw std::runtime_error("Error: Could not open file " + file_name + "!");
     }
 
     const auto file_size = file.tellg();
@@ -48,7 +48,7 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
 
     spdlog::debug("Creating shader module {}.", name);
     if (vkCreateShaderModule(device, &create_info, nullptr, &shader_module) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name);
+        throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name + "!");
     }
 
     // Try to find the Vulkan debug marker function.
@@ -64,7 +64,9 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
         name_info.pObjectName = name.c_str();
 
         spdlog::debug("Assigning internal name {} to shader module.", name);
-        vkDebugMarkerSetObjectNameEXT(device, &name_info);
+        if (vkDebugMarkerSetObjectNameEXT(device, &name_info) != VK_SUCCESS) {
+            throw std::runtime_error("Error: vkDebugMarkerSetObjectNameEXT failed for shader " + name + "!");
+        }
     }
 }
 
