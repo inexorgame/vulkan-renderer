@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/shader_manager.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/thread_pool.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
