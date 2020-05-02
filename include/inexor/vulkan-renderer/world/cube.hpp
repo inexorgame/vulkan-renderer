@@ -63,7 +63,7 @@ public:
     /// @param x Indentation leven on the x-axis
     /// @param y Indentation leven on the y-axis
     /// @param z Indentation leven on the z-axis
-    explicit Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z);
+    Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z);
 
     Indentation(const Indentation& indentation);
     Indentation(Indentation &&indentation) noexcept;

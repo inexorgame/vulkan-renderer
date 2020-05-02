@@ -4,13 +4,13 @@
 namespace inexor::vulkan_renderer::world {
 void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z) {
     assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
-    if (x != std::nullopt) {
+    if (x) {
         this->x_level = x.value();
     }
-    if (y != std::nullopt) {
+    if (y) {
         this->y_level = y.value();
     }
-    if (z != std::nullopt) {
+    if (z) {
         this->z_level = z.value();
     }
     this->change();
@@ -207,14 +207,14 @@ void Cube::make_reactive(bool force) {
     if (!force && this->is_reactive) {
         return;
     }
-    if (this->indentations != std::nullopt) {
+    if (this->indentations) {
         for (auto &indentation : this->indentations.value()) {
             indentation.on_change.connect([this](Indentation *i) {
                 this->change(i);
             });
         }
     }
-    if (this->octants != std::nullopt) {
+    if (this->octants) {
         for (auto &octant : this->octants.value()) {
             octant->make_reactive(force);
             octant->on_change.connect([this](Cube *o) {
