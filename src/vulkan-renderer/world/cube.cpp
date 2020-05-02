@@ -454,4 +454,4 @@ std::array<glm::tvec3<std::uint8_t>, 8> Cube::indentation_levels() {
     }
     return in;
 }
-}// namespace inexor::vulkan_render::world
+} // namespace inexor::vulkan_render::world
