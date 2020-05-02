@@ -210,8 +210,8 @@ MoltenVK
 
 .. Badges.
 
-.. |github actions| image:: https://github.com/inexorgame/vulkan-renderer/workflows/CMake%20Build/badge.svg
-   :target: https://github.com/inexorgame/vulkan-renderer/actions
+.. |github actions| image:: https://github.com/inexorgame/vulkan-renderer/workflows/Build/badge.svg
+   :target: https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3A%22Build%22
 
 .. |license| image:: https://img.shields.io/badge/License-MIT-brightgreen.svg
    :target: https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE.rst
