@@ -15,7 +15,6 @@ add_library(
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/gpu_memory_buffer.cpp
     vulkan-renderer/gpu_queue_manager.cpp
-    vulkan-renderer/mesh_buffer_manager.cpp
     vulkan-renderer/mesh_buffer.cpp
     vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/once_command_buffer.cpp
@@ -26,11 +25,9 @@ add_library(
     vulkan-renderer/single_time_command_buffer.cpp
     vulkan-renderer/staging_buffer.cpp
     vulkan-renderer/texture.cpp
-    vulkan-renderer/texture_manager.cpp
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
     vulkan-renderer/uniform_buffer.cpp
-    vulkan-renderer/uniform_buffer_manager.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
