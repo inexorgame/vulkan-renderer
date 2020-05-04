@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/staging_buffer.hpp"
 
 #include <vma/vma_usage.h>
 #include <vulkan/vulkan.h>
@@ -17,19 +18,57 @@ namespace inexor::vulkan_renderer {
 /// used during the same render operations, provided that their data is refreshed,
 /// of course. This is known as aliasing and some Vulkan functions have explicit
 /// flags to specify that you want to do this.
-struct MeshBuffer {
-    Buffer vertex_buffer;
+class MeshBuffer {
 
-    Buffer index_buffer;
+private:
+    std::string name = "";
+
+    GPUMemoryBuffer vertex_buffer;
+
+    GPUMemoryBuffer index_buffer;
 
     std::uint32_t number_of_vertices = 0;
 
     std::uint32_t number_of_indices = 0;
 
-    std::string description = "";
-
     // Don't forget that index buffers are optional!
     bool index_buffer_available = false;
+
+public:
+    // Delete the copy constructor so mesh buffers are move-only objects.
+    MeshBuffer(const MeshBuffer &) = delete;
+    MeshBuffer(MeshBuffer &&buffer) noexcept;
+
+    // Delete the copy assignment operator so uniform buffers are move-only objects.
+    MeshBuffer &operator=(const MeshBuffer &) = delete;
+    MeshBuffer &operator=(MeshBuffer &&) noexcept = default;
+
+    ///
+    MeshBuffer(const VkDevice &device, VkCommandPool &command_pool, VkCommandBuffer &command_buffer, VkQueue &data_transfer_queue,
+               const VmaAllocator &vma_allocator, std::string &name, const VkDeviceSize &size_of_vertex_structure, const std::size_t number_of_vertices,
+               void *vertices, const VkDeviceSize &size_of_index_structure, const std::size_t number_of_indices, void *indices);
+
+    VkBuffer get_vertex_buffer() const {
+        return vertex_buffer.get_buffer();
+    }
+
+    VkBuffer get_index_buffer() const {
+        return index_buffer.get_buffer();
+    }
+
+    const std::uint32_t get_vertex_count() const {
+        return number_of_vertices;
+    }
+
+    const std::uint32_t get_index_cound() const {
+        return number_of_indices;
+    }
+
+    // TODO: Update data!
+    // void update_vertex_buffer();
+    // void update_index_buffer();
+
+    ~MeshBuffer();
 };
 
 } // namespace inexor::vulkan_renderer
