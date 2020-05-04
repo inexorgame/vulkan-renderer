@@ -7,21 +7,18 @@
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
-#include "inexor/vulkan-renderer/gltf-model/manager.hpp"
-#include "inexor/vulkan-renderer/gltf-model/vertex.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/gpu_queue_manager.hpp"
 #include "inexor/vulkan-renderer/image_buffer.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
-#include "inexor/vulkan-renderer/mesh_buffer_manager.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
-#include "inexor/vulkan-renderer/texture_manager.hpp"
+#include "inexor/vulkan-renderer/texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
-#include "inexor/vulkan-renderer/uniform_buffer_manager.hpp"
+#include "inexor/vulkan-renderer/uniform_buffer.hpp"
 
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
@@ -35,6 +32,7 @@
 #include <vma/vma_usage.h>
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -78,15 +76,7 @@ protected:
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
-    std::shared_ptr<UniformBufferManager> uniform_buffer_manager = std::make_shared<UniformBufferManager>();
-
-    std::shared_ptr<VulkanTextureManager> texture_manager = std::make_shared<VulkanTextureManager>();
-
-    std::shared_ptr<MeshBufferManager> mesh_buffer_manager = std::make_shared<MeshBufferManager>();
-
     std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
-
-    std::shared_ptr<gltf_model::Manager> gltf_model_manager = std::make_shared<gltf_model::Manager>();
 
     std::shared_ptr<AvailabilityChecksManager> availability_checks_manager = std::make_shared<AvailabilityChecksManager>();
 
@@ -170,7 +160,7 @@ protected:
     VkDescriptorBufferInfo uniform_buffer_info = {};
     VkDescriptorImageInfo image_info = {};
 
-    std::shared_ptr<UniformBuffer> matrices;
+    UniformBuffer matrices;
 
     VkPipelineCache pipeline_cache;
 
@@ -190,6 +180,8 @@ protected:
     Camera game_camera;
 
     std::vector<Shader> shaders;
+
+    std::vector<Texture> textures;
 
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.

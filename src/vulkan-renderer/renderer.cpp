@@ -517,11 +517,11 @@ VkResult VulkanRenderer::record_command_buffers() {
             vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, global_descriptor->descriptor_sets.data(), 0,
                                     nullptr);
 
-            VkBuffer vertexBuffers[] = {octree_mesh->vertex_buffer.buffer};
+            VkBuffer vertexBuffers[] = {octree_mesh->get_vertex_buffer()};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
 
-            vkCmdDraw(command_buffers[i], octree_mesh->number_of_vertices, 1, 0, 0);
+            vkCmdDraw(command_buffers[i], octree_mesh->get_vertex_count(), 1, 0, 0);
 
             // TODO: This does not specify the order of rendering!
             // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
@@ -883,10 +883,6 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         swapchain = VK_NULL_HANDLE;
     }
 
-    spdlog::debug("Destroying uniform buffers.");
-
-    uniform_buffer_manager->shutdown_uniform_buffers();
-
     spdlog::debug("Destroying descriptor sets and layouts.");
 
     descriptor_manager->shutdown_descriptors();
@@ -1072,7 +1068,7 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 VkResult VulkanRenderer::create_descriptor_writes() {
     std::array<VkWriteDescriptorSet, 1> descriptor_writes = {};
 
-    uniform_buffer_info.buffer = matrices->buffer;
+    uniform_buffer_info.buffer = matrices.get_buffer();
     uniform_buffer_info.offset = 0;
     uniform_buffer_info.range = sizeof(UniformBufferObject);
 
@@ -1092,19 +1088,6 @@ VkResult VulkanRenderer::create_descriptor_writes() {
 
 VkResult VulkanRenderer::create_descriptor_sets() {
     VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor);
-    vulkan_error_check(result);
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_uniform_buffers() {
-    spdlog::debug("Creating uniform buffers.");
-
-    // The uniform buffer for the world matrices.
-    VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
-
-    // TODO: Create 3 uniform buffers for triple buffering!
-    VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, matrices);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
@@ -1828,14 +1811,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         swapchain_images.clear();
     }
 
-    spdlog::debug("Destroying textures.");
-    texture_manager->shutdown_textures();
-
     spdlog::debug("Destroying descriptor set layout.");
     descriptor_manager->shutdown_descriptors(true);
-
-    spdlog::debug("Destroying vertex buffers.");
-    mesh_buffer_manager->shutdown_vertex_and_index_buffers();
 
     spdlog::debug("Destroying semaphores.");
     semaphore_manager->shutdown_semaphores();
