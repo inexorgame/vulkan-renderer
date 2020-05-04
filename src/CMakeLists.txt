@@ -32,13 +32,6 @@ add_library(
     vulkan-renderer/uniform_buffer.cpp
     vulkan-renderer/uniform_buffer_manager.cpp
 
-    vulkan-renderer/gltf-model/bounding_box.cpp
-    vulkan-renderer/gltf-model/manager.cpp
-    vulkan-renderer/gltf-model/mesh.cpp
-    vulkan-renderer/gltf-model/node.cpp
-    vulkan-renderer/gltf-model/primitive.cpp
-    vulkan-renderer/gltf-model/vertex.cpp
-
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
