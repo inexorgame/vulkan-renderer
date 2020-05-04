@@ -104,22 +104,9 @@ VkResult Application::load_textures() {
     assert(debug_marker_manager);
     assert(vma_allocator);
 
-    VkResult result = texture_manager->init(device, selected_graphics_card, debug_marker_manager, vma_allocator,
-                                            gpu_queue_manager->get_graphics_family_index().value(), gpu_queue_manager->get_graphics_queue());
-    vulkan_error_check(result);
-
     // TODO: Refactor! use key from TOML file as name!
     std::size_t texture_number = 1;
 
-    for (const auto &texture_file : texture_files) {
-        std::string texture_name = "example_texture_" + std::to_string(texture_number);
-        texture_number++;
-
-        std::shared_ptr<Texture> new_texture;
-
-        // Insert the new texture into the list of textures.
-        // TODO: Fix this!
-        textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, std::string("unnamed texture"), gpu_queue_manager->get_data_transfer_queue());
     // Insert the new texture into the list of textures.
     std::string texture_name = "unnamed texture";
 
@@ -564,14 +551,6 @@ VkResult Application::init() {
     result = create_physical_device(selected_graphics_card, enable_debug_marker_device_extension);
     vulkan_error_check(result);
 
-    // Assign an appropriate name to the central Vulkan device.
-    // Debug markers are very useful when debugging vulkan-renderer with RenderDoc!
-    // debug_marker_manager->set_object_name(device, (std::uint64_t)(device), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "Inexor Vulkan device.");
-
-    //
-    // result = gltf_model_manager->init(device, texture_manager, uniform_buffer_manager, mesh_buffer_manager, descriptor_manager);
-    // vulkan_error_check(result);
-
     result = check_application_specific_features();
     vulkan_error_check(result);
 
@@ -617,14 +596,7 @@ VkResult Application::init() {
     result = create_frame_buffers();
     vulkan_error_check(result);
 
-    result = mesh_buffer_manager->init(device, debug_marker_manager, vma_allocator, gpu_queue_manager->get_data_transfer_queue_family_index().value(),
-                                       gpu_queue_manager->get_data_transfer_queue());
-    vulkan_error_check(result);
-
     result = create_command_pool();
-    vulkan_error_check(result);
-
-    result = uniform_buffer_manager->init(device, number_of_images_in_swapchain, vma_allocator, debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_uniform_buffers();
@@ -682,9 +654,8 @@ VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     ubo.proj = game_camera.matrices.perspective;
     ubo.proj[1][1] *= -1;
 
-    // Update the world matrices!
-    // TODO: Update by shared pointer value!
-    uniform_buffer_manager->update_uniform_buffer("matrices", &ubo, sizeof(ubo));
+    // TODO: Don't use vector of uniform buffers.
+    uniform_buffers[0].update(&ubo, sizeof(ubo));
 
     return VK_SUCCESS;
 }
