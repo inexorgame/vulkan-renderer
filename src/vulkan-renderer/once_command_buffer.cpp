@@ -7,7 +7,7 @@ OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
       command_pool(std::exchange(other.command_pool, nullptr)), queue(std::exchange(other.queue, nullptr)), recording_started(other.recording_started) {}
 
 OnceCommandBuffer::OnceCommandBuffer(const VkDevice &device, const VkQueue &data_transfer_queue) : device(device), queue(data_transfer_queue) {
-    // Create a command pool for this once command buffer.
+
     // TODO: Rename all "allocation_info" variables in the engine to "alloc_info".
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {};
 

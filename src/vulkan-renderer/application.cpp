@@ -109,9 +109,9 @@ VkResult Application::load_textures() {
 
     for (const auto &texture_file : texture_files) {
 
-        // TODO!
         // Insert the new texture into the list of textures.
-        // textures.emplace_back(device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
+        textures.emplace_back(
+            Texture(device, selected_graphics_card, vma_allocator, texture_file, "unnamed texture", gpu_queue_manager->get_data_transfer_queue()));
     }
 
     return VK_SUCCESS;

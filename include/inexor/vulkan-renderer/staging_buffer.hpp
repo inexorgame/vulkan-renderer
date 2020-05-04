@@ -33,8 +33,8 @@ public:
     /// @param size [in] The size of the buffer in bytes.
     /// @note Staging buffers always have VK_BUFFER_USAGE_TRANSFER_SRC_BIT as VkBufferUsageFlags.
     /// @note Staging buffers always have VMA_MEMORY_USAGE_CPU_ONLY as VmaMemoryUsage.
-    StagingBuffer(const VkDevice &device, const VkCommandPool &command_pool, const VkCommandBuffer &command_buffer, const VmaAllocator &vma_allocator,
-                  std::string &name, const VkDeviceSize &buffer_size, void *data, const std::size_t data_size);
+    StagingBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, std::string &name, const VkDeviceSize &buffer_size, void *data,
+                  const std::size_t data_size);
 
     ///
     void upload_data_to_gpu(const GPUMemoryBuffer &target_buffer, const VkQueue &data_transfer_queue);

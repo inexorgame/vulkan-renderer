@@ -67,31 +67,23 @@ public:
     /// @brief Creates a texture from a file.
     /// @param device [in] The Vulkan device from which the texture will be created.
     /// @param graphics_card [in] The graphics card.
-    /// @param command_pool [in] The command pool.
-    /// @param command_buffer [in] The command buffer.
     /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
     /// @param file_name [in] The file name of the texture.
     /// @param name [in] The internal memory allocation name of the texture.
-    /// @param data_transfer_queue_family_index [in] The queue family index which will be used for uploading texture data to GPU memory.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
-    Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VkCommandPool &command_pool, const VkCommandBuffer &command_buffer,
-            const VmaAllocator &vma_allocator, const std::string &file_name, const std::string &name, const std::uint32_t &data_transfer_queue_family_index,
-            const VkQueue &data_transfer_queue);
+    Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VmaAllocator &vma_allocator, const std::string &file_name,
+            const std::string &name, const VkQueue &data_transfer_queue);
 
     /// @brief Creates a texture from memory.
     /// @param device [in] The Vulkan device from which the texture will be created.
     /// @param graphics_card [in] The graphics card.
-    /// @param command_pool [in] The command pool.
-    /// @param command_buffer [in] The command buffer.
     /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
     /// @param texture_data [in] The texture data.
     /// @param texture_size [in] The size of the texture.
     /// @param name [in] The internal memory allocation name of the texture.
-    /// @param data_transfer_queue_family_index [in] The queue family index which will be used for uploading texture data to GPU memory.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
-    Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VkCommandPool &command_pool, const VkCommandBuffer &command_buffer,
-            const VmaAllocator &vma_allocator, void *texture_data, const std::size_t texture_size, std::string &name,
-            const std::uint32_t &data_transfer_queue_family_index, const VkQueue &data_transfer_queue);
+    Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VmaAllocator &vma_allocator, void *texture_data,
+            const std::size_t texture_size, std::string &name, const VkQueue &data_transfer_queue);
 
     ~Texture();
 
