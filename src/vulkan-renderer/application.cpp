@@ -117,12 +117,15 @@ VkResult Application::load_textures() {
 
         std::shared_ptr<Texture> new_texture;
 
-        // TODO: Find duplicate loads!
-        // TOOD: Specify assets folder!
-        texture_manager->create_texture_from_file(texture_name, texture_file, new_texture);
-        vulkan_error_check(result);
+        // Insert the new texture into the list of textures.
+        // TODO: Fix this!
+        textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, std::string("unnamed texture"), gpu_queue_manager->get_data_transfer_queue());
+    // Insert the new texture into the list of textures.
+    std::string texture_name = "unnamed texture";
 
-        textures.push_back(new_texture);
+    for (const auto &texture_file : texture_files) {
+        textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_graphics_queue(),
+                                   gpu_queue_manager->get_graphics_family_index().value());
     }
 
     return VK_SUCCESS;
