@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,clang-analyzer-*,clang-diagnostics-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-modernize-use-trailing-return-type,-llvm-header-guard'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,clang-analyzer-*,clang-diagnostics-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-modernize-use-trailing-return-type,-llvm-header-guard,-cppcoreguidelines-pro-bounds-array-to-pointer-decay'
 WarningsAsErrors: ''
 HeaderFilterRegex: 'inexor/*'
 AnalyzeTemporaryDtors: false
