@@ -13,6 +13,7 @@ add_library(
     vulkan-renderer/fence_manager.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
+    vulkan-renderer/gpu_memory_buffer.cpp
     vulkan-renderer/gpu_queue_manager.cpp
     vulkan-renderer/mesh_buffer_manager.cpp
     vulkan-renderer/octree_vertex.cpp
@@ -26,6 +27,7 @@ add_library(
     vulkan-renderer/texture_manager.cpp
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
+    vulkan-renderer/uniform_buffer.cpp
     vulkan-renderer/uniform_buffer_manager.cpp
 
     vulkan-renderer/gltf-model/bounding_box.cpp
