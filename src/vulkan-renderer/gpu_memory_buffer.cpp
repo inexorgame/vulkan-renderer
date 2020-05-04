@@ -14,9 +14,6 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     assert(vma_allocator);
     assert(!name.empty());
 
-    // TODO: What if index buffer is not available in MeshBuffer?
-    assert(size > 0);
-
     spdlog::debug("Creating GPU memory buffer of size {} for '{}'.", size, name);
 
     create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

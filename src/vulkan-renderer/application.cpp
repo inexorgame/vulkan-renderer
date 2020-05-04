@@ -269,9 +269,7 @@ VkResult Application::load_octree_geometry() {
     world::Cube cube = world::Cube::parse(test);
     cube.make_reactive();
 
-    cube.on_change.connect([](world::Cube* c) {
-        spdlog::debug("THE WORLD (octree) HAS CHANGED!");
-    });
+    cube.on_change.connect([](world::Cube *c) { spdlog::debug("THE WORLD (octree) HAS CHANGED!"); });
 
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
     cube.octants.value()[6]->indentations.value()[4] += {1, 1, -3};
@@ -293,9 +291,12 @@ VkResult Application::load_octree_geometry() {
         }
     }
 
-    VkResult result =
-        mesh_buffer_manager->create_vertex_buffer("octree_geometry_example", octree_vertices.data(), sizeof(OctreeVertex), octree_vertices.size(), octree_mesh);
-    vulkan_error_check(result);
+    const std::string octree_mesh_name = "unnamed octree";
+
+    // Create a mesh buffer for octree vertex geometry.
+    octree_mesh =
+        std::make_shared<MeshBuffer>(device, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value(),
+                                     vma_allocator, octree_mesh_name, sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }

@@ -16,6 +16,7 @@ add_library(
     vulkan-renderer/gpu_memory_buffer.cpp
     vulkan-renderer/gpu_queue_manager.cpp
     vulkan-renderer/mesh_buffer_manager.cpp
+    vulkan-renderer/mesh_buffer.cpp
     vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/once_command_buffer.cpp
     vulkan-renderer/renderer.cpp
