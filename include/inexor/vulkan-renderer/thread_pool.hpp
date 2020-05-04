@@ -55,7 +55,7 @@ public:
 
     /// @brief Executes a task from the tasklist.
     /// @note We only accept invokable arguments in the template.
-    template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int> = 0>
+    template <typename F, typename... Args, typename = std::enable_if_t<std::is_invocable_v<F &&, Args &&...>>>
     auto execute(F, Args &&...);
 
 private:
@@ -120,7 +120,7 @@ private:
     std::atomic<bool> stop_threads = false;
 };
 
-template <typename F, typename... Args, std::enable_if_t<std::is_invocable_v<F &&, Args &&...>, int>>
+template <typename F, typename... Args, typename>
 auto ThreadPool::execute(F function, Args &&... args) {
     spdlog::warn("Executing task from task list.");
 
