@@ -19,11 +19,13 @@ add_library(
     vulkan-renderer/renderer.cpp
     vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
+	vulkan-renderer/staging_buffer.cpp
     vulkan-renderer/shader.cpp
     vulkan-renderer/texture.cpp
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
 	vulkan-renderer/uniform_buffer.cpp
+	vulkan-renderer/once_command_buffer.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp

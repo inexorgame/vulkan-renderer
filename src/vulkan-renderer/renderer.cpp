@@ -287,6 +287,13 @@ VkResult VulkanRenderer::create_command_pool() {
     return VK_SUCCESS;
 }
 
+VkResult VulkanRenderer::create_uniform_buffers()
+{
+    uniform_buffers.emplace_back(device, vma_allocator, std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
+
+    return VK_SUCCESS;
+}
+
 VkResult VulkanRenderer::create_depth_buffer() {
     VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 
@@ -1068,7 +1075,9 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 VkResult VulkanRenderer::create_descriptor_writes() {
     std::array<VkWriteDescriptorSet, 1> descriptor_writes = {};
 
-    uniform_buffer_info.buffer = matrices.get_buffer();
+    // We can do better than this, but therefore RAII refactoring needs to be done..
+    uniform_buffer_info.buffer = uniform_buffers[0].get_buffer();
+
     uniform_buffer_info.offset = 0;
     uniform_buffer_info.range = sizeof(UniformBufferObject);
 

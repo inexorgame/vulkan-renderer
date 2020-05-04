@@ -159,9 +159,6 @@ protected:
     // TODO: Refactor this!
     VkDescriptorBufferInfo uniform_buffer_info = {};
     VkDescriptorImageInfo image_info = {};
-
-    UniformBuffer matrices;
-
     VkPipelineCache pipeline_cache;
 
     // TODO: Read from TOML configuration file and pass value to core engine.
@@ -180,8 +177,9 @@ protected:
     Camera game_camera;
 
     std::vector<Shader> shaders;
-
     std::vector<Texture> textures;
+    std::vector<UniformBuffer> uniform_buffers;
+
 
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.
