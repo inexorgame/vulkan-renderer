@@ -1,0 +1,45 @@
+#pragma once
+
+#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
+
+#include <vulkan/vulkan.h>
+
+#include <cassert>
+
+namespace inexor::vulkan_renderer {
+
+/// @brief In general, it is inefficient to use normal memory mapping to a vertex buffer.
+/// It is highly advised to use a staging buffer. Once the staging buffer is filled with data,
+/// a queue command can be executed to use a transfer queue to upload the data to the GPU memory.
+class StagingBuffer : public GPUMemoryBuffer {
+private:
+    VkQueue transfer_queue;
+    VkCommandBuffer command_buffer;
+
+public:
+    // Delete the copy constructor so staging buffers are move-only objects.
+    StagingBuffer(const StagingBuffer &) = delete;
+    StagingBuffer(StagingBuffer &&other) noexcept;
+
+    // Delete the copy assignment operator so staging buffers are move-only objects.
+    StagingBuffer &operator=(const StagingBuffer &) = delete;
+    StagingBuffer &operator=(StagingBuffer &&) noexcept = default;
+
+    /// @brief Creates a new staging buffer.
+    /// @param device [in] The Vulkan device from which the buffer will be created.
+    /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
+    /// @param name [in] The internal name of the buffer.
+    /// @param data [in] The address of the data which will be copied.
+    /// @param size [in] The size of the buffer in bytes.
+    /// @note Staging buffers always have VK_BUFFER_USAGE_TRANSFER_SRC_BIT as VkBufferUsageFlags.
+    /// @note Staging buffers always have VMA_MEMORY_USAGE_CPU_ONLY as VmaMemoryUsage.
+    StagingBuffer(const VkDevice &device, const VkCommandPool &command_pool, const VkCommandBuffer &command_buffer, const VmaAllocator &vma_allocator,
+                  std::string &name, const VkDeviceSize &buffer_size, void *data, const std::size_t data_size);
+
+    ///
+    void upload_data_to_gpu(const GPUMemoryBuffer &target_buffer, const VkQueue &data_transfer_queue);
+
+    ~StagingBuffer();
+};
+
+} // namespace inexor::vulkan_renderer
