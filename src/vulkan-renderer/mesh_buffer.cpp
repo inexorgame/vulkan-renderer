@@ -12,13 +12,12 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are created!.
     : vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      index_buffer(device, vma_allocator, name, size_of_index_structure * number_of_vertices,
-                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY) {
+      index_buffer(GPUMemoryBuffer(device, vma_allocator, name, size_of_index_structure * number_of_vertices,
+                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY)) {
     assert(device);
     assert(vma_allocator);
     assert(!name.empty());
     assert(size_of_vertex_structure > 0);
-    assert(size_of_index_structure > 0);
 
     std::size_t vertex_buffer_size = size_of_vertex_structure * number_of_vertices;
     std::size_t index_buffer_size = size_of_index_structure * number_of_indices;
@@ -43,7 +42,7 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
 
         StagingBuffer staging_buffer_for_indices(device, vma_allocator, name, index_buffer_size, indices, indices_memory_size);
 
-        staging_buffer_for_indices.upload_data_to_gpu(index_buffer, data_transfer_queue);
+        staging_buffer_for_indices.upload_data_to_gpu(index_buffer.value(), data_transfer_queue);
     } else {
         spdlog::warn("No index buffer created for mesh {}", name);
     }
@@ -51,9 +50,29 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
 
 MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator, std::string &name,
                        const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices)
-    // TODO: Does this work?
-    : MeshBuffer(device, data_transfer_queue, vma_allocator, name, size_of_vertex_structure, number_of_vertices, vertices, 0, 0, nullptr)
-{}
+    // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are created!.
+    : vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
+      index_buffer(std::nullopt) {
+    assert(device);
+    assert(vma_allocator);
+    assert(!name.empty());
+    assert(size_of_vertex_structure > 0);
+
+    std::size_t vertex_buffer_size = size_of_vertex_structure * number_of_vertices;
+
+    spdlog::debug("Creating vertex buffer of size {} for mesh {}.", vertex_buffer_size, name);
+
+    // Not using an index buffer can decrease performance drastically!
+    spdlog::warn("Creating a vertex buffer without an index buffer!");
+    spdlog::warn("Always use an index buffer if possible. The performance will decrease drastically otherwise!");
+
+    VkDeviceSize vertices_memory_size = number_of_vertices * size_of_vertex_structure;
+
+    StagingBuffer staging_buffer_for_vertices(device, vma_allocator, name, vertex_buffer_size, vertices, vertices_memory_size);
+
+    staging_buffer_for_vertices.upload_data_to_gpu(vertex_buffer, data_transfer_queue);
+}
 
 MeshBuffer::~MeshBuffer() {}
 

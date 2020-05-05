@@ -6,6 +6,8 @@
 #include <vma/vma_usage.h>
 #include <vulkan/vulkan.h>
 
+#include <optional>
+
 namespace inexor::vulkan_renderer {
 
 /// @brief A structure which bundles vertex buffer and index buffer (if existent).
@@ -25,7 +27,8 @@ private:
 
     GPUMemoryBuffer vertex_buffer;
 
-    GPUMemoryBuffer index_buffer;
+    // Index buffer, if available.
+    std::optional<GPUMemoryBuffer> index_buffer;
 
     std::uint32_t number_of_vertices = 0;
 
@@ -44,20 +47,25 @@ public:
     MeshBuffer &operator=(MeshBuffer &&) noexcept = default;
 
     /// @brief Creates a new vertex buffer and an associated index buffer.
-    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator,
-               std::string &name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices,
-               const VkDeviceSize size_of_index_structure, const std::size_t number_of_indices, void *indices);
+    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator, std::string &name,
+               const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
+               const std::size_t number_of_indices, void *indices);
 
     /// @brief Creates a vertex buffer without index buffer.
-    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator,
-               std::string &name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices);
+    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator, std::string &name,
+               const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices);
 
     VkBuffer get_vertex_buffer() const {
         return vertex_buffer.get_buffer();
     }
 
-    VkBuffer get_index_buffer() const {
-        return index_buffer.get_buffer();
+    bool has_index_buffer() const {
+        return index_buffer.has_value();
+    }
+
+    std::optional<VkBuffer> get_index_buffer() const {
+        assert(index_buffer.has_value());
+        return index_buffer.value().get_buffer();
     }
 
     const std::uint32_t get_vertex_count() const {
