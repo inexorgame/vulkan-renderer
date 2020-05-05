@@ -17,10 +17,11 @@ Texture::Texture(Texture &&other) noexcept
 
 // TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
-                 const std::size_t texture_size, std::string &name, const VkQueue data_transfer_queue)
+                 const std::size_t texture_size, std::string &name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
-      copy_command_buffer(device, data_transfer_queue) {
-    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), name, texture_size, texture_data, texture_size);
+      copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
+    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
+                                         name, texture_size, texture_data, texture_size);
 
     VkImageCreateInfo image_create_info = {};
 
@@ -81,9 +82,10 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
 }
 
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string &name,
-                 const VkQueue data_transfer_queue)
-    : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
-      copy_command_buffer(device, data_transfer_queue) {
+                 const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
+    : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue),
+      data_transfer_queue_family_index(data_transfer_queue_family_index), vma_allocator(vma_allocator),
+      copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
     assert(device);
     assert(vma_allocator);
     assert(!file_name.empty());

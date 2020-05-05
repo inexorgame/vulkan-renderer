@@ -4,9 +4,24 @@ namespace inexor::vulkan_renderer {
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
     : device(std::exchange(other.device, nullptr)), command_buffer(std::exchange(other.command_buffer, nullptr)),
-      command_pool(std::exchange(other.command_pool, nullptr)), queue(std::exchange(other.queue, nullptr)), recording_started(other.recording_started) {}
+      command_pool(std::exchange(other.command_pool, nullptr)),
+      data_transfer_queue_family_index(std::exchange(other.data_transfer_queue_family_index, nullptr)), recording_started(other.recording_started) {}
 
-OnceCommandBuffer::OnceCommandBuffer(const VkDevice &device, const VkQueue &data_transfer_queue) : device(device), queue(data_transfer_queue) {
+OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
+    : device(device), data_transfer_queue(data_transfer_queue), data_transfer_queue_family_index(data_transfer_queue_family_index) {
+
+    spdlog::debug("Creating command pool for rendering.");
+
+    VkCommandPoolCreateInfo command_pool_create_info = {};
+
+    command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    command_pool_create_info.pNext = nullptr;
+    command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    command_pool_create_info.queueFamilyIndex = data_transfer_queue_family_index;
+
+    if (vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool) != VK_SUCCESS) {
+        throw std::runtime_error("Error: vkCreateCommandPool failed for once command buffer!");
+    }
 
     // TODO: Rename all "allocation_info" variables in the engine to "alloc_info".
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {};
@@ -34,7 +49,7 @@ void OnceCommandBuffer::start_recording() {
     assert(device);
     assert(command_pool);
     assert(command_buffer);
-    assert(queue);
+    assert(data_transfer_queue);
     assert(!recording_started);
 
     spdlog::debug("Starting recording of once command buffer.");
@@ -61,7 +76,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     assert(device);
     assert(command_pool);
     assert(command_buffer);
-    assert(queue);
+    assert(data_transfer_queue);
     assert(recording_started);
 
     spdlog::debug("Ending recording of once command buffer.");
@@ -80,12 +95,12 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &command_buffer;
 
-    if (vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
+    if (vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueSubmit failed for once command buffer!");
     }
 
     // TODO: Refactor! Introduce proper synchronisation using VkFence!
-    if (vkQueueWaitIdle(queue) != VK_SUCCESS) {
+    if (vkQueueWaitIdle(data_transfer_queue) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueWaitIdle failed for once command buffer!");
     }
 

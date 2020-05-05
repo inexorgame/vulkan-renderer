@@ -3,15 +3,16 @@
 namespace inexor::vulkan_renderer {
 
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
-    : GPUMemoryBuffer(std::move(other)), transfer_queue(std::exchange(other.transfer_queue, nullptr)),
+    : GPUMemoryBuffer(std::move(other)), data_transfer_queue(std::exchange(other.data_transfer_queue, nullptr)),
       command_buffer(std::exchange(other.command_buffer, nullptr)) {}
 
-StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, VkCommandBuffer command_buffer, std::string &name,
-                             const VkDeviceSize buffer_size, void *data, const std::size_t data_size)
+StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkCommandBuffer command_buffer, const VkQueue data_transfer_queue,
+                             const std::uint32_t data_transfer_queueu_family_index, std::string &name, const VkDeviceSize buffer_size, void *data,
+                             const std::size_t data_size)
     : GPUMemoryBuffer(device, vma_allocator, name, buffer_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      transfer_queue(transfer_queue), command_buffer(command_buffer) {}
+      data_transfer_queue(data_transfer_queue), command_buffer(command_buffer) {}
 
-void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer, const VkQueue &data_transfer_queue) {
+void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
     VkBufferCopy vertex_buffer_copy = {};
 
     vertex_buffer_copy.srcOffset = 0;

@@ -14,9 +14,11 @@ class OnceCommandBuffer {
 private:
     VkDevice device = VK_NULL_HANDLE;
     VkCommandPool command_pool = VK_NULL_HANDLE;
-    VkQueue queue = VK_NULL_HANDLE;
-    bool recording_started = false;
     VkCommandBuffer command_buffer = VK_NULL_HANDLE;
+    VkQueue data_transfer_queue = VK_NULL_HANDLE;
+    std::uint32_t data_transfer_queue_family_index = 0;
+
+    bool recording_started = false;
 
 public:
     // Delete the copy constructor so once command buffers are move-only objects.
@@ -30,7 +32,7 @@ public:
     /// @brief Creates a new commandbuffer which is being called only once.
     /// @param device [in] The Vulkan device.
     /// @param data_transfer_queue [in] The data transfer queue.
-    OnceCommandBuffer(const VkDevice &device, const VkQueue &data_transfer_queue);
+    OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
 
     ~OnceCommandBuffer();
 

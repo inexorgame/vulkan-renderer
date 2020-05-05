@@ -13,7 +13,7 @@ namespace inexor::vulkan_renderer {
 /// a queue command can be executed to use a transfer queue to upload the data to the GPU memory.
 class StagingBuffer : public GPUMemoryBuffer {
 private:
-    VkQueue transfer_queue;
+    VkQueue data_transfer_queue;
     VkCommandBuffer command_buffer;
 
 public:
@@ -33,11 +33,12 @@ public:
     /// @param size [in] The size of the buffer in bytes.
     /// @note Staging buffers always have VK_BUFFER_USAGE_TRANSFER_SRC_BIT as VkBufferUsageFlags.
     /// @note Staging buffers always have VMA_MEMORY_USAGE_CPU_ONLY as VmaMemoryUsage.
-    StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkCommandBuffer, std::string &name, const VkDeviceSize buffer_size, void *data,
+    StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkCommandBuffer command_buffer, const VkQueue data_transfer_queue,
+                  const std::uint32_t data_transfer_queueu_family_index, std::string &name, const VkDeviceSize buffer_size, void *data,
                   const std::size_t data_size);
 
     ///
-    void upload_data_to_gpu(const GPUMemoryBuffer &target_buffer, const VkQueue &data_transfer_queue);
+    void upload_data_to_gpu(const GPUMemoryBuffer &target_buffer);
 
     ~StagingBuffer();
 };
