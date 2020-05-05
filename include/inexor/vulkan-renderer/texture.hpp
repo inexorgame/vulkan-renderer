@@ -47,7 +47,7 @@ private:
     OnceCommandBuffer copy_command_buffer;
 
     ///
-    void transition_image_layout(VkImage &image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+    void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
     ///
     void create_texture_image_view();
@@ -71,8 +71,8 @@ public:
     /// @param file_name [in] The file name of the texture.
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
-    Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VmaAllocator &vma_allocator, const std::string &file_name,
-            const std::string &name, const VkQueue &data_transfer_queue);
+    Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name,
+            std::string &name, const VkQueue data_transfer_queue);
 
     /// @brief Creates a texture from memory.
     /// @param device [in] The Vulkan device from which the texture will be created.
@@ -82,8 +82,8 @@ public:
     /// @param texture_size [in] The size of the texture.
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
-    Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VmaAllocator &vma_allocator, void *texture_data,
-            const std::size_t texture_size, std::string &name, const VkQueue &data_transfer_queue);
+    Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
+            const std::size_t texture_size, std::string &name, const VkQueue data_transfer_queue);
 
     ~Texture();
 

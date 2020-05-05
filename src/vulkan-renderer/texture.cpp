@@ -16,8 +16,8 @@ copy_command_buffer(std::move(other.copy_command_buffer))
 {}
 
 // TODO: Remove unnecessary parameters!
-Texture::Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VmaAllocator &vma_allocator, void *texture_data,
-                 const std::size_t texture_size, std::string &name, const VkQueue &data_transfer_queue)
+Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
+                 const std::size_t texture_size, std::string &name, const VkQueue data_transfer_queue)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue) {
     StagingBuffer texture_staging_buffer(device, vma_allocator, name, texture_size, texture_data, texture_size);
@@ -80,8 +80,8 @@ Texture::Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, 
     create_texture_sampler();
 }
 
-Texture::Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, const VmaAllocator &vma_allocator, const std::string &file_name,
-                 const std::string &name, const VkQueue &data_transfer_queue)
+Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name,
+                 std::string &name, const VkQueue data_transfer_queue)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue) {
     assert(device);
@@ -114,7 +114,7 @@ Texture::Texture(const VkDevice &device, const VkPhysicalDevice &graphics_card, 
     stbi_image_free(texture_data);
 }
 
-void Texture::transition_image_layout(VkImage &image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout) {
+void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout) {
 
     VkImageMemoryBarrier barrier = {};
 
