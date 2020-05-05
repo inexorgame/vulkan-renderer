@@ -6,7 +6,7 @@ MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
       number_of_vertices(other.number_of_vertices), number_of_indices(other.number_of_indices), copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
 MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index,
-                       const VmaAllocator vma_allocator, std::string &name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices,
+                       const VmaAllocator vma_allocator, std::string name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices,
                        void *vertices, const VkDeviceSize size_of_index_structure, const std::size_t number_of_indices, void *indices)
 
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are created!.
@@ -52,7 +52,7 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
 }
 
 MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index,
-                       const VmaAllocator vma_allocator, std::string &name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices,
+                       const VmaAllocator vma_allocator, std::string name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices,
                        void *vertices)
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are created!.
     : vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
