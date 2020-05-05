@@ -9,11 +9,11 @@
 namespace inexor::vulkan_renderer {
 
 Texture::Texture(Texture &&other) noexcept
-: name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height), texture_channels(other.texture_channels), mip_levels(other.mip_levels),
-device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)), data_transfer_queue(std::exchange(other.data_transfer_queue, nullptr)), vma_allocator(std::move(other.vma_allocator)),
-allocation(std::move(other.allocation)), allocation_info(std::move(other.allocation_info)), image(std::move(other.image)), image_view(std::move(other.image_view)), sampler(std::move(other.sampler)), texture_image_format(other.texture_image_format),
-copy_command_buffer(std::move(other.copy_command_buffer))
-{}
+    : name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height),
+      texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(std::move(other.device)), graphics_card(std::move(other.graphics_card)),
+      data_transfer_queue(std::move(other.data_transfer_queue)), vma_allocator(std::move(other.vma_allocator)), allocation(std::move(other.allocation)),
+      allocation_info(std::move(other.allocation_info)), image(std::move(other.image)), image_view(std::move(other.image_view)),
+      sampler(std::move(other.sampler)), texture_image_format(other.texture_image_format), copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
 // TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
@@ -80,8 +80,8 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     create_texture_sampler();
 }
 
-Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name,
-                 std::string &name, const VkQueue data_transfer_queue)
+Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string &name,
+                 const VkQueue data_transfer_queue)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue) {
     assert(device);
