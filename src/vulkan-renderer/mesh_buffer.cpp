@@ -3,7 +3,7 @@
 namespace inexor::vulkan_renderer {
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : name(std::move(other.name)), vertex_buffer(std::move(other.vertex_buffer)), index_buffer(std::move(other.index_buffer)),
-      number_of_vertices(other.number_of_vertices), number_of_indices(other.number_of_indices) {}
+      number_of_vertices(other.number_of_vertices), number_of_indices(other.number_of_indices), copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
 MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator, std::string &name,
                        const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices,
@@ -13,7 +13,8 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
     : vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
       index_buffer(GPUMemoryBuffer(device, vma_allocator, name, size_of_index_structure * number_of_vertices,
-                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY)) {
+                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY)),
+      copy_command_buffer(device, data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(!name.empty());
@@ -33,14 +34,14 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
 
     VkDeviceSize vertices_memory_size = number_of_vertices * size_of_vertex_structure;
 
-    StagingBuffer staging_buffer_for_vertices(device, vma_allocator, name, vertex_buffer_size, vertices, vertices_memory_size);
+    StagingBuffer staging_buffer_for_vertices(device, vma_allocator, copy_command_buffer.get_command_buffer(), name, vertex_buffer_size, vertices, vertices_memory_size);
 
     staging_buffer_for_vertices.upload_data_to_gpu(vertex_buffer, data_transfer_queue);
 
     if (number_of_indices > 0) {
         VkDeviceSize indices_memory_size = number_of_indices * size_of_index_structure;
 
-        StagingBuffer staging_buffer_for_indices(device, vma_allocator, name, index_buffer_size, indices, indices_memory_size);
+        StagingBuffer staging_buffer_for_indices(device, vma_allocator, copy_command_buffer.get_command_buffer(), name, index_buffer_size, indices, indices_memory_size);
 
         staging_buffer_for_indices.upload_data_to_gpu(index_buffer.value(), data_transfer_queue);
     } else {
@@ -53,7 +54,7 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are created!.
     : vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      index_buffer(std::nullopt) {
+      index_buffer(std::nullopt), copy_command_buffer(device, data_transfer_queue) {
     assert(device);
     assert(vma_allocator);
     assert(!name.empty());
@@ -69,11 +70,11 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
 
     VkDeviceSize vertices_memory_size = number_of_vertices * size_of_vertex_structure;
 
-    StagingBuffer staging_buffer_for_vertices(device, vma_allocator, name, vertex_buffer_size, vertices, vertices_memory_size);
+    StagingBuffer staging_buffer_for_vertices(device, vma_allocator, copy_command_buffer.get_command_buffer(), name, vertex_buffer_size, vertices, vertices_memory_size);
 
     staging_buffer_for_vertices.upload_data_to_gpu(vertex_buffer, data_transfer_queue);
 }
 
 MeshBuffer::~MeshBuffer() {}
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer 

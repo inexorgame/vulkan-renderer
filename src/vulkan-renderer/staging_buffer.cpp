@@ -6,8 +6,8 @@ StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
     : GPUMemoryBuffer(std::move(other)), transfer_queue(std::exchange(other.transfer_queue, nullptr)),
       command_buffer(std::exchange(other.command_buffer, nullptr)) {}
 
-StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, std::string &name, const VkDeviceSize buffer_size, void *data,
-                             const std::size_t data_size)
+StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, VkCommandBuffer command_buffer, std::string &name,
+                             const VkDeviceSize buffer_size, void *data, const std::size_t data_size)
     : GPUMemoryBuffer(device, vma_allocator, name, buffer_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
       transfer_queue(transfer_queue), command_buffer(command_buffer) {}
 

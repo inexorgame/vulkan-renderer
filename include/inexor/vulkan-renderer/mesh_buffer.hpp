@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/once_command_buffer.hpp"
 #include "inexor/vulkan-renderer/staging_buffer.hpp"
 
 #include <vma/vma_usage.h>
@@ -36,6 +37,8 @@ private:
 
     // Don't forget that index buffers are optional!
     bool index_buffer_available = false;
+
+    OnceCommandBuffer copy_command_buffer;
 
 public:
     // Delete the copy constructor so mesh buffers are move-only objects.

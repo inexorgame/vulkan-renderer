@@ -20,7 +20,7 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
                  const std::size_t texture_size, std::string &name, const VkQueue data_transfer_queue)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue) {
-    StagingBuffer texture_staging_buffer(device, vma_allocator, name, texture_size, texture_data, texture_size);
+    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), name, texture_size, texture_data, texture_size);
 
     VkImageCreateInfo image_create_info = {};
 
