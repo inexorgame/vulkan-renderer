@@ -43,10 +43,14 @@ public:
     MeshBuffer &operator=(const MeshBuffer &) = delete;
     MeshBuffer &operator=(MeshBuffer &&) noexcept = default;
 
-    ///
-    MeshBuffer(const VkDevice &device, VkCommandPool &command_pool, VkCommandBuffer &command_buffer, VkQueue &data_transfer_queue,
-               const VmaAllocator &vma_allocator, std::string &name, const VkDeviceSize &size_of_vertex_structure, const std::size_t number_of_vertices,
-               void *vertices, const VkDeviceSize &size_of_index_structure, const std::size_t number_of_indices, void *indices);
+    /// @brief Creates a new vertex buffer and an associated index buffer.
+    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator,
+               std::string &name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices,
+               const VkDeviceSize size_of_index_structure, const std::size_t number_of_indices, void *indices);
+
+    /// @brief Creates a vertex buffer without index buffer.
+    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const VmaAllocator vma_allocator,
+               std::string &name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices);
 
     VkBuffer get_vertex_buffer() const {
         return vertex_buffer.get_buffer();

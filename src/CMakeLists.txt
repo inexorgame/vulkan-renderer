@@ -15,6 +15,7 @@ add_library(
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/gpu_memory_buffer.cpp
     vulkan-renderer/gpu_queue_manager.cpp
+	vulkan-renderer/mesh_buffer.cpp
     vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/renderer.cpp
     vulkan-renderer/semaphore_manager.cpp

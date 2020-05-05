@@ -111,7 +111,8 @@ VkResult Application::load_textures() {
 
         // Insert the new texture into the list of textures.
         // TODO: Fix this!
-        //textures.emplace_back(Texture(device, selected_graphics_card, vma_allocator, texture_file.c_str(), std::string("unnamed texture"), gpu_queue_manager->get_data_transfer_queue()));
+        // textures.emplace_back(Texture(device, selected_graphics_card, vma_allocator, texture_file.c_str(), std::string("unnamed texture"),
+        // gpu_queue_manager->get_data_transfer_queue()));
     }
 
     return VK_SUCCESS;
@@ -279,8 +280,8 @@ VkResult Application::load_octree_geometry() {
         }
     }
 
-    // TODO!
-    // mesh_buffers.emplace_back(..);
+    // Create a mesh buffer for octree vertex geometry.
+    octree_mesh = std::make_shared<MeshBuffer>(device, gpu_queue_manager->get_data_transfer_queue(), vma_allocator, std::string("octree mesh"), sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }
