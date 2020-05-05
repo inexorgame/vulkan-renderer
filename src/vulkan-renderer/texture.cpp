@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer {
 Texture::Texture(Texture &&other) noexcept
 : name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height), texture_channels(other.texture_channels), mip_levels(other.mip_levels),
 device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)), data_transfer_queue(std::exchange(other.data_transfer_queue, nullptr)), vma_allocator(std::move(other.vma_allocator)),
-allocation(std::move(other.allocation)), allocation_info(std::move(other.allocation_info)), image(std::move(other.image)), image_view(std::move(other.image_view)), sampler(std::move(other.sampler)), texture_image_format(other.texture_image_format)),
+allocation(std::move(other.allocation)), allocation_info(std::move(other.allocation_info)), image(std::move(other.image)), image_view(std::move(other.image_view)), sampler(std::move(other.sampler)), texture_image_format(other.texture_image_format),
 copy_command_buffer(std::move(other.copy_command_buffer))
 {}
 
