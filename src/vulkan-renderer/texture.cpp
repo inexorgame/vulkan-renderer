@@ -9,11 +9,13 @@
 namespace inexor::vulkan_renderer {
 
 Texture::Texture(Texture &&other) noexcept
-    : name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height),
-      texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(std::move(other.device)), graphics_card(std::move(other.graphics_card)),
-      data_transfer_queue(std::move(other.data_transfer_queue)), vma_allocator(std::move(other.vma_allocator)), allocation(std::move(other.allocation)),
-      allocation_info(std::move(other.allocation_info)), image(std::move(other.image)), image_view(std::move(other.image_view)),
-      sampler(std::move(other.sampler)), texture_image_format(other.texture_image_format), copy_command_buffer(std::move(other.copy_command_buffer)) {}
+: name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height), 
+texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)),
+data_transfer_queue(std::exchange(other.data_transfer_queue, nullptr)), data_transfer_queue_family_index(other.data_transfer_queue_family_index), vma_allocator(std::exchange(other.vma_allocator, nullptr)),
+allocation(std::exchange(other.allocation, nullptr)), allocation_info(std::move(other.allocation_info)), image(std::exchange(other.image, nullptr)), image_view(std::exchange(other.image_view, nullptr)),
+sampler(std::exchange(other.sampler, nullptr)), texture_image_format(other.texture_image_format), copy_command_buffer(std::move(other.copy_command_buffer))
+
+{}
 
 // TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
@@ -111,6 +113,66 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     // For now, we will not generate mip-maps automatically.
     // TODO: Generate mip-maps automatically!
     mip_levels = 1;
+
+    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
+                                         name, texture_memory_size, texture_data, texture_memory_size);
+
+    VkImageCreateInfo image_create_info = {};
+
+    image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_create_info.imageType = VK_IMAGE_TYPE_2D;
+    image_create_info.extent.width = texture_width;
+    image_create_info.extent.height = texture_height;
+    image_create_info.extent.depth = 1;
+    image_create_info.mipLevels = 1;
+    image_create_info.arrayLayers = 1;
+    image_create_info.format = texture_image_format;
+    image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo allocation_create_info = {};
+    allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    // TODO: Check if other memory flags are necessary, especially for the case of VMA_RECORDING_ENABLED not being defined!
+
+#if VMA_RECORDING_ENABLED
+    allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+    allocation_create_info.pUserData = name.data();
+#endif
+
+    if (vmaCreateImage(vma_allocator, &image_create_info, &allocation_create_info, &image, &allocation, &allocation_info) != VK_SUCCESS) {
+        throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
+    }
+
+    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    copy_command_buffer.start_recording();
+
+    VkBufferImageCopy buffer_image_region = {};
+
+    buffer_image_region.bufferOffset = 0;
+    buffer_image_region.bufferRowLength = 0;
+    buffer_image_region.bufferImageHeight = 0;
+    buffer_image_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    buffer_image_region.imageSubresource.mipLevel = 0;
+    buffer_image_region.imageSubresource.baseArrayLayer = 0;
+    buffer_image_region.imageSubresource.layerCount = 1;
+    buffer_image_region.imageOffset = {0, 0, 0};
+    buffer_image_region.imageExtent = {static_cast<uint32_t>(texture_width), static_cast<uint32_t>(texture_height), 1};
+
+    vkCmdCopyBufferToImage(copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+                           &buffer_image_region);
+
+    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    copy_command_buffer.end_recording_and_submit_command();
+
+    create_texture_image_view();
+
+    create_texture_sampler();
 
     // We can discard the texture data since we copied it already to GPU memory.
     stbi_image_free(texture_data);
