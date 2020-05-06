@@ -17,7 +17,7 @@ Texture::Texture(Texture &&other) noexcept
 
 // TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
-                 const std::size_t texture_size, std::string &name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
+                 const std::size_t texture_size, std::string name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
     StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
@@ -81,7 +81,7 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     create_texture_sampler();
 }
 
-Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string &name,
+Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string name,
                  const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue),
       data_transfer_queue_family_index(data_transfer_queue_family_index), vma_allocator(vma_allocator),

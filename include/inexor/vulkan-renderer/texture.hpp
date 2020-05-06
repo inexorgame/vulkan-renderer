@@ -73,7 +73,7 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string &name,
+    Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string name,
             const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
 
     /// @brief Creates a texture from memory.
@@ -86,7 +86,7 @@ public:
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
     Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data, const std::size_t texture_size,
-            std::string &name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
+            std::string name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
 
     ~Texture();
 
