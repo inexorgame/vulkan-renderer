@@ -110,8 +110,9 @@ VkResult Application::load_textures() {
     for (const auto &texture_file : texture_files) {
 
         // Insert the new texture into the list of textures.
-        // TODO: Fix this!
-        textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, std::string("unnamed texture"), gpu_queue_manager->get_data_transfer_queue());
+        std::string texture_name = "unnamed texture";
+
+        textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value());
     }
 
     return VK_SUCCESS;

@@ -37,8 +37,6 @@ private:
     // Call thread_pool->execute(); to order new tasks to be worked on.
     std::shared_ptr<ThreadPool> thread_pool;
 
-    std::vector<std::shared_ptr<Texture>> textures;
-
     std::size_t current_frame = 0;
 
     // TODO: Refactor into a manger class.
