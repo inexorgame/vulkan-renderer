@@ -3,7 +3,7 @@
 namespace inexor::vulkan_renderer {
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
-    : device(other.device), command_pool(other.command_pool),
+    : device(other.device), command_pool(std::exchange(other.command_pool, nullptr)),
       command_buffer(other.command_buffer), data_transfer_queue(other.data_transfer_queue),
       data_transfer_queue_family_index(other.data_transfer_queue_family_index), recording_started(other.recording_started) {}
 
@@ -40,8 +40,6 @@ OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_t
 }
 
 OnceCommandBuffer::~OnceCommandBuffer() {
-    assert(device);
-    assert(command_pool);
     vkDestroyCommandPool(device, command_pool, nullptr);
 }
 
