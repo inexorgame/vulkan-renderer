@@ -1805,6 +1805,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
 
     // TODO(yeetari): Remove once this class is RAII-ified
     shaders.clear();
+    textures.clear();
+    uniform_buffers.clear();
 
     cleanup_swapchain();
 
