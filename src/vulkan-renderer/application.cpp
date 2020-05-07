@@ -107,12 +107,12 @@ VkResult Application::load_textures() {
     // TODO: Refactor! use key from TOML file as name!
     std::size_t texture_number = 1;
 
+    // Insert the new texture into the list of textures.
+    std::string texture_name = "unnamed texture";
+
     for (const auto &texture_file : texture_files) {
-
-        // Insert the new texture into the list of textures.
-        std::string texture_name = "unnamed texture";
-
-        textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value());
+        textures.push_back(Texture(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_data_transfer_queue(),
+                                   gpu_queue_manager->get_data_transfer_queue_family_index().value()));
     }
 
     return VK_SUCCESS;
@@ -281,8 +281,9 @@ VkResult Application::load_octree_geometry() {
     }
 
     // Create a mesh buffer for octree vertex geometry.
-    octree_mesh = std::make_shared<MeshBuffer>(device, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value(),
-                                               vma_allocator, std::string("octree mesh"), sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
+    octree_mesh =
+        std::make_shared<MeshBuffer>(device, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value(),
+                                     vma_allocator, std::string("octree mesh"), sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }

@@ -3,8 +3,8 @@
 namespace inexor::vulkan_renderer {
 
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
-    : GPUMemoryBuffer(std::move(other)), data_transfer_queue(std::exchange(other.data_transfer_queue, nullptr)),
-      command_buffer(std::exchange(other.command_buffer, nullptr)) {}
+    : data_transfer_queue(std::move(other.data_transfer_queue)), command_buffer(std::exchange(other.command_buffer, nullptr)),
+      GPUMemoryBuffer(std::move(other)) {}
 
 StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkCommandBuffer command_buffer, const VkQueue data_transfer_queue,
                              const std::uint32_t data_transfer_queueu_family_index, std::string &name, const VkDeviceSize buffer_size, void *data,

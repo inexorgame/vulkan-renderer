@@ -4,7 +4,7 @@ namespace inexor::vulkan_renderer {
 
 GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
     : name(std::move(name)), device(std::exchange(other.device, nullptr)), buffer(std::exchange(other.buffer, nullptr)),
-      allocation(std::move(other.allocation)), allocation_info(std::move(other.allocation_info)), create_info(std::move(other.create_info)),
+      allocation(std::exchange(other.allocation, nullptr)), allocation_info(std::move(other.allocation_info)), create_info(std::move(other.create_info)),
       allocation_create_info(std::move(other.allocation_create_info)) {}
 
 GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, std::string &name, const VkDeviceSize &size,
