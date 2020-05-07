@@ -31,7 +31,7 @@ public:
     /// @param size [in] The size of the buffer in bytes.
     /// @param buffer_usage [in] The Vulkan buffer usage flags.
     /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
-    UniformBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, std::string &name, const VkDeviceSize &size);
+    UniformBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, std::string name, const VkDeviceSize &size);
 
     /// @brief Updates the data of a uniform buffer.
     void update(void *data, const std::size_t size);

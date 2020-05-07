@@ -76,7 +76,7 @@ public:
         return allocation_create_info;
     }
 
-    ~GPUMemoryBuffer();
+    virtual ~GPUMemoryBuffer();
 };
 
 } // namespace inexor::vulkan_renderer

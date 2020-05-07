@@ -13,7 +13,7 @@ Texture::Texture(Texture &&other) noexcept
       texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(other.device),
       graphics_card(other.graphics_card), data_transfer_queue(other.data_transfer_queue),
       vma_allocator(other.vma_allocator), allocation(other.allocation), allocation_info(other.allocation_info),
-      image(other.image), sampler(other.sampler), texture_image_format(other.texture_image_format),
+      image(std::exchange(other.image, nullptr)), sampler(std::exchange(other.sampler, nullptr)), texture_image_format(other.texture_image_format),
       copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
 // TODO: Remove unnecessary parameters!
