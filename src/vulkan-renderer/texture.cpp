@@ -10,11 +10,10 @@ namespace inexor::vulkan_renderer {
 
 Texture::Texture(Texture &&other) noexcept
     : name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height),
-      texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(other.device),
-      graphics_card(other.graphics_card), data_transfer_queue(other.data_transfer_queue),
-      vma_allocator(other.vma_allocator), allocation(std::exchange(other.allocation, nullptr)), allocation_info(other.allocation_info),
-      image(std::exchange(other.image, nullptr)), sampler(std::exchange(other.sampler, nullptr)), texture_image_format(other.texture_image_format),
-      copy_command_buffer(std::move(other.copy_command_buffer)) {}
+      texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(other.device), graphics_card(other.graphics_card),
+      data_transfer_queue(other.data_transfer_queue), vma_allocator(other.vma_allocator), allocation(std::exchange(other.allocation, nullptr)),
+      allocation_info(other.allocation_info), image(std::exchange(other.image, nullptr)), sampler(std::exchange(other.sampler, nullptr)),
+      texture_image_format(other.texture_image_format), copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
 // TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
@@ -54,9 +53,9 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
         throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
     }
 
-    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
     copy_command_buffer.start_recording();
+
+    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region = {};
 
@@ -146,9 +145,9 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
         throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
     }
 
-    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
     copy_command_buffer.start_recording();
+
+    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region = {};
 
