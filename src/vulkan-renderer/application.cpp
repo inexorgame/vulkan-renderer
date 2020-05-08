@@ -654,9 +654,8 @@ VkResult Application::update_uniform_buffers(const std::size_t current_image) {
     ubo.proj = game_camera.matrices.perspective;
     ubo.proj[1][1] *= -1;
 
-    // TODO!
-    // Update the world matrices!
-    // ..
+    // TODO: Don't use vector of uniform buffers.
+    uniform_buffers[0].update(&ubo, sizeof(ubo));
 
     return VK_SUCCESS;
 }
