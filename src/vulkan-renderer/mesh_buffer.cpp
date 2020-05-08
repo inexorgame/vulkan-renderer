@@ -57,7 +57,8 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are created!.
     : vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      index_buffer(std::nullopt), copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
+      index_buffer(std::nullopt), copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index), number_of_vertices(number_of_vertices),
+      number_of_indices(number_of_indices) {
     assert(device);
     assert(vma_allocator);
     assert(!name.empty());
