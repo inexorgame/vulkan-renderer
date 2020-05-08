@@ -111,8 +111,8 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : texture_files) {
-        textures.push_back(Texture(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_data_transfer_queue(),
-                                   gpu_queue_manager->get_data_transfer_queue_family_index().value()));
+        textures.push_back(Texture(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_graphics_queue(),
+                                   gpu_queue_manager->get_graphics_family_index().value()));
     }
 
     return VK_SUCCESS;
@@ -256,9 +256,7 @@ VkResult Application::load_octree_geometry() {
     world::Cube cube = world::Cube::parse(test);
     cube.make_reactive();
 
-    cube.on_change.connect([](world::Cube* c) {
-        spdlog::debug("THE WORLD (octree) HAS CHANGED!");
-    });
+    cube.on_change.connect([](world::Cube *c) { spdlog::debug("THE WORLD (octree) HAS CHANGED!"); });
 
     cube.octants.value()[6]->indentations.value()[4].set_z(4);
     cube.octants.value()[6]->indentations.value()[4] += {1, 1, -3};
@@ -280,10 +278,12 @@ VkResult Application::load_octree_geometry() {
         }
     }
 
+    const std::string octree_mesh_name = "unnamed octree";
+
     // Create a mesh buffer for octree vertex geometry.
     octree_mesh =
         std::make_shared<MeshBuffer>(device, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value(),
-                                     vma_allocator, std::string("octree mesh"), sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
+                                     vma_allocator, octree_mesh_name, sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }
