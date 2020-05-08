@@ -22,7 +22,6 @@ add_library(
     vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/shader.cpp
-    vulkan-renderer/single_time_command_buffer.cpp
     vulkan-renderer/staging_buffer.cpp
     vulkan-renderer/texture.cpp
     vulkan-renderer/thread_pool.cpp
