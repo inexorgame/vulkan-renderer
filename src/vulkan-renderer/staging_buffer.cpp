@@ -17,7 +17,7 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
 
     vertex_buffer_copy.srcOffset = 0;
     vertex_buffer_copy.dstOffset = 0;
-    vertex_buffer_copy.size = allocation_info.size;
+    vertex_buffer_copy.size = create_info.size;
 
     VkCommandBufferBeginInfo buffer_copy_begin_info = {};
 
