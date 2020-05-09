@@ -281,9 +281,8 @@ VkResult Application::load_octree_geometry() {
     const std::string octree_mesh_name = "unnamed octree";
 
     // Create a mesh buffer for octree vertex geometry.
-    octree_mesh =
-        std::make_shared<MeshBuffer>(device, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value(),
-                                     vma_allocator, octree_mesh_name, sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
+    mesh_buffers.emplace_back(device, gpu_queue_manager->get_data_transfer_queue(), gpu_queue_manager->get_data_transfer_queue_family_index().value(),
+                              vma_allocator, octree_mesh_name, sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }

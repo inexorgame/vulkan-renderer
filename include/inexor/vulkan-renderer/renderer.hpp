@@ -172,14 +172,12 @@ protected:
 
     std::shared_ptr<DescriptorBundle> global_descriptor;
 
-    std::shared_ptr<MeshBuffer> octree_mesh;
-
     Camera game_camera;
 
     std::vector<Shader> shaders;
     std::vector<Texture> textures;
     std::vector<UniformBuffer> uniform_buffers;
-
+    std::vector<MeshBuffer> mesh_buffers;
 
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.

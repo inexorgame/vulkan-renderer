@@ -287,8 +287,7 @@ VkResult VulkanRenderer::create_command_pool() {
     return VK_SUCCESS;
 }
 
-VkResult VulkanRenderer::create_uniform_buffers()
-{
+VkResult VulkanRenderer::create_uniform_buffers() {
     uniform_buffers.emplace_back(device, vma_allocator, std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
 
     return VK_SUCCESS;
@@ -524,11 +523,11 @@ VkResult VulkanRenderer::record_command_buffers() {
             vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, global_descriptor->descriptor_sets.data(), 0,
                                     nullptr);
 
-            VkBuffer vertexBuffers[] = {octree_mesh->get_vertex_buffer()};
+            VkBuffer vertexBuffers[] = {mesh_buffers[0].get_vertex_buffer()};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
 
-            vkCmdDraw(command_buffers[i], octree_mesh->get_vertex_count(), 1, 0, 0);
+            vkCmdDraw(command_buffers[i], mesh_buffers[0].get_vertex_count(), 1, 0, 0);
 
             // TODO: This does not specify the order of rendering!
             // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
@@ -1807,6 +1806,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     shaders.clear();
     textures.clear();
     uniform_buffers.clear();
+    mesh_buffers.clear();
 
     cleanup_swapchain();
 
