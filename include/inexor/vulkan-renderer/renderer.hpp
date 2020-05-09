@@ -44,22 +44,6 @@ namespace inexor::vulkan_renderer {
 constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3;
 
 class VulkanRenderer {
-public:
-    VulkanRenderer() = default;
-
-    ~VulkanRenderer() = default;
-
-public:
-    // Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
-    // it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
-    bool frame_buffer_resized = false;
-
-    /// Neccesary for taking into account the relative speed of the system's CPU.
-    float time_passed = 0.0f;
-
-    //
-    TimeStep stopwatch;
-
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
@@ -179,11 +163,9 @@ protected:
     std::vector<UniformBuffer> uniform_buffers;
     std::vector<MeshBuffer> mesh_buffers;
 
-public:
-    /// @brief Run Vulkan memory allocator's memory statistics.
-    VkResult calculate_memory_budget();
+    // TODO(Hanni): Remove this with RAII refactoring of descriptors!
+    VkDescriptorImageInfo descriptor_image_info = {};
 
-protected:
     /// @brief Creates a Vulkan instance.
     /// @param application_name The name of the application
     /// @param engine_name The name of the engine.
@@ -259,6 +241,24 @@ protected:
 
     /// @brief Destroys all Vulkan objects.
     VkResult shutdown_vulkan();
+
+public:
+    VulkanRenderer() = default;
+
+    ~VulkanRenderer() = default;
+
+    /// @brief Run Vulkan memory allocator's memory statistics.
+    VkResult calculate_memory_budget();
+
+    // Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
+    // it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
+    bool frame_buffer_resized = false;
+
+    /// Neccesary for taking into account the relative speed of the system's CPU.
+    float time_passed = 0.0f;
+
+    //
+    TimeStep stopwatch;
 };
 
 } // namespace inexor::vulkan_renderer

@@ -3,12 +3,15 @@
 namespace inexor::vulkan_renderer {
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
-    : device(other.device), command_pool(std::exchange(other.command_pool, nullptr)),
-      command_buffer(other.command_buffer), data_transfer_queue(other.data_transfer_queue),
-      data_transfer_queue_family_index(other.data_transfer_queue_family_index), recording_started(other.recording_started) {}
+    : device(other.device), command_pool(std::exchange(other.command_pool, nullptr)), command_buffer(std::exchange(other.command_buffer, nullptr)),
+      data_transfer_queue(other.data_transfer_queue), data_transfer_queue_family_index(other.data_transfer_queue_family_index),
+      recording_started(other.recording_started), command_buffer_created(other.command_buffer_created) {}
 
 OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : device(device), data_transfer_queue(data_transfer_queue), data_transfer_queue_family_index(data_transfer_queue_family_index) {
+
+    assert(device);
+    assert(data_transfer_queue);
 
     spdlog::debug("Creating command pool for rendering.");
 
@@ -22,6 +25,26 @@ OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_t
     if (vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateCommandPool failed for once command buffer!");
     }
+}
+
+OnceCommandBuffer::~OnceCommandBuffer() {
+    assert(device);
+
+    // TODO(Hanni): Is there no other way to do this?
+    // We are using the move constructor, so command_pool will be std::exchanged
+    // but it is also required in the destructor here.
+    vkDestroyCommandPool(device, command_pool, nullptr);
+
+    command_buffer_created = false;
+    recording_started = false;
+}
+
+void OnceCommandBuffer::create_command_buffer() {
+    assert(device);
+    assert(command_pool);
+    assert(data_transfer_queue);
+    assert(!recording_started);
+    assert(!command_buffer_created);
 
     // TODO: Rename all "allocation_info" variables in the engine to "alloc_info".
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {};
@@ -37,17 +60,15 @@ OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_t
     }
 
     // TODO: Set object name using Vulkan debug markers.
-}
 
-OnceCommandBuffer::~OnceCommandBuffer() {
-    vkDestroyCommandPool(device, command_pool, nullptr);
+    command_buffer_created = true;
 }
 
 void OnceCommandBuffer::start_recording() {
     assert(device);
     assert(command_pool);
-    assert(command_buffer);
     assert(data_transfer_queue);
+    assert(command_buffer_created);
     assert(!recording_started);
 
     spdlog::debug("Starting recording of once command buffer.");
@@ -75,6 +96,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     assert(command_pool);
     assert(command_buffer);
     assert(data_transfer_queue);
+    assert(command_buffer_created);
     assert(recording_started);
 
     spdlog::debug("Ending recording of once command buffer.");
@@ -106,6 +128,8 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
 
     // Because we destroy the command buffer after submission, we have to allocate it every time.
     vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
+
+    command_buffer_created = false;
 
     recording_started = false;
 }

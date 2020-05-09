@@ -1,8 +1,6 @@
 #include "inexor/vulkan-renderer/texture.hpp"
 
 // stb single-file public domain libraries for C/C++
-// https://github.com/nothings/stb
-// License: Public Domain
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -12,77 +10,21 @@ Texture::Texture(Texture &&other) noexcept
     : name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height),
       texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(other.device), graphics_card(other.graphics_card),
       data_transfer_queue(other.data_transfer_queue), vma_allocator(other.vma_allocator), allocation(std::exchange(other.allocation, nullptr)),
-      allocation_info(other.allocation_info), image(std::exchange(other.image, nullptr)), sampler(std::exchange(other.sampler, nullptr)),
-      texture_image_format(other.texture_image_format), copy_command_buffer(std::move(other.copy_command_buffer)) {}
+      allocation_info(other.allocation_info), image(std::exchange(other.image, nullptr)), image_view(std::exchange(other.image_view, nullptr)),
+      sampler(std::exchange(other.sampler, nullptr)), texture_image_format(other.texture_image_format),
+      copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
-// TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
-                 const std::size_t texture_size, std::string name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
+                 const std::size_t texture_size, const std::string &name, const VkQueue data_transfer_queue,
+                 const std::uint32_t data_transfer_queue_family_index)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
-    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
-                                         name, texture_size, texture_data, texture_size);
 
-    VkImageCreateInfo image_create_info = {};
-
-    image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    image_create_info.extent.width = texture_width;
-    image_create_info.extent.height = texture_height;
-    image_create_info.extent.depth = 1;
-    image_create_info.mipLevels = 1;
-    image_create_info.arrayLayers = 1;
-    image_create_info.format = texture_image_format;
-    image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VmaAllocationCreateInfo allocation_create_info = {};
-    allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    // TODO: Check if other memory flags are necessary, especially for the case of VMA_RECORDING_ENABLED not being defined!
-
-#if VMA_RECORDING_ENABLED
-    allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    allocation_create_info.pUserData = name.data();
-#endif
-
-    if (vmaCreateImage(vma_allocator, &image_create_info, &allocation_create_info, &image, &allocation, &allocation_info) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
-    }
-
-    copy_command_buffer.start_recording();
-
-    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-    VkBufferImageCopy buffer_image_region = {};
-
-    buffer_image_region.bufferOffset = 0;
-    buffer_image_region.bufferRowLength = 0;
-    buffer_image_region.bufferImageHeight = 0;
-    buffer_image_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    buffer_image_region.imageSubresource.mipLevel = 0;
-    buffer_image_region.imageSubresource.baseArrayLayer = 0;
-    buffer_image_region.imageSubresource.layerCount = 1;
-    buffer_image_region.imageOffset = {0, 0, 0};
-    buffer_image_region.imageExtent = {static_cast<uint32_t>(texture_width), static_cast<uint32_t>(texture_height), 1};
-
-    vkCmdCopyBufferToImage(copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-                           &buffer_image_region);
-
-    copy_command_buffer.end_recording_and_submit_command();
-
-    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    create_texture_image_view();
-
-    create_texture_sampler();
+    create_texture(texture_data, texture_size);
 }
 
-Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name, std::string name,
-                 const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
+Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const std::string &file_name,
+                 const std::string &name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue),
       data_transfer_queue_family_index(data_transfer_queue_family_index), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
@@ -108,12 +50,20 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     // We need 4 times the size since we have 4 channels: red, green, blue and alpha channel.
     VkDeviceSize texture_memory_size = 4 * texture_width * texture_height;
 
+    create_texture(texture_data, texture_memory_size);
+
+    // We can discard the texture data since we copied it already to GPU memory.
+    stbi_image_free(texture_data);
+}
+
+void Texture::create_texture(void *texture_data, const std::size_t texture_size) {
+
     // For now, we will not generate mip-maps automatically.
     // TODO: Generate mip-maps automatically!
     mip_levels = 1;
 
-    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
-                                         name, texture_memory_size, texture_data, texture_memory_size);
+    StagingBuffer texture_staging_buffer(device, vma_allocator, data_transfer_queue, data_transfer_queue_family_index, name, texture_size, texture_data,
+                                         texture_size);
 
     VkImageCreateInfo image_create_info = {};
 
@@ -138,12 +88,14 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
 
 #if VMA_RECORDING_ENABLED
     allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    allocation_create_info.pUserData = name.data();
+    allocation_create_info.pUserData = this->name.data();
 #endif
 
     if (vmaCreateImage(vma_allocator, &image_create_info, &allocation_create_info, &image, &allocation, &allocation_info) != VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
     }
+
+    copy_command_buffer.create_command_buffer();
 
     copy_command_buffer.start_recording();
 
@@ -171,9 +123,6 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     create_texture_image_view();
 
     create_texture_sampler();
-
-    // We can discard the texture data since we copied it already to GPU memory.
-    stbi_image_free(texture_data);
 }
 
 void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout) {
@@ -213,7 +162,15 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 
     spdlog::debug("Recording pipeline barrier for image layer transition");
 
-    vkCmdPipelineBarrier(copy_command_buffer.get_command_buffer(), source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    OnceCommandBuffer command_buffer_for_image_transition(device, data_transfer_queue, data_transfer_queue_family_index);
+
+    command_buffer_for_image_transition.create_command_buffer();
+
+    command_buffer_for_image_transition.start_recording();
+
+    vkCmdPipelineBarrier(command_buffer_for_image_transition.get_command_buffer(), source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+    command_buffer_for_image_transition.end_recording_and_submit_command();
 }
 
 void Texture::create_texture_image_view() {

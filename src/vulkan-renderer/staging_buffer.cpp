@@ -3,14 +3,14 @@
 namespace inexor::vulkan_renderer {
 
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
-    : data_transfer_queue(std::move(other.data_transfer_queue)), command_buffer(std::exchange(other.command_buffer, nullptr)),
+    : data_transfer_queue(std::move(other.data_transfer_queue)), command_buffer_for_copying(std::move(other.command_buffer_for_copying)),
       GPUMemoryBuffer(std::move(other)) {}
 
-StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkCommandBuffer command_buffer, const VkQueue data_transfer_queue,
-                             const std::uint32_t data_transfer_queueu_family_index, std::string &name, const VkDeviceSize buffer_size, void *data,
+StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkQueue data_transfer_queue,
+                             const std::uint32_t data_transfer_queueu_family_index, const std::string &name, const VkDeviceSize buffer_size, void *data,
                              const std::size_t data_size)
     : GPUMemoryBuffer(device, vma_allocator, name, buffer_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      data_transfer_queue(data_transfer_queue), command_buffer(command_buffer) {}
+      data_transfer_queue(data_transfer_queue), command_buffer_for_copying(device, data_transfer_queue, data_transfer_queueu_family_index) {}
 
 void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
     VkBufferCopy vertex_buffer_copy = {};
@@ -31,40 +31,19 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
 
     spdlog::debug("Beginning command buffer recording for copy of staging buffer for vertices.");
 
-    if (vkBeginCommandBuffer(command_buffer, &buffer_copy_begin_info) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkBeginCommandBuffer failed for staging buffer of vertices of " + name + " !");
-    }
+    command_buffer_for_copying.create_command_buffer();
+
+    command_buffer_for_copying.start_recording();
 
     spdlog::debug("Specifying vertex buffer copy operation in command buffer.");
 
-    vkCmdCopyBuffer(command_buffer, buffer, target_buffer.get_buffer(), 1, &vertex_buffer_copy);
-
-    spdlog::debug("Ending command buffer recording for staging buffer copy.");
-
-    if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEndCommandBuffer failed for mesh buffer " + name + " !");
-    }
-
-    VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
-
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
-
-    if (vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkQueueSubmit failed for mesh buffer " + name + " !");
-    }
-
-    if (vkQueueWaitIdle(data_transfer_queue) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkQueueWaitIdle failed for mesh buffer " + name + " !");
-    }
+    vkCmdCopyBuffer(command_buffer_for_copying.get_command_buffer(), buffer, target_buffer.get_buffer(), 1, &vertex_buffer_copy);
 
     spdlog::debug("Finished uploading mesh data to graphics card memory.");
 
-    // No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
-}
+    command_buffer_for_copying.end_recording_and_submit_command();
 
-StagingBuffer::~StagingBuffer() {
-    // The staging buffer will be destroyed automatically when GPUMemoryBuffer's destructor is called.
+    // No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
 }
 
 } // namespace inexor::vulkan_renderer
