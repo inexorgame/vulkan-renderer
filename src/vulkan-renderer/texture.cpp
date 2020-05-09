@@ -12,16 +12,17 @@ Texture::Texture(Texture &&other) noexcept
     : name(std::move(other.name)), file_name(std::move(other.file_name)), texture_width(other.texture_width), texture_height(other.texture_height),
       texture_channels(other.texture_channels), mip_levels(other.mip_levels), device(other.device), graphics_card(other.graphics_card),
       data_transfer_queue(other.data_transfer_queue), vma_allocator(other.vma_allocator), allocation(std::exchange(other.allocation, nullptr)),
-      allocation_info(other.allocation_info), image(std::exchange(other.image, nullptr)), sampler(std::exchange(other.sampler, nullptr)),
-      texture_image_format(other.texture_image_format), copy_command_buffer(std::move(other.copy_command_buffer)) {}
+      allocation_info(other.allocation_info), image(std::exchange(other.image, nullptr)), image_view(std::exchange(other.image_view, nullptr)),
+      sampler(std::exchange(other.sampler, nullptr)), texture_image_format(other.texture_image_format),
+      copy_command_buffer(std::move(other.copy_command_buffer)) {}
 
 // TODO: Remove unnecessary parameters!
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, void *texture_data,
                  const std::size_t texture_size, std::string name, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : name(name), file_name(file_name), device(device), graphics_card(graphics_card), data_transfer_queue(data_transfer_queue), vma_allocator(vma_allocator),
       copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
-    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
-                                         name, texture_size, texture_data, texture_size);
+    StagingBuffer texture_staging_buffer(device, vma_allocator, data_transfer_queue, data_transfer_queue_family_index, name, texture_size, texture_data,
+                                         texture_size);
 
     VkImageCreateInfo image_create_info = {};
 
@@ -53,6 +54,8 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
         throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
     }
 
+    copy_command_buffer.create_command_buffer();
+
     copy_command_buffer.start_recording();
 
     transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -72,9 +75,9 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     vkCmdCopyBufferToImage(copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                            &buffer_image_region);
 
-    copy_command_buffer.end_recording_and_submit_command();
-
     transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    copy_command_buffer.end_recording_and_submit_command();
 
     create_texture_image_view();
 
@@ -112,9 +115,6 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     // TODO: Generate mip-maps automatically!
     mip_levels = 1;
 
-    StagingBuffer texture_staging_buffer(device, vma_allocator, copy_command_buffer.get_command_buffer(), data_transfer_queue, data_transfer_queue_family_index,
-                                         name, texture_memory_size, texture_data, texture_memory_size);
-
     VkImageCreateInfo image_create_info = {};
 
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -145,8 +145,6 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
         throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
     }
 
-    copy_command_buffer.start_recording();
-
     transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region = {};
@@ -161,12 +159,19 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
     buffer_image_region.imageOffset = {0, 0, 0};
     buffer_image_region.imageExtent = {static_cast<uint32_t>(texture_width), static_cast<uint32_t>(texture_height), 1};
 
+    copy_command_buffer.create_command_buffer();
+
+    StagingBuffer texture_staging_buffer(device, vma_allocator, data_transfer_queue, data_transfer_queue_family_index, name, texture_memory_size, texture_data,
+                                         texture_memory_size);
+
+    copy_command_buffer.start_recording();
+
     vkCmdCopyBufferToImage(copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                            &buffer_image_region);
 
-    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
     copy_command_buffer.end_recording_and_submit_command();
+
+    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     create_texture_image_view();
 
@@ -213,7 +218,15 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 
     spdlog::debug("Recording pipeline barrier for image layer transition");
 
-    vkCmdPipelineBarrier(copy_command_buffer.get_command_buffer(), source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    OnceCommandBuffer command_buffer_for_image_transition(device, data_transfer_queue, data_transfer_queue_family_index);
+
+    command_buffer_for_image_transition.create_command_buffer();
+
+    command_buffer_for_image_transition.start_recording();
+
+    vkCmdPipelineBarrier(command_buffer_for_image_transition.get_command_buffer(), source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+    command_buffer_for_image_transition.end_recording_and_submit_command();
 }
 
 void Texture::create_texture_image_view() {

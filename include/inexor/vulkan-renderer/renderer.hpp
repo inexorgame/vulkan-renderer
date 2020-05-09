@@ -179,6 +179,9 @@ protected:
     std::vector<UniformBuffer> uniform_buffers;
     std::vector<MeshBuffer> mesh_buffers;
 
+    // TODO(Hanni): Remove this with RAII refactoring of descriptors!
+    VkDescriptorImageInfo descriptor_image_info = {};
+
 public:
     /// @brief Run Vulkan memory allocator's memory statistics.
     VkResult calculate_memory_budget();

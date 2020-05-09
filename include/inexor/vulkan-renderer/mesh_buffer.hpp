@@ -38,8 +38,6 @@ private:
     // Don't forget that index buffers are optional!
     bool index_buffer_available = false;
 
-    OnceCommandBuffer copy_command_buffer;
-
 public:
     // Delete the copy constructor so mesh buffers are move-only objects.
     MeshBuffer(const MeshBuffer &) = delete;
@@ -50,13 +48,13 @@ public:
     MeshBuffer &operator=(MeshBuffer &&) noexcept = default;
 
     /// @brief Creates a new vertex buffer and an associated index buffer.
-    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator, std::string name,
-               const VkDeviceSize size_of_vertex_structure, const std::uint32_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
-               const std::uint32_t number_of_indices, void *indices);
+    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
+               std::string name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices,
+               const VkDeviceSize size_of_index_structure, const std::size_t number_of_indices, void *indices);
 
     /// @brief Creates a vertex buffer without index buffer.
-    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator, std::string name,
-               const VkDeviceSize size_of_vertex_structure, const std::uint32_t number_of_vertices, void *vertices);
+    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
+               std::string name, const VkDeviceSize size_of_vertex_structure, const std::size_t number_of_vertices, void *vertices);
 
     VkBuffer get_vertex_buffer() const {
         return vertex_buffer.get_buffer();

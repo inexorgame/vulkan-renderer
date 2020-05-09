@@ -1036,10 +1036,13 @@ VkResult VulkanRenderer::recreate_swapchain() {
 VkResult VulkanRenderer::create_descriptor_pool() {
     std::vector<VkDescriptorPoolSize> pool_sizes = {};
 
-    pool_sizes.resize(1);
+    pool_sizes.resize(2);
 
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     pool_sizes[0].descriptorCount = number_of_images_in_swapchain;
+
+    pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
     // Create the descriptor pool first.
     VkResult result = descriptor_manager->create_descriptor_pool("global_descriptor_pool", pool_sizes, global_descriptor_pool);
@@ -1050,13 +1053,19 @@ VkResult VulkanRenderer::create_descriptor_pool() {
 
 VkResult VulkanRenderer::create_descriptor_set_layouts() {
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layouts;
-    descriptor_set_layouts.resize(1);
+    descriptor_set_layouts.resize(2);
 
     descriptor_set_layouts[0].binding = 0;
     descriptor_set_layouts[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor_set_layouts[0].descriptorCount = 1;
     descriptor_set_layouts[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     descriptor_set_layouts[0].pImmutableSamplers = nullptr;
+
+    descriptor_set_layouts[1].binding = 1;
+    descriptor_set_layouts[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor_set_layouts[1].descriptorCount = 1;
+    descriptor_set_layouts[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor_set_layouts[1].pImmutableSamplers = nullptr;
 
     VkResult result;
 
@@ -1072,11 +1081,12 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 }
 
 VkResult VulkanRenderer::create_descriptor_writes() {
-    std::array<VkWriteDescriptorSet, 1> descriptor_writes = {};
+    std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+
+    // Link the matrices uniform buffer to the descriptor set so the shader can access it.
 
     // We can do better than this, but therefore RAII refactoring needs to be done..
     uniform_buffer_info.buffer = uniform_buffers[0].get_buffer();
-
     uniform_buffer_info.offset = 0;
     uniform_buffer_info.range = sizeof(UniformBufferObject);
 
@@ -1089,6 +1099,22 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     descriptor_writes[0].pBufferInfo = &uniform_buffer_info;
 
     VkResult result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[0]);
+    vulkan_error_check(result);
+
+    // Link the texture to the descriptor set so the shader can access it.
+    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor_image_info.imageView = textures[0].get_image_view();
+    descriptor_image_info.sampler = textures[0].get_sampler();
+
+    descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_writes[1].dstSet = 0;
+    descriptor_writes[1].dstBinding = 1;
+    descriptor_writes[1].dstArrayElement = 0;
+    descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor_writes[1].descriptorCount = 1;
+    descriptor_writes[1].pImageInfo = &descriptor_image_info;
+
+    result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[1]);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
@@ -1802,13 +1828,13 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
+    cleanup_swapchain();
+
     // TODO(yeetari): Remove once this class is RAII-ified
     shaders.clear();
     textures.clear();
     uniform_buffers.clear();
     mesh_buffers.clear();
-
-    cleanup_swapchain();
 
     spdlog::debug("Destroying swapchain images.");
     if (swapchain_images.size() > 0) {
