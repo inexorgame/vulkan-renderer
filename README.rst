@@ -76,7 +76,12 @@ Releases
 Upcoming releases
 #################
 
-`Threadpool <https://en.wikipedia.org/wiki/Thread_pool>`__ demo (v0.1-alpha.3) (est. May 10th, 2020)
+imgui demo (v0.1-alpha.3) (est. May 17th, 2020)
+----------------------------------------------------------------------------
+
+- Add `imgui <https://github.com/ocornut/imgui>`__ support.
+
+threadpool / task system demo (v0.1-alpha.4) (date not set)
 ----------------------------------------------------------------------------------------------------
 
 - Implement ``-threads <N>`` command line argument.
@@ -93,10 +98,6 @@ Upcoming releases
 - Give threadpool tasks a name.
 - Use ``std::chrono`` to measure how long a task took to finish.
 
-`imgui <https://github.com/ocornut/imgui>`__ demo (0.4 alpha) (date not set)
-----------------------------------------------------------------------------
-
-- Add `imgui <https://github.com/ocornut/imgui>`__ support.
 
 How to build
 ############
