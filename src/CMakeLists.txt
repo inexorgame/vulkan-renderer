@@ -7,6 +7,7 @@ add_library(
     vulkan-renderer/camera.cpp
     vulkan-renderer/debug_callback.cpp
     vulkan-renderer/debug_marker_manager.cpp
+	vulkan-renderer/descriptor.cpp
     vulkan-renderer/descriptor_manager.cpp
     vulkan-renderer/descriptor_pool.cpp
     vulkan-renderer/error_handling.cpp
