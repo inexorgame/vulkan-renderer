@@ -111,7 +111,7 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : texture_files) {
-        textures.push_back(Texture(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_graphics_queue(),
+        textures.emplace_back(Texture(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_graphics_queue(),
                                    gpu_queue_manager->get_graphics_family_index().value()));
     }
 
