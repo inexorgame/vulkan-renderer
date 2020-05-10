@@ -1,7 +1,7 @@
 from conans import ConanFile, CMake
 
-class InexorConan(ConanFile):
 
+class InexorConan(ConanFile):
     settings = (
         "os",
         "compiler",
@@ -10,9 +10,7 @@ class InexorConan(ConanFile):
     )
 
     requires = (
-        "benchmark/1.5.0",
         "glm/0.9.9.7",
-        "gtest/1.10.0",
         "boost/1.72.0",
         "spdlog/1.5.0",
         "glfw/3.3.2@bincrafters/stable",
@@ -22,7 +20,22 @@ class InexorConan(ConanFile):
         "nlohmann_json/3.7.3",
     )
 
+    options = {
+        "build_benchmarks": [True, False],
+        "build_tests": [True, False],
+    }
+    default_options = {
+        "build_benchmarks": False,
+        "build_tests": False,
+    }
+
     generators = "cmake"
+
+    def requirements(self):
+        if self.options.build_benchmarks:
+            self.requires("benchmark/1.5.0")
+        if self.options.build_tests:
+            self.requires("gtest/1.10.0")
 
     def imports(self):
         # Copies all dll files from packages bin folder to my "bin" folder (win)
