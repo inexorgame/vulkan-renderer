@@ -3,7 +3,7 @@
 #include "availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/debug_marker_manager.hpp"
-#include "inexor/vulkan-renderer/descriptor_manager.hpp"
+#include "inexor/vulkan-renderer/descriptor.hpp"
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
@@ -53,10 +53,6 @@ protected:
     std::shared_ptr<VulkanSemaphoreManager> semaphore_manager = std::make_shared<VulkanSemaphoreManager>();
 
     std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
-
-    std::shared_ptr<DescriptorManager> descriptor_manager = std::make_shared<DescriptorManager>();
-
-    std::shared_ptr<DescriptorPool> global_descriptor_pool;
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
@@ -154,14 +150,13 @@ protected:
 
     bool vsync_enabled = false;
 
-    std::shared_ptr<DescriptorBundle> global_descriptor;
-
     Camera game_camera;
 
     std::vector<Shader> shaders;
     std::vector<Texture> textures;
     std::vector<UniformBuffer> uniform_buffers;
     std::vector<MeshBuffer> mesh_buffers;
+    std::vector<Descriptor> descriptors;
 
     // TODO(Hanni): Remove this with RAII refactoring of descriptors!
     VkDescriptorImageInfo descriptor_image_info = {};

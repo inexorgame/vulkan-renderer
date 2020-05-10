@@ -112,7 +112,7 @@ VkResult Application::load_textures() {
 
     for (const auto &texture_file : texture_files) {
         textures.emplace_back(device, selected_graphics_card, vma_allocator, texture_file, texture_name, gpu_queue_manager->get_graphics_queue(),
-                                   gpu_queue_manager->get_graphics_family_index().value());
+                              gpu_queue_manager->get_graphics_family_index().value());
     }
 
     return VK_SUCCESS;
@@ -577,13 +577,7 @@ VkResult Application::init() {
     result = load_shaders();
     vulkan_error_check(result);
 
-    result = descriptor_manager->init(device, number_of_images_in_swapchain, debug_marker_manager);
-    vulkan_error_check(result);
-
     result = create_descriptor_pool();
-    vulkan_error_check(result);
-
-    result = descriptor_manager->create_descriptor_bundle("inexor_global_descriptor_bundle", global_descriptor_pool, global_descriptor);
     vulkan_error_check(result);
 
     result = create_descriptor_set_layouts();
@@ -602,9 +596,6 @@ VkResult Application::init() {
     vulkan_error_check(result);
 
     result = create_descriptor_writes();
-    vulkan_error_check(result);
-
-    result = create_descriptor_sets();
     vulkan_error_check(result);
 
     result = create_command_buffers();

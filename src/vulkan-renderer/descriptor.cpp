@@ -2,16 +2,20 @@
 
 namespace inexor::vulkan_renderer {
 
-Descriptor::Descriptor(Descriptor &&other) noexcept : device(other.device) {}
+Descriptor::Descriptor(Descriptor &&other) noexcept
+    : name(std::move(other.name)), number_of_images_in_swapchain(other.number_of_images_in_swapchain), descriptor_sets(std::move(other.descriptor_sets)),
+      write_descriptor_sets(std::move(other.write_descriptor_sets)), descriptor_set_layout_bindings(std::move(other.descriptor_set_layout_bindings)),
+      descriptor_set_layout(std::exchange(other.descriptor_set_layout, nullptr)), descriptor_pool(std::exchange(other.descriptor_pool, nullptr)),
+      device(other.device) {}
 
-Descriptor::Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain, const std::string name)
+Descriptor::Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain, const std::string &name)
     : device(device), number_of_images_in_swapchain(number_of_images_in_swapchain), name(name) {}
 
 void Descriptor::create_descriptor_pool(const std::initializer_list<VkDescriptorType> descriptor_pool_types) {
     assert(device);
     assert(number_of_images_in_swapchain > 0);
 
-    std::vector<VkDescriptorPoolSize> pool_sizes(descriptor_pool_types.size());
+    std::vector<VkDescriptorPoolSize> pool_sizes;
 
     for (const auto &descriptor_pool_type : descriptor_pool_types) {
         VkDescriptorPoolSize new_descriptor_pool_entry;
@@ -124,12 +128,12 @@ void Descriptor::create_descriptor_sets() {
 
     // TODO: Assign name using debug makers!
 
-    for (std::size_t i = 0; i < number_of_images_in_swapchain; i++) {
-        spdlog::debug("Updating descriptor set '{}' #{}", name, i);
+    for (std::size_t k = 0; k < number_of_images_in_swapchain; k++) {
+        spdlog::debug("Updating descriptor set '{}' #{}", name, k);
 
         for (std::size_t j = 0; j < write_descriptor_sets.size(); j++) {
             write_descriptor_sets[j].dstBinding = static_cast<std::uint32_t>(j);
-            write_descriptor_sets[j].dstSet = descriptor_sets[i];
+            write_descriptor_sets[j].dstSet = descriptor_sets[k];
         }
 
         vkUpdateDescriptorSets(device, static_cast<std::uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);

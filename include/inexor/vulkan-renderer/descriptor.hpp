@@ -1,11 +1,11 @@
 #pragma once
 
+#include <cassert>
 #include <string>
 #include <vector>
-#include <cassert>
 
-#include "spdlog/spdlog.h"
-#include "vulkan/vulkan.h"
+#include <spdlog/spdlog.h>
+#include <vulkan/vulkan.h>
 
 namespace inexor::vulkan_renderer {
 
@@ -34,30 +34,29 @@ public:
 
     /// @param device [in] The Vulkan device.
     /// @param number_of_images_in_swapchain [in] The number of images in the swapchain, usually 3 (triple buffering).
-    Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain, const std::string name);
+    Descriptor(VkDevice device, std::uint32_t number_of_images_in_swapchain, const std::string &name);
 
     ~Descriptor();
 
-    /// @brief Creates a descriptor pool.
-    /// @param pool_types [in] An initializer list of types in the descriptor.
     void create_descriptor_pool(const std::initializer_list<VkDescriptorType> pool_types);
 
-    /// @param descriptor_set_layout_bindings [in] 
-    void create_descriptor_set_layouts(const std::vector<VkDescriptorSetLayoutBinding>& descriptor_set_layout_bindings);
+    void create_descriptor_set_layouts(const std::vector<VkDescriptorSetLayoutBinding> &descriptor_set_layout_bindings);
 
-    /// @brief
-    /// @param 
-    void add_descriptor_writes(const std::vector<VkWriteDescriptorSet>& descriptor_writes);
-    
-    /// 
-    /// 
+    void add_descriptor_writes(const std::vector<VkWriteDescriptorSet> &descriptor_writes);
+
     void create_descriptor_sets();
 
     /// @brief Resets descriptor.
     /// @note This will be called when swapchain needs to be recreated.
     void reset(const bool clear_descriptor_layout_bindings = false);
 
-    // TODO: Get methods here!
+    const auto get_descriptor_sets_data() const {
+        return descriptor_sets.data();
+    }
+
+    const auto get_descriptor_set_layout() const {
+        return descriptor_set_layout;
+    }
 };
 
 } // namespace inexor::vulkan_renderer
