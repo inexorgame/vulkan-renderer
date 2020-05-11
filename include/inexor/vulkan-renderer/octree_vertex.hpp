@@ -14,11 +14,11 @@ struct OctreeVertex {
     glm::vec3 color;
     glm::vec2 texture_coordinate;
 
-    static VkVertexInputBindingDescription get_vertex_binding_description();
+    [[nodiscard]] static VkVertexInputBindingDescription get_vertex_binding_description();
 
     /// @note You should use the format where the amount of color channels matches the number of components in the shader data type.
     /// It is allowed to use more channels than the number of components in the shader, but they will be silently discarded.
-    static std::array<VkVertexInputAttributeDescription, 3> get_attribute_binding_description();
+    [[nodiscard]] static std::array<VkVertexInputAttributeDescription, 3> get_attribute_binding_description();
 };
 
 } // namespace inexor::vulkan_renderer

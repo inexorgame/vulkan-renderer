@@ -83,7 +83,7 @@ public:
 
     void calculate_bezier_curve(const float curve_precision);
 
-    std::vector<BezierOutputPoint> get_output_points();
+    [[nodiscard]] std::vector<BezierOutputPoint> get_output_points();
 
     void clear_output();
 
@@ -91,7 +91,7 @@ public:
 
     void clear();
 
-    bool is_curve_generated();
+    [[nodiscard]] bool is_curve_generated();
 };
 
 } // namespace inexor::vulkan_renderer

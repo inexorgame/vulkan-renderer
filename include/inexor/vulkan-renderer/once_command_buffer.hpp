@@ -42,7 +42,7 @@ public:
 
     void end_recording_and_submit_command();
 
-    const VkCommandBuffer get_command_buffer() const {
+    [[nodiscard]] const VkCommandBuffer get_command_buffer() const {
         return command_buffer;
     }
 };

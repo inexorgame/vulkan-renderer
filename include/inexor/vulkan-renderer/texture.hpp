@@ -93,23 +93,23 @@ public:
 
     ~Texture();
 
-    const std::string &get_name() const {
+    [[nodiscard]] const std::string &get_name() const {
         return name;
     }
 
-    const std::string &get_file_name() const {
+    [[nodiscard]] const std::string &get_file_name() const {
         return file_name;
     }
 
-    const VkImage get_image() const {
+    [[nodiscard]] const VkImage get_image() const {
         return image;
     }
 
-    const VkImageView get_image_view() const {
+    [[nodiscard]] const VkImageView get_image_view() const {
         return image_view;
     }
 
-    const VkSampler get_sampler() const {
+    [[nodiscard]] const VkSampler get_sampler() const {
         return sampler;
     }
 };
