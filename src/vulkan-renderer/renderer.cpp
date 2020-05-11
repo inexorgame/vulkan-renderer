@@ -3,11 +3,6 @@
 // Vulkan Memory Allocator (VMA) library.
 #define VMA_IMPLEMENTATION
 
-// Disable warning C4005 (macro redefinition of VMA_RECORDING_ENABLED) in MS Visual Studio.
-#ifdef _MSC_VER
-#pragma warning(disable : 4005)
-#endif
-
 // It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
 // Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
 // Memory is automatically mapped and unmapped if necessary.
