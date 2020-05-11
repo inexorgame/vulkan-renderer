@@ -91,6 +91,8 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     allocation_create_info.pUserData = this->name.data();
 #endif
 
+    spdlog::debug("Creating image for texture {}.", name);
+
     if (vmaCreateImage(vma_allocator, &image_create_info, &allocation_create_info, &image, &allocation, &allocation_info) != VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateImage failed for texture " + name + " !");
     }
@@ -98,6 +100,8 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     copy_command_buffer.create_command_buffer();
 
     copy_command_buffer.start_recording();
+
+    spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", name);
 
     transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -115,10 +119,12 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
 
     vkCmdCopyBufferToImage(copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                            &buffer_image_region);
-
-    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                           
+    spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", name);
 
     copy_command_buffer.end_recording_and_submit_command();
+
+    transition_image_layout(image, texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     create_texture_image_view();
 
