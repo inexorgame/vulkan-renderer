@@ -7,21 +7,18 @@
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
-#include "inexor/vulkan-renderer/gltf-model/manager.hpp"
-#include "inexor/vulkan-renderer/gltf-model/vertex.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/gpu_queue_manager.hpp"
 #include "inexor/vulkan-renderer/image_buffer.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
-#include "inexor/vulkan-renderer/mesh_buffer_manager.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
-#include "inexor/vulkan-renderer/texture_manager.hpp"
+#include "inexor/vulkan-renderer/texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
-#include "inexor/vulkan-renderer/uniform_buffer_manager.hpp"
+#include "inexor/vulkan-renderer/uniform_buffer.hpp"
 
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
@@ -35,6 +32,7 @@
 #include <vma/vma_usage.h>
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -46,22 +44,6 @@ namespace inexor::vulkan_renderer {
 constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3;
 
 class VulkanRenderer {
-public:
-    VulkanRenderer() = default;
-
-    ~VulkanRenderer() = default;
-
-public:
-    // Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
-    // it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
-    bool frame_buffer_resized = false;
-
-    /// Neccesary for taking into account the relative speed of the system's CPU.
-    float time_passed = 0.0f;
-
-    //
-    TimeStep stopwatch;
-
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
@@ -78,15 +60,7 @@ protected:
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
-    std::shared_ptr<UniformBufferManager> uniform_buffer_manager = std::make_shared<UniformBufferManager>();
-
-    std::shared_ptr<VulkanTextureManager> texture_manager = std::make_shared<VulkanTextureManager>();
-
-    std::shared_ptr<MeshBufferManager> mesh_buffer_manager = std::make_shared<MeshBufferManager>();
-
     std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
-
-    std::shared_ptr<gltf_model::Manager> gltf_model_manager = std::make_shared<gltf_model::Manager>();
 
     std::shared_ptr<AvailabilityChecksManager> availability_checks_manager = std::make_shared<AvailabilityChecksManager>();
 
@@ -169,9 +143,6 @@ protected:
     // TODO: Refactor this!
     VkDescriptorBufferInfo uniform_buffer_info = {};
     VkDescriptorImageInfo image_info = {};
-
-    std::shared_ptr<UniformBuffer> matrices;
-
     VkPipelineCache pipeline_cache;
 
     // TODO: Read from TOML configuration file and pass value to core engine.
@@ -185,17 +156,16 @@ protected:
 
     std::shared_ptr<DescriptorBundle> global_descriptor;
 
-    std::shared_ptr<MeshBuffer> octree_mesh;
-
     Camera game_camera;
 
     std::vector<Shader> shaders;
+    std::vector<Texture> textures;
+    std::vector<UniformBuffer> uniform_buffers;
+    std::vector<MeshBuffer> mesh_buffers;
 
-public:
-    /// @brief Run Vulkan memory allocator's memory statistics.
-    VkResult calculate_memory_budget();
+    // TODO(Hanni): Remove this with RAII refactoring of descriptors!
+    VkDescriptorImageInfo descriptor_image_info = {};
 
-protected:
     /// @brief Creates a Vulkan instance.
     /// @param application_name The name of the application
     /// @param engine_name The name of the engine.
@@ -271,6 +241,24 @@ protected:
 
     /// @brief Destroys all Vulkan objects.
     VkResult shutdown_vulkan();
+
+public:
+    VulkanRenderer() = default;
+
+    ~VulkanRenderer() = default;
+
+    /// @brief Run Vulkan memory allocator's memory statistics.
+    VkResult calculate_memory_budget();
+
+    // Although many drivers and platforms trigger VK_ERROR_OUT_OF_DATE_KHR automatically after a window resize,
+    // it is not guaranteed to happen. That’s why we’ll add some extra code to also handle resizes explicitly.
+    bool frame_buffer_resized = false;
+
+    /// Neccesary for taking into account the relative speed of the system's CPU.
+    float time_passed = 0.0f;
+
+    //
+    TimeStep stopwatch;
 };
 
 } // namespace inexor::vulkan_renderer

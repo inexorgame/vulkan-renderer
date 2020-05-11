@@ -13,26 +13,20 @@ add_library(
     vulkan-renderer/fence_manager.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
+    vulkan-renderer/gpu_memory_buffer.cpp
     vulkan-renderer/gpu_queue_manager.cpp
-    vulkan-renderer/mesh_buffer_manager.cpp
+    vulkan-renderer/mesh_buffer.cpp
     vulkan-renderer/octree_vertex.cpp
+    vulkan-renderer/once_command_buffer.cpp
     vulkan-renderer/renderer.cpp
     vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/shader.cpp
-    vulkan-renderer/single_time_command_buffer.cpp
+    vulkan-renderer/staging_buffer.cpp
     vulkan-renderer/texture.cpp
-    vulkan-renderer/texture_manager.cpp
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
-    vulkan-renderer/uniform_buffer_manager.cpp
-
-    vulkan-renderer/gltf-model/bounding_box.cpp
-    vulkan-renderer/gltf-model/manager.cpp
-    vulkan-renderer/gltf-model/mesh.cpp
-    vulkan-renderer/gltf-model/node.cpp
-    vulkan-renderer/gltf-model/primitive.cpp
-    vulkan-renderer/gltf-model/vertex.cpp
+    vulkan-renderer/uniform_buffer.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp

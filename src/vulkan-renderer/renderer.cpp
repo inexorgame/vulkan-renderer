@@ -20,8 +20,6 @@
 #define VMA_DEBUG_DETECT_CORRUPTION 1
 
 // Vulkan Memory Allocator library.
-// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-// License: MIT.
 #include <vma/vk_mem_alloc.h>
 
 namespace inexor::vulkan_renderer {
@@ -287,6 +285,12 @@ VkResult VulkanRenderer::create_command_pool() {
     return VK_SUCCESS;
 }
 
+VkResult VulkanRenderer::create_uniform_buffers() {
+    uniform_buffers.emplace_back(device, vma_allocator, std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
+
+    return VK_SUCCESS;
+}
+
 VkResult VulkanRenderer::create_depth_buffer() {
     VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 
@@ -517,11 +521,11 @@ VkResult VulkanRenderer::record_command_buffers() {
             vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, global_descriptor->descriptor_sets.data(), 0,
                                     nullptr);
 
-            VkBuffer vertexBuffers[] = {octree_mesh->vertex_buffer.buffer};
+            VkBuffer vertexBuffers[] = {mesh_buffers[0].get_vertex_buffer()};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
 
-            vkCmdDraw(command_buffers[i], octree_mesh->number_of_vertices, 1, 0, 0);
+            vkCmdDraw(command_buffers[i], mesh_buffers[0].get_vertex_count(), 1, 0, 0);
 
             // TODO: This does not specify the order of rendering!
             // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
@@ -883,10 +887,6 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         swapchain = VK_NULL_HANDLE;
     }
 
-    spdlog::debug("Destroying uniform buffers.");
-
-    uniform_buffer_manager->shutdown_uniform_buffers();
-
     spdlog::debug("Destroying descriptor sets and layouts.");
 
     descriptor_manager->shutdown_descriptors();
@@ -1034,10 +1034,13 @@ VkResult VulkanRenderer::recreate_swapchain() {
 VkResult VulkanRenderer::create_descriptor_pool() {
     std::vector<VkDescriptorPoolSize> pool_sizes = {};
 
-    pool_sizes.resize(1);
+    pool_sizes.resize(2);
 
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     pool_sizes[0].descriptorCount = number_of_images_in_swapchain;
+
+    pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
 
     // Create the descriptor pool first.
     VkResult result = descriptor_manager->create_descriptor_pool("global_descriptor_pool", pool_sizes, global_descriptor_pool);
@@ -1048,13 +1051,19 @@ VkResult VulkanRenderer::create_descriptor_pool() {
 
 VkResult VulkanRenderer::create_descriptor_set_layouts() {
     std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layouts;
-    descriptor_set_layouts.resize(1);
+    descriptor_set_layouts.resize(2);
 
     descriptor_set_layouts[0].binding = 0;
     descriptor_set_layouts[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor_set_layouts[0].descriptorCount = 1;
     descriptor_set_layouts[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     descriptor_set_layouts[0].pImmutableSamplers = nullptr;
+
+    descriptor_set_layouts[1].binding = 1;
+    descriptor_set_layouts[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor_set_layouts[1].descriptorCount = 1;
+    descriptor_set_layouts[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor_set_layouts[1].pImmutableSamplers = nullptr;
 
     VkResult result;
 
@@ -1070,9 +1079,14 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 }
 
 VkResult VulkanRenderer::create_descriptor_writes() {
-    std::array<VkWriteDescriptorSet, 1> descriptor_writes = {};
+    assert(!textures.empty());
 
-    uniform_buffer_info.buffer = matrices->buffer;
+    std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+
+    // Link the matrices uniform buffer to the descriptor set so the shader can access it.
+
+    // We can do better than this, but therefore RAII refactoring needs to be done..
+    uniform_buffer_info.buffer = uniform_buffers[0].get_buffer();
     uniform_buffer_info.offset = 0;
     uniform_buffer_info.range = sizeof(UniformBufferObject);
 
@@ -1087,24 +1101,27 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     VkResult result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[0]);
     vulkan_error_check(result);
 
-    return VK_SUCCESS;
-}
+    // Link the texture to the descriptor set so the shader can access it.
+    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor_image_info.imageView = textures[0].get_image_view();
+    descriptor_image_info.sampler = textures[0].get_sampler();
 
-VkResult VulkanRenderer::create_descriptor_sets() {
-    VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor);
+    descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_writes[1].dstSet = 0;
+    descriptor_writes[1].dstBinding = 1;
+    descriptor_writes[1].dstArrayElement = 0;
+    descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor_writes[1].descriptorCount = 1;
+    descriptor_writes[1].pImageInfo = &descriptor_image_info;
+
+    result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[1]);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
 }
 
-VkResult VulkanRenderer::create_uniform_buffers() {
-    spdlog::debug("Creating uniform buffers.");
-
-    // The uniform buffer for the world matrices.
-    VkDeviceSize matrices_buffer_size = sizeof(UniformBufferObject);
-
-    // TODO: Create 3 uniform buffers for triple buffering!
-    VkResult result = uniform_buffer_manager->create_uniform_buffer("matrices", matrices_buffer_size, matrices);
+VkResult VulkanRenderer::create_descriptor_sets() {
+    VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor);
     vulkan_error_check(result);
 
     return VK_SUCCESS;
@@ -1811,10 +1828,13 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
+    cleanup_swapchain();
+
     // TODO(yeetari): Remove once this class is RAII-ified
     shaders.clear();
-
-    cleanup_swapchain();
+    textures.clear();
+    uniform_buffers.clear();
+    mesh_buffers.clear();
 
     spdlog::debug("Destroying swapchain images.");
     if (swapchain_images.size() > 0) {
@@ -1828,14 +1848,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         swapchain_images.clear();
     }
 
-    spdlog::debug("Destroying textures.");
-    texture_manager->shutdown_textures();
-
     spdlog::debug("Destroying descriptor set layout.");
     descriptor_manager->shutdown_descriptors(true);
-
-    spdlog::debug("Destroying vertex buffers.");
-    mesh_buffer_manager->shutdown_vertex_and_index_buffers();
 
     spdlog::debug("Destroying semaphores.");
     semaphore_manager->shutdown_semaphores();

@@ -17,11 +17,11 @@ private:
     VkShaderModule shader_module;
 
 public:
-    /// Delete the copy constructor so Shaders are move-only objects.
+    /// Delete the copy constructor so shaders are move-only objects.
     Shader(const Shader &) = delete;
     Shader(Shader &&shader) noexcept;
 
-    /// Delete the copy assignment operator so Shaders are move-only objects.
+    /// Delete the copy assignment operator so shaders are move-only objects.
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) noexcept = default;
 
