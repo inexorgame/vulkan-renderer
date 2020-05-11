@@ -15,9 +15,9 @@ protected:
     VkDevice device;
     VmaAllocator vma_allocator;
     VkBuffer buffer = VK_NULL_HANDLE;
+    VkDeviceSize buffer_size = 0;
     VmaAllocation allocation = VK_NULL_HANDLE;
     VmaAllocationInfo allocation_info = {};
-    VkBufferCreateInfo create_info = {};
     VmaAllocationCreateInfo allocation_create_info = {};
 
 public:
@@ -66,10 +66,6 @@ public:
 
     const VmaAllocationInfo get_allocation_info() const {
         return allocation_info;
-    }
-
-    const VkBufferCreateInfo get_buffer_create_info() const {
-        return create_info;
     }
 
     const VmaAllocationCreateInfo get_allocation_create_info() const {

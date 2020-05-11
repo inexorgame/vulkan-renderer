@@ -4,17 +4,19 @@ namespace inexor::vulkan_renderer {
 
 GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
     : name(std::move(name)), device(std::exchange(other.device, nullptr)), buffer(std::exchange(other.buffer, nullptr)),
-      allocation(std::exchange(other.allocation, nullptr)), allocation_info(std::move(other.allocation_info)), create_info(std::move(other.create_info)),
+      allocation(std::exchange(other.allocation, nullptr)), allocation_info(std::move(other.allocation_info)),
       allocation_create_info(std::move(other.allocation_create_info)) {}
 
 GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name, const VkDeviceSize &size,
                                  const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage)
-    : device(device), vma_allocator(vma_allocator), name(name) {
+    : device(device), vma_allocator(vma_allocator), name(name), buffer_size(size) {
     assert(device);
     assert(vma_allocator);
     assert(!name.empty());
 
     spdlog::debug("Creating GPU memory buffer of size {} for '{}'.", size, name);
+
+    VkBufferCreateInfo create_info = {};
 
     create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     create_info.size = size;
