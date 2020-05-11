@@ -66,19 +66,19 @@ public:
 
     VkResult prepare_swapchain_creation(VkSwapchainCreateInfoKHR &swapchain_create_info);
 
-    VkQueue get_graphics_queue();
+    [[nodiscard]] VkQueue get_graphics_queue();
 
-    VkQueue get_present_queue();
+    [[nodiscard]] VkQueue get_present_queue();
 
-    VkQueue get_data_transfer_queue();
+    [[nodiscard]] VkQueue get_data_transfer_queue();
 
-    std::optional<std::uint32_t> get_graphics_family_index();
+    [[nodiscard]] std::optional<std::uint32_t> get_graphics_family_index();
 
-    std::optional<std::uint32_t> get_present_queue_family_index();
+    [[nodiscard]] std::optional<std::uint32_t> get_present_queue_family_index();
 
-    std::optional<std::uint32_t> get_data_transfer_queue_family_index();
+    [[nodiscard]] std::optional<std::uint32_t> get_data_transfer_queue_family_index();
 
-    std::vector<VkDeviceQueueCreateInfo> get_queues_to_create();
+    [[nodiscard]] std::vector<VkDeviceQueueCreateInfo> get_queues_to_create();
 };
 
 } // namespace inexor::vulkan_renderer

@@ -43,19 +43,19 @@ public:
 
     ~Shader();
 
-    const std::string &get_name() const {
+    [[nodiscard]] const std::string &get_name() const {
         return name;
     }
 
-    const std::string &get_entry_point() const {
+    [[nodiscard]] const std::string &get_entry_point() const {
         return entry_point;
     }
 
-    VkShaderStageFlagBits get_type() const {
+    [[nodiscard]] VkShaderStageFlagBits get_type() const {
         return type;
     }
 
-    VkShaderModule get_module() const {
+    [[nodiscard]] VkShaderModule get_module() const {
         return shader_module;
     }
 };

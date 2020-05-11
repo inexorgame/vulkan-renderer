@@ -82,7 +82,7 @@ private:
 
 protected:
     /// @brief Checks if a command line argument
-    bool does_command_line_argument_template_exist(const std::string argument_name);
+    [[nodiscard]] bool does_command_line_argument_template_exist(const std::string argument_name);
 
     // @brief Checks if the command line argument is specified.
     std::optional<bool> is_command_line_argument_specified(const std::string argument_name);
@@ -92,32 +92,32 @@ public:
     void parse_command_line_arguments(std::size_t argument_count, char *arguments[]);
 
     /// @brief Returns the number of command line arguments.
-    const std::int64_t get_number_of_parsed_command_line_arguments();
+    [[nodiscard]] const std::int64_t get_number_of_parsed_command_line_arguments();
 
     /// @brief Returns the type of a command line argument.
     /// @param argument_name The name of the command line argument.
-    const std::optional<CommandLineArgumentType> get_argument_template_type(const std::string &argument_name);
+    [[nodiscard]] const std::optional<CommandLineArgumentType> get_argument_template_type(const std::string &argument_name);
 
     /// @brief Returns the value of a boolean command line argument (if existent).
     /// @param argument_name The name of the command line argument.
     /// @return The value of the boolean command line argument
     /// (true or false, in case it even exists), std::nullopt otherwise.
-    const std::optional<bool> get_command_line_argument_bool(const std::string &argument_name);
+    [[nodiscard]] const std::optional<bool> get_command_line_argument_bool(const std::string &argument_name);
 
     /// @brief Returns the value of a std::string command line argument (if existent).
     /// @param argument_name The name of the command line argument.
     /// @return The std::string value of the command line argument.
-    const std::optional<std::string> get_command_line_argument_string(const std::string &argument_name);
+    [[nodiscard]] const std::optional<std::string> get_command_line_argument_string(const std::string &argument_name);
 
     /// @brief Returns the value of a std::int64_t command line argument (if existent).
     /// @parm argument_name The name of the command line argument.
     /// @return The std::int64_t value of the command line argument.
-    const std::optional<std::int64_t> get_command_line_argument_int64(const std::string &argument_name);
+    [[nodiscard]] const std::optional<std::int64_t> get_command_line_argument_int64(const std::string &argument_name);
 
     /// @brief Returns the value of a std::uint32_t command line argument (if existent).
     /// @parm argument_name The name of the command line argument.
     /// @return The std::uint32_t value of the command line argument.
-    const std::optional<std::uint32_t> get_command_line_argument_uint32(const std::string &argument_name);
+    [[nodiscard]] const std::optional<std::uint32_t> get_command_line_argument_uint32(const std::string &argument_name);
 };
 
 } // namespace inexor::vulkan_renderer::tools

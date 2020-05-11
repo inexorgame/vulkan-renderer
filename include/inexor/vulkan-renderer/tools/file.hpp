@@ -24,15 +24,15 @@ public:
     ~File() = default;
 
     /// @brief Returns the size of the file.
-    const std::size_t get_file_size() const;
+    [[nodiscard]] const std::size_t get_file_size() const;
 
     /// @brief Returns the file's data.
-    const std::vector<char> &get_file_data() const;
+    [[nodiscard]] const std::vector<char> &get_file_data() const;
 
     /// @brief Loads the entire file into memory.
     /// @param file_name The name of the file.
     /// @return True if file was loaded successfully, false otherwise.
-    bool load_file(const std::string &file_name);
+    [[nodiscard]] bool load_file(const std::string &file_name);
 };
 
 } // namespace inexor::vulkan_renderer::tools

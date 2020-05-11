@@ -35,18 +35,18 @@ public:
     /// @brief Checks if a fence with this name already exists.
     /// @param fence_name [in] The name of the fence.
     /// @return True if a fence with this name already exists, false otherwise.
-    bool does_fence_exist(const std::string &fence_name);
+    [[nodiscard]] bool does_fence_exist(const std::string &fence_name);
 
     /// @brief Creates a new Vulkan fence.
     /// @param device [in] The Vulkan device.
     /// @param fence_name [in] The unique name of the fence.
     /// @param create_as_signaled [in] Describes if the fence will be created as signaled (turned on).
-    std::optional<std::shared_ptr<VkFence>> create_fence(const std::string &fence_name, bool create_as_signaled = true);
+    [[nodiscard]] std::optional<std::shared_ptr<VkFence>> create_fence(const std::string &fence_name, bool create_as_signaled = true);
 
     /// @brief Gets a certain fence by name.
     /// @param fence_name [in] The name of the fence.
     /// @return The acquired fence (if existent), std::nullopt otherwise.
-    std::optional<std::shared_ptr<VkFence>> get_fence(const std::string &fence_name);
+    [[nodiscard]] std::optional<std::shared_ptr<VkFence>> get_fence(const std::string &fence_name);
 
     /// @brief Destroys all existing fences.
     /// @param device [in] The Vulkan device.
