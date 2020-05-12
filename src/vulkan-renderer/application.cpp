@@ -370,7 +370,7 @@ VkResult Application::init() {
     std::optional<bool> enable_renderdoc = is_command_line_argument_specified("-renderdoc");
 
     if (enable_renderdoc.has_value()) {
-#if !defined(_DEBUG)
+#ifdef NDEBUG
         spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
 #else
         if (enable_renderdoc.value()) {
@@ -395,11 +395,10 @@ VkResult Application::init() {
 
     spdlog::debug("Creating Vulkan instance.");
 
-    result = create_vulkan_instance(application_name, engine_name, application_version, engine_version, enable_khronos_validation_instance_layer,
-                                    enable_renderdoc_instance_layer);
-    vulkan_error_check(result);
+    // Create a Vulkan instance.
+    vkinstance = std::make_unique<wrapper::Instance>(application_name, engine_name, application_version, engine_version, VK_API_VERSION_1_1);
 
-#if defined(_DEBUG)
+#ifndef NDEBUG
     // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
     if (enable_khronos_validation_instance_layer) {
         spdlog::debug("Khronos validation layer is enabled.");
@@ -414,11 +413,11 @@ VkResult Application::init() {
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-                reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
+                reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(vkinstance->get_instance(), "vkCreateDebugReportCallbackEXT"));
 
-            if (nullptr != vkCreateDebugReportCallbackEXT) {
+            if (vkCreateDebugReportCallbackEXT) {
                 // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(instance, &debug_report_create_info, nullptr, &debug_report_callback);
+                VkResult result = vkCreateDebugReportCallbackEXT(vkinstance->get_instance(), &debug_report_create_info, nullptr, &debug_report_callback);
                 if (VK_SUCCESS == result) {
                     spdlog::debug("Creating Vulkan debug callback.");
                     debug_report_callback_initialised = true;
@@ -441,7 +440,7 @@ VkResult Application::init() {
     // Create a window surface using GLFW library.
     // The window surface needs to be created right after the instance creation,
     // because it can actually influence the physical device selection.
-    result = create_window_surface(instance, window, surface);
+    result = create_window_surface(vkinstance->get_instance(), window, surface);
     if (result != VK_SUCCESS) {
         vulkan_error_check(result);
         return result;
@@ -458,7 +457,7 @@ VkResult Application::init() {
 
     // Let's see if there is a graphics card that is suitable for us.
     std::optional<VkPhysicalDevice> graphics_card_candidate =
-        settings_decision_maker->decide_which_graphics_card_to_use(instance, surface, prefered_graphics_card);
+        settings_decision_maker->decide_which_graphics_card_to_use(vkinstance->get_instance(), surface, prefered_graphics_card);
 
     // Check if we found a graphics card candidate.
     if (graphics_card_candidate.has_value()) {
@@ -506,7 +505,7 @@ VkResult Application::init() {
         gpu_info_manager->print_instance_extensions();
 
         // Print all information that we can find about all graphics card available.
-        gpu_info_manager->print_all_physical_devices(instance, surface);
+        gpu_info_manager->print_all_physical_devices(vkinstance->get_instance(), surface);
     }
 
     spdlog::debug("Checking for -no_separate_data_queue command line argument.");
