@@ -513,7 +513,7 @@ VkResult VulkanRenderer::record_command_buffers() {
 
             vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-            vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, global_descriptor->descriptor_sets.data(), 0,
+            vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, descriptors[0].get_descriptor_sets_data(), 0,
                                     nullptr);
 
             VkBuffer vertexBuffers[] = {mesh_buffers[0].get_vertex_buffer()};
@@ -884,8 +884,6 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Destroying descriptor sets and layouts.");
 
-    descriptor_manager->shutdown_descriptors();
-
     return VK_SUCCESS;
 }
 
@@ -1027,48 +1025,31 @@ VkResult VulkanRenderer::recreate_swapchain() {
 }
 
 VkResult VulkanRenderer::create_descriptor_pool() {
-    std::vector<VkDescriptorPoolSize> pool_sizes = {};
 
-    pool_sizes.resize(2);
+    descriptors.emplace_back(device, number_of_images_in_swapchain, std::string("unnamed descriptor"));
 
-    pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    pool_sizes[0].descriptorCount = number_of_images_in_swapchain;
-
-    pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool_sizes[1].descriptorCount = number_of_images_in_swapchain;
-
-    // Create the descriptor pool first.
-    VkResult result = descriptor_manager->create_descriptor_pool("global_descriptor_pool", pool_sizes, global_descriptor_pool);
-    vulkan_error_check(result);
+    // Create the descriptor pool.
+    descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_descriptor_set_layouts() {
-    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layouts;
-    descriptor_set_layouts.resize(2);
+    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings(2);
 
-    descriptor_set_layouts[0].binding = 0;
-    descriptor_set_layouts[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor_set_layouts[0].descriptorCount = 1;
-    descriptor_set_layouts[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    descriptor_set_layouts[0].pImmutableSamplers = nullptr;
+    descriptor_set_layout_bindings[0].binding = 0;
+    descriptor_set_layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptor_set_layout_bindings[0].descriptorCount = 1;
+    descriptor_set_layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    descriptor_set_layout_bindings[0].pImmutableSamplers = nullptr;
 
-    descriptor_set_layouts[1].binding = 1;
-    descriptor_set_layouts[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_set_layouts[1].descriptorCount = 1;
-    descriptor_set_layouts[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    descriptor_set_layouts[1].pImmutableSamplers = nullptr;
+    descriptor_set_layout_bindings[1].binding = 1;
+    descriptor_set_layout_bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor_set_layout_bindings[1].descriptorCount = 1;
+    descriptor_set_layout_bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor_set_layout_bindings[1].pImmutableSamplers = nullptr;
 
-    VkResult result;
-
-    for (const auto &descriptor_set_layout : descriptor_set_layouts) {
-        result = descriptor_manager->add_descriptor_set_layout_binding(global_descriptor, descriptor_set_layout);
-        vulkan_error_check(result);
-    }
-
-    result = descriptor_manager->create_descriptor_set_layouts(global_descriptor);
-    vulkan_error_check(result);
+    descriptors[0].create_descriptor_set_layouts(descriptor_set_layout_bindings);
 
     return VK_SUCCESS;
 }
@@ -1076,7 +1057,7 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 VkResult VulkanRenderer::create_descriptor_writes() {
     assert(!textures.empty());
 
-    std::array<VkWriteDescriptorSet, 2> descriptor_writes = {};
+    std::vector<VkWriteDescriptorSet> descriptor_writes(2);
 
     // Link the matrices uniform buffer to the descriptor set so the shader can access it.
 
@@ -1086,15 +1067,12 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     uniform_buffer_info.range = sizeof(UniformBufferObject);
 
     descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[0].dstSet = 0; // This will be overwritten automatically by descriptor_set_builder.
+    descriptor_writes[0].dstSet = 0;
     descriptor_writes[0].dstBinding = 0;
     descriptor_writes[0].dstArrayElement = 0;
     descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &uniform_buffer_info;
-
-    VkResult result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[0]);
-    vulkan_error_check(result);
 
     // Link the texture to the descriptor set so the shader can access it.
     descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1109,15 +1087,9 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     descriptor_writes[1].descriptorCount = 1;
     descriptor_writes[1].pImageInfo = &descriptor_image_info;
 
-    result = descriptor_manager->add_write_descriptor_set(global_descriptor, descriptor_writes[1]);
-    vulkan_error_check(result);
+    descriptors[0].add_descriptor_writes(descriptor_writes);
 
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_descriptor_sets() {
-    VkResult result = descriptor_manager->create_descriptor_sets(global_descriptor);
-    vulkan_error_check(result);
+    descriptors[0].create_descriptor_sets();
 
     return VK_SUCCESS;
 }
@@ -1270,7 +1242,7 @@ VkResult VulkanRenderer::create_pipeline() {
     color_blend_state_create_info.blendConstants[2] = 0.0f;
     color_blend_state_create_info.blendConstants[3] = 0.0f;
 
-    const std::vector<VkDescriptorSetLayout> set_layouts = {global_descriptor->descriptor_set_layout};
+    const std::vector<VkDescriptorSetLayout> set_layouts = {descriptors[0].get_descriptor_set_layout()};
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
 
@@ -1830,6 +1802,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     textures.clear();
     uniform_buffers.clear();
     mesh_buffers.clear();
+    descriptors.clear();
 
     spdlog::debug("Destroying swapchain images.");
     if (swapchain_images.size() > 0) {
@@ -1842,9 +1815,6 @@ VkResult VulkanRenderer::shutdown_vulkan() {
 
         swapchain_images.clear();
     }
-
-    spdlog::debug("Destroying descriptor set layout.");
-    descriptor_manager->shutdown_descriptors(true);
 
     spdlog::debug("Destroying semaphores.");
     semaphore_manager->shutdown_semaphores();
@@ -1880,8 +1850,6 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
     }
-
-    descriptor_manager->shutdown_descriptors();
 
     // Destroy Vulkan debug callback.
     if (debug_report_callback_initialised) {
