@@ -22,6 +22,7 @@
 
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -63,8 +64,6 @@ protected:
     std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker = std::make_shared<VulkanSettingsDecisionMaker>();
 
     VmaAllocator vma_allocator;
-
-    VkInstance instance;
 
     VkDevice device;
 
@@ -161,15 +160,8 @@ protected:
     // TODO(Hanni): Remove this with RAII refactoring of descriptors!
     VkDescriptorImageInfo descriptor_image_info = {};
 
-    /// @brief Creates a Vulkan instance.
-    /// @param application_name The name of the application
-    /// @param engine_name The name of the engine.
-    /// @param application_version The version of the application encoded as an unsigned 32 bit integer.
-    /// @param engine_version The version of the engine encoded as an unsigned 32 bit integer.
-    /// @param enable_validation_layers True if validation is enabled.
-    VkResult create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
-                                    const std::uint32_t engine_version, bool enable_validation_instance_layers = true,
-                                    bool enable_renderdoc_instance_layer = false);
+    // RAII wrapper for VkInstance.
+    std::unique_ptr<wrapper::Instance> vkinstance = nullptr;
 
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.

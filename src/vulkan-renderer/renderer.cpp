@@ -19,157 +19,6 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanRenderer::create_vulkan_instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
-                                                const std::uint32_t engine_version, bool enable_validation_instance_layers,
-                                                bool enable_renderdoc_instance_layer) {
-    assert(!application_name.empty());
-    assert(!engine_name.empty());
-
-    // Get the major, minor and patch version of the application.
-    std::uint32_t app_major = VK_VERSION_MAJOR(application_version);
-    std::uint32_t app_minor = VK_VERSION_MINOR(application_version);
-    std::uint32_t app_patch = VK_VERSION_PATCH(application_version);
-
-    // Get the major, minor and patch version of the engine.
-    std::uint32_t engine_major = VK_VERSION_MAJOR(engine_version);
-    std::uint32_t engine_minor = VK_VERSION_MINOR(engine_version);
-    std::uint32_t engine_patch = VK_VERSION_PATCH(engine_version);
-
-    spdlog::debug("Initialising Vulkan instance.");
-    spdlog::debug("Application name: '{}'", application_name.c_str());
-    spdlog::debug("Application version: {}.{}.{}", app_major, app_minor, app_patch);
-    spdlog::debug("Engine name: '{}'", engine_name.c_str());
-    spdlog::debug("Engine version: {}.{}.{}", engine_major, engine_minor, engine_patch);
-
-    // TODO: Switch to VOLK one day? This would allow for dynamic initialisation during runtime without linking vulkan libraries.
-    // This would also resolve the issue of checking which version of Vulkan can be initialised.
-    // https://github.com/zeux/volk
-
-    // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
-    // "Because Vulkan 1.0 implementations may fail with VK_ERROR_INCOMPATIBLE_DRIVER,
-    // applications should determine the version of Vulkan available before calling vkCreateInstance.
-    // If the vkGetInstanceProcAddr returns NULL for vkEnumerateInstanceVersion, it is a Vulkan 1.0 implementation.
-    // Otherwise, the application can call vkEnumerateInstanceVersion to determine the version of Vulkan."
-    // -This can also be resolved by using VOLK!
-
-    // Structure specifying application's Vulkan API info.
-    VkApplicationInfo app_info = {};
-
-    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    app_info.pNext = nullptr;
-    app_info.pApplicationName = application_name.c_str();
-    app_info.applicationVersion = application_version;
-    app_info.pEngineName = engine_name.c_str();
-    app_info.engineVersion = engine_version;
-    app_info.apiVersion = VK_API_VERSION_1_1;
-
-    // A vector of strings which represent the enabled instance extensions.
-    std::vector<const char *> enabled_instance_extensions;
-
-    // The extensions that we would like to enable.
-    std::vector<const char *> instance_extension_wishlist = {
-#ifndef NDEBUG
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-#endif
-        // TODO: Add more instance extensions here.
-    };
-
-    // Query which extensions are needed by GLFW.
-    std::uint32_t number_of_glfw_extensions = 0;
-
-    auto glfw_extensions = glfwGetRequiredInstanceExtensions(&number_of_glfw_extensions);
-
-    spdlog::debug("Required GLFW instance extensions:");
-
-    for (std::size_t i = 0; i < number_of_glfw_extensions; i++) {
-        spdlog::debug(glfw_extensions[i]);
-
-        // Add instance extensions required by GLFW to our wishlist.
-        instance_extension_wishlist.push_back(glfw_extensions[i]);
-    }
-
-    for (const auto &instance_extension : instance_extension_wishlist) {
-        // TODO: Why is this taking so long?
-        // TODO: Limit the number of function calls?
-        if (availability_checks_manager->has_instance_extension(instance_extension)) {
-            spdlog::debug("Adding '{}' to instance extension wishlist.", instance_extension);
-            enabled_instance_extensions.push_back(instance_extension);
-        } else {
-            std::string error_message = "Error: Required instance extension '" + std::string(instance_extension) + "' is not available!";
-            display_warning_message(error_message);
-        }
-    }
-
-    // A vector of strings which represent the enabled instance layers.
-    std::vector<const char *> enabled_instance_layers;
-
-    // The layers that we would like to enable.
-    std::vector<const char *> instance_layers_wishlist = {
-        // RenderDoc instance layer can be specified using -renderdoc command line argument.
-        // TODO: Add instance layers if neccesary..
-    };
-
-    /// RenderDoc is a modern graphics debugger written by Baldur Karlsson.
-    /// It comes with many useful debugging functions!
-    /// https://renderdoc.org/
-    /// https://github.com/baldurk/renderdoc
-#ifndef NDEBUG
-    if (enable_renderdoc_instance_layer) {
-        const char renderdoc_layer_name[] = "VK_LAYER_RENDERDOC_Capture";
-
-        spdlog::debug("Adding '{}' to instance extension wishlist.", renderdoc_layer_name);
-        instance_layers_wishlist.push_back(renderdoc_layer_name);
-    }
-
-    // If validation is requested, we need to add the validation layer as instance extension!
-    // For more information on Vulkan validation layers see:
-    // https://vulkan.lunarg.com/doc/view/1.0.39.0/windows/layers.html
-    if (enable_validation_instance_layers) {
-        const char validation_layer_name[] = "VK_LAYER_KHRONOS_validation";
-
-        spdlog::debug("Adding '{}' to instance extension wishlist.", validation_layer_name);
-        instance_layers_wishlist.push_back(validation_layer_name);
-    }
-#endif
-
-    // We now have to check which instance layers of our wishlist are really supported on the current system!
-    // Loop through the wishlist and check for availabiliy.
-    for (auto current_layer : instance_layers_wishlist) {
-        if (availability_checks_manager->has_instance_layer(current_layer)) {
-            spdlog::debug("Instance layer '{}' is supported.", current_layer);
-
-            // This instance layer is available!
-            // Add it to the list of enabled instance layers!
-            enabled_instance_layers.push_back(current_layer);
-        } else {
-#ifdef NDEBUG
-            if (std::string(current_layer).compare(VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0) {
-                display_warning_message(
-                    "You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
-            }
-#endif
-            std::string error_message = "Error: Instance layer '" + std::string(current_layer) + "' is not available!";
-            display_error_message(error_message);
-        }
-    }
-
-    VkInstanceCreateInfo instance_create_info = {};
-
-    instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.pNext = nullptr;
-    instance_create_info.flags = 0;
-    instance_create_info.pApplicationInfo = &app_info;
-    instance_create_info.ppEnabledExtensionNames = enabled_instance_extensions.data();
-    instance_create_info.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());
-    instance_create_info.ppEnabledLayerNames = enabled_instance_layers.data();
-    instance_create_info.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
-
-    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance);
-    vulkan_error_check(result);
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_window_surface(const VkInstance &instance, GLFWwindow *window, VkSurfaceKHR &surface) {
     assert(window);
     assert(instance);
@@ -428,7 +277,7 @@ VkResult VulkanRenderer::create_vma_allocator() {
 #if VMA_RECORDING_ENABLED
     allocator_info.pRecordSettings = &vma_record_settings;
 #endif
-    allocator_info.instance = instance;
+    allocator_info.instance = vkinstance->get_instance();
 
     // Create an instance of Vulkan memory allocator.
     VkResult result = vmaCreateAllocator(&allocator_info, &vma_allocator);
@@ -1824,7 +1673,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
 
     spdlog::debug("Destroying window surface.");
     if (VK_NULL_HANDLE != surface) {
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        vkDestroySurfaceKHR(vkinstance->get_instance(), surface, nullptr);
         surface = VK_NULL_HANDLE;
     }
 
@@ -1855,18 +1704,12 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     if (debug_report_callback_initialised) {
         // We have to explicitly load this function.
         PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
-            reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
+            reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
 
         if (nullptr != vkDestroyDebugReportCallbackEXT) {
-            vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
+            vkDestroyDebugReportCallbackEXT(vkinstance->get_instance(), debug_report_callback, nullptr);
             debug_report_callback_initialised = false;
         }
-    }
-
-    spdlog::debug("Destroying Vulkan instance.");
-    if (VK_NULL_HANDLE != instance) {
-        vkDestroyInstance(instance, nullptr);
-        instance = VK_NULL_HANDLE;
     }
 
     spdlog::debug("Shutdown finished.");
