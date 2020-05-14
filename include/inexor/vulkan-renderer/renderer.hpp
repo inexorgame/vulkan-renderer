@@ -8,7 +8,6 @@
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
-#include "inexor/vulkan-renderer/gpu_queue_manager.hpp"
 #include "inexor/vulkan-renderer/image_buffer.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
@@ -22,6 +21,7 @@
 
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <GLFW/glfw3.h>
@@ -53,8 +53,6 @@ protected:
 
     std::shared_ptr<VulkanSemaphoreManager> semaphore_manager = std::make_shared<VulkanSemaphoreManager>();
 
-    std::shared_ptr<VulkanQueueManager> gpu_queue_manager = std::make_shared<VulkanQueueManager>();
-
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
     std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
@@ -65,11 +63,7 @@ protected:
 
     VmaAllocator vma_allocator;
 
-    VkDevice device;
-
     VkSurfaceKHR surface;
-
-    VkPhysicalDevice selected_graphics_card;
 
     VkPresentModeKHR selected_present_mode;
 
@@ -162,6 +156,9 @@ protected:
 
     // RAII wrapper for VkInstance.
     std::unique_ptr<wrapper::Instance> vkinstance = nullptr;
+
+    // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
+    std::unique_ptr<wrapper::Device> vkdevice = nullptr;
 
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.

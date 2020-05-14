@@ -29,68 +29,9 @@ VkResult VulkanRenderer::create_window_surface(const VkInstance &instance, GLFWw
     return glfwCreateWindowSurface(instance, window, nullptr, &surface);
 }
 
-VkResult VulkanRenderer::create_physical_device(const VkPhysicalDevice &graphics_card, const bool enable_debug_markers) {
-    assert(graphics_card);
-
-    spdlog::debug("Creating physical device (graphics card interface).");
-
-    VkPhysicalDeviceFeatures used_features = {};
-
-    // Enable anisotropic filtering.
-    used_features.samplerAnisotropy = VK_TRUE;
-
-    // Our wishlist of device extensions that we would like to enable.
-    std::vector<const char *> device_extensions_wishlist = {
-        // Since we actually want a window to draw on, we need this swapchain extension.
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    };
-
-    if (enable_debug_markers) {
-        // Debug markers are only present if RenderDoc is enabled.
-        device_extensions_wishlist.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-    }
-
-    // The actual list of enabled device extensions.
-    std::vector<const char *> enabled_device_extensions;
-
-    for (auto device_extension_name : device_extensions_wishlist) {
-        if (availability_checks_manager->has_device_extension(graphics_card, device_extension_name)) {
-            spdlog::debug("Device extension '{}' is supported!", device_extension_name);
-
-            // This device layer is supported!
-            // Add it to the list of enabled device layers.
-            enabled_device_extensions.push_back(device_extension_name);
-        } else {
-            // This device layer is not supported!
-            std::string error_message = "Device extension '" + std::string(device_extension_name) + " not supported!";
-            display_error_message(error_message);
-        }
-    }
-
-    VkDeviceCreateInfo device_create_info = {};
-
-    auto queues_to_create = gpu_queue_manager->get_queues_to_create();
-
-    device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_create_info.pNext = nullptr;
-    device_create_info.flags = 0;
-    device_create_info.queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size());
-    device_create_info.pQueueCreateInfos = queues_to_create.data();
-    device_create_info.enabledLayerCount = 0;
-    device_create_info.ppEnabledLayerNames = nullptr;
-    device_create_info.enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size());
-    device_create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
-    device_create_info.pEnabledFeatures = &used_features;
-
-    VkResult result = vkCreateDevice(graphics_card, &device_create_info, nullptr, &device);
-    vulkan_error_check(result);
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug_markers) {
-    assert(device);
-    assert(selected_graphics_card);
+    assert(vkdevice->get_device());
+    assert(vkdevice->get_physical_device());
 
     spdlog::debug("Initialising debug marker manager.");
 
@@ -101,15 +42,14 @@ VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug
     }
 #endif
 
-    debug_marker_manager->init(device, selected_graphics_card, enable_debug_markers);
+    debug_marker_manager->init(vkdevice->get_device(), vkdevice->get_physical_device(), enable_debug_markers);
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_command_pool() {
-    assert(device);
-    assert(debug_marker_manager);
-    assert(gpu_queue_manager->get_graphics_family_index().has_value());
+    assert(vkdevice->get_device());
+    assert(vkdevice->get_physical_device());
 
     spdlog::debug("Creating command pool for rendering.");
 
@@ -118,19 +58,20 @@ VkResult VulkanRenderer::create_command_pool() {
     command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     command_pool_create_info.pNext = nullptr;
     command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_create_info.queueFamilyIndex = gpu_queue_manager->get_graphics_family_index().value();
+    command_pool_create_info.queueFamilyIndex = vkdevice->get_graphics_queue_family_index();
 
-    VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
+    VkResult result = vkCreateCommandPool(vkdevice->get_device(), &command_pool_create_info, nullptr, &command_pool);
     vulkan_error_check(result);
 
     // Give this command pool an appropriate name.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)command_pool, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "Core engine command pool.");
+    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)command_pool, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT,
+                                          "Core engine command pool.");
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_uniform_buffers() {
-    uniform_buffers.emplace_back(device, vma_allocator, std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
+    uniform_buffers.emplace_back(vkdevice->get_device(), vma_allocator, std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
 
     return VK_SUCCESS;
 }
@@ -148,7 +89,7 @@ VkResult VulkanRenderer::create_depth_buffer() {
 
     // Try to find an appropriate format for the depth buffer.
     auto depth_buffer_format_candidate =
-        settings_decision_maker->find_depth_buffer_format(selected_graphics_card, depth_buffer_format_candidates, tiling, format);
+        settings_decision_maker->find_depth_buffer_format(vkdevice->get_physical_device(), depth_buffer_format_candidates, tiling, format);
 
     assert(depth_buffer_format_candidate.has_value());
 
@@ -184,7 +125,8 @@ VkResult VulkanRenderer::create_depth_buffer() {
     vulkan_error_check(result);
 
     // Give this depth buffer image an appropriate name.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "Depth buffer image.");
+    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT,
+                                          "Depth buffer image.");
 
     VkImageViewCreateInfo view_info = {};
 
@@ -198,18 +140,18 @@ VkResult VulkanRenderer::create_depth_buffer() {
     view_info.subresourceRange.baseArrayLayer = 0;
     view_info.subresourceRange.layerCount = 1;
 
-    result = vkCreateImageView(device, &view_info, nullptr, &depth_buffer.image_view);
+    result = vkCreateImageView(vkdevice->get_device(), &view_info, nullptr, &depth_buffer.image_view);
     vulkan_error_check(result);
 
     // Give this buffer image view an appropriate name.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
                                           "Depth buffer image view.");
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_command_buffers() {
-    assert(device);
+    assert(vkdevice->get_device());
     assert(debug_marker_manager);
     assert(number_of_images_in_swapchain > 0);
 
@@ -227,13 +169,13 @@ VkResult VulkanRenderer::create_command_buffers() {
     command_buffers.clear();
     command_buffers.resize(number_of_images_in_swapchain);
 
-    VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
+    VkResult result = vkAllocateCommandBuffers(vkdevice->get_device(), &command_buffer_allocate_info, command_buffers.data());
     vulkan_error_check(result);
 
     for (std::size_t i = 0; i < command_buffers.size(); i++) {
         std::string command_buffer_name = "Command buffer " + std::to_string(i) + " for core engine.";
 
-        debug_marker_manager->set_object_name(device, (std::uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                               command_buffer_name.c_str());
     }
 
@@ -241,8 +183,8 @@ VkResult VulkanRenderer::create_command_buffers() {
 }
 
 VkResult VulkanRenderer::create_vma_allocator() {
-    assert(device);
-    assert(selected_graphics_card);
+    assert(vkdevice->get_device());
+    assert(vkdevice->get_physical_device());
     assert(debug_marker_manager);
 
     spdlog::debug("Initialising Vulkan memory allocator.");
@@ -272,8 +214,8 @@ VkResult VulkanRenderer::create_vma_allocator() {
 
     VmaAllocatorCreateInfo allocator_info = {};
 
-    allocator_info.physicalDevice = selected_graphics_card;
-    allocator_info.device = device;
+    allocator_info.physicalDevice = vkdevice->get_physical_device();
+    allocator_info.device = vkdevice->get_device();
 #if VMA_RECORDING_ENABLED
     allocator_info.pRecordSettings = &vma_record_settings;
 #endif
@@ -429,9 +371,9 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
 }
 
 VkResult VulkanRenderer::create_swapchain() {
-    assert(device);
+    assert(vkdevice->get_device());
     assert(surface);
-    assert(selected_graphics_card);
+    assert(vkdevice->get_physical_device());
     assert(debug_marker_manager);
 
     // TODO: Implement command line argument!
@@ -443,29 +385,31 @@ VkResult VulkanRenderer::create_swapchain() {
     VkSwapchainKHR old_swapchain = swapchain;
 
     // Select extent of swapchain images.
-    settings_decision_maker->decide_width_and_height_of_swapchain_extent(selected_graphics_card, surface, window_width, window_height, swapchain_image_extent);
+    settings_decision_maker->decide_width_and_height_of_swapchain_extent(vkdevice->get_physical_device(), surface, window_width, window_height,
+                                                                         swapchain_image_extent);
 
     // TODO: Remove std::optional from this method!
     // Select a present mode for the swapchain.
     std::optional<VkPresentModeKHR> present_mode =
-        settings_decision_maker->decide_which_presentation_mode_to_use(selected_graphics_card, surface, vsync_enabled);
+        settings_decision_maker->decide_which_presentation_mode_to_use(vkdevice->get_physical_device(), surface, vsync_enabled);
 
     assert(present_mode.has_value());
 
     selected_present_mode = present_mode.value();
 
     // Decide how many images in swapchain to use.
-    number_of_images_in_swapchain = settings_decision_maker->decide_how_many_images_in_swapchain_to_use(selected_graphics_card, surface);
+    number_of_images_in_swapchain = settings_decision_maker->decide_how_many_images_in_swapchain_to_use(vkdevice->get_physical_device(), surface);
 
     // Find the transformation of the surface.
-    auto pre_transform = settings_decision_maker->decide_which_image_transformation_to_use(selected_graphics_card, surface);
+    auto pre_transform = settings_decision_maker->decide_which_image_transformation_to_use(vkdevice->get_physical_device(), surface);
 
     // Find a supported composite alpha format (not all devices support alpha opaque)
-    auto composite_alpha_format = settings_decision_maker->find_composite_alpha_format(selected_graphics_card, surface);
+    auto composite_alpha_format = settings_decision_maker->find_composite_alpha_format(vkdevice->get_physical_device(), surface);
 
     // TODO: Remove std::optional from this method?
     // Find a color format.
-    auto selected_image_format_candidate = settings_decision_maker->decide_which_surface_color_format_in_swapchain_to_use(selected_graphics_card, surface);
+    auto selected_image_format_candidate =
+        settings_decision_maker->decide_which_surface_color_format_in_swapchain_to_use(vkdevice->get_physical_device(), surface);
 
     assert(selected_image_format_candidate.has_value());
 
@@ -497,13 +441,13 @@ VkResult VulkanRenderer::create_swapchain() {
     // Set additional usage flag for blitting from the swapchain images if supported.
     VkFormatProperties formatProps;
 
-    vkGetPhysicalDeviceFormatProperties(selected_graphics_card, selected_image_format, &formatProps);
+    vkGetPhysicalDeviceFormatProperties(vkdevice->get_physical_device(), selected_image_format, &formatProps);
 
     if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) || (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
         swapchain_create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 
-    VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
+    VkResult result = vkCreateSwapchainKHR(vkdevice->get_device(), &swapchain_create_info, nullptr, &swapchain);
     vulkan_error_check(result);
 
     // If an existing swapchain is recreated, destroy the old swapchain.
@@ -512,7 +456,7 @@ VkResult VulkanRenderer::create_swapchain() {
         if (swapchain_image_views.size() > 0) {
             for (auto image_view : swapchain_image_views) {
                 if (VK_NULL_HANDLE != image_view) {
-                    vkDestroyImageView(device, image_view, nullptr);
+                    vkDestroyImageView(vkdevice->get_device(), image_view, nullptr);
                     image_view = VK_NULL_HANDLE;
                 }
             }
@@ -520,24 +464,25 @@ VkResult VulkanRenderer::create_swapchain() {
             swapchain_image_views.clear();
         }
 
-        vkDestroySwapchainKHR(device, old_swapchain, nullptr);
+        vkDestroySwapchainKHR(vkdevice->get_device(), old_swapchain, nullptr);
 
         swapchain_images.clear();
     }
 
-    result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, nullptr);
+    result = vkGetSwapchainImagesKHR(vkdevice->get_device(), swapchain, &number_of_images_in_swapchain, nullptr);
     vulkan_error_check(result);
 
     swapchain_images.resize(number_of_images_in_swapchain);
 
-    result = vkGetSwapchainImagesKHR(device, swapchain, &number_of_images_in_swapchain, swapchain_images.data());
+    result = vkGetSwapchainImagesKHR(vkdevice->get_device(), swapchain, &number_of_images_in_swapchain, swapchain_images.data());
     vulkan_error_check(result);
 
     for (std::size_t i = 0; i < swapchain_images.size(); i++) {
         std::string debug_marker_name = "Swapchain image #" + std::to_string(i);
 
         // Assign an appropriate debug marker name to the swapchain images.
-        debug_marker_manager->set_object_name(device, (std::uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, debug_marker_name.c_str());
+        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT,
+                                              debug_marker_name.c_str());
     }
 
     spdlog::debug("Creating swapchainm image views.");
@@ -568,14 +513,14 @@ VkResult VulkanRenderer::create_swapchain() {
         image_view_create_info.subresourceRange.layerCount = 1;
         image_view_create_info.image = swapchain_images[i];
 
-        VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
+        VkResult result = vkCreateImageView(vkdevice->get_device(), &image_view_create_info, nullptr, &swapchain_image_views[i]);
         if (VK_SUCCESS != result)
             return result;
 
         std::string swapchain_image_view_name = "Swapchain image view #" + std::to_string(i) + ".";
 
         // Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
-        debug_marker_manager->set_object_name(device, (std::uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
                                               swapchain_image_view_name.c_str());
     }
 
@@ -587,7 +532,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Waiting for device to be idle.");
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(vkdevice->get_device());
 
     spdlog::debug("Device is idle.");
 
@@ -596,7 +541,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     if (frame_buffers.size() > 0) {
         for (auto frame_buffer : frame_buffers) {
             if (VK_NULL_HANDLE != frame_buffer) {
-                vkDestroyFramebuffer(device, frame_buffer, nullptr);
+                vkDestroyFramebuffer(vkdevice->get_device(), frame_buffer, nullptr);
                 frame_buffer = VK_NULL_HANDLE;
             }
         }
@@ -607,7 +552,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying depth buffer image view.");
 
     if (VK_NULL_HANDLE != depth_buffer.image_view) {
-        vkDestroyImageView(device, depth_buffer.image_view, nullptr);
+        vkDestroyImageView(vkdevice->get_device(), depth_buffer.image_view, nullptr);
         depth_buffer.image_view = VK_NULL_HANDLE;
     }
 
@@ -621,7 +566,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying depth stencil image view.");
 
     if (VK_NULL_HANDLE != depth_stencil.image_view) {
-        vkDestroyImageView(device, depth_stencil.image_view, nullptr);
+        vkDestroyImageView(vkdevice->get_device(), depth_stencil.image_view, nullptr);
         depth_stencil.image_view = VK_NULL_HANDLE;
     }
 
@@ -636,7 +581,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         spdlog::debug("Destroying multisampling color target image view.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.color.image_view) {
-            vkDestroyImageView(device, msaa_target_buffer.color.image_view, nullptr);
+            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.color.image_view, nullptr);
             msaa_target_buffer.color.image_view = VK_NULL_HANDLE;
         }
 
@@ -650,7 +595,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         spdlog::debug("Destroying multisampling depth target image view.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.depth.image_view) {
-            vkDestroyImageView(device, msaa_target_buffer.depth.image_view, nullptr);
+            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.depth.image_view, nullptr);
             msaa_target_buffer.depth.image_view = VK_NULL_HANDLE;
         }
 
@@ -667,7 +612,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     // We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
     if (command_buffers.size() > 0) {
         // The size of the command buffer is equal to the number of image in swapchain.
-        vkFreeCommandBuffers(device, command_pool, static_cast<std::uint32_t>(command_buffers.size()), command_buffers.data());
+        vkFreeCommandBuffers(vkdevice->get_device(), command_pool, static_cast<std::uint32_t>(command_buffers.size()), command_buffers.data());
 
         command_buffers.clear();
     }
@@ -677,7 +622,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying depth buffer image view.");
 
     if (VK_NULL_HANDLE != depth_buffer.image_view) {
-        vkDestroyImageView(device, depth_buffer.image_view, nullptr);
+        vkDestroyImageView(vkdevice->get_device(), depth_buffer.image_view, nullptr);
         depth_buffer.image_view = VK_NULL_HANDLE;
     }
 
@@ -691,21 +636,21 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying pipeline.");
 
     if (VK_NULL_HANDLE != pipeline) {
-        vkDestroyPipeline(device, pipeline, nullptr);
+        vkDestroyPipeline(vkdevice->get_device(), pipeline, nullptr);
         pipeline = VK_NULL_HANDLE;
     }
 
     spdlog::debug("Destroying pipeline layout.");
 
     if (VK_NULL_HANDLE != pipeline_layout) {
-        vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+        vkDestroyPipelineLayout(vkdevice->get_device(), pipeline_layout, nullptr);
         pipeline_layout = VK_NULL_HANDLE;
     }
 
     spdlog::debug("Destroying render pass.");
 
     if (VK_NULL_HANDLE != render_pass) {
-        vkDestroyRenderPass(device, render_pass, nullptr);
+        vkDestroyRenderPass(vkdevice->get_device(), render_pass, nullptr);
         render_pass = VK_NULL_HANDLE;
     }
 
@@ -714,7 +659,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     if (swapchain_image_views.size() > 0) {
         for (auto image_view : swapchain_image_views) {
             if (VK_NULL_HANDLE != image_view) {
-                vkDestroyImageView(device, image_view, nullptr);
+                vkDestroyImageView(vkdevice->get_device(), image_view, nullptr);
                 image_view = VK_NULL_HANDLE;
             }
         }
@@ -727,7 +672,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying swapchain.");
 
     if (VK_NULL_HANDLE != swapchain) {
-        vkDestroySwapchainKHR(device, swapchain, nullptr);
+        vkDestroySwapchainKHR(vkdevice->get_device(), swapchain, nullptr);
         swapchain = VK_NULL_HANDLE;
     }
 
@@ -744,9 +689,9 @@ VkResult VulkanRenderer::update_cameras() {
 }
 
 VkResult VulkanRenderer::recreate_swapchain() {
-    assert(device);
+    assert(vkdevice->get_device());
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(vkdevice->get_device());
 
     // TODO: outsource cleanup_swapchain() methods!
 
@@ -772,7 +717,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     spdlog::debug("Destroying depth buffer image view.");
 
     if (VK_NULL_HANDLE != depth_buffer.image_view) {
-        vkDestroyImageView(device, depth_buffer.image_view, nullptr);
+        vkDestroyImageView(vkdevice->get_device(), depth_buffer.image_view, nullptr);
         depth_buffer.image_view = VK_NULL_HANDLE;
     }
 
@@ -786,7 +731,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     spdlog::debug("Destroying depth stencil image view.");
 
     if (VK_NULL_HANDLE != depth_stencil.image_view) {
-        vkDestroyImageView(device, depth_stencil.image_view, nullptr);
+        vkDestroyImageView(vkdevice->get_device(), depth_stencil.image_view, nullptr);
         depth_stencil.image_view = VK_NULL_HANDLE;
     }
 
@@ -801,7 +746,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
         spdlog::debug("Destroying multisampling color target image view.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.color.image_view) {
-            vkDestroyImageView(device, msaa_target_buffer.color.image_view, nullptr);
+            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.color.image_view, nullptr);
             msaa_target_buffer.color.image_view = VK_NULL_HANDLE;
         }
 
@@ -815,7 +760,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
         spdlog::debug("Destroying multisampling depth target image view.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.depth.image_view) {
-            vkDestroyImageView(device, msaa_target_buffer.depth.image_view, nullptr);
+            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.depth.image_view, nullptr);
             msaa_target_buffer.depth.image_view = VK_NULL_HANDLE;
         }
 
@@ -833,7 +778,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     if (frame_buffers.size() > 0) {
         for (auto frame_buffer : frame_buffers) {
             if (VK_NULL_HANDLE != frame_buffer) {
-                vkDestroyFramebuffer(device, frame_buffer, nullptr);
+                vkDestroyFramebuffer(vkdevice->get_device(), frame_buffer, nullptr);
                 frame_buffer = VK_NULL_HANDLE;
             }
         }
@@ -847,14 +792,14 @@ VkResult VulkanRenderer::recreate_swapchain() {
     result = create_frame_buffers();
     vulkan_error_check(result);
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(vkdevice->get_device());
 
     // Calculate the new aspect ratio so we can update game camera matrices.
     float aspect_ratio = window_width / static_cast<float>(window_height);
 
     spdlog::debug("New aspect ratio: {}.", aspect_ratio);
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(vkdevice->get_device());
 
     // Setup game camera.
     game_camera.type = Camera::CameraType::LOOKAT;
@@ -868,14 +813,13 @@ VkResult VulkanRenderer::recreate_swapchain() {
     result = record_command_buffers();
     vulkan_error_check(result);
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(vkdevice->get_device());
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_descriptor_pool() {
-
-    descriptors.emplace_back(device, number_of_images_in_swapchain, std::string("unnamed descriptor"));
+    descriptors.emplace_back(vkdevice->get_device(), number_of_images_in_swapchain, std::string("unnamed descriptor"));
 
     // Create the descriptor pool.
     descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
@@ -944,8 +888,7 @@ VkResult VulkanRenderer::create_descriptor_writes() {
 }
 
 VkResult VulkanRenderer::create_pipeline() {
-    // TODO: VulkanPipelineManager!
-    assert(device);
+    assert(vkdevice->get_device());
     assert(debug_marker_manager);
 
     spdlog::debug("Creating graphics pipeline.");
@@ -1105,12 +1048,12 @@ VkResult VulkanRenderer::create_pipeline() {
 
     spdlog::debug("Setting up pipeline layout.");
 
-    VkResult result = vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
+    VkResult result = vkCreatePipelineLayout(vkdevice->get_device(), &pipeline_layout_create_info, nullptr, &pipeline_layout);
     if (VK_SUCCESS != result)
         return result;
 
     // Use Vulkan debug markers to assign an appropriate name to this pipeline.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(pipeline_layout), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
+    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(pipeline_layout), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
                                           "Pipeline layout for core engine.");
 
     if (multisampling_enabled) {
@@ -1214,7 +1157,7 @@ VkResult VulkanRenderer::create_pipeline() {
 
         spdlog::debug("Creating renderpass.");
 
-        result = vkCreateRenderPass(device, &renderpass_create_info, nullptr, &render_pass);
+        result = vkCreateRenderPass(vkdevice->get_device(), &renderpass_create_info, nullptr, &render_pass);
         vulkan_error_check(result);
     } else {
         spdlog::debug("Multisampling is disabled.");
@@ -1294,12 +1237,13 @@ VkResult VulkanRenderer::create_pipeline() {
 
         spdlog::debug("Creating renderpass.");
 
-        result = vkCreateRenderPass(device, &renderpass_create_info, nullptr, &render_pass);
+        result = vkCreateRenderPass(vkdevice->get_device(), &renderpass_create_info, nullptr, &render_pass);
         vulkan_error_check(result);
     }
 
     // Use Vulkan debug markers to assign an appropriate name to this renderpass.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "Render pass for core engine.");
+    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(render_pass), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT,
+                                          "Render pass for core engine.");
 
     // Tell Vulkan that we want to change viewport and scissor during runtime so it's a dynamic state.
     const std::vector<VkDynamicState> enabled_dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
@@ -1347,18 +1291,19 @@ VkResult VulkanRenderer::create_pipeline() {
     /// runs of an application is achieved by retrieving pipeline cache contents in one run of an application, saving the contents, and using
     /// them to preinitialize a pipeline cache on a subsequent run. The contents of the pipeline cache objects are managed by the implementation.
     /// Applications can manage the host memory consumed by a pipeline cache object and control the amount of data retrieved from a pipeline cache object."
-    result = vkCreatePipelineCache(device, &pipeline_cache_create_info, nullptr, &pipeline_cache);
+    result = vkCreatePipelineCache(vkdevice->get_device(), &pipeline_cache_create_info, nullptr, &pipeline_cache);
     vulkan_error_check(result);
 
     spdlog::debug("Finalizing graphics pipeline.");
 
     // TODO: Create multiple pipelines at once?
-    result = vkCreateGraphicsPipelines(device, pipeline_cache, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
+    result = vkCreateGraphicsPipelines(vkdevice->get_device(), pipeline_cache, 1, &graphics_pipeline_create_info, nullptr, &pipeline);
     if (VK_SUCCESS != result)
         return result;
 
     // Use Vulkan debug markers to assign an appropriate name to this pipeline.
-    debug_marker_manager->set_object_name(device, (std::uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "Graphics pipeline for core engine.");
+    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(pipeline), VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT,
+                                          "Graphics pipeline for core engine.");
 
     // TODO: We could destroy shader modules here already.
     // TODO: Create alpha blend pipeline.
@@ -1368,7 +1313,7 @@ VkResult VulkanRenderer::create_pipeline() {
 }
 
 VkResult VulkanRenderer::create_frame_buffers() {
-    assert(device);
+    assert(vkdevice->get_device());
     assert(window_width > 0);
     assert(window_height > 0);
     assert(debug_marker_manager);
@@ -1426,7 +1371,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
         image_view_create_info.subresourceRange.levelCount = 1;
         image_view_create_info.subresourceRange.layerCount = 1;
 
-        result = vkCreateImageView(device, &image_view_create_info, nullptr, &msaa_target_buffer.color.image_view);
+        result = vkCreateImageView(vkdevice->get_device(), &image_view_create_info, nullptr, &msaa_target_buffer.color.image_view);
         vulkan_error_check(result);
 
         // Depth target.
@@ -1467,7 +1412,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
         image_view_create_info.subresourceRange.levelCount = 1;
         image_view_create_info.subresourceRange.layerCount = 1;
 
-        result = vkCreateImageView(device, &image_view_create_info, nullptr, &msaa_target_buffer.depth.image_view);
+        result = vkCreateImageView(vkdevice->get_device(), &image_view_create_info, nullptr, &msaa_target_buffer.depth.image_view);
         vulkan_error_check(result);
     }
 
@@ -1514,7 +1459,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
     depth_stencil_view_create_info.subresourceRange.baseArrayLayer = 0;
     depth_stencil_view_create_info.subresourceRange.layerCount = 1;
 
-    result = vkCreateImageView(device, &depth_stencil_view_create_info, nullptr, &depth_stencil.image_view);
+    result = vkCreateImageView(vkdevice->get_device(), &depth_stencil_view_create_info, nullptr, &depth_stencil.image_view);
     vulkan_error_check(result);
 
     VkImageView attachments[4];
@@ -1554,13 +1499,13 @@ VkResult VulkanRenderer::create_frame_buffers() {
             attachments[0] = swapchain_image_views[i];
         }
 
-        VkResult result = vkCreateFramebuffer(device, &frame_buffer_create_info, nullptr, &frame_buffers[i]);
+        VkResult result = vkCreateFramebuffer(vkdevice->get_device(), &frame_buffer_create_info, nullptr, &frame_buffers[i]);
         vulkan_error_check(result);
 
         std::string frame_buffer_name = "Frame buffer #" + std::to_string(i) + ".";
 
         // Use Vulkan debug markers to assign an appropriate name to this frame buffer.
-        debug_marker_manager->set_object_name(device, (std::uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT,
+        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT,
                                               frame_buffer_name.c_str());
     }
 
@@ -1657,7 +1602,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     if (swapchain_images.size() > 0) {
         for (auto image : swapchain_images) {
             if (VK_NULL_HANDLE != image) {
-                vkDestroyImage(device, image, nullptr);
+                vkDestroyImage(vkdevice->get_device(), image, nullptr);
                 image = VK_NULL_HANDLE;
             }
         }
@@ -1682,23 +1627,17 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("Destroying Vulkan pipeline cache.");
 
     if (VK_NULL_HANDLE != pipeline_cache) {
-        vkDestroyPipelineCache(device, pipeline_cache, nullptr);
+        vkDestroyPipelineCache(vkdevice->get_device(), pipeline_cache, nullptr);
         pipeline_cache = VK_NULL_HANDLE;
     }
 
     spdlog::debug("Destroying Vulkan command pool.");
     if (VK_NULL_HANDLE != command_pool) {
-        vkDestroyCommandPool(device, command_pool, nullptr);
+        vkDestroyCommandPool(vkdevice->get_device(), command_pool, nullptr);
         command_pool = VK_NULL_HANDLE;
     }
 
-    // Device queues are implicitly cleaned up when the device is destroyed,
-    // so we don’t need to do anything in cleanup.
-    spdlog::debug("Destroying Vulkan device.");
-    if (VK_NULL_HANDLE != device) {
-        vkDestroyDevice(device, nullptr);
-        device = VK_NULL_HANDLE;
-    }
+    vkdevice.reset();
 
     // Destroy Vulkan debug callback.
     if (debug_report_callback_initialised) {
@@ -1719,6 +1658,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     in_flight_fences.clear();
     image_available_semaphores.clear();
     rendering_finished_semaphores.clear();
+
+    vkinstance.reset();
 
     return VK_SUCCESS;
 }

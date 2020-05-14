@@ -55,8 +55,9 @@ public:
     /// @param vulkan_instance A pointer to the Vulkan instance handle.
     /// @param preferred_graphics_card_index The preferred graphics card (by array index).
     /// @return The physical device which was chosen to be the best one.
-    [[nodiscard]] std::optional<VkPhysicalDevice> decide_which_graphics_card_to_use(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
-                                                                      const std::optional<std::uint32_t> &preferred_graphics_card_index = std::nullopt);
+    [[nodiscard]] std::optional<VkPhysicalDevice>
+    decide_which_graphics_card_to_use(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
+                                      const std::optional<std::uint32_t> &preferred_graphics_card_index = std::nullopt);
 
     /// @brief Automatically decides how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.
@@ -69,7 +70,8 @@ public:
     /// @param surface The window surface.
     /// @param color_format The chosen color format.
     /// @param color_space The chosen color space.
-    [[nodiscard]] std::optional<VkSurfaceFormatKHR> decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
+    [[nodiscard]] std::optional<VkSurfaceFormatKHR> decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
+                                                                                                          const VkSurfaceKHR &surface);
 
     /// @brief Automatically decides which surface color format to use in swapchain.
     /// @param graphics_card The selected graphics card.
@@ -97,7 +99,7 @@ public:
     /// @brief Finds a supported composite alpha format.
     /// @param graphics_card [in] The selected graphics card.
     /// @param surface [in] The window surface.
-    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(VkPhysicalDevice &selected_graphics_card, VkSurfaceKHR &surface);
+    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(VkPhysicalDevice selected_graphics_card, VkSurfaceKHR &surface);
 
     /// @brief Automatically decides which presentation mode the presentation engine will be using.
     /// @note We can only use presentation modes that are available in the current system. The preferred presentation mode is VK_PRESENT_MODE_MAILBOX_KHR.
@@ -107,7 +109,7 @@ public:
     /// @param surface The selected (window) surface.
     /// @return The presentation mode which will be used by the presentation engine.
     [[nodiscard]] std::optional<VkPresentModeKHR> decide_which_presentation_mode_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                                                          bool vsync = false);
+                                                                                        bool vsync = false);
 
     /// @brief Decides which graphics queue family index to use in case it is not possible to use one for both graphics and presentation.
     /// @warning This function should only be used when it is not possible to use one queue family for both graphics and presentation!
@@ -124,7 +126,8 @@ public:
 
     /// @brief Checks if there is a queue family (index) which can be used for both graphics and presentation.
     /// @return The queue family index which can be used for both graphics and presentation (if existent), std::nullopt otherwise.
-    [[nodiscard]] std::optional<std::uint32_t> find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
+    [[nodiscard]] std::optional<std::uint32_t> find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card,
+                                                                                                    const VkSurfaceKHR &surface);
 
     /// @brief Tries to find a queue family which has VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT.
     /// @warning It might be the case that there is no distinct queue family available on your system!
@@ -144,8 +147,8 @@ public:
     /// @return The index of the queue family which can be used for data transfer.
     [[nodiscard]] std::optional<std::uint32_t> find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card);
 
-    [[nodiscard]] std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice &graphics_card, const std::vector<VkFormat> &formats, const VkImageTiling tiling,
-                                                     const VkFormatFeatureFlags feature_flags);
+    [[nodiscard]] std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice &graphics_card, const std::vector<VkFormat> &formats,
+                                                                   const VkImageTiling tiling, const VkFormatFeatureFlags feature_flags);
 };
 
 } // namespace inexor::vulkan_renderer

@@ -1,11 +1,32 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
+namespace {
+// TODO: Make proper use of queue priorities in the future.
+constexpr float default_queue_priority = 1.0f;
+} // namespace
+
 namespace inexor::vulkan_renderer::wrapper {
 
-Device::Device(Device &&other) noexcept : device(other.device), graphics_card(other.graphics_card) {}
+Device::Device(Device &&other) noexcept : device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)) {}
 
-void Device::prepare_queues(bool prefer_distinct_transfer_queue) {
+Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers, bool prefer_distinct_transfer_queue,
+               const std::optional<std::uint32_t> preferred_physical_device_index)
+    : graphics_card(graphics_card), surface(surface) {
+
+    VulkanSettingsDecisionMaker settings_decision_maker;
+
+    std::optional<VkPhysicalDevice> selected_graphics_card =
+        settings_decision_maker.decide_which_graphics_card_to_use(instance, surface, preferred_physical_device_index);
+
+    if (!selected_graphics_card) {
+        throw std::runtime_error("Error: Could not find suitable graphics card!");
+    }
+
+    graphics_card = selected_graphics_card.value();
+
     spdlog::debug("Creating Vulkan device queues.");
+
+    std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 
     if (prefer_distinct_transfer_queue) {
         spdlog::debug("The application will try to use a distinct data transfer queue if it is available.");
@@ -17,23 +38,18 @@ void Device::prepare_queues(bool prefer_distinct_transfer_queue) {
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
         settings_decision_maker.find_queue_family_for_both_graphics_and_presentation(graphics_card, surface);
 
-    if (queue_family_index_for_both_graphics_and_presentation.has_value()) {
+    if (queue_family_index_for_both_graphics_and_presentation) {
         spdlog::debug("One queue for both graphics and presentation will be used.");
 
         graphics_queue_family_index = queue_family_index_for_both_graphics_and_presentation.value();
         present_queue_family_index = graphics_queue_family_index;
 
-        use_one_queue_for_graphics_and_present = true;
-
-        // For now, we only need one queue family.
-        std::uint32_t number_of_combined_queues_to_use = 1;
-
         // In this case, there is one queue family which can be used for both graphics and presentation.
         VkDeviceQueueCreateInfo create_info = {};
         create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         create_info.queueFamilyIndex = queue_family_index_for_both_graphics_and_presentation.value();
-        create_info.queueCount = number_of_combined_queues_to_use;
-        create_info.pQueuePriorities = &global_queue_priority;
+        create_info.queueCount = 1;
+        create_info.pQueuePriorities = &::default_queue_priority;
 
         queues_to_create.push_back(create_info);
     } else {
@@ -44,67 +60,66 @@ void Device::prepare_queues(bool prefer_distinct_transfer_queue) {
         // One for graphics and another one for presentation.
 
         // Check which queue family index can be used for graphics.
-        graphics_queue_family_index = settings_decision_maker.find_graphics_queue_family(graphics_card);
+        std::optional<std::uint32_t> queue_candidate = settings_decision_maker.find_graphics_queue_family(graphics_card);
 
-        if (!graphics_queue_family_index.has_value()) {
+        if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
         }
 
-        // Check which queue family index can be used for presentation.
-        present_queue_family_index = settings_decision_maker.find_presentation_queue_family(graphics_card, surface);
+        graphics_queue_family_index = queue_candidate.value();
 
-        if (!present_queue_family_index.has_value()) {
+        // Check which queue family index can be used for presentation.
+        queue_candidate = settings_decision_maker.find_presentation_queue_family(graphics_card, surface);
+
+        if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
         }
 
-        spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index.value());
-        spdlog::debug("Presentation queue family index: {}.", present_queue_family_index.value());
+        present_queue_family_index = queue_candidate.value();
 
-        // For now, we only need one queue family.
-        std::uint32_t number_of_graphics_queues_to_use = 1;
+        spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index);
+        spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
 
         // Set up one queue for graphics.
         VkDeviceQueueCreateInfo create_info = {};
         create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.queueFamilyIndex = graphics_queue_family_index.value();
-        create_info.queueCount = number_of_graphics_queues_to_use;
-        create_info.pQueuePriorities = &global_queue_priority;
+        create_info.queueFamilyIndex = graphics_queue_family_index;
+        create_info.queueCount = 1;
+        create_info.pQueuePriorities = &::default_queue_priority;
 
         queues_to_create.push_back(create_info);
-
-        // For now, we only need one queue family.
-        std::uint32_t number_of_present_queues_to_use = 1;
 
         // Set up one queue for presentation.
         create_info = {};
         create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.queueFamilyIndex = present_queue_family_index.value();
-        create_info.queueCount = number_of_present_queues_to_use;
-        create_info.pQueuePriorities = &global_queue_priority;
+        create_info.queueFamilyIndex = present_queue_family_index;
+        create_info.queueCount = 1;
+        create_info.pQueuePriorities = &::default_queue_priority;
 
         queues_to_create.push_back(create_info);
     }
 
     // Add another device queue just for data transfer.
-    transfer_queue_family_index = settings_decision_maker.find_distinct_data_transfer_queue_family(graphics_card);
+    std::optional<std::uint32_t> queue_candidate = settings_decision_maker.find_distinct_data_transfer_queue_family(graphics_card);
 
-    if (transfer_queue_family_index.has_value() && prefer_distinct_transfer_queue) {
+    bool use_distinct_data_transfer_queue = false;
+
+    if (queue_candidate && prefer_distinct_transfer_queue) {
+        transfer_queue_family_index = queue_candidate.value();
+
         spdlog::debug("A separate queue will be used for data transfer.");
-        spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index.value());
+        spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index);
 
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
-
-        // For now, we only need one queue family.
-        std::uint32_t number_of_queues_to_use = 1;
 
         VkDeviceQueueCreateInfo create_info = {};
         create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         create_info.pNext = nullptr;
         create_info.flags = 0;
-        create_info.queueFamilyIndex = transfer_queue_family_index.value();
-        create_info.queueCount = number_of_queues_to_use;
-        create_info.pQueuePriorities = &global_queue_priority;
+        create_info.queueFamilyIndex = transfer_queue_family_index;
+        create_info.queueCount = 1;
+        create_info.pQueuePriorities = &::default_queue_priority;
 
         queues_to_create.push_back(create_info);
     } else {
@@ -119,11 +134,6 @@ void Device::prepare_queues(bool prefer_distinct_transfer_queue) {
 
         transfer_queue_family_index = graphics_queue_family_index;
     }
-}
-
-Device::Device(bool prefer_distinct_transer_queue, const std::optional<std::uint32_t> preferred_physical_device_index) : graphics_card(graphics_card) {
-
-    prepare_queues(true);
 
     std::vector<const char *> device_extensions_wishlist = {
         // Since we want to draw on a window, we need the swapchain extension.
@@ -131,14 +141,19 @@ Device::Device(bool prefer_distinct_transer_queue, const std::optional<std::uint
     };
 
 #ifndef NDEBUG
-    // Debug markers allow the assignment of internal names to Vulkan resources.
-    // These internal names will conveniently be visible in debuggers like RenderDoc.
-    device_extensions_wishlist.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+    if (enable_vulkan_debug_markers) {
+        // Debug markers allow the assignment of internal names to Vulkan resources.
+        // These internal names will conveniently be visible in debuggers like RenderDoc.
+        // Debug markers are only available if RenderDoc is enabled.
+        device_extensions_wishlist.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+    }
 #endif
+
+    AvailabilityChecksManager availability_checks;
 
     std::vector<const char *> enabled_device_extensions;
 
-    for (auto device_extension_name : device_extensions_wishlist) {
+    for (const auto &device_extension_name : device_extensions_wishlist) {
         if (availability_checks.has_device_extension(graphics_card, device_extension_name)) {
             spdlog::debug("Device extension '{}' is available on this system.", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
@@ -173,19 +188,19 @@ Device::Device(bool prefer_distinct_transer_queue, const std::optional<std::uint
 
     spdlog::debug("Initialising GPU queues.");
 
-    spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index.value());
-    spdlog::debug("Presentation queue family index: {}.", present_queue_family_index.value());
-    spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index.value());
+    spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index);
+    spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
+    spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index);
 
     // Setup the queues for presentation and graphics.
     // Since we only have one queue per queue family, we acquire index 0.
-    vkGetDeviceQueue(device, present_queue_family_index.value(), 0, &present_queue);
-    vkGetDeviceQueue(device, graphics_queue_family_index.value(), 0, &graphics_queue);
+    vkGetDeviceQueue(device, present_queue_family_index, 0, &present_queue);
+    vkGetDeviceQueue(device, graphics_queue_family_index, 0, &graphics_queue);
 
     // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
     if (use_distinct_data_transfer_queue) {
         // Use a separate queue for data transfer to GPU.
-        vkGetDeviceQueue(device, transfer_queue_family_index.value(), 0, &transfer_queue);
+        vkGetDeviceQueue(device, transfer_queue_family_index, 0, &transfer_queue);
     }
 
     spdlog::debug("Created device successfully.");
@@ -194,8 +209,6 @@ Device::Device(bool prefer_distinct_transer_queue, const std::optional<std::uint
 Device::~Device() {
     vkDestroyDevice(this->device, nullptr);
     this->device = VK_NULL_HANDLE;
-
-    queues_to_create.clear();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
