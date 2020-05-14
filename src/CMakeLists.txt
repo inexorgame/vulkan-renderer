@@ -30,6 +30,7 @@ add_library(
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
+    vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/instance.cpp
 
     vulkan-renderer/world/bit_stream.cpp
