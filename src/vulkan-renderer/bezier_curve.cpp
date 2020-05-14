@@ -100,16 +100,15 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
     // Calculate a relative normal vector.
     // Please note that there is an infinite amount of normal vectors from vector a to b.
 
-    // TODO: Glm uses int as length() ?
-    float length = static_cast<float>(temp_output.tangent.length());
+    float length = glm::length(temp_output.tangent);
     temp_output.normal = glm::vec3(-temp_output.tangent.y / length, temp_output.tangent.x / length, 0);
 
     // Do not normalize tangent vectors before you have copied the normal vector! They will be incorrect!
 
     // Normalize the vectors: divide them by length so their length is 1.
     // You could rescale the vectors to change the length to your wishes.
-    glm::normalize(temp_output.normal);
-    glm::normalize(temp_output.tangent);
+    temp_output.normal = glm::normalize(temp_output.normal);
+    temp_output.tangent = glm::normalize(temp_output.tangent);
 
     // Store the output.
     return temp_output;
