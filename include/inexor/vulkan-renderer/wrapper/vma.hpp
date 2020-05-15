@@ -34,4 +34,5 @@ public:
         return vma_allocator;
     }
 };
+
 } // namespace inexor::vulkan_renderer::wrapper

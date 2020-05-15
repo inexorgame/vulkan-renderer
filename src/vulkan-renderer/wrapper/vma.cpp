@@ -30,12 +30,11 @@ VulkanMemoryAllocator::VulkanMemoryAllocator(const VkInstance instance, const Vk
 
     spdlog::debug("Opening VMA memory recording file for writing.");
 
-    std::ofstream replay_file_test;
-    replay_file_test.open(vma_replay_file, std::ios::out);
+    std::ofstream replay_file_test(vma_replay_file, std::ios::out);
 
     // Check if we can open the csv file.
     // This causes problems when the debugging path is set incorrectly!
-    if (!replay_file_test.is_open()) {
+    if (!replay_file_test) {
         throw std::runtime_error("Could not open VMA replay file " + vma_replay_file + " !");
     }
 

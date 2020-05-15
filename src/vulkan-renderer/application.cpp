@@ -102,7 +102,7 @@ VkResult Application::load_textures() {
     assert(vkdevice->get_device());
     assert(vkdevice->get_physical_device());
     assert(debug_marker_manager);
-    assert(vma_allocator);
+    assert(vma->get_allocator());
 
     // TODO: Refactor! use key from TOML file as name!
     std::size_t texture_number = 1;
@@ -111,7 +111,7 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : texture_files) {
-        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vma_allocator, texture_file, texture_name,
+        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), texture_file, texture_name,
                               vkdevice->get_graphics_queue(), vkdevice->get_graphics_queue_family_index());
     }
 
@@ -282,7 +282,7 @@ VkResult Application::load_octree_geometry() {
     const std::string octree_mesh_name = "unnamed octree";
 
     // Create a mesh buffer for octree vertex geometry.
-    mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(), vkdevice->get_transfer_queue_family_index(), vma_allocator,
+    mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(), vkdevice->get_transfer_queue_family_index(), vma->get_allocator(),
                               octree_mesh_name, sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
@@ -514,8 +514,7 @@ VkResult Application::init(int argc, char **argv) {
     result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
     vulkan_error_check(result);
 
-    result = create_vma_allocator();
-    vulkan_error_check(result);
+    vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(), vkdevice->get_physical_device());
 
     result = create_swapchain();
     vulkan_error_check(result);
