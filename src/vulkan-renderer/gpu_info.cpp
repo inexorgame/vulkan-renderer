@@ -358,11 +358,9 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
 
     // Graphics card types.
     // TODO: Is there any other way to get the graphics card type name by id?
-    std::array<std::string, 5> graphics_card_types = {
-        "VK_PHYSICAL_DEVICE_TYPE_OTHER",        "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
-        "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU", "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU",
-        "VK_PHYSICAL_DEVICE_TYPE_CPU"
-    };
+    std::array<std::string, 5> graphics_card_types = {"VK_PHYSICAL_DEVICE_TYPE_OTHER", "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
+                                                      "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU", "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU",
+                                                      "VK_PHYSICAL_DEVICE_TYPE_CPU"};
 
     // Check if array index is in bounds.
     if (graphics_card_properties.deviceType <= 4) {

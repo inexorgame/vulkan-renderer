@@ -119,7 +119,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
 
     vkCmdCopyBufferToImage(copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                            &buffer_image_region);
-                           
+
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", name);
 
     copy_command_buffer.end_recording_and_submit_command();
