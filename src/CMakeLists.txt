@@ -13,7 +13,6 @@ add_library(
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/gpu_memory_buffer.cpp
-    vulkan-renderer/gpu_queue_manager.cpp
     vulkan-renderer/mesh_buffer.cpp
     vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/once_command_buffer.cpp
@@ -30,6 +29,7 @@ add_library(
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
+    vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/instance.cpp
 
     vulkan-renderer/world/bit_stream.cpp
