@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
+#include "inexor/vulkan-renderer/frame_graph.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
@@ -16,12 +17,9 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
-#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
-#include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -44,6 +42,9 @@ namespace inexor::vulkan_renderer {
 constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
 
 class VulkanRenderer {
+private:
+    FrameGraph m_frame_graph;
+
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
@@ -137,15 +138,7 @@ protected:
     /// RAII wrapper for command pools.
     std::unique_ptr<wrapper::CommandPool> command_pool = nullptr;
 
-    std::unique_ptr<wrapper::Image> depth_buffer;
-
-    std::unique_ptr<wrapper::Image> depth_stencil;
-
     std::unique_ptr<wrapper::PipelineLayout> pipeline_layout;
-
-    std::unique_ptr<wrapper::GraphicsPipeline> graphics_pipeline;
-
-    std::unique_ptr<wrapper::RenderPass> renderpass;
 
     std::unique_ptr<wrapper::Framebuffer> framebuffer;
 
@@ -154,15 +147,6 @@ protected:
     VkResult create_physical_device(const VkPhysicalDevice &graphics_card, const bool enable_debug_markers = true);
 
     VkResult update_cameras();
-
-    /// @brief Create depth image.
-    VkResult create_depth_buffer();
-
-    /// @brief Creates the command buffers.
-    VkResult create_command_buffers();
-
-    /// @brief Records the command buffers.
-    VkResult record_command_buffers();
 
     /// @brief Creates the semaphores neccesary for synchronisation.
     VkResult create_synchronisation_objects();
@@ -188,18 +172,13 @@ protected:
     /// @brief Creates the command pool.
     VkResult create_command_pool();
 
-    /// @brief Creates the frame buffers.
-    VkResult create_frame_buffers();
-
-    /// @brief Creates the rendering pipeline.
-    VkResult create_pipeline();
+    void create_frame_graph();
 
     /// @brief Destroys all Vulkan objects.
     VkResult shutdown_vulkan();
 
 public:
     VulkanRenderer() = default;
-
     ~VulkanRenderer() = default;
 
     /// @brief Run Vulkan memory allocator's memory statistics.

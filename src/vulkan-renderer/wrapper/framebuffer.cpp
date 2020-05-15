@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -9,46 +11,33 @@ namespace inexor::vulkan_renderer::wrapper {
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept
     : device(other.device), name(std::move(other.name)), frames(std::move(other.frames)) {}
 
-Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass,
-                         std::vector<VkImageView> attachments,
-                         const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width,
-                         const std::uint32_t height, const std::uint32_t swapchain_image_count,
-                         const bool multisampling_enabled, const std::string name)
-    : device(device), name(std::move(name)) {
+Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass, const Swapchain &swapchain,
+                         std::vector<VkImageView> attachments)
+    : device(device), name("framebuffer") {
     assert(device);
     assert(renderpass);
     assert(!name.empty());
-    assert(!attachments.empty());
-    assert(width > 0);
-    assert(height > 0);
-    assert(swapchain_image_count > 0);
 
     spdlog::debug("Creating frame buffers.");
-    spdlog::debug("Number of images in swapchain: {}.", swapchain_image_count);
+    spdlog::debug("Number of images in swapchain: {}.", swapchain.get_image_count());
 
     VkFramebufferCreateInfo framebuffer_ci = {};
     framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebuffer_ci.renderPass = renderpass;
     framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
     framebuffer_ci.pAttachments = attachments.data();
-    framebuffer_ci.width = width;
-    framebuffer_ci.height = height;
+    framebuffer_ci.width = swapchain.get_extent().width;
+    framebuffer_ci.height = swapchain.get_extent().height;
     framebuffer_ci.layers = 1;
 
-    frames.resize(swapchain_image_count);
+    frames.resize(swapchain.get_image_count());
 
     // Create one frame buffer for every image in swap chain.
-    for (std::size_t i = 0; i < swapchain_image_count; i++) {
+    for (std::size_t i = 0; i < swapchain.get_image_count(); i++) {
         spdlog::debug("Creating framebuffer #{}.", i);
-
-        if (multisampling_enabled) {
-            attachments[1] = swapchain_attachments[i];
-        } else {
-            attachments[0] = swapchain_attachments[i];
-        }
-
-        if (vkCreateFramebuffer(device, &framebuffer_ci, nullptr, &frames[i])) {
-            throw std::runtime_error("Error: vkCreateFramebuffer failed for framebuffer " + name + " !");
+        attachments[0] = swapchain.get_image_view(i);
+        if (vkCreateFramebuffer(device, &framebuffer_ci, nullptr, &frames[i]) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create framebuffer!");
         }
     }
 
