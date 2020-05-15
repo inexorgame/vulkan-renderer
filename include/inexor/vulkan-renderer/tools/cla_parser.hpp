@@ -1,123 +1,104 @@
 ﻿#pragma once
 
-#include <spdlog/spdlog.h>
-
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace inexor::vulkan_renderer::tools {
 
-/// @brief Defines the type of an accepted command line argument.
-enum class CommandLineArgumentType {
-    NONE,
-    STRING,
-    INT64,
-    UINT32,
-    BOOL,
-    // TODO: Add more
+/// @brief Template class for creating arguments
+class CommandLineArgumentTemplate {
+    const std::string argument;
+    const bool takes_values;
+
+public:
+    /// @param argument The argument to be passed on the command line (e.g --vsync)
+    /// @param takes_args Whether this argument can take values (e.g --gpu 1)
+    /// @note Only arguments that take zero or one values are supported
+    CommandLineArgumentTemplate(std::string argument, bool takes_args) : argument(std::move(argument)), takes_values(takes_args) {}
+
+    [[nodiscard]] const std::string &get_argument() const {
+        return argument;
+    }
+
+    [[nodiscard]] bool does_take_values() const {
+        return takes_values;
+    }
 };
 
-/// @brief A command line argument template class.
-/// @noe This class does not contain any data yet!
-struct CommandLineArgumentTemplate {
-    CommandLineArgumentTemplate(const CommandLineArgumentType param_type, std::string param_name);
+class CommandLineArgumentValue {
+    const std::string value;
 
-    std::string argument_name;
+public:
+    explicit CommandLineArgumentValue(std::string value) : value(std::move(value)) {}
 
-    CommandLineArgumentType argument_type;
-};
-
-/// @brief Contains the actual command line data.
-struct CommandLineArgumentValue {
-    CommandLineArgumentType type;
-
-    std::string value_str;
-    std::int64_t value_int64;
-    std::uint32_t value_uint32;
-    bool value_bool;
+    template <typename T>
+    T as() const;
 };
 
 /// @brief A simple command line argument parser.
-/// @todo What if an argumen gets specified twice?
+/// @note Only supports arguments with zero or one values (e.g --vsync or --gpu 1)
+/// @note Only supports long arguments (e.g --<arg>)
+/// @todo Support equals arguments and arguments with multiple values (e.g --gpus=1,2,3)
+/// @todo Support short arguments with stacking (e.g -abc)
 class CommandLineArgumentParser {
-public:
-    CommandLineArgumentParser() = default;
+    /// @todo Allow runtime addition of accepted parameters
+    const std::vector<CommandLineArgumentTemplate> accepted_args = {
+        // Defines which GPU to use (by array index).
+        {"--gpu", true},
 
-    ~CommandLineArgumentParser() = default;
-
-private:
-    /// @brief This defines the list of acceptable command line arguments with their corresponding types.
-    const std::vector<CommandLineArgumentTemplate> list_of_accepted_command_line_arguments{
-        /// Defines which GPU to use (by array index).
-        {CommandLineArgumentType::UINT32, "-gpu"},
-
-        /// Defines if we will print stats about graphics cards.
-        {CommandLineArgumentType::NONE, "-nostats"},
+        // Defines if we will print stats about graphics cards.
+        {"--no-stats", false},
 
         // Use vertical synchronisation.
-        {CommandLineArgumentType::NONE, "-vsync"},
+        {"--vsync", false},
 
         // Use RenderDoc layer.
-        {CommandLineArgumentType::NONE, "-renderdoc"},
+        {"--renderdoc", false},
 
         // Disable Khronos validation layer.
-        {CommandLineArgumentType::NONE, "-novalidation"},
+        {"--no-validation", false},
 
         // Do not use distinct data transfer queue, use graphics queue.
-        {CommandLineArgumentType::NONE, "-no_separate_data_queue"},
+        {"--no-separate-data-queue", false},
 
         // Disable debug markers (even if -renderdoc is specified)
-        {CommandLineArgumentType::NONE, "-no_vk_debug_markers"}
+        {"--no-vk-debug-markers", false}};
 
-        /// TODO: Add more command line argumetns here!
-    };
+    std::unordered_map<std::string, CommandLineArgumentValue> parsed_arguments;
 
-    /// The parsed arguments.
-    std::unordered_map<std::string, CommandLineArgumentValue> parsed_command_line_arguments;
-
-    /// The number of command line arguments.
-    std::int64_t number_of_parsed_command_line_arguments = 0;
-
-protected:
-    /// @brief Checks if a command line argument
-    [[nodiscard]] bool does_command_line_argument_template_exist(const std::string argument_name);
-
-    // @brief Checks if the command line argument is specified.
-    std::optional<bool> is_command_line_argument_specified(const std::string argument_name);
+    std::optional<CommandLineArgumentTemplate> get_arg_template(const std::string &argument_name) const;
 
 public:
     /// @brief Parses the command line arguments
-    void parse_command_line_arguments(std::size_t argument_count, char *arguments[]);
+    void parse_args(int argc, char **argv);
+
+    template <typename T>
+    std::optional<T> get_arg(const std::string &name) const {
+        auto arg_template = get_arg_template(name);
+        if (!arg_template) {
+            return std::nullopt;
+        }
+
+        auto it = parsed_arguments.find(name);
+        if (it == parsed_arguments.end()) {
+            return std::nullopt;
+        }
+
+        if (!arg_template->does_take_values()) {
+            return true;
+        }
+
+        return it->second.as<T>();
+    }
 
     /// @brief Returns the number of command line arguments.
-    [[nodiscard]] const std::int64_t get_number_of_parsed_command_line_arguments();
-
-    /// @brief Returns the type of a command line argument.
-    /// @param argument_name The name of the command line argument.
-    [[nodiscard]] const std::optional<CommandLineArgumentType> get_argument_template_type(const std::string &argument_name);
-
-    /// @brief Returns the value of a boolean command line argument (if existent).
-    /// @param argument_name The name of the command line argument.
-    /// @return The value of the boolean command line argument
-    /// (true or false, in case it even exists), std::nullopt otherwise.
-    [[nodiscard]] const std::optional<bool> get_command_line_argument_bool(const std::string &argument_name);
-
-    /// @brief Returns the value of a std::string command line argument (if existent).
-    /// @param argument_name The name of the command line argument.
-    /// @return The std::string value of the command line argument.
-    [[nodiscard]] const std::optional<std::string> get_command_line_argument_string(const std::string &argument_name);
-
-    /// @brief Returns the value of a std::int64_t command line argument (if existent).
-    /// @parm argument_name The name of the command line argument.
-    /// @return The std::int64_t value of the command line argument.
-    [[nodiscard]] const std::optional<std::int64_t> get_command_line_argument_int64(const std::string &argument_name);
-
-    /// @brief Returns the value of a std::uint32_t command line argument (if existent).
-    /// @parm argument_name The name of the command line argument.
-    /// @return The std::uint32_t value of the command line argument.
-    [[nodiscard]] const std::optional<std::uint32_t> get_command_line_argument_uint32(const std::string &argument_name);
+    [[nodiscard]] std::size_t get_parsed_arg_count() const {
+        return parsed_arguments.size();
+    }
 };
 
 } // namespace inexor::vulkan_renderer::tools

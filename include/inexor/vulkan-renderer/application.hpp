@@ -16,7 +16,7 @@
 
 namespace inexor::vulkan_renderer {
 
-class Application : public VulkanRenderer, public tools::CommandLineArgumentParser {
+class Application : public VulkanRenderer {
 public:
     Application() = default;
 
@@ -85,7 +85,7 @@ private:
     double cursor_x, cursor_y;
 
 public:
-    VkResult init();
+    VkResult init(int argc, char **argv);
 
     /// @brief Keyboard input callback.
     /// @param window [in] The glfw window.

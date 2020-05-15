@@ -24,10 +24,7 @@ int main(int argc, char *argv[]) {
     spdlog::debug("Parsing command line arguments.");
 
     Application renderer;
-    // We use some simple command line argument parser we wrote ourselves.
-    renderer.parse_command_line_arguments(argc, argv);
-
-    VkResult result = renderer.init();
+    VkResult result = renderer.init(argc, argv);
 
     if (VK_SUCCESS == result) {
         renderer.run();

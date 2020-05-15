@@ -320,12 +320,12 @@ VkResult Application::check_application_specific_features() {
     return VK_SUCCESS;
 }
 
-VkResult Application::init() {
+VkResult Application::init(int argc, char **argv) {
     spdlog::debug("Initialising vulkan-renderer.");
-
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
 
-    // TOOD: Implement -threads <N> command line argument.
+    tools::CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
 
     // Initialise Inexor thread-pool.
     thread_pool = std::make_shared<ThreadPool>();
@@ -363,34 +363,27 @@ VkResult Application::init() {
     // Since GLFW is a C-style API, we can't use a class method as callback for window resize!
     glfwSetFramebufferSizeCallback(window, frame_buffer_resize_callback);
 
-    spdlog::debug("Checking for '-renderdoc' command line argument.");
-
     bool enable_renderdoc_instance_layer = false;
 
-    // If the user specified command line argument "-renderdoc", the RenderDoc instance layer will be enabled.
-    std::optional<bool> enable_renderdoc = is_command_line_argument_specified("-renderdoc");
-
-    if (enable_renderdoc.has_value()) {
+    auto enable_renderdoc = cla_parser.get_arg<bool>("--renderdoc");
+    if (enable_renderdoc) {
 #ifdef NDEBUG
         spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
 #else
         if (enable_renderdoc.value()) {
-            spdlog::debug("RenderDoc command line argument specified.");
+            spdlog::debug("--renderdoc specified, enabling renderdoc instance layer.");
             enable_renderdoc_instance_layer = true;
         }
 #endif
     }
 
-    spdlog::debug("Checking for '-novalidation' command line argument.");
-
     bool enable_khronos_validation_instance_layer = true;
 
-    // If the user specified command line argument "-novalidation", the Khronos validation instance layer will be disabled.
+    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be disabled.
     // For debug builds, this is not advisable! Always use validation layers during development!
-    std::optional<bool> disable_validation = is_command_line_argument_specified("-novalidation");
-
-    if (disable_validation.has_value() && disable_validation.value()) {
-        spdlog::warn("Vulkan validation layers DISABLED by command line argument -novalidation!.");
+    auto disable_validation = cla_parser.get_arg<bool>("--no-validation");
+    if (disable_validation && disable_validation.value()) {
+        spdlog::warn("--no-validation specified, disabling validation layers.");
         enable_khronos_validation_instance_layer = false;
     }
 
@@ -447,36 +440,27 @@ VkResult Application::init() {
         return result;
     }
 
-    spdlog::debug("Checking for -gpu command line argument.");
-
-    // The user can specify with "-gpu <number>" which graphics card to prefer.
-    std::optional<std::uint32_t> prefered_graphics_card = get_command_line_argument_uint32("-gpu");
-
-    if (prefered_graphics_card.has_value()) {
+    // The user can specify with "--gpu <number>" which graphics card to prefer.
+    auto prefered_graphics_card = cla_parser.get_arg<std::uint32_t>("--gpu");
+    if (prefered_graphics_card) {
         spdlog::debug("Preferential graphics card index {} specified.", prefered_graphics_card.value());
     }
 
     bool display_graphics_card_info = true;
 
-    spdlog::debug("Checking for -nostats command line argument.");
-
-    // If the user specified command line argument "-nostats", no information will be
+    // If the user specified command line argument "--nostats", no information will be
     // displayed about all the graphics cards which are available on the system.
-    std::optional<bool> hide_gpu_stats = is_command_line_argument_specified("-nostats");
-
-    if (hide_gpu_stats.has_value() && hide_gpu_stats.value()) {
-        spdlog::debug("No extended information about graphics cards will be shown.");
+    auto hide_gpu_stats = cla_parser.get_arg<bool>("--no-stats");
+    if (hide_gpu_stats && hide_gpu_stats.value()) {
+        spdlog::debug("--no-stats specified, no extended information about graphics cards will be shown.");
         display_graphics_card_info = false;
     }
 
-    spdlog::debug("Checking for -vsync command line argument.");
-
-    // If the user specified command line argument "-vsync", the presentation engine waits
+    // If the user specified command line argument "--vsync", the presentation engine waits
     // for the next vertical blanking period to update the current image.
-    std::optional<bool> enable_vertical_synchronisation = is_command_line_argument_specified("-nostats");
-
-    if (enable_vertical_synchronisation.has_value() && enable_vertical_synchronisation.value()) {
-        spdlog::debug("V-sync enabled!.");
+    auto enable_vertical_synchronisation = cla_parser.get_arg<bool>("--vsync");
+    if (enable_vertical_synchronisation && enable_vertical_synchronisation.value()) {
+        spdlog::debug("V-sync enabled!");
         vsync_enabled = true;
     } else {
         spdlog::debug("V-sync disabled!");
@@ -495,21 +479,16 @@ VkResult Application::init() {
         gpu_info_manager->print_all_physical_devices(vkinstance->get_instance(), surface);
     }
 
-    spdlog::debug("Checking for -no_separate_data_queue command line argument.");
-
-    // Ignore distinct data transfer queue.
-    std::optional<bool> forbid_distinct_data_transfer_queue = is_command_line_argument_specified("-no_separate_data_queue");
-
     bool use_distinct_data_transfer_queue = true;
 
-    if (forbid_distinct_data_transfer_queue.has_value() && forbid_distinct_data_transfer_queue.value()) {
-        spdlog::warn("Command line argument -no_separate_data_queue specified.");
+    // Ignore distinct data transfer queue
+    auto forbid_distinct_data_transfer_queue = cla_parser.get_arg<bool>("--no-separate-data-queue");
+    if (forbid_distinct_data_transfer_queue && forbid_distinct_data_transfer_queue.value()) {
+        spdlog::warn("Command line argument --no-separate-data-queue specified.");
         spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
         spdlog::warn("Performance loss might be a result of this!");
         use_distinct_data_transfer_queue = false;
     }
-
-    spdlog::debug("Checking for -no_vk_debug_markers command line argument.");
 
     bool enable_debug_marker_device_extension = true;
 
@@ -520,10 +499,9 @@ VkResult Application::init() {
 
     // Check if Vulkan debug markers should be disabled.
     // Those are only available if RenderDoc instance layer is enabled!
-    std::optional<bool> no_vulkan_debug_markers = is_command_line_argument_specified("-no_vk_debug_markers");
-
-    if (no_vulkan_debug_markers.has_value() && no_vulkan_debug_markers.value()) {
-        spdlog::warn("Vulkan debug markers are disabled because -no_vk_debug_markers was specified.");
+    auto no_vulkan_debug_markers = cla_parser.get_arg<bool>("--no-vk-debug-markers");
+    if (no_vulkan_debug_markers && no_vulkan_debug_markers.value()) {
+        spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
         enable_debug_marker_device_extension = false;
     }
 
