@@ -1,22 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
-// Vulkan Memory Allocator (VMA) library.
-#define VMA_IMPLEMENTATION
-
-// It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
-// Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
-// Memory is automatically mapped and unmapped if necessary.
-#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
-
-// Enforce specified number of bytes as a margin before and after every allocation.
-#define VMA_DEBUG_MARGIN 16
-
-// Enable validation of contents of the margins.
-#define VMA_DEBUG_DETECT_CORRUPTION 1
-
-// Vulkan Memory Allocator library.
-#include <vma/vk_mem_alloc.h>
-
 namespace inexor::vulkan_renderer {
 
 VkResult VulkanRenderer::create_window_surface(const VkInstance &instance, GLFWwindow *window, VkSurfaceKHR &surface) {
@@ -71,7 +54,7 @@ VkResult VulkanRenderer::create_command_pool() {
 }
 
 VkResult VulkanRenderer::create_uniform_buffers() {
-    uniform_buffers.emplace_back(vkdevice->get_device(), vma_allocator, std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
+    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
 
     return VK_SUCCESS;
 }
@@ -120,7 +103,7 @@ VkResult VulkanRenderer::create_depth_buffer() {
 
     depth_buffer.allocation_create_info.pUserData = depth_buffer_image_name.data();
 
-    VkResult result = vmaCreateImage(vma_allocator, &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image,
+    VkResult result = vmaCreateImage(vma->get_allocator(), &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image,
                                      &depth_buffer.allocation, &depth_buffer.allocation_info);
     vulkan_error_check(result);
 
@@ -178,52 +161,6 @@ VkResult VulkanRenderer::create_command_buffers() {
         debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                               command_buffer_name.c_str());
     }
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_vma_allocator() {
-    assert(vkdevice->get_device());
-    assert(vkdevice->get_physical_device());
-    assert(debug_marker_manager);
-
-    spdlog::debug("Initialising Vulkan memory allocator.");
-
-    // VMA memory recording and replay.
-    VmaRecordSettings vma_record_settings;
-
-    const std::string vma_replay_file = "vma-replays/vma_replay.csv";
-
-    std::ofstream replay_file_test;
-    replay_file_test.open(vma_replay_file, std::ios::out);
-
-    // Check if we can open the csv file.
-    // This causes problems when the debugging path is set incorrectly!
-    if (!replay_file_test.is_open()) {
-        spdlog::error("Could not open VMA replay file {}", vma_replay_file);
-        return VK_ERROR_INITIALIZATION_FAILED;
-    }
-
-    replay_file_test.close();
-
-    vma_record_settings.pFilePath = vma_replay_file.c_str();
-
-    // We flush the stream after every write operation because we are expecting unforseen program crashes.
-    // This might has a negative effect on the application's performance but it's worth it for now.
-    vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
-
-    VmaAllocatorCreateInfo allocator_info = {};
-
-    allocator_info.physicalDevice = vkdevice->get_physical_device();
-    allocator_info.device = vkdevice->get_device();
-#if VMA_RECORDING_ENABLED
-    allocator_info.pRecordSettings = &vma_record_settings;
-#endif
-    allocator_info.instance = vkinstance->get_instance();
-
-    // Create an instance of Vulkan memory allocator.
-    VkResult result = vmaCreateAllocator(&allocator_info, &vma_allocator);
-    vulkan_error_check(result);
 
     return VK_SUCCESS;
 }
@@ -559,7 +496,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying depth buffer image.");
 
     if (VK_NULL_HANDLE != depth_buffer.image) {
-        vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
+        vmaDestroyImage(vma->get_allocator(), depth_buffer.image, depth_buffer.allocation);
         depth_buffer.image = VK_NULL_HANDLE;
     }
 
@@ -573,7 +510,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying depth stencil image.");
 
     if (VK_NULL_HANDLE != depth_stencil.image) {
-        vmaDestroyImage(vma_allocator, depth_stencil.image, depth_stencil.allocation);
+        vmaDestroyImage(vma->get_allocator(), depth_stencil.image, depth_stencil.allocation);
         depth_stencil.image = VK_NULL_HANDLE;
     }
 
@@ -588,7 +525,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         spdlog::debug("Destroying multisampling color target image.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.color.image) {
-            vmaDestroyImage(vma_allocator, msaa_target_buffer.color.image, msaa_target_buffer.color.allocation);
+            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.color.image, msaa_target_buffer.color.allocation);
             msaa_target_buffer.color.allocation = VK_NULL_HANDLE;
         }
 
@@ -602,7 +539,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         spdlog::debug("Destroying multisampling depth target image.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.depth.image) {
-            vmaDestroyImage(vma_allocator, msaa_target_buffer.depth.image, msaa_target_buffer.depth.allocation);
+            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.depth.image, msaa_target_buffer.depth.allocation);
             msaa_target_buffer.depth.allocation = VK_NULL_HANDLE;
         }
     }
@@ -629,7 +566,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying depth buffer image.");
 
     if (VK_NULL_HANDLE != depth_buffer.image) {
-        vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
+        vmaDestroyImage(vma->get_allocator(), depth_buffer.image, depth_buffer.allocation);
         depth_buffer.image = VK_NULL_HANDLE;
     }
 
@@ -724,7 +661,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     spdlog::debug("Destroying depth buffer image.");
 
     if (VK_NULL_HANDLE != depth_buffer.image) {
-        vmaDestroyImage(vma_allocator, depth_buffer.image, depth_buffer.allocation);
+        vmaDestroyImage(vma->get_allocator(), depth_buffer.image, depth_buffer.allocation);
         depth_buffer.image = VK_NULL_HANDLE;
     }
 
@@ -738,7 +675,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     spdlog::debug("Destroying depth stencil image.");
 
     if (VK_NULL_HANDLE != depth_stencil.image) {
-        vmaDestroyImage(vma_allocator, depth_stencil.image, depth_stencil.allocation);
+        vmaDestroyImage(vma->get_allocator(), depth_stencil.image, depth_stencil.allocation);
         depth_stencil.image = VK_NULL_HANDLE;
     }
 
@@ -753,7 +690,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
         spdlog::debug("Destroying multisampling color target image.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.color.image) {
-            vmaDestroyImage(vma_allocator, msaa_target_buffer.color.image, msaa_target_buffer.color.allocation);
+            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.color.image, msaa_target_buffer.color.allocation);
             msaa_target_buffer.color.allocation = VK_NULL_HANDLE;
         }
 
@@ -767,7 +704,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
         spdlog::debug("Destroying multisampling depth target image.");
 
         if (VK_NULL_HANDLE != msaa_target_buffer.depth.image) {
-            vmaDestroyImage(vma_allocator, msaa_target_buffer.depth.image, msaa_target_buffer.depth.allocation);
+            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.depth.image, msaa_target_buffer.depth.allocation);
             msaa_target_buffer.depth.allocation = VK_NULL_HANDLE;
         }
     }
@@ -1351,7 +1288,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
 
         msaa_target_buffer.color.allocation_create_info.pUserData = msaa_target_color_image_name.data();
 
-        result = vmaCreateImage(vma_allocator, &image_create_info, &msaa_target_buffer.color.allocation_create_info, &msaa_target_buffer.color.image,
+        result = vmaCreateImage(vma->get_allocator(), &image_create_info, &msaa_target_buffer.color.allocation_create_info, &msaa_target_buffer.color.image,
                                 &msaa_target_buffer.color.allocation, &msaa_target_buffer.color.allocation_info);
         vulkan_error_check(result);
 
@@ -1395,7 +1332,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
 
         msaa_target_buffer.depth.allocation_create_info.pUserData = msaa_target_depth_image.data();
 
-        result = vmaCreateImage(vma_allocator, &image_create_info, &msaa_target_buffer.depth.allocation_create_info, &msaa_target_buffer.depth.image,
+        result = vmaCreateImage(vma->get_allocator(), &image_create_info, &msaa_target_buffer.depth.allocation_create_info, &msaa_target_buffer.depth.image,
                                 &msaa_target_buffer.depth.allocation, &msaa_target_buffer.depth.allocation_info);
         vulkan_error_check(result);
 
@@ -1440,7 +1377,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
 
     depth_stencil.allocation_create_info.pUserData = depth_stencil_image_name.data();
 
-    result = vmaCreateImage(vma_allocator, &image_create_info, &depth_stencil.allocation_create_info, &depth_stencil.image, &depth_stencil.allocation,
+    result = vmaCreateImage(vma->get_allocator(), &image_create_info, &depth_stencil.allocation_create_info, &depth_stencil.image, &depth_stencil.allocation,
                             &depth_stencil.allocation_info);
     vulkan_error_check(result);
 
@@ -1519,7 +1456,7 @@ VkResult VulkanRenderer::calculate_memory_budget() {
     spdlog::debug("Calculating memory statistics before shutdown.");
 
     // Use Vulkan memory allocator's statistics.
-    vmaCalculateStats(vma_allocator, &memory_stats);
+    vmaCalculateStats(vma->get_allocator(), &memory_stats);
 
     spdlog::debug("VMA heap:");
 
@@ -1565,7 +1502,7 @@ VkResult VulkanRenderer::calculate_memory_budget() {
 
     char *vma_stats_string = nullptr;
 
-    vmaBuildStatsString(vma_allocator, &vma_stats_string, true);
+    vmaBuildStatsString(vma->get_allocator(), &vma_stats_string, true);
 
     std::ofstream vma_memory_dump;
 
@@ -1579,7 +1516,7 @@ VkResult VulkanRenderer::calculate_memory_budget() {
 
     vma_dump_index++;
 
-    vmaFreeStatsString(vma_allocator, vma_stats_string);
+    vmaFreeStatsString(vma->get_allocator(), vma_stats_string);
 
     return VK_SUCCESS;
 }
@@ -1622,7 +1559,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         surface = VK_NULL_HANDLE;
     }
 
-    vmaDestroyAllocator(vma_allocator);
+    vma.reset();
 
     spdlog::debug("Destroying Vulkan pipeline cache.");
 

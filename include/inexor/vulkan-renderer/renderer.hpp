@@ -23,6 +23,7 @@
 #include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/vma.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -30,7 +31,6 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <spdlog/spdlog.h>
-#include <vma/vma_usage.h>
 
 #include <chrono>
 #include <fstream>
@@ -60,8 +60,6 @@ protected:
     std::shared_ptr<AvailabilityChecksManager> availability_checks_manager = std::make_shared<AvailabilityChecksManager>();
 
     std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker = std::make_shared<VulkanSettingsDecisionMaker>();
-
-    VmaAllocator vma_allocator;
 
     VkSurfaceKHR surface;
 
@@ -160,6 +158,9 @@ protected:
     // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
     std::unique_ptr<wrapper::Device> vkdevice = nullptr;
 
+    // RAII wrapper for VmaAllocator.
+    std::unique_ptr<wrapper::VulkanMemoryAllocator> vma;
+
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.
     /// @param window The GLFW window.
@@ -177,9 +178,6 @@ protected:
     VkResult initialise_glTF2_model_manager();
 
     VkResult update_cameras();
-
-    /// @brief Initialise allocator of Vulkan Memory Allocator library.
-    VkResult create_vma_allocator();
 
     /// @brief Create depth image.
     VkResult create_depth_buffer();
