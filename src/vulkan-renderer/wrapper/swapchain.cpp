@@ -138,9 +138,8 @@ void Swapchain::recreate(std::uint32_t &window_width, std::uint32_t &window_heig
 
     // Unlike swapchain images, the image views were created by us directly.
     // It is our job to destroy them again.
-    for (auto image_view : swapchain_image_views) {
+    for (const auto image_view : swapchain_image_views) {
         vkDestroyImageView(device, image_view, nullptr);
-        image_view = VK_NULL_HANDLE;
     }
 
     swapchain_image_views.clear();
@@ -154,9 +153,8 @@ Swapchain::~Swapchain() {
     vkDestroySwapchainKHR(device, swapchain, nullptr);
     swapchain = VK_NULL_HANDLE;
 
-    for (auto image_view : swapchain_image_views) {
+    for (const auto image_view : swapchain_image_views) {
         vkDestroyImageView(device, image_view, nullptr);
-        image_view = VK_NULL_HANDLE;
     }
 }
 

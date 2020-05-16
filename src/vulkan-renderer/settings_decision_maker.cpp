@@ -483,7 +483,8 @@ VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::decide_which_image_trans
 }
 
 // TOOD: std::optional?
-VkCompositeAlphaFlagBitsKHR VulkanSettingsDecisionMaker::find_composite_alpha_format(VkPhysicalDevice selected_graphics_card, VkSurfaceKHR &surface) {
+VkCompositeAlphaFlagBitsKHR VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
+                                                                                     const VkSurfaceKHR surface) {
     VkCompositeAlphaFlagBitsKHR composite_alpha;
 
     const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags = {

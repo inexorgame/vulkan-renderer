@@ -27,9 +27,11 @@ private:
     std::uint32_t images_in_swapchain_count;
     bool vsync_enabled;
 
-    /// @brief
-    /// @param
-    /// @param
+    /// @brief (Re)creates the swapchain.
+    /// @param window_width [in] The requested width of the window.
+    /// @param window_height [in] The requested height of the window.
+    /// @note We are passing width and height of the window as reference since the API
+    /// needs to check if the swapchain can support the requested resolution.
     void setup_swapchain(std::uint32_t &window_width, std::uint32_t &window_height);
 
 public:
@@ -53,7 +55,7 @@ public:
     /// This happens for example when the window gets resized.
     void recreate(std::uint32_t &window_width, std::uint32_t &window_height);
 
-    [[nodiscard]] const auto get_swapchain_ptr() const {
+    [[nodiscard]] const VkSwapchainKHR* get_swapchain_ptr() const {
         return &swapchain;
     }
 
