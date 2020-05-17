@@ -23,8 +23,8 @@
 #include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "inexor/vulkan-renderer/wrapper/vma.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/vma.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -146,6 +146,12 @@ protected:
 
     // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
     std::unique_ptr<wrapper::Device> vkdevice = nullptr;
+
+    // RAII wrapper for Swapchain.
+    std::unique_ptr<wrapper::Swapchain> swapchain = nullptr;
+
+    // RAII wrapper for Vulkan Memory Allocator.
+    std::unique_ptr<wrapper::VulkanMemoryAllocator> vma = nullptr;
 
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.
