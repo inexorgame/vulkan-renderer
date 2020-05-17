@@ -24,6 +24,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/vma.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -65,23 +66,11 @@ protected:
 
     VkPresentModeKHR selected_present_mode;
 
-    VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-
-    std::uint32_t number_of_images_in_swapchain = 0;
-
     VkSubmitInfo submit_info;
 
     VkPresentInfoKHR present_info = {};
 
-    std::vector<VkImage> swapchain_images;
-
-    std::vector<VkImageView> swapchain_image_views;
-
     VkPipelineLayout pipeline_layout = {};
-
-    VkFormat selected_image_format = {};
-
-    VkExtent2D swapchain_image_extent = {};
 
     VkColorSpaceKHR selected_color_space = {};
 
@@ -157,9 +146,6 @@ protected:
 
     // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
     std::unique_ptr<wrapper::Device> vkdevice = nullptr;
-
-    // RAII wrapper for VmaAllocator.
-    std::unique_ptr<wrapper::VulkanMemoryAllocator> vma;
 
     /// @brief Create a window surface.
     /// @param vulkan_instance The instance of Vulkan.

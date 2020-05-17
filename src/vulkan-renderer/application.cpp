@@ -166,8 +166,8 @@ VkResult Application::render_frame() {
     vkWaitForFences(vkdevice->get_device(), 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
 
     std::uint32_t image_index = 0;
-    VkResult result =
-        vkAcquireNextImageKHR(vkdevice->get_device(), swapchain, UINT64_MAX, *image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
+    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX, *image_available_semaphores[current_frame],
+                                            VK_NULL_HANDLE, &image_index);
 
     if (images_in_flight[image_index] != VK_NULL_HANDLE) {
         vkWaitForFences(vkdevice->get_device(), 1, &*images_in_flight[image_index], VK_TRUE, UINT64_MAX);
@@ -219,7 +219,7 @@ VkResult Application::render_frame() {
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = &*rendering_finished_semaphores[current_frame];
     present_info.swapchainCount = 1;
-    present_info.pSwapchains = &swapchain;
+    present_info.pSwapchains = swapchain->get_swapchain_ptr();
     present_info.pImageIndices = &image_index;
     present_info.pResults = nullptr;
 
@@ -516,8 +516,8 @@ VkResult Application::init(int argc, char **argv) {
 
     vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(), vkdevice->get_physical_device());
 
-    result = create_swapchain();
-    vulkan_error_check(result);
+    swapchain =
+        std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(), surface, window_width, window_height, vsync_enabled);
 
     result = create_depth_buffer();
     vulkan_error_check(result);

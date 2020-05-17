@@ -78,8 +78,9 @@ VkResult VulkanRenderer::create_depth_buffer() {
 
     depth_buffer.format = depth_buffer_format_candidate.value();
 
-    VkImageCreateInfo depth_buffer_image_create_info = {};
+    auto swapchain_image_extent = swapchain->get_extent();
 
+    VkImageCreateInfo depth_buffer_image_create_info = {};
     depth_buffer_image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     depth_buffer_image_create_info.imageType = VK_IMAGE_TYPE_2D;
     depth_buffer_image_create_info.extent.width = swapchain_image_extent.width;
@@ -136,10 +137,10 @@ VkResult VulkanRenderer::create_depth_buffer() {
 VkResult VulkanRenderer::create_command_buffers() {
     assert(vkdevice->get_device());
     assert(debug_marker_manager);
-    assert(number_of_images_in_swapchain > 0);
+    assert(swapchain->get_image_count() > 0);
 
     spdlog::debug("Allocating command buffers.");
-    spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
+    spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
 
     VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
 
@@ -147,10 +148,10 @@ VkResult VulkanRenderer::create_command_buffers() {
     command_buffer_allocate_info.pNext = nullptr;
     command_buffer_allocate_info.commandPool = command_pool;
     command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    command_buffer_allocate_info.commandBufferCount = number_of_images_in_swapchain;
+    command_buffer_allocate_info.commandBufferCount = swapchain->get_image_count();
 
     command_buffers.clear();
-    command_buffers.resize(number_of_images_in_swapchain);
+    command_buffers.resize(swapchain->get_image_count());
 
     VkResult result = vkAllocateCommandBuffers(vkdevice->get_device(), &command_buffer_allocate_info, command_buffers.data());
     vulkan_error_check(result);
@@ -214,7 +215,7 @@ VkResult VulkanRenderer::record_command_buffers() {
     scissor.extent.width = window_width;
     scissor.extent.height = window_height;
 
-    for (std::size_t i = 0; i < number_of_images_in_swapchain; i++) {
+    for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
         spdlog::debug("Recording command buffer #{}.", i);
 
         // TODO: Fix debug marker regions in RenderDoc.
@@ -271,11 +272,11 @@ VkResult VulkanRenderer::record_command_buffers() {
 }
 
 VkResult VulkanRenderer::create_synchronisation_objects() {
-    assert(number_of_images_in_swapchain > 0);
+    assert(swapchain->get_image_count() > 0);
     assert(debug_marker_manager);
 
     spdlog::debug("Creating synchronisation objects: semaphores and fences.");
-    spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
+    spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
 
     in_flight_fences.clear();
     image_available_semaphores.clear();
@@ -302,164 +303,7 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
     images_in_flight.clear();
 
     // Note: Images in flight do not need to be initialised!
-    images_in_flight.resize(number_of_images_in_swapchain, VK_NULL_HANDLE);
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_swapchain() {
-    assert(vkdevice->get_device());
-    assert(surface);
-    assert(vkdevice->get_physical_device());
-    assert(debug_marker_manager);
-
-    // TODO: Implement command line argument!
-    bool vsync = false;
-
-    // Store the old swapchain. This allows us to pass it
-    // to VkSwapchainCreateInfoKHR::oldSwapchain to speed up swapchain recreation.
-    // TODO: Is it a problem that this value is VK_NULL_HANDLE in the beginning?
-    VkSwapchainKHR old_swapchain = swapchain;
-
-    // Select extent of swapchain images.
-    settings_decision_maker->decide_width_and_height_of_swapchain_extent(vkdevice->get_physical_device(), surface, window_width, window_height,
-                                                                         swapchain_image_extent);
-
-    // TODO: Remove std::optional from this method!
-    // Select a present mode for the swapchain.
-    std::optional<VkPresentModeKHR> present_mode =
-        settings_decision_maker->decide_which_presentation_mode_to_use(vkdevice->get_physical_device(), surface, vsync_enabled);
-
-    assert(present_mode.has_value());
-
-    selected_present_mode = present_mode.value();
-
-    // Decide how many images in swapchain to use.
-    number_of_images_in_swapchain = settings_decision_maker->decide_how_many_images_in_swapchain_to_use(vkdevice->get_physical_device(), surface);
-
-    // Find the transformation of the surface.
-    auto pre_transform = settings_decision_maker->decide_which_image_transformation_to_use(vkdevice->get_physical_device(), surface);
-
-    // Find a supported composite alpha format (not all devices support alpha opaque)
-    auto composite_alpha_format = settings_decision_maker->find_composite_alpha_format(vkdevice->get_physical_device(), surface);
-
-    // TODO: Remove std::optional from this method?
-    // Find a color format.
-    auto selected_image_format_candidate =
-        settings_decision_maker->decide_which_surface_color_format_in_swapchain_to_use(vkdevice->get_physical_device(), surface);
-
-    assert(selected_image_format_candidate.has_value());
-
-    selected_color_space = selected_image_format_candidate.value().colorSpace;
-    selected_image_format = selected_image_format_candidate.value().format;
-
-    VkSwapchainCreateInfoKHR swapchain_create_info = {};
-
-    swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchain_create_info.pNext = nullptr;
-    swapchain_create_info.surface = surface;
-    swapchain_create_info.minImageCount = number_of_images_in_swapchain;
-    swapchain_create_info.imageFormat = selected_image_format;
-    swapchain_create_info.imageColorSpace = selected_color_space;
-    swapchain_create_info.imageExtent.width = swapchain_image_extent.width;
-    swapchain_create_info.imageExtent.height = swapchain_image_extent.height;
-    swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchain_create_info.preTransform = (VkSurfaceTransformFlagBitsKHR)pre_transform;
-    swapchain_create_info.imageArrayLayers = 1;
-    swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchain_create_info.queueFamilyIndexCount = 0;
-    swapchain_create_info.pQueueFamilyIndices = nullptr;
-    swapchain_create_info.presentMode = selected_present_mode;
-    swapchain_create_info.oldSwapchain = old_swapchain;
-    // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
-    swapchain_create_info.clipped = VK_TRUE;
-    swapchain_create_info.compositeAlpha = composite_alpha_format;
-
-    // Set additional usage flag for blitting from the swapchain images if supported.
-    VkFormatProperties formatProps;
-
-    vkGetPhysicalDeviceFormatProperties(vkdevice->get_physical_device(), selected_image_format, &formatProps);
-
-    if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) || (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
-        swapchain_create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    }
-
-    VkResult result = vkCreateSwapchainKHR(vkdevice->get_device(), &swapchain_create_info, nullptr, &swapchain);
-    vulkan_error_check(result);
-
-    // If an existing swapchain is recreated, destroy the old swapchain.
-    // This also cleans up all the presentable images.
-    if (VK_NULL_HANDLE != old_swapchain) {
-        if (swapchain_image_views.size() > 0) {
-            for (auto image_view : swapchain_image_views) {
-                if (VK_NULL_HANDLE != image_view) {
-                    vkDestroyImageView(vkdevice->get_device(), image_view, nullptr);
-                    image_view = VK_NULL_HANDLE;
-                }
-            }
-
-            swapchain_image_views.clear();
-        }
-
-        vkDestroySwapchainKHR(vkdevice->get_device(), old_swapchain, nullptr);
-
-        swapchain_images.clear();
-    }
-
-    result = vkGetSwapchainImagesKHR(vkdevice->get_device(), swapchain, &number_of_images_in_swapchain, nullptr);
-    vulkan_error_check(result);
-
-    swapchain_images.resize(number_of_images_in_swapchain);
-
-    result = vkGetSwapchainImagesKHR(vkdevice->get_device(), swapchain, &number_of_images_in_swapchain, swapchain_images.data());
-    vulkan_error_check(result);
-
-    for (std::size_t i = 0; i < swapchain_images.size(); i++) {
-        std::string debug_marker_name = "Swapchain image #" + std::to_string(i);
-
-        // Assign an appropriate debug marker name to the swapchain images.
-        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(swapchain_images[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT,
-                                              debug_marker_name.c_str());
-    }
-
-    spdlog::debug("Creating swapchainm image views.");
-    spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
-
-    // Preallocate memory for the image views.
-    swapchain_image_views.clear();
-    swapchain_image_views.resize(number_of_images_in_swapchain);
-
-    for (std::size_t i = 0; i < number_of_images_in_swapchain; i++) {
-        spdlog::debug("Creating swapchain image #{}.", i);
-
-        VkImageViewCreateInfo image_view_create_info = {};
-
-        image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        image_view_create_info.pNext = nullptr;
-        image_view_create_info.flags = 0;
-        image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        image_view_create_info.format = selected_image_format;
-        image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        image_view_create_info.subresourceRange.baseMipLevel = 0;
-        image_view_create_info.subresourceRange.levelCount = 1;
-        image_view_create_info.subresourceRange.baseArrayLayer = 0;
-        image_view_create_info.subresourceRange.layerCount = 1;
-        image_view_create_info.image = swapchain_images[i];
-
-        VkResult result = vkCreateImageView(vkdevice->get_device(), &image_view_create_info, nullptr, &swapchain_image_views[i]);
-        if (VK_SUCCESS != result)
-            return result;
-
-        std::string swapchain_image_view_name = "Swapchain image view #" + std::to_string(i) + ".";
-
-        // Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
-        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(swapchain_image_views[i]), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
-                                              swapchain_image_view_name.c_str());
-    }
+    images_in_flight.resize(swapchain->get_image_count(), VK_NULL_HANDLE);
 
     return VK_SUCCESS;
 }
@@ -593,25 +437,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Destroying image views.");
 
-    if (swapchain_image_views.size() > 0) {
-        for (auto image_view : swapchain_image_views) {
-            if (VK_NULL_HANDLE != image_view) {
-                vkDestroyImageView(vkdevice->get_device(), image_view, nullptr);
-                image_view = VK_NULL_HANDLE;
-            }
-        }
-
-        swapchain_image_views.clear();
-    }
-
-    swapchain_images.clear();
-
-    spdlog::debug("Destroying swapchain.");
-
-    if (VK_NULL_HANDLE != swapchain) {
-        vkDestroySwapchainKHR(vkdevice->get_device(), swapchain, nullptr);
-        swapchain = VK_NULL_HANDLE;
-    }
+    swapchain.reset();
 
     spdlog::debug("Destroying descriptor sets and layouts.");
 
@@ -648,8 +474,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     spdlog::debug("New window size: width: {}, height: {}.", window_width, window_height);
 
-    VkResult result = create_swapchain();
-    vulkan_error_check(result);
+    swapchain->recreate(window_width, window_height);
 
     spdlog::debug("Destroying depth buffer image view.");
 
@@ -723,7 +548,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
         frame_buffers.clear();
     }
 
-    result = create_depth_buffer();
+    VkResult result = create_depth_buffer();
     vulkan_error_check(result);
 
     result = create_frame_buffers();
@@ -756,7 +581,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
 }
 
 VkResult VulkanRenderer::create_descriptor_pool() {
-    descriptors.emplace_back(vkdevice->get_device(), number_of_images_in_swapchain, std::string("unnamed descriptor"));
+    descriptors.emplace_back(vkdevice->get_device(), swapchain->get_image_count(), std::string("unnamed descriptor"));
 
     // Create the descriptor pool.
     descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
@@ -1000,7 +825,7 @@ VkResult VulkanRenderer::create_pipeline() {
         std::array<VkAttachmentDescription, 4> attachments = {};
 
         // Multisampled attachment that we render to
-        attachments[0].format = selected_image_format;
+        attachments[0].format = swapchain->get_image_format();
         attachments[0].samples = multisampling_sample_count;
         attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1011,7 +836,7 @@ VkResult VulkanRenderer::create_pipeline() {
 
         // This is the frame buffer attachment to where the multisampled image
         // will be resolved to and which will be presented to the swapchain.
-        attachments[1].format = selected_image_format;
+        attachments[1].format = swapchain->get_image_format();
         attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
         attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1102,7 +927,7 @@ VkResult VulkanRenderer::create_pipeline() {
         std::array<VkAttachmentDescription, 2> attachments = {};
 
         // Color attachment.
-        attachments[0].format = selected_image_format;
+        attachments[0].format = swapchain->get_image_format();
         attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
         attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1254,7 +1079,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
     assert(window_width > 0);
     assert(window_height > 0);
     assert(debug_marker_manager);
-    assert(number_of_images_in_swapchain > 0);
+    assert(swapchain->get_image_count() > 0);
 
     VkResult result;
 
@@ -1269,7 +1094,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
 
         image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         image_create_info.imageType = VK_IMAGE_TYPE_2D;
-        image_create_info.format = selected_image_format;
+        image_create_info.format = swapchain->get_image_format();
         image_create_info.extent.width = window_width;
         image_create_info.extent.height = window_height;
         image_create_info.extent.depth = 1;
@@ -1298,7 +1123,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
         image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         image_view_create_info.image = msaa_target_buffer.color.image;
         image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        image_view_create_info.format = selected_image_format;
+        image_view_create_info.format = swapchain->get_image_format();
         image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_R;
         image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_G;
         image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_B;
@@ -1421,19 +1246,19 @@ VkResult VulkanRenderer::create_frame_buffers() {
     frame_buffer_create_info.layers = 1;
 
     spdlog::debug("Creating frame buffers.");
-    spdlog::debug("Number of images in swapchain: {}.", number_of_images_in_swapchain);
+    spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
 
     frame_buffers.clear();
-    frame_buffers.resize(number_of_images_in_swapchain);
+    frame_buffers.resize(swapchain->get_image_count());
 
     // Create frame buffers for every swap chain image.
-    for (std::size_t i = 0; i < number_of_images_in_swapchain; i++) {
+    for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
         spdlog::debug("Creating framebuffer #{}.", i);
 
         if (multisampling_enabled) {
-            attachments[1] = swapchain_image_views[i];
+            attachments[1] = swapchain->get_image_view(i);
         } else {
-            attachments[0] = swapchain_image_views[i];
+            attachments[0] = swapchain->get_image_view(i);
         }
 
         VkResult result = vkCreateFramebuffer(vkdevice->get_device(), &frame_buffer_create_info, nullptr, &frame_buffers[i]);
@@ -1535,17 +1360,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     mesh_buffers.clear();
     descriptors.clear();
 
-    spdlog::debug("Destroying swapchain images.");
-    if (swapchain_images.size() > 0) {
-        for (auto image : swapchain_images) {
-            if (VK_NULL_HANDLE != image) {
-                vkDestroyImage(vkdevice->get_device(), image, nullptr);
-                image = VK_NULL_HANDLE;
-            }
-        }
-
-        swapchain_images.clear();
-    }
+    swapchain.reset();
 
     spdlog::debug("Destroying semaphores.");
     semaphore_manager->shutdown_semaphores();

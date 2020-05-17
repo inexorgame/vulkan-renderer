@@ -99,7 +99,7 @@ public:
     /// @brief Finds a supported composite alpha format.
     /// @param graphics_card [in] The selected graphics card.
     /// @param surface [in] The window surface.
-    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(VkPhysicalDevice selected_graphics_card, VkSurfaceKHR &surface);
+    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card, const VkSurfaceKHR surface);
 
     /// @brief Automatically decides which presentation mode the presentation engine will be using.
     /// @note We can only use presentation modes that are available in the current system. The preferred presentation mode is VK_PRESENT_MODE_MAILBOX_KHR.

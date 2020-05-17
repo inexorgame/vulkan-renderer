@@ -31,6 +31,7 @@ add_library(
 
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/vma.cpp
 
     vulkan-renderer/world/bit_stream.cpp
