@@ -163,11 +163,8 @@ protected:
     /// @param graphics_card The regarded graphics card.
     VkResult create_physical_device(const VkPhysicalDevice &graphics_card, const bool enable_debug_markers = true);
 
-    /// @brief Creates an instance of VulkanDebugMarkerManager
+    /// @brief Creates an instance of VulkanDebugMarkerManager.
     VkResult initialise_debug_marker_manager(const bool enable_debug_markers = true);
-
-    /// @brief Initialises glTF 2.0 model manager.
-    VkResult initialise_glTF2_model_manager();
 
     VkResult update_cameras();
 
@@ -182,9 +179,6 @@ protected:
 
     /// @brief Creates the semaphores neccesary for synchronisation.
     VkResult create_synchronisation_objects();
-
-    /// @brief Creates the swapchain.
-    VkResult create_swapchain();
 
     /// @brief Cleans the swapchain.
     VkResult cleanup_swapchain();

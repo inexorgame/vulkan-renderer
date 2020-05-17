@@ -18,13 +18,12 @@ private:
     VkPhysicalDevice graphics_card;
     VkSurfaceKHR surface;
     VkSwapchainKHR swapchain;
-    VkSwapchainKHR old_swapchain;
     VkSurfaceFormatKHR surface_format;
     VkExtent2D extent;
 
     std::vector<VkImage> swapchain_images;
     std::vector<VkImageView> swapchain_image_views;
-    std::uint32_t images_in_swapchain_count;
+    std::uint32_t swapchain_image_count;
     bool vsync_enabled;
 
     /// @brief (Re)creates the swapchain.
@@ -32,7 +31,7 @@ private:
     /// @param window_height [in] The requested height of the window.
     /// @note We are passing width and height of the window as reference since the API
     /// needs to check if the swapchain can support the requested resolution.
-    void setup_swapchain(std::uint32_t &window_width, std::uint32_t &window_height);
+    void setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
 
 public:
     /// Delete the copy constructor so swapchains are move-only objects.
@@ -45,17 +44,17 @@ public:
 
     /// @brief
     /// @note We must pass width and height as call by reference!
-    Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface, std::uint32_t &window_width,
-              std::uint32_t &window_height, const bool enable_vsync);
+    Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
+              const bool enable_vsync);
 
     ~Swapchain();
 
     /// @brief The swapchain needs to be recreated if it has been invalidated.
     /// @note We must pass width and height as call by reference!
     /// This happens for example when the window gets resized.
-    void recreate(std::uint32_t &window_width, std::uint32_t &window_height);
+    void recreate(std::uint32_t window_width, std::uint32_t window_height);
 
-    [[nodiscard]] const VkSwapchainKHR* get_swapchain_ptr() const {
+    [[nodiscard]] const VkSwapchainKHR *get_swapchain_ptr() const {
         return &swapchain;
     }
 
@@ -64,7 +63,7 @@ public:
     }
 
     [[nodiscard]] std::uint32_t get_image_count() const {
-        return images_in_swapchain_count;
+        return swapchain_image_count;
     }
 
     [[nodiscard]] VkFormat get_image_format() const {

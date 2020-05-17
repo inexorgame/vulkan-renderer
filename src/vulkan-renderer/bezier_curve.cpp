@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/bezier_curve.h"
+#include "inexor/vulkan-renderer/bezier_curve.hpp"
 
 namespace inexor::vulkan_renderer {
 
