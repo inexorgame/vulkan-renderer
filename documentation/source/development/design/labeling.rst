@@ -22,11 +22,9 @@ Some labels are mutual to each other like ``org:in progress`` and ``org:on hold`
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | Preview             | Category | Name          | Description                                                                        | Color   |
 +=====================+==========+===============+====================================================================================+=========+
-| |cat:benchmark|     | cat      | benchmark     | benchmarking                                                                       | #C0E169 |
+| |cat:benchmark|     | cat      | benchmark     | testing code performance with automated benchmarking                               | #C0E169 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |cat:bug|           | cat      | bug           | bug/error/mistake which limits the program                                         | #FF0000 |
-+---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |cat:crash|         | cat      | crash         | something causes the program to crash                                              | #FF0000 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |cat:dependency|    | cat      | dependency    | dependency management                                                              | #BFD4F2 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
@@ -48,31 +46,29 @@ Some labels are mutual to each other like ``org:in progress`` and ``org:on hold`
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |diff:first issue|  | diff     | first issue   | good first issue to start contributing                                             | #FEF2C0 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |diff:beginner|     | diff     | beginner      | beginner                                                                           | #FEF2C0 |
+| |diff:beginner|     | diff     | beginner      | beginner skills required                                                           | #FEF2C0 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |diff:intermediate| | diff     | intermediate  | intermediate                                                                       | #FEF2C0 |
+| |diff:intermediate| | diff     | intermediate  | intermediate skills required                                                       | #FEF2C0 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |diff:advanced|     | diff     | advanced      | advanced                                                                           | #FEF2C0 |
+| |diff:advanced|     | diff     | advanced      | advanced skills required                                                           | #FEF2C0 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |diff:expert|       | diff     | expert        | expert                                                                             | #FEF2C0 |
+| |diff:expert|       | diff     | expert        | expert skills required                                                             | #FEF2C0 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:discussion|    | org      | discussion    | needs further discussion with others                                               | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:duplicate|     | org      | duplicate     | duplicate issue                                                                    | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |org:future|        | org      | future        | topic for the future, might be working on it later                                 | #DDDDDD |
-+---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:help wanted|   | org      | help wanted   | help wanted                                                                        | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:idea|          | org      | idea          | needs further elaboration before it is possible to continue                        | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |org:in progress|   | org      | in progress   | in progress                                                                        | #DDDDDD |
+| |org:in progress|   | org      | in progress   | somebody is working on this                                                        | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:invalid|       | org      | invalid       | invalid issue                                                                      | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:on hold|       | org      | on hold       | on hold, until ...                                                                 | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |org:planned|       | org      | planned       | planned                                                                            | #DDDDDD |
+| |org:planned|       | org      | planned       | planned/ prepared issue                                                            | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |org:third party|   | org      | third party   | this issue depends on a third party project and is out of our hands                | #DDDDDD |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
@@ -104,11 +100,11 @@ Some labels are mutual to each other like ``org:in progress`` and ``org:on hold`
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |feat:texture|      | feat     | texture       | textures                                                                           | #D4C5F9 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |plat:linux|        | plat     | linux         | Linux specific issue                                                               | #004E00 |
+| |plat:linux|        | plat     | linux         | Linux specific issue                                                               | #FFC683 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |plat:macos|        | plat     | macos         | MacOS specific issue                                                               | #004E00 |
+| |plat:macos|        | plat     | macos         | MacOS specific issue                                                               | #FFC683 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |plat:windows|      | plat     | windows       | Windows specific issue                                                             | #004E00 |
+| |plat:windows|      | plat     | windows       | Windows specific issue                                                             | #FFC683 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |prio:blocker|      | prio     | blocker       | this issue cannot be moved to a later milestone, also this label cannot be removed | #B60205 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
@@ -158,9 +154,9 @@ Some labels are mutual to each other like ``org:in progress`` and ``org:on hold`
 .. |feat:settings| image:: https://img.shields.io/badge/-feat:settings-D4C5F9
 .. |feat:shader| image:: https://img.shields.io/badge/-feat:shader-D4C5F9
 .. |feat:texture| image:: https://img.shields.io/badge/-feat:texture-D4C5F9
-.. |plat:linux| image:: https://img.shields.io/badge/-plat:linux-004E00
-.. |plat:macos| image:: https://img.shields.io/badge/-plat:macos-004E00
-.. |plat:windows| image:: https://img.shields.io/badge/-plat:windows-004E00
+.. |plat:linux| image:: https://img.shields.io/badge/-plat:linux-FFC683
+.. |plat:macos| image:: https://img.shields.io/badge/-plat:macos-FFC683
+.. |plat:windows| image:: https://img.shields.io/badge/-plat:windows-FFC683
 .. |prio:blocker| image:: https://img.shields.io/badge/-prio:blocker-B60205
 .. |prio:high| image:: https://img.shields.io/badge/-prio:high-FF0000
 .. |prio:low| image:: https://img.shields.io/badge/-prio:low-AD8D43
