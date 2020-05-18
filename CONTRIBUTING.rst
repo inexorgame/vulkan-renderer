@@ -1,4 +1,4 @@
-We are always open for suggestions or pull requests.
+We are always open for suggestions or pull requests. You can search after ``diff:first issue`` for good issues to get in touch with this project.
 
 Join our discord server: https://discord.gg/acUW8k7.
 
