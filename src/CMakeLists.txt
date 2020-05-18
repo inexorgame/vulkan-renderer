@@ -33,6 +33,8 @@ add_library(
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/vma.cpp
+    vulkan-renderer/wrapper/window.cpp
+    vulkan-renderer/wrapper/window_surface.cpp
 
     vulkan-renderer/world/bit_stream.cpp
     vulkan-renderer/world/cube.cpp
