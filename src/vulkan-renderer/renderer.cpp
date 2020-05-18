@@ -2,16 +2,6 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanRenderer::create_window_surface(const VkInstance &instance, GLFWwindow *window, VkSurfaceKHR &surface) {
-    assert(window);
-    assert(instance);
-
-    spdlog::debug("Creating window surface.");
-
-    // Create a window surface using GLFW library.
-    return glfwCreateWindowSurface(instance, window, nullptr, &surface);
-}
-
 VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug_markers) {
     assert(vkdevice->get_device());
     assert(vkdevice->get_physical_device());
@@ -168,8 +158,8 @@ VkResult VulkanRenderer::create_command_buffers() {
 
 VkResult VulkanRenderer::record_command_buffers() {
     assert(debug_marker_manager);
-    assert(window_width > 0);
-    assert(window_height > 0);
+    assert(window->get_width() > 0);
+    assert(window->get_height() > 0);
 
     spdlog::debug("Recording command buffers.");
 
@@ -193,27 +183,29 @@ VkResult VulkanRenderer::record_command_buffers() {
         clear_values[1].depthStencil = {1.0f, 0};
     }
 
-    VkRenderPassBeginInfo render_pass_begin_info = {};
+    VkExtent2D render_area;
+    render_area.width = window->get_width();
+    render_area.height = window->get_height();
 
+    VkRenderPassBeginInfo render_pass_begin_info = {};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.pNext = nullptr;
     render_pass_begin_info.renderPass = render_pass;
     render_pass_begin_info.renderArea.offset = {0, 0};
-    render_pass_begin_info.renderArea.extent = {window_width, window_height};
+    render_pass_begin_info.renderArea.extent = render_area;
     render_pass_begin_info.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
     render_pass_begin_info.pClearValues = clear_values.data();
 
     VkViewport viewport{};
 
-    viewport.width = (float)window_width;
-    viewport.height = (float)window_height;
+    viewport.width = static_cast<float>(window->get_width());
+    viewport.height = static_cast<float>(window->get_height());
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
 
-    scissor.extent.width = window_width;
-    scissor.extent.height = window_height;
+    scissor.extent.width = window->get_width();
+    scissor.extent.height = window->get_height();
 
     for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
         spdlog::debug("Recording command buffer #{}.", i);
@@ -437,8 +429,6 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Destroying image views.");
 
-    swapchain.reset();
-
     spdlog::debug("Destroying descriptor sets and layouts.");
 
     return VK_SUCCESS;
@@ -458,19 +448,12 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     // TODO: outsource cleanup_swapchain() methods!
 
-    int current_window_width = 0;
-    int current_window_height = 0;
-
     spdlog::debug("Querying new window size.");
 
-    // If window is minimized, wait until it is visible again.
-    while (current_window_width == 0 || current_window_height == 0) {
-        glfwGetFramebufferSize(window, &current_window_width, &current_window_height);
-        glfwWaitEvents();
-    }
+    window->wait_for_focus();
 
-    window_width = current_window_width;
-    window_height = current_window_height;
+    window_width = window->get_width();
+    window_height = window->get_height();
 
     spdlog::debug("New window size: width: {}, height: {}.", window_width, window_height);
 
@@ -1076,8 +1059,8 @@ VkResult VulkanRenderer::create_pipeline() {
 
 VkResult VulkanRenderer::create_frame_buffers() {
     assert(vkdevice->get_device());
-    assert(window_width > 0);
-    assert(window_height > 0);
+    assert(window->get_width() > 0);
+    assert(window->get_height() > 0);
     assert(debug_marker_manager);
     assert(swapchain->get_image_count() > 0);
 
@@ -1241,8 +1224,8 @@ VkResult VulkanRenderer::create_frame_buffers() {
     frame_buffer_create_info.renderPass = render_pass;
     frame_buffer_create_info.attachmentCount = multisampling_enabled ? 4 : 2;
     frame_buffer_create_info.pAttachments = attachments;
-    frame_buffer_create_info.width = window_width;
-    frame_buffer_create_info.height = window_height;
+    frame_buffer_create_info.width = window->get_width();
+    frame_buffer_create_info.height = window->get_height();
     frame_buffer_create_info.layers = 1;
 
     spdlog::debug("Creating frame buffers.");
@@ -1360,19 +1343,11 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     mesh_buffers.clear();
     descriptors.clear();
 
-    swapchain.reset();
-
     spdlog::debug("Destroying semaphores.");
     semaphore_manager->shutdown_semaphores();
 
     spdlog::debug("Destroying fences.");
     fence_manager->shutdown_fences();
-
-    spdlog::debug("Destroying window surface.");
-    if (VK_NULL_HANDLE != surface) {
-        vkDestroySurfaceKHR(vkinstance->get_instance(), surface, nullptr);
-        surface = VK_NULL_HANDLE;
-    }
 
     vma.reset();
 
@@ -1389,6 +1364,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         command_pool = VK_NULL_HANDLE;
     }
 
+    swapchain.reset();
+    surface.reset();
     vkdevice.reset();
 
     // Destroy Vulkan debug callback.
