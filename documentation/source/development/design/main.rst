@@ -10,3 +10,4 @@ Design
     coding-style
     code-design
     illustrations
+    labeling
