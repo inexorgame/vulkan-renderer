@@ -30,6 +30,7 @@ add_library(
     vulkan-renderer/tools/file.cpp
 
     vulkan-renderer/wrapper/device.cpp
+    vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/vma.cpp

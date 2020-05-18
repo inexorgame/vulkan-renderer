@@ -22,11 +22,13 @@
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/vma.hpp"
+#include "inexor/vulkan-renderer/wrapper/window.hpp"
+#include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
@@ -62,8 +64,6 @@ protected:
 
     std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker = std::make_shared<VulkanSettingsDecisionMaker>();
 
-    VkSurfaceKHR surface;
-
     VkPresentModeKHR selected_present_mode;
 
     VkSubmitInfo submit_info;
@@ -71,8 +71,6 @@ protected:
     VkPresentInfoKHR present_info = {};
 
     VkPipelineLayout pipeline_layout = {};
-
-    VkColorSpaceKHR selected_color_space = {};
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
@@ -111,8 +109,6 @@ protected:
     std::uint32_t window_height = 0;
 
     std::string window_title = "";
-
-    GLFWwindow *window = nullptr;
 
     FPSCounter fps_counter;
 
@@ -153,11 +149,14 @@ protected:
     // RAII wrapper for Vulkan Memory Allocator.
     std::unique_ptr<wrapper::VulkanMemoryAllocator> vma = nullptr;
 
-    /// @brief Create a window surface.
-    /// @param vulkan_instance The instance of Vulkan.
-    /// @param window The GLFW window.
-    /// @param vulkan_surface The Vulkan (window) surface.
-    static VkResult create_window_surface(const VkInstance &vulkan_instance, GLFWwindow *window, VkSurfaceKHR &vulkan_surface);
+    // RAII wrapper for glfw windows.
+    std::unique_ptr<wrapper::Window> window = nullptr;
+
+    // RAII wrapper for glfw compatible Vulkan surfaces.
+    std::unique_ptr<wrapper::WindowSurface> surface = nullptr;
+
+    /// RAII wrapper for glfw contexts.
+    std::unique_ptr<wrapper::GLFWContext> glfw_context = nullptr;
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.

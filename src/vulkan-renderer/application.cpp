@@ -238,11 +238,8 @@ VkResult Application::render_frame() {
     auto fps_value = fps_counter.update();
 
     if (fps_value.has_value()) {
-        // Update fps by changing window name.
-        std::string window_title = "Inexor Vulkan API renderer demo - " + std::to_string(fps_value.value()) + " FPS";
-        glfwSetWindowTitle(window, window_title.c_str());
-
-        spdlog::debug("FPS: {}, window size: {} x {}.", fps_value.value(), window_width, window_height);
+        window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(fps_value.value()) + " FPS");
+        spdlog::debug("FPS: {}, window size: {} x {}.", fps_value.value(), window->get_width(), window->get_height());
     }
 
     return VK_SUCCESS;
@@ -332,36 +329,7 @@ VkResult Application::init(int argc, char **argv) {
 
     // Load the configuration from the TOML file.
     VkResult result = load_toml_configuration_file("configuration/renderer.toml");
-
     vulkan_error_check(result);
-
-    spdlog::debug("Creating window.");
-
-    // Initialise GLFW library.
-    glfwInit();
-
-    // We do not want to use the OpenGL API.
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    glfwWindowHint(GLFW_VISIBLE, false);
-
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-    // Create the window using GLFW library.
-    window = glfwCreateWindow(window_width, window_height, window_title.c_str(), nullptr, nullptr);
-
-    spdlog::debug("Storing GLFW window user pointer.");
-
-    // Store the current Application instance in the GLFW window user pointer.
-    // Since GLFW is a C-style API, we can't use a class method as callback for window resize!
-    // TODO: Refactor! Don't use callback functions! use manual polling in the render loop instead.
-    glfwSetWindowUserPointer(window, this);
-
-    spdlog::debug("Setting up framebuffer resize callback.");
-
-    // Setup callback for window resize.
-    // Since GLFW is a C-style API, we can't use a class method as callback for window resize!
-    glfwSetFramebufferSizeCallback(window, frame_buffer_resize_callback);
 
     bool enable_renderdoc_instance_layer = false;
 
@@ -389,8 +357,21 @@ VkResult Application::init(int argc, char **argv) {
 
     spdlog::debug("Creating Vulkan instance.");
 
-    // Create a Vulkan instance.
+    glfw_context = std::make_unique<wrapper::GLFWContext>();
+
     vkinstance = std::make_unique<wrapper::Instance>(application_name, engine_name, application_version, engine_version, VK_API_VERSION_1_1);
+
+    window = std::make_unique<wrapper::Window>(window_title, window_width, window_height, true, false);
+
+    surface = std::make_unique<wrapper::WindowSurface>(vkinstance->get_instance(), window->get());
+
+    spdlog::debug("Storing GLFW window user pointer.");
+
+    window->set_user_ptr(this);
+
+    spdlog::debug("Setting up framebuffer resize callback.");
+
+    window->set_resize_callback(frame_buffer_resize_callback);
 
 #ifndef NDEBUG
     // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
@@ -431,15 +412,6 @@ VkResult Application::init(int argc, char **argv) {
 
     spdlog::debug("Creating window surface.");
 
-    // Create a window surface using GLFW library.
-    // The window surface needs to be created right after the instance creation,
-    // because it can actually influence the physical device selection.
-    result = create_window_surface(vkinstance->get_instance(), window, surface);
-    if (result != VK_SUCCESS) {
-        vulkan_error_check(result);
-        return result;
-    }
-
     // The user can specify with "--gpu <number>" which graphics card to prefer.
     auto prefered_graphics_card = cla_parser.get_arg<std::uint32_t>("--gpu");
     if (prefered_graphics_card) {
@@ -476,7 +448,7 @@ VkResult Application::init(int argc, char **argv) {
         gpu_info_manager->print_instance_extensions();
 
         // Print all information that we can find about all graphics card available.
-        gpu_info_manager->print_all_physical_devices(vkinstance->get_instance(), surface);
+        // gpu_info_manager->print_all_physical_devices(vkinstance->get_instance(), surface);
     }
 
     bool use_distinct_data_transfer_queue = true;
@@ -505,7 +477,8 @@ VkResult Application::init(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    vkdevice = std::make_unique<wrapper::Device>(vkinstance->get_instance(), surface, enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
+    vkdevice =
+        std::make_unique<wrapper::Device>(vkinstance->get_instance(), surface->get(), enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
     result = check_application_specific_features();
     vulkan_error_check(result);
@@ -516,8 +489,8 @@ VkResult Application::init(int argc, char **argv) {
 
     vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(), vkdevice->get_physical_device());
 
-    swapchain =
-        std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(), surface, window_width, window_height, vsync_enabled);
+    swapchain = std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(), surface->get(), window->get_width(),
+                                                     window->get_height(), vsync_enabled);
 
     result = create_depth_buffer();
     vulkan_error_check(result);
@@ -576,11 +549,10 @@ VkResult Application::init(int argc, char **argv) {
 
     spdlog::debug("Showing window.");
 
-    glfwShowWindow(window);
+    window->show();
 
     // We must store the window user pointer to be able to call the window resize callback.
-    // TODO: Use window queue instead?
-    glfwSetWindowUserPointer(window, this);
+    window->set_user_ptr(this);
 
     return recreate_swapchain();
 }
@@ -608,18 +580,20 @@ VkResult Application::update_mouse_input() {
     double current_cursor_x;
     double current_cursor_y;
 
-    glfwGetCursorPos(window, &current_cursor_x, &current_cursor_y);
+    window->get_cursor_pos(current_cursor_x, current_cursor_y);
 
     double cursor_delta_x = current_cursor_x - cursor_x;
     double cursor_delta_y = current_cursor_y - cursor_y;
 
-    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    int state =
+
+        window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
 
     if (state == GLFW_PRESS) {
         game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
     }
 
-    state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+    window->is_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
 
     cursor_x = current_cursor_x;
     cursor_y = current_cursor_y;
@@ -628,32 +602,20 @@ VkResult Application::update_mouse_input() {
 }
 
 VkResult Application::update_keyboard_input() {
-    int key_w_status = glfwGetKey(window, GLFW_KEY_W);
-
-    /*
-    if (key_w_status == GLFW_PRESS) {
-        //game_camera_1.start_camera_movement();
-    }
-    if (key_w_status == GLFW_RELEASE) {
-        //game_camera_1.end_camera_movement();
-    }
-    */
-
     return VK_SUCCESS;
 }
 
 void Application::run() {
     spdlog::debug("Running Application.");
 
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+    while (!window->should_close()) {
+        window->poll();
         render_frame();
 
         // TODO: Run this in a separated thread?
         // TODO: Merge into one update_game_data() method?
         update_keyboard_input();
         update_mouse_input();
-
         update_cameras();
 
         time_passed = stopwatch.get_time_step();
@@ -665,8 +627,9 @@ void Application::cleanup() {
 
     shutdown_vulkan();
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    window.reset();
+
+    glfw_context.reset();
 
     vertex_shader_files.clear();
     fragment_shader_files.clear();

@@ -1,13 +1,15 @@
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+
 namespace inexor::vulkan_renderer::wrapper {
 
-Window::Window(Window &&other) noexcept : instance(std::exchange(other.instance, nullptr)), window(std::exchange(other.window, nullptr)) {}
+Window::Window(Window &&other) noexcept : window(std::exchange(other.window, nullptr)) {}
 
-Window::Window(const VkInstance instance, const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
-               const bool resizable)
-    : instance(instance), width(width), height(height) {
-    assert(instance);
+Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible, const bool resizable)
+    : width(width), height(height) {
     assert(!title.empty());
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -86,7 +88,6 @@ bool Window::should_close() {
 
 Window::~Window() {
     glfwDestroyWindow(window);
-    glfwTerminate();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
