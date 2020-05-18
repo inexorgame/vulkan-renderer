@@ -1,5 +1,9 @@
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 
+#include "inexor/vulkan-renderer/staging_buffer.hpp"
+
+#include <spdlog/spdlog.h>
+
 namespace inexor::vulkan_renderer {
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : name(std::move(other.name)), vertex_buffer(std::move(other.vertex_buffer)), index_buffer(std::move(other.index_buffer)),

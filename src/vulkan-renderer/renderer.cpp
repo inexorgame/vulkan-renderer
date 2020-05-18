@@ -1,5 +1,13 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+#include "inexor/vulkan-renderer/octree_vertex.hpp"
+#include "inexor/vulkan-renderer/standard_ubo.hpp"
+
+#include <spdlog/spdlog.h>
+
+#include <fstream>
+
 namespace inexor::vulkan_renderer {
 
 VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug_markers) {

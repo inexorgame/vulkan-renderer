@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cassert>
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
 #include <string>
 #include <vector>
-
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
 
 namespace inexor::vulkan_renderer {
 

@@ -1,14 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/error_handling.hpp"
-#include "inexor/vulkan-renderer/surface_formats.hpp"
-
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
-
-#include <cassert>
-#include <unordered_map>
-#include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace inexor::vulkan_renderer {
 

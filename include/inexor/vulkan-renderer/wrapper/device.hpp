@@ -1,16 +1,10 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/availability_checks.hpp"
-#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 #include <cassert>
-#include <memory>
+#include <cstdint>
 #include <optional>
-#include <string>
-#include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 

@@ -1,6 +1,13 @@
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+#include "inexor/vulkan-renderer/surface_formats.hpp"
+
+#include <spdlog/spdlog.h>
+
 #include <array>
+#include <cassert>
+#include <cstdint>
 
 namespace inexor::vulkan_renderer {
 

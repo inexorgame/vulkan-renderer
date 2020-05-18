@@ -1,10 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/error_handling.hpp"
+#include <vulkan/vulkan_core.h>
 
-#include <cassert>
-#include <optional>
-#include <shared_mutex>
+#include <cstdint>
 #include <string>
 #include <vector>
 

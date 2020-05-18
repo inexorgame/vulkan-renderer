@@ -1,5 +1,10 @@
 #include "inexor/vulkan-renderer/tools/file.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+#include <fstream>
+
 namespace inexor::vulkan_renderer::tools {
 
 const std::size_t File::get_file_size() const {

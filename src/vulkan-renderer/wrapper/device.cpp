@@ -1,5 +1,12 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
+#include "inexor/vulkan-renderer/availability_checks.hpp"
+#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+
+#include <spdlog/spdlog.h>
+
+#include <stdexcept>
+
 namespace {
 // TODO: Make proper use of queue priorities in the future.
 constexpr float default_queue_priority = 1.0f;

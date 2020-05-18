@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/debug_callback.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace inexor::vulkan_renderer {
 VKAPI_ATTR VkBool32 VKAPI_CALL vulkan_debug_message_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, std::uint64_t object,
                                                              std::size_t location, std::int32_t message_code, const char *layer_prefix, const char *message,

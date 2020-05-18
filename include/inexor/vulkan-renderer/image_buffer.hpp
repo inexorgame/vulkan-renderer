@@ -2,8 +2,6 @@
 
 #include <vma/vma_usage.h>
 
-#include <optional>
-
 namespace inexor::vulkan_renderer {
 
 struct ImageBuffer {

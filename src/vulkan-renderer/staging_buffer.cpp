@@ -1,5 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/staging_buffer.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace inexor::vulkan_renderer {
 
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept

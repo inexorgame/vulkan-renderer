@@ -1,5 +1,9 @@
 #include "inexor/vulkan-renderer/debug_marker_manager.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <vector>
+
 namespace inexor::vulkan_renderer {
 
 void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers) {

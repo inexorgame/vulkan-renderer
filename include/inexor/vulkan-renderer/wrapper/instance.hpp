@@ -2,14 +2,10 @@
 
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 
-#include <fmt/ranges.h>
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
-#include <array>
-#include <cassert>
-#include <memory>
 #include <string>
+#include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 

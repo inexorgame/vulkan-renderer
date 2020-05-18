@@ -1,26 +1,20 @@
 ﻿#pragma once
 
-#include "availability_checks.hpp"
+#include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
-#include "inexor/vulkan-renderer/debug_marker_manager.hpp"
 #include "inexor/vulkan-renderer/descriptor.hpp"
-#include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/image_buffer.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
-#include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-#include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/uniform_buffer.hpp"
-
-// Those components have been refactored to fulfill RAII idioms.
-#include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
@@ -30,16 +24,10 @@
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
-#include <spdlog/spdlog.h>
+#include <vulkan/vulkan_core.h>
 
-#include <chrono>
-#include <fstream>
-#include <iostream>
-#include <string>
+#include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace inexor::vulkan_renderer {

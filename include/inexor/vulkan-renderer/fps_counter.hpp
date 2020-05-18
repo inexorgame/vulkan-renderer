@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <optional>
 
 namespace inexor::vulkan_renderer {

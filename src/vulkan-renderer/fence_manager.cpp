@@ -1,5 +1,11 @@
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+
 namespace inexor::vulkan_renderer {
 
 VkResult VulkanFenceManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {

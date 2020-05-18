@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/camera.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace inexor::vulkan_renderer {
 void Camera::update_view_matrix() {
     glm::mat4 rot_m = glm::mat4(1.0f);

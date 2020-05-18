@@ -1,13 +1,11 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/debug_marker_manager.hpp"
-#include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/manager_template.hpp"
 
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
-#include <cassert>
+#include <memory>
 #include <mutex>
 
 namespace inexor::vulkan_renderer {

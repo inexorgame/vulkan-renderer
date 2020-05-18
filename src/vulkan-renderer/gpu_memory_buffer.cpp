@@ -1,5 +1,9 @@
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+
 namespace inexor::vulkan_renderer {
 
 GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept

@@ -1,13 +1,14 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
-#include "inexor/vulkan-renderer/once_command_buffer.hpp"
-#include "inexor/vulkan-renderer/staging_buffer.hpp"
 
 #include <vma/vma_usage.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
+#include <cassert>
+#include <cstdint>
 #include <optional>
+#include <string>
 
 namespace inexor::vulkan_renderer {
 

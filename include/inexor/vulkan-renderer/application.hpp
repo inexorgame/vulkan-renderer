@@ -1,18 +1,15 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/camera.hpp"
-#include "inexor/vulkan-renderer/debug_callback.hpp"
-#include "inexor/vulkan-renderer/error_handling.hpp"
-#include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/thread_pool.hpp"
-#include "inexor/vulkan-renderer/tools/cla_parser.hpp"
-#include "inexor/vulkan-renderer/world/cube.hpp"
 
 #include <GLFW/glfw3.h>
-#include <spdlog/spdlog.h>
-#include <toml11/toml.hpp>
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace inexor::vulkan_renderer {
 

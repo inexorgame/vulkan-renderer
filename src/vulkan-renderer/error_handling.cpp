@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/error_handling.hpp"
 
+#include <spdlog/spdlog.h>
+
 #ifdef _WIN32
 #include <Windows.h>
 #endif

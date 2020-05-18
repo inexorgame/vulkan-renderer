@@ -6,8 +6,8 @@
 #include <boost/signals2.hpp>
 #include <glm/vec3.hpp>
 
-#include <functional>
-#include <iostream>
+#include <array>
+#include <cstdint>
 #include <optional>
 
 namespace inexor::vulkan_renderer::world {

@@ -1,6 +1,10 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <GLFW/glfw3.h>
+#include <fmt/ranges.h>
+#include <spdlog/spdlog.h>
+
+#include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
 

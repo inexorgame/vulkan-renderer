@@ -1,5 +1,12 @@
 ﻿#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+#include <map>
+
 namespace inexor::vulkan_renderer {
 
 std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
