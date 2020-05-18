@@ -1,5 +1,15 @@
 #include "inexor/vulkan-renderer/application.hpp"
+
 #include "inexor/vulkan-renderer/debug_callback.hpp"
+#include "inexor/vulkan-renderer/error_handling.hpp"
+#include "inexor/vulkan-renderer/octree_vertex.hpp"
+#include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/world/cube.hpp"
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <spdlog/spdlog.h>
+#include <toml11/toml.hpp>
 
 namespace inexor::vulkan_renderer {
 

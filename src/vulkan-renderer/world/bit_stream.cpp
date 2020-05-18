@@ -1,4 +1,4 @@
-#include <inexor/vulkan-renderer/world/bit_stream.hpp>
+#include "inexor/vulkan-renderer/world/bit_stream.hpp"
 
 namespace inexor::vulkan_renderer::world {
 BitStream::BitStream(unsigned char *data, std::size_t size) {

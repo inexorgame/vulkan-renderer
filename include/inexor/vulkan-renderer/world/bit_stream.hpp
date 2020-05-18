@@ -2,12 +2,9 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <cassert>
+#include <array>
 #include <cstdint>
-#include <fstream>
-#include <iostream>
 #include <optional>
-#include <vector>
 
 namespace inexor::vulkan_renderer::world {
 constexpr std::array<std::uint8_t, 9> KEEP_FIRST_N_BITS{0b0000'0000, 0b1000'0000, 0b1100'0000, 0b1110'0000, 0b1111'0000,

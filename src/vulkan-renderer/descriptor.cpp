@@ -1,5 +1,10 @@
 #include "inexor/vulkan-renderer/descriptor.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+#include <stdexcept>
+
 namespace inexor::vulkan_renderer {
 
 Descriptor::Descriptor(Descriptor &&other) noexcept

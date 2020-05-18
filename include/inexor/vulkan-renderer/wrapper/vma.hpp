@@ -2,12 +2,6 @@
 
 #include <vma/vk_mem_alloc.h>
 
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
-
-#include <cassert>
-#include <fstream>
-
 namespace inexor::vulkan_renderer::wrapper {
 class VulkanMemoryAllocator {
 private:

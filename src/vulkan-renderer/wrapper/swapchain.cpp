@@ -1,5 +1,11 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
+#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+
+#include <spdlog/spdlog.h>
+
+#include <optional>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 Swapchain::Swapchain(Swapchain &&other) noexcept

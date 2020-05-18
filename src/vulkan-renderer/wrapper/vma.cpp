@@ -13,7 +13,10 @@
 // Enable validation of contents of the margins.
 #define VMA_DEBUG_DETECT_CORRUPTION 1
 
+#include <spdlog/spdlog.h>
 #include <vma/vk_mem_alloc.h>
+
+#include <fstream>
 
 namespace inexor::vulkan_renderer::wrapper {
 

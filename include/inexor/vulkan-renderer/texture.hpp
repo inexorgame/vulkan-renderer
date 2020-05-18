@@ -2,19 +2,11 @@
 
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/once_command_buffer.hpp"
-#include "inexor/vulkan-renderer/staging_buffer.hpp"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
-#include <cassert>
+#include <cstdint>
 #include <string>
-
-#include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
-#include <vma/vma_usage.h>
-#include <vulkan/vulkan.h>
-#define TINYGLTF_NO_INCLUDE_JSON
-#include <tiny_gltf/tiny_gltf.h>
 
 namespace inexor::vulkan_renderer {
 

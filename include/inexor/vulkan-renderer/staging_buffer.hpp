@@ -3,9 +3,7 @@
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/once_command_buffer.hpp"
 
-#include <vulkan/vulkan.h>
-
-#include <cassert>
+#include <vulkan/vulkan_core.h>
 
 namespace inexor::vulkan_renderer {
 

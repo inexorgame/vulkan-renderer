@@ -1,5 +1,11 @@
 #include "inexor/vulkan-renderer/once_command_buffer.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
+#include <stdexcept>
+#include <utility>
+
 namespace inexor::vulkan_renderer {
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept

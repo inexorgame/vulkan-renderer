@@ -1,5 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>

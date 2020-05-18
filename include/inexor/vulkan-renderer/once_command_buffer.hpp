@@ -1,12 +1,10 @@
 #pragma once
 
-#include "wrapper/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
-#include <cassert>
-#include <stdexcept>
+#include <cstdint>
 
 namespace inexor::vulkan_renderer {
 

@@ -1,9 +1,6 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
-
-#include <cassert>
-#include <fstream>
+#include <cstdint>
 #include <string>
 #include <vector>
 

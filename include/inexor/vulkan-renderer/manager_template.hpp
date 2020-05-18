@@ -1,7 +1,10 @@
 ﻿#pragma once
 
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include <shared_mutex>
+#include <string>
 #include <unordered_map>
 #include <vector>
 

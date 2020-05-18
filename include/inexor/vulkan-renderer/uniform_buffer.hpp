@@ -1,11 +1,9 @@
 #pragma once
 
-#include "gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
 
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
-#include <shared_mutex>
 #include <string>
 
 namespace inexor::vulkan_renderer {

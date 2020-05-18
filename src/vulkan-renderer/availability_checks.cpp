@@ -1,5 +1,10 @@
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+
+#include <cassert>
+#include <cstring>
+
 namespace inexor::vulkan_renderer {
 
 VkResult AvailabilityChecksManager::create_instance_extensions_cache() {

@@ -1,8 +1,11 @@
 #include "inexor/vulkan-renderer/texture.hpp"
 
-// stb single-file public domain libraries for C/C++
+#include "inexor/vulkan-renderer/staging_buffer.hpp"
+
 #define STB_IMAGE_IMPLEMENTATION
+#include <spdlog/spdlog.h>
 #include <stb_image.h>
+#include <vma/vk_mem_alloc.h>
 
 namespace inexor::vulkan_renderer {
 

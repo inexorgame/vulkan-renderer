@@ -1,4 +1,5 @@
-#include <inexor/vulkan-renderer/world/cube.hpp>
+#include "inexor/vulkan-renderer/world/cube.hpp"
+
 #include <utility>
 
 namespace inexor::vulkan_renderer::world {

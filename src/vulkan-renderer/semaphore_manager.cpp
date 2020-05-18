@@ -1,5 +1,9 @@
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
 
+#include "inexor/vulkan-renderer/error_handling.hpp"
+
+#include <spdlog/spdlog.h>
+
 namespace inexor::vulkan_renderer {
 
 VkResult VulkanSemaphoreManager::init(const VkDevice &device, const std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager) {

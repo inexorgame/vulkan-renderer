@@ -1,12 +1,9 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/availability_checks.hpp"
-#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include <vulkan/vulkan_core.h>
 
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
-
-#include <cassert>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {

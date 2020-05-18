@@ -1,5 +1,8 @@
 #include "inexor/vulkan-renderer/uniform_buffer.hpp"
 
+#include <cassert>
+#include <cstring>
+
 namespace inexor::vulkan_renderer {
 
 // TODO: Fix move constructor!
