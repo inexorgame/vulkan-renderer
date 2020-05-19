@@ -20,29 +20,6 @@ VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug
     return VK_SUCCESS;
 }
 
-VkResult VulkanRenderer::create_command_pool() {
-    assert(vkdevice->get_device());
-    assert(vkdevice->get_physical_device());
-
-    spdlog::debug("Creating command pool for rendering.");
-
-    VkCommandPoolCreateInfo command_pool_create_info = {};
-
-    command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    command_pool_create_info.pNext = nullptr;
-    command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_create_info.queueFamilyIndex = vkdevice->get_graphics_queue_family_index();
-
-    VkResult result = vkCreateCommandPool(vkdevice->get_device(), &command_pool_create_info, nullptr, &command_pool);
-    vulkan_error_check(result);
-
-    // Give this command pool an appropriate name.
-    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)command_pool, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT,
-                                          "Core engine command pool.");
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_uniform_buffers() {
     uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
 
@@ -136,7 +113,7 @@ VkResult VulkanRenderer::create_command_buffers() {
 
     command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     command_buffer_allocate_info.pNext = nullptr;
-    command_buffer_allocate_info.commandPool = command_pool;
+    command_buffer_allocate_info.commandPool = command_pool->get();
     command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     command_buffer_allocate_info.commandBufferCount = swapchain->get_image_count();
 
@@ -385,7 +362,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     // We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
     if (command_buffers.size() > 0) {
         // The size of the command buffer is equal to the number of image in swapchain.
-        vkFreeCommandBuffers(vkdevice->get_device(), command_pool, static_cast<std::uint32_t>(command_buffers.size()), command_buffers.data());
+        vkFreeCommandBuffers(vkdevice->get_device(), command_pool->get(), static_cast<std::uint32_t>(command_buffers.size()), command_buffers.data());
 
         command_buffers.clear();
     }
@@ -1336,7 +1313,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
 
     cleanup_swapchain();
 
-    // TODO(yeetari): Remove once this class is RAII-ified
+    // @todo: (yeetari) Remove once this class is RAII-ified.
     shaders.clear();
     textures.clear();
     uniform_buffers.clear();
@@ -1358,12 +1335,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         pipeline_cache = VK_NULL_HANDLE;
     }
 
-    spdlog::debug("Destroying Vulkan command pool.");
-    if (VK_NULL_HANDLE != command_pool) {
-        vkDestroyCommandPool(vkdevice->get_device(), command_pool, nullptr);
-        command_pool = VK_NULL_HANDLE;
-    }
-
+    // @todo: (Hanni) Remove them once this class is RAII-ified.
+    command_pool.reset();
     swapchain.reset();
     surface.reset();
     vkdevice.reset();

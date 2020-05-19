@@ -515,8 +515,7 @@ VkResult Application::init(int argc, char **argv) {
     result = create_frame_buffers();
     vulkan_error_check(result);
 
-    result = create_command_pool();
-    vulkan_error_check(result);
+    command_pool = std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
 
     result = create_uniform_buffers();
     vulkan_error_check(result);
