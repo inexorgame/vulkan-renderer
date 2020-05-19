@@ -117,25 +117,8 @@ VkResult VulkanRenderer::create_command_buffers() {
     spdlog::debug("Allocating command buffers.");
     spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
 
-    VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
-
-    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    command_buffer_allocate_info.pNext = nullptr;
-    command_buffer_allocate_info.commandPool = command_pool->get();
-    command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    command_buffer_allocate_info.commandBufferCount = swapchain->get_image_count();
-
-    command_buffers.clear();
-    command_buffers.resize(swapchain->get_image_count());
-
-    VkResult result = vkAllocateCommandBuffers(vkdevice->get_device(), &command_buffer_allocate_info, command_buffers.data());
-    vulkan_error_check(result);
-
-    for (std::size_t i = 0; i < command_buffers.size(); i++) {
-        std::string command_buffer_name = "Command buffer " + std::to_string(i) + " for core engine.";
-
-        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(command_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
-                                              command_buffer_name.c_str());
+    for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
+        command_buffers.emplace_back(vkdevice->get_device(), command_pool->get());
     }
 
     return VK_SUCCESS;
@@ -195,38 +178,40 @@ VkResult VulkanRenderer::record_command_buffers() {
     for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
         spdlog::debug("Recording command buffer #{}.", i);
 
+        VkCommandBuffer current_command_buffer = command_buffers[i].get();
+
         // TODO: Fix debug marker regions in RenderDoc.
         // Start binding the region with Vulkan debug markers.
-        debug_marker_manager->bind_region(command_buffers[i], "Beginning of rendering.", DEBUG_MARKER_GREEN);
+        debug_marker_manager->bind_region(current_command_buffer, "Beginning of rendering.", DEBUG_MARKER_GREEN);
 
-        VkResult result = vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
+        VkResult result = vkBeginCommandBuffer(current_command_buffer, &command_buffer_begin_info);
         if (VK_SUCCESS != result)
             return result;
 
         // Update only the necessary parts of VkRenderPassBeginInfo.
         render_pass_begin_info.framebuffer = frame_buffers[i];
 
-        vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(current_command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
         // ----------------------------------------------------------------------------------------------------------------
         // Begin of render pass.
         {
-            vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
+            vkCmdSetViewport(current_command_buffer, 0, 1, &viewport);
 
-            vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
+            vkCmdSetScissor(current_command_buffer, 0, 1, &scissor);
 
             // TODO: Render skybox!
 
-            vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            vkCmdBindPipeline(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-            vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, descriptors[0].get_descriptor_sets_data(), 0,
-                                    nullptr);
+            vkCmdBindDescriptorSets(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, descriptors[0].get_descriptor_sets_data(),
+                                    0, nullptr);
 
             VkBuffer vertexBuffers[] = {mesh_buffers[0].get_vertex_buffer()};
             VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
+            vkCmdBindVertexBuffers(current_command_buffer, 0, 1, vertexBuffers, offsets);
 
-            vkCmdDraw(command_buffers[i], mesh_buffers[0].get_vertex_count(), 1, 0, 0);
+            vkCmdDraw(current_command_buffer, mesh_buffers[0].get_vertex_count(), 1, 0, 0);
 
             // TODO: This does not specify the order of rendering!
             // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
@@ -236,13 +221,13 @@ VkResult VulkanRenderer::record_command_buffers() {
         // End of render pass.
         // ----------------------------------------------------------------------------------------------------------------
 
-        vkCmdEndRenderPass(command_buffers[i]);
+        vkCmdEndRenderPass(current_command_buffer);
 
-        result = vkEndCommandBuffer(command_buffers[i]);
+        result = vkEndCommandBuffer(current_command_buffer);
         if (VK_SUCCESS != result)
             return result;
 
-        debug_marker_manager->end_region(command_buffers[i]);
+        debug_marker_manager->end_region(current_command_buffer);
     }
 
     return VK_SUCCESS;
@@ -367,15 +352,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Destroying command buffers.");
 
-    // We do not need to reset the command buffers explicitly, since it is covered by vkDestroyCommandPool.
-    if (command_buffers.size() > 0) {
-        // The size of the command buffer is equal to the number of image in swapchain.
-        vkFreeCommandBuffers(vkdevice->get_device(), command_pool->get(), static_cast<std::uint32_t>(command_buffers.size()), command_buffers.data());
-
-        command_buffers.clear();
-    }
-
-    // TODO: Pack every shutdown of a resource into an own function.
+    command_buffers.clear();
 
     spdlog::debug("Destroying depth buffer image view.");
 

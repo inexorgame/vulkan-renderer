@@ -1,20 +1,23 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
 #include <vulkan/vulkan_core.h>
 
-#include <cstdint>
+#include <cassert>
+#include <memory>
+#include <stdexcept>
 
 namespace inexor::vulkan_renderer {
 
 /// @brief A OnceCommandBuffer is a command buffer which is being used only once.
 class OnceCommandBuffer {
 private:
-    VkDevice device;
     wrapper::CommandPool command_pool;
-    VkCommandBuffer command_buffer;
+    std::unique_ptr<wrapper::CommandBuffer> command_buffer;
     VkQueue data_transfer_queue;
+    VkDevice device;
 
     bool command_buffer_created;
     bool recording_started;
@@ -41,8 +44,8 @@ public:
 
     void end_recording_and_submit_command();
 
-    [[nodiscard]] const VkCommandBuffer get_command_buffer() const {
-        return command_buffer;
+    [[nodiscard]] VkCommandBuffer get_command_buffer() const {
+        return command_buffer->get();
     }
 };
 

@@ -30,6 +30,10 @@ public:
     [[nodiscard]] VkCommandPool get() const {
         return command_pool;
     }
+
+    [[nodiscard]] const VkCommandPool *get_ptr() const {
+        return &command_pool;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

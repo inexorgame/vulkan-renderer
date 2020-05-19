@@ -20,10 +20,13 @@ public:
     CommandBuffer(const VkDevice device, const VkCommandPool command_pool);
 
     /// @note We don't need to destroy the command buffer because it will be destroyed along with it's associated command pool automatically.
-    ~CommandBuffer() = default;
 
     [[nodiscard]] VkCommandBuffer get() const {
         return command_buffer;
+    }
+
+    [[nodiscard]] const VkCommandBuffer *get_ptr() const {
+        return &command_buffer;
     }
 };
 } // namespace inexor::vulkan_renderer::wrapper
