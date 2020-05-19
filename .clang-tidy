@@ -1,10 +1,14 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,clang-analyzer-*,clang-diagnostics-*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-modernize-use-trailing-return-type,-llvm-header-guard,-cppcoreguidelines-pro-bounds-array-to-pointer-decay'
-WarningsAsErrors: ''
-HeaderFilterRegex: 'inexor/*'
-AnalyzeTemporaryDtors: false
+Checks: >
+  *,
+  -fuchsia*,
+  -zircon*,
+
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -llvm-header-guard,
+  -modernize-use-trailing-return-type
 FormatStyle:     file
-User:            iceflower
+HeaderFilterRegex: 'inexor/*'
 CheckOptions:
   - key:             bugprone-argument-comment.CommentBoolLiterals
     value:           '0'
