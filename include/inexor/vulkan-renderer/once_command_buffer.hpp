@@ -1,5 +1,7 @@
 #pragma once
 
+#include "wrapper/command_pool.hpp"
+
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
 
@@ -11,14 +13,13 @@ namespace inexor::vulkan_renderer {
 /// @brief A OnceCommandBuffer is a command buffer which is being used only once.
 class OnceCommandBuffer {
 private:
-    VkDevice device = VK_NULL_HANDLE;
-    VkCommandPool command_pool = VK_NULL_HANDLE;
-    VkCommandBuffer command_buffer = VK_NULL_HANDLE;
-    VkQueue data_transfer_queue = VK_NULL_HANDLE;
-    std::uint32_t data_transfer_queue_family_index = 0;
+    VkDevice device;
+    wrapper::CommandPool command_pool;
+    VkCommandBuffer command_buffer;
+    VkQueue data_transfer_queue;
 
-    bool command_buffer_created = false;
-    bool recording_started = false;
+    bool command_buffer_created;
+    bool recording_started;
 
 public:
     // Delete the copy constructor so once command buffers are move-only objects.

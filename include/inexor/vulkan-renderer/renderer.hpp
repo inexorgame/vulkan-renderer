@@ -21,6 +21,7 @@
 
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -79,8 +80,6 @@ protected:
     VkPipeline pipeline = VK_NULL_HANDLE;
 
     std::vector<VkFramebuffer> frame_buffers;
-
-    VkCommandPool command_pool = VK_NULL_HANDLE;
 
     std::vector<VkCommandBuffer> command_buffers;
 
@@ -157,6 +156,9 @@ protected:
 
     /// RAII wrapper for glfw contexts.
     std::unique_ptr<wrapper::GLFWContext> glfw_context = nullptr;
+
+    /// RAII wrapper for command pools.
+    std::unique_ptr<wrapper::CommandPool> command_pool = nullptr;
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.
