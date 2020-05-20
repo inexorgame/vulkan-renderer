@@ -43,6 +43,7 @@ jobs:
             cmake \
             curl \
             libx11-dev \
+            libgl1-mesa-dev \
             lld \
             ninja-build \
             pkg-config \
