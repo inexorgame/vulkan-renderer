@@ -15,6 +15,9 @@
 #include "inexor/vulkan-renderer/texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/uniform_buffer.hpp"
+// Those components have been refactored to fulfill RAII idioms.
+#include "inexor/vulkan-renderer/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
@@ -69,7 +72,7 @@ protected:
 
     std::vector<VkFramebuffer> frame_buffers;
 
-    std::vector<VkCommandBuffer> command_buffers;
+    std::vector<wrapper::CommandBuffer> command_buffers;
 
     std::vector<std::shared_ptr<VkSemaphore>> image_available_semaphores;
 

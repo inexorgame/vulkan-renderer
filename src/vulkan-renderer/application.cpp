@@ -212,7 +212,7 @@ VkResult Application::render_frame() {
     submit_info.waitSemaphoreCount = 1;
     submit_info.pWaitDstStageMask = wait_stage_mask;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffers[image_index];
+    submit_info.pCommandBuffers = command_buffers[image_index].get_ptr();
     submit_info.signalSemaphoreCount = 1;
     submit_info.pWaitSemaphores = &*image_available_semaphores[current_frame];
     submit_info.pSignalSemaphores = &*rendering_finished_semaphores[current_frame];

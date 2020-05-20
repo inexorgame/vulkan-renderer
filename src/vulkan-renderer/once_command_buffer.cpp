@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer {
 
-OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
+OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept 
     : device(other.device), command_pool(std::move(other.command_pool)), command_buffer(std::exchange(other.command_buffer, nullptr)),
       data_transfer_queue(other.data_transfer_queue), recording_started(other.recording_started), command_buffer_created(other.command_buffer_created) {}
 
@@ -22,6 +22,7 @@ OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_t
 }
 
 OnceCommandBuffer::~OnceCommandBuffer() {
+    command_buffer.reset();
     command_buffer_created = false;
     recording_started = false;
 }
@@ -33,20 +34,7 @@ void OnceCommandBuffer::create_command_buffer() {
     assert(!recording_started);
     assert(!command_buffer_created);
 
-    // TODO: Rename all "allocation_info" variables in the engine to "alloc_info".
-    VkCommandBufferAllocateInfo command_buffer_alloc_info = {};
-
-    command_buffer_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    command_buffer_alloc_info.pNext = nullptr;
-    command_buffer_alloc_info.commandBufferCount = 1;
-    command_buffer_alloc_info.commandPool = command_pool.get();
-    command_buffer_alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    if (vkAllocateCommandBuffers(device, &command_buffer_alloc_info, &command_buffer) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkAllocateCommandBuffers failed for once command buffer!");
-    }
-
-    // TODO: Set object name using Vulkan debug markers.
+    command_buffer = std::make_unique<wrapper::CommandBuffer>(device, command_pool.get());
 
     command_buffer_created = true;
 }
@@ -69,7 +57,7 @@ void OnceCommandBuffer::start_recording() {
     // It's good practice to tell the driver about our intent using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
     command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    if (vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info) != VK_SUCCESS) {
+    if (vkBeginCommandBuffer(command_buffer->get(), &command_buffer_begin_info) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkBeginCommandBuffer failed for once command buffer!");
     }
 
@@ -88,7 +76,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
 
     spdlog::debug("Ending recording of once command buffer.");
 
-    if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
+    if (vkEndCommandBuffer(command_buffer->get()) != VK_SUCCESS) {
         throw std::runtime_error("Error: VkEndCommandBuffer failed for once command buffer!");
     }
 
@@ -97,10 +85,9 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     spdlog::debug("Starting to submit command.");
 
     VkSubmitInfo submit_info = {};
-
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
+    submit_info.pCommandBuffers = command_buffer->get_ptr();
 
     if (vkQueueSubmit(data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueSubmit failed for once command buffer!");
@@ -114,7 +101,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     spdlog::debug("Destroying once command buffer.");
 
     // Because we destroy the command buffer after submission, we have to allocate it every time.
-    vkFreeCommandBuffers(device, command_pool.get(), 1, &command_buffer);
+    vkFreeCommandBuffers(device, command_pool.get(), 1, command_buffer->get_ptr());
 
     command_buffer_created = false;
 
