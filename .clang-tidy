@@ -6,9 +6,11 @@ Checks: >
 
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -hicpp-uppercase-literal-suffix,
   -llvm-header-guard,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
+  -readability-uppercase-literal-suffix,
 FormatStyle:     file
 HeaderFilterRegex: 'inexor/*'
 CheckOptions:
