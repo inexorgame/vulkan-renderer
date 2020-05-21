@@ -4,9 +4,10 @@ Checks: >
   -fuchsia*,
   -zircon*,
 
+  -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -llvm-header-guard,
-  -modernize-use-trailing-return-type
+  -modernize-use-trailing-return-type,
 FormatStyle:     file
 HeaderFilterRegex: 'inexor/*'
 CheckOptions:
