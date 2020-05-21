@@ -49,9 +49,9 @@ VkResult VulkanRenderer::create_depth_buffer() {
     auto depth_buffer_format_candidate =
         settings_decision_maker->find_depth_buffer_format(vkdevice->get_physical_device(), depth_buffer_format_candidates, tiling, format);
 
-    assert(depth_buffer_format_candidate.has_value());
+    assert(depth_buffer_format_candidate);
 
-    depth_buffer.format = depth_buffer_format_candidate.value();
+    depth_buffer.format = *depth_buffer_format_candidate;
 
     auto swapchain_image_extent = swapchain->get_extent();
 
@@ -257,9 +257,9 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
         auto new_image_available_semaphore = semaphore_manager->create_semaphore(image_available_semaphore_name);
         auto new_rendering_finished_semaphore = semaphore_manager->create_semaphore(rendering_finished_semaphore_name);
 
-        in_flight_fences.push_back(in_flight_fence.value());
-        image_available_semaphores.push_back(new_image_available_semaphore.value());
-        rendering_finished_semaphores.push_back(new_rendering_finished_semaphore.value());
+        in_flight_fences.push_back(*in_flight_fence);
+        image_available_semaphores.push_back(*new_image_available_semaphore);
+        rendering_finished_semaphores.push_back(*new_rendering_finished_semaphore);
     }
 
     images_in_flight.clear();

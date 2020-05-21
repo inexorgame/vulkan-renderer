@@ -264,12 +264,12 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
         // Did the user specify a preferred GPU by command line argument?
         // If so, let's take a look at what he wanted us to use.
         // This does not matter in any way in this case.
-        if (preferred_graphics_card_index.has_value()) {
+        if (preferred_graphics_card_index) {
             // Since we only have one graphics card to choose from, index 0 is our only option.
-            if (0 != preferred_graphics_card_index.value()) {
-                spdlog::debug("Ignoring command line argument -gpu {} because there is only one GPU to chose from.", preferred_graphics_card_index.value());
+            if (0 != *preferred_graphics_card_index) {
+                spdlog::debug("Ignoring command line argument -gpu {} because there is only one GPU to chose from.", *preferred_graphics_card_index);
             }
-            if (!(preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index.value() < available_graphics_cards.size())) {
+            if (!(*preferred_graphics_card_index >= 0 && *preferred_graphics_card_index < available_graphics_cards.size())) {
                 spdlog::warn("Warning: Array index for selected graphics card would have been invalid anyways!");
             }
         }
@@ -289,19 +289,19 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
     /// It is important to note that the preferred graphics card can be unsuitable for the application's purposes though!
     /// If that is the case, the automatic graphics card selection mechanism is responsible for finding a suitable graphics card.
     /// The user can also simply change the command line argument and try to prefer another graphics card.
-    if (preferred_graphics_card_index.has_value()) {
+    if (preferred_graphics_card_index) {
         // Check if this array index is valid!
-        if (preferred_graphics_card_index.value() >= 0 && preferred_graphics_card_index < number_of_available_graphics_cards) {
-            spdlog::debug("Command line parameter for prefered GPU specified. Checking graphics card with index {}.", preferred_graphics_card_index.value());
+        if (*preferred_graphics_card_index >= 0 && preferred_graphics_card_index < number_of_available_graphics_cards) {
+            spdlog::debug("Command line parameter for prefered GPU specified. Checking graphics card with index {}.", *preferred_graphics_card_index);
 
             // Check if the graphics card selected by the user meets all the criteria we need!
-            if (VulkanSettingsDecisionMaker::is_graphics_card_suitable(available_graphics_cards[preferred_graphics_card_index.value()], surface)) {
+            if (VulkanSettingsDecisionMaker::is_graphics_card_suitable(available_graphics_cards[*preferred_graphics_card_index], surface)) {
                 // We are done: Use the graphics card which was specified by the user's command line argument.
                 spdlog::debug("The prefered graphics card is suitable for this application.");
-                spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[preferred_graphics_card_index.value()]));
-                return available_graphics_cards[preferred_graphics_card_index.value()];
+                spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[*preferred_graphics_card_index]));
+                return available_graphics_cards[*preferred_graphics_card_index];
             }
-            spdlog::error("The preferred graphics card with index {} is not suitable for this application!", preferred_graphics_card_index.value());
+            spdlog::error("The preferred graphics card with index {} is not suitable for this application!", *preferred_graphics_card_index);
             spdlog::error("The array index is valid, but this graphics card does not fulfill all requirements!");
 
             // We are NOT done!
@@ -309,7 +309,7 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
 
         } else {
             // No, this array index for available_graphics_cards is invalid!
-            spdlog::error("Error: Invalid command line argument! Graphics card array index {} is invalid!", preferred_graphics_card_index.value());
+            spdlog::error("Error: Invalid command line argument! Graphics card array index {} is invalid!", *preferred_graphics_card_index);
 
             // We are NOT done!
             // Try to select the best graphics card automatically!

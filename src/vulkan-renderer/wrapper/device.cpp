@@ -29,7 +29,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         throw std::runtime_error("Error: Could not find suitable graphics card!");
     }
 
-    graphics_card = selected_graphics_card.value();
+    graphics_card = *selected_graphics_card;
 
     spdlog::debug("Creating Vulkan device queues.");
 
@@ -48,13 +48,13 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     if (queue_family_index_for_both_graphics_and_presentation) {
         spdlog::debug("One queue for both graphics and presentation will be used.");
 
-        graphics_queue_family_index = queue_family_index_for_both_graphics_and_presentation.value();
+        graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
         present_queue_family_index = graphics_queue_family_index;
 
         // In this case, there is one queue family which can be used for both graphics and presentation.
         VkDeviceQueueCreateInfo create_info = {};
         create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.queueFamilyIndex = queue_family_index_for_both_graphics_and_presentation.value();
+        create_info.queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation;
         create_info.queueCount = 1;
         create_info.pQueuePriorities = &::default_queue_priority;
 
@@ -73,7 +73,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
         }
 
-        graphics_queue_family_index = queue_candidate.value();
+        graphics_queue_family_index = *queue_candidate;
 
         // Check which queue family index can be used for presentation.
         queue_candidate = settings_decision_maker.find_presentation_queue_family(graphics_card, surface);
@@ -82,7 +82,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
         }
 
-        present_queue_family_index = queue_candidate.value();
+        present_queue_family_index = *queue_candidate;
 
         spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index);
         spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
@@ -112,7 +112,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     bool use_distinct_data_transfer_queue = false;
 
     if (queue_candidate && prefer_distinct_transfer_queue) {
-        transfer_queue_family_index = queue_candidate.value();
+        transfer_queue_family_index = *queue_candidate;
 
         spdlog::debug("A separate queue will be used for data transfer.");
         spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index);

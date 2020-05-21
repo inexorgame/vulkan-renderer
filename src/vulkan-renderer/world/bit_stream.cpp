@@ -11,10 +11,10 @@ BitStream::BitStream() {}
 
 std::optional<boost::dynamic_bitset<>> BitStream::get_bitset(std::uint8_t size) {
     const std::optional<std::uint8_t> ubits = this->get(size);
-    if (ubits == std::nullopt) {
-        return std::nullopt;
+    if (ubits) {
+        return boost::dynamic_bitset<>(size, *ubits);
     }
-    return boost::dynamic_bitset<>(size, ubits.value());
+    return std::nullopt;
 }
 
 std::optional<std::uint8_t> BitStream::get(std::uint8_t size) {

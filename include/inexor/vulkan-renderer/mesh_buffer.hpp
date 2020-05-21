@@ -68,8 +68,8 @@ public:
     }
 
     [[nodiscard]] std::optional<VkBuffer> get_index_buffer() const {
-        assert(index_buffer.has_value());
-        return index_buffer.value().get_buffer();
+        assert(index_buffer);
+        return index_buffer->get_buffer();
     }
 
     [[nodiscard]] const std::uint32_t get_vertex_count() const {
