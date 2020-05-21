@@ -9,7 +9,7 @@ namespace inexor::vulkan_renderer {
 
 VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
     // First ask Vulkan how many instance extensions are available on the system.
-    VkResult result = vkEnumerateInstanceExtensionProperties(NULL, &available_instance_extensions, NULL);
+    VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &available_instance_extensions, nullptr);
     vulkan_error_check(result);
 
     if (available_instance_extensions == 0) {
@@ -23,7 +23,7 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
         instance_extensions_cache.resize(available_instance_extensions);
 
         // Get the information about the available instance extensions.
-        result = vkEnumerateInstanceExtensionProperties(NULL, &available_instance_extensions, instance_extensions_cache.data());
+        result = vkEnumerateInstanceExtensionProperties(nullptr, &available_instance_extensions, instance_extensions_cache.data());
         vulkan_error_check(result);
     }
 

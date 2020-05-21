@@ -567,7 +567,7 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     uniform_buffer_info.range = sizeof(UniformBufferObject);
 
     descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[0].dstSet = 0;
+    descriptor_writes[0].dstSet = nullptr;
     descriptor_writes[0].dstBinding = 0;
     descriptor_writes[0].dstArrayElement = 0;
     descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -580,7 +580,7 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     descriptor_image_info.sampler = textures[0].get_sampler();
 
     descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[1].dstSet = 0;
+    descriptor_writes[1].dstSet = nullptr;
     descriptor_writes[1].dstBinding = 1;
     descriptor_writes[1].dstArrayElement = 0;
     descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
