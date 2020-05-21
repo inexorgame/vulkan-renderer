@@ -265,7 +265,7 @@ std::vector<std::array<glm::vec3, 3>> Cube::polygons() {
 
     polygons.resize(this->leaves() * 12);
 
-    auto polygons_pointer = polygons.data();
+    auto *polygons_pointer = polygons.data();
     this->all_polygons(polygons_pointer);
     return polygons;
 }

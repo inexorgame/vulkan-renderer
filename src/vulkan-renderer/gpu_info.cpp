@@ -685,7 +685,7 @@ void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &
         vulkan_error_check(result);
 
         // Loop through all graphics cards and print information about them.
-        for (auto graphics_card : available_graphics_cards) {
+        for (auto *graphics_card : available_graphics_cards) {
             print_device_layers(graphics_card);
             print_device_extensions(graphics_card);
             print_graphics_card_info(graphics_card);
