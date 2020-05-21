@@ -247,9 +247,9 @@ VkResult Application::render_frame() {
 
     auto fps_value = fps_counter.update();
 
-    if (fps_value.has_value()) {
-        window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(fps_value.value()) + " FPS");
-        spdlog::debug("FPS: {}, window size: {} x {}.", fps_value.value(), window->get_width(), window->get_height());
+    if (fps_value) {
+        window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
+        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, window->get_width(), window->get_height());
     }
 
     return VK_SUCCESS;
@@ -348,7 +348,7 @@ VkResult Application::init(int argc, char **argv) {
 #ifdef NDEBUG
         spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
 #else
-        if (enable_renderdoc.value()) {
+        if (*enable_renderdoc) {
             spdlog::debug("--renderdoc specified, enabling renderdoc instance layer.");
             enable_renderdoc_instance_layer = true;
         }
@@ -360,7 +360,7 @@ VkResult Application::init(int argc, char **argv) {
     // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be disabled.
     // For debug builds, this is not advisable! Always use validation layers during development!
     auto disable_validation = cla_parser.get_arg<bool>("--no-validation");
-    if (disable_validation && disable_validation.value()) {
+    if (disable_validation.value_or(false)) {
         spdlog::warn("--no-validation specified, disabling validation layers.");
         enable_khronos_validation_instance_layer = false;
     }
@@ -425,7 +425,7 @@ VkResult Application::init(int argc, char **argv) {
     // The user can specify with "--gpu <number>" which graphics card to prefer.
     auto prefered_graphics_card = cla_parser.get_arg<std::uint32_t>("--gpu");
     if (prefered_graphics_card) {
-        spdlog::debug("Preferential graphics card index {} specified.", prefered_graphics_card.value());
+        spdlog::debug("Preferential graphics card index {} specified.", *prefered_graphics_card);
     }
 
     bool display_graphics_card_info = true;
@@ -433,7 +433,7 @@ VkResult Application::init(int argc, char **argv) {
     // If the user specified command line argument "--nostats", no information will be
     // displayed about all the graphics cards which are available on the system.
     auto hide_gpu_stats = cla_parser.get_arg<bool>("--no-stats");
-    if (hide_gpu_stats && hide_gpu_stats.value()) {
+    if (hide_gpu_stats.value_or(false)) {
         spdlog::debug("--no-stats specified, no extended information about graphics cards will be shown.");
         display_graphics_card_info = false;
     }
@@ -441,7 +441,7 @@ VkResult Application::init(int argc, char **argv) {
     // If the user specified command line argument "--vsync", the presentation engine waits
     // for the next vertical blanking period to update the current image.
     auto enable_vertical_synchronisation = cla_parser.get_arg<bool>("--vsync");
-    if (enable_vertical_synchronisation && enable_vertical_synchronisation.value()) {
+    if (enable_vertical_synchronisation.value_or(false)) {
         spdlog::debug("V-sync enabled!");
         vsync_enabled = true;
     } else {
@@ -465,7 +465,7 @@ VkResult Application::init(int argc, char **argv) {
 
     // Ignore distinct data transfer queue
     auto forbid_distinct_data_transfer_queue = cla_parser.get_arg<bool>("--no-separate-data-queue");
-    if (forbid_distinct_data_transfer_queue && forbid_distinct_data_transfer_queue.value()) {
+    if (forbid_distinct_data_transfer_queue.value_or(false)) {
         spdlog::warn("Command line argument --no-separate-data-queue specified.");
         spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
         spdlog::warn("Performance loss might be a result of this!");
@@ -482,7 +482,7 @@ VkResult Application::init(int argc, char **argv) {
     // Check if Vulkan debug markers should be disabled.
     // Those are only available if RenderDoc instance layer is enabled!
     auto no_vulkan_debug_markers = cla_parser.get_arg<bool>("--no-vk-debug-markers");
-    if (no_vulkan_debug_markers && no_vulkan_debug_markers.value()) {
+    if (no_vulkan_debug_markers.value_or(false)) {
         spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
         enable_debug_marker_device_extension = false;
     }

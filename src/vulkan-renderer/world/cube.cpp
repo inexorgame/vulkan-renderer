@@ -6,13 +6,13 @@ namespace inexor::vulkan_renderer::world {
 void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z) {
     assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
     if (x) {
-        this->x_level = x.value();
+        this->x_level = *x;
     }
     if (y) {
-        this->y_level = y.value();
+        this->y_level = *y;
     }
     if (z) {
-        this->z_level = z.value();
+        this->z_level = *z;
     }
     this->change();
 }
@@ -202,12 +202,12 @@ void Cube::make_reactive(bool force) {
         return;
     }
     if (this->indentations) {
-        for (auto &indentation : this->indentations.value()) {
+        for (auto &indentation : *this->indentations) {
             indentation.on_change.connect([this](Indentation *i) { this->change(i); });
         }
     }
     if (this->octants) {
-        for (auto &octant : this->octants.value()) {
+        for (auto &octant : *this->octants) {
             octant->make_reactive(force);
             octant->on_change.connect([this](Cube *o) { this->change(); });
         }
@@ -275,7 +275,7 @@ void Cube::all_polygons(std::array<glm::vec3, 3> *&polygons) {
         return;
     }
     if (this->cube_type == CubeType::OCTANT) {
-        for (const auto &octant : this->octants.value()) {
+        for (const auto &octant : *this->octants) {
             octant->all_polygons(polygons);
         }
         return;
@@ -307,7 +307,7 @@ std::uint64_t Cube::leaves() {
         return 1;
     case CubeType::OCTANT:
         std::uint64_t i = 0;
-        for (const auto &octant : this->octants.value()) {
+        for (const auto &octant : *this->octants) {
             i += octant->leaves();
         }
         return i;

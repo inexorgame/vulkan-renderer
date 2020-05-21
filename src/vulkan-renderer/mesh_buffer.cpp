@@ -49,7 +49,7 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const
         StagingBuffer staging_buffer_for_indices(device, vma_allocator, data_transfer_queue, data_transfer_queue_family_index, name, index_buffer_size, indices,
                                                  indices_memory_size);
 
-        staging_buffer_for_indices.upload_data_to_gpu(index_buffer.value());
+        staging_buffer_for_indices.upload_data_to_gpu(*index_buffer);
     } else {
         spdlog::warn("No index buffer created for mesh {}", name);
     }

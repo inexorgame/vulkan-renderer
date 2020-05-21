@@ -33,7 +33,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         throw std::runtime_error("Error: Could not find an image format for images in swapchain!");
     }
 
-    surface_format = surface_format_candidate.value();
+    surface_format = *surface_format_candidate;
 
     VkSwapchainCreateInfoKHR swapchain_create_info = {};
     swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -50,7 +50,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchain_create_info.queueFamilyIndexCount = 0;
     swapchain_create_info.pQueueFamilyIndices = nullptr;
-    swapchain_create_info.presentMode = present_mode.value();
+    swapchain_create_info.presentMode = *present_mode;
 
     if (old_swapchain != VK_NULL_HANDLE) {
         swapchain_create_info.oldSwapchain = old_swapchain;
