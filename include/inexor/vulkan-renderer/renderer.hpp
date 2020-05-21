@@ -6,7 +6,6 @@
 #include "inexor/vulkan-renderer/fence_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
-#include "inexor/vulkan-renderer/image_buffer.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/semaphore_manager.hpp"
@@ -15,12 +14,14 @@
 #include "inexor/vulkan-renderer/texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/uniform_buffer.hpp"
+
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
+#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/vma.hpp"
@@ -86,10 +87,6 @@ protected:
 
     bool debug_report_callback_initialised = false;
 
-    ImageBuffer depth_buffer;
-
-    ImageBuffer depth_stencil;
-
     std::uint32_t vma_dump_index = 0;
 
     TimeStep time_step;
@@ -150,6 +147,10 @@ protected:
 
     /// RAII wrapper for command pools.
     std::unique_ptr<wrapper::CommandPool> command_pool = nullptr;
+
+    std::unique_ptr<wrapper::Image> depth_buffer;
+
+    std::unique_ptr<wrapper::Image> depth_stencil;
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.

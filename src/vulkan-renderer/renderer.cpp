@@ -35,76 +35,23 @@ VkResult VulkanRenderer::create_uniform_buffers() {
 }
 
 VkResult VulkanRenderer::create_depth_buffer() {
-    VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 
+    const std::vector<VkFormat> supported_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT,
+                                                     VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D16_UNORM};
+
+    VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
     VkFormatFeatureFlags format = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    VkImageUsageFlags image_usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    auto depth_buffer_format_candidate = settings_decision_maker->find_depth_buffer_format(vkdevice->get_physical_device(), supported_formats, tiling, format);
 
-    // Supported candidates for depth buffer format.
-    const std::vector<VkFormat> depth_buffer_format_candidates = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT,
-                                                                  VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D16_UNORM};
+    if (!depth_buffer_format_candidate) {
+        throw std::runtime_error("Error: Could not find appropriate image format for depth buffer!");
+    }
 
-    // Try to find an appropriate format for the depth buffer.
-    auto depth_buffer_format_candidate =
-        settings_decision_maker->find_depth_buffer_format(vkdevice->get_physical_device(), depth_buffer_format_candidates, tiling, format);
-
-    assert(depth_buffer_format_candidate);
-
-    depth_buffer.format = *depth_buffer_format_candidate;
-
-    auto swapchain_image_extent = swapchain->get_extent();
-
-    VkImageCreateInfo depth_buffer_image_create_info = {};
-    depth_buffer_image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    depth_buffer_image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    depth_buffer_image_create_info.extent.width = swapchain_image_extent.width;
-    depth_buffer_image_create_info.extent.height = swapchain_image_extent.height;
-    depth_buffer_image_create_info.extent.depth = 1;
-    depth_buffer_image_create_info.mipLevels = 1;
-    depth_buffer_image_create_info.arrayLayers = 1;
-    depth_buffer_image_create_info.format = depth_buffer.format;
-    depth_buffer_image_create_info.tiling = tiling;
-    depth_buffer_image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depth_buffer_image_create_info.usage = image_usage;
-    depth_buffer_image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    depth_buffer_image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    // Image creation does not allocate memory for the image automatically.
-    // This is done in the following code part:
-    depth_buffer.allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    depth_buffer.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-
-    std::string depth_buffer_image_name = "Depth buffer image.";
-
-    depth_buffer.allocation_create_info.pUserData = depth_buffer_image_name.data();
-
-    VkResult result = vmaCreateImage(vma->get_allocator(), &depth_buffer_image_create_info, &depth_buffer.allocation_create_info, &depth_buffer.image,
-                                     &depth_buffer.allocation, &depth_buffer.allocation_info);
-    vulkan_error_check(result);
-
-    // Give this depth buffer image an appropriate name.
-    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(depth_buffer.image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT,
-                                          "Depth buffer image.");
-
-    VkImageViewCreateInfo view_info = {};
-
-    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    view_info.image = depth_buffer.image;
-    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    view_info.format = depth_buffer.format;
-    view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = 1;
-    view_info.subresourceRange.baseArrayLayer = 0;
-    view_info.subresourceRange.layerCount = 1;
-
-    result = vkCreateImageView(vkdevice->get_device(), &view_info, nullptr, &depth_buffer.image_view);
-    vulkan_error_check(result);
-
-    // Give this buffer image view an appropriate name.
-    debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(depth_buffer.image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
-                                          "Depth buffer image view.");
+    // Create depth buffer image and image view.
+    depth_buffer = std::make_unique<wrapper::Image>(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+                                                    depth_buffer_format_candidate.value(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                                    VK_IMAGE_ASPECT_DEPTH_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth buffer", swapchain->get_extent());
 
     return VK_SUCCESS;
 }
@@ -294,79 +241,18 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Destroying depth buffer image view.");
 
-    if (VK_NULL_HANDLE != depth_buffer.image_view) {
-        vkDestroyImageView(vkdevice->get_device(), depth_buffer.image_view, nullptr);
-        depth_buffer.image_view = VK_NULL_HANDLE;
-    }
+    depth_buffer.reset();
 
-    spdlog::debug("Destroying depth buffer image.");
-
-    if (VK_NULL_HANDLE != depth_buffer.image) {
-        vmaDestroyImage(vma->get_allocator(), depth_buffer.image, depth_buffer.allocation);
-        depth_buffer.image = VK_NULL_HANDLE;
-    }
-
-    spdlog::debug("Destroying depth stencil image view.");
-
-    if (VK_NULL_HANDLE != depth_stencil.image_view) {
-        vkDestroyImageView(vkdevice->get_device(), depth_stencil.image_view, nullptr);
-        depth_stencil.image_view = VK_NULL_HANDLE;
-    }
-
-    spdlog::debug("Destroying depth stencil image.");
-
-    if (VK_NULL_HANDLE != depth_stencil.image) {
-        vmaDestroyImage(vma->get_allocator(), depth_stencil.image, depth_stencil.allocation);
-        depth_stencil.image = VK_NULL_HANDLE;
-    }
+    depth_stencil.reset();
 
     if (multisampling_enabled) {
-        spdlog::debug("Destroying multisampling color target image view.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.color.image_view) {
-            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.color.image_view, nullptr);
-            msaa_target_buffer.color.image_view = VK_NULL_HANDLE;
-        }
-
-        spdlog::debug("Destroying multisampling color target image.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.color.image) {
-            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.color.image, msaa_target_buffer.color.allocation);
-            msaa_target_buffer.color.allocation = VK_NULL_HANDLE;
-        }
-
-        spdlog::debug("Destroying multisampling depth target image view.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.depth.image_view) {
-            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.depth.image_view, nullptr);
-            msaa_target_buffer.depth.image_view = VK_NULL_HANDLE;
-        }
-
-        spdlog::debug("Destroying multisampling depth target image.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.depth.image) {
-            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.depth.image, msaa_target_buffer.depth.allocation);
-            msaa_target_buffer.depth.allocation = VK_NULL_HANDLE;
-        }
+        msaa_target_buffer.color.reset();
+        msaa_target_buffer.depth.reset();
     }
 
     spdlog::debug("Destroying command buffers.");
 
     command_buffers.clear();
-
-    spdlog::debug("Destroying depth buffer image view.");
-
-    if (VK_NULL_HANDLE != depth_buffer.image_view) {
-        vkDestroyImageView(vkdevice->get_device(), depth_buffer.image_view, nullptr);
-        depth_buffer.image_view = VK_NULL_HANDLE;
-    }
-
-    spdlog::debug("Destroying depth buffer image.");
-
-    if (VK_NULL_HANDLE != depth_buffer.image) {
-        vmaDestroyImage(vma->get_allocator(), depth_buffer.image, depth_buffer.allocation);
-        depth_buffer.image = VK_NULL_HANDLE;
-    }
 
     spdlog::debug("Destroying pipeline.");
 
@@ -423,60 +309,13 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     spdlog::debug("Destroying depth buffer image view.");
 
-    if (VK_NULL_HANDLE != depth_buffer.image_view) {
-        vkDestroyImageView(vkdevice->get_device(), depth_buffer.image_view, nullptr);
-        depth_buffer.image_view = VK_NULL_HANDLE;
-    }
+    depth_buffer.reset();
 
-    spdlog::debug("Destroying depth buffer image.");
-
-    if (VK_NULL_HANDLE != depth_buffer.image) {
-        vmaDestroyImage(vma->get_allocator(), depth_buffer.image, depth_buffer.allocation);
-        depth_buffer.image = VK_NULL_HANDLE;
-    }
-
-    spdlog::debug("Destroying depth stencil image view.");
-
-    if (VK_NULL_HANDLE != depth_stencil.image_view) {
-        vkDestroyImageView(vkdevice->get_device(), depth_stencil.image_view, nullptr);
-        depth_stencil.image_view = VK_NULL_HANDLE;
-    }
-
-    spdlog::debug("Destroying depth stencil image.");
-
-    if (VK_NULL_HANDLE != depth_stencil.image) {
-        vmaDestroyImage(vma->get_allocator(), depth_stencil.image, depth_stencil.allocation);
-        depth_stencil.image = VK_NULL_HANDLE;
-    }
+    depth_stencil.reset();
 
     if (multisampling_enabled) {
-        spdlog::debug("Destroying multisampling color target image view.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.color.image_view) {
-            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.color.image_view, nullptr);
-            msaa_target_buffer.color.image_view = VK_NULL_HANDLE;
-        }
-
-        spdlog::debug("Destroying multisampling color target image.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.color.image) {
-            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.color.image, msaa_target_buffer.color.allocation);
-            msaa_target_buffer.color.allocation = VK_NULL_HANDLE;
-        }
-
-        spdlog::debug("Destroying multisampling depth target image view.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.depth.image_view) {
-            vkDestroyImageView(vkdevice->get_device(), msaa_target_buffer.depth.image_view, nullptr);
-            msaa_target_buffer.depth.image_view = VK_NULL_HANDLE;
-        }
-
-        spdlog::debug("Destroying multisampling depth target image.");
-
-        if (VK_NULL_HANDLE != msaa_target_buffer.depth.image) {
-            vmaDestroyImage(vma->get_allocator(), msaa_target_buffer.depth.image, msaa_target_buffer.depth.allocation);
-            msaa_target_buffer.depth.allocation = VK_NULL_HANDLE;
-        }
+        msaa_target_buffer.color.reset();
+        msaa_target_buffer.depth.reset();
     }
 
     // TODO: Create methods for destroying resources as well!
@@ -791,7 +630,7 @@ VkResult VulkanRenderer::create_pipeline() {
         attachments[1].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         // Multisampled depth attachment we render to
-        attachments[2].format = depth_buffer.format;
+        attachments[2].format = depth_buffer->get_image_format();
         attachments[2].samples = multisampling_sample_count;
         attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -801,7 +640,7 @@ VkResult VulkanRenderer::create_pipeline() {
         attachments[2].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
         // Depth resolve attachment
-        attachments[3].format = depth_buffer.format;
+        attachments[3].format = depth_buffer->get_image_format();
         attachments[3].samples = VK_SAMPLE_COUNT_1_BIT;
         attachments[3].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachments[3].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -882,7 +721,7 @@ VkResult VulkanRenderer::create_pipeline() {
         attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         // Depth attachment.
-        attachments[1].format = depth_buffer.format;
+        attachments[1].format = depth_buffer->get_image_format();
         attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
         attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1026,157 +865,38 @@ VkResult VulkanRenderer::create_frame_buffers() {
     assert(debug_marker_manager);
     assert(swapchain->get_image_count() > 0);
 
-    VkResult result;
-
-    // MSAA setup.
-    // TODO: Pack all this to MultisamplingManager?
     if (multisampling_enabled) {
         // Check if device supports requested sample count for color and depth frame buffer
         // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) && (deviceProperties.limits.framebufferDepthSampleCounts >=
         // sampleCount));
 
-        VkImageCreateInfo image_create_info = {};
+        // Create color buffer for MSAA target.
+        msaa_target_buffer.color =
+            std::make_unique<wrapper::Image>(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), swapchain->get_image_format(),
+                                             VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
+                                             multisampling_sample_count, "MSAA color image", swapchain->get_extent());
 
-        image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        image_create_info.imageType = VK_IMAGE_TYPE_2D;
-        image_create_info.format = swapchain->get_image_format();
-        image_create_info.extent.width = window_width;
-        image_create_info.extent.height = window_height;
-        image_create_info.extent.depth = 1;
-        image_create_info.mipLevels = 1;
-        image_create_info.arrayLayers = 1;
-        image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-        image_create_info.samples = multisampling_sample_count;
-        image_create_info.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-        msaa_target_buffer.color.allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        msaa_target_buffer.color.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-
-        std::string msaa_target_color_image_name = "MSAA target color image.";
-
-        msaa_target_buffer.color.allocation_create_info.pUserData = msaa_target_color_image_name.data();
-
-        result = vmaCreateImage(vma->get_allocator(), &image_create_info, &msaa_target_buffer.color.allocation_create_info, &msaa_target_buffer.color.image,
-                                &msaa_target_buffer.color.allocation, &msaa_target_buffer.color.allocation_info);
-        vulkan_error_check(result);
-
-        // Create image view for the MSAA target
-        VkImageViewCreateInfo image_view_create_info = {};
-
-        image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        image_view_create_info.image = msaa_target_buffer.color.image;
-        image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        image_view_create_info.format = swapchain->get_image_format();
-        image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_R;
-        image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_G;
-        image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_B;
-        image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_A;
-
-        image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        image_view_create_info.subresourceRange.levelCount = 1;
-        image_view_create_info.subresourceRange.layerCount = 1;
-
-        result = vkCreateImageView(vkdevice->get_device(), &image_view_create_info, nullptr, &msaa_target_buffer.color.image_view);
-        vulkan_error_check(result);
-
-        // Depth target.
-        image_create_info.imageType = VK_IMAGE_TYPE_2D;
-        image_create_info.format = depth_buffer.format;
-        image_create_info.extent.width = window_width;
-        image_create_info.extent.height = window_height;
-        image_create_info.extent.depth = 1;
-        image_create_info.mipLevels = 1;
-        image_create_info.arrayLayers = 1;
-        image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-        image_create_info.samples = multisampling_sample_count;
-        image_create_info.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-        msaa_target_buffer.depth.allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        msaa_target_buffer.depth.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-
-        std::string msaa_target_depth_image = "MSAA target depth image.";
-
-        msaa_target_buffer.depth.allocation_create_info.pUserData = msaa_target_depth_image.data();
-
-        result = vmaCreateImage(vma->get_allocator(), &image_create_info, &msaa_target_buffer.depth.allocation_create_info, &msaa_target_buffer.depth.image,
-                                &msaa_target_buffer.depth.allocation, &msaa_target_buffer.depth.allocation_info);
-        vulkan_error_check(result);
-
-        // Create image view for the MSAA target.
-        image_view_create_info.image = msaa_target_buffer.depth.image;
-        image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        image_view_create_info.format = depth_buffer.format;
-        image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_R;
-        image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_G;
-        image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_B;
-        image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_A;
-
-        image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-        image_view_create_info.subresourceRange.levelCount = 1;
-        image_view_create_info.subresourceRange.layerCount = 1;
-
-        result = vkCreateImageView(vkdevice->get_device(), &image_view_create_info, nullptr, &msaa_target_buffer.depth.image_view);
-        vulkan_error_check(result);
+        // Create depth buffer for MSAA target.
+        msaa_target_buffer.depth = std::make_unique<wrapper::Image>(
+            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
+            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+            multisampling_sample_count, "MSAA depth image", swapchain->get_extent());
     }
 
-    // Depth/Stencil attachment is the same for all frame buffers.
-    VkImageCreateInfo image_create_info = {};
-
-    image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_create_info.pNext = nullptr;
-    image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    image_create_info.format = depth_buffer.format;
-    image_create_info.extent.width = window_width;
-    image_create_info.extent.height = window_height;
-    image_create_info.extent.depth = 1;
-    image_create_info.mipLevels = 1;
-    image_create_info.arrayLayers = 1;
-    image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_create_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    image_create_info.flags = 0;
-
-    depth_stencil.allocation_create_info.usage = VMA_MEMORY_USAGE_CPU_COPY;
-    depth_stencil.allocation_create_info.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-
-    std::string depth_stencil_image_name = "Depth stencil image.";
-
-    depth_stencil.allocation_create_info.pUserData = depth_stencil_image_name.data();
-
-    result = vmaCreateImage(vma->get_allocator(), &image_create_info, &depth_stencil.allocation_create_info, &depth_stencil.image, &depth_stencil.allocation,
-                            &depth_stencil.allocation_info);
-    vulkan_error_check(result);
-
-    VkImageViewCreateInfo depth_stencil_view_create_info = {};
-
-    depth_stencil_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    depth_stencil_view_create_info.pNext = nullptr;
-    depth_stencil_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    depth_stencil_view_create_info.format = depth_buffer.format;
-    depth_stencil_view_create_info.flags = 0;
-    depth_stencil_view_create_info.subresourceRange = {};
-    depth_stencil_view_create_info.image = depth_stencil.image;
-    depth_stencil_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-    depth_stencil_view_create_info.subresourceRange.baseMipLevel = 0;
-    depth_stencil_view_create_info.subresourceRange.levelCount = 1;
-    depth_stencil_view_create_info.subresourceRange.baseArrayLayer = 0;
-    depth_stencil_view_create_info.subresourceRange.layerCount = 1;
-
-    result = vkCreateImageView(vkdevice->get_device(), &depth_stencil_view_create_info, nullptr, &depth_stencil.image_view);
-    vulkan_error_check(result);
+    // Create depth stencil buffer.
+    depth_stencil = std::make_unique<wrapper::Image>(
+        vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+        VK_SAMPLE_COUNT_1_BIT, "Depth stencil image", swapchain->get_extent());
 
     VkImageView attachments[4];
 
     if (multisampling_enabled) {
-        attachments[0] = msaa_target_buffer.color.image_view;
-        attachments[2] = msaa_target_buffer.depth.image_view;
-        attachments[3] = depth_stencil.image_view;
+        attachments[0] = msaa_target_buffer.color->get_image_view();
+        attachments[2] = msaa_target_buffer.depth->get_image_view();
+        attachments[3] = depth_stencil->get_image_view();
     } else {
-        attachments[1] = depth_stencil.image_view;
+        attachments[1] = depth_stencil->get_image_view();
     }
 
     VkFramebufferCreateInfo frame_buffer_create_info = {};

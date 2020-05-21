@@ -1,15 +1,15 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/image_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/image.hpp"
 
 namespace inexor::vulkan_renderer {
 
 struct MSAATarget {
     // The color buffer.
-    ImageBuffer color;
+    std::unique_ptr<wrapper::Image> color;
 
     // The depth buffer.
-    ImageBuffer depth;
+    std::unique_ptr<wrapper::Image> depth;
 };
 
 } // namespace inexor::vulkan_renderer

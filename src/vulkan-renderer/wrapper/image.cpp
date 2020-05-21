@@ -1,5 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
+#include <spdlog/spdlog.h>
+
+
 namespace inexor::vulkan_renderer::wrapper {
 
 Image::Image(Image &&other) noexcept

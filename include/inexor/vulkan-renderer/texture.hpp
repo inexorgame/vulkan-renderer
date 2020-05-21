@@ -2,10 +2,11 @@
 
 #include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/image.hpp"
 
 #include <vulkan/vulkan_core.h>
 
-#include <cstdint>
+#include <memory>
 #include <string>
 
 namespace inexor::vulkan_renderer {
@@ -16,6 +17,8 @@ namespace inexor::vulkan_renderer {
 
 class Texture {
 private:
+    std::unique_ptr<wrapper::Image> texture_image;
+
     std::string name = "";
     std::string file_name = "";
     int texture_width = 0;
@@ -23,19 +26,14 @@ private:
     int texture_channels = 0;
     int mip_levels = 0;
 
-    VkDevice device = VK_NULL_HANDLE;
-    VkPhysicalDevice graphics_card = VK_NULL_HANDLE;
-    VkQueue data_transfer_queue = VK_NULL_HANDLE;
-    std::uint32_t data_transfer_queue_family_index = 0;
+    VkDevice device;
+    VkSampler sampler;
+    VmaAllocator vma_allocator;
+    VkQueue data_transfer_queue;
+    VkPhysicalDevice graphics_card;
 
-    VmaAllocator vma_allocator = VK_NULL_HANDLE;
-    VmaAllocation allocation;
-    VmaAllocationInfo allocation_info;
-
-    VkImage image = VK_NULL_HANDLE;
-    VkImageView image_view = VK_NULL_HANDLE;
-    VkSampler sampler = VK_NULL_HANDLE;
-    VkFormat texture_image_format = VK_FORMAT_R8G8B8A8_UNORM;
+    std::uint32_t data_transfer_queue_family_index;
+    const VkFormat texture_image_format = VK_FORMAT_R8G8B8A8_UNORM;
 
     OnceCommandBuffer copy_command_buffer;
 
@@ -44,9 +42,6 @@ private:
 
     ///
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
-
-    ///
-    void create_texture_image_view();
 
     ///
     void create_texture_sampler();
@@ -94,14 +89,17 @@ public:
     }
 
     [[nodiscard]] const VkImage get_image() const {
-        return image;
+        assert(texture_image);
+        return texture_image->get();
     }
 
     [[nodiscard]] const VkImageView get_image_view() const {
-        return image_view;
+        assert(texture_image);
+        return texture_image->get_image_view();
     }
 
     [[nodiscard]] const VkSampler get_sampler() const {
+        assert(texture_image);
         return sampler;
     }
 };
