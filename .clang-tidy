@@ -8,6 +8,7 @@ Checks: >
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -llvm-header-guard,
   -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
 FormatStyle:     file
 HeaderFilterRegex: 'inexor/*'
 CheckOptions:
