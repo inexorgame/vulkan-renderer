@@ -32,9 +32,11 @@ add_library(
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/device.cpp
+    vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/vma.cpp
     vulkan-renderer/wrapper/window.cpp
