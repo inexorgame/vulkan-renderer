@@ -3,12 +3,11 @@
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/descriptor.hpp"
-#include "inexor/vulkan-renderer/fence_manager.hpp"
+#include "inexor/vulkan-renderer/debug_marker_manager.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
-#include "inexor/vulkan-renderer/semaphore_manager.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/texture.hpp"
@@ -20,9 +19,11 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/vma.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
@@ -38,16 +39,12 @@ namespace inexor::vulkan_renderer {
 
 // The maximum number of images to process simultaneously.
 // TODO: Refactoring! That is triple buffering essentially!
-constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3;
+constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
 
 class VulkanRenderer {
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
-
-    std::shared_ptr<VulkanFenceManager> fence_manager = std::make_shared<VulkanFenceManager>();
-
-    std::shared_ptr<VulkanSemaphoreManager> semaphore_manager = std::make_shared<VulkanSemaphoreManager>();
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
@@ -75,13 +72,11 @@ protected:
 
     std::vector<wrapper::CommandBuffer> command_buffers;
 
-    std::vector<std::shared_ptr<VkSemaphore>> image_available_semaphores;
+    std::vector<wrapper::Semaphore> image_available_semaphores;
 
-    std::vector<std::shared_ptr<VkSemaphore>> rendering_finished_semaphores;
+    std::vector<wrapper::Semaphore> rendering_finished_semaphores;
 
-    std::vector<std::shared_ptr<VkFence>> in_flight_fences;
-
-    std::vector<std::shared_ptr<VkFence>> images_in_flight;
+    std::vector<wrapper::Fence> in_flight_fences;
 
     VkDebugReportCallbackEXT debug_report_callback = {};
 

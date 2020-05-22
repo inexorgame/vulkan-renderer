@@ -1,11 +1,10 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
 #include <vulkan/vulkan_core.h>
 
 #include <cassert>
 #include <limits>
-#include <stdexcept>
+#include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 

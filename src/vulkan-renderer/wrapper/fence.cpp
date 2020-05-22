@@ -1,5 +1,9 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <stdexcept>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 Fence::Fence(Fence &&other) noexcept : device(other.device), fence(std::exchange(other.fence, nullptr)), name(std::move(other.name)) {}
@@ -10,10 +14,7 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
 
     VkFenceCreateInfo create_info = {};
     create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
-    if (in_signaled_state) {
-        create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    }
+    create_info.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
     spdlog::debug("Creating Vulkan synchronisation fence {}.", name);
 

@@ -9,7 +9,6 @@ add_library(
     vulkan-renderer/debug_marker_manager.cpp
     vulkan-renderer/descriptor.cpp
     vulkan-renderer/error_handling.cpp
-    vulkan-renderer/fence_manager.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/gpu_memory_buffer.cpp
@@ -17,7 +16,6 @@ add_library(
     vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/once_command_buffer.cpp
     vulkan-renderer/renderer.cpp
-    vulkan-renderer/semaphore_manager.cpp
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/shader.cpp
     vulkan-renderer/staging_buffer.cpp

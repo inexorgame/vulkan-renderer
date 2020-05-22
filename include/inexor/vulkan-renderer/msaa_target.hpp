@@ -2,6 +2,8 @@
 
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
+#include <memory>
+
 namespace inexor::vulkan_renderer {
 
 struct MSAATarget {

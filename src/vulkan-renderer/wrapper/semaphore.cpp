@@ -18,11 +18,15 @@ Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(de
     create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     create_info.flags = 0;
 
+    spdlog::debug("Creating semaphore {}.", name);
+
     if (vkCreateSemaphore(device, &create_info, nullptr, &semaphore) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSemaphore failed for " + name + " !");
     }
 
     // TODO: Assign an internal name using Vulkan debug markers.
+
+    spdlog::debug("Created semaphore successfully.");
 }
 
 Semaphore::~Semaphore() {
