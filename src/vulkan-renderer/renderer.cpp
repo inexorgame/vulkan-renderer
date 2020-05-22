@@ -194,25 +194,10 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
     // TODO: Add method to create several fences/semaphores.
 
     for (std::size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        // Here we create the semaphores and fences which are neccesary for synchronisation.
-        // Cleanup will be handled by VulkanSynchronisationManager.
-        std::string image_available_semaphore_name = "image_available_semaphores_" + std::to_string(i);
-        std::string rendering_finished_semaphore_name = "rendering_finished_semaphores_" + std::to_string(i);
-        std::string in_flight_fence_name = "in_flight_fences_" + std::to_string(i);
-
-        auto in_flight_fence = fence_manager->create_fence(in_flight_fence_name, true);
-        auto new_image_available_semaphore = semaphore_manager->create_semaphore(image_available_semaphore_name);
-        auto new_rendering_finished_semaphore = semaphore_manager->create_semaphore(rendering_finished_semaphore_name);
-
-        in_flight_fences.push_back(*in_flight_fence);
-        image_available_semaphores.push_back(*new_image_available_semaphore);
-        rendering_finished_semaphores.push_back(*new_rendering_finished_semaphore);
+        in_flight_fences.emplace_back(vkdevice->get_device(), "In flight fence #" + std::to_string(i), true);
+        image_available_semaphores.emplace_back(vkdevice->get_device(), "Image available semaphore #" + std::to_string(i));
+        rendering_finished_semaphores.emplace_back(vkdevice->get_device(), "Rendering finished semaphore #" + std::to_string(i));
     }
-
-    images_in_flight.clear();
-
-    // Note: Images in flight do not need to be initialised!
-    images_in_flight.resize(swapchain->get_image_count(), VK_NULL_HANDLE);
 
     return VK_SUCCESS;
 }
@@ -1026,10 +1011,11 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     descriptors.clear();
 
     spdlog::debug("Destroying semaphores.");
-    semaphore_manager->shutdown_semaphores();
+    image_available_semaphores.clear();
+    rendering_finished_semaphores.clear();
 
     spdlog::debug("Destroying fences.");
-    fence_manager->shutdown_fences();
+    in_flight_fences.clear();
 
     vma.reset();
 
@@ -1061,7 +1047,6 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("Shutdown finished.");
     spdlog::debug("------------------------------------------------------------------------------------------------------------");
 
-    images_in_flight.clear();
     in_flight_fences.clear();
     image_available_semaphores.clear();
     rendering_finished_semaphores.clear();

@@ -173,21 +173,14 @@ VkResult Application::render_frame() {
     assert(vkdevice->get_graphics_queue());
     assert(vkdevice->get_present_queue());
 
-    vkWaitForFences(vkdevice->get_device(), 1, &(*in_flight_fences[current_frame]), VK_TRUE, UINT64_MAX);
+    in_flight_fences[current_frame].block();
 
     std::uint32_t image_index = 0;
-    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX, *image_available_semaphores[current_frame],
+    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX, image_available_semaphores[current_frame].get(),
                                             VK_NULL_HANDLE, &image_index);
-
-    if (images_in_flight[image_index] != VK_NULL_HANDLE) {
-        vkWaitForFences(vkdevice->get_device(), 1, &*images_in_flight[image_index], VK_TRUE, UINT64_MAX);
-    }
 
     // Update the data which changes every frame!
     update_uniform_buffers(current_frame);
-
-    // Mark the image as now being in use by this frame.
-    images_in_flight[image_index] = in_flight_fences[current_frame];
 
     // Is it time to regenerate the swapchain because window has been resized or minimized?
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -214,12 +207,12 @@ VkResult Application::render_frame() {
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = command_buffers[image_index].get_ptr();
     submit_info.signalSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &*image_available_semaphores[current_frame];
-    submit_info.pSignalSemaphores = &*rendering_finished_semaphores[current_frame];
+    submit_info.pWaitSemaphores = image_available_semaphores[current_frame].get_ptr();
+    submit_info.pSignalSemaphores = rendering_finished_semaphores[current_frame].get_ptr();
 
-    vkResetFences(vkdevice->get_device(), 1, &*in_flight_fences[current_frame]);
+    in_flight_fences[current_frame].reset();
 
-    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, *in_flight_fences[current_frame]);
+    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame].get());
     if (result != VK_SUCCESS) {
         return result;
     }
@@ -227,7 +220,7 @@ VkResult Application::render_frame() {
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = nullptr;
     present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = &*rendering_finished_semaphores[current_frame];
+    present_info.pWaitSemaphores = rendering_finished_semaphores[current_frame].get_ptr();
     present_info.swapchainCount = 1;
     present_info.pSwapchains = swapchain->get_swapchain_ptr();
     present_info.pImageIndices = &image_index;
@@ -371,7 +364,7 @@ VkResult Application::init(int argc, char **argv) {
 
     vkinstance = std::make_unique<wrapper::Instance>(application_name, engine_name, application_version, engine_version, VK_API_VERSION_1_1);
 
-    window = std::make_unique<wrapper::Window>(window_title, window_width, window_height, true, false);
+    window = std::make_unique<wrapper::Window>(window_title, window_width, window_height, true, true);
 
     surface = std::make_unique<wrapper::WindowSurface>(vkinstance->get_instance(), window->get());
 
@@ -543,12 +536,6 @@ VkResult Application::init(int argc, char **argv) {
     vulkan_error_check(result);
 
     result = record_command_buffers();
-    vulkan_error_check(result);
-
-    result = fence_manager->init(vkdevice->get_device(), debug_marker_manager);
-    vulkan_error_check(result);
-
-    result = semaphore_manager->init(vkdevice->get_device(), debug_marker_manager);
     vulkan_error_check(result);
 
     result = create_synchronisation_objects();
