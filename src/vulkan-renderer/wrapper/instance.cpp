@@ -48,7 +48,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     std::uint32_t glfw_extension_count = 0;
 
     // Because this requires some dynamic libraries to be loaded, this may take even up to some seconds!
-    auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+    auto *glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
     if (glfw_extension_count == 0) {
         throw std::runtime_error("Error: glfwGetRequiredInstanceExtensions results 0 as number of required instance extensions!");

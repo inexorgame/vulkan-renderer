@@ -23,7 +23,7 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
 
     // This is actually the way it is handled by the official Vulkan samples.
-    auto app = reinterpret_cast<VulkanRenderer *>(glfwGetWindowUserPointer(window));
+    auto *app = reinterpret_cast<VulkanRenderer *>(glfwGetWindowUserPointer(window));
     app->frame_buffer_resized = true;
 }
 

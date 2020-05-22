@@ -229,7 +229,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
     spdlog::debug("Destroying frame buffer.");
 
     if (frame_buffers.size() > 0) {
-        for (auto frame_buffer : frame_buffers) {
+        for (auto *frame_buffer : frame_buffers) {
             if (VK_NULL_HANDLE != frame_buffer) {
                 vkDestroyFramebuffer(vkdevice->get_device(), frame_buffer, nullptr);
                 frame_buffer = VK_NULL_HANDLE;
@@ -322,7 +322,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     spdlog::debug("Destroying frame buffer.");
 
     if (frame_buffers.size() > 0) {
-        for (auto frame_buffer : frame_buffers) {
+        for (auto *frame_buffer : frame_buffers) {
             if (VK_NULL_HANDLE != frame_buffer) {
                 vkDestroyFramebuffer(vkdevice->get_device(), frame_buffer, nullptr);
                 frame_buffer = VK_NULL_HANDLE;
