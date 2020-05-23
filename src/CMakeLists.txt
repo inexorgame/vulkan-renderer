@@ -32,6 +32,7 @@ add_library(
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
+    vulkan-renderer/wrapper/graphics_pipeline.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/pipeline_layout.cpp
