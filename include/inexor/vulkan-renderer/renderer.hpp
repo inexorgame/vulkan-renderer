@@ -2,8 +2,8 @@
 
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
-#include "inexor/vulkan-renderer/descriptor.hpp"
 #include "inexor/vulkan-renderer/debug_marker_manager.hpp"
+#include "inexor/vulkan-renderer/descriptor.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/mesh_buffer.hpp"
@@ -21,8 +21,11 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
+#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/vma.hpp"
@@ -60,13 +63,7 @@ protected:
 
     VkPresentInfoKHR present_info = {};
 
-    VkPipelineLayout pipeline_layout = {};
-
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
-
-    VkRenderPass render_pass = VK_NULL_HANDLE;
-
-    VkPipeline pipeline = VK_NULL_HANDLE;
 
     std::vector<VkFramebuffer> frame_buffers;
 
@@ -146,6 +143,12 @@ protected:
     std::unique_ptr<wrapper::Image> depth_buffer;
 
     std::unique_ptr<wrapper::Image> depth_stencil;
+
+    std::unique_ptr<wrapper::PipelineLayout> pipeline_layout;
+
+    std::unique_ptr<wrapper::GraphicsPipeline> graphics_pipeline;
+
+    std::unique_ptr<wrapper::RenderPass> renderpass;
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.

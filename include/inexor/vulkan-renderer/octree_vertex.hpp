@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <vulkan/vulkan_core.h>
 
-#include <array>
+#include <vector>
 
 namespace inexor::vulkan_renderer {
 
@@ -17,7 +17,7 @@ struct OctreeVertex {
 
     /// @note You should use the format where the amount of color channels matches the number of components in the shader data type.
     /// It is allowed to use more channels than the number of components in the shader, but they will be silently discarded.
-    [[nodiscard]] static std::array<VkVertexInputAttributeDescription, 3> get_attribute_binding_description();
+    [[nodiscard]] static std::vector<VkVertexInputAttributeDescription> get_attribute_binding_description();
 };
 
 } // namespace inexor::vulkan_renderer
