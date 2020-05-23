@@ -34,6 +34,7 @@ add_library(
     vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/vma.cpp
