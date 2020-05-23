@@ -11,8 +11,8 @@ VkVertexInputBindingDescription OctreeVertex::get_vertex_binding_description() {
     return vertex_input_binding_description;
 }
 
-std::array<VkVertexInputAttributeDescription, 3> OctreeVertex::get_attribute_binding_description() {
-    std::array<VkVertexInputAttributeDescription, 3> vertex_input_attribute_description = {};
+std::vector<VkVertexInputAttributeDescription> OctreeVertex::get_attribute_binding_description() {
+    std::vector<VkVertexInputAttributeDescription> vertex_input_attribute_description(3);
 
     vertex_input_attribute_description[0].location = 0;
     vertex_input_attribute_description[0].binding = 0;

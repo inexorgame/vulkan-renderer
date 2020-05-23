@@ -22,10 +22,12 @@ public:
     RenderPass &operator=(const RenderPass &) = delete;
     RenderPass &operator=(RenderPass &&) noexcept = default;
 
-    ///
-    ///
-    ///
-    ///
+    /// @brief Creates a renderpass.
+    /// @param device [in] The Vulkan device.
+    /// @param attachments [in] The renderpass attachments.
+    /// @param dependencies [in] The subpass dependencies.
+    /// @param subpass_description [in] The subpass description.
+    /// @param name [in] The internal name of this renderpass.
     RenderPass(const VkDevice device, const std::vector<VkAttachmentDescription> &attachments, const std::vector<VkSubpassDependency> &dependencies,
                const VkSubpassDescription subpass_description, const std::string &name);
 
