@@ -40,7 +40,7 @@ breathe_projects = {
 breathe_default_project = "connector"
 breathe_default_members = ('private-members', 'members', 'undoc-members')
 
-header_path = "../../src/"
+header_path = "../../include/"
 # Setup the exhale extension
 exhale_args = {
     # These arguments are required
