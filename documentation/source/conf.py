@@ -35,13 +35,13 @@ html_favicon = "../../assets/textures/logo_rendered.png"
 
 # Setup the breathe extension
 breathe_projects = {
-    "connector": "../doxygen-output/xml"
+    "vulkan-renderer": "../doxygen-output/xml"
 }
-breathe_default_project = "connector"
+breathe_default_project = "vulkan-renderer"
 breathe_default_members = ('private-members', 'members', 'undoc-members')
 
-header_path = "../../include/"
 # Setup the exhale extension
+header_path = "../../include/"
 exhale_args = {
     # These arguments are required
     "containmentFolder": "./exhale-generated",
