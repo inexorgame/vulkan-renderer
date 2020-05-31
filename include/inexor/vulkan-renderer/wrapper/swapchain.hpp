@@ -41,8 +41,8 @@ public:
 
     /// @brief
     /// @note We must pass width and height as call by reference!
-    Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
-              const bool enable_vsync);
+    Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+              std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync);
 
     ~Swapchain();
 
@@ -73,8 +73,8 @@ public:
 
     [[nodiscard]] VkImageView get_image_view(std::size_t index) const {
         if (index >= swapchain_image_views.size()) {
-            throw std::out_of_range("Error: swapchain_image_views has " + std::to_string(swapchain_image_views.size()) + " entries. Requested index " +
-                                    std::to_string(index) + " is out of bounds!");
+            throw std::out_of_range("Error: swapchain_image_views has " + std::to_string(swapchain_image_views.size()) +
+                                    " entries. Requested index " + std::to_string(index) + " is out of bounds!");
         }
 
         return swapchain_image_views.at(index);

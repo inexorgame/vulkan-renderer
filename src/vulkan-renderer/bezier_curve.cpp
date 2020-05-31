@@ -15,8 +15,10 @@ std::uint32_t BezierCurve::binomial_coefficient(std::uint32_t n, const std::uint
     return r;
 }
 
-float BezierCurve::bernstein_polynomial(std::uint32_t n, std::uint32_t k, const float curve_precision, const float coordinate_value) {
-    return binomial_coefficient(n, k) * static_cast<float>(pow(curve_precision, k)) * static_cast<float>(pow(1 - curve_precision, n - k)) * coordinate_value;
+float BezierCurve::bernstein_polynomial(std::uint32_t n, std::uint32_t k, const float curve_precision,
+                                        const float coordinate_value) {
+    return binomial_coefficient(n, k) * static_cast<float>(pow(curve_precision, k)) *
+           static_cast<float>(pow(1 - curve_precision, n - k)) * coordinate_value;
 }
 
 void BezierCurve::clear_output() {

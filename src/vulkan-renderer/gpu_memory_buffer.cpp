@@ -11,8 +11,9 @@ GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
       allocation(std::exchange(other.allocation, nullptr)), allocation_info(std::move(other.allocation_info)),
       allocation_create_info(std::move(other.allocation_create_info)) {}
 
-GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name, const VkDeviceSize &size,
-                                 const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage)
+GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
+                                 const VkDeviceSize &size, const VkBufferUsageFlags &buffer_usage,
+                                 const VmaMemoryUsage &memory_usage)
     : device(device), vma_allocator(vma_allocator), name(name), buffer_size(size) {
     assert(device);
     assert(vma_allocator);
@@ -45,10 +46,12 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     }
 
     // Try to find the Vulkan debug marker function.
-    auto *vkDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
+    auto *vkDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
+        vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
 
     if (vkDebugMarkerSetObjectNameEXT != nullptr) {
-        // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for debugging.
+        // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for
+        // debugging.
         VkDebugMarkerObjectNameInfoEXT name_info = {};
         name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
 
@@ -63,8 +66,9 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     }
 }
 
-GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name, const VkDeviceSize &buffer_size,
-                                 void *data, const std::size_t data_size, const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage)
+GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
+                                 const VkDeviceSize &buffer_size, void *data, const std::size_t data_size,
+                                 const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage)
     : GPUMemoryBuffer(device, vma_allocator, name, buffer_size, buffer_usage, memory_usage) {
     assert(device);
     assert(vma_allocator);

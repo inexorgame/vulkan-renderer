@@ -20,9 +20,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-VulkanMemoryAllocator::VulkanMemoryAllocator(VulkanMemoryAllocator &&other) noexcept : vma_allocator(std::exchange(other.vma_allocator, nullptr)) {}
+VulkanMemoryAllocator::VulkanMemoryAllocator(VulkanMemoryAllocator &&other) noexcept
+    : vma_allocator(std::exchange(other.vma_allocator, nullptr)) {}
 
-VulkanMemoryAllocator::VulkanMemoryAllocator(const VkInstance instance, const VkDevice device, const VkPhysicalDevice graphics_card) {
+VulkanMemoryAllocator::VulkanMemoryAllocator(const VkInstance instance, const VkDevice device,
+                                             const VkPhysicalDevice graphics_card) {
     assert(device);
 
     spdlog::debug("Initialising Vulkan memory allocator.");

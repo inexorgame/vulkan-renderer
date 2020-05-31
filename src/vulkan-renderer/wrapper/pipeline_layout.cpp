@@ -7,9 +7,11 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
-    : device(other.device), pipeline_layout(std::exchange(other.pipeline_layout, nullptr)), name(std::move(other.name)) {}
+    : device(other.device), pipeline_layout(std::exchange(other.pipeline_layout, nullptr)),
+      name(std::move(other.name)) {}
 
-PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts, const std::string &name)
+PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
+                               const std::string &name)
     : device(device), name(name) {
     assert(device);
     assert(!descriptor_set_layouts.empty());

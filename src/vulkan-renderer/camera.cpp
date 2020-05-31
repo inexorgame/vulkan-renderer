@@ -127,7 +127,8 @@ bool Camera::update_pad(glm::vec2 axis_left, glm::vec2 axis_right, float delta_t
         }
         if (fabsf(axis_left.x) > dead_zone) {
             float pos = (fabsf(axis_left.x) - dead_zone) / range;
-            position += glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * pos * ((axis_left.x < 0.0f) ? -1.0f : 1.0f) * move_speed;
+            position += glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * pos *
+                        ((axis_left.x < 0.0f) ? -1.0f : 1.0f) * move_speed;
             ret_val = true;
         }
 

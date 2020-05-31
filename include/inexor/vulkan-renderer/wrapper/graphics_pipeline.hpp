@@ -36,9 +36,11 @@ public:
     /// @note For now, The engines uses 4 samples for MSAA by default. This might change in the future.
     /// @param name [in] The internal name of the graphics pipeline.
     GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
-                     const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages, const VkVertexInputBindingDescription vertex_binding,
-                     const std::vector<VkVertexInputAttributeDescription> &attribute_binding, const std::uint32_t window_width,
-                     const std::uint32_t window_height, const bool multisampling_enabled, const std::string &name);
+                     const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
+                     const VkVertexInputBindingDescription vertex_binding,
+                     const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
+                     const std::uint32_t window_width, const std::uint32_t window_height,
+                     const bool multisampling_enabled, const std::string &name);
 
     ~GraphicsPipeline();
 

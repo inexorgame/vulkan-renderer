@@ -2,7 +2,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandPool::CommandPool(CommandPool &&other) noexcept : device(other.device), command_pool(std::exchange(other.command_pool, nullptr)) {}
+CommandPool::CommandPool(CommandPool &&other) noexcept
+    : device(other.device), command_pool(std::exchange(other.command_pool, nullptr)) {}
 
 CommandPool::CommandPool(const VkDevice device, const std::uint32_t queue_family_index) : device(device) {
     assert(device);

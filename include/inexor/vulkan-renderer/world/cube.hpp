@@ -159,7 +159,8 @@ public:
 /// | 6.    | higher | axis   | axis   |
 class Cube {
 private:
-    Cube(CubeType type, float size, const glm::vec3 &position, const std::optional<std::array<Indentation, 8>> &indentations,
+    Cube(CubeType type, float size, const glm::vec3 &position,
+         const std::optional<std::array<Indentation, 8>> &indentations,
          std::optional<std::array<std::shared_ptr<Cube>, 8>> octants);
 
     /// Insert all polygons into memory.
@@ -210,8 +211,8 @@ private:
     /// Type of the cube.
     CubeType cube_type = CubeType::EMPTY;
 
-    /// The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
-    /// x, y, and z-axis).
+    /// The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube
+    /// with the lowest values on x, y, and z-axis).
     glm::vec3 cube_position = {0.0f, 0.0f, 0.0f};
 
     /// The maximum size of the cube (i.e. if the cube is not indented).
@@ -247,25 +248,26 @@ public:
     std::optional<std::array<std::shared_ptr<Cube>, 8>> octants = std::nullopt;
 
     /// Create a cube.
-    /// @param type The type of the cube. The cube needs further adjustment after construction if not of CubeType::FULL or CubeType::EMPTY.
+    /// @param type The type of the cube. The cube needs further adjustment after construction if not of CubeType::FULL
+    /// or CubeType::EMPTY.
     /// @param size The maximum size of the cube.
-    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
-    /// x, y, and z-axis).
+    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds
+    /// of the cube with the lowest values on x, y, and z-axis).
     Cube(CubeType type, float size, const glm::vec3 &position);
 
     /// Create a CubeType::INDENTED cube.
     /// @param indentations The indentations of the cube.
     /// @param size The maximum size of the cube.
-    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
-    /// x, y, and z-axis).
+    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds
+    /// of the cube with the lowest values on x, y, and z-axis).
     Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position);
 
     /// Create a CubeType::Octants cube.
     ///
     /// @param octants The octants (i.e. sub-cubes) of the cube.
     /// @param size The maximum size of the cube.
-    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
-    /// x, y, and z-axis).
+    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds
+    /// of the cube with the lowest values on x, y, and z-axis).
     Cube(std::array<std::shared_ptr<Cube>, 8> &octants, float size, const glm::vec3 &position);
 
     Cube(const Cube &cube);
@@ -289,8 +291,8 @@ public:
     /// Parse an octree from a BitStream.
     /// @param stream The BitStream to parse the octree from.
     /// @param size The maximum size of the cube.
-    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds of the cube with the lowest values on
-    /// x, y, and z-axis).
+    /// @param position The position of the cube in the coordinate system (i.e., the vector from (0, 0, 0) to the bounds
+    /// of the cube with the lowest values on x, y, and z-axis).
     /// @return Cube object representing the cubes / octrees from the stream.
     static Cube parse(BitStream &stream, float size, const glm::vec3 &position);
 

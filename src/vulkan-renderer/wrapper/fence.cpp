@@ -6,9 +6,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Fence::Fence(Fence &&other) noexcept : device(other.device), fence(std::exchange(other.fence, nullptr)), name(std::move(other.name)) {}
+Fence::Fence(Fence &&other) noexcept
+    : device(other.device), fence(std::exchange(other.fence, nullptr)), name(std::move(other.name)) {}
 
-Fence::Fence(const VkDevice device, const std::string &name, const bool in_signaled_state) : device(device), name(name) {
+Fence::Fence(const VkDevice device, const std::string &name, const bool in_signaled_state)
+    : device(device), name(name) {
     assert(device);
     assert(!name.empty());
 

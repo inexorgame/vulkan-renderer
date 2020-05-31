@@ -10,22 +10,26 @@ namespace inexor::vulkan_renderer::wrapper {
 
 Instance::Instance(Instance &&other) noexcept : instance(std::exchange(other.instance, nullptr)) {}
 
-Instance::Instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
-                   const std::uint32_t engine_version, const std::uint32_t vulkan_api_version, std::vector<std::string> requested_instance_extensions,
-                   std::vector<std::string> requested_instance_layers, bool enable_validation_layers, bool enable_renderdoc_instance_layer) {
+Instance::Instance(const std::string &application_name, const std::string &engine_name,
+                   const std::uint32_t application_version, const std::uint32_t engine_version,
+                   const std::uint32_t vulkan_api_version, std::vector<std::string> requested_instance_extensions,
+                   std::vector<std::string> requested_instance_layers, bool enable_validation_layers,
+                   bool enable_renderdoc_instance_layer) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
-    // In Vulkan API we can use VK_MAKE_VERSION() macro to create an std::uint32_t value from major, minor and patch number.
+    // In Vulkan API we can use VK_MAKE_VERSION() macro to create an std::uint32_t value from major, minor and patch
+    // number.
 
     spdlog::debug("Initialising Vulkan instance.");
     spdlog::debug("Application name: '{}'", application_name);
-    spdlog::debug("Application version: {}.{}.{}", VK_VERSION_MAJOR(application_version), VK_VERSION_MINOR(application_version),
-                  VK_VERSION_PATCH(application_version));
+    spdlog::debug("Application version: {}.{}.{}", VK_VERSION_MAJOR(application_version),
+                  VK_VERSION_MINOR(application_version), VK_VERSION_PATCH(application_version));
     spdlog::debug("Engine name: '{}'", engine_name);
-    spdlog::debug("Engine version: {}.{}.{}", VK_VERSION_MAJOR(engine_version), VK_VERSION_MINOR(engine_version), VK_VERSION_PATCH(engine_version));
-    spdlog::debug("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(vulkan_api_version), VK_VERSION_MINOR(vulkan_api_version),
-                  VK_VERSION_PATCH(vulkan_api_version));
+    spdlog::debug("Engine version: {}.{}.{}", VK_VERSION_MAJOR(engine_version), VK_VERSION_MINOR(engine_version),
+                  VK_VERSION_PATCH(engine_version));
+    spdlog::debug("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(vulkan_api_version),
+                  VK_VERSION_MINOR(vulkan_api_version), VK_VERSION_PATCH(vulkan_api_version));
 
     VkApplicationInfo app_info = {};
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -51,7 +55,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     auto *glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
     if (glfw_extension_count == 0) {
-        throw std::runtime_error("Error: glfwGetRequiredInstanceExtensions results 0 as number of required instance extensions!");
+        throw std::runtime_error(
+            "Error: glfwGetRequiredInstanceExtensions results 0 as number of required instance extensions!");
     }
 
     spdlog::debug("Required GLFW instance extensions:");
@@ -102,7 +107,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         instance_layers_wishlist.push_back("VK_LAYER_KHRONOS_validation");
     } else {
         spdlog::warn("Vulkan validation layers are not enabled although debug configuration is selected!");
-        spdlog::warn("You must always use validation layers during development if you are serious about writing stable software.");
+        spdlog::warn("You must always use validation layers during development if you are serious about writing stable "
+                     "software.");
         spdlog::warn("Without them, most bugs are literally impossible to find.");
         spdlog::warn("Even worse, your software might work on your machine but does crash on other systems!");
     }
@@ -147,9 +153,11 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("Created Vulkan instance successfully.");
 }
 
-Instance::Instance(const std::string &application_name, const std::string &engine_name, const std::uint32_t application_version,
-                   const std::uint32_t engine_version, const std::uint32_t vulkan_api_version)
-    : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version, {}, {}, true, false) {
+Instance::Instance(const std::string &application_name, const std::string &engine_name,
+                   const std::uint32_t application_version, const std::uint32_t engine_version,
+                   const std::uint32_t vulkan_api_version)
+    : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version, {}, {}, true,
+               false) {
     spdlog::debug("No instance extensions or instance layers specified.");
     spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
 }

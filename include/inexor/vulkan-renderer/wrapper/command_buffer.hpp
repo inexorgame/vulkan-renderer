@@ -19,7 +19,8 @@ public:
 
     CommandBuffer(const VkDevice device, const VkCommandPool command_pool);
 
-    /// @note We don't need to destroy the command buffer because it will be destroyed along with it's associated command pool automatically.
+    /// @note We don't need to destroy the command buffer because it will be destroyed along with it's associated
+    /// command pool automatically.
 
     [[nodiscard]] VkCommandBuffer get() const {
         return command_buffer;

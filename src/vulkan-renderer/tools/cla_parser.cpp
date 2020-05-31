@@ -29,7 +29,8 @@ std::uint32_t CommandLineArgumentValue::as() const {
     return static_cast<std::uint32_t>(as<int>());
 }
 
-std::optional<CommandLineArgumentTemplate> CommandLineArgumentParser::get_arg_template(const std::string &argument_name) const {
+std::optional<CommandLineArgumentTemplate>
+CommandLineArgumentParser::get_arg_template(const std::string &argument_name) const {
     // clang-format off
     auto it = std::find_if(accepted_args.begin(), accepted_args.end(), [&](const auto &accepted_arg) {
         return argument_name == accepted_arg.get_argument();

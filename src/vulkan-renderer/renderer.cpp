@@ -30,29 +30,33 @@ VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug
 }
 
 VkResult VulkanRenderer::create_uniform_buffers() {
-    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"), sizeof(UniformBufferObject));
+    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"),
+                                 sizeof(UniformBufferObject));
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_depth_buffer() {
 
-    const std::vector<VkFormat> supported_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT,
-                                                     VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D16_UNORM};
+    const std::vector<VkFormat> supported_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
+                                                     VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT,
+                                                     VK_FORMAT_D16_UNORM};
 
     VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
     VkFormatFeatureFlags format = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    auto depth_buffer_format_candidate = settings_decision_maker->find_depth_buffer_format(vkdevice->get_physical_device(), supported_formats, tiling, format);
+    auto depth_buffer_format_candidate = settings_decision_maker->find_depth_buffer_format(
+        vkdevice->get_physical_device(), supported_formats, tiling, format);
 
     if (!depth_buffer_format_candidate) {
         throw std::runtime_error("Error: Could not find appropriate image format for depth buffer!");
     }
 
     // Create depth buffer image and image view.
-    depth_buffer = std::make_unique<wrapper::Image>(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
-                                                    depth_buffer_format_candidate.value(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                                    VK_IMAGE_ASPECT_DEPTH_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth buffer", swapchain->get_extent());
+    depth_buffer = std::make_unique<wrapper::Image>(
+        vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+        depth_buffer_format_candidate.value(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT,
+        VK_SAMPLE_COUNT_1_BIT, "Depth buffer", swapchain->get_extent());
 
     return VK_SUCCESS;
 }
@@ -152,8 +156,8 @@ VkResult VulkanRenderer::record_command_buffers() {
 
             vkCmdBindPipeline(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline->get());
 
-            vkCmdBindDescriptorSets(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get(), 0, 1,
-                                    descriptors[0].get_descriptor_sets_data(), 0, nullptr);
+            vkCmdBindDescriptorSets(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get(), 0,
+                                    1, descriptors[0].get_descriptor_sets_data(), 0, nullptr);
 
             VkBuffer vertexBuffers[] = {mesh_buffers[0].get_vertex_buffer()};
             VkDeviceSize offsets[] = {0};
@@ -196,8 +200,10 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
 
     for (std::size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         in_flight_fences.emplace_back(vkdevice->get_device(), "In flight fence #" + std::to_string(i), true);
-        image_available_semaphores.emplace_back(vkdevice->get_device(), "Image available semaphore #" + std::to_string(i));
-        rendering_finished_semaphores.emplace_back(vkdevice->get_device(), "Rendering finished semaphore #" + std::to_string(i));
+        image_available_semaphores.emplace_back(vkdevice->get_device(),
+                                                "Image available semaphore #" + std::to_string(i));
+        rendering_finished_semaphores.emplace_back(vkdevice->get_device(),
+                                                   "Rendering finished semaphore #" + std::to_string(i));
     }
 
     return VK_SUCCESS;
@@ -345,7 +351,8 @@ VkResult VulkanRenderer::create_descriptor_pool() {
     descriptors.emplace_back(vkdevice->get_device(), swapchain->get_image_count(), std::string("unnamed descriptor"));
 
     // Create the descriptor pool.
-    descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
+    descriptors[0].create_descriptor_pool(
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
 
     return VK_SUCCESS;
 }
@@ -555,18 +562,21 @@ VkResult VulkanRenderer::create_pipeline() {
 
     dependencies[1] = dependencies[0];
 
-    renderpass = std::make_unique<wrapper::RenderPass>(vkdevice->get_device(), attachments, dependencies, subpass_description, "Default renderpass");
+    renderpass = std::make_unique<wrapper::RenderPass>(vkdevice->get_device(), attachments, dependencies,
+                                                       subpass_description, "Default renderpass");
 
     const std::vector<VkDescriptorSetLayout> set_layouts = {descriptors[0].get_descriptor_set_layout()};
 
-    pipeline_layout = std::make_unique<wrapper::PipelineLayout>(vkdevice->get_device(), set_layouts, "Default pipeline layout");
+    pipeline_layout =
+        std::make_unique<wrapper::PipelineLayout>(vkdevice->get_device(), set_layouts, "Default pipeline layout");
 
     const auto vertex_binding_desc = OctreeVertex::get_vertex_binding_description();
     const auto attribute_binding_desc = OctreeVertex::get_attribute_binding_description();
 
-    graphics_pipeline = std::make_unique<wrapper::GraphicsPipeline>(vkdevice->get_device(), pipeline_layout->get(), renderpass->get(), shader_stages,
-                                                                    vertex_binding_desc, attribute_binding_desc, window->get_width(), window->get_height(),
-                                                                    multisampling_enabled, "Default graphics pipeline");
+    graphics_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
+        vkdevice->get_device(), pipeline_layout->get(), renderpass->get(), shader_stages, vertex_binding_desc,
+        attribute_binding_desc, window->get_width(), window->get_height(), multisampling_enabled,
+        "Default graphics pipeline");
 
     return VK_SUCCESS;
 }
@@ -580,27 +590,31 @@ VkResult VulkanRenderer::create_frame_buffers() {
 
     if (multisampling_enabled) {
         // Check if device supports requested sample count for color and depth frame buffer
-        // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) && (deviceProperties.limits.framebufferDepthSampleCounts >=
-        // sampleCount));
+        // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) &&
+        // (deviceProperties.limits.framebufferDepthSampleCounts >= sampleCount));
 
         // Create color buffer for MSAA target.
-        msaa_target_buffer.color =
-            std::make_unique<wrapper::Image>(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), swapchain->get_image_format(),
-                                             VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-                                             multisampling_sample_count, "MSAA color image", swapchain->get_extent());
+        msaa_target_buffer.color = std::make_unique<wrapper::Image>(
+            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+            swapchain->get_image_format(),
+            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
+            multisampling_sample_count, "MSAA color image", swapchain->get_extent());
 
         // Create depth buffer for MSAA target.
         msaa_target_buffer.depth = std::make_unique<wrapper::Image>(
-            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
-            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
-            multisampling_sample_count, "MSAA depth image", swapchain->get_extent());
+            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+            depth_buffer->get_image_format(),
+            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, multisampling_sample_count, "MSAA depth image",
+            swapchain->get_extent());
     }
 
     // Create depth stencil buffer.
     depth_stencil = std::make_unique<wrapper::Image>(
         vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
-        VK_SAMPLE_COUNT_1_BIT, "Depth stencil image", swapchain->get_extent());
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
+        swapchain->get_extent());
 
     VkImageView attachments[4];
 
@@ -639,14 +653,15 @@ VkResult VulkanRenderer::create_frame_buffers() {
             attachments[0] = swapchain->get_image_view(i);
         }
 
-        VkResult result = vkCreateFramebuffer(vkdevice->get_device(), &frame_buffer_create_info, nullptr, &frame_buffers[i]);
+        VkResult result =
+            vkCreateFramebuffer(vkdevice->get_device(), &frame_buffer_create_info, nullptr, &frame_buffers[i]);
         vulkan_error_check(result);
 
         std::string frame_buffer_name = "Frame buffer #" + std::to_string(i) + ".";
 
         // Use Vulkan debug markers to assign an appropriate name to this frame buffer.
-        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(frame_buffers[i]), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT,
-                                              frame_buffer_name.c_str());
+        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(frame_buffers[i]),
+                                              VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
     }
 
     return VK_SUCCESS;
@@ -655,7 +670,8 @@ VkResult VulkanRenderer::create_frame_buffers() {
 VkResult VulkanRenderer::calculate_memory_budget() {
     VmaStats memory_stats;
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Calculating memory statistics before shutdown.");
 
     // Use Vulkan memory allocator's statistics.
@@ -664,7 +680,8 @@ VkResult VulkanRenderer::calculate_memory_budget() {
     spdlog::debug("VMA heap:");
 
     spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryHeap->blockCount);
-    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}", memory_stats.memoryHeap->allocationCount);
+    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}",
+                  memory_stats.memoryHeap->allocationCount);
     spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryHeap->unusedRangeCount);
     spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryHeap->usedBytes);
     spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryHeap->unusedBytes);
@@ -678,7 +695,8 @@ VkResult VulkanRenderer::calculate_memory_budget() {
     spdlog::debug("VMA memory type:");
 
     spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryType->blockCount);
-    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}", memory_stats.memoryType->allocationCount);
+    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}",
+                  memory_stats.memoryType->allocationCount);
     spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryType->unusedRangeCount);
     spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryType->usedBytes);
     spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryType->unusedBytes);
@@ -726,7 +744,8 @@ VkResult VulkanRenderer::calculate_memory_budget() {
 
 VkResult VulkanRenderer::shutdown_vulkan() {
     // It is important to destroy the objects in reversal of the order of creation.
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
     cleanup_swapchain();
@@ -757,7 +776,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     if (debug_report_callback_initialised) {
         // We have to explicitly load this function.
         PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
-            reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
+            reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+                vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
 
         if (nullptr != vkDestroyDebugReportCallbackEXT) {
             vkDestroyDebugReportCallbackEXT(vkinstance->get_instance(), debug_report_callback, nullptr);
@@ -766,7 +786,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     }
 
     spdlog::debug("Shutdown finished.");
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     in_flight_fences.clear();
     image_available_semaphores.clear();

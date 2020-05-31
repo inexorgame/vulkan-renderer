@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -34,7 +34,8 @@ public:
     /// @brief Creates a new commandbuffer which is being called only once.
     /// @param device [in] The Vulkan device.
     /// @param data_transfer_queue [in] The data transfer queue.
-    OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
+    OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue,
+                      const std::uint32_t data_transfer_queue_family_index);
 
     ~OnceCommandBuffer();
 

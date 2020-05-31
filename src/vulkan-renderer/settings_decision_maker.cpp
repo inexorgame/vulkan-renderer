@@ -9,7 +9,9 @@
 
 namespace inexor::vulkan_renderer {
 
-std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
+std::uint32_t
+VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
+                                                                        const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -28,15 +30,16 @@ std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_t
     number_of_images_in_swapchain = surface_capabilities.minImageCount + 1;
 
     // If the maximum number of images available in swapchain is greater than our current number, chose it.
-    if ((surface_capabilities.maxImageCount > 0) && (surface_capabilities.maxImageCount < number_of_images_in_swapchain)) {
+    if ((surface_capabilities.maxImageCount > 0) &&
+        (surface_capabilities.maxImageCount < number_of_images_in_swapchain)) {
         number_of_images_in_swapchain = surface_capabilities.maxImageCount;
     }
 
     return number_of_images_in_swapchain;
 }
 
-std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
-                                                                                                                     const VkSurfaceKHR &surface) {
+std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(
+    const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -45,7 +48,8 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
     std::uint32_t number_of_available_surface_formats = 0;
 
     // First check how many surface formats are available.
-    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr);
+    VkResult result =
+        vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr);
     if (result != VK_SUCCESS) {
         std::string error_message = get_error_description_text(result);
         display_error_message(error_message);
@@ -62,7 +66,8 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
     std::vector<VkSurfaceFormatKHR> available_surface_formats(number_of_available_surface_formats);
 
     // Get information about all surface formats available.
-    result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, available_surface_formats.data());
+    result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats,
+                                                  available_surface_formats.data());
     vulkan_error_check(result);
 
     VkSurfaceFormatKHR accepted_color_format = {};
@@ -111,7 +116,8 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
     return accepted_color_format;
 }
 
-bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
+bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice &graphics_card,
+                                                            const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -137,7 +143,8 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
 
     std::uint32_t number_of_available_device_extensions = 0;
 
-    VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr);
+    VkResult result =
+        vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr);
     vulkan_error_check(result);
 
     if (number_of_available_device_extensions == 0) {
@@ -148,7 +155,8 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     } else {
         // Preallocate memory for device extensions.
         std::vector<VkExtensionProperties> device_extensions(number_of_available_device_extensions);
-        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, device_extensions.data());
+        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions,
+                                                      device_extensions.data());
         vulkan_error_check(result);
 
         // Loop through all available device extensions and search for the requested one.
@@ -228,9 +236,9 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevi
     return graphics_card_score;
 }
 
-std::optional<VkPhysicalDevice>
-VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
-                                                               const std::optional<std::uint32_t> &preferred_graphics_card_index) {
+std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(
+    const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
+    const std::optional<std::uint32_t> &preferred_graphics_card_index) {
     assert(vulkan_instance);
     assert(surface);
 
@@ -252,12 +260,14 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
     std::vector<VkPhysicalDevice> available_graphics_cards(number_of_available_graphics_cards);
 
     // Get information about the available graphics cards.
-    result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards, available_graphics_cards.data());
+    result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards,
+                                        available_graphics_cards.data());
     vulkan_error_check(result);
 
     /// ATTEMPT 1
     /// If there is only 1 graphics card available, we don't have a choice and must use that one.
-    /// The preferred graphics card index which could have been specified by the user must be either this one or an invalid index!
+    /// The preferred graphics card index which could have been specified by the user must be either this one or an
+    /// invalid index!
     if (1 == number_of_available_graphics_cards) {
         spdlog::debug("Because there is only 1 graphics card available, we don't have a choice and must use that one.");
 
@@ -267,9 +277,11 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
         if (preferred_graphics_card_index) {
             // Since we only have one graphics card to choose from, index 0 is our only option.
             if (0 != *preferred_graphics_card_index) {
-                spdlog::debug("Ignoring command line argument -gpu {} because there is only one GPU to chose from.", *preferred_graphics_card_index);
+                spdlog::debug("Ignoring command line argument -gpu {} because there is only one GPU to chose from.",
+                              *preferred_graphics_card_index);
             }
-            if (!(*preferred_graphics_card_index >= 0 && *preferred_graphics_card_index < available_graphics_cards.size())) {
+            if (!(*preferred_graphics_card_index >= 0 &&
+                  *preferred_graphics_card_index < available_graphics_cards.size())) {
                 spdlog::warn("Warning: Array index for selected graphics card would have been invalid anyways!");
             }
         }
@@ -279,29 +291,35 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
             spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[0]));
             return available_graphics_cards[0];
         }
-        std::string error_message = "Error: The only graphics card available is unsuitable for the application's purposes!";
+        std::string error_message =
+            "Error: The only graphics card available is unsuitable for the application's purposes!";
         display_error_message(error_message);
         return std::nullopt;
     }
 
     /// ATTEMPT 2
     /// There is more than 1 graphics cards available, but the user specified which one should be preferred.
-    /// It is important to note that the preferred graphics card can be unsuitable for the application's purposes though!
-    /// If that is the case, the automatic graphics card selection mechanism is responsible for finding a suitable graphics card.
-    /// The user can also simply change the command line argument and try to prefer another graphics card.
+    /// It is important to note that the preferred graphics card can be unsuitable for the application's purposes
+    /// though! If that is the case, the automatic graphics card selection mechanism is responsible for finding a
+    /// suitable graphics card. The user can also simply change the command line argument and try to prefer another
+    /// graphics card.
     if (preferred_graphics_card_index) {
         // Check if this array index is valid!
         if (*preferred_graphics_card_index >= 0 && preferred_graphics_card_index < number_of_available_graphics_cards) {
-            spdlog::debug("Command line parameter for prefered GPU specified. Checking graphics card with index {}.", *preferred_graphics_card_index);
+            spdlog::debug("Command line parameter for prefered GPU specified. Checking graphics card with index {}.",
+                          *preferred_graphics_card_index);
 
             // Check if the graphics card selected by the user meets all the criteria we need!
-            if (VulkanSettingsDecisionMaker::is_graphics_card_suitable(available_graphics_cards[*preferred_graphics_card_index], surface)) {
+            if (VulkanSettingsDecisionMaker::is_graphics_card_suitable(
+                    available_graphics_cards[*preferred_graphics_card_index], surface)) {
                 // We are done: Use the graphics card which was specified by the user's command line argument.
                 spdlog::debug("The prefered graphics card is suitable for this application.");
-                spdlog::debug("Score: {}", rate_graphics_card(available_graphics_cards[*preferred_graphics_card_index]));
+                spdlog::debug("Score: {}",
+                              rate_graphics_card(available_graphics_cards[*preferred_graphics_card_index]));
                 return available_graphics_cards[*preferred_graphics_card_index];
             }
-            spdlog::error("The preferred graphics card with index {} is not suitable for this application!", *preferred_graphics_card_index);
+            spdlog::error("The preferred graphics card with index {} is not suitable for this application!",
+                          *preferred_graphics_card_index);
             spdlog::error("The array index is valid, but this graphics card does not fulfill all requirements!");
 
             // We are NOT done!
@@ -309,7 +327,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
 
         } else {
             // No, this array index for available_graphics_cards is invalid!
-            spdlog::error("Error: Invalid command line argument! Graphics card array index {} is invalid!", *preferred_graphics_card_index);
+            spdlog::error("Error: Invalid command line argument! Graphics card array index {} is invalid!",
+                          *preferred_graphics_card_index);
 
             // We are NOT done!
             // Try to select the best graphics card automatically!
@@ -341,7 +360,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
             discrete_graphics_card_exists = true;
         }
 
-        if (VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU == gpu_type_1 || VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU == gpu_type_2) {
+        if (VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU == gpu_type_1 ||
+            VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU == gpu_type_2) {
             integrated_graphics_card_exists = true;
         }
 
@@ -365,14 +385,16 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
 
             // Ok, so try to prefer the discrete GPU over the integrated GPU.
             if (is_graphics_card_suitable(discrete_gpu, surface)) {
-                spdlog::debug("You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application. The integrated GPU is not!");
+                spdlog::debug("You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application. "
+                              "The integrated GPU is not!");
                 spdlog::debug("Score: {}", rate_graphics_card(discrete_gpu));
 
                 return discrete_gpu;
             }
             // Ok, so the discrete GPU is unsuitable. What about the integrated GPU?
             if (is_graphics_card_suitable(integrated_GPU, surface)) {
-                spdlog::debug("You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The discrete GPU is not!");
+                spdlog::debug("You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The "
+                              "discrete GPU is not!");
                 spdlog::debug("Score: {}", rate_graphics_card(integrated_GPU));
 
                 // This might be a very rare case though.
@@ -406,7 +428,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
             // Add this graphics card to the list of suitable graphics cards.
             suitable_graphics_cards.push_back(i);
         } else {
-            spdlog::debug("Sorting out graphics card index {} because it is unsuitable for this application's purposes!", i);
+            spdlog::debug(
+                "Sorting out graphics card index {} because it is unsuitable for this application's purposes!", i);
         }
     }
 
@@ -414,7 +437,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
     auto how_many_graphics_card_disqualified = number_of_available_graphics_cards - suitable_graphics_cards.size();
 
     if (how_many_graphics_card_disqualified > 0) {
-        spdlog::debug("{} have been disqualified because they are unsuitable for the application's purposes!", how_many_graphics_card_disqualified);
+        spdlog::debug("{} have been disqualified because they are unsuitable for the application's purposes!",
+                      how_many_graphics_card_disqualified);
     }
 
     // We could not find any suitable graphics card!
@@ -454,7 +478,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
 
     // Loop through the map using an interator and return the first graphics card which has a score greater than zero.
     // It should be extremy unlikely that a graphics card gets a score of zero after all!
-    for (auto candidate_iterator = graphics_cards_candidates.begin(); candidate_iterator != graphics_cards_candidates.end(); candidate_iterator++) {
+    for (auto candidate_iterator = graphics_cards_candidates.begin();
+         candidate_iterator != graphics_cards_candidates.end(); candidate_iterator++) {
         spdlog::debug("Score: {}", candidate_iterator->first);
 
         // We can be sure that the candidate's score is greater than 0 because of the aforementioned code block.
@@ -466,8 +491,9 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(const VkInstance 
     return std::nullopt;
 }
 
-VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPhysicalDevice &graphics_card,
-                                                                                                 const VkSurfaceKHR &surface) {
+VkSurfaceTransformFlagsKHR
+VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPhysicalDevice &graphics_card,
+                                                                      const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -490,8 +516,9 @@ VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::decide_which_image_trans
 }
 
 // TOOD: std::optional?
-VkCompositeAlphaFlagBitsKHR VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
-                                                                                     const VkSurfaceKHR surface) {
+VkCompositeAlphaFlagBitsKHR
+VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
+                                                         const VkSurfaceKHR surface) {
     VkCompositeAlphaFlagBitsKHR composite_alpha;
 
     const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags = {
@@ -516,23 +543,27 @@ VkCompositeAlphaFlagBitsKHR VulkanSettingsDecisionMaker::find_composite_alpha_fo
     return composite_alpha;
 }
 
-std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysicalDevice &graphics_card,
-                                                                                                   const VkSurfaceKHR &surface, bool vsync) {
+std::optional<VkPresentModeKHR>
+VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysicalDevice &graphics_card,
+                                                                   const VkSurfaceKHR &surface, bool vsync) {
     assert(graphics_card);
     assert(surface);
 
     if (vsync) {
-        // VK_PRESENT_MODE_FIFO_KHR specifies that the presentation engine waits for the next vertical blanking period to
-        // update the current image. Tearing cannot be observed. An internal queue is used to hold pending presentation requests.
-        // New requests are appended to the end of the queue, and one request is removed from the beginning of the queue and processed
-        // during each vertical blanking period in which the queue is non-empty. This is the only value of presentMode that is required to be supported.
+        // VK_PRESENT_MODE_FIFO_KHR specifies that the presentation engine waits for the next vertical blanking period
+        // to update the current image. Tearing cannot be observed. An internal queue is used to hold pending
+        // presentation requests. New requests are appended to the end of the queue, and one request is removed from the
+        // beginning of the queue and processed during each vertical blanking period in which the queue is non-empty.
+        // This is the only value of presentMode that is required to be supported.
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
     std::uint32_t number_of_available_present_modes = 0;
 
-    // First check how many present modes are available for the selected combination of graphics card and window surface.
-    VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, nullptr);
+    // First check how many present modes are available for the selected combination of graphics card and window
+    // surface.
+    VkResult result =
+        vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, nullptr);
     vulkan_error_check(result);
 
     if (0 == number_of_available_present_modes) {
@@ -546,16 +577,18 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presen
     std::vector<VkPresentModeKHR> available_present_modes(number_of_available_present_modes);
 
     // Get information about the available present modes.
-    result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes, available_present_modes.data());
+    result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes,
+                                                       available_present_modes.data());
     vulkan_error_check(result);
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
-        // VK_PRESENT_MODE_MAILBOX_KHR specifies that the presentation engine waits for the next vertical blanking period
-        // to update the current image. Tearing cannot be observed. An internal single-entry queue is used to hold pending
-        // presentation requests. If the queue is full when a new presentation request is received, the new request replaces
-        // the existing entry, and any images associated with the prior entry become available for re-use by the application.
-        // One request is removed from the queue and processed during each vertical blanking period in which the queue is non-empty.
+        // VK_PRESENT_MODE_MAILBOX_KHR specifies that the presentation engine waits for the next vertical blanking
+        // period to update the current image. Tearing cannot be observed. An internal single-entry queue is used to
+        // hold pending presentation requests. If the queue is full when a new presentation request is received, the new
+        // request replaces the existing entry, and any images associated with the prior entry become available for
+        // re-use by the application. One request is removed from the queue and processed during each vertical blanking
+        // period in which the queue is non-empty.
         if (VK_PRESENT_MODE_MAILBOX_KHR == present_mode) {
             spdlog::debug("VK_PRESENT_MODE_MAILBOX_KHR will be used.");
             return VK_PRESENT_MODE_MAILBOX_KHR;
@@ -567,9 +600,9 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presen
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
-        // VK_PRESENT_MODE_IMMEDIATE_KHR specifies that the presentation engine does not wait for a vertical blanking period to update
-        // the current image, meaning this mode may result in visible tearing. No internal queuing of presentation requests is needed,
-        // as the requests are applied immediately.
+        // VK_PRESENT_MODE_IMMEDIATE_KHR specifies that the presentation engine does not wait for a vertical blanking
+        // period to update the current image, meaning this mode may result in visible tearing. No internal queuing of
+        // presentation requests is needed, as the requests are applied immediately.
         if (VK_PRESENT_MODE_IMMEDIATE_KHR == present_mode) {
             spdlog::debug("VK_PRESENT_MODE_IMMEDIATE_KHR will be used.");
             return VK_PRESENT_MODE_IMMEDIATE_KHR;
@@ -582,9 +615,10 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presen
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
-        // VK_PRESENT_MODE_FIFO_KHR specifies that the presentation engine waits for the next vertical blanking period to update the current image.
-        // Tearing cannot be observed. An internal queue is used to hold pending presentation requests. New requests are appended to the end of the queue,
-        // and one request is removed from the beginning of the queue and processed during each vertical blanking period in which the queue is non-empty.
+        // VK_PRESENT_MODE_FIFO_KHR specifies that the presentation engine waits for the next vertical blanking period
+        // to update the current image. Tearing cannot be observed. An internal queue is used to hold pending
+        // presentation requests. New requests are appended to the end of the queue, and one request is removed from the
+        // beginning of the queue and processed during each vertical blanking period in which the queue is non-empty.
         // This is the only value of presentMode that is required to be supported.
         if (VK_PRESENT_MODE_FIFO_KHR == present_mode) {
             spdlog::debug("VK_PRESENT_MODE_FIFO_KHR will be used.");
@@ -607,8 +641,10 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_which_presen
     return std::nullopt;
 }
 
-void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                                                              std::uint32_t &window_width, std::uint32_t &window_height,
+void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice &graphics_card,
+                                                                              const VkSurfaceKHR &surface,
+                                                                              std::uint32_t &window_width,
+                                                                              std::uint32_t &window_height,
                                                                               VkExtent2D &swapchain_extent) {
     assert(graphics_card);
     assert(surface);
@@ -618,7 +654,8 @@ void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(co
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
 
-    if (surface_capabilities.currentExtent.width == UINT32_MAX && surface_capabilities.currentExtent.height == UINT32_MAX) {
+    if (surface_capabilities.currentExtent.width == UINT32_MAX &&
+        surface_capabilities.currentExtent.height == UINT32_MAX) {
         // The size of the window dictates the swapchain's extent.
         swapchain_extent.width = window_width;
         swapchain_extent.height = window_height;
@@ -632,7 +669,8 @@ void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(co
     }
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice &graphics_card) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
     std::uint32_t number_of_available_queue_families = 0;
@@ -646,7 +684,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_fa
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
 
     // Get information about the available queue families.
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families,
+                                             available_queue_families.data());
 
     // Loop through all available queue families and look for a suitable one.
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
@@ -663,7 +702,9 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_fa
     return std::nullopt;
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevice &graphics_card,
+                                                            const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -678,7 +719,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queu
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
 
     // Get information about the available queue families.
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families,
+                                             available_queue_families.data());
 
     // Loop through all available queue families and look for a suitable one.
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
@@ -688,7 +730,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queu
             VkBool32 presentation_available = 0;
 
             // Query if presentation is supported.
-            VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface, &presentation_available);
+            VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface,
+                                                                   &presentation_available);
             vulkan_error_check(result);
 
             if (presentation_available != 0) {
@@ -701,7 +744,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queu
     return std::nullopt;
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
     std::uint32_t number_of_available_queue_families = 0;
@@ -715,7 +759,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_tra
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
 
     // Get information about the available queue families.
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families,
+                                             available_queue_families.data());
 
     // Loop through all available queue families and look for a suitable one.
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
@@ -734,7 +779,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_distinct_data_tra
     return std::nullopt;
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
     std::uint32_t number_of_available_queue_families = 0;
@@ -748,7 +794,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
 
     // Get information about the available queue families.
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families,
+                                             available_queue_families.data());
 
     // Loop through all available queue families and look for a suitable one.
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
@@ -767,8 +814,9 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_any_data_transfer
     return std::nullopt;
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card,
-                                                                                                               const VkSurfaceKHR &surface) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card,
+                                                                                  const VkSurfaceKHR &surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -783,7 +831,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
 
     // Get information about the available queue families.
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, available_queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families,
+                                             available_queue_families.data());
 
     // Loop through all available queue families and look for a suitable one.
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
@@ -797,7 +846,8 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_
                 auto this_queue_family_index = static_cast<std::uint32_t>(i);
 
                 // Query if presentation is supported.
-                VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface, &presentation_available);
+                VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface,
+                                                                       &presentation_available);
                 vulkan_error_check(result);
 
                 // Check if we can use this queue family for presentation as well.
@@ -814,8 +864,10 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_queue_family_for_
     return std::nullopt;
 }
 
-std::optional<VkFormat> VulkanSettingsDecisionMaker::find_depth_buffer_format(const VkPhysicalDevice &graphics_card, const std::vector<VkFormat> &formats,
-                                                                              const VkImageTiling tiling, const VkFormatFeatureFlags feature_flags) {
+std::optional<VkFormat>
+VulkanSettingsDecisionMaker::find_depth_buffer_format(const VkPhysicalDevice &graphics_card,
+                                                      const std::vector<VkFormat> &formats, const VkImageTiling tiling,
+                                                      const VkFormatFeatureFlags feature_flags) {
     spdlog::debug("Trying to find appropriate format for depth buffer.");
 
     for (const auto &format : formats) {
@@ -823,8 +875,10 @@ std::optional<VkFormat> VulkanSettingsDecisionMaker::find_depth_buffer_format(co
 
         vkGetPhysicalDeviceFormatProperties(graphics_card, format, &format_properties);
 
-        if ((tiling == VK_IMAGE_TILING_LINEAR && feature_flags == (format_properties.linearTilingFeatures & feature_flags)) ||
-            (tiling == VK_IMAGE_TILING_OPTIMAL && feature_flags == (format_properties.optimalTilingFeatures & feature_flags))) {
+        if ((tiling == VK_IMAGE_TILING_LINEAR &&
+             feature_flags == (format_properties.linearTilingFeatures & feature_flags)) ||
+            (tiling == VK_IMAGE_TILING_OPTIMAL &&
+             feature_flags == (format_properties.optimalTilingFeatures & feature_flags))) {
             return format;
         }
     }

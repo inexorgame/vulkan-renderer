@@ -33,7 +33,8 @@ public:
 
     /// @brief Creates a graphics card interface.
     /// @param preferred_gpu_index [in] The index of the preferred physical device to use.
-    Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers, bool prefer_distinct_transfer_queue,
+    Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+           bool prefer_distinct_transfer_queue,
            const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
 
     // TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!

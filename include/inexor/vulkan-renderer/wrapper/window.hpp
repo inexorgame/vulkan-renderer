@@ -29,7 +29,8 @@ public:
     /// @param height [in] The height of the window.
     /// @param visible [in] True if the window should be visible.
     /// @param resizable [in] True if the window should be resizable.
-    Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible, const bool resizable);
+    Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
+           const bool resizable);
 
     ~Window();
 

@@ -38,9 +38,9 @@ public:
     /// @param sample_count [in] The sample count, mostly 1 if multisampling for this image is disabled.
     /// @param name [in] The internal name of this image.
     /// @param image_extent [in] The width and height of the image.
-    Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const VkFormat format,
-          const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
-          const VkExtent2D image_extent);
+    Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+          const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
+          const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent);
 
     ~Image();
 

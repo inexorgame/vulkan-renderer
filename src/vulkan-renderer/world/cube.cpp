@@ -71,9 +71,11 @@ Indentation::Indentation(std::uint8_t x, std::uint8_t y, std::uint8_t z) {
     this->z_level = z;
 }
 
-Indentation::Indentation(const Indentation &indentation) : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
+Indentation::Indentation(const Indentation &indentation)
+    : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
 
-Indentation::Indentation(Indentation &&indentation) noexcept : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
+Indentation::Indentation(Indentation &&indentation) noexcept
+    : Indentation(indentation.x_level, indentation.y_level, indentation.z_level) {}
 
 glm::tvec3<std::uint8_t> Indentation::vec() const {
     return {this->x_level, this->y_level, this->z_level};
@@ -142,7 +144,8 @@ Indentation &Indentation::operator-=(const glm::tvec3<int8_t> &other) {
     return (*this += {-other.x, -other.y, -other.z});
 }
 
-Cube::Cube(CubeType type, float size, const glm::vec3 &position, const std::optional<std::array<Indentation, 8>> &indentations,
+Cube::Cube(CubeType type, float size, const glm::vec3 &position,
+           const std::optional<std::array<Indentation, 8>> &indentations,
            std::optional<std::array<std::shared_ptr<Cube>, 8>> octants) {
     this->cube_type = type;
     this->cube_size = size;
@@ -157,19 +160,23 @@ Cube::Cube(CubeType type, float size, const glm::vec3 &position) {
     this->cube_position = position;
 }
 
-Cube::Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position) : Cube(CubeType::INDENTED, size, position) {
+Cube::Cube(std::array<Indentation, 8> &indentations, float size, const glm::vec3 &position)
+    : Cube(CubeType::INDENTED, size, position) {
     // Parse indentations to std::optional<...>
     this->indentations = {indentations};
 }
 
-Cube::Cube(std::array<std::shared_ptr<Cube>, 8> &octants, float size, const glm::vec3 &position) : Cube(CubeType::OCTANT, size, position) {
+Cube::Cube(std::array<std::shared_ptr<Cube>, 8> &octants, float size, const glm::vec3 &position)
+    : Cube(CubeType::OCTANT, size, position) {
     // Parse octants to std::optional<...>
     this->octants = {static_cast<std::array<std::shared_ptr<Cube>, 8> &&>(octants)};
 }
 
-Cube::Cube(const Cube &cube) : Cube(cube.cube_type, cube.cube_size, cube.cube_position, cube.indentations, cube.octants) {}
+Cube::Cube(const Cube &cube)
+    : Cube(cube.cube_type, cube.cube_size, cube.cube_position, cube.indentations, cube.octants) {}
 
-Cube::Cube(Cube &&cube) noexcept : Cube(cube.cube_type, cube.cube_size, cube.cube_position, cube.indentations, cube.octants) {}
+Cube::Cube(Cube &&cube) noexcept
+    : Cube(cube.cube_type, cube.cube_size, cube.cube_position, cube.indentations, cube.octants) {}
 
 Cube &Cube::operator=(Cube &&lhs) noexcept {
     if (this->copy_values(lhs)) {
@@ -246,11 +253,14 @@ Cube Cube::parse(BitStream &stream, float size, const glm::vec3 &position) {
     const float xh = x + half;
     const float yh = y + half;
     const float zh = z + half;
-    std::array<std::shared_ptr<Cube>, 8> octants = {
-        std::make_shared<Cube>(Cube::parse(stream, half, {x, y, z})),   std::make_shared<Cube>(Cube::parse(stream, half, {x, y, zh})),
-        std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, z})),  std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, zh})),
-        std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, z})),  std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, zh})),
-        std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, z})), std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, zh}))};
+    std::array<std::shared_ptr<Cube>, 8> octants = {std::make_shared<Cube>(Cube::parse(stream, half, {x, y, z})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {x, y, zh})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, z})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {x, yh, zh})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, z})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {xh, y, zh})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, z})),
+                                                    std::make_shared<Cube>(Cube::parse(stream, half, {xh, yh, zh}))};
     return Cube(octants, size, position);
 }
 
@@ -400,8 +410,14 @@ std::array<glm::vec3, 8> Cube::vertices() {
     glm::vec3 f = {p.x + this->cube_size, p.y + this->cube_size, p.z + this->cube_size};
 
     if (this->cube_type == CubeType::FULL) {
-        return std::array<glm::vec3, 8>{
-            {{p.x, p.y, p.z}, {p.x, p.y, f.z}, {p.x, f.y, p.z}, {p.x, f.y, f.z}, {f.x, p.y, p.z}, {f.x, p.y, f.z}, {f.x, f.y, p.z}, {f.x, f.y, f.z}}};
+        return std::array<glm::vec3, 8>{{{p.x, p.y, p.z},
+                                         {p.x, p.y, f.z},
+                                         {p.x, f.y, p.z},
+                                         {p.x, f.y, f.z},
+                                         {f.x, p.y, p.z},
+                                         {f.x, p.y, f.z},
+                                         {f.x, f.y, p.z},
+                                         {f.x, f.y, f.z}}};
     }
     assert(this->cube_type == CubeType::INDENTED);
     const float step = this->cube_size / MAX_INDENTATION;

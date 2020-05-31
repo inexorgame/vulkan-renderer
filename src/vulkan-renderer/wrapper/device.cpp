@@ -14,10 +14,11 @@ constexpr float default_queue_priority = 1.0f;
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Device::Device(Device &&other) noexcept : device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)) {}
+Device::Device(Device &&other) noexcept
+    : device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)) {}
 
-Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers, bool prefer_distinct_transfer_queue,
-               const std::optional<std::uint32_t> preferred_physical_device_index)
+Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
     : graphics_card(graphics_card), surface(surface) {
 
     VulkanSettingsDecisionMaker settings_decision_maker;
@@ -67,7 +68,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         // One for graphics and another one for presentation.
 
         // Check which queue family index can be used for graphics.
-        std::optional<std::uint32_t> queue_candidate = settings_decision_maker.find_graphics_queue_family(graphics_card);
+        std::optional<std::uint32_t> queue_candidate =
+            settings_decision_maker.find_graphics_queue_family(graphics_card);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
@@ -107,7 +109,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     }
 
     // Add another device queue just for data transfer.
-    std::optional<std::uint32_t> queue_candidate = settings_decision_maker.find_distinct_data_transfer_queue_family(graphics_card);
+    std::optional<std::uint32_t> queue_candidate =
+        settings_decision_maker.find_distinct_data_transfer_queue_family(graphics_card);
 
     bool use_distinct_data_transfer_queue = false;
 
@@ -165,7 +168,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
             spdlog::debug("Device extension '{}' is available on this system.", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
         } else {
-            throw std::runtime_error("Device extension " + std::string(device_extension_name) + " is not available on this system!");
+            throw std::runtime_error("Device extension " + std::string(device_extension_name) +
+                                     " is not available on this system!");
         }
     }
 

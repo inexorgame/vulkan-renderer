@@ -8,11 +8,13 @@
 
 namespace inexor::vulkan_renderer {
 
-OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept 
-    : device(other.device), command_pool(std::move(other.command_pool)), command_buffer(std::exchange(other.command_buffer, nullptr)),
-      data_transfer_queue(other.data_transfer_queue), recording_started(other.recording_started), command_buffer_created(other.command_buffer_created) {}
+OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
+    : device(other.device), command_pool(std::move(other.command_pool)),
+      command_buffer(std::exchange(other.command_buffer, nullptr)), data_transfer_queue(other.data_transfer_queue),
+      recording_started(other.recording_started), command_buffer_created(other.command_buffer_created) {}
 
-OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
+OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue,
+                                     const std::uint32_t data_transfer_queue_family_index)
     : device(device), data_transfer_queue(data_transfer_queue), command_pool(device, data_transfer_queue_family_index) {
 
     assert(device);
@@ -53,8 +55,9 @@ void OnceCommandBuffer::start_recording() {
     command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     command_buffer_begin_info.pNext = nullptr;
 
-    // We're only going to use the command buffer once and wait with returning from the function until the copy operation has finished executing.
-    // It's good practice to tell the driver about our intent using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
+    // We're only going to use the command buffer once and wait with returning from the function until the copy
+    // operation has finished executing. It's good practice to tell the driver about our intent using
+    // VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
     command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
     if (vkBeginCommandBuffer(command_buffer->get(), &command_buffer_begin_info) != VK_SUCCESS) {

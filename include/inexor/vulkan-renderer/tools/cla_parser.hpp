@@ -18,7 +18,8 @@ public:
     /// @param argument The argument to be passed on the command line (e.g --vsync)
     /// @param takes_args Whether this argument can take values (e.g --gpu 1)
     /// @note Only arguments that take zero or one values are supported
-    CommandLineArgumentTemplate(std::string argument, bool takes_args) : argument(std::move(argument)), takes_values(takes_args) {}
+    CommandLineArgumentTemplate(std::string argument, bool takes_args)
+        : argument(std::move(argument)), takes_values(takes_args) {}
 
     [[nodiscard]] const std::string &get_argument() const {
         return argument;

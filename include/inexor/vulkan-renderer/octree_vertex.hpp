@@ -15,8 +15,9 @@ struct OctreeVertex {
 
     [[nodiscard]] static VkVertexInputBindingDescription get_vertex_binding_description();
 
-    /// @note You should use the format where the amount of color channels matches the number of components in the shader data type.
-    /// It is allowed to use more channels than the number of components in the shader, but they will be silently discarded.
+    /// @note You should use the format where the amount of color channels matches the number of components in the
+    /// shader data type. It is allowed to use more channels than the number of components in the shader, but they will
+    /// be silently discarded.
     [[nodiscard]] static std::vector<VkVertexInputAttributeDescription> get_attribute_binding_description();
 };
 

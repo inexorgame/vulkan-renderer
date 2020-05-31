@@ -6,7 +6,8 @@
 
 namespace inexor::vulkan_renderer {
 
-void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers) {
+void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevice &graphics_card,
+                                    bool enable_debug_markers) {
     if (enable_debug_markers) {
         // Check if the debug marker extension is present (which is the case if run from a graphics debugger)
         std::uint32_t extensionCount;
@@ -26,10 +27,12 @@ void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevi
 
         if (extension_present) {
             // The debug marker extension is not part of the core, so function pointers need to be loaded manually
-            marker_set_object_tag = (PFN_vkDebugMarkerSetObjectTagEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT");
+            marker_set_object_tag =
+                (PFN_vkDebugMarkerSetObjectTagEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT");
             assert(marker_set_object_tag);
 
-            marker_set_object_name = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT");
+            marker_set_object_name =
+                (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT");
             assert(marker_set_object_name);
 
             cmd_marker_begin = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT");
@@ -50,8 +53,8 @@ void VulkanDebugMarkerManager::init(const VkDevice &device, const VkPhysicalDevi
     }
 }
 
-void VulkanDebugMarkerManager::set_object_name(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type,
-                                               const char *name) {
+void VulkanDebugMarkerManager::set_object_name(const VkDevice &device, const std::uint64_t &object,
+                                               const VkDebugReportObjectTypeEXT &object_type, const char *name) {
     assert(device);
     assert(name);
     assert(object);
@@ -70,8 +73,9 @@ void VulkanDebugMarkerManager::set_object_name(const VkDevice &device, const std
     }
 }
 
-void VulkanDebugMarkerManager::set_object_tag(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type,
-                                              const std::uint64_t &name, const std::size_t &tag_size, const void *tag) {
+void VulkanDebugMarkerManager::set_object_tag(const VkDevice &device, const std::uint64_t &object,
+                                              const VkDebugReportObjectTypeEXT &object_type, const std::uint64_t &name,
+                                              const std::size_t &tag_size, const void *tag) {
     assert(device);
 
     // Check for valid function pointer (may not be present if not running in a debugging application)
@@ -90,7 +94,8 @@ void VulkanDebugMarkerManager::set_object_tag(const VkDevice &device, const std:
     }
 }
 
-void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer &command_buffer, const std::string &debug_marker_name, const glm::vec4 &debug_marker_color) {
+void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer &command_buffer, const std::string &debug_marker_name,
+                                           const glm::vec4 &debug_marker_color) {
     assert(command_buffer);
     assert(!debug_marker_name.empty());
 
@@ -110,7 +115,8 @@ void VulkanDebugMarkerManager::bind_region(const VkCommandBuffer &command_buffer
     }
 }
 
-void VulkanDebugMarkerManager::insert(const VkCommandBuffer &command_buffer, const std::string &debug_marker_name, const glm::vec4 &debug_marker_color) {
+void VulkanDebugMarkerManager::insert(const VkCommandBuffer &command_buffer, const std::string &debug_marker_name,
+                                      const glm::vec4 &debug_marker_color) {
     assert(command_buffer);
     assert(!debug_marker_name.empty());
 

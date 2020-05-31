@@ -9,17 +9,21 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 Swapchain::Swapchain(Swapchain &&other) noexcept
-    : device(other.device), graphics_card(std::exchange(other.graphics_card, nullptr)), surface(std::exchange(other.surface, nullptr)),
-      swapchain(std::exchange(other.swapchain, nullptr)), surface_format(other.surface_format), extent(other.extent),
-      swapchain_images(std::move(other.swapchain_images)), swapchain_image_views(std::move(other.swapchain_image_views)),
-      swapchain_image_count(other.swapchain_image_count), vsync_enabled(other.vsync_enabled) {}
+    : device(other.device), graphics_card(std::exchange(other.graphics_card, nullptr)),
+      surface(std::exchange(other.surface, nullptr)), swapchain(std::exchange(other.swapchain, nullptr)),
+      surface_format(other.surface_format), extent(other.extent), swapchain_images(std::move(other.swapchain_images)),
+      swapchain_image_views(std::move(other.swapchain_image_views)), swapchain_image_count(other.swapchain_image_count),
+      vsync_enabled(other.vsync_enabled) {}
 
-void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height) {
+void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
+                                std::uint32_t window_height) {
     VulkanSettingsDecisionMaker settings_decision_maker;
 
-    settings_decision_maker.decide_width_and_height_of_swapchain_extent(graphics_card, surface, window_width, window_height, extent);
+    settings_decision_maker.decide_width_and_height_of_swapchain_extent(graphics_card, surface, window_width,
+                                                                        window_height, extent);
 
-    std::optional<VkPresentModeKHR> present_mode = settings_decision_maker.decide_which_presentation_mode_to_use(graphics_card, surface, vsync_enabled);
+    std::optional<VkPresentModeKHR> present_mode =
+        settings_decision_maker.decide_which_presentation_mode_to_use(graphics_card, surface, vsync_enabled);
 
     if (!present_mode) {
         throw std::runtime_error("Error: Could not find a suitable present mode!");
@@ -27,7 +31,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     swapchain_image_count = settings_decision_maker.decide_how_many_images_in_swapchain_to_use(graphics_card, surface);
 
-    auto surface_format_candidate = settings_decision_maker.decide_which_surface_color_format_in_swapchain_to_use(graphics_card, surface);
+    auto surface_format_candidate =
+        settings_decision_maker.decide_which_surface_color_format_in_swapchain_to_use(graphics_card, surface);
 
     if (!surface_format_candidate) {
         throw std::runtime_error("Error: Could not find an image format for images in swapchain!");
@@ -45,7 +50,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_create_info.imageExtent.height = extent.height;
     swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     swapchain_create_info.preTransform =
-        (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(graphics_card, surface);
+        (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(graphics_card,
+                                                                                                        surface);
     swapchain_create_info.imageArrayLayers = 1;
     swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchain_create_info.queueFamilyIndexCount = 0;
@@ -65,7 +71,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     vkGetPhysicalDeviceFormatProperties(graphics_card, surface_format.format, &formatProps);
 
-    if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) || (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
+    if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) ||
+        (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
         swapchain_create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 
@@ -118,8 +125,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     spdlog::debug("Created {} swapchain image views successfully.", swapchain_image_count);
 }
 
-Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface, std::uint32_t window_width,
-                     std::uint32_t window_height, const bool enable_vsync)
+Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+                     std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync)
     : device(device), graphics_card(graphics_card), surface(surface), vsync_enabled(enable_vsync) {
 
     assert(device);
@@ -130,7 +137,8 @@ Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card
 }
 
 void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height) {
-    // Store the old swapchain. This allows us to pass it to VkSwapchainCreateInfoKHR::oldSwapchain to speed up swapchain recreation.
+    // Store the old swapchain. This allows us to pass it to VkSwapchainCreateInfoKHR::oldSwapchain to speed up
+    // swapchain recreation.
     VkSwapchainKHR old_swapchain = swapchain;
 
     // When swapchain needs to be recreated, all the old swapchain images need to be destroyed.

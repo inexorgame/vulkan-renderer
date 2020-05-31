@@ -8,7 +8,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 Window::Window(Window &&other) noexcept : window(std::exchange(other.window, nullptr)) {}
 
-Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible, const bool resizable)
+Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
+               const bool resizable)
     : width(width), height(height) {
     assert(!title.empty());
 

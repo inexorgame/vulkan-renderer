@@ -8,12 +8,14 @@
 namespace inexor::vulkan_renderer {
 
 Descriptor::Descriptor(Descriptor &&other) noexcept
-    : name(std::move(other.name)), number_of_images_in_swapchain(other.number_of_images_in_swapchain), descriptor_sets(std::move(other.descriptor_sets)),
-      write_descriptor_sets(std::move(other.write_descriptor_sets)), descriptor_set_layout_bindings(std::move(other.descriptor_set_layout_bindings)),
-      descriptor_set_layout(std::exchange(other.descriptor_set_layout, nullptr)), descriptor_pool(std::exchange(other.descriptor_pool, nullptr)),
-      device(other.device) {}
+    : name(std::move(other.name)), number_of_images_in_swapchain(other.number_of_images_in_swapchain),
+      descriptor_sets(std::move(other.descriptor_sets)), write_descriptor_sets(std::move(other.write_descriptor_sets)),
+      descriptor_set_layout_bindings(std::move(other.descriptor_set_layout_bindings)),
+      descriptor_set_layout(std::exchange(other.descriptor_set_layout, nullptr)),
+      descriptor_pool(std::exchange(other.descriptor_pool, nullptr)), device(other.device) {}
 
-Descriptor::Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain, const std::string &name)
+Descriptor::Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain,
+                       const std::string &name)
     : device(device), number_of_images_in_swapchain(number_of_images_in_swapchain), name(name) {}
 
 void Descriptor::create_descriptor_pool(const std::initializer_list<VkDescriptorType> descriptor_pool_types) {
@@ -50,7 +52,8 @@ void Descriptor::create_descriptor_pool(const std::initializer_list<VkDescriptor
     spdlog::debug("Created descriptor pool for descriptor {} successfully.", name);
 }
 
-void Descriptor::create_descriptor_set_layouts(const std::vector<VkDescriptorSetLayoutBinding> &descriptor_set_layout_bindings) {
+void Descriptor::create_descriptor_set_layouts(
+    const std::vector<VkDescriptorSetLayoutBinding> &descriptor_set_layout_bindings) {
     assert(device);
     assert(!name.empty());
     assert(descriptor_pool);
@@ -66,7 +69,8 @@ void Descriptor::create_descriptor_set_layouts(const std::vector<VkDescriptorSet
     descriptor_set_layout_create_info.bindingCount = static_cast<std::uint32_t>(descriptor_set_layout_bindings.size());
     descriptor_set_layout_create_info.pBindings = descriptor_set_layout_bindings.data();
 
-    if (vkCreateDescriptorSetLayout(device, &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout) != VK_SUCCESS) {
+    if (vkCreateDescriptorSetLayout(device, &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateDescriptorSetLayout failed for descriptor " + name + " !");
     }
 
@@ -113,7 +117,8 @@ void Descriptor::create_descriptor_sets() {
 
     spdlog::debug("Creating descriptor sets for '{}'.", name);
 
-    const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(number_of_images_in_swapchain, descriptor_set_layout);
+    const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(number_of_images_in_swapchain,
+                                                                    descriptor_set_layout);
 
     VkDescriptorSetAllocateInfo descriptor_set_alloc_info = {};
 
@@ -141,7 +146,8 @@ void Descriptor::create_descriptor_sets() {
             write_descriptor_sets[j].dstSet = descriptor_sets[k];
         }
 
-        vkUpdateDescriptorSets(device, static_cast<std::uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+        vkUpdateDescriptorSets(device, static_cast<std::uint32_t>(write_descriptor_sets.size()),
+                               write_descriptor_sets.data(), 0, nullptr);
     }
 
     spdlog::debug("Created descriptor sets for descriptor {} successfully.", name);

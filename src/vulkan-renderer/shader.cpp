@@ -30,14 +30,16 @@ std::vector<char> read_binary(const std::string &file_name) {
 
 namespace inexor::vulkan_renderer {
 
-Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::string &file_name, const std::string &entry_point)
+Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
+               const std::string &entry_point)
     : Shader(device, type, name, read_binary(file_name), entry_point) {}
 
 Shader::Shader(Shader &&shader) noexcept
-    : device(shader.device), type(shader.type), name(std::move(shader.name)), entry_point(std::move(shader.entry_point)),
-      shader_module(std::exchange(shader.shader_module, nullptr)) {}
+    : device(shader.device), type(shader.type), name(std::move(shader.name)),
+      entry_point(std::move(shader.entry_point)), shader_module(std::exchange(shader.shader_module, nullptr)) {}
 
-Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::vector<char> &code, const std::string &entry_point)
+Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name,
+               const std::vector<char> &code, const std::string &entry_point)
     : device(device), type(type), name(name), entry_point(entry_point) {
     assert(device);
     assert(!name.empty());
@@ -59,10 +61,12 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     }
 
     // Try to find the Vulkan debug marker function.
-    auto *vkDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
+    auto *vkDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
+        vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
 
     if (vkDebugMarkerSetObjectNameEXT != nullptr) {
-        // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for debugging.
+        // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for
+        // debugging.
         VkDebugMarkerObjectNameInfoEXT name_info = {};
         name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
 

@@ -58,10 +58,12 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
     int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
     int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor");
     int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
-    spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor, application_version_patch);
+    spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor,
+                  application_version_patch);
 
     // Generate an std::uint32_t value from the major, minor and patch version info.
-    application_version = VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
+    application_version =
+        VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
 
     int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
     int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
@@ -95,7 +97,8 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
         spdlog::debug("{}", vertex_shader_file);
     }
 
-    fragment_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
+    fragment_shader_files =
+        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
 
     spdlog::debug("Fragment shaders:");
 
@@ -121,8 +124,9 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : texture_files) {
-        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), texture_file, texture_name,
-                              vkdevice->get_graphics_queue(), vkdevice->get_graphics_queue_family_index());
+        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+                              texture_file, texture_name, vkdevice->get_graphics_queue(),
+                              vkdevice->get_graphics_queue_family_index());
     }
 
     return VK_SUCCESS;
@@ -144,7 +148,8 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
-        shaders.emplace_back(vkdevice->get_device(), VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
+        shaders.emplace_back(vkdevice->get_device(), VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader",
+                             vertex_shader_file);
     }
 
     spdlog::debug("Loading fragment shaders.");
@@ -158,7 +163,8 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
-        shaders.emplace_back(vkdevice->get_device(), VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader", fragment_shader_file);
+        shaders.emplace_back(vkdevice->get_device(), VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
+                             fragment_shader_file);
     }
 
     spdlog::debug("Loading shaders finished.");
@@ -176,8 +182,9 @@ VkResult Application::render_frame() {
     in_flight_fences[current_frame].block();
 
     std::uint32_t image_index = 0;
-    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX, image_available_semaphores[current_frame].get(),
-                                            VK_NULL_HANDLE, &image_index);
+    VkResult result =
+        vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
+                              image_available_semaphores[current_frame].get(), VK_NULL_HANDLE, &image_index);
 
     // Update the data which changes every frame!
     update_uniform_buffers(current_frame);
@@ -282,8 +289,9 @@ VkResult Application::load_octree_geometry() {
     const std::string octree_mesh_name = "unnamed octree";
 
     // Create a mesh buffer for octree vertex geometry.
-    mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(), vkdevice->get_transfer_queue_family_index(), vma->get_allocator(),
-                              octree_mesh_name, sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
+    mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(),
+                              vkdevice->get_transfer_queue_family_index(), vma->get_allocator(), octree_mesh_name,
+                              sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }
@@ -339,7 +347,8 @@ VkResult Application::init(int argc, char **argv) {
     auto enable_renderdoc = cla_parser.get_arg<bool>("--renderdoc");
     if (enable_renderdoc) {
 #ifdef NDEBUG
-        spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code and compile it yourself in debug mode.");
+        spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code "
+                     "and compile it yourself in debug mode.");
 #else
         if (*enable_renderdoc) {
             spdlog::debug("--renderdoc specified, enabling renderdoc instance layer.");
@@ -350,8 +359,8 @@ VkResult Application::init(int argc, char **argv) {
 
     bool enable_khronos_validation_instance_layer = true;
 
-    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be disabled.
-    // For debug builds, this is not advisable! Always use validation layers during development!
+    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
+    // disabled. For debug builds, this is not advisable! Always use validation layers during development!
     auto disable_validation = cla_parser.get_arg<bool>("--no-validation");
     if (disable_validation.value_or(false)) {
         spdlog::warn("--no-validation specified, disabling validation layers.");
@@ -362,7 +371,8 @@ VkResult Application::init(int argc, char **argv) {
 
     glfw_context = std::make_unique<wrapper::GLFWContext>();
 
-    vkinstance = std::make_unique<wrapper::Instance>(application_name, engine_name, application_version, engine_version, VK_API_VERSION_1_1);
+    vkinstance = std::make_unique<wrapper::Instance>(application_name, engine_name, application_version, engine_version,
+                                                     VK_API_VERSION_1_1);
 
     window = std::make_unique<wrapper::Window>(window_title, window_width, window_height, true, true);
 
@@ -385,17 +395,20 @@ VkResult Application::init(int argc, char **argv) {
             VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
 
             debug_report_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-            debug_report_create_info.flags =
-                VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
+            debug_report_create_info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
+                                             VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
+                                             VK_DEBUG_REPORT_ERROR_BIT_EXT;
             debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-                reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(vkinstance->get_instance(), "vkCreateDebugReportCallbackEXT"));
+                reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
+                    vkGetInstanceProcAddr(vkinstance->get_instance(), "vkCreateDebugReportCallbackEXT"));
 
             if (vkCreateDebugReportCallbackEXT) {
                 // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(vkinstance->get_instance(), &debug_report_create_info, nullptr, &debug_report_callback);
+                VkResult result = vkCreateDebugReportCallbackEXT(vkinstance->get_instance(), &debug_report_create_info,
+                                                                 nullptr, &debug_report_callback);
                 if (VK_SUCCESS == result) {
                     spdlog::debug("Creating Vulkan debug callback.");
                     debug_report_callback_initialised = true;
@@ -481,7 +494,8 @@ VkResult Application::init(int argc, char **argv) {
     }
 
     vkdevice =
-        std::make_unique<wrapper::Device>(vkinstance->get_instance(), surface->get(), enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
+        std::make_unique<wrapper::Device>(vkinstance->get_instance(), surface->get(),
+                                          enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
     result = check_application_specific_features();
     vulkan_error_check(result);
@@ -490,10 +504,12 @@ VkResult Application::init(int argc, char **argv) {
     result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
     vulkan_error_check(result);
 
-    vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(), vkdevice->get_physical_device());
+    vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(),
+                                                           vkdevice->get_physical_device());
 
-    swapchain = std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(), surface->get(), window->get_width(),
-                                                     window->get_height(), vsync_enabled);
+    swapchain =
+        std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(), surface->get(),
+                                             window->get_width(), window->get_height(), vsync_enabled);
 
     result = create_depth_buffer();
     vulkan_error_check(result);
@@ -518,7 +534,8 @@ VkResult Application::init(int argc, char **argv) {
     result = create_frame_buffers();
     vulkan_error_check(result);
 
-    command_pool = std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
+    command_pool =
+        std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
 
     result = create_uniform_buffers();
     vulkan_error_check(result);
@@ -586,7 +603,8 @@ VkResult Application::update_mouse_input() {
         window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
 
     if (state == GLFW_PRESS) {
-        game_camera.rotate(glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
+        game_camera.rotate(
+            glm::vec3(cursor_delta_y * game_camera.rotation_speed, -cursor_delta_x * game_camera.rotation_speed, 0.0f));
     }
 
     window->is_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);

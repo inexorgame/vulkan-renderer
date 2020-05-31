@@ -7,13 +7,16 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept
-    : device(other.device), graphics_pipeline(std::exchange(other.graphics_pipeline, nullptr)), pipeline_cache(std::exchange(other.pipeline_cache, nullptr)),
-      name(std::move(other.name)) {}
+    : device(other.device), graphics_pipeline(std::exchange(other.graphics_pipeline, nullptr)),
+      pipeline_cache(std::exchange(other.pipeline_cache, nullptr)), name(std::move(other.name)) {}
 
-GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
-                                   const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages, const VkVertexInputBindingDescription vertex_binding,
-                                   const std::vector<VkVertexInputAttributeDescription> &attribute_binding, const std::uint32_t window_width,
-                                   const std::uint32_t window_height, const bool multisampling_enabled, const std::string &name)
+GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout,
+                                   const VkRenderPass render_pass,
+                                   const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
+                                   const VkVertexInputBindingDescription vertex_binding,
+                                   const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
+                                   const std::uint32_t window_width, const std::uint32_t window_height,
+                                   const bool multisampling_enabled, const std::string &name)
     : device(device), name(name) {
 
     assert(device);
@@ -102,7 +105,8 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
     color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment.colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
     // TODO: Examine how this could be parameterized.
     VkPipelineColorBlendStateCreateInfo color_blend_state_ci = {};

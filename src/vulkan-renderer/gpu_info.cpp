@@ -16,10 +16,11 @@ void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
     // https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#extendingvulkan-coreversions-versionnumbers
     std::uint32_t api_version = 0;
 
-    // The Vulkan version number comprises three parts indicating the major, minor and patch version of the Vulkan API Specification.
-    // The major version indicates a significant change in the API, which will encompass a wholly new version of the specification.
-    // The minor version indicates the incorporation of new functionality into the core specification.
-    // The patch version indicates bug fixes, clarifications, and language improvements have been incorporated into the specification.
+    // The Vulkan version number comprises three parts indicating the major, minor and patch version of the Vulkan API
+    // Specification. The major version indicates a significant change in the API, which will encompass a wholly new
+    // version of the specification. The minor version indicates the incorporation of new functionality into the core
+    // specification. The patch version indicates bug fixes, clarifications, and language improvements have been
+    // incorporated into the specification.
     VkResult result = vkEnumerateInstanceVersion(&api_version);
     vulkan_error_check(result);
 
@@ -28,9 +29,11 @@ void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
     std::uint16_t api_minor_version = VK_VERSION_MINOR(api_version);
     std::uint16_t api_version_patch = VK_VERSION_PATCH(api_version);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Supported Vulkan API version: {}.{}.{}", api_major_version, api_minor_version, api_version_patch);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 }
 
 void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const VkPhysicalDevice &graphics_card) {
@@ -41,9 +44,11 @@ void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const Vk
 
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, nullptr);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Number of queue families: {}", number_of_queue_families);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_queue_families <= 0) {
         display_error_message("Error: Could not find any queue families!");
@@ -52,12 +57,14 @@ void VulkanGraphicsCardInfoViewer::print_physical_device_queue_families(const Vk
         std::vector<VkQueueFamilyProperties> queue_family_properties(number_of_queue_families);
 
         // Get information about physical device queue family properties.
-        vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families, queue_family_properties.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_queue_families,
+                                                 queue_family_properties.data());
 
         // Loop through all available queue families.
         for (std::size_t i = 0; i < number_of_queue_families; i++) {
             spdlog::debug("Queue family: {}", i);
-            spdlog::debug("------------------------------------------------------------------------------------------------------------");
+            spdlog::debug("--------------------------------------------------------------------------------------------"
+                          "----------------");
             spdlog::debug("Queue Count: {}", queue_family_properties[i].queueCount);
             spdlog::debug("Timestamp Valid Bits: {}", queue_family_properties[i].timestampValidBits);
 
@@ -93,9 +100,11 @@ void VulkanGraphicsCardInfoViewer::print_instance_layers() {
     VkResult result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
     vulkan_error_check(result);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Number of instance layers: {}", number_of_instance_layers);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_instance_layers <= 0) {
         display_error_message("Error: Could not find any instance layers!");
@@ -128,9 +137,11 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
     VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, nullptr);
     vulkan_error_check(result);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Number of instance extensions: {} ", number_of_instance_extensions);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_instance_extensions <= 0) {
         display_error_message("Error: Could not find any instance extensions!");
@@ -148,7 +159,8 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
             std::uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
             std::uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
 
-            spdlog::debug("Spec version: {}.{}.{}\t Name: {}", spec_major, spec_minor, spec_patch, extension.extensionName);
+            spdlog::debug("Spec version: {}.{}.{}\t Name: {}", spec_major, spec_minor, spec_patch,
+                          extension.extensionName);
         }
     }
 }
@@ -162,9 +174,11 @@ void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &g
     VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
     vulkan_error_check(result);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Number of device layers: {}", number_of_device_layers);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_device_layers <= 0) {
         display_error_message("Error: Could not find any device layers!");
@@ -196,12 +210,15 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
     std::uint32_t number_of_device_extensions = 0;
 
     // First check how many device extensions are available.
-    VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
+    VkResult result =
+        vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
     vulkan_error_check(result);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Number of device extensions: {}", number_of_device_extensions);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_device_extensions <= 0) {
         display_error_message("Error: Could not find any device extensions!");
@@ -210,7 +227,8 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
         std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
 
         // Get information about the available device extensions.
-        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
+        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions,
+                                                      device_extensions.data());
         vulkan_error_check(result);
 
         // Loop through all available device extensions and print information about them.
@@ -219,12 +237,14 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
             std::uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
             std::uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
 
-            spdlog::debug("Spec version: {}.{}.{}\t Name: {}", spec_major, spec_minor, spec_patch, device_extension.extensionName);
+            spdlog::debug("Spec version: {}.{}.{}\t Name: {}", spec_major, spec_minor, spec_patch,
+                          device_extension.extensionName);
         }
     }
 }
 
-void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &vulkan_surface) {
+void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDevice &graphics_card,
+                                                              const VkSurfaceKHR &vulkan_surface) {
     assert(graphics_card);
     assert(vulkan_surface);
 
@@ -250,26 +270,31 @@ void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDe
     spdlog::debug("supportedUsageFlags: {}", surface_capabilities.supportedUsageFlags);
 }
 
-void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &vulkan_surface) {
+void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysicalDevice &graphics_card,
+                                                                   const VkSurfaceKHR &vulkan_surface) {
     assert(graphics_card);
     assert(vulkan_surface);
 
     std::uint32_t number_of_supported_formats = 0;
 
     // First check how many formats are supported.
-    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+    VkResult result =
+        vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
     vulkan_error_check(result);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Supported surface formats: {}", number_of_supported_formats);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_supported_formats <= 0) {
         display_error_message("Error: Could not find any supported formats!");
     } else {
         std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
 
-        result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+        result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats,
+                                                      surface_formats.data());
         vulkan_error_check(result);
 
         for (std::size_t i = 0; i < number_of_supported_formats; i++) {
@@ -286,19 +311,23 @@ void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysi
     }
 }
 
-void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &vulkan_surface) {
+void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevice &graphics_card,
+                                                            const VkSurfaceKHR &vulkan_surface) {
     assert(graphics_card);
     assert(vulkan_surface);
 
     std::uint32_t number_of_present_modes = 0;
 
     // First check how many presentation modes are available.
-    VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
+    VkResult result =
+        vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
     vulkan_error_check(result);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Available present modes: ", number_of_present_modes);
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     if (number_of_present_modes <= 0) {
         display_error_message("Error: Could not find any presentation modes!");
@@ -306,15 +335,17 @@ void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevi
         // Preallocate memory for the presentation modes.
         std::vector<VkPresentModeKHR> present_modes(number_of_present_modes);
 
-        result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
+        result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes,
+                                                           present_modes.data());
         vulkan_error_check(result);
 
-        const std::unordered_map<int, std::string> present_mode_names = {{0, "VK_PRESENT_MODE_IMMEDIATE_KHR"},
-                                                                         {1, "VK_PRESENT_MODE_MAILBOX_KHR"},
-                                                                         {2, "VK_PRESENT_MODE_FIFO_KHR"},
-                                                                         {3, "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
-                                                                         {1000111000, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
-                                                                         {1000111001, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}};
+        const std::unordered_map<int, std::string> present_mode_names = {
+            {0, "VK_PRESENT_MODE_IMMEDIATE_KHR"},
+            {1, "VK_PRESENT_MODE_MAILBOX_KHR"},
+            {2, "VK_PRESENT_MODE_FIFO_KHR"},
+            {3, "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
+            {1000111000, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
+            {1000111001, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}};
 
         for (std::size_t i = 0; i < number_of_present_modes; i++) {
             auto present_mode_lookup = present_mode_names.find(present_modes[i]);
@@ -349,7 +380,8 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
     std::uint32_t vulkan_version_patch = VK_VERSION_MAJOR(vulkan_api_version);
 
     // The Vulkan version which is supported by the graphics card.
-    spdlog::debug("Vulkan API supported version: {}.{}.{}", vulkan_version_major, vulkan_version_minor, vulkan_version_patch);
+    spdlog::debug("Vulkan API supported version: {}.{}.{}", vulkan_version_major, vulkan_version_minor,
+                  vulkan_version_patch);
 
     // Get the major, minor and patch version of the driver version.
     std::uint32_t driver_version_major = VK_VERSION_MAJOR(graphics_card_properties.driverVersion);
@@ -359,15 +391,16 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
     // The driver version.
     // Always keep your graphics drivers up to date!
     // Note: The driver version format is NOT standardised!
-    spdlog::debug("Vulkan API supported version: {}.{}.{}", vulkan_version_major, vulkan_version_minor, vulkan_version_patch);
+    spdlog::debug("Vulkan API supported version: {}.{}.{}", vulkan_version_major, vulkan_version_minor,
+                  vulkan_version_patch);
     spdlog::debug("Vendor ID: {}", graphics_card_properties.vendorID);
     spdlog::debug("Device ID: {}", graphics_card_properties.deviceID);
 
     // Graphics card types.
     // TODO: Is there any other way to get the graphics card type name by id?
-    std::array<std::string, 5> graphics_card_types = {"VK_PHYSICAL_DEVICE_TYPE_OTHER", "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
-                                                      "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU", "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU",
-                                                      "VK_PHYSICAL_DEVICE_TYPE_CPU"};
+    std::array<std::string, 5> graphics_card_types = {
+        "VK_PHYSICAL_DEVICE_TYPE_OTHER", "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
+        "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU", "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU", "VK_PHYSICAL_DEVICE_TYPE_CPU"};
 
     // Check if array index is in bounds.
     if (graphics_card_properties.deviceType <= 4) {
@@ -378,9 +411,11 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_info(const VkPhysicalDevi
 void VulkanGraphicsCardInfoViewer::print_graphics_card_memory_properties(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Graphics card's memory properties:");
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
     // Check memory properties of this graphics card.
     VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
@@ -424,7 +459,8 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_memory_properties(const V
 
     // Loop through all memory heaps.
     for (std::size_t i = 0; i < graphics_card_memory_properties.memoryHeapCount; i++) {
-        spdlog::debug("Heap [{}], memory size: {}", i, graphics_card_memory_properties.memoryHeaps[i].size / (1000 * 1000));
+        spdlog::debug("Heap [{}], memory size: {}", i,
+                      graphics_card_memory_properties.memoryHeaps[i].size / (1000 * 1000));
 
         auto &property_flag = graphics_card_memory_properties.memoryHeaps[i].flags;
 
@@ -445,9 +481,11 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_features(const VkPhysical
     // Check which features are supported by this graphics card.
     vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Graphics card's features:");
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
 // This little helper macro prints the regarded information about graphics card features to the console.
 #define PRINT_GRAPHICS_CARD_FEATURE(x) spdlog::debug("{}: {}", #x, (graphics_card_features.x) ? "yes" : "no")
@@ -517,9 +555,11 @@ void VulkanGraphicsCardInfoViewer::print_graphics_cards_sparse_properties(const 
     // Get the information about that graphics card.
     vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Graphics card's sparse properties:");
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
 #define PRINT_SPARSE_PROPERTIES(x) spdlog::debug("{}: {}", #x, (graphics_card_properties.sparseProperties.x))
 
@@ -538,9 +578,11 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_limits(const VkPhysicalDe
     // Get the information about that graphics card.
     vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
 
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Graphics card's limits:");
-    spdlog::debug("------------------------------------------------------------------------------------------------------------");
+    spdlog::debug(
+        "------------------------------------------------------------------------------------------------------------");
 
 // This little helper macro prints the regarded information about graphics card limits to the console.
 #define PRINT_GRAPHICS_CARD_LIMITS(x) spdlog::debug("{}: {}", #x, (graphics_card_properties.limits.x))
@@ -661,7 +703,8 @@ void VulkanGraphicsCardInfoViewer::print_graphics_card_limits(const VkPhysicalDe
     PRINT_GRAPHICS_CARD_LIMITS(nonCoherentAtomSize);
 }
 
-void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &vulkan_instance, const VkSurfaceKHR &vulkan_surface) {
+void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &vulkan_instance,
+                                                              const VkSurfaceKHR &vulkan_surface) {
     assert(vulkan_surface);
     assert(vulkan_instance);
 
@@ -673,15 +716,18 @@ void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &
     if (number_of_graphics_cards <= 0) {
         display_error_message("Error: Could not find any GPU's!");
     } else {
-        spdlog::debug("------------------------------------------------------------------------------------------------------------");
+        spdlog::debug("------------------------------------------------------------------------------------------------"
+                      "------------");
         spdlog::debug("Number of available graphics cards: {}", number_of_graphics_cards);
-        spdlog::debug("------------------------------------------------------------------------------------------------------------");
+        spdlog::debug("------------------------------------------------------------------------------------------------"
+                      "------------");
 
         // Preallocate memory for the available graphics cards.
         std::vector<VkPhysicalDevice> available_graphics_cards(number_of_graphics_cards);
 
         // Query information about all the graphics cards available on the system.
-        result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data());
+        result =
+            vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data());
         vulkan_error_check(result);
 
         // Loop through all graphics cards and print information about them.

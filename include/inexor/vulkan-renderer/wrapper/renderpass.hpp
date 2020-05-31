@@ -28,8 +28,9 @@ public:
     /// @param dependencies [in] The subpass dependencies.
     /// @param subpass_description [in] The subpass description.
     /// @param name [in] The internal name of this renderpass.
-    RenderPass(const VkDevice device, const std::vector<VkAttachmentDescription> &attachments, const std::vector<VkSubpassDependency> &dependencies,
-               const VkSubpassDescription subpass_description, const std::string &name);
+    RenderPass(const VkDevice device, const std::vector<VkAttachmentDescription> &attachments,
+               const std::vector<VkSubpassDependency> &dependencies, const VkSubpassDescription subpass_description,
+               const std::string &name);
 
     ~RenderPass();
 

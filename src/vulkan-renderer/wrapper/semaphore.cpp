@@ -6,7 +6,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Semaphore::Semaphore(Semaphore &&other) noexcept : device(other.device), semaphore(std::exchange(other.semaphore, nullptr)), name(std::move(other.name)) {}
+Semaphore::Semaphore(Semaphore &&other) noexcept
+    : device(other.device), semaphore(std::exchange(other.semaphore, nullptr)), name(std::move(other.name)) {}
 
 Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(device), name(name) {
     assert(device);

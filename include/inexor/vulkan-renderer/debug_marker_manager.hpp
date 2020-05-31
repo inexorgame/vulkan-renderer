@@ -47,19 +47,24 @@ public:
     void init(const VkDevice &device, const VkPhysicalDevice &graphics_card, bool enable_debug_markers = true);
 
     /// @brief Sets the debug name of an object.
-    /// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function along with the object type
-    void set_object_name(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const char *name);
+    /// All Objects in Vulkan are represented by their 64-bit handles which are passed into this function along with the
+    /// object type
+    void set_object_name(const VkDevice &device, const std::uint64_t &object,
+                         const VkDebugReportObjectTypeEXT &object_type, const char *name);
 
     /// @brief Sets the tag for an object.
     /// @note We can link a memory block of arbitrary size to an object.
-    void set_object_tag(const VkDevice &device, const std::uint64_t &object, const VkDebugReportObjectTypeEXT &object_type, const std::uint64_t &name,
+    void set_object_tag(const VkDevice &device, const std::uint64_t &object,
+                        const VkDebugReportObjectTypeEXT &object_type, const std::uint64_t &name,
                         const std::size_t &tag_size, const void *tag);
 
     /// Starts a new debug marker region.
-    void bind_region(const VkCommandBuffer &cmdbuffer, const std::string &debug_marker_name, const glm::vec4 &debug_marker_color);
+    void bind_region(const VkCommandBuffer &cmdbuffer, const std::string &debug_marker_name,
+                     const glm::vec4 &debug_marker_color);
 
     /// @brief Inserts a new debug marker into the command buffer.
-    void insert(const VkCommandBuffer &command_buffer, const std::string &debug_marker_name, const glm::vec4 &debug_marker_color);
+    void insert(const VkCommandBuffer &command_buffer, const std::string &debug_marker_name,
+                const glm::vec4 &debug_marker_color);
 
     /// Ends the current debug marker region.
     void end_region(const VkCommandBuffer &command_buffer);

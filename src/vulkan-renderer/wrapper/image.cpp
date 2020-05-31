@@ -2,16 +2,16 @@
 
 #include <spdlog/spdlog.h>
 
-
 namespace inexor::vulkan_renderer::wrapper {
 
 Image::Image(Image &&other) noexcept
-    : device(other.device), vma_allocator(other.vma_allocator), allocation(other.allocation), allocation_info(other.allocation_info), image(other.image),
-      format(other.format), image_view(other.image_view), name(std::move(other.name)) {}
+    : device(other.device), vma_allocator(other.vma_allocator), allocation(other.allocation),
+      allocation_info(other.allocation_info), image(other.image), format(other.format), image_view(other.image_view),
+      name(std::move(other.name)) {}
 
-Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator, const VkFormat format,
-             const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
-             const VkExtent2D image_extent)
+Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+             const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
+             const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent)
     : device(device), vma_allocator(vma_allocator), format(format), name(name) {
     assert(device);
     assert(graphics_card);
@@ -45,7 +45,8 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
-    if (vmaCreateImage(vma_allocator, &create_info, &allocation_create_info, &image, &allocation, &allocation_info) != VK_SUCCESS) {
+    if (vmaCreateImage(vma_allocator, &create_info, &allocation_create_info, &image, &allocation, &allocation_info) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateImage failed for depth buffer images!");
     }
 

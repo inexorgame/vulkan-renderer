@@ -5,12 +5,14 @@
 /// INTRODUCTION
 /// A bezier curve (named after french mathematician PIERRE ETIENNE BEZIER) is a parametric curve
 /// whose only purpose is to look soft and smooth. Bezier curves are all about elegance!
-/// Those curves can be used to represent the path of a everything (imagin a camera which is moving along a path for example).
+/// Those curves can be used to represent the path of a everything (imagin a camera which is moving along a path for
+/// example).
 ///
 /// Bezier curves are fast, flexible, beautiful and easy to compute. You just pass a bunch of parameter points to
 /// your code and the final curve will be computed. Because every complex curve can be represented with a
 /// chain of smaller curves, it is recommended to create a chain of curves. Bezier curves are essential
-/// in the field of computer graphics and image processing. They can also be used for approximation, interpolation and more.
+/// in the field of computer graphics and image processing. They can also be used for approximation, interpolation and
+/// more.
 ///
 /// COMPUTING
 /// There are two ways to generate a bezier curves from a group of [n] points.

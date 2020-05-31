@@ -53,9 +53,11 @@ protected:
 
     std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
 
-    std::shared_ptr<AvailabilityChecksManager> availability_checks_manager = std::make_shared<AvailabilityChecksManager>();
+    std::shared_ptr<AvailabilityChecksManager> availability_checks_manager =
+        std::make_shared<AvailabilityChecksManager>();
 
-    std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker = std::make_shared<VulkanSettingsDecisionMaker>();
+    std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker =
+        std::make_shared<VulkanSettingsDecisionMaker>();
 
     VkPresentModeKHR selected_present_mode;
 

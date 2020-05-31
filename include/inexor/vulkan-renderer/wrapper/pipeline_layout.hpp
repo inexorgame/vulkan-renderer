@@ -26,7 +26,8 @@ public:
     /// @param device [in] The Vulkan device.
     /// @param descriptor_set_layouts [in] The descriptor set layouts for the pipeline layout.
     /// @param name [in] The internal name of the pipeline layout.
-    PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts, const std::string &name);
+    PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
+                   const std::string &name);
 
     ~PipelineLayout();
 

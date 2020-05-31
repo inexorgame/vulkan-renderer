@@ -21,7 +21,8 @@ float TimeStep::get_time_step() {
 float TimeStep::get_time_step_since_initialisation() {
     auto current_time = std::chrono::high_resolution_clock::now();
 
-    auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - initialisation_time).count();
+    auto time_duration =
+        std::chrono::duration<float, std::chrono::seconds::period>(current_time - initialisation_time).count();
 
     return time_duration;
 }

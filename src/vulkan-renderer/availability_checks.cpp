@@ -13,7 +13,8 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
     vulkan_error_check(result);
 
     if (available_instance_extensions == 0) {
-        // It should be a very rare case that no instance extensions are available at all. Still we have to consider this!
+        // It should be a very rare case that no instance extensions are available at all. Still we have to consider
+        // this!
         display_error_message("Error: No Vulkan instance extensions available!");
 
         // Since there are no instance extensions available at all, the desired one is not supported either.
@@ -23,7 +24,8 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
         instance_extensions_cache.resize(available_instance_extensions);
 
         // Get the information about the available instance extensions.
-        result = vkEnumerateInstanceExtensionProperties(nullptr, &available_instance_extensions, instance_extensions_cache.data());
+        result = vkEnumerateInstanceExtensionProperties(nullptr, &available_instance_extensions,
+                                                        instance_extensions_cache.data());
         vulkan_error_check(result);
     }
 
@@ -108,13 +110,15 @@ VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalD
     device_layer_properties_cache.resize(available_device_layers);
 
     // Get the information about the available device layers.
-    result = vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, device_layer_properties_cache.data());
+    result =
+        vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, device_layer_properties_cache.data());
     vulkan_error_check(result);
 
     return VK_SUCCESS;
 }
 
-bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphics_card, const std::string &device_layer_name) {
+bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphics_card,
+                                                 const std::string &device_layer_name) {
     assert(graphics_card);
     assert(!device_layer_name.empty());
 
@@ -136,7 +140,8 @@ bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphic
 
 VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device extensions are available on the system.
-    VkResult result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &available_device_extensions, nullptr);
+    VkResult result =
+        vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &available_device_extensions, nullptr);
     vulkan_error_check(result);
 
     if (0 == available_device_extensions) {
@@ -150,14 +155,16 @@ VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysi
         device_extensions_cache.resize(available_device_extensions);
 
         // Get the information about the available device extensions.
-        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &available_device_extensions, device_extensions_cache.data());
+        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &available_device_extensions,
+                                                      device_extensions_cache.data());
         vulkan_error_check(result);
     }
 
     return VK_SUCCESS;
 }
 
-bool AvailabilityChecksManager::has_device_extension(const VkPhysicalDevice &graphics_card, const std::string &device_extension_name) {
+bool AvailabilityChecksManager::has_device_extension(const VkPhysicalDevice &graphics_card,
+                                                     const std::string &device_extension_name) {
     assert(graphics_card);
     assert(!device_extension_name.empty());
 

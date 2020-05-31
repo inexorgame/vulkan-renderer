@@ -55,7 +55,8 @@ public:
 
     /// @brief Checks if a certain Vulkan device layer is available on the system.
     /// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateDeviceLayerProperties.html
-    /// @note Device layers and device extensions are coupled to a certain graphics card which needs to be specified as parameter.
+    /// @note Device layers and device extensions are coupled to a certain graphics card which needs to be specified as
+    /// parameter.
     /// @param graphics_card The selected graphics card.
     /// @param device_layer_name The name of the Vulkan device layer.
     /// @return true if the Vulkan device layer is available, false otherwise.
@@ -68,8 +69,10 @@ public:
     /// @param device_extension_name [in] The name of the Vulkan device extension.
     /// @return true if the Vulkan device extension is available, false otherwise.
     /// @note Available device extensions can be enabled by passing them as a parameter during Vulkan device creation.
-    /// @note Device layers and device extensions are coupled to a certain graphics card which needs to be specified as parameter.
-    [[nodiscard]] bool has_device_extension(const VkPhysicalDevice &graphics_card, const std::string &device_extension_name);
+    /// @note Device layers and device extensions are coupled to a certain graphics card which needs to be specified as
+    /// parameter.
+    [[nodiscard]] bool has_device_extension(const VkPhysicalDevice &graphics_card,
+                                            const std::string &device_extension_name);
 
     /// @brief Checks if presentation is available for a certain combination of graphics card and window surface.
     /// The present mode describes how the rendered image will be presented on the screen.

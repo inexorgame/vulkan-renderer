@@ -7,5 +7,5 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakTemplateDeclarations: Yes
-ColumnLimit: 160
+ColumnLimit: 120
 IndentWidth: 4
