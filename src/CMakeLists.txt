@@ -31,6 +31,7 @@ add_library(
     vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
+    vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/graphics_pipeline.cpp
     vulkan-renderer/wrapper/image.cpp
