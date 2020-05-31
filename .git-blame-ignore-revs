@@ -12,3 +12,6 @@ d2d9eaebbf13ef52a8716967b593f4b7c1136953
 
 # [*] Format all
 701a42dbca4511cd6f53c17456fe45d085d3834a
+
+# [clang-format] Lower ColumnLimit to 120
+30a029d234e6b864c941ff8ddbbe0f797cd37484
