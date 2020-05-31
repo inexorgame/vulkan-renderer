@@ -114,7 +114,6 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 VkResult Application::load_textures() {
     assert(vkdevice->get_device());
     assert(vkdevice->get_physical_device());
-    assert(debug_marker_manager);
     assert(vma->get_allocator());
 
     // TODO: Refactor! use key from TOML file as name!
@@ -297,8 +296,6 @@ VkResult Application::load_octree_geometry() {
 }
 
 VkResult Application::load_models() {
-    assert(debug_marker_manager);
-
     spdlog::debug("Loading models.");
 
     // TODO: Load models from TOML list.
@@ -498,10 +495,6 @@ VkResult Application::init(int argc, char **argv) {
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
     result = check_application_specific_features();
-    vulkan_error_check(result);
-
-    // Vulkan debug markes will be very useful when debugging with RenderDoc!
-    result = initialise_debug_marker_manager(enable_debug_marker_device_extension);
     vulkan_error_check(result);
 
     vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(),

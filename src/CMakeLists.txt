@@ -6,7 +6,6 @@ add_library(
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
     vulkan-renderer/debug_callback.cpp
-    vulkan-renderer/debug_marker_manager.cpp
     vulkan-renderer/descriptor.cpp
     vulkan-renderer/error_handling.cpp
     vulkan-renderer/fps_counter.cpp

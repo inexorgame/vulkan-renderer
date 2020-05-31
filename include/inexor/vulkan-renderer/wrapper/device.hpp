@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <array>
 #include <cassert>
 #include <optional>
 #include <string>
@@ -24,12 +25,12 @@ private:
 
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
-    PFN_vkDebugMarkerSetObjectTagEXT vkDebugMarkerSetObjectTag;
-    PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectName;
-    PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBegin;
-    PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEnd;
-    PFN_vkCmdDebugMarkerInsertEXT vkCmdDebugMarkerInsert;
-    PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectName;
+    PFN_vkDebugMarkerSetObjectTagEXT vk_debug_marker_set_object_tag;
+    PFN_vkDebugMarkerSetObjectNameEXT vk_debug_marker_set_object_name;
+    PFN_vkCmdDebugMarkerBeginEXT vk_cmd_debug_marker_begin;
+    PFN_vkCmdDebugMarkerEndEXT vk_cmd_debug_marker_end;
+    PFN_vkCmdDebugMarkerInsertEXT vk_cmd_debug_marker_insert;
+    PFN_vkSetDebugUtilsObjectNameEXT vk_set_debug_utils_object_name;
 
 public:
     /// Delete the copy constructor so shaders are move-only objects.
@@ -90,12 +91,14 @@ public:
         return transfer_queue_family_index;
     }
 
+#ifndef NDEBUG
+
     /// @brief Vulkan debug marker: Sets the name of a Vulkan resource.
     /// The debug marker name will be visible in external debuggers like RenderDoc.
     /// @param object [in] A pointer to the Vulkan object.
     /// @param type [in] The type of the Vulkan object.
     /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
-    void set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const char *name);
+    void set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string& name);
 
     /// @brief Vulkan debug marker: Links a memory dump block to a Vulkan resource.
     /// The object will be visible in external debuggers like RenderDoc.
@@ -112,21 +115,25 @@ public:
     /// @param command_buffer [in] The associated command buffer.
     /// @param name [in] The name of the rendering region.
     /// @param color [in] The rgba color of the rendering region.
-    void bind_region(const VkCommandBuffer command_buffer, const std::string &name, const float color[4]);
+    void bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
+                           const std::array<float, 4> color);
 
     /// @brief Vulkan debug markers: Inserts a debug marker into a renderpass.
     /// The debug marker will be visible in external debuggers like RenderDoc.
     /// @param command_buffer [in] The associated command buffer.
     /// @param name [in] The name of the rendering region.
     /// @param color [in] The rgba color of the rendering region.
-    void insert(const VkCommandBuffer command_buffer, const std::string &name, const float color[4]);
+    void insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
+                             const std::array<float, 4> color);
 
     /// @brief Vulkan debug markers: Annotation of a rendering region.
     /// The rendering region will be visible in external debuggers like RenderDoc.
     /// @param command_buffer [in] The associated command buffer.
     /// @param name [in] The name of the rendering region.
     /// @param color [in] The rgba color of the rendering region.
-    void end_region(const VkCommandBuffer command_buffer);
+    void end_debug_region(const VkCommandBuffer command_buffer);
+
+#endif
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

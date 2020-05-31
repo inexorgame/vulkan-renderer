@@ -199,27 +199,29 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         spdlog::debug("Initializing Vulkan debug markers.");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
-        vkDebugMarkerSetObjectTag =
-            (PFN_vkDebugMarkerSetObjectTagEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT");
-        assert(vkDebugMarkerSetObjectTag);
+        vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>(
+            vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT"));
+        assert(vk_debug_marker_set_object_tag);
 
-        vkDebugMarkerSetObjectName =
-            (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT");
-        assert(vkDebugMarkerSetObjectName);
+        vk_debug_marker_set_object_name = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
+            vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
+        assert(vk_debug_marker_set_object_name);
 
-        vkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT");
-        assert(vkCmdDebugMarkerBegin);
+        vk_cmd_debug_marker_begin =
+            reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT"));
+        assert(vk_cmd_debug_marker_begin);
 
-        vkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT");
-        assert(vkCmdDebugMarkerEnd);
+        vk_cmd_debug_marker_end =
+            reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT"));
+        assert(vk_cmd_debug_marker_end);
 
-        vkCmdDebugMarkerInsert =
-            (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT");
-        assert(vkCmdDebugMarkerInsert);
+        vk_cmd_debug_marker_insert =
+            reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT"));
+        assert(vk_cmd_debug_marker_insert);
 
-        vkSetDebugUtilsObjectName =
-            (PFN_vkSetDebugUtilsObjectNameEXT)vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT");
-        assert(vkSetDebugUtilsObjectName);
+        vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+            vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
+        assert(vk_set_debug_utils_object_name);
     } else {
         spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
         spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
@@ -250,31 +252,29 @@ Device::~Device() {
     this->device = VK_NULL_HANDLE;
 }
 
-void Device::set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const char *name) {
 #ifndef NDEBUG
+void Device::set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string& name) {
     assert(device);
-    assert(name);
+    assert(!name.empty());
     assert(object);
-    assert(vkDebugMarkerSetObjectName);
+    assert(vk_debug_marker_set_object_name);
 
     VkDebugMarkerObjectNameInfoEXT name_info = {};
     name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
     name_info.objectType = type;
     name_info.object = object;
-    name_info.pObjectName = name;
+    name_info.pObjectName = name.c_str();
 
-    vkDebugMarkerSetObjectName(device, &name_info);
-#endif
+    vk_debug_marker_set_object_name(device, &name_info);
 }
 
 void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
                             const std::size_t tag_size, const void *tag) {
-#ifndef NDEBUG
     assert(device);
     assert(name);
     assert(tag_size > 0);
     assert(tag);
-    assert(vkDebugMarkerSetObjectTag);
+    assert(vk_debug_marker_set_object_tag);
 
     VkDebugMarkerObjectTagInfoEXT tagInfo = {};
     tagInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
@@ -284,15 +284,14 @@ void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjec
     tagInfo.tagSize = tag_size;
     tagInfo.pTag = tag;
 
-    vkDebugMarkerSetObjectTag(device, &tagInfo);
-#endif
+    vk_debug_marker_set_object_tag(device, &tagInfo);
 }
 
-void Device::bind_region(const VkCommandBuffer command_buffer, const std::string &name, const float color[4]) {
-#ifndef NDEBUG
+void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
+                               const std::array<float, 4> color) {
     assert(command_buffer);
     assert(!name.empty());
-    assert(vkCmdDebugMarkerBegin);
+    assert(vk_cmd_debug_marker_begin);
 
     VkDebugMarkerMarkerInfoEXT debug_marker = {};
     debug_marker.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
@@ -302,15 +301,14 @@ void Device::bind_region(const VkCommandBuffer command_buffer, const std::string
     debug_marker.color[3] = color[3];
     debug_marker.pMarkerName = name.c_str();
 
-    vkCmdDebugMarkerBegin(command_buffer, &debug_marker);
-#endif
+    vk_cmd_debug_marker_begin(command_buffer, &debug_marker);
 }
 
-void Device::insert(const VkCommandBuffer command_buffer, const std::string &name, const float color[4]) {
-#ifndef NDEBUG
+void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
+                                 const std::array<float, 4> color) {
     assert(command_buffer);
     assert(!name.empty());
-    assert(vkCmdDebugMarkerInsert);
+    assert(vk_cmd_debug_marker_insert);
 
     VkDebugMarkerMarkerInfoEXT debug_marker = {};
     debug_marker.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
@@ -320,15 +318,13 @@ void Device::insert(const VkCommandBuffer command_buffer, const std::string &nam
     debug_marker.color[3] = color[3];
     debug_marker.pMarkerName = name.c_str();
 
-    vkCmdDebugMarkerInsert(command_buffer, &debug_marker);
-#endif
+    vk_cmd_debug_marker_insert(command_buffer, &debug_marker);
 }
 
-void Device::end_region(const VkCommandBuffer command_buffer) {
-#ifndef NDEBUG
-    assert(vkCmdDebugMarkerEnd);
-    vkCmdDebugMarkerEnd(command_buffer);
-#endif
+void Device::end_debug_region(const VkCommandBuffer command_buffer) {
+    assert(vk_cmd_debug_marker_end);
+    vk_cmd_debug_marker_end(command_buffer);
 }
+#endif
 
 } // namespace inexor::vulkan_renderer::wrapper
