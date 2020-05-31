@@ -570,6 +570,15 @@ VkResult VulkanRenderer::create_frame_buffers() {
     assert(debug_marker_manager);
     assert(swapchain->get_image_count() > 0);
 
+    // Create depth stencil buffer.
+    depth_stencil = std::make_unique<wrapper::Image>(
+        vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
+        swapchain->get_extent());
+
+    std::vector<VkImageView> attachments(4, nullptr);
+
     if (multisampling_enabled) {
         // Check if device supports requested sample count for color and depth frame buffer
         // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) &&
@@ -589,18 +598,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
             VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, multisampling_sample_count, "MSAA depth image",
             swapchain->get_extent());
-    }
 
-    // Create depth stencil buffer.
-    depth_stencil = std::make_unique<wrapper::Image>(
-        vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
-        swapchain->get_extent());
-
-    std::vector<VkImageView> attachments(4);
-
-    if (multisampling_enabled) {
         attachments[0] = msaa_target_buffer.color->get_image_view();
         attachments[2] = msaa_target_buffer.depth->get_image_view();
         attachments[3] = depth_stencil->get_image_view();
@@ -609,9 +607,9 @@ VkResult VulkanRenderer::create_frame_buffers() {
     }
 
     // Create frames for frame buffer.
-    framebuffer =
-        std::make_unique<wrapper::Framebuffer>(vkdevice->get_device(), renderpass->get(), attachments, swapchain->get_image_views(), window->get_width(),
-                                               window->get_height(), swapchain->get_image_count(), multisampling_enabled, "Standard framebuffer");
+    framebuffer = std::make_unique<wrapper::Framebuffer>(
+        vkdevice->get_device(), renderpass->get(), attachments, swapchain->get_image_views(), window->get_width(),
+        window->get_height(), swapchain->get_image_count(), multisampling_enabled, "Standard framebuffer");
 
     return VK_SUCCESS;
 }

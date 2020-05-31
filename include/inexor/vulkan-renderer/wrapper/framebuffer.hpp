@@ -34,17 +34,19 @@ public:
     /// @param swapchain_image_count [in] The number of images in the swapchain.
     /// @param multisampling_enabled [in] True if multisampling is enabled, false otherwise.
     /// @param name [in] The internal name of the framebuffer.
-    Framebuffer(const VkDevice device, const VkRenderPass renderpass, const std::vector<VkImageView> &attachments,
-                const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width, const std::uint32_t height,
-                const std::uint32_t swapchain_image_count, const bool multisampling_enabled, const std::string &name);
+    Framebuffer(const VkDevice device, const VkRenderPass renderpass, std::vector<VkImageView> attachments,
+                const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width,
+                const std::uint32_t height, const std::uint32_t swapchain_image_count, const bool multisampling_enabled,
+                const std::string name);
 
     ~Framebuffer();
 
     [[nodiscard]] VkFramebuffer get(const std::size_t index) {
         if (index >= frames.size()) {
-            throw std::out_of_range("Error: Index " + std::to_string(index) + " for frame buffers is out of range! Size: " + std::to_string(frames.size()));
+            throw std::out_of_range("Error: Index " + std::to_string(index) +
+                                    " for frame buffers is out of range! Size: " + std::to_string(frames.size()));
         }
-        return frames.at(index);
+        return frames[index];
     }
 };
 } // namespace inexor::vulkan_renderer::wrapper

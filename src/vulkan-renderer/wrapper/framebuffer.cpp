@@ -6,12 +6,15 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Framebuffer::Framebuffer(Framebuffer &&other) noexcept : device(other.device), name(std::move(other.name)), frames(std::move(other.frames)) {}
+Framebuffer::Framebuffer(Framebuffer &&other) noexcept
+    : device(other.device), name(std::move(other.name)), frames(std::move(other.frames)) {}
 
-Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass, const std::vector<VkImageView> &attachments,
-                         const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width, const std::uint32_t height,
-                         const std::uint32_t swapchain_image_count, const bool multisampling_enabled, const std::string &name)
-    : device(device), name(name) {
+Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass,
+                         std::vector<VkImageView> attachments,
+                         const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width,
+                         const std::uint32_t height, const std::uint32_t swapchain_image_count,
+                         const bool multisampling_enabled, const std::string name)
+    : device(device), name(std::move(name)) {
     assert(device);
     assert(renderpass);
     assert(!name.empty());
@@ -23,16 +26,14 @@ Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass, c
     spdlog::debug("Creating frame buffers.");
     spdlog::debug("Number of images in swapchain: {}.", swapchain_image_count);
 
-    std::vector<VkImageView> framebuffer_attachments = attachments;
-
-    VkFramebufferCreateInfo frame_buffer_ci = {};
-    frame_buffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    frame_buffer_ci.renderPass = renderpass;
-    frame_buffer_ci.attachmentCount = static_cast<std::uint32_t>(framebuffer_attachments.size());
-    frame_buffer_ci.pAttachments = framebuffer_attachments.data();
-    frame_buffer_ci.width = width;
-    frame_buffer_ci.height = height;
-    frame_buffer_ci.layers = 1;
+    VkFramebufferCreateInfo framebuffer_ci = {};
+    framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebuffer_ci.renderPass = renderpass;
+    framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
+    framebuffer_ci.pAttachments = attachments.data();
+    framebuffer_ci.width = width;
+    framebuffer_ci.height = height;
+    framebuffer_ci.layers = 1;
 
     frames.resize(swapchain_image_count);
 
@@ -41,12 +42,12 @@ Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass, c
         spdlog::debug("Creating framebuffer #{}.", i);
 
         if (multisampling_enabled) {
-            framebuffer_attachments[1] = swapchain_attachments[i];
+            attachments[1] = swapchain_attachments[i];
         } else {
-            framebuffer_attachments[0] = swapchain_attachments[i];
+            attachments[0] = swapchain_attachments[i];
         }
 
-        if (vkCreateFramebuffer(device, &frame_buffer_ci, nullptr, &frames[i])) {
+        if (vkCreateFramebuffer(device, &framebuffer_ci, nullptr, &frames[i])) {
             throw std::runtime_error("Error: vkCreateFramebuffer failed for framebuffer " + name + " !");
         }
     }
