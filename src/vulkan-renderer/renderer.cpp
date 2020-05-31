@@ -141,7 +141,7 @@ VkResult VulkanRenderer::record_command_buffers() {
             return result;
 
         // Update only the necessary parts of VkRenderPassBeginInfo.
-        render_pass_begin_info.framebuffer = frame_buffers[i];
+        render_pass_begin_info.framebuffer = framebuffer->get(i);
 
         vkCmdBeginRenderPass(current_command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -220,16 +220,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Destroying frame buffer.");
 
-    if (frame_buffers.size() > 0) {
-        for (auto *frame_buffer : frame_buffers) {
-            if (VK_NULL_HANDLE != frame_buffer) {
-                vkDestroyFramebuffer(vkdevice->get_device(), frame_buffer, nullptr);
-                frame_buffer = VK_NULL_HANDLE;
-            }
-        }
-
-        frame_buffers.clear();
-    }
+    framebuffer.reset();
 
     spdlog::debug("Destroying depth buffer image view.");
 
@@ -304,16 +295,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
     // TODO: Create methods for destroying resources as well!
     spdlog::debug("Destroying frame buffer.");
 
-    if (frame_buffers.size() > 0) {
-        for (auto *frame_buffer : frame_buffers) {
-            if (VK_NULL_HANDLE != frame_buffer) {
-                vkDestroyFramebuffer(vkdevice->get_device(), frame_buffer, nullptr);
-                frame_buffer = VK_NULL_HANDLE;
-            }
-        }
-
-        frame_buffers.clear();
-    }
+    framebuffer.reset();
 
     VkResult result = create_depth_buffer();
     vulkan_error_check(result);
@@ -616,7 +598,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
         VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
         swapchain->get_extent());
 
-    VkImageView attachments[4];
+    std::vector<VkImageView> attachments(4);
 
     if (multisampling_enabled) {
         attachments[0] = msaa_target_buffer.color->get_image_view();
@@ -626,43 +608,10 @@ VkResult VulkanRenderer::create_frame_buffers() {
         attachments[1] = depth_stencil->get_image_view();
     }
 
-    VkFramebufferCreateInfo frame_buffer_create_info = {};
-
-    frame_buffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    frame_buffer_create_info.pNext = nullptr;
-    frame_buffer_create_info.renderPass = renderpass->get();
-    frame_buffer_create_info.attachmentCount = multisampling_enabled ? 4 : 2;
-    frame_buffer_create_info.pAttachments = attachments;
-    frame_buffer_create_info.width = window->get_width();
-    frame_buffer_create_info.height = window->get_height();
-    frame_buffer_create_info.layers = 1;
-
-    spdlog::debug("Creating frame buffers.");
-    spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
-
-    frame_buffers.clear();
-    frame_buffers.resize(swapchain->get_image_count());
-
-    // Create frame buffers for every swap chain image.
-    for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
-        spdlog::debug("Creating framebuffer #{}.", i);
-
-        if (multisampling_enabled) {
-            attachments[1] = swapchain->get_image_view(i);
-        } else {
-            attachments[0] = swapchain->get_image_view(i);
-        }
-
-        VkResult result =
-            vkCreateFramebuffer(vkdevice->get_device(), &frame_buffer_create_info, nullptr, &frame_buffers[i]);
-        vulkan_error_check(result);
-
-        std::string frame_buffer_name = "Frame buffer #" + std::to_string(i) + ".";
-
-        // Use Vulkan debug markers to assign an appropriate name to this frame buffer.
-        debug_marker_manager->set_object_name(vkdevice->get_device(), (std::uint64_t)(frame_buffers[i]),
-                                              VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, frame_buffer_name.c_str());
-    }
+    // Create frames for frame buffer.
+    framebuffer =
+        std::make_unique<wrapper::Framebuffer>(vkdevice->get_device(), renderpass->get(), attachments, swapchain->get_image_views(), window->get_width(),
+                                               window->get_height(), swapchain->get_image_count(), multisampling_enabled, "Standard framebuffer");
 
     return VK_SUCCESS;
 }

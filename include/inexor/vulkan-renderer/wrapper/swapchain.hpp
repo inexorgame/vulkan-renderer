@@ -79,6 +79,10 @@ public:
 
         return swapchain_image_views.at(index);
     }
+
+    [[nodiscard]] std::vector<VkImageView> get_image_views() const {
+        return swapchain_image_views;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

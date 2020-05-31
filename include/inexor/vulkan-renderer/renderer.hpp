@@ -20,6 +20,7 @@
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
+#include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
@@ -66,8 +67,6 @@ protected:
     VkPresentInfoKHR present_info = {};
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
-
-    std::vector<VkFramebuffer> frame_buffers;
 
     std::vector<wrapper::CommandBuffer> command_buffers;
 
@@ -151,6 +150,8 @@ protected:
     std::unique_ptr<wrapper::GraphicsPipeline> graphics_pipeline;
 
     std::unique_ptr<wrapper::RenderPass> renderpass;
+
+    std::unique_ptr<wrapper::Framebuffer> framebuffer;
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.

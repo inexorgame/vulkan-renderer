@@ -41,7 +41,6 @@ public:
     ~Framebuffer();
 
     [[nodiscard]] VkFramebuffer get(const std::size_t index) {
-
         if (index >= frames.size()) {
             throw std::out_of_range("Error: Index " + std::to_string(index) + " for frame buffers is out of range! Size: " + std::to_string(frames.size()));
         }

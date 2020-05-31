@@ -57,11 +57,9 @@ Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass, c
 Framebuffer::~Framebuffer() {
     spdlog::trace("Destroying frame buffer.");
 
-    for (const auto &frame : frames) {
+    for (auto *frame : frames) {
         vkDestroyFramebuffer(device, frame, nullptr);
     }
-
-    frames.clear();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
