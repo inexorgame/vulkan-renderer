@@ -1,10 +1,9 @@
-#include "inexor/vulkan-renderer/mesh_buffer.hpp"
-
-#include "inexor/vulkan-renderer/staging_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #include <spdlog/spdlog.h>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : name(std::move(other.name)), vertex_buffer(std::move(other.vertex_buffer)),
       index_buffer(std::move(other.index_buffer)), number_of_vertices(other.number_of_vertices),
@@ -96,4 +95,4 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
 
 MeshBuffer::~MeshBuffer() {}
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

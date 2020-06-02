@@ -1,8 +1,8 @@
-﻿#include "inexor/vulkan-renderer/staging_buffer.hpp"
+﻿#include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #include <spdlog/spdlog.h>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
     : data_transfer_queue(std::move(other.data_transfer_queue)),
@@ -52,4 +52,4 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
     // No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

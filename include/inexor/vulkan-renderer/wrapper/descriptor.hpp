@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief TODO
 class Descriptor {
@@ -58,4 +58,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

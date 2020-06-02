@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
 #include <spdlog/spdlog.h>
 
 #include <cassert>
 #include <stdexcept>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 Descriptor::Descriptor(Descriptor &&other) noexcept
     : name(std::move(other.name)), number_of_images_in_swapchain(other.number_of_images_in_swapchain),
@@ -159,4 +159,4 @@ Descriptor::~Descriptor() {
     reset(true);
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

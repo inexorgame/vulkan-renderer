@@ -1,11 +1,11 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
-#include "inexor/vulkan-renderer/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
 #include <vulkan/vulkan_core.h>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief In general, it is inefficient to use normal memory mapping to a vertex buffer.
 /// It is highly advised to use a staging buffer. Once the staging buffer is filled with data,
@@ -42,4 +42,4 @@ public:
     ~StagingBuffer() = default;
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

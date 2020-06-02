@@ -6,42 +6,42 @@ add_library(
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
     vulkan-renderer/debug_callback.cpp
-    vulkan-renderer/descriptor.cpp
     vulkan-renderer/error_handling.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_info.cpp
-    vulkan-renderer/gpu_memory_buffer.cpp
-    vulkan-renderer/mesh_buffer.cpp
     vulkan-renderer/octree_vertex.cpp
-    vulkan-renderer/once_command_buffer.cpp
     vulkan-renderer/renderer.cpp
     vulkan-renderer/settings_decision_maker.cpp
-    vulkan-renderer/shader.cpp
-    vulkan-renderer/staging_buffer.cpp
-    vulkan-renderer/texture.cpp
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
-    vulkan-renderer/uniform_buffer.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
+    vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/graphics_pipeline.cpp
+    vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/mesh_buffer.cpp
+    vulkan-renderer/wrapper/once_command_buffer.cpp
     vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/renderpass.cpp
     vulkan-renderer/wrapper/semaphore.cpp
+    vulkan-renderer/wrapper/shader.cpp
+    vulkan-renderer/wrapper/staging_buffer.cpp
     vulkan-renderer/wrapper/swapchain.cpp
+    vulkan-renderer/wrapper/texture.cpp
     vulkan-renderer/wrapper/vma.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
+    vulkan-renderer/wrapper/uniform_buffer.cpp
 
     vulkan-renderer/world/bit_stream.cpp
     vulkan-renderer/world/cube.cpp

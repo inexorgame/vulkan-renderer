@@ -1,10 +1,10 @@
-#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <spdlog/spdlog.h>
 
 #include <cassert>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
     : name(std::move(name)), device(std::exchange(other.device, nullptr)), buffer(std::exchange(other.buffer, nullptr)),
@@ -85,4 +85,4 @@ GPUMemoryBuffer::~GPUMemoryBuffer() {
     vmaDestroyBuffer(vma_allocator, buffer, allocation);
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

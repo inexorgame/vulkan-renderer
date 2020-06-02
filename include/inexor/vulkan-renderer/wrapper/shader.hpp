@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 class Shader {
 private:
@@ -62,4 +62,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

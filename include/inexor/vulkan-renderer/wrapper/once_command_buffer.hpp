@@ -9,7 +9,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief A OnceCommandBuffer is a command buffer which is being used only once.
 class OnceCommandBuffer {
@@ -50,4 +50,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

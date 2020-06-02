@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
     : device(other.device), command_pool(std::move(other.command_pool)),
@@ -111,4 +111,4 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     recording_started = false;
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

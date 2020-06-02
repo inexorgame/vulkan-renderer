@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <vma/vma_usage.h>
 #include <vulkan/vulkan_core.h>
@@ -10,7 +10,7 @@
 #include <optional>
 #include <string>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief A structure which bundles vertex buffer and index buffer (if existent).
 /// It contains all data which are related to memory allocations for these buffers.
@@ -87,4 +87,4 @@ public:
     // void update_index_buffer();
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

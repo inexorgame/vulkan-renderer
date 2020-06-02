@@ -1,13 +1,12 @@
-#include "inexor/vulkan-renderer/texture.hpp"
-
-#include "inexor/vulkan-renderer/staging_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <spdlog/spdlog.h>
 #include <stb_image.h>
 #include <vma/vk_mem_alloc.h>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 Texture::Texture(Texture &&other) noexcept
     : texture_image(std::exchange(other.texture_image, nullptr)), name(std::move(other.name)),
@@ -237,4 +236,4 @@ Texture::~Texture() {
     vkDestroySampler(device, sampler, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

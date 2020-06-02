@@ -1,9 +1,9 @@
-#include "inexor/vulkan-renderer/uniform_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 #include <cassert>
 #include <cstring>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 // TODO: Fix move constructor!
 UniformBuffer::UniformBuffer(UniformBuffer &&other) noexcept
@@ -21,4 +21,4 @@ void UniformBuffer::update(void *data, const std::size_t size) {
     std::memcpy(allocation_info.pMappedData, data, size);
 }
 
-}; // namespace inexor::vulkan_renderer
+}; // namespace inexor::vulkan_renderer::wrapper

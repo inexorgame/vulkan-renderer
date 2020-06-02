@@ -1,12 +1,12 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <vulkan/vulkan_core.h>
 
 #include <string>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 class UniformBuffer : public GPUMemoryBuffer {
 protected:
@@ -37,4 +37,4 @@ public:
     void update(void *data, const std::size_t size);
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper
