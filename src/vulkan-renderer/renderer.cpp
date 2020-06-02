@@ -11,24 +11,6 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanRenderer::initialise_debug_marker_manager(const bool enable_debug_markers) {
-    assert(vkdevice->get_device());
-    assert(vkdevice->get_physical_device());
-
-    spdlog::debug("Initialising debug marker manager.");
-
-#ifndef NDEBUG
-    if (!enable_debug_markers) {
-        spdlog::warn("Vulkan debug markers are not enabled!");
-        spdlog::warn("This will be of disadvantage when debugging the application with e.g. RenderDoc.");
-    }
-#endif
-
-    debug_marker_manager->init(vkdevice->get_device(), vkdevice->get_physical_device(), enable_debug_markers);
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_uniform_buffers() {
     uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"),
                                  sizeof(UniformBufferObject));
@@ -63,7 +45,6 @@ VkResult VulkanRenderer::create_depth_buffer() {
 
 VkResult VulkanRenderer::create_command_buffers() {
     assert(vkdevice->get_device());
-    assert(debug_marker_manager);
     assert(swapchain->get_image_count() > 0);
 
     spdlog::debug("Allocating command buffers.");
@@ -77,7 +58,6 @@ VkResult VulkanRenderer::create_command_buffers() {
 }
 
 VkResult VulkanRenderer::record_command_buffers() {
-    assert(debug_marker_manager);
     assert(window->get_width() > 0);
     assert(window->get_height() > 0);
 
@@ -132,9 +112,7 @@ VkResult VulkanRenderer::record_command_buffers() {
 
         VkCommandBuffer current_command_buffer = command_buffers[i].get();
 
-        // TODO: Fix debug marker regions in RenderDoc.
-        // Start binding the region with Vulkan debug markers.
-        debug_marker_manager->bind_region(current_command_buffer, "Beginning of rendering.", DEBUG_MARKER_GREEN);
+        // TODO: Start debug marker region.
 
         VkResult result = vkBeginCommandBuffer(current_command_buffer, &command_buffer_begin_info);
         if (VK_SUCCESS != result)
@@ -179,7 +157,7 @@ VkResult VulkanRenderer::record_command_buffers() {
         if (VK_SUCCESS != result)
             return result;
 
-        debug_marker_manager->end_region(current_command_buffer);
+        // TODO: End debug marker region
     }
 
     return VK_SUCCESS;
@@ -187,7 +165,6 @@ VkResult VulkanRenderer::record_command_buffers() {
 
 VkResult VulkanRenderer::create_synchronisation_objects() {
     assert(swapchain->get_image_count() > 0);
-    assert(debug_marker_manager);
 
     spdlog::debug("Creating synchronisation objects: semaphores and fences.");
     spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
@@ -401,7 +378,6 @@ VkResult VulkanRenderer::create_descriptor_writes() {
 
 VkResult VulkanRenderer::create_pipeline() {
     assert(vkdevice->get_device());
-    assert(debug_marker_manager);
 
     spdlog::debug("Creating graphics pipeline.");
 
@@ -567,7 +543,6 @@ VkResult VulkanRenderer::create_frame_buffers() {
     assert(vkdevice->get_device());
     assert(window->get_width() > 0);
     assert(window->get_height() > 0);
-    assert(debug_marker_manager);
     assert(swapchain->get_image_count() > 0);
 
     // Create depth stencil buffer.

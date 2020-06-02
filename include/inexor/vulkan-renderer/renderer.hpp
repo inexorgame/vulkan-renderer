@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
-#include "inexor/vulkan-renderer/debug_marker_manager.hpp"
 #include "inexor/vulkan-renderer/descriptor.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
@@ -51,8 +50,6 @@ protected:
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
-
-    std::shared_ptr<VulkanDebugMarkerManager> debug_marker_manager = std::make_shared<VulkanDebugMarkerManager>();
 
     std::shared_ptr<AvailabilityChecksManager> availability_checks_manager =
         std::make_shared<AvailabilityChecksManager>();
@@ -156,9 +153,6 @@ protected:
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.
     VkResult create_physical_device(const VkPhysicalDevice &graphics_card, const bool enable_debug_markers = true);
-
-    /// @brief Creates an instance of VulkanDebugMarkerManager.
-    VkResult initialise_debug_marker_manager(const bool enable_debug_markers = true);
 
     VkResult update_cameras();
 
