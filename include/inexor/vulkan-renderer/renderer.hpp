@@ -2,21 +2,16 @@
 
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
-#include "inexor/vulkan-renderer/descriptor.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
-#include "inexor/vulkan-renderer/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-#include "inexor/vulkan-renderer/shader.hpp"
-#include "inexor/vulkan-renderer/texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
-#include "inexor/vulkan-renderer/uniform_buffer.hpp"
 
 // Those components have been refactored to fulfill RAII idioms.
-#include "inexor/vulkan-renderer/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
@@ -24,10 +19,14 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/vma.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
@@ -105,11 +104,11 @@ protected:
 
     Camera game_camera;
 
-    std::vector<Shader> shaders;
-    std::vector<Texture> textures;
-    std::vector<UniformBuffer> uniform_buffers;
-    std::vector<MeshBuffer> mesh_buffers;
-    std::vector<Descriptor> descriptors;
+    std::vector<wrapper::Shader> shaders;
+    std::vector<wrapper::Texture> textures;
+    std::vector<wrapper::UniformBuffer> uniform_buffers;
+    std::vector<wrapper::MeshBuffer> mesh_buffers;
+    std::vector<wrapper::Descriptor> descriptors;
 
     // TODO(Hanni): Remove this with RAII refactoring of descriptors!
     VkDescriptorImageInfo descriptor_image_info = {};

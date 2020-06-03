@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 class GPUMemoryBuffer {
 protected:
@@ -75,4 +75,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

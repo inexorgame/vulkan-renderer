@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -28,7 +28,7 @@ std::vector<char> read_binary(const std::string &file_name) {
 
 } // namespace
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
                const std::string &entry_point)
@@ -85,4 +85,4 @@ Shader::~Shader() {
     vkDestroyShaderModule(device, shader_module, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper

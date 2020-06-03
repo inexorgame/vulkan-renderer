@@ -1,15 +1,15 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gpu_memory_buffer.hpp"
-#include "inexor/vulkan-renderer/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
+#include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
 #include <vulkan/vulkan_core.h>
 
 #include <memory>
 #include <string>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper {
 
 // TODO: 3D textures and cube maps.
 // TODO: Scan asset directory automatically.
@@ -106,4 +106,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::wrapper
