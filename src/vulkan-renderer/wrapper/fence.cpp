@@ -30,6 +30,7 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
 }
 
 Fence::~Fence() {
+    spdlog::trace("Destroying fences {}.", name);
     vkDestroyFence(device, fence, nullptr);
 }
 

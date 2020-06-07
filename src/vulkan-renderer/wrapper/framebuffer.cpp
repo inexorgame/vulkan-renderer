@@ -56,7 +56,7 @@ Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass,
 }
 
 Framebuffer::~Framebuffer() {
-    spdlog::trace("Destroying frame buffer.");
+    spdlog::trace("Destroying frame buffer {}.", name);
 
     for (auto *frame : frames) {
         vkDestroyFramebuffer(device, frame, nullptr);

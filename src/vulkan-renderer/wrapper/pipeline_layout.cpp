@@ -34,6 +34,7 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
 }
 
 PipelineLayout::~PipelineLayout() {
+    spdlog::trace("Destroying pipeline layout {}.", name);
     vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 }
 

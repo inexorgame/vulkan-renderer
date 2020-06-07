@@ -173,7 +173,10 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
 }
 
 GraphicsPipeline::~GraphicsPipeline() {
+    spdlog::trace("Destroying pipeline cache {}.", name);
     vkDestroyPipelineCache(device, pipeline_cache, nullptr);
+
+    spdlog::trace("Destroying pipeline {}.", name);
     vkDestroyPipeline(device, graphics_pipeline, nullptr);
 }
 
