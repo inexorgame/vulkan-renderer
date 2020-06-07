@@ -71,7 +71,10 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
 }
 
 Image::~Image() {
+    spdlog::trace("Destroying image view {} .", name);
     vkDestroyImageView(device, image_view, nullptr);
+
+    spdlog::trace("Destroying image {} .", name);
     vmaDestroyImage(vma_allocator, image, allocation);
 }
 

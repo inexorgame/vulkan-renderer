@@ -195,11 +195,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Device is idle.");
 
-    spdlog::debug("Destroying frame buffer.");
-
     framebuffer.reset();
-
-    spdlog::debug("Destroying depth buffer image view.");
 
     depth_buffer.reset();
 
@@ -210,25 +206,13 @@ VkResult VulkanRenderer::cleanup_swapchain() {
         msaa_target_buffer.depth.reset();
     }
 
-    spdlog::debug("Destroying command buffers.");
-
     command_buffers.clear();
-
-    spdlog::debug("Destroying pipeline.");
 
     graphics_pipeline.reset();
 
-    spdlog::debug("Destroying pipeline layout.");
-
     pipeline_layout.reset();
 
-    spdlog::debug("Destroying render pass.");
-
     renderpass.reset();
-
-    spdlog::debug("Destroying image views.");
-
-    spdlog::debug("Destroying descriptor sets and layouts.");
 
     return VK_SUCCESS;
 }
@@ -258,8 +242,6 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     swapchain->recreate(window_width, window_height);
 
-    spdlog::debug("Destroying depth buffer image view.");
-
     depth_buffer.reset();
 
     depth_stencil.reset();
@@ -268,9 +250,6 @@ VkResult VulkanRenderer::recreate_swapchain() {
         msaa_target_buffer.color.reset();
         msaa_target_buffer.depth.reset();
     }
-
-    // TODO: Create methods for destroying resources as well!
-    spdlog::debug("Destroying frame buffer.");
 
     framebuffer.reset();
 
@@ -679,11 +658,9 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     mesh_buffers.clear();
     descriptors.clear();
 
-    spdlog::debug("Destroying semaphores.");
     image_available_semaphores.clear();
     rendering_finished_semaphores.clear();
 
-    spdlog::debug("Destroying fences.");
     in_flight_fences.clear();
 
     vma.reset();

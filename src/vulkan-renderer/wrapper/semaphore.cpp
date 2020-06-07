@@ -31,6 +31,7 @@ Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(de
 }
 
 Semaphore::~Semaphore() {
+    spdlog::trace("Destroying semaphore {}.", name);
     vkDestroySemaphore(device, semaphore, nullptr);
 }
 
