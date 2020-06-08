@@ -15,13 +15,13 @@ Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(de
 
     // So far, there is nothing to fill into this structure.
     // This may change in the future!
-    VkSemaphoreCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    create_info.flags = 0;
+    VkSemaphoreCreateInfo semaphore_ci = {};
+    semaphore_ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphore_ci.flags = 0;
 
     spdlog::debug("Creating semaphore {}.", name);
 
-    if (vkCreateSemaphore(device, &create_info, nullptr, &semaphore) != VK_SUCCESS) {
+    if (vkCreateSemaphore(device, &semaphore_ci, nullptr, &semaphore) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSemaphore failed for " + name + " !");
     }
 

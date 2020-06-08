@@ -60,10 +60,12 @@ void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_call
 }
 
 void Window::show() {
+    assert(window);
     glfwShowWindow(window);
 }
 
 void Window::hide() {
+    assert(window);
     glfwHideWindow(window);
 }
 
@@ -88,6 +90,7 @@ bool Window::should_close() {
 }
 
 Window::~Window() {
+    spdlog::trace("Destroying window.");
     glfwDestroyWindow(window);
 }
 

@@ -21,6 +21,7 @@ private:
     std::vector<VkImage> swapchain_images;
     std::vector<VkImageView> swapchain_image_views;
     std::uint32_t swapchain_image_count;
+    std::string name;
     bool vsync_enabled;
 
     /// @brief (Re)creates the swapchain.
@@ -42,7 +43,8 @@ public:
     /// @brief
     /// @note We must pass width and height as call by reference!
     Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
-              std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync);
+              std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
+              const std::string &name);
 
     ~Swapchain();
 

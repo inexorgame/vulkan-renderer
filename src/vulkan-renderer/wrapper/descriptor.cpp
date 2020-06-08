@@ -36,14 +36,13 @@ void Descriptor::create_descriptor_pool(const std::initializer_list<VkDescriptor
 
     spdlog::debug("Creating new descriptor pool.");
 
-    VkDescriptorPoolCreateInfo pool_create_info = {};
+    VkDescriptorPoolCreateInfo descriptor_pool_ci = {};
+    descriptor_pool_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
+    descriptor_pool_ci.pPoolSizes = pool_sizes.data();
+    descriptor_pool_ci.maxSets = static_cast<std::uint32_t>(number_of_images_in_swapchain);
 
-    pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_create_info.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
-    pool_create_info.pPoolSizes = pool_sizes.data();
-    pool_create_info.maxSets = static_cast<std::uint32_t>(number_of_images_in_swapchain);
-
-    if (vkCreateDescriptorPool(device, &pool_create_info, nullptr, &descriptor_pool) != VK_SUCCESS) {
+    if (vkCreateDescriptorPool(device, &descriptor_pool_ci, nullptr, &descriptor_pool) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateDescriptorPool failed for descriptor " + name + " !");
     }
 
@@ -63,14 +62,12 @@ void Descriptor::create_descriptor_set_layouts(
 
     spdlog::debug("Creating descriptor set layout for descriptor '{}'.", name);
 
-    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {};
+    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci = {};
+    descriptor_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(descriptor_set_layout_bindings.size());
+    descriptor_set_layout_ci.pBindings = descriptor_set_layout_bindings.data();
 
-    descriptor_set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptor_set_layout_create_info.bindingCount = static_cast<std::uint32_t>(descriptor_set_layout_bindings.size());
-    descriptor_set_layout_create_info.pBindings = descriptor_set_layout_bindings.data();
-
-    if (vkCreateDescriptorSetLayout(device, &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout) !=
-        VK_SUCCESS) {
+    if (vkCreateDescriptorSetLayout(device, &descriptor_set_layout_ci, nullptr, &descriptor_set_layout) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateDescriptorSetLayout failed for descriptor " + name + " !");
     }
 
@@ -120,19 +117,18 @@ void Descriptor::create_descriptor_sets() {
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(number_of_images_in_swapchain,
                                                                     descriptor_set_layout);
 
-    VkDescriptorSetAllocateInfo descriptor_set_alloc_info = {};
-
-    descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    descriptor_set_alloc_info.descriptorPool = descriptor_pool;
-    descriptor_set_alloc_info.descriptorSetCount = static_cast<std::uint32_t>(number_of_images_in_swapchain);
-    descriptor_set_alloc_info.pSetLayouts = descriptor_set_layouts.data();
+    VkDescriptorSetAllocateInfo descriptor_set_ai = {};
+    descriptor_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptor_set_ai.descriptorPool = descriptor_pool;
+    descriptor_set_ai.descriptorSetCount = static_cast<std::uint32_t>(number_of_images_in_swapchain);
+    descriptor_set_ai.pSetLayouts = descriptor_set_layouts.data();
 
     // TODO: Do we need this for recreation of swapchain?
     descriptor_sets.clear();
 
     descriptor_sets.resize(number_of_images_in_swapchain);
 
-    if (vkAllocateDescriptorSets(device, &descriptor_set_alloc_info, descriptor_sets.data()) != VK_SUCCESS) {
+    if (vkAllocateDescriptorSets(device, &descriptor_set_ai, descriptor_sets.data()) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkAllocateDescriptorSets failed for descriptor " + name + " !");
     }
 
@@ -155,6 +151,7 @@ void Descriptor::create_descriptor_sets() {
 
 Descriptor::~Descriptor() {
     assert(device);
+    spdlog::trace("Destroying descriptor {}.", name);
 
     reset(true);
 }

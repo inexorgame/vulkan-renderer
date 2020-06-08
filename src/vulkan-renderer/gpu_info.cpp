@@ -1,5 +1,4 @@
 #include "inexor/vulkan-renderer/gpu_info.hpp"
-
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/surface_formats.hpp"
 

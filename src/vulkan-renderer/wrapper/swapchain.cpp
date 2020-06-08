@@ -13,7 +13,7 @@ Swapchain::Swapchain(Swapchain &&other) noexcept
       surface(std::exchange(other.surface, nullptr)), swapchain(std::exchange(other.swapchain, nullptr)),
       surface_format(other.surface_format), extent(other.extent), swapchain_images(std::move(other.swapchain_images)),
       swapchain_image_views(std::move(other.swapchain_image_views)), swapchain_image_count(other.swapchain_image_count),
-      vsync_enabled(other.vsync_enabled) {}
+      vsync_enabled(other.vsync_enabled), name(std::move(other.name)) {}
 
 void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
                                 std::uint32_t window_height) {
@@ -40,31 +40,31 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     surface_format = *surface_format_candidate;
 
-    VkSwapchainCreateInfoKHR swapchain_create_info = {};
-    swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchain_create_info.surface = surface;
-    swapchain_create_info.minImageCount = swapchain_image_count;
-    swapchain_create_info.imageFormat = surface_format.format;
-    swapchain_create_info.imageColorSpace = surface_format.colorSpace;
-    swapchain_create_info.imageExtent.width = extent.width;
-    swapchain_create_info.imageExtent.height = extent.height;
-    swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchain_create_info.preTransform =
+    VkSwapchainCreateInfoKHR swapchain_ci = {};
+    swapchain_ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchain_ci.surface = surface;
+    swapchain_ci.minImageCount = swapchain_image_count;
+    swapchain_ci.imageFormat = surface_format.format;
+    swapchain_ci.imageColorSpace = surface_format.colorSpace;
+    swapchain_ci.imageExtent.width = extent.width;
+    swapchain_ci.imageExtent.height = extent.height;
+    swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapchain_ci.preTransform =
         (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(graphics_card,
                                                                                                         surface);
-    swapchain_create_info.imageArrayLayers = 1;
-    swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchain_create_info.queueFamilyIndexCount = 0;
-    swapchain_create_info.pQueueFamilyIndices = nullptr;
-    swapchain_create_info.presentMode = *present_mode;
+    swapchain_ci.imageArrayLayers = 1;
+    swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapchain_ci.queueFamilyIndexCount = 0;
+    swapchain_ci.pQueueFamilyIndices = nullptr;
+    swapchain_ci.presentMode = *present_mode;
 
     if (old_swapchain != VK_NULL_HANDLE) {
-        swapchain_create_info.oldSwapchain = old_swapchain;
+        swapchain_ci.oldSwapchain = old_swapchain;
     }
 
     // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
-    swapchain_create_info.clipped = VK_TRUE;
-    swapchain_create_info.compositeAlpha = settings_decision_maker.find_composite_alpha_format(graphics_card, surface);
+    swapchain_ci.clipped = VK_TRUE;
+    swapchain_ci.compositeAlpha = settings_decision_maker.find_composite_alpha_format(graphics_card, surface);
 
     // Set additional usage flag for blitting from the swapchain images if supported.
     VkFormatProperties formatProps;
@@ -73,10 +73,10 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) ||
         (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
-        swapchain_create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        swapchain_ci.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 
-    if (vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(device, &swapchain_ci, nullptr, &swapchain) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSwapchainKHR failed!");
     }
 
@@ -96,26 +96,26 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     swapchain_image_views.resize(swapchain_image_count);
 
-    VkImageViewCreateInfo image_view_create_info = {};
-    image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_create_info.format = surface_format.format;
-    image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_create_info.subresourceRange.baseMipLevel = 0;
-    image_view_create_info.subresourceRange.levelCount = 1;
-    image_view_create_info.subresourceRange.baseArrayLayer = 0;
-    image_view_create_info.subresourceRange.layerCount = 1;
+    VkImageViewCreateInfo image_view_ci = {};
+    image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_ci.format = surface_format.format;
+    image_view_ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_ci.subresourceRange.baseMipLevel = 0;
+    image_view_ci.subresourceRange.levelCount = 1;
+    image_view_ci.subresourceRange.baseArrayLayer = 0;
+    image_view_ci.subresourceRange.layerCount = 1;
 
     for (std::size_t i = 0; i < swapchain_image_count; i++) {
         spdlog::debug("Creating swapchain image #{}.", i);
 
-        image_view_create_info.image = swapchain_images[i];
+        image_view_ci.image = swapchain_images[i];
 
-        if (vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]) != VK_SUCCESS) {
+        if (vkCreateImageView(device, &image_view_ci, nullptr, &swapchain_image_views[i]) != VK_SUCCESS) {
             throw std::runtime_error("Error: vkCreateImageView failed!");
         }
 
@@ -126,8 +126,9 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 }
 
 Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
-                     std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync)
-    : device(device), graphics_card(graphics_card), surface(surface), vsync_enabled(enable_vsync) {
+                     std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
+                     const std::string &name)
+    : device(device), graphics_card(graphics_card), surface(surface), vsync_enabled(enable_vsync), name(name) {
 
     assert(device);
     assert(graphics_card);
@@ -157,8 +158,8 @@ void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height
 }
 
 Swapchain::~Swapchain() {
+    spdlog::trace("Destroying swapchain {}.", name);
     vkDestroySwapchainKHR(device, swapchain, nullptr);
-    swapchain = VK_NULL_HANDLE;
 
     for (auto *image_view : swapchain_image_views) {
         vkDestroyImageView(device, image_view, nullptr);

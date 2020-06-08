@@ -52,13 +52,13 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         present_queue_family_index = graphics_queue_family_index;
 
         // In this case, there is one queue family which can be used for both graphics and presentation.
-        VkDeviceQueueCreateInfo create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation;
-        create_info.queueCount = 1;
-        create_info.pQueuePriorities = &::default_queue_priority;
+        VkDeviceQueueCreateInfo device_queue_ci = {};
+        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        device_queue_ci.queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation;
+        device_queue_ci.queueCount = 1;
+        device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
-        queues_to_create.push_back(create_info);
+        queues_to_create.push_back(device_queue_ci);
     } else {
         spdlog::debug("No queue found which supports both graphics and presentation.");
         spdlog::debug("The application will try to use 2 separate queues.");
@@ -89,22 +89,22 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
 
         // Set up one queue for graphics.
-        VkDeviceQueueCreateInfo create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.queueFamilyIndex = graphics_queue_family_index;
-        create_info.queueCount = 1;
-        create_info.pQueuePriorities = &::default_queue_priority;
+        VkDeviceQueueCreateInfo device_queue_ci = {};
+        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        device_queue_ci.queueFamilyIndex = graphics_queue_family_index;
+        device_queue_ci.queueCount = 1;
+        device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
-        queues_to_create.push_back(create_info);
+        queues_to_create.push_back(device_queue_ci);
 
         // Set up one queue for presentation.
-        create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.queueFamilyIndex = present_queue_family_index;
-        create_info.queueCount = 1;
-        create_info.pQueuePriorities = &::default_queue_priority;
+        device_queue_ci = {};
+        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        device_queue_ci.queueFamilyIndex = present_queue_family_index;
+        device_queue_ci.queueCount = 1;
+        device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
-        queues_to_create.push_back(create_info);
+        queues_to_create.push_back(device_queue_ci);
     }
 
     // Add another device queue just for data transfer.
@@ -122,15 +122,13 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
 
-        VkDeviceQueueCreateInfo create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        create_info.pNext = nullptr;
-        create_info.flags = 0;
-        create_info.queueFamilyIndex = transfer_queue_family_index;
-        create_info.queueCount = 1;
-        create_info.pQueuePriorities = &::default_queue_priority;
+        VkDeviceQueueCreateInfo device_queue_ci = {};
+        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        device_queue_ci.queueFamilyIndex = transfer_queue_family_index;
+        device_queue_ci.queueCount = 1;
+        device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
-        queues_to_create.push_back(create_info);
+        queues_to_create.push_back(device_queue_ci);
     } else {
         // We don't have the opportunity to use a separated queue for data transfer!
         // Do not create a new queue, use the graphics queue instead.
@@ -177,20 +175,20 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     // Enable anisotropic filtering.
     used_features.samplerAnisotropy = VK_TRUE;
 
-    VkDeviceCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size());
-    create_info.pQueueCreateInfos = queues_to_create.data();
+    VkDeviceCreateInfo device_ci = {};
+    device_ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    device_ci.queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size());
+    device_ci.pQueueCreateInfos = queues_to_create.data();
     // Device layers were deprecated in Vulkan some time ago, essentially making all layers instance layers.
-    create_info.enabledLayerCount = 0;
-    create_info.ppEnabledLayerNames = nullptr;
-    create_info.enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size());
-    create_info.ppEnabledExtensionNames = enabled_device_extensions.data();
-    create_info.pEnabledFeatures = &used_features;
+    device_ci.enabledLayerCount = 0;
+    device_ci.ppEnabledLayerNames = nullptr;
+    device_ci.enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size());
+    device_ci.ppEnabledExtensionNames = enabled_device_extensions.data();
+    device_ci.pEnabledFeatures = &used_features;
 
     spdlog::debug("Creating physical device (graphics card interface).");
 
-    if (vkCreateDevice(graphics_card, &create_info, nullptr, &device) != VK_SUCCESS) {
+    if (vkCreateDevice(graphics_card, &device_ci, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateDevice failed!");
     }
 
@@ -248,12 +246,14 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 }
 
 Device::~Device() {
-    vkDestroyDevice(this->device, nullptr);
-    this->device = VK_NULL_HANDLE;
+    assert(device);
+    spdlog::trace("Destroying device.");
+    vkDestroyDevice(device, nullptr);
 }
 
 #ifndef NDEBUG
-void Device::set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string& name) {
+void Device::set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type,
+                             const std::string &name) {
     assert(device);
     assert(!name.empty());
     assert(object);

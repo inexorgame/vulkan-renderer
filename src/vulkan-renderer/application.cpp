@@ -389,13 +389,12 @@ VkResult Application::init(int argc, char **argv) {
         spdlog::debug("Khronos validation layer is enabled.");
 
         if (availability_checks_manager->has_instance_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
-            VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {};
+            VkDebugReportCallbackCreateInfoEXT debug_report_ci = {};
 
-            debug_report_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-            debug_report_create_info.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
-                                             VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
-                                             VK_DEBUG_REPORT_ERROR_BIT_EXT;
-            debug_report_create_info.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
+            debug_report_ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+            debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
+                                    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
+            debug_report_ci.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
@@ -404,8 +403,8 @@ VkResult Application::init(int argc, char **argv) {
 
             if (vkCreateDebugReportCallbackEXT) {
                 // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(vkinstance->get_instance(), &debug_report_create_info,
-                                                                 nullptr, &debug_report_callback);
+                VkResult result = vkCreateDebugReportCallbackEXT(vkinstance->get_instance(), &debug_report_ci, nullptr,
+                                                                 &debug_report_callback);
                 if (VK_SUCCESS == result) {
                     spdlog::debug("Creating Vulkan debug callback.");
                     debug_report_callback_initialised = true;
@@ -500,9 +499,9 @@ VkResult Application::init(int argc, char **argv) {
     vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(),
                                                            vkdevice->get_physical_device());
 
-    swapchain =
-        std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(), surface->get(),
-                                             window->get_width(), window->get_height(), vsync_enabled);
+    swapchain = std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(),
+                                                     surface->get(), window->get_width(), window->get_height(),
+                                                     vsync_enabled, "Standard swapchain.");
 
     result = create_depth_buffer();
     vulkan_error_check(result);

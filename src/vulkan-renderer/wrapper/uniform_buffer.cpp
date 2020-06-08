@@ -5,7 +5,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-// TODO: Fix move constructor!
 UniformBuffer::UniformBuffer(UniformBuffer &&other) noexcept
     : GPUMemoryBuffer(std::move(other)), descriptor_buffer_info(std::move(other.descriptor_buffer_info)),
       descriptor_set(std::move(other.descriptor_set)) {}

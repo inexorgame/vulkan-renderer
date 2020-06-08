@@ -152,28 +152,25 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 
     spdlog::debug("Recording pipeline barrier for image layer transition");
 
-    OnceCommandBuffer command_buffer_for_image_transition(device, data_transfer_queue,
-                                                          data_transfer_queue_family_index);
+    OnceCommandBuffer image_transition_change(device, data_transfer_queue, data_transfer_queue_family_index);
 
-    command_buffer_for_image_transition.create_command_buffer();
+    image_transition_change.create_command_buffer();
+    image_transition_change.start_recording();
 
-    command_buffer_for_image_transition.start_recording();
+    vkCmdPipelineBarrier(image_transition_change.get_command_buffer(), source_stage, destination_stage, 0, 0, nullptr,
+                         0, nullptr, 1, &barrier);
 
-    vkCmdPipelineBarrier(command_buffer_for_image_transition.get_command_buffer(), source_stage, destination_stage, 0,
-                         0, nullptr, 0, nullptr, 1, &barrier);
-
-    command_buffer_for_image_transition.end_recording_and_submit_command();
+    image_transition_change.end_recording_and_submit_command();
 }
 
 void Texture::create_texture_sampler() {
-    VkSamplerCreateInfo sampler_create_info = {};
-
-    sampler_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_create_info.magFilter = VK_FILTER_LINEAR;
-    sampler_create_info.minFilter = VK_FILTER_LINEAR;
-    sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    VkSamplerCreateInfo sampler_ci = {};
+    sampler_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_ci.magFilter = VK_FILTER_LINEAR;
+    sampler_ci.minFilter = VK_FILTER_LINEAR;
+    sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
     // These two fields specify if anisotropic filtering should be used.
     // There is no reason not to use this unless performance is a concern.
@@ -182,13 +179,13 @@ void Texture::create_texture_sampler() {
     // performance, but lower quality results. There is no graphics hardware
     // available today that will use more than 16 samples, because the difference
     // is negligible beyond that point.
-    sampler_create_info.anisotropyEnable = VK_TRUE;
-    sampler_create_info.maxAnisotropy = 16;
+    sampler_ci.anisotropyEnable = VK_TRUE;
+    sampler_ci.maxAnisotropy = 16;
 
     // The borderColor field specifies which color is returned when sampling beyond
     // the image with clamp to border addressing mode. It is possible to return black,
     // white or transparent in either float or int formats. You cannot specify an arbitrary color.
-    sampler_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_ci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 
     // The unnormalizedCoordinates field specifies which coordinate system you
     // want to use to address texels in an image. If this field is VK_TRUE, then you
@@ -197,13 +194,13 @@ void Texture::create_texture_sampler() {
     // on all axes. Real-world applications almost always use normalized coordinates,
     // because then it's possible to use textures of varying resolutions with the exact
     // same coordinates.
-    sampler_create_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_create_info.compareEnable = VK_FALSE;
-    sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_create_info.mipLodBias = 0.0f;
-    sampler_create_info.minLod = 0.0f;
-    sampler_create_info.maxLod = 0.0f;
+    sampler_ci.unnormalizedCoordinates = VK_FALSE;
+    sampler_ci.compareEnable = VK_FALSE;
+    sampler_ci.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_ci.mipLodBias = 0.0f;
+    sampler_ci.minLod = 0.0f;
+    sampler_ci.maxLod = 0.0f;
 
     VkPhysicalDeviceFeatures device_features;
     vkGetPhysicalDeviceFeatures(graphics_card, &device_features);
@@ -213,17 +210,17 @@ void Texture::create_texture_sampler() {
 
     if (VK_TRUE == device_features.samplerAnisotropy) {
         // Anisotropic filtering is available.
-        sampler_create_info.maxAnisotropy = graphics_card_properties.limits.maxSamplerAnisotropy;
-        sampler_create_info.anisotropyEnable = VK_TRUE;
+        sampler_ci.maxAnisotropy = graphics_card_properties.limits.maxSamplerAnisotropy;
+        sampler_ci.anisotropyEnable = VK_TRUE;
     } else {
         // The device does not support anisotropic filtering
-        sampler_create_info.maxAnisotropy = 1.0;
-        sampler_create_info.anisotropyEnable = VK_FALSE;
+        sampler_ci.maxAnisotropy = 1.0;
+        sampler_ci.anisotropyEnable = VK_FALSE;
     }
 
     spdlog::debug("Creating image sampler for texture {}.", name);
 
-    if (vkCreateSampler(device, &sampler_create_info, nullptr, &sampler) != VK_SUCCESS) {
+    if (vkCreateSampler(device, &sampler_ci, nullptr, &sampler) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSampler failed for texture " + name + " !");
     }
 
@@ -233,6 +230,7 @@ void Texture::create_texture_sampler() {
 }
 
 Texture::~Texture() {
+    spdlog::trace("Destroying texture {}.", name);
     vkDestroySampler(device, sampler, nullptr);
 }
 

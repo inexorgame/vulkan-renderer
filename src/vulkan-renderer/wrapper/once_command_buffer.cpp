@@ -50,17 +50,16 @@ void OnceCommandBuffer::start_recording() {
 
     spdlog::debug("Starting recording of once command buffer.");
 
-    VkCommandBufferBeginInfo command_buffer_begin_info = {};
-
-    command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.pNext = nullptr;
+    VkCommandBufferBeginInfo command_buffer_bi = {};
+    command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_bi.pNext = nullptr;
 
     // We're only going to use the command buffer once and wait with returning from the function until the copy
     // operation has finished executing. It's good practice to tell the driver about our intent using
     // VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
-    command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    command_buffer_bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    if (vkBeginCommandBuffer(command_buffer->get(), &command_buffer_begin_info) != VK_SUCCESS) {
+    if (vkBeginCommandBuffer(command_buffer->get(), &command_buffer_bi) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkBeginCommandBuffer failed for once command buffer!");
     }
 

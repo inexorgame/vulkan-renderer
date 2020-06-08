@@ -16,6 +16,7 @@ GLFWContext::GLFWContext() {
 }
 
 GLFWContext::~GLFWContext() {
+    spdlog::trace("Destroying glfw context.");
     glfwTerminate();
 }
 

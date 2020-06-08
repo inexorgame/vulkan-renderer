@@ -63,12 +63,10 @@ VkResult VulkanRenderer::record_command_buffers() {
 
     spdlog::debug("Recording command buffers.");
 
-    VkCommandBufferBeginInfo command_buffer_begin_info = {};
-
-    command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.pNext = nullptr;
-    command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-    command_buffer_begin_info.pInheritanceInfo = nullptr;
+    VkCommandBufferBeginInfo command_buffer_bi = {};
+    command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_bi.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    command_buffer_bi.pInheritanceInfo = nullptr;
 
     // TODO: Setup clear colors by TOML configuration file.
     std::array<VkClearValue, 3> clear_values;
@@ -87,13 +85,13 @@ VkResult VulkanRenderer::record_command_buffers() {
     render_area.width = window->get_width();
     render_area.height = window->get_height();
 
-    VkRenderPassBeginInfo render_pass_begin_info = {};
-    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = renderpass->get();
-    render_pass_begin_info.renderArea.offset = {0, 0};
-    render_pass_begin_info.renderArea.extent = render_area;
-    render_pass_begin_info.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
-    render_pass_begin_info.pClearValues = clear_values.data();
+    VkRenderPassBeginInfo render_pass_bi = {};
+    render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_bi.renderPass = renderpass->get();
+    render_pass_bi.renderArea.offset = {0, 0};
+    render_pass_bi.renderArea.extent = render_area;
+    render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
+    render_pass_bi.pClearValues = clear_values.data();
 
     VkViewport viewport{};
 
@@ -114,14 +112,14 @@ VkResult VulkanRenderer::record_command_buffers() {
 
         // TODO: Start debug marker region.
 
-        VkResult result = vkBeginCommandBuffer(current_command_buffer, &command_buffer_begin_info);
+        VkResult result = vkBeginCommandBuffer(current_command_buffer, &command_buffer_bi);
         if (VK_SUCCESS != result)
             return result;
 
         // Update only the necessary parts of VkRenderPassBeginInfo.
-        render_pass_begin_info.framebuffer = framebuffer->get(i);
+        render_pass_bi.framebuffer = framebuffer->get(i);
 
-        vkCmdBeginRenderPass(current_command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(current_command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
         // ----------------------------------------------------------------------------------------------------------------
         // Begin of render pass.
@@ -368,17 +366,14 @@ VkResult VulkanRenderer::create_pipeline() {
 
     // Loop through all shaders in Vulkan shader manager's list and add them to the setup.
     for (const auto &shader : shaders) {
-        VkPipelineShaderStageCreateInfo shader_stage_create_info = {};
+        VkPipelineShaderStageCreateInfo shader_stage_ci = {};
+        shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_ci.stage = shader.get_type();
+        shader_stage_ci.module = shader.get_module();
+        shader_stage_ci.pSpecializationInfo = nullptr;
+        shader_stage_ci.pName = shader.get_entry_point().c_str();
 
-        shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shader_stage_create_info.pNext = nullptr;
-        shader_stage_create_info.flags = 0;
-        shader_stage_create_info.stage = shader.get_type();
-        shader_stage_create_info.module = shader.get_module();
-        shader_stage_create_info.pSpecializationInfo = nullptr;
-        shader_stage_create_info.pName = shader.get_entry_point().c_str();
-
-        shader_stages.push_back(shader_stage_create_info);
+        shader_stages.push_back(shader_stage_ci);
     }
 
     std::vector<VkAttachmentDescription> attachments;

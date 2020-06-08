@@ -46,17 +46,17 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     assert(!code.empty());
     assert(!entry_point.empty());
 
-    VkShaderModuleCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    create_info.codeSize = code.size();
+    VkShaderModuleCreateInfo shader_module_ci = {};
+    shader_module_ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_module_ci.codeSize = code.size();
 
     // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
     // requirements of std::uint32_t. Lucky for us, the data is stored in an std::vector where the default
     // allocator already ensures that the data satisfies the worst case alignment requirements.
-    create_info.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
+    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
 
     spdlog::debug("Creating shader module {}.", name);
-    if (vkCreateShaderModule(device, &create_info, nullptr, &shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(device, &shader_module_ci, nullptr, &shader_module) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name + "!");
     }
 
@@ -69,7 +69,6 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
         // debugging.
         VkDebugMarkerObjectNameInfoEXT name_info = {};
         name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-
         name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT;
         name_info.object = reinterpret_cast<std::uint64_t>(shader_module);
         name_info.pObjectName = name.c_str();

@@ -14,13 +14,13 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
     assert(device);
     assert(!name.empty());
 
-    VkFenceCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    create_info.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
+    VkFenceCreateInfo fence_ci = {};
+    fence_ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
     spdlog::debug("Creating Vulkan synchronisation fence {}.", name);
 
-    if (vkCreateFence(device, &create_info, nullptr, &fence) != VK_SUCCESS) {
+    if (vkCreateFence(device, &fence_ci, nullptr, &fence) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateFence failed!");
     }
 
@@ -30,7 +30,7 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
 }
 
 Fence::~Fence() {
-    spdlog::trace("Destroying fences {}.", name);
+    spdlog::trace("Destroying fence {}.", name);
     vkDestroyFence(device, fence, nullptr);
 }
 

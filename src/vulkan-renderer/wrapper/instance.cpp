@@ -138,15 +138,15 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         }
     }
 
-    VkInstanceCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    create_info.pApplicationInfo = &app_info;
-    create_info.ppEnabledExtensionNames = enabled_instance_extensions.data();
-    create_info.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());
-    create_info.ppEnabledLayerNames = enabled_instance_layers.data();
-    create_info.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
+    VkInstanceCreateInfo instance_ci = {};
+    instance_ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instance_ci.pApplicationInfo = &app_info;
+    instance_ci.ppEnabledExtensionNames = enabled_instance_extensions.data();
+    instance_ci.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());
+    instance_ci.ppEnabledLayerNames = enabled_instance_layers.data();
+    instance_ci.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
 
-    if (vkCreateInstance(&create_info, nullptr, &instance) != VK_SUCCESS) {
+    if (vkCreateInstance(&instance_ci, nullptr, &instance) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateInstance failed!");
     }
 
@@ -163,8 +163,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 }
 
 Instance::~Instance() {
-    vkDestroyInstance(this->instance, nullptr);
-    this->instance = VK_NULL_HANDLE;
+    vkDestroyInstance(instance, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

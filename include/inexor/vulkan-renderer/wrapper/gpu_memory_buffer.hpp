@@ -17,7 +17,7 @@ protected:
     VkDeviceSize buffer_size = 0;
     VmaAllocation allocation = VK_NULL_HANDLE;
     VmaAllocationInfo allocation_info = {};
-    VmaAllocationCreateInfo allocation_create_info = {};
+    VmaAllocationCreateInfo allocation_ci = {};
 
 public:
     /// Delete the copy constructor so gpu memory buffers are move-only objects.
@@ -71,7 +71,7 @@ public:
     }
 
     [[nodiscard]] const VmaAllocationCreateInfo get_allocation_create_info() const {
-        return allocation_create_info;
+        return allocation_ci;
     }
 };
 

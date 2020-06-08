@@ -20,50 +20,50 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     assert(image_extent.height > 0);
     assert(!name.empty());
 
-    VkImageCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    create_info.imageType = VK_IMAGE_TYPE_2D;
-    create_info.extent.width = image_extent.width;
-    create_info.extent.height = image_extent.height;
-    create_info.extent.depth = 1;
-    create_info.mipLevels = 1;
-    create_info.arrayLayers = 1;
-    create_info.format = format;
-    create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    create_info.usage = image_usage;
-    create_info.samples = sample_count;
-    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkImageCreateInfo image_ci = {};
+    image_ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_ci.imageType = VK_IMAGE_TYPE_2D;
+    image_ci.extent.width = image_extent.width;
+    image_ci.extent.height = image_extent.height;
+    image_ci.extent.depth = 1;
+    image_ci.mipLevels = 1;
+    image_ci.arrayLayers = 1;
+    image_ci.format = format;
+    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_ci.usage = image_usage;
+    image_ci.samples = sample_count;
+    image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VmaAllocationCreateInfo allocation_create_info = {};
-    allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    VmaAllocationCreateInfo vma_allocation_ci = {};
+    vma_allocation_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 #if VMA_RECORDING_ENABLED
-    allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    allocation_create_info.pUserData = this->name.data();
+    vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+    vma_allocation_ci.pUserData = this->name.data();
 #else
-    allocation_create_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
-    if (vmaCreateImage(vma_allocator, &create_info, &allocation_create_info, &image, &allocation, &allocation_info) !=
+    if (vmaCreateImage(vma_allocator, &image_ci, &vma_allocation_ci, &image, &allocation, &allocation_info) !=
         VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateImage failed for depth buffer images!");
     }
 
     // TODO: Assign an internal name using Vulkan debug markers.
 
-    VkImageViewCreateInfo view_info = {};
-    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    view_info.image = image;
-    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    view_info.format = format;
-    view_info.subresourceRange.aspectMask = aspect_flags;
-    view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = 1;
-    view_info.subresourceRange.baseArrayLayer = 0;
-    view_info.subresourceRange.layerCount = 1;
+    VkImageViewCreateInfo image_view_ci = {};
+    image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_ci.image = image;
+    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_ci.format = format;
+    image_view_ci.subresourceRange.aspectMask = aspect_flags;
+    image_view_ci.subresourceRange.baseMipLevel = 0;
+    image_view_ci.subresourceRange.levelCount = 1;
+    image_view_ci.subresourceRange.baseArrayLayer = 0;
+    image_view_ci.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device, &view_info, nullptr, &image_view) != VK_SUCCESS) {
+    if (vkCreateImageView(device, &image_view_ci, nullptr, &image_view) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateImageView failed!");
     }
 

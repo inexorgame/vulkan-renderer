@@ -57,17 +57,17 @@ VulkanMemoryAllocator::VulkanMemoryAllocator(const VkInstance instance, const Vk
     vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
     vma_record_settings.pFilePath = vma_replay_file.c_str();
 
-    VmaAllocatorCreateInfo allocator_info = {};
-    allocator_info.physicalDevice = graphics_card;
-    allocator_info.instance = instance;
-    allocator_info.device = device;
+    VmaAllocatorCreateInfo vma_allocator_ci = {};
+    vma_allocator_ci.physicalDevice = graphics_card;
+    vma_allocator_ci.instance = instance;
+    vma_allocator_ci.device = device;
 #if VMA_RECORDING_ENABLED
-    allocator_info.pRecordSettings = &vma_record_settings;
+    vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif
 
     spdlog::debug("Creating Vulkan memory allocator instance.");
 
-    if (vmaCreateAllocator(&allocator_info, &vma_allocator) != VK_SUCCESS) {
+    if (vmaCreateAllocator(&vma_allocator_ci, &vma_allocator) != VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateAllocator failed!");
     }
 
@@ -75,8 +75,8 @@ VulkanMemoryAllocator::VulkanMemoryAllocator(const VkInstance instance, const Vk
 }
 
 VulkanMemoryAllocator::~VulkanMemoryAllocator() {
+    spdlog::trace("Destroying Vulkan memory allocator.");
     vmaDestroyAllocator(vma_allocator);
-    vma_allocator = VK_NULL_HANDLE;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

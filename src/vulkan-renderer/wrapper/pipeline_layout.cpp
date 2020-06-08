@@ -17,14 +17,14 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
     assert(!descriptor_set_layouts.empty());
     assert(!name.empty());
 
-    VkPipelineLayoutCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    create_info.setLayoutCount = static_cast<std::uint32_t>(descriptor_set_layouts.size());
-    create_info.pSetLayouts = descriptor_set_layouts.data();
+    VkPipelineLayoutCreateInfo pipeline_layout_ci = {};
+    pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(descriptor_set_layouts.size());
+    pipeline_layout_ci.pSetLayouts = descriptor_set_layouts.data();
 
     spdlog::debug("Creating pipeline layout {}.", name);
 
-    if (vkCreatePipelineLayout(device, &create_info, nullptr, &pipeline_layout)) {
+    if (vkCreatePipelineLayout(device, &pipeline_layout_ci, nullptr, &pipeline_layout)) {
         throw std::runtime_error("Error: vkCreatePipelineLayout failed for " + name + " !");
     }
 

@@ -16,6 +16,7 @@ WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : in
 }
 
 WindowSurface::~WindowSurface() {
+    spdlog::trace("Destroying window surface.");
     vkDestroySurfaceKHR(instance, surface, nullptr);
 }
 
