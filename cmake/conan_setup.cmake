@@ -35,5 +35,6 @@ conan_cmake_run(
     KEEP_RPATHS
     OPTIONS build_benchmarks=${benchmark_option}
             build_tests=${tests_option}
+    SETTINGS compiler.cppstd=17
 )
 conan_check_compiler()
