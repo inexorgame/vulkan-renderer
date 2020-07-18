@@ -111,7 +111,7 @@ VkResult VulkanRenderer::record_command_buffers() {
             return result;
 
         // Update only the necessary parts of VkRenderPassBeginInfo.
-        render_pass_bi.framebuffer = framebuffer->get(i);
+        render_pass_bi.framebuffer = framebuffers[i].get();
 
         vkCmdBeginRenderPass(current_command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -187,7 +187,7 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     spdlog::debug("Device is idle.");
 
-    framebuffer.reset();
+    framebuffers.clear();
 
     depth_buffer.reset();
 
@@ -233,7 +233,7 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     depth_stencil.reset();
 
-    framebuffer.reset();
+    framebuffers.clear();
 
     VkResult result = create_depth_buffer();
     vulkan_error_check(result);
@@ -451,10 +451,11 @@ VkResult VulkanRenderer::create_frame_buffers() {
     std::vector<VkImageView> attachments(2, nullptr);
     attachments[1] = depth_stencil->get_image_view();
 
-    // Create frames for frame buffer.
-    framebuffer = std::make_unique<wrapper::Framebuffer>(
-        vkdevice->get_device(), renderpass->get(), attachments, swapchain->get_image_views(), window->get_width(),
-        window->get_height(), swapchain->get_image_count(), "Standard framebuffer");
+    // Create framebuffers
+    for (std::uint32_t i = 0; i < swapchain->get_image_count(); i++) {
+        framebuffers.emplace_back(vkdevice->get_device(), swapchain->get_image_view(i), depth_stencil->get_image_view(),
+                                  renderpass->get(), *swapchain);
+    }
 
     return VK_SUCCESS;
 }

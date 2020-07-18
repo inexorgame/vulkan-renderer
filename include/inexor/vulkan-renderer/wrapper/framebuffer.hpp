@@ -1,18 +1,16 @@
 #pragma once
 
+// TODO(): Create a vulkan forward declaration header
 #include <vulkan/vulkan_core.h>
 
-#include <stdexcept>
-#include <string>
-#include <vector>
-
 namespace inexor::vulkan_renderer::wrapper {
+
+class Swapchain;
 
 class Framebuffer {
 private:
     VkDevice device;
-    std::vector<VkFramebuffer> frames;
-    std::string name;
+    VkFramebuffer framebuffer;
 
 public:
     /// Delete the copy constructor so framebuffers are move-only objects.
@@ -25,27 +23,18 @@ public:
 
     /// @brief Creates the frames for the framebuffer.
     /// @param device [in] The Vulkan device.
-    /// @param renderpass [in] The renderpass.
+    /// @param render_pass [in] The render_pass.
     /// @param attachments [in] The framebuffer attachments (image views).
     /// @param swapchain_attachments [in] The swapchain image views.
     /// @param width [in] The width of the framebuffer, mostly equal to the window's width.
     /// @param height [in] The width of the framebuffer, mostly equal to the height's width.
     /// @param swapchain_image_count [in] The number of images in the swapchain.
     /// @param name [in] The internal name of the framebuffer.
-    Framebuffer(const VkDevice device, const VkRenderPass renderpass, std::vector<VkImageView> attachments,
-                const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width,
-                const std::uint32_t height, const std::uint32_t swapchain_image_count,
-                const std::string name);
-
+    Framebuffer(VkDevice device, VkImageView color, VkImageView depth, VkRenderPass render_pass,
+                const wrapper::Swapchain &swapchain);
     ~Framebuffer();
 
-    [[nodiscard]] VkFramebuffer get(const std::size_t index) const {
-        if (index >= frames.size()) {
-            throw std::out_of_range("Error: Index " + std::to_string(index) +
-                                    " for frame buffers is out of range! Size: " + std::to_string(frames.size()));
-        }
-        return frames[index];
-    }
+    VkFramebuffer get() const { return framebuffer; }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -140,7 +140,7 @@ protected:
 
     std::unique_ptr<wrapper::RenderPass> renderpass;
 
-    std::unique_ptr<wrapper::Framebuffer> framebuffer;
+    std::vector<wrapper::Framebuffer> framebuffers;
 
     /// @brief Create a physical device handle.
     /// @param graphics_card The regarded graphics card.
