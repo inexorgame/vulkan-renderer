@@ -8,6 +8,7 @@ add_library(
     vulkan-renderer/debug_callback.cpp
     vulkan-renderer/error_handling.cpp
     vulkan-renderer/fps_counter.cpp
+    vulkan-renderer/frame_graph.cpp
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/renderer.cpp
