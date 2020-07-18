@@ -16,7 +16,7 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
                                    const VkVertexInputBindingDescription vertex_binding,
                                    const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
                                    const std::uint32_t window_width, const std::uint32_t window_height,
-                                   const bool multisampling_enabled, const std::string &name)
+                                   const std::string &name)
     : device(device), name(name) {
 
     assert(device);
@@ -63,7 +63,6 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
     viewport_state_ci.scissorCount = 1;
     viewport_state_ci.pScissors = &scissor;
 
-    // TODO: Improve multisampling parameters: support other than 4 samples.
     VkPipelineMultisampleStateCreateInfo multisample_state_ci = {};
     multisample_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisample_state_ci.sampleShadingEnable = VK_FALSE;
@@ -71,7 +70,7 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
     multisample_state_ci.pSampleMask = nullptr;
     multisample_state_ci.alphaToCoverageEnable = VK_FALSE;
     multisample_state_ci.alphaToOneEnable = VK_FALSE;
-    multisample_state_ci.rasterizationSamples = multisampling_enabled ? VK_SAMPLE_COUNT_4_BIT : VK_SAMPLE_COUNT_1_BIT;
+    multisample_state_ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     // TODO: Support wireframe.
     VkPipelineRasterizationStateCreateInfo rasterization_state_ci = {};

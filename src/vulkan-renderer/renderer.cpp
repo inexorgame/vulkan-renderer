@@ -72,14 +72,8 @@ VkResult VulkanRenderer::record_command_buffers() {
     std::array<VkClearValue, 3> clear_values;
 
     // Note that the order of clear_values must be identical to the order of the attachments.
-    if (multisampling_enabled) {
-        clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clear_values[1].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clear_values[2].depthStencil = {1.0f, 0};
-    } else {
-        clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clear_values[1].depthStencil = {1.0f, 0};
-    }
+    clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clear_values[1].depthStencil = {1.0f, 0};
 
     VkExtent2D render_area;
     render_area.width = window->get_width();
@@ -199,11 +193,6 @@ VkResult VulkanRenderer::cleanup_swapchain() {
 
     depth_stencil.reset();
 
-    if (multisampling_enabled) {
-        msaa_target_buffer.color.reset();
-        msaa_target_buffer.depth.reset();
-    }
-
     command_buffers.clear();
 
     graphics_pipeline.reset();
@@ -243,11 +232,6 @@ VkResult VulkanRenderer::recreate_swapchain() {
     depth_buffer.reset();
 
     depth_stencil.reset();
-
-    if (multisampling_enabled) {
-        msaa_target_buffer.color.reset();
-        msaa_target_buffer.depth.reset();
-    }
 
     framebuffer.reset();
 
@@ -384,100 +368,41 @@ VkResult VulkanRenderer::create_pipeline() {
     color_reference.attachment = 0;
     color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkAttachmentReference resolve_reference = {};
-    resolve_reference.attachment = 1;
-    resolve_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
     VkAttachmentReference depth_reference = {};
-    depth_reference.attachment = multisampling_enabled ? 2 : 1;
+    depth_reference.attachment = 1;
     depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    if (multisampling_enabled) {
-        spdlog::debug("Multisampling is enabled.");
+    attachments.resize(2);
 
-        attachments.resize(4);
+    // Color attachment.
+    attachments[0].format = swapchain->get_image_format();
+    attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        // Multisampled attachment that we render to.
-        attachments[0].format = swapchain->get_image_format();
-        attachments[0].samples = multisampling_sample_count;
-        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    // Depth attachment.
+    attachments[1].format = depth_buffer->get_image_format();
+    attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-        // This is the frame buffer attachment to where the multisampled image
-        // will be resolved to and which will be presented to the swapchain.
-        attachments[1].format = swapchain->get_image_format();
-        attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[1].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        // Multisampled depth attachment we render to.
-        attachments[2].format = depth_buffer->get_image_format();
-        attachments[2].samples = multisampling_sample_count;
-        attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[2].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        // Depth resolve attachment.
-        attachments[3].format = depth_buffer->get_image_format();
-        attachments[3].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[3].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[3].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[3].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[3].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[3].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass_description.colorAttachmentCount = 1;
-        subpass_description.pColorAttachments = &color_reference;
-        subpass_description.pResolveAttachments = &resolve_reference;
-        subpass_description.pDepthStencilAttachment = &depth_reference;
-    } else {
-        spdlog::debug("Multisampling is disabled.");
-
-        attachments.resize(2);
-
-        // Color attachment.
-        attachments[0].format = swapchain->get_image_format();
-        attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        // Depth attachment.
-        attachments[1].format = depth_buffer->get_image_format();
-        attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass_description.colorAttachmentCount = 1;
-        subpass_description.pColorAttachments = &color_reference;
-        subpass_description.pDepthStencilAttachment = &depth_reference;
-        subpass_description.inputAttachmentCount = 0;
-        subpass_description.pInputAttachments = nullptr;
-        subpass_description.preserveAttachmentCount = 0;
-        subpass_description.pPreserveAttachments = nullptr;
-        subpass_description.pResolveAttachments = nullptr;
-    }
+    subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_description.colorAttachmentCount = 1;
+    subpass_description.pColorAttachments = &color_reference;
+    subpass_description.pDepthStencilAttachment = &depth_reference;
+    subpass_description.inputAttachmentCount = 0;
+    subpass_description.pInputAttachments = nullptr;
+    subpass_description.preserveAttachmentCount = 0;
+    subpass_description.pPreserveAttachments = nullptr;
+    subpass_description.pResolveAttachments = nullptr;
 
     std::vector<VkSubpassDependency> dependencies(2);
 
@@ -505,8 +430,7 @@ VkResult VulkanRenderer::create_pipeline() {
 
     graphics_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
         vkdevice->get_device(), pipeline_layout->get(), renderpass->get(), shader_stages, vertex_binding_desc,
-        attribute_binding_desc, window->get_width(), window->get_height(), multisampling_enabled,
-        "Default graphics pipeline");
+        attribute_binding_desc, window->get_width(), window->get_height(), "Default graphics pipeline");
 
     return VK_SUCCESS;
 }
@@ -524,39 +448,13 @@ VkResult VulkanRenderer::create_frame_buffers() {
         VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
         swapchain->get_extent());
 
-    std::vector<VkImageView> attachments(multisampling_enabled ? 4 : 2, nullptr);
-
-    if (multisampling_enabled) {
-        // Check if device supports requested sample count for color and depth frame buffer
-        // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) &&
-        // (deviceProperties.limits.framebufferDepthSampleCounts >= sampleCount));
-
-        // Create color buffer for MSAA target.
-        msaa_target_buffer.color = std::make_unique<wrapper::Image>(
-            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
-            swapchain->get_image_format(),
-            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-            multisampling_sample_count, "MSAA color image", swapchain->get_extent());
-
-        // Create depth buffer for MSAA target.
-        msaa_target_buffer.depth = std::make_unique<wrapper::Image>(
-            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
-            depth_buffer->get_image_format(),
-            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, multisampling_sample_count, "MSAA depth image",
-            swapchain->get_extent());
-
-        attachments[0] = msaa_target_buffer.color->get_image_view();
-        attachments[2] = msaa_target_buffer.depth->get_image_view();
-        attachments[3] = depth_stencil->get_image_view();
-    } else {
-        attachments[1] = depth_stencil->get_image_view();
-    }
+    std::vector<VkImageView> attachments(2, nullptr);
+    attachments[1] = depth_stencil->get_image_view();
 
     // Create frames for frame buffer.
     framebuffer = std::make_unique<wrapper::Framebuffer>(
         vkdevice->get_device(), renderpass->get(), attachments, swapchain->get_image_views(), window->get_width(),
-        window->get_height(), swapchain->get_image_count(), multisampling_enabled, "Standard framebuffer");
+        window->get_height(), swapchain->get_image_count(), "Standard framebuffer");
 
     return VK_SUCCESS;
 }

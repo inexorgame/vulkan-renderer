@@ -12,8 +12,7 @@ Framebuffer::Framebuffer(Framebuffer &&other) noexcept
 Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass,
                          std::vector<VkImageView> attachments,
                          const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width,
-                         const std::uint32_t height, const std::uint32_t swapchain_image_count,
-                         const bool multisampling_enabled, const std::string name)
+                         const std::uint32_t height, const std::uint32_t swapchain_image_count, const std::string name)
     : device(device), name(std::move(name)) {
     assert(device);
     assert(renderpass);
@@ -41,11 +40,7 @@ Framebuffer::Framebuffer(const VkDevice device, const VkRenderPass renderpass,
     for (std::size_t i = 0; i < swapchain_image_count; i++) {
         spdlog::debug("Creating framebuffer #{}.", i);
 
-        if (multisampling_enabled) {
-            attachments[1] = swapchain_attachments[i];
-        } else {
-            attachments[0] = swapchain_attachments[i];
-        }
+        attachments[0] = swapchain_attachments[i];
 
         if (vkCreateFramebuffer(device, &framebuffer_ci, nullptr, &frames[i])) {
             throw std::runtime_error("Error: vkCreateFramebuffer failed for framebuffer " + name + " !");

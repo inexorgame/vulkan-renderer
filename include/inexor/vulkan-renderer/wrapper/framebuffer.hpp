@@ -24,7 +24,6 @@ public:
     Framebuffer &operator=(Framebuffer &&) noexcept = default;
 
     /// @brief Creates the frames for the framebuffer.
-    /// @todo Currently, 4xMSAA is used as default multisampling. Adapt this code once that changes.
     /// @param device [in] The Vulkan device.
     /// @param renderpass [in] The renderpass.
     /// @param attachments [in] The framebuffer attachments (image views).
@@ -32,11 +31,10 @@ public:
     /// @param width [in] The width of the framebuffer, mostly equal to the window's width.
     /// @param height [in] The width of the framebuffer, mostly equal to the height's width.
     /// @param swapchain_image_count [in] The number of images in the swapchain.
-    /// @param multisampling_enabled [in] True if multisampling is enabled, false otherwise.
     /// @param name [in] The internal name of the framebuffer.
     Framebuffer(const VkDevice device, const VkRenderPass renderpass, std::vector<VkImageView> attachments,
                 const std::vector<VkImageView> &swapchain_attachments, const std::uint32_t width,
-                const std::uint32_t height, const std::uint32_t swapchain_image_count, const bool multisampling_enabled,
+                const std::uint32_t height, const std::uint32_t swapchain_image_count,
                 const std::string name);
 
     ~Framebuffer();

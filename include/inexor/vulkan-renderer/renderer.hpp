@@ -93,13 +93,6 @@ protected:
     VkDescriptorImageInfo image_info = {};
     VkPipelineCache pipeline_cache;
 
-    // TODO: Read from TOML configuration file and pass value to core engine.
-    bool multisampling_enabled = true;
-
-    VkSampleCountFlagBits multisampling_sample_count = VK_SAMPLE_COUNT_4_BIT;
-
-    MSAATarget msaa_target_buffer;
-
     bool vsync_enabled = false;
 
     Camera game_camera;

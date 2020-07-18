@@ -32,15 +32,12 @@ public:
     /// @param attribute_binding [in] The vertex attribute binding description.
     /// @param window_width [in] The width of the window.
     /// @param window_height [in] The height of the window.
-    /// @param multisampling_enabled [in] True if multisampling is enabled, false otherwise.
-    /// @note For now, The engines uses 4 samples for MSAA by default. This might change in the future.
     /// @param name [in] The internal name of the graphics pipeline.
     GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
                      const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
                      const VkVertexInputBindingDescription vertex_binding,
                      const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
-                     const std::uint32_t window_width, const std::uint32_t window_height,
-                     const bool multisampling_enabled, const std::string &name);
+                     const std::uint32_t window_width, const std::uint32_t window_height, const std::string &name);
 
     ~GraphicsPipeline();
 
