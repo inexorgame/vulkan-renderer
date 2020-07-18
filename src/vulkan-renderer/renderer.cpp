@@ -389,7 +389,7 @@ VkResult VulkanRenderer::create_pipeline() {
     resolve_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference depth_reference = {};
-    depth_reference.attachment = 2;
+    depth_reference.attachment = multisampling_enabled ? 2 : 1;
     depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     if (multisampling_enabled) {
@@ -447,8 +447,6 @@ VkResult VulkanRenderer::create_pipeline() {
         spdlog::debug("Multisampling is disabled.");
 
         attachments.resize(2);
-
-        std::array<VkAttachmentDescription, 2> attachments = {};
 
         // Color attachment.
         attachments[0].format = swapchain->get_image_format();
@@ -526,7 +524,7 @@ VkResult VulkanRenderer::create_frame_buffers() {
         VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
         swapchain->get_extent());
 
-    std::vector<VkImageView> attachments(4, nullptr);
+    std::vector<VkImageView> attachments(multisampling_enabled ? 4 : 2, nullptr);
 
     if (multisampling_enabled) {
         // Check if device supports requested sample count for color and depth frame buffer
