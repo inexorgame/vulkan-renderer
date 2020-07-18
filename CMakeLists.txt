@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.9)
 project(inexor-vulkan-renderer)
 
 # Stop in source builds
