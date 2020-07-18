@@ -34,13 +34,13 @@ Fence::~Fence() {
     vkDestroyFence(device, fence, nullptr);
 }
 
-void Fence::block(std::uint64_t timeout_limit) {
+void Fence::block(std::uint64_t timeout_limit) const {
     assert(device);
     assert(fence);
     vkWaitForFences(device, 1, &fence, VK_TRUE, timeout_limit);
 }
 
-void Fence::reset() {
+void Fence::reset() const {
     assert(device);
     assert(fence);
     vkResetFences(device, 1, &fence);

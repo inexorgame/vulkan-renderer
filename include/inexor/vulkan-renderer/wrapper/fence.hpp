@@ -36,10 +36,10 @@ public:
 
     ///
     ///
-    void block(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max());
+    void block(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
 
     ///
-    void reset();
+    void reset() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
