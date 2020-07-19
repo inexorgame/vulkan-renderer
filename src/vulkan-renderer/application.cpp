@@ -171,67 +171,6 @@ VkResult Application::load_shaders() {
     return VK_SUCCESS;
 }
 
-/// TODO: Refactor rendering method!
-/// TODO: Finish present call using transfer queue.
-VkResult Application::render_frame() {
-    assert(vkdevice->get_device());
-    assert(vkdevice->get_graphics_queue());
-    assert(vkdevice->get_present_queue());
-
-    std::uint32_t image_index = 0;
-    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
-                                            image_available_semaphore->get(), VK_NULL_HANDLE, &image_index);
-
-    // Update the data which changes every frame!
-    update_uniform_buffers();
-
-    // Did something else fail?
-    // VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
-    // to the surface, but the surface properties are no longer matched exactly.
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        std::string error_message = "Error: Failed to acquire swapchain image!";
-        display_error_message(error_message);
-        exit(-1);
-    }
-
-    const VkPipelineStageFlags wait_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.pNext = nullptr;
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitDstStageMask = wait_stage_mask;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = command_buffers[image_index].get_ptr();
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = image_available_semaphore->get_ptr();
-    submit_info.pSignalSemaphores = rendering_finished_semaphore->get_ptr();
-
-    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, VK_NULL_HANDLE);
-    if (result != VK_SUCCESS) {
-        return result;
-    }
-
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.pNext = nullptr;
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = rendering_finished_semaphore->get_ptr();
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = swapchain->get_swapchain_ptr();
-    present_info.pImageIndices = &image_index;
-    present_info.pResults = nullptr;
-
-    result = vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
-
-    auto fps_value = fps_counter.update();
-
-    if (fps_value) {
-        window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
-        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, window->get_width(), window->get_height());
-    }
-
-    return VK_SUCCESS;
-}
-
 VkResult Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
@@ -594,6 +533,7 @@ void Application::run() {
 
     while (!window->should_close()) {
         window->poll();
+        update_uniform_buffers();
         render_frame();
 
         // TODO: Run this in a separated thread?

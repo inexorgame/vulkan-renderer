@@ -66,8 +66,6 @@ private:
 
     VkResult check_application_specific_features();
 
-    VkResult render_frame();
-
     /// @brief Implementation of the uniform buffer update method.
     /// @param current_image [in] The current image index.
     VkResult update_uniform_buffers();

@@ -164,6 +164,8 @@ protected:
     /// @brief Creates the rendering pipeline.
     VkResult create_pipeline();
 
+    VkResult render_frame();
+
     /// @brief Destroys all Vulkan objects.
     VkResult shutdown_vulkan();
 
