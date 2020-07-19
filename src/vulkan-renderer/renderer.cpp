@@ -16,14 +16,8 @@ void VulkanRenderer::setup_frame_graph() {
     back_buffer.set_format(swapchain->get_image_format());
     back_buffer.set_usage(TextureUsage::BACK_BUFFER);
 
-    const std::vector<VkFormat> supported_depth_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
-                                                           VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT,
-                                                           VK_FORMAT_D16_UNORM};
-
     auto &depth_buffer = m_frame_graph->add<TextureResource>("depth buffer");
-    depth_buffer.set_format(*settings_decision_maker->find_depth_buffer_format(
-        vkdevice->get_physical_device(), supported_depth_formats, VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT));
+    depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
     depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
 
     auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
