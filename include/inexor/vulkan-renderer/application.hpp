@@ -34,8 +34,6 @@ private:
     // Call thread_pool->execute(); to order new tasks to be worked on.
     std::shared_ptr<ThreadPool> thread_pool;
 
-    std::size_t current_frame = 0;
-
     // TODO: Refactor into a manger class.
     struct ShaderSetup {
         VkShaderStageFlagBits shader_type;

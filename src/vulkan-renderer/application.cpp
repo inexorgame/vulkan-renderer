@@ -178,12 +178,9 @@ VkResult Application::render_frame() {
     assert(vkdevice->get_graphics_queue());
     assert(vkdevice->get_present_queue());
 
-    in_flight_fences[current_frame].block();
-
     std::uint32_t image_index = 0;
-    VkResult result =
-        vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
-                              image_available_semaphores[current_frame].get(), VK_NULL_HANDLE, &image_index);
+    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
+                                            image_available_semaphore->get(), VK_NULL_HANDLE, &image_index);
 
     // Update the data which changes every frame!
     update_uniform_buffers();
@@ -206,12 +203,10 @@ VkResult Application::render_frame() {
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = command_buffers[image_index].get_ptr();
     submit_info.signalSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = image_available_semaphores[current_frame].get_ptr();
-    submit_info.pSignalSemaphores = rendering_finished_semaphores[current_frame].get_ptr();
+    submit_info.pWaitSemaphores = image_available_semaphore->get_ptr();
+    submit_info.pSignalSemaphores = rendering_finished_semaphore->get_ptr();
 
-    in_flight_fences[current_frame].reset();
-
-    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame].get());
+    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, VK_NULL_HANDLE);
     if (result != VK_SUCCESS) {
         return result;
     }
@@ -219,15 +214,13 @@ VkResult Application::render_frame() {
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = nullptr;
     present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = rendering_finished_semaphores[current_frame].get_ptr();
+    present_info.pWaitSemaphores = rendering_finished_semaphore->get_ptr();
     present_info.swapchainCount = 1;
     present_info.pSwapchains = swapchain->get_swapchain_ptr();
     present_info.pImageIndices = &image_index;
     present_info.pResults = nullptr;
 
     result = vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
-
-    current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 
     auto fps_value = fps_counter.update();
 

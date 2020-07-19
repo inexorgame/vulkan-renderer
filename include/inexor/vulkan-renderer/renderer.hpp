@@ -39,10 +39,6 @@
 
 namespace inexor::vulkan_renderer {
 
-// The maximum number of images to process simultaneously.
-// TODO: Refactoring! That is triple buffering essentially!
-constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
-
 class VulkanRenderer {
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
@@ -66,11 +62,8 @@ protected:
 
     std::vector<wrapper::CommandBuffer> command_buffers;
 
-    std::vector<wrapper::Semaphore> image_available_semaphores;
-
-    std::vector<wrapper::Semaphore> rendering_finished_semaphores;
-
-    std::vector<wrapper::Fence> in_flight_fences;
+    std::unique_ptr<wrapper::Semaphore> image_available_semaphore;
+    std::unique_ptr<wrapper::Semaphore> rendering_finished_semaphore;
 
     VkDebugReportCallbackEXT debug_report_callback = {};
 

@@ -154,19 +154,12 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
     spdlog::debug("Creating synchronisation objects: semaphores and fences.");
     spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
 
-    in_flight_fences.clear();
-    image_available_semaphores.clear();
-    rendering_finished_semaphores.clear();
-
     // TODO: Add method to create several fences/semaphores.
 
-    for (std::size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        in_flight_fences.emplace_back(vkdevice->get_device(), "In flight fence #" + std::to_string(i), true);
-        image_available_semaphores.emplace_back(vkdevice->get_device(),
-                                                "Image available semaphore #" + std::to_string(i));
-        rendering_finished_semaphores.emplace_back(vkdevice->get_device(),
-                                                   "Rendering finished semaphore #" + std::to_string(i));
-    }
+    image_available_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Image available semaphore");
+    rendering_finished_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Rendering finished semaphore");
 
     return VK_SUCCESS;
 }
@@ -487,10 +480,8 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     mesh_buffers.clear();
     descriptors.clear();
 
-    image_available_semaphores.clear();
-    rendering_finished_semaphores.clear();
-
-    in_flight_fences.clear();
+    image_available_semaphore.reset();
+    rendering_finished_semaphore.reset();
 
     vma.reset();
 
@@ -516,10 +507,6 @@ VkResult VulkanRenderer::shutdown_vulkan() {
     spdlog::debug("Shutdown finished.");
     spdlog::debug(
         "------------------------------------------------------------------------------------------------------------");
-
-    in_flight_fences.clear();
-    image_available_semaphores.clear();
-    rendering_finished_semaphores.clear();
 
     vkinstance.reset();
 
