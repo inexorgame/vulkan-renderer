@@ -24,7 +24,7 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
 
     // This is actually the way it is handled by the official Vulkan samples.
     auto *app = reinterpret_cast<VulkanRenderer *>(glfwGetWindowUserPointer(window));
-    app->frame_buffer_resized = true;
+    // app->frame_buffer_resized = true;
 }
 
 VkResult Application::load_toml_configuration_file(const std::string &file_name) {
@@ -188,13 +188,6 @@ VkResult Application::render_frame() {
     // Update the data which changes every frame!
     update_uniform_buffers(current_frame);
 
-    // Is it time to regenerate the swapchain because window has been resized or minimized?
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        // VK_ERROR_OUT_OF_DATE_KHR: The swap chain has become incompatible with the surface
-        // and can no longer be used for rendering. Usually happens after a window resize.
-        return recreate_swapchain();
-    }
-
     // Did something else fail?
     // VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
     // to the surface, but the surface properties are no longer matched exactly.
@@ -233,14 +226,6 @@ VkResult Application::render_frame() {
     present_info.pResults = nullptr;
 
     result = vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
-
-    // Some notes on frame_buffer_resized:
-    // It is important to do this after vkQueuePresentKHR to ensure that the semaphores are
-    // in a consistent state, otherwise a signalled semaphore may never be properly waited upon.
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frame_buffer_resized) {
-        frame_buffer_resized = false;
-        recreate_swapchain();
-    }
 
     current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 

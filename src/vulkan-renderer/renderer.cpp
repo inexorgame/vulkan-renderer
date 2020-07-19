@@ -204,53 +204,6 @@ VkResult VulkanRenderer::update_cameras() {
     return VK_SUCCESS;
 }
 
-VkResult VulkanRenderer::recreate_swapchain() {
-    assert(vkdevice->get_device());
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    // TODO: outsource cleanup_swapchain() methods!
-
-    spdlog::debug("Querying new window size.");
-
-    window->wait_for_focus();
-
-    window_width = window->get_width();
-    window_height = window->get_height();
-
-    spdlog::debug("New window size: width: {}, height: {}.", window_width, window_height);
-
-    swapchain->recreate(window_width, window_height);
-
-    depth_buffer.reset();
-
-    depth_stencil.reset();
-
-    framebuffers.clear();
-
-    VkResult result = create_depth_buffer();
-    vulkan_error_check(result);
-
-    result = create_frame_buffers();
-    vulkan_error_check(result);
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    // Calculate the new aspect ratio so we can update game camera matrices.
-    float aspect_ratio = window_width / static_cast<float>(window_height);
-
-    spdlog::debug("New aspect ratio: {}.", aspect_ratio);
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    result = record_command_buffers();
-    vulkan_error_check(result);
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_descriptor_pool() {
     descriptors.emplace_back(vkdevice->get_device(), swapchain->get_image_count(), std::string("unnamed descriptor"));
 
