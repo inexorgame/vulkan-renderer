@@ -462,6 +462,10 @@ VkResult Application::init(int argc, char **argv) {
     result = create_synchronisation_objects();
     vulkan_error_check(result);
 
+    m_frame_graph =
+        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vma->get_allocator(), *swapchain);
+    setup_frame_graph();
+
     spdlog::debug("Vulkan initialisation finished.");
 
     spdlog::debug("Showing window.");

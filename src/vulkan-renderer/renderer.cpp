@@ -11,6 +11,48 @@
 
 namespace inexor::vulkan_renderer {
 
+void VulkanRenderer::setup_frame_graph() {
+    auto &back_buffer = m_frame_graph->add<TextureResource>("back buffer");
+    back_buffer.set_format(swapchain->get_image_format());
+    back_buffer.set_usage(TextureUsage::BACK_BUFFER);
+
+    const std::vector<VkFormat> supported_depth_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
+                                                           VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT,
+                                                           VK_FORMAT_D16_UNORM};
+
+    auto &depth_buffer = m_frame_graph->add<TextureResource>("depth buffer");
+    depth_buffer.set_format(*settings_decision_maker->find_depth_buffer_format(
+        vkdevice->get_physical_device(), supported_depth_formats, VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT));
+    depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
+
+    auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
+    main_stage.writes_to(back_buffer);
+    main_stage.writes_to(depth_buffer);
+    main_stage.set_on_record([&](VkCommandBuffer cmd_buf, const PhysicalStage *phys_stage) {
+        // TODO(): Nice OOP wrappers
+        // TODO(): cmd_buf->draw(...);
+        const std::array<VkBuffer, 1> buffers = {mesh_buffers[0].get_vertex_buffer()};
+        const std::array<VkDeviceSize, 1> offsets = {0};
+        vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, phys_stage->pipeline_layout(), 0, 1,
+                                descriptors[0].get_descriptor_sets_data(), 0, nullptr);
+        vkCmdBindVertexBuffers(cmd_buf, 0, 1, buffers.data(), offsets.data());
+        vkCmdDraw(cmd_buf, mesh_buffers[0].get_vertex_count(), 1, 0, 0);
+    });
+
+    for (const auto &shader : shaders) {
+        main_stage.uses_shader(shader);
+    }
+
+    for (const auto &attribute_binding : OctreeVertex::get_attribute_binding_description()) {
+        main_stage.add_attribute_binding(attribute_binding);
+    }
+
+    main_stage.add_descriptor_layout(descriptors[0].get_descriptor_set_layout());
+    main_stage.add_vertex_binding(OctreeVertex::get_vertex_binding_description());
+    m_frame_graph->compile(back_buffer);
+}
+
 VkResult VulkanRenderer::create_depth_buffer() {
 
     const std::vector<VkFormat> supported_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
@@ -529,6 +571,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
+    m_frame_graph.reset();
     cleanup_swapchain();
 
     // @todo: (yeetari) Remove once this class is RAII-ified.

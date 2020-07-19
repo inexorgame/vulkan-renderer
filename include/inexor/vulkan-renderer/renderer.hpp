@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
+#include "inexor/vulkan-renderer/frame_graph.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
@@ -43,6 +44,9 @@ class VulkanRenderer {
 protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
+
+    // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
+    std::unique_ptr<FrameGraph> m_frame_graph;
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
@@ -134,6 +138,8 @@ protected:
     std::unique_ptr<wrapper::RenderPass> renderpass;
 
     std::vector<wrapper::Framebuffer> framebuffers;
+
+    void setup_frame_graph();
 
     VkResult update_cameras();
 
