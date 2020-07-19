@@ -602,10 +602,6 @@ VkResult Application::update_mouse_input() {
     return VK_SUCCESS;
 }
 
-VkResult Application::update_keyboard_input() {
-    return VK_SUCCESS;
-}
-
 void Application::run() {
     spdlog::debug("Running Application.");
 
@@ -615,7 +611,6 @@ void Application::run() {
 
         // TODO: Run this in a separated thread?
         // TODO: Merge into one update_game_data() method?
-        update_keyboard_input();
         update_mouse_input();
         update_cameras();
 

@@ -74,8 +74,6 @@ private:
     /// @param current_image [in] The current image index.
     VkResult update_uniform_buffers(const std::size_t current_image);
 
-    VkResult update_keyboard_input();
-
     VkResult update_mouse_input();
 
     // TODO: Refactor!
