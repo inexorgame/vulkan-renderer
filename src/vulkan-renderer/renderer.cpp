@@ -527,22 +527,8 @@ VkResult VulkanRenderer::render_frame() {
         exit(-1);
     }
 
-    const VkPipelineStageFlags wait_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.pNext = nullptr;
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitDstStageMask = wait_stage_mask;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = command_buffers[image_index].get_ptr();
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = image_available_semaphore->get_ptr();
-    submit_info.pSignalSemaphores = rendering_finished_semaphore->get_ptr();
-
-    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, VK_NULL_HANDLE);
-    if (result != VK_SUCCESS) {
-        return result;
-    }
+    m_frame_graph->render(image_index, rendering_finished_semaphore->get(), image_available_semaphore->get(),
+                          vkdevice->get_graphics_queue());
 
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = nullptr;
@@ -552,8 +538,7 @@ VkResult VulkanRenderer::render_frame() {
     present_info.pSwapchains = swapchain->get_swapchain_ptr();
     present_info.pImageIndices = &image_index;
     present_info.pResults = nullptr;
-
-    result = vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
+    vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
 
     auto fps_value = fps_counter.update();
 
@@ -571,6 +556,7 @@ VkResult VulkanRenderer::shutdown_vulkan() {
         "------------------------------------------------------------------------------------------------------------");
     spdlog::debug("Shutting down Vulkan API.");
 
+    vkDeviceWaitIdle(vkdevice->get_device());
     m_frame_graph.reset();
     cleanup_swapchain();
 
