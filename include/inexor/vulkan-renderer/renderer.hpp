@@ -56,15 +56,9 @@ protected:
     std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker =
         std::make_shared<VulkanSettingsDecisionMaker>();
 
-    VkPresentModeKHR selected_present_mode;
-
-    VkSubmitInfo submit_info;
-
     VkPresentInfoKHR present_info = {};
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
-
-    std::vector<wrapper::CommandBuffer> command_buffers;
 
     std::unique_ptr<wrapper::Semaphore> image_available_semaphore;
     std::unique_ptr<wrapper::Semaphore> rendering_finished_semaphore;
@@ -87,8 +81,6 @@ protected:
 
     // TODO: Refactor this!
     VkDescriptorBufferInfo uniform_buffer_info = {};
-    VkDescriptorImageInfo image_info = {};
-    VkPipelineCache pipeline_cache;
 
     bool vsync_enabled = false;
 
@@ -127,48 +119,18 @@ protected:
     /// RAII wrapper for command pools.
     std::unique_ptr<wrapper::CommandPool> command_pool = nullptr;
 
-    std::unique_ptr<wrapper::Image> depth_buffer;
-
-    std::unique_ptr<wrapper::Image> depth_stencil;
-
-    std::unique_ptr<wrapper::PipelineLayout> pipeline_layout;
-
-    std::unique_ptr<wrapper::GraphicsPipeline> graphics_pipeline;
-
-    std::unique_ptr<wrapper::RenderPass> renderpass;
-
-    std::vector<wrapper::Framebuffer> framebuffers;
-
     void setup_frame_graph();
 
     VkResult update_cameras();
 
-    /// @brief Create depth image.
-    VkResult create_depth_buffer();
-
-    /// @brief Creates the command buffers.
-    VkResult create_command_buffers();
-
-    /// @brief Records the command buffers.
-    VkResult record_command_buffers();
-
     /// @brief Creates the semaphores neccesary for synchronisation.
     VkResult create_synchronisation_objects();
-
-    /// @brief Cleans the swapchain.
-    VkResult cleanup_swapchain();
 
     VkResult create_descriptor_pool();
 
     VkResult create_descriptor_set_layouts();
 
     VkResult create_descriptor_writes();
-
-    /// @brief Creates the frame buffers.
-    VkResult create_frame_buffers();
-
-    /// @brief Creates the rendering pipeline.
-    VkResult create_pipeline();
 
     VkResult render_frame();
 

@@ -415,9 +415,6 @@ VkResult Application::init(int argc, char **argv) {
                                                      surface->get(), window->get_width(), window->get_height(),
                                                      vsync_enabled, "Standard swapchain.");
 
-    result = create_depth_buffer();
-    vulkan_error_check(result);
-
     spdlog::debug("Starting to load textures using threadpool.");
 
     result = load_textures();
@@ -432,12 +429,6 @@ VkResult Application::init(int argc, char **argv) {
     result = create_descriptor_set_layouts();
     vulkan_error_check(result);
 
-    result = create_pipeline();
-    vulkan_error_check(result);
-
-    result = create_frame_buffers();
-    vulkan_error_check(result);
-
     command_pool =
         std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
 
@@ -447,16 +438,10 @@ VkResult Application::init(int argc, char **argv) {
     result = create_descriptor_writes();
     vulkan_error_check(result);
 
-    result = create_command_buffers();
-    vulkan_error_check(result);
-
     result = load_models();
     vulkan_error_check(result);
 
     result = load_octree_geometry();
-    vulkan_error_check(result);
-
-    result = record_command_buffers();
     vulkan_error_check(result);
 
     result = create_synchronisation_objects();
