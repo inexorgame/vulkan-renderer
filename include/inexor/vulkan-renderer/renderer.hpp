@@ -142,10 +142,6 @@ protected:
 
     std::vector<wrapper::Framebuffer> framebuffers;
 
-    /// @brief Create a physical device handle.
-    /// @param graphics_card The regarded graphics card.
-    VkResult create_physical_device(const VkPhysicalDevice &graphics_card, const bool enable_debug_markers = true);
-
     VkResult update_cameras();
 
     /// @brief Create depth image.
@@ -172,14 +168,8 @@ protected:
 
     VkResult create_descriptor_writes();
 
-    /// @brief Creates the descriptor set.
-    VkResult create_descriptor_sets();
-
     /// @brief Recreates the swapchain.
     VkResult recreate_swapchain();
-
-    /// @brief Creates the command pool.
-    VkResult create_command_pool();
 
     /// @brief Creates the frame buffers.
     VkResult create_frame_buffers();
