@@ -243,15 +243,6 @@ VkResult VulkanRenderer::recreate_swapchain() {
 
     vkDeviceWaitIdle(vkdevice->get_device());
 
-    // Setup game camera.
-    game_camera.type = Camera::CameraType::LOOKAT;
-
-    game_camera.set_perspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
-    game_camera.rotation_speed = 0.25f;
-    game_camera.movement_speed = 0.1f;
-    game_camera.set_position({0.0f, 0.0f, 5.0f});
-    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
-
     result = record_command_buffers();
     vulkan_error_check(result);
 

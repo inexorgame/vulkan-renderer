@@ -554,7 +554,16 @@ VkResult Application::init(int argc, char **argv) {
     // We must store the window user pointer to be able to call the window resize callback.
     window->set_user_ptr(this);
 
-    return recreate_swapchain();
+    // Setup game camera
+    game_camera.type = Camera::CameraType::LOOKAT;
+
+    game_camera.set_perspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
+    game_camera.rotation_speed = 0.25f;
+    game_camera.movement_speed = 0.1f;
+    game_camera.set_position({0.0f, 0.0f, 5.0f});
+    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
+
+    return VK_SUCCESS;
 }
 
 VkResult Application::update_uniform_buffers(const std::size_t current_image) {
