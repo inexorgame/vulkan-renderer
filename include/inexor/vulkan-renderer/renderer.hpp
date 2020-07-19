@@ -159,9 +159,6 @@ protected:
     /// @brief Cleans the swapchain.
     VkResult cleanup_swapchain();
 
-    /// @brief Creates the uniform buffers.
-    VkResult create_uniform_buffers();
-
     VkResult create_descriptor_pool();
 
     VkResult create_descriptor_set_layouts();

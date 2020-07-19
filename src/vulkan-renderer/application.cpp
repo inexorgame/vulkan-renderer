@@ -524,8 +524,8 @@ VkResult Application::init(int argc, char **argv) {
     command_pool =
         std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
 
-    result = create_uniform_buffers();
-    vulkan_error_check(result);
+    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), "matrices uniform buffer",
+                                 sizeof(UniformBufferObject));
 
     result = create_descriptor_writes();
     vulkan_error_check(result);

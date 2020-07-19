@@ -11,13 +11,6 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanRenderer::create_uniform_buffers() {
-    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"),
-                                 sizeof(UniformBufferObject));
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_depth_buffer() {
 
     const std::vector<VkFormat> supported_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
