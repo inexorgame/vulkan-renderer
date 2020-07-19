@@ -186,7 +186,7 @@ VkResult Application::render_frame() {
                               image_available_semaphores[current_frame].get(), VK_NULL_HANDLE, &image_index);
 
     // Update the data which changes every frame!
-    update_uniform_buffers(current_frame);
+    update_uniform_buffers();
 
     // Did something else fail?
     // VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
@@ -551,7 +551,7 @@ VkResult Application::init(int argc, char **argv) {
     return VK_SUCCESS;
 }
 
-VkResult Application::update_uniform_buffers(const std::size_t current_image) {
+VkResult Application::update_uniform_buffers() {
     float time = time_step.get_time_step_since_initialisation();
 
     UniformBufferObject ubo = {};
