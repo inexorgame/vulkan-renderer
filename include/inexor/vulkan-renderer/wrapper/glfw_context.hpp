@@ -1,6 +1,7 @@
 #pragma once
 
 namespace inexor::vulkan_renderer::wrapper {
+
 class GLFWContext {
 public:
     /// Delete the copy constructor so glfw contexts are move-only objects.

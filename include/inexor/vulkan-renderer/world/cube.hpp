@@ -11,6 +11,7 @@
 #include <optional>
 
 namespace inexor::vulkan_renderer::world {
+
 /// How often a cube can be indented, results in MAX_INDENTATION+1 steps.
 constexpr std::uint8_t MAX_INDENTATION = 8;
 
@@ -319,4 +320,5 @@ public:
     /// @param force Whether to make it reactive again even though the connections were established before.
     void make_reactive(bool force = false);
 };
+
 } // namespace inexor::vulkan_renderer::world

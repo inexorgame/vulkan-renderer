@@ -4,6 +4,7 @@
 #include <vulkan/vulkan_core.h>
 
 namespace inexor::vulkan_renderer::wrapper {
+
 class CommandBuffer {
 private:
     VkCommandBuffer command_buffer;
@@ -30,4 +31,5 @@ public:
         return &command_buffer;
     }
 };
+
 } // namespace inexor::vulkan_renderer::wrapper

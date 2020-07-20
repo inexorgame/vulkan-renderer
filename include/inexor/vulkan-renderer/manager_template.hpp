@@ -225,4 +225,5 @@ void ManagerClassTemplate<T>::delete_all_entries() {
 
     stored_types.clear();
 }
+
 } // namespace inexor::vulkan_renderer

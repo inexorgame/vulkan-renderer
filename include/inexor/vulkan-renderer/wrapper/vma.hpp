@@ -3,6 +3,7 @@
 #include <vma/vk_mem_alloc.h>
 
 namespace inexor::vulkan_renderer::wrapper {
+
 class VulkanMemoryAllocator {
 private:
     VmaAllocator vma_allocator;

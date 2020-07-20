@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace inexor::vulkan_renderer {
+
 void Camera::update_view_matrix() {
     glm::mat4 rot_m = glm::mat4(1.0f);
     glm::mat4 trans_m;
@@ -153,4 +154,5 @@ bool Camera::update_pad(glm::vec2 axis_left, glm::vec2 axis_right, float delta_t
 
     return ret_val;
 }
+
 } // namespace inexor::vulkan_renderer

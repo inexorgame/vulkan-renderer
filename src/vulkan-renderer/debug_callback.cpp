@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer {
+
 VKAPI_ATTR VkBool32 VKAPI_CALL vulkan_debug_message_callback(VkDebugReportFlagsEXT flags,
                                                              VkDebugReportObjectTypeEXT object_type,
                                                              std::uint64_t object, std::size_t location,
@@ -22,4 +23,5 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vulkan_debug_message_callback(VkDebugReportFlagsE
 
     return VK_FALSE;
 }
+
 } // namespace inexor::vulkan_renderer

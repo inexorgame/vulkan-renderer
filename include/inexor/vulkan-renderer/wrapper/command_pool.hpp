@@ -6,6 +6,7 @@
 #include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
+
 class CommandPool {
 private:
     VkDevice device;

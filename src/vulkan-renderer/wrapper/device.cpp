@@ -7,8 +7,10 @@
 #include <stdexcept>
 
 namespace {
+
 // TODO: Make proper use of queue priorities in the future.
 constexpr float default_queue_priority = 1.0f;
+
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {

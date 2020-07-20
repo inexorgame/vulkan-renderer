@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/octree_vertex.hpp"
 
 namespace inexor::vulkan_renderer {
+
 VkVertexInputBindingDescription OctreeVertex::get_vertex_binding_description() {
     VkVertexInputBindingDescription vertex_input_binding_description = {};
 
@@ -31,4 +32,5 @@ std::vector<VkVertexInputAttributeDescription> OctreeVertex::get_attribute_bindi
 
     return vertex_input_attribute_description;
 }
+
 } // namespace inexor::vulkan_renderer

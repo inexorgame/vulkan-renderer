@@ -63,4 +63,5 @@ public:
         return instance;
     }
 };
+
 } // namespace inexor::vulkan_renderer::wrapper

@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
 namespace inexor::vulkan_renderer::wrapper {
+
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
     : command_buffer(std::exchange(other.command_buffer, nullptr)) {}
 

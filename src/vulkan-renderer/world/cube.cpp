@@ -3,6 +3,7 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::world {
+
 void Indentation::set(std::optional<std::uint8_t> x, std::optional<std::uint8_t> y, std::optional<std::uint8_t> z) {
     assert(x <= MAX_INDENTATION && y <= MAX_INDENTATION && z <= MAX_INDENTATION);
     if (x) {
@@ -456,4 +457,5 @@ std::array<glm::tvec3<std::uint8_t>, 8> Cube::indentation_levels() {
     }
     return in;
 }
+
 } // namespace inexor::vulkan_renderer::world

@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer::wrapper {
+
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : name(std::move(other.name)), vertex_buffer(std::move(other.vertex_buffer)),
       index_buffer(std::move(other.index_buffer)), number_of_vertices(other.number_of_vertices),

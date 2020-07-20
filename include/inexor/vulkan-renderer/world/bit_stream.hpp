@@ -7,6 +7,7 @@
 #include <optional>
 
 namespace inexor::vulkan_renderer::world {
+
 constexpr std::array<std::uint8_t, 9> KEEP_FIRST_N_BITS{0b0000'0000, 0b1000'0000, 0b1100'0000, 0b1110'0000, 0b1111'0000,
                                                         0b1111'1000, 0b1111'1100, 0b1111'1110, 0b1111'1111};
 
@@ -49,4 +50,5 @@ public:
     /// @return <size> next bits of the stream.
     std::optional<boost::dynamic_bitset<>> get_bitset(std::uint8_t size);
 };
+
 } // namespace inexor::vulkan_renderer::world

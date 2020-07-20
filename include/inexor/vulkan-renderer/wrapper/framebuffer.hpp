@@ -49,4 +49,5 @@ public:
         return frames[index];
     }
 };
+
 } // namespace inexor::vulkan_renderer::wrapper

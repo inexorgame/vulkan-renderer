@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/world/bit_stream.hpp"
 
 namespace inexor::vulkan_renderer::world {
+
 BitStream::BitStream(unsigned char *data, std::size_t size) {
     this->data = data;
     this->offset = 0;
@@ -54,4 +55,5 @@ std::optional<std::uint8_t> BitStream::get(std::uint8_t size) {
     assert(this->bytes_left);
     return current << overflow | this->get(overflow).value();
 }
+
 } // namespace inexor::vulkan_renderer::world
