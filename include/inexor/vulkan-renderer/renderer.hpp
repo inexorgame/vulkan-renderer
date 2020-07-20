@@ -56,8 +56,6 @@ protected:
     std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker =
         std::make_shared<VulkanSettingsDecisionMaker>();
 
-    VkPresentInfoKHR present_info = {};
-
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
     std::unique_ptr<wrapper::Semaphore> image_available_semaphore;
@@ -130,7 +128,7 @@ protected:
 
     VkResult create_descriptor_writes();
 
-    VkResult render_frame();
+    void render_frame();
 
     /// @brief Destroys all Vulkan objects.
     VkResult shutdown_vulkan();

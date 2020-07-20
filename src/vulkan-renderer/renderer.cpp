@@ -208,47 +208,31 @@ VkResult VulkanRenderer::calculate_memory_budget() {
     return VK_SUCCESS;
 }
 
-/// TODO: Refactor rendering method!
-/// TODO: Finish present call using transfer queue.
-VkResult VulkanRenderer::render_frame() {
-    assert(vkdevice->get_device());
-    assert(vkdevice->get_graphics_queue());
-    assert(vkdevice->get_present_queue());
-
+void VulkanRenderer::render_frame() {
+    // TODO(): Add std::uint32_t wrapper::Swapchain::acquire_next_image(const wrapper::Semaphore &)
     std::uint32_t image_index = 0;
     VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
                                             image_available_semaphore->get(), VK_NULL_HANDLE, &image_index);
-
-    // Did something else fail?
-    // VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
-    // to the surface, but the surface properties are no longer matched exactly.
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        std::string error_message = "Error: Failed to acquire swapchain image!";
-        display_error_message(error_message);
-        exit(-1);
-    }
+    assert(result == VK_SUCCESS);
 
     m_frame_graph->render(image_index, rendering_finished_semaphore->get(), image_available_semaphore->get(),
                           vkdevice->get_graphics_queue());
 
+    // TODO(): Create specialized create info function
+    // TODO(): Create a queue wrapper class
+    VkPresentInfoKHR present_info = {};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.pNext = nullptr;
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = rendering_finished_semaphore->get_ptr();
     present_info.swapchainCount = 1;
-    present_info.pSwapchains = swapchain->get_swapchain_ptr();
+    present_info.waitSemaphoreCount = 1;
     present_info.pImageIndices = &image_index;
-    present_info.pResults = nullptr;
+    present_info.pSwapchains = swapchain->get_swapchain_ptr();
+    present_info.pWaitSemaphores = rendering_finished_semaphore->get_ptr();
     vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
 
-    auto fps_value = fps_counter.update();
-
-    if (fps_value) {
+    if (auto fps_value = fps_counter.update()) {
         window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
         spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, window->get_width(), window->get_height());
     }
-
-    return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::shutdown_vulkan() {
