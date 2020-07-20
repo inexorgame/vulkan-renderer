@@ -29,14 +29,12 @@ add_library(
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
-    vulkan-renderer/wrapper/graphics_pipeline.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/mesh_buffer.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
     vulkan-renderer/wrapper/pipeline_layout.cpp
-    vulkan-renderer/wrapper/renderpass.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/staging_buffer.cpp
