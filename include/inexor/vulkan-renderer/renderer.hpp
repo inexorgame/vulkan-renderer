@@ -28,7 +28,6 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/vma.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
@@ -101,9 +100,6 @@ protected:
 
     // RAII wrapper for Swapchain.
     std::unique_ptr<wrapper::Swapchain> swapchain = nullptr;
-
-    // RAII wrapper for Vulkan Memory Allocator.
-    std::unique_ptr<wrapper::VulkanMemoryAllocator> vma = nullptr;
 
     // RAII wrapper for glfw windows.
     std::unique_ptr<wrapper::Window> window = nullptr;

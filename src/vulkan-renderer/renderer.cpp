@@ -141,7 +141,7 @@ VkResult VulkanRenderer::calculate_memory_budget() {
     spdlog::debug("Calculating memory statistics before shutdown.");
 
     // Use Vulkan memory allocator's statistics.
-    vmaCalculateStats(vma->get_allocator(), &memory_stats);
+    vmaCalculateStats(vkdevice->allocator(), &memory_stats);
 
     spdlog::debug("VMA heap:");
 
@@ -189,7 +189,7 @@ VkResult VulkanRenderer::calculate_memory_budget() {
 
     char *vma_stats_string = nullptr;
 
-    vmaBuildStatsString(vma->get_allocator(), &vma_stats_string, true);
+    vmaBuildStatsString(vkdevice->allocator(), &vma_stats_string, true);
 
     std::ofstream vma_memory_dump;
 
@@ -203,7 +203,7 @@ VkResult VulkanRenderer::calculate_memory_budget() {
 
     vma_dump_index++;
 
-    vmaFreeStatsString(vma->get_allocator(), vma_stats_string);
+    vmaFreeStatsString(vkdevice->allocator(), vma_stats_string);
 
     return VK_SUCCESS;
 }
@@ -253,8 +253,6 @@ VkResult VulkanRenderer::shutdown_vulkan() {
 
     image_available_semaphore.reset();
     rendering_finished_semaphore.reset();
-
-    vma.reset();
 
     // @todo: (Hanni) Remove them once this class is RAII-ified.
     command_pool.reset();

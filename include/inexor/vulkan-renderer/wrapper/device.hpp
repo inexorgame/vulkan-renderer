@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
 #include <array>
@@ -14,6 +15,9 @@ class Device {
 private:
     VkDevice device;
     VkPhysicalDevice graphics_card;
+    VmaAllocator m_allocator;
+
+    // TODO(): Create a queue wrapper
     VkQueue graphics_queue;
     VkQueue present_queue;
     VkQueue transfer_queue;
@@ -61,6 +65,10 @@ public:
         return graphics_card;
     }
 
+    [[nodiscard]] VmaAllocator allocator() const {
+        return m_allocator;
+    }
+
     [[nodiscard]] const VkQueue get_graphics_queue() const {
         assert(graphics_queue);
         return graphics_queue;
@@ -98,7 +106,7 @@ public:
     /// @param object [in] A pointer to the Vulkan object.
     /// @param type [in] The type of the Vulkan object.
     /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
-    void set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string& name);
+    void set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string &name);
 
     /// @brief Vulkan debug marker: Links a memory dump block to a Vulkan resource.
     /// The object will be visible in external debuggers like RenderDoc.

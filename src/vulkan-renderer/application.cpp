@@ -114,7 +114,7 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 VkResult Application::load_textures() {
     assert(vkdevice->get_device());
     assert(vkdevice->get_physical_device());
-    assert(vma->get_allocator());
+    assert(vkdevice->allocator());
 
     // TODO: Refactor! use key from TOML file as name!
     std::size_t texture_number = 1;
@@ -123,7 +123,7 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : texture_files) {
-        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vkdevice->allocator(),
                               texture_file, texture_name, vkdevice->get_graphics_queue(),
                               vkdevice->get_graphics_queue_family_index());
     }
@@ -201,7 +201,7 @@ VkResult Application::load_octree_geometry() {
 
     // Create a mesh buffer for octree vertex geometry.
     mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(),
-                              vkdevice->get_transfer_queue_family_index(), vma->get_allocator(), octree_mesh_name,
+                              vkdevice->get_transfer_queue_family_index(), vkdevice->allocator(), octree_mesh_name,
                               sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
@@ -408,9 +408,6 @@ VkResult Application::init(int argc, char **argv) {
     result = check_application_specific_features();
     vulkan_error_check(result);
 
-    vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(),
-                                                           vkdevice->get_physical_device());
-
     swapchain = std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(),
                                                      surface->get(), window->get_width(), window->get_height(),
                                                      vsync_enabled, "Standard swapchain.");
@@ -432,7 +429,7 @@ VkResult Application::init(int argc, char **argv) {
     command_pool =
         std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
 
-    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), "matrices uniform buffer",
+    uniform_buffers.emplace_back(vkdevice->get_device(), vkdevice->allocator(), "matrices uniform buffer",
                                  sizeof(UniformBufferObject));
 
     result = create_descriptor_writes();
@@ -448,7 +445,7 @@ VkResult Application::init(int argc, char **argv) {
     vulkan_error_check(result);
 
     m_frame_graph =
-        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vma->get_allocator(), *swapchain);
+        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vkdevice->allocator(), *swapchain);
     setup_frame_graph();
 
     spdlog::debug("Vulkan initialisation finished.");

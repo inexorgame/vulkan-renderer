@@ -42,7 +42,6 @@ add_library(
     vulkan-renderer/wrapper/staging_buffer.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/texture.cpp
-    vulkan-renderer/wrapper/vma.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp

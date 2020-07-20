@@ -1,9 +1,25 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 
-#include <spdlog/spdlog.h>
+#define VMA_IMPLEMENTATION
 
+// It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
+// Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
+// Memory is automatically mapped and unmapped if necessary.
+#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
+
+// Enforce specified number of bytes as a margin before and after every allocation.
+#define VMA_DEBUG_MARGIN 16
+
+// Enable validation of contents of the margins.
+#define VMA_DEBUG_DETECT_CORRUPTION 1
+
+#include <spdlog/spdlog.h>
+#include <vma/vk_mem_alloc.h>
+
+#include <fstream>
 #include <stdexcept>
 
 namespace {
@@ -244,12 +260,56 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         vkGetDeviceQueue(device, transfer_queue_family_index, 0, &transfer_queue);
     }
 
+    spdlog::debug("Creating vma allocator");
+
+    // Make sure to set the root directory of this repository as working directory in the debugger!
+    // Otherwise, VMA won't be able to open this allocation replay file for writing.
+    const std::string vma_replay_file = "vma-replays/vma_replay.csv";
+    spdlog::debug("Opening VMA memory recording file for writing.");
+
+    std::ofstream replay_file_test(vma_replay_file, std::ios::out);
+
+    // Check if we can open the csv file.
+    // This causes problems when the debugging path is set incorrectly!
+    if (!replay_file_test) {
+        throw std::runtime_error("Could not open VMA replay file " + vma_replay_file + " !");
+    }
+
+    spdlog::debug("VMA memory recording file opened successfully.");
+
+    replay_file_test.close();
+
+    // VMA allows to record memory allocations to a .csv file.
+    // This .csv file can be replayed using tools from the repository.
+    // This is very useful every time there is a bug in memory management.
+    VmaRecordSettings vma_record_settings;
+
+    // We flush the stream after every write operation because we are expecting unforseen program crashes.
+    // This might has a negative effect on the application's performance but it's worth it for now.
+    vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
+    vma_record_settings.pFilePath = vma_replay_file.c_str();
+
+    VmaAllocatorCreateInfo vma_allocator_ci = {};
+    vma_allocator_ci.physicalDevice = graphics_card;
+    vma_allocator_ci.instance = instance;
+    vma_allocator_ci.device = device;
+#if VMA_RECORDING_ENABLED
+    vma_allocator_ci.pRecordSettings = &vma_record_settings;
+#endif
+
+    spdlog::debug("Creating Vulkan memory allocator instance.");
+
+    if (vmaCreateAllocator(&vma_allocator_ci, &m_allocator) != VK_SUCCESS) {
+        throw std::runtime_error("Error: vmaCreateAllocator failed!");
+    }
+
     spdlog::debug("Created device successfully.");
 }
 
 Device::~Device() {
     assert(device);
     spdlog::trace("Destroying device.");
+    vmaDestroyAllocator(m_allocator);
     vkDestroyDevice(device, nullptr);
 }
 
