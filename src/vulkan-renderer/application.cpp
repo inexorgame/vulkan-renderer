@@ -528,7 +528,7 @@ void Application::run() {
         // TODO: Run this in a separated thread?
         // TODO: Merge into one update_game_data() method?
         update_mouse_input();
-        update_cameras();
+        game_camera.update(time_passed);
 
         time_passed = stopwatch.get_time_step();
     }

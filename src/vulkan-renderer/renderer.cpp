@@ -63,13 +63,6 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
     return VK_SUCCESS;
 }
 
-VkResult VulkanRenderer::update_cameras() {
-
-    game_camera.update(time_passed);
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_descriptor_pool() {
     descriptors.emplace_back(vkdevice->get_device(), swapchain->get_image_count(), std::string("unnamed descriptor"));
 

@@ -121,8 +121,6 @@ protected:
 
     void setup_frame_graph();
 
-    VkResult update_cameras();
-
     /// @brief Creates the semaphores neccesary for synchronisation.
     VkResult create_synchronisation_objects();
 
