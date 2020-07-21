@@ -44,8 +44,8 @@ public:
     RenderResource &operator=(RenderResource &&) = delete;
 };
 
-// TODO(): Add TextureUsage::INVALID to use as default value in TextureResource
 enum class TextureUsage {
+    INVALID,
     BACK_BUFFER,
     DEPTH_STENCIL_BUFFER,
     NORMAL,
@@ -56,7 +56,7 @@ class TextureResource : public RenderResource {
 
 private:
     VkFormat m_format{VK_FORMAT_UNDEFINED};
-    TextureUsage m_usage;
+    TextureUsage m_usage{TextureUsage::INVALID};
 
 public:
     explicit TextureResource(std::string &&name) : RenderResource(name) {}

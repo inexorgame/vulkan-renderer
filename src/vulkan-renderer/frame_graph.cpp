@@ -337,6 +337,7 @@ void FrameGraph::compile(const RenderResource &target) {
 #endif
 
         if (const auto *texture_resource = dynamic_cast<const TextureResource *>(resource.get())) {
+            assert(texture_resource->m_usage != TextureUsage::INVALID);
             auto *phys = texture_resource->m_usage == TextureUsage::BACK_BUFFER
                              ? create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device)
                              : create<PhysicalImage>(texture_resource, m_allocator, m_device);
