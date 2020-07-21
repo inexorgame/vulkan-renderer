@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -46,8 +48,7 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     assert(!code.empty());
     assert(!entry_point.empty());
 
-    VkShaderModuleCreateInfo shader_module_ci = {};
-    shader_module_ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    auto shader_module_ci = make_info<VkShaderModuleCreateInfo>();
     shader_module_ci.codeSize = code.size();
 
     // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
@@ -67,8 +68,7 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     if (vkDebugMarkerSetObjectNameEXT != nullptr) {
         // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for
         // debugging.
-        VkDebugMarkerObjectNameInfoEXT name_info = {};
-        name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+        auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
         name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT;
         name_info.object = reinterpret_cast<std::uint64_t>(shader_module);
         name_info.pObjectName = name.c_str();

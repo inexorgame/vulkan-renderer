@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -50,9 +52,7 @@ void OnceCommandBuffer::start_recording() {
 
     spdlog::debug("Starting recording of once command buffer.");
 
-    VkCommandBufferBeginInfo command_buffer_bi = {};
-    command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_bi.pNext = nullptr;
+    auto command_buffer_bi = make_info<VkCommandBufferBeginInfo>();
 
     // We're only going to use the command buffer once and wait with returning from the function until the copy
     // operation has finished executing. It's good practice to tell the driver about our intent using
@@ -86,8 +86,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
 
     spdlog::debug("Starting to submit command.");
 
-    VkSubmitInfo submit_info = {};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    auto submit_info = make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = command_buffer->get_ptr();
 

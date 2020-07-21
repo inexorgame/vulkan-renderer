@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -218,10 +219,8 @@ void VulkanRenderer::render_frame() {
     m_frame_graph->render(image_index, rendering_finished_semaphore->get(), image_available_semaphore->get(),
                           vkdevice->get_graphics_queue());
 
-    // TODO(): Create specialized create info function
     // TODO(): Create a queue wrapper class
-    VkPresentInfoKHR present_info = {};
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;
     present_info.waitSemaphoreCount = 1;
     present_info.pImageIndices = &image_index;

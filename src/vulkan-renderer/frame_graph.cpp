@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/frame_graph.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
@@ -23,8 +25,7 @@ void RenderStage::reads_from(const RenderResource &resource) {
 }
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
-    VkPipelineShaderStageCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    auto create_info = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
     create_info.module = shader.get_module();
     create_info.stage = shader.get_type();
     create_info.pName = shader.get_entry_point().c_str();
@@ -45,8 +46,7 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
 }
 
 void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phys, VmaAllocationCreateInfo *alloc_ci) {
-    VkImageCreateInfo image_ci = {};
-    image_ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    auto image_ci = wrapper::make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
 
     // TODO(): Support textures with dimensions not equal to back buffer size
@@ -73,8 +73,7 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
 }
 
 void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage *phys) {
-    VkImageViewCreateInfo image_view_ci = {};
-    image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
     image_view_ci.format = resource->m_format;
     image_view_ci.image = phys->m_image;
     image_view_ci.subresourceRange.aspectMask = resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
@@ -143,8 +142,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     subpass_description.pDepthStencilAttachment = depth_refs.data();
     subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-    VkRenderPassCreateInfo render_pass_ci = {};
-    render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    auto render_pass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
     render_pass_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
     render_pass_ci.dependencyCount = 1;
     render_pass_ci.subpassCount = 1;
@@ -163,36 +161,31 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
         std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, "Default pipeline layout");
 
     // TODO(): Add wrapper::VertexBuffer (as well as UniformBuffer)
-    VkPipelineVertexInputStateCreateInfo vertex_input = {};
-    vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    auto vertex_input = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
     vertex_input.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(stage->m_attribute_bindings.size());
     vertex_input.vertexBindingDescriptionCount = static_cast<std::uint32_t>(stage->m_vertex_bindings.size());
     vertex_input.pVertexAttributeDescriptions = stage->m_attribute_bindings.data();
     vertex_input.pVertexBindingDescriptions = stage->m_vertex_bindings.data();
 
     // TODO(): Support primitives other than triangles
-    VkPipelineInputAssemblyStateCreateInfo input_assembly = {};
-    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
     input_assembly.primitiveRestartEnable = VK_FALSE;
     input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-    VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
-    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    auto depth_stencil = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>();
     depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     depth_stencil.depthTestEnable = VK_TRUE;
     depth_stencil.depthWriteEnable = VK_TRUE;
 
     // TODO(): Wireframe rendering
-    VkPipelineRasterizationStateCreateInfo rasterization_state = {};
-    rasterization_state.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
     rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterization_state.lineWidth = 1.0F;
     rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
 
     // TODO(): Support multisampling again
-    VkPipelineMultisampleStateCreateInfo multisample_state = {};
-    multisample_state.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
     multisample_state.minSampleShading = 1.0F;
     multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
@@ -200,8 +193,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    VkPipelineColorBlendStateCreateInfo blend_state = {};
-    blend_state.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    auto blend_state = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
     blend_state.attachmentCount = 1;
     blend_state.pAttachments = &blend_attachment;
 
@@ -214,15 +206,13 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     viewport.maxDepth = 1.0F;
 
     // TODO(): Custom scissors?
-    VkPipelineViewportStateCreateInfo viewport_state = {};
-    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
     viewport_state.scissorCount = 1;
     viewport_state.viewportCount = 1;
     viewport_state.pScissors = &scissor;
     viewport_state.pViewports = &viewport;
 
-    VkGraphicsPipelineCreateInfo pipeline_ci = {};
-    pipeline_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
     pipeline_ci.pVertexInputState = &vertex_input;
     pipeline_ci.pInputAssemblyState = &input_assembly;
     pipeline_ci.pDepthStencilState = &depth_stencil;
@@ -245,8 +235,7 @@ void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
     phys->m_command_buffers.resize(m_swapchain.get_image_count());
 
-    VkCommandBufferAllocateInfo alloc_info = {};
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    auto alloc_info = wrapper::make_info<VkCommandBufferAllocateInfo>();
     alloc_info.commandBufferCount = phys->m_command_buffers.size();
     alloc_info.commandPool = m_command_pool;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -258,9 +247,7 @@ void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *
 
 void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys,
                                         const PhysicalBackBuffer *back_buffer) {
-    VkCommandBufferBeginInfo cmd_buf_bi = {};
-    cmd_buf_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
+    auto cmd_buf_bi = wrapper::make_info<VkCommandBufferBeginInfo>();
     // TODO(): Remove this once we have proper max frames in flight control
     cmd_buf_bi.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
@@ -280,8 +267,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             clear_values[0].color = {0, 0, 0, 0};
             clear_values[1].depthStencil = {1.0F, 0};
 
-            VkRenderPassBeginInfo render_pass_bi = {};
-            render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
             render_pass_bi.clearValueCount = clear_values.size();
             render_pass_bi.pClearValues = clear_values.data();
             render_pass_bi.framebuffer = back_buffer->m_framebuffers[i].get();
@@ -404,8 +390,7 @@ void FrameGraph::compile(const RenderResource &target) {
 
 void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
                         VkQueue graphics_queue) const {
-    VkSubmitInfo submit_info = {};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    auto submit_info = wrapper::make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
     submit_info.signalSemaphoreCount = 1;
     submit_info.waitSemaphoreCount = 1;

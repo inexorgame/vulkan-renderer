@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
@@ -18,9 +19,7 @@ Framebuffer::Framebuffer(VkDevice device, VkImageView color, VkImageView depth, 
 
     std::array<VkImageView, 2> attachments = {color, depth};
 
-    // TODO(): Create specialized create info function
-    VkFramebufferCreateInfo framebuffer_ci = {};
-    framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
     framebuffer_ci.attachmentCount = attachments.size();
     framebuffer_ci.pAttachments = attachments.data();
     framebuffer_ci.width = swapchain.get_extent().width;

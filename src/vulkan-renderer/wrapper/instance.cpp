@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <GLFW/glfw3.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
@@ -31,8 +33,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(vulkan_api_version),
                   VK_VERSION_MINOR(vulkan_api_version), VK_VERSION_PATCH(vulkan_api_version));
 
-    VkApplicationInfo app_info = {};
-    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    auto app_info = make_info<VkApplicationInfo>();
     app_info.pApplicationName = application_name.c_str();
     app_info.applicationVersion = application_version;
     app_info.pEngineName = engine_name.c_str();
@@ -138,8 +139,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         }
     }
 
-    VkInstanceCreateInfo instance_ci = {};
-    instance_ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    auto instance_ci = make_info<VkInstanceCreateInfo>();
     instance_ci.pApplicationInfo = &app_info;
     instance_ci.ppEnabledExtensionNames = enabled_instance_extensions.data();
     instance_ci.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());

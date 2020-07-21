@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -20,8 +22,7 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     assert(image_extent.height > 0);
     assert(!name.empty());
 
-    VkImageCreateInfo image_ci = {};
-    image_ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    auto image_ci = make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
     image_ci.extent.width = image_extent.width;
     image_ci.extent.height = image_extent.height;
@@ -52,8 +53,7 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
 
     // TODO: Assign an internal name using Vulkan debug markers.
 
-    VkImageViewCreateInfo image_view_ci = {};
-    image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    auto image_view_ci = make_info<VkImageViewCreateInfo>();
     image_view_ci.image = image;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = format;

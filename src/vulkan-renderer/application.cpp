@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/spdlog.h>
@@ -301,9 +302,7 @@ VkResult Application::init(int argc, char **argv) {
         spdlog::debug("Khronos validation layer is enabled.");
 
         if (availability_checks_manager->has_instance_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
-            VkDebugReportCallbackCreateInfoEXT debug_report_ci = {};
-
-            debug_report_ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+            auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
             debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
                                     VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
             debug_report_ci.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;

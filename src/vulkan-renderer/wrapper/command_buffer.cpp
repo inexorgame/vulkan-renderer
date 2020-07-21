@@ -1,13 +1,14 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 namespace inexor::vulkan_renderer::wrapper {
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
     : command_buffer(std::exchange(other.command_buffer, nullptr)) {}
 
 CommandBuffer::CommandBuffer(const VkDevice device, const VkCommandPool command_pool) {
-    VkCommandBufferAllocateInfo alloc_info = {};
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
     alloc_info.commandBufferCount = 1;
     alloc_info.commandPool = command_pool;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;

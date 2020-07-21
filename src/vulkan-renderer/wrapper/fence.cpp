@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <stdexcept>
@@ -14,8 +16,7 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
     assert(device);
     assert(!name.empty());
 
-    VkFenceCreateInfo fence_ci = {};
-    fence_ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    auto fence_ci = make_info<VkFenceCreateInfo>();
     fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
     spdlog::debug("Creating Vulkan synchronisation fence {}.", name);

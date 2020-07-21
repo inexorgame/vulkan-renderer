@@ -31,6 +31,7 @@ add_library(
     vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/image.cpp
+    vulkan-renderer/wrapper/info.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/mesh_buffer.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
