@@ -1,6 +1,9 @@
 #include "inexor/vulkan-renderer/octree_vertex.hpp"
 
+#include <glm/glm.hpp>
+
 namespace inexor::vulkan_renderer {
+OctreeVertex::OctreeVertex(glm::vec3 pos, glm::vec3 color) : pos(pos), color(color) {}
 
 VkVertexInputBindingDescription OctreeVertex::get_vertex_binding_description() {
     VkVertexInputBindingDescription vertex_input_binding_description = {};

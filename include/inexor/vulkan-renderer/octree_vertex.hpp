@@ -8,10 +8,13 @@
 namespace inexor::vulkan_renderer {
 
 // TODO: Generalize this setup using a builder pattern!
-struct OctreeVertex {
+class OctreeVertex {
+public:
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texture_coordinate;
+
+    OctreeVertex(glm::vec3 pos, glm::vec3 color);
 
     [[nodiscard]] static VkVertexInputBindingDescription get_vertex_binding_description();
 

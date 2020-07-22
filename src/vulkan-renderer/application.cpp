@@ -255,33 +255,28 @@ VkResult Application::render_frame() {
 }
 
 VkResult Application::load_octree_geometry() {
-
     spdlog::debug("Creating octree geometry.");
 
-    std::vector<unsigned char> test = {0xC4, 0x52, 0x03, 0xC0, 0x00, 0x00};
+    std::shared_ptr<world::Cube> cube =
+        std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2, glm::vec3{0, -1, -1});
+    for (auto child : cube->childs()) {
+        child->set_type(world::Cube::Type::NORMAL);
+        child->indent(8, true, 3);
+        child->indent(11, true, 5);
+        child->indent(1, false, 2);
+    }
 
-    world::Cube cube = world::Cube::parse(test);
-    cube.make_reactive();
-
-    cube.on_change.connect([](world::Cube *c) { spdlog::debug("THE WORLD (octree) HAS CHANGED!"); });
-
-    cube.octants.value()[6]->indentations.value()[4].set_z(4);
-    cube.octants.value()[6]->indentations.value()[4] += {1, 1, -3};
-
-    std::vector<std::array<glm::vec3, 3>> polygons = cube.polygons();
     std::vector<OctreeVertex> octree_vertices;
-    octree_vertices.resize(polygons.size() * 3);
-    OctreeVertex *current_vertex = octree_vertices.data();
-
-    for (auto triangle : polygons) {
-        for (auto vertex : triangle) {
-            glm::vec3 color = {
-                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-            };
-            *current_vertex = {vertex, color};
-            current_vertex++;
+    for (const auto &polygons : cube->polygons(true)) {
+        for (const auto &triangle : *polygons) {
+            for (const auto &vertex : triangle) {
+                glm::vec3 color = {
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                };
+                octree_vertices.emplace_back(vertex, color);
+            }
         }
     }
 

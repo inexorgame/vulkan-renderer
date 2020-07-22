@@ -4,18 +4,24 @@ from pathlib import Path
 import sphinx_rtd_theme
 
 sys.path.insert(0, str(Path('../../').resolve()))
+sys.path.insert(0, str(Path('../').resolve()))
+
+from helper import generate_radar
+# generate additional source stuff
+generate_radar.generate(Path("./auto-generated/"))
+
 extensions = [
     'breathe',
     'exhale',
     'recommonmark',
-    'sphinxcontrib.mermaid',
+    'sphinxcontrib.mermaid'
 ]
 source_suffix = ['.rst']
 master_doc = 'index'
 
 project = 'Inexor Vulkan Renderer'
-author = 'Inexor'
-copyright = 'CC BY 2020 Inexor'
+author = 'Inexor Collective'
+copyright = 'CC BY 2020 ' + author
 title = project + ' Documentation'
 version = '0.0.0'
 release = '0.0.0'

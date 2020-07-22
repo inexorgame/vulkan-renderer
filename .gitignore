@@ -48,6 +48,7 @@ vma-dumps/*.json
 
 # auto generated documentations paths
 documentation/doxygen-output/
+documentation/source/auto-generated/
 documentation/source/exhale-generated/
 
 # logfiles
