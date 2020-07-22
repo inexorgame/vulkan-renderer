@@ -61,8 +61,6 @@ protected:
 
     bool debug_report_callback_initialised = false;
 
-    std::uint32_t vma_dump_index = 0;
-
     TimeStep time_step;
 
     std::uint32_t window_width = 0;
@@ -131,8 +129,8 @@ public:
 
     ~VulkanRenderer() = default;
 
-    /// @brief Run Vulkan memory allocator's memory statistics.
-    VkResult calculate_memory_budget();
+    /// @brief Run Vulkan memory allocator's memory statistics
+    void calculate_memory_budget();
 
     /// Neccesary for taking into account the relative speed of the system's CPU.
     float time_passed = 0.0f;
