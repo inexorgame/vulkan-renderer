@@ -24,15 +24,10 @@ void VulkanRenderer::setup_frame_graph() {
     auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
-    main_stage.set_on_record([&](VkCommandBuffer cmd_buf, const PhysicalStage *phys_stage) {
-        // TODO(): Nice OOP wrappers
-        // TODO(): cmd_buf->draw(...);
-        const std::array<VkBuffer, 1> buffers = {mesh_buffers[0].get_vertex_buffer()};
-        const std::array<VkDeviceSize, 1> offsets = {0};
-        vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, phys_stage->pipeline_layout(), 0, 1,
-                                descriptors[0].get_descriptor_sets_data(), 0, nullptr);
-        vkCmdBindVertexBuffers(cmd_buf, 0, 1, buffers.data(), offsets.data());
-        vkCmdDraw(cmd_buf, mesh_buffers[0].get_vertex_count(), 1, 0, 0);
+    main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
+        cmd_buf.bind_descriptor(descriptors[0], phys->pipeline_layout());
+        cmd_buf.bind_vertex_buffer(mesh_buffers[0].get_vertex_buffer());
+        cmd_buf.draw(mesh_buffers[0].get_vertex_count());
     });
 
     for (const auto &shader : shaders) {

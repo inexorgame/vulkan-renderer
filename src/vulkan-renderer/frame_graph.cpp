@@ -233,28 +233,18 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
 
 void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
-    phys->m_command_buffers.resize(m_swapchain.get_image_count());
-
-    auto alloc_info = wrapper::make_info<VkCommandBufferAllocateInfo>();
-    alloc_info.commandBufferCount = phys->m_command_buffers.size();
-    alloc_info.commandPool = m_command_pool;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    if (vkAllocateCommandBuffers(m_device, &alloc_info, phys->m_command_buffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate command buffers!");
+    for (std::uint32_t i = 0; i < m_swapchain.get_image_count(); i++) {
+        phys->m_command_buffers.emplace_back(m_device, m_command_pool);
     }
 }
 
 void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys,
                                         const PhysicalBackBuffer *back_buffer) {
-    auto cmd_buf_bi = wrapper::make_info<VkCommandBufferBeginInfo>();
-    // TODO(): Remove this once we have proper max frames in flight control
-    cmd_buf_bi.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
     m_log->trace("Recording command buffers for stage '{}'", stage->m_name);
     for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
-        auto *cmd_buf = phys->m_command_buffers[i];
-        vkBeginCommandBuffer(cmd_buf, &cmd_buf_bi);
+        // TODO(): Remove simultaneous usage once we have proper max frames in flight control
+        auto &cmd_buf = phys->m_command_buffers[i];
+        cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
         // Record render pass for graphics stages
         const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage);
@@ -273,16 +263,16 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             render_pass_bi.framebuffer = back_buffer->m_framebuffers[i].get();
             render_pass_bi.renderArea.extent = m_swapchain.get_extent();
             render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
-            vkCmdBeginRenderPass(cmd_buf, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+            cmd_buf.begin_render_pass(render_pass_bi);
         }
 
-        vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, phys->m_pipeline);
-        stage->m_on_record(cmd_buf, phys);
+        cmd_buf.bind_graphics_pipeline(phys->m_pipeline);
+        stage->m_on_record(phys, cmd_buf);
 
         if (graphics_stage != nullptr) {
-            vkCmdEndRenderPass(cmd_buf);
+            cmd_buf.end_render_pass();
         }
-        vkEndCommandBuffer(cmd_buf);
+        cmd_buf.end();
     }
 }
 
@@ -404,7 +394,8 @@ void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemapho
     // TODO(): Batch submit infos
     // TODO(): Loop over physical stages here
     for (const auto *stage : m_stage_stack) {
-        submit_info.pCommandBuffers = &m_stage_map.at(stage)->m_command_buffers[image_index];
+        auto cmd_buf = m_stage_map.at(stage)->m_command_buffers[image_index].get();
+        submit_info.pCommandBuffers = &cmd_buf;
         vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 // TODO(): Forward declare
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
@@ -81,7 +82,7 @@ private:
     std::vector<const RenderResource *> m_reads;
 
     std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
-    std::function<void(VkCommandBuffer, const class PhysicalStage *)> m_on_record;
+    std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> m_on_record;
 
 protected:
     explicit RenderStage(std::string name) : m_name(std::move(name)) {}
@@ -104,7 +105,7 @@ public:
         m_descriptor_layouts.push_back(layout);
     }
 
-    void set_on_record(std::function<void(VkCommandBuffer, const class PhysicalStage *)> on_record) {
+    void set_on_record(std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
     }
 };
@@ -195,7 +196,7 @@ class PhysicalStage {
     friend FrameGraph;
 
 private:
-    std::vector<VkCommandBuffer> m_command_buffers;
+    std::vector<wrapper::CommandBuffer> m_command_buffers;
     VkDevice m_device;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
