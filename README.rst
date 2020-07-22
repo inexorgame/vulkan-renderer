@@ -4,7 +4,7 @@ vulkan-renderer
 
 |programming language| |license|
 
-|github actions| |travis ci| |readthedocs|
+|github actions| |readthedocs|
 
 |issues| |last commit| |code size| |contributors| |downloads|
 
@@ -14,7 +14,7 @@ A new octree-based game+engine using `Vulkan API <https://www.khronos.org/vulkan
 
 Our current octree demo ``v0.1-alpha.2`` can be downloaded `here <https://github.com/inexorgame/vulkan-renderer/releases>`__. Please send your logfiles to info@inexor.org.
 
-Please visit `inexor.org <https://inexor.org>`__ and join our `discord <https://discord.gg/acUW8k7>`__.
+Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.gg/acUW8k7>`__ server.
 
 ----
 
@@ -25,7 +25,8 @@ What is Vulkan?
 
 .. image:: https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/300px-Vulkan.svg.png
 
-Vulkan is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is seen by some as the successor to OpenGL, although it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Like DirectX 12 or Apple's Metal, Vulkan is a low level API which allows for much deeper control over the graphics card and the driver. This offers better performance (higher FPS) due to reduction of overhead and driver guesswork during runtime. In general, Vulkan does a lot of work during the initialisation of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code.
+The Inexor project is using Vulkan API for the main rendering engine. `Vulkan <https://www.khronos.org/vulkan/>`__ is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ (higher FPS) due to reduction of overhead and driver guesswork during runtime. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__.
+
 
 Getting into Vulkan
 ###################
@@ -73,32 +74,6 @@ Releases
 
 `Octree demo (v0.1-alpha.2), April 26th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.2>`__
 
-Upcoming releases
-#################
-
-imgui demo (v0.1-alpha.3) (est. May 17th, 2020)
-----------------------------------------------------------------------------
-
-- Add `imgui <https://github.com/ocornut/imgui>`__ support.
-
-threadpool / task system demo (v0.1-alpha.4) (date not set)
-----------------------------------------------------------------------------------------------------
-
-- Implement ``-threads <N>`` command line argument.
-- Refactor ``render_frame`` method: Account for N buffering (prefer triple buffering).
-- Create a threadpool using C++17.
-- Refactor the engine so it loads resources with worker threads. Use C++17 synchronisation techniques.
-- Abstract command buffer recording into manager classes.
-- Abstract pipeline creation into manager classes.
-- Record command buffers on demand using separate thread.
-- Update uniform buffers in separate thread.
-- Poll window events in separate thread.
-- Implement Vulkan pipeline statistics.
-- Create new threads on demand.
-- Give threadpool tasks a name.
-- Use ``std::chrono`` to measure how long a task took to finish.
-
-
 How to build
 ############
 
@@ -111,8 +86,8 @@ Who develops Vulkan?
 
 The `Khronos Group <https://www.khronos.org/>`__, which also made `OpenGL <https://www.opengl.org/>`__.
 
-## Who supports Vulkan ?
-Just to give a selection of supporters:
+Who supports Vulkan?
+####################
 - Google
 - Intel
 - Apple
@@ -128,7 +103,6 @@ For a full list of contributors, see `this link <https://www.khronos.org/members
 
 Which engines support Vulkan already?
 #####################################
-
 - Unity engine
 - Unreal engine (EPIC games)
 - CryEngine (Crytek)
@@ -220,9 +194,6 @@ MoltenVK
 
 .. |programming language| image:: https://img.shields.io/badge/Language-C++17-orange.svg
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/design/coding-style.html
-
-.. |travis ci| image:: https://img.shields.io/travis/inexorgame/vulkan-renderer/master.svg?label=Travis%20CI
-   :target: https://travis-ci.org/inexorgame/vulkan-renderer
 
 .. |contributors| image:: https://img.shields.io/github/contributors/inexorgame/vulkan-renderer
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributors/main.html
