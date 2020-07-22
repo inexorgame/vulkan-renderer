@@ -11,7 +11,6 @@ class InexorConan(ConanFile):
 
     requires = (
         "glm/0.9.9.7",
-        "boost/1.72.0",
         "spdlog/1.5.0",
         "glfw/3.3.2@bincrafters/stable",
         "toml11/3.1.0",

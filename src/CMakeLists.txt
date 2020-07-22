@@ -15,6 +15,9 @@ add_library(
     vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
 
+    vulkan-renderer/io/byte_stream.cpp
+    vulkan-renderer/io/octree_parser.cpp
+
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
@@ -43,8 +46,8 @@ add_library(
     vulkan-renderer/wrapper/window_surface.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
 
-    vulkan-renderer/world/bit_stream.cpp
     vulkan-renderer/world/cube.cpp
+    vulkan-renderer/world/indentation.cpp
 )
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)
