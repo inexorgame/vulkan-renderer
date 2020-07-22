@@ -185,49 +185,19 @@ void VulkanRenderer::calculate_memory_budget() {
     vmaFreeStatsString(vkdevice->allocator(), vma_stats_string);
 }
 
-VkResult VulkanRenderer::shutdown_vulkan() {
-    // It is important to destroy the objects in reversal of the order of creation.
-    spdlog::debug("Shutting down Vulkan API.");
-
+VulkanRenderer::~VulkanRenderer() {
+    spdlog::debug("Shutting down vulkan renderer");
     vkDeviceWaitIdle(vkdevice->get_device());
-    m_frame_graph.reset();
-
-    // @todo: (yeetari) Remove once this class is RAII-ified.
-    shaders.clear();
-    textures.clear();
-    uniform_buffers.clear();
-    mesh_buffers.clear();
-    descriptors.clear();
-
-    image_available_semaphore.reset();
-    rendering_finished_semaphore.reset();
-
-    // @todo: (Hanni) Remove them once this class is RAII-ified.
-    command_pool.reset();
-    swapchain.reset();
-    surface.reset();
-    vkdevice.reset();
-
-    // Destroy Vulkan debug callback.
     if (debug_report_callback_initialised) {
-        // We have to explicitly load this function.
+        // We have to explicitly load this function
         PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
             reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
                 vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
 
-        if (nullptr != vkDestroyDebugReportCallbackEXT) {
+        if (vkDestroyDebugReportCallbackEXT != nullptr) {
             vkDestroyDebugReportCallbackEXT(vkinstance->get_instance(), debug_report_callback, nullptr);
-            debug_report_callback_initialised = false;
         }
     }
-
-    spdlog::debug("Shutdown finished.");
-    spdlog::debug(
-        "------------------------------------------------------------------------------------------------------------");
-
-    vkinstance.reset();
-
-    return VK_SUCCESS;
 }
 
 } // namespace inexor::vulkan_renderer

@@ -238,7 +238,7 @@ VkResult Application::check_application_specific_features() {
     return VK_SUCCESS;
 }
 
-VkResult Application::init(int argc, char **argv) {
+Application::Application(int argc, char **argv) {
     spdlog::debug("Initialising vulkan-renderer.");
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
 
@@ -464,8 +464,6 @@ VkResult Application::init(int argc, char **argv) {
     game_camera.movement_speed = 0.1f;
     game_camera.set_position({0.0f, 0.0f, 5.0f});
     game_camera.set_rotation({0.0f, 0.0f, 0.0f});
-
-    return VK_SUCCESS;
 }
 
 VkResult Application::update_uniform_buffers() {
@@ -528,22 +526,6 @@ void Application::run() {
 
         time_passed = stopwatch.get_time_step();
     }
-}
-
-void Application::cleanup() {
-    spdlog::debug("Cleaning up Application.");
-
-    shutdown_vulkan();
-
-    window.reset();
-
-    glfw_context.reset();
-
-    vertex_shader_files.clear();
-    fragment_shader_files.clear();
-    texture_files.clear();
-    shader_files.clear();
-    gltf_model_files.clear();
 }
 
 } // namespace inexor::vulkan_renderer

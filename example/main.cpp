@@ -26,20 +26,8 @@ int main(int argc, char *argv[]) {
     spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
     spdlog::debug("Parsing command line arguments.");
 
-    Application renderer;
-    VkResult result = renderer.init(argc, argv);
-
-    if (VK_SUCCESS == result) {
-        renderer.run();
-        renderer.calculate_memory_budget();
-        renderer.cleanup();
-
-        spdlog::debug("Window closed.");
-    } else {
-        // Something did go wrong when initialising the engine!
-        vulkan_error_check(result);
-        return -1;
-    }
-
-    return 0;
+    Application renderer(argc, argv);
+    renderer.run();
+    renderer.calculate_memory_budget();
+    spdlog::debug("Window closed");
 }

@@ -41,9 +41,6 @@ protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 
-    // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
-    std::unique_ptr<FrameGraph> m_frame_graph;
-
     std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
 
     std::shared_ptr<AvailabilityChecksManager> availability_checks_manager =
@@ -53,9 +50,6 @@ protected:
         std::make_shared<VulkanSettingsDecisionMaker>();
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
-
-    std::unique_ptr<wrapper::Semaphore> image_available_semaphore;
-    std::unique_ptr<wrapper::Semaphore> rendering_finished_semaphore;
 
     VkDebugReportCallbackEXT debug_report_callback = {};
 
@@ -78,14 +72,11 @@ protected:
 
     Camera game_camera;
 
-    std::vector<wrapper::Shader> shaders;
-    std::vector<wrapper::Texture> textures;
-    std::vector<wrapper::UniformBuffer> uniform_buffers;
-    std::vector<wrapper::MeshBuffer> mesh_buffers;
-    std::vector<wrapper::Descriptor> descriptors;
+    // RAII wrapper for glfw contexts.
+    std::unique_ptr<wrapper::GLFWContext> glfw_context = nullptr;
 
-    // TODO(Hanni): Remove this with RAII refactoring of descriptors!
-    VkDescriptorImageInfo descriptor_image_info = {};
+    // RAII wrapper for glfw windows.
+    std::unique_ptr<wrapper::Window> window = nullptr;
 
     // RAII wrapper for VkInstance.
     std::unique_ptr<wrapper::Instance> vkinstance = nullptr;
@@ -93,20 +84,29 @@ protected:
     // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
     std::unique_ptr<wrapper::Device> vkdevice = nullptr;
 
-    // RAII wrapper for Swapchain.
-    std::unique_ptr<wrapper::Swapchain> swapchain = nullptr;
-
-    // RAII wrapper for glfw windows.
-    std::unique_ptr<wrapper::Window> window = nullptr;
-
     // RAII wrapper for glfw compatible Vulkan surfaces.
     std::unique_ptr<wrapper::WindowSurface> surface = nullptr;
 
-    /// RAII wrapper for glfw contexts.
-    std::unique_ptr<wrapper::GLFWContext> glfw_context = nullptr;
+    // RAII wrapper for Swapchain.
+    std::unique_ptr<wrapper::Swapchain> swapchain = nullptr;
 
-    /// RAII wrapper for command pools.
+    // RAII wrapper for command pools.
     std::unique_ptr<wrapper::CommandPool> command_pool = nullptr;
+
+    std::unique_ptr<wrapper::Semaphore> image_available_semaphore;
+    std::unique_ptr<wrapper::Semaphore> rendering_finished_semaphore;
+
+    std::vector<wrapper::Shader> shaders;
+    std::vector<wrapper::Texture> textures;
+    std::vector<wrapper::UniformBuffer> uniform_buffers;
+    std::vector<wrapper::MeshBuffer> mesh_buffers;
+    std::vector<wrapper::Descriptor> descriptors;
+
+    // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
+    std::unique_ptr<FrameGraph> m_frame_graph;
+
+    // TODO(Hanni): Remove this with RAII refactoring of descriptors!
+    VkDescriptorImageInfo descriptor_image_info = {};
 
     void setup_frame_graph();
 
@@ -121,13 +121,8 @@ protected:
 
     void render_frame();
 
-    /// @brief Destroys all Vulkan objects.
-    VkResult shutdown_vulkan();
-
 public:
-    VulkanRenderer() = default;
-
-    ~VulkanRenderer() = default;
+    ~VulkanRenderer();
 
     /// @brief Run Vulkan memory allocator's memory statistics
     void calculate_memory_budget();

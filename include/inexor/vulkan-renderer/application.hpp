@@ -14,11 +14,6 @@
 namespace inexor::vulkan_renderer {
 
 class Application : public VulkanRenderer {
-public:
-    Application() = default;
-
-    ~Application() = default;
-
 private:
     std::string application_name = "";
 
@@ -76,7 +71,7 @@ private:
     double cursor_x, cursor_y;
 
 public:
-    VkResult init(int argc, char **argv);
+    Application(int argc, char **argv);
 
     /// @brief Keyboard input callback.
     /// @param window [in] The glfw window.
@@ -87,8 +82,6 @@ public:
     void keyboard_input_callback(GLFWwindow *window, int key, int scan_code, int action, int mods);
 
     void run();
-
-    void cleanup();
 };
 
 } // namespace inexor::vulkan_renderer
