@@ -1,6 +1,4 @@
-add_library(
-    inexor-vulkan-renderer
-
+set(SOURCE_FILES
     vulkan-renderer/application.cpp
     vulkan-renderer/availability_checks.cpp
     vulkan-renderer/bezier_curve.cpp
@@ -49,6 +47,22 @@ add_library(
     vulkan-renderer/world/cube.cpp
     vulkan-renderer/world/indentation.cpp
 )
+
+foreach(FILE ${SOURCE_FILES})
+  get_filename_component(PARENT_DIR "${FILE}" PATH)
+
+  string(REPLACE "/" "\\" GROUP "${PARENT_DIR}")
+
+  if ("${FILE}" MATCHES ".*\\.cpp")
+    set(GROUP "Source Files\\${GROUP}")
+  elseif("${FILE}" MATCHES ".*\\.hpp")
+    set(GROUP "Header Files\\${GROUP}")
+  endif()
+
+  source_group("${GROUP}" FILES "${FILE}")
+endforeach()
+
+add_library(inexor-vulkan-renderer ${SOURCE_FILES})
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)
 
