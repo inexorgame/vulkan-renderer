@@ -32,6 +32,10 @@ void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     m_shaders.push_back(create_info);
 }
 
+PhysicalBuffer::~PhysicalBuffer() {
+    vmaDestroyBuffer(m_allocator, m_buffer, m_allocation);
+}
+
 PhysicalImage::~PhysicalImage() {
     vkDestroyImageView(m_device, m_image_view, nullptr);
     vmaDestroyImage(m_allocator, m_image, m_allocation);
@@ -265,6 +269,20 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             cmd_buf.begin_render_pass(render_pass_bi);
         }
 
+        std::vector<VkBuffer> bind_buffers;
+        for (const auto *resource : stage->m_reads) {
+            const auto *phys_resource = m_resource_map[resource].get();
+            assert(phys_resource != nullptr);
+
+            if (const auto *phys_buffer = dynamic_cast<const PhysicalBuffer *>(phys_resource)) {
+                bind_buffers.push_back(phys_buffer->m_buffer);
+            }
+        }
+
+        if (!bind_buffers.empty()) {
+            cmd_buf.bind_vertex_buffers(bind_buffers);
+        }
+
         cmd_buf.bind_graphics_pipeline(phys->m_pipeline);
         stage->m_on_record(phys, cmd_buf);
 
@@ -316,14 +334,43 @@ void FrameGraph::compile(const RenderResource &target) {
         // Build allocation (using VMA for now)
         m_log->trace("Allocating physical resource for resource '{}'", resource->m_name);
         VmaAllocationCreateInfo alloc_ci = {};
-        alloc_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-        alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
         // TODO(): Use a constexpr bool
 #if VMA_RECORDING_ENABLED
         alloc_ci.flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
         alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
 #endif
+
+        if (const auto *buffer_resource = dynamic_cast<const BufferResource *>(resource.get())) {
+            assert(buffer_resource->m_usage != BufferUsage::INVALID);
+            auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device);
+
+            bool is_uploading_data = buffer_resource->m_data != nullptr;
+            alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0U;
+            alloc_ci.usage = is_uploading_data ? VMA_MEMORY_USAGE_CPU_TO_GPU : VMA_MEMORY_USAGE_GPU_ONLY;
+
+            auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>();
+            buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            buffer_ci.size = buffer_resource->m_data_size;
+            switch (buffer_resource->m_usage) {
+            case BufferUsage::VERTEX_BUFFER:
+                buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+                break;
+            default:
+                assert(false);
+            }
+
+            VmaAllocationInfo alloc_info;
+            if (vmaCreateBuffer(m_allocator, &buffer_ci, &alloc_ci, &phys->m_buffer, &phys->m_allocation,
+                                &alloc_info) != VK_SUCCESS) {
+                throw std::runtime_error("Failed to create buffer!");
+            }
+
+            if (is_uploading_data) {
+                assert(alloc_info.pMappedData != nullptr);
+                std::memcpy(alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
+            }
+        }
 
         if (const auto *texture_resource = dynamic_cast<const TextureResource *>(resource.get())) {
             assert(texture_resource->m_usage != TextureUsage::INVALID);
@@ -334,6 +381,7 @@ void FrameGraph::compile(const RenderResource &target) {
                 create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device, m_swapchain);
             } else {
                 auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device);
+                alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
                 build_image(texture_resource, phys, &alloc_ci);
                 build_image_view(texture_resource, phys);
             }

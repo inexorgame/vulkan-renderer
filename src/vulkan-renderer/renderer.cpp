@@ -21,24 +21,30 @@ void VulkanRenderer::setup_frame_graph() {
     depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
     depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
 
+    auto &vertex_buffer = m_frame_graph->add<BufferResource>("vertex buffer");
+    vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
+    vertex_buffer.upload_data(m_octree_vertices);
+
     auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
+    main_stage.reads_from(vertex_buffer);
     main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(descriptors[0], phys->pipeline_layout());
-        cmd_buf.bind_vertex_buffer(mesh_buffers[0].get_vertex_buffer());
-        cmd_buf.draw(mesh_buffers[0].get_vertex_count());
+        cmd_buf.draw(m_octree_vertices.size());
     });
 
     for (const auto &shader : shaders) {
         main_stage.uses_shader(shader);
     }
 
+    // TODO(): Make a vertex buffer wrapper class that wraps this information
     for (const auto &attribute_binding : OctreeVertex::get_attribute_binding_description()) {
         main_stage.add_attribute_binding(attribute_binding);
     }
 
     main_stage.add_descriptor_layout(descriptors[0].get_descriptor_set_layout());
+    // TODO(): Handle this in the frame graph
     main_stage.add_vertex_binding(OctreeVertex::get_vertex_binding_description());
     m_frame_graph->compile(back_buffer);
 }

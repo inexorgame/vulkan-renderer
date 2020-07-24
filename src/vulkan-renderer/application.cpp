@@ -184,7 +184,6 @@ VkResult Application::load_octree_geometry() {
         child->indent(1, false, 2);
     }
 
-    std::vector<OctreeVertex> octree_vertices;
     for (const auto &polygons : cube->polygons(true)) {
         for (const auto &triangle : *polygons) {
             for (const auto &vertex : triangle) {
@@ -193,17 +192,10 @@ VkResult Application::load_octree_geometry() {
                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
                 };
-                octree_vertices.emplace_back(vertex, color);
+                m_octree_vertices.emplace_back(vertex, color);
             }
         }
     }
-
-    const std::string octree_mesh_name = "unnamed octree";
-
-    // Create a mesh buffer for octree vertex geometry.
-    mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(),
-                              vkdevice->get_transfer_queue_family_index(), vkdevice->allocator(), octree_mesh_name,
-                              sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }

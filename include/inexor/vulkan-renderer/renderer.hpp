@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/frame_graph.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
+#include "inexor/vulkan-renderer/octree_vertex.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 
@@ -104,6 +105,8 @@ protected:
 
     // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
     std::unique_ptr<FrameGraph> m_frame_graph;
+
+    std::vector<OctreeVertex> m_octree_vertices;
 
     // TODO(Hanni): Remove this with RAII refactoring of descriptors!
     VkDescriptorImageInfo descriptor_image_info = {};

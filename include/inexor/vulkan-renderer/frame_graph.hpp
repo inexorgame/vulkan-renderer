@@ -45,6 +45,41 @@ public:
     RenderResource &operator=(RenderResource &&) = delete;
 };
 
+enum class BufferUsage {
+    INVALID,
+    VERTEX_BUFFER,
+};
+
+class BufferResource : public RenderResource {
+    friend FrameGraph;
+
+private:
+    BufferUsage m_usage{BufferUsage::INVALID};
+
+    // Data to upload during frame graph compilation
+    const void *m_data{nullptr};
+    std::size_t m_data_size{0};
+
+public:
+    explicit BufferResource(std::string &&name) : RenderResource(name) {}
+
+    void set_usage(BufferUsage usage) {
+        m_usage = usage;
+    }
+
+    // TODO(): Use std::span when we switch to C++ 20
+    template <typename T>
+    void upload_data(const T *data, std::size_t count) {
+        m_data = data;
+        m_data_size = count * sizeof(T);
+    }
+
+    template <typename T>
+    void upload_data(const std::vector<T> &data) {
+        upload_data(data.data(), data.size());
+    }
+};
+
 enum class TextureUsage {
     INVALID,
     BACK_BUFFER,
@@ -157,6 +192,22 @@ public:
 
     PhysicalResource &operator=(const PhysicalResource &) = delete;
     PhysicalResource &operator=(PhysicalResource &&) = delete;
+};
+
+class PhysicalBuffer : public PhysicalResource {
+    friend FrameGraph;
+
+private:
+    VkBuffer m_buffer{VK_NULL_HANDLE};
+
+public:
+    PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    PhysicalBuffer(const PhysicalBuffer &) = delete;
+    PhysicalBuffer(PhysicalBuffer &&) = delete;
+    ~PhysicalBuffer() override;
+
+    PhysicalBuffer &operator=(const PhysicalBuffer &) = delete;
+    PhysicalBuffer &operator=(PhysicalBuffer &&) = delete;
 };
 
 class PhysicalImage : public PhysicalResource {
