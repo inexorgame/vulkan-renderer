@@ -10,12 +10,6 @@ endif()
 include(${PROJECT_BINARY_DIR}/conan.cmake)
 conan_check(VERSION 1.19.1 REQUIRED)
 
-conan_add_remote(
-    NAME bincrafters
-    INDEX 1
-    URL https://api.bintray.com/conan/bincrafters/public-conan
-)
-
 if(INEXOR_BUILD_BENCHMARKS)
     set(benchmark_option True)
 else()

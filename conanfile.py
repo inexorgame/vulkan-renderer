@@ -10,13 +10,14 @@ class InexorConan(ConanFile):
     )
 
     requires = (
-        "glm/0.9.9.7",
-        "spdlog/1.5.0",
-        "glfw/3.3.2@bincrafters/stable",
-        "toml11/3.1.0",
-        "imgui/1.75",
+        "glfw/3.3.2",
+        "glm/0.9.9.8",
+        "imgui/1.77",
+        "nlohmann_json/3.8.0",
+        "spdlog/1.7.0",
         "stb/20200203",
-        "nlohmann_json/3.7.3",
+        "tinygltf/2.2.0",
+        "toml11/3.4.0",
     )
 
     options = {
