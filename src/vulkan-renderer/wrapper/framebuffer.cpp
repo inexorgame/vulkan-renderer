@@ -9,15 +9,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Framebuffer::Framebuffer(Framebuffer &&other) noexcept
-    : device(other.device), framebuffer(std::exchange(other.framebuffer, nullptr)) {}
-
-Framebuffer::Framebuffer(VkDevice device, VkImageView color, VkImageView depth, VkRenderPass render_pass,
+Framebuffer::Framebuffer(VkDevice device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
                          const wrapper::Swapchain &swapchain)
-    : device(device), framebuffer(nullptr) {
+    : m_device(device) {
     spdlog::trace("Creating framebuffer");
-
-    std::array<VkImageView, 2> attachments = {color, depth};
 
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
     framebuffer_ci.attachmentCount = attachments.size();
@@ -27,14 +22,19 @@ Framebuffer::Framebuffer(VkDevice device, VkImageView color, VkImageView depth, 
     framebuffer_ci.layers = 1;
     framebuffer_ci.renderPass = render_pass;
 
-    if (vkCreateFramebuffer(device, &framebuffer_ci, nullptr, &framebuffer) != VK_SUCCESS) {
+    if (vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, &m_framebuffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create framebuffer!");
     }
 }
 
+Framebuffer::Framebuffer(Framebuffer &&other) noexcept
+    : m_device(other.m_device), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)) {}
+
 Framebuffer::~Framebuffer() {
-    spdlog::trace("Destroying frame buffer");
-    vkDestroyFramebuffer(device, framebuffer, nullptr);
+    if (m_framebuffer != VK_NULL_HANDLE) {
+        spdlog::trace("Destroying framebuffer");
+    }
+    vkDestroyFramebuffer(m_device, m_framebuffer, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

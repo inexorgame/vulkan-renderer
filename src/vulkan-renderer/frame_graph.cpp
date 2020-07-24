@@ -238,8 +238,7 @@ void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *
     }
 }
 
-void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys,
-                                        const PhysicalBackBuffer *back_buffer) {
+void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Recording command buffers for stage '{}'", stage->m_name);
     for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
         // TODO(): Remove simultaneous usage once we have proper max frames in flight control
@@ -260,7 +259,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
             render_pass_bi.clearValueCount = clear_values.size();
             render_pass_bi.pClearValues = clear_values.data();
-            render_pass_bi.framebuffer = back_buffer->m_framebuffers[i].get();
+            render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[i].get();
             render_pass_bi.renderArea.extent = m_swapchain.get_extent();
             render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
             cmd_buf.begin_render_pass(render_pass_bi);
@@ -328,11 +327,16 @@ void FrameGraph::compile(const RenderResource &target) {
 
         if (const auto *texture_resource = dynamic_cast<const TextureResource *>(resource.get())) {
             assert(texture_resource->m_usage != TextureUsage::INVALID);
-            auto *phys = texture_resource->m_usage == TextureUsage::BACK_BUFFER
-                             ? create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device)
-                             : create<PhysicalImage>(texture_resource, m_allocator, m_device);
-            build_image(texture_resource, phys, &alloc_ci);
-            build_image_view(texture_resource, phys);
+
+            // Back buffer gets special handling
+            if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
+                // TODO(): Move image views from wrapper::Swapchain to PhysicalBackBuffer
+                create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device, m_swapchain);
+            } else {
+                auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device);
+                build_image(texture_resource, phys, &alloc_ci);
+                build_image_view(texture_resource, phys);
+            }
         }
     }
 
@@ -344,38 +348,43 @@ void FrameGraph::compile(const RenderResource &target) {
             auto *phys = create<PhysicalGraphicsStage>(graphics_stage, m_device);
             build_render_pass(graphics_stage, phys);
             build_graphics_pipeline(graphics_stage, phys);
-        }
-    }
 
-    // Find depth buffer
-    const TextureResource *depth_buffer = nullptr;
-    for (const auto &resource : m_resources) {
-        if (const auto *texture = dynamic_cast<const TextureResource *>(resource.get())) {
-            if (texture->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER) {
-                depth_buffer = texture;
+            // If we write to at least one texture, we need to make framebuffers
+            if (!stage->m_writes.empty()) {
+                // For every texture that this stage writes to, we need to attach it to the framebuffer
+                std::vector<const PhysicalBackBuffer *> back_buffers;
+                std::vector<const PhysicalImage *> images;
+                for (const auto *resource : stage->m_writes) {
+                    const auto *phys_resource = m_resource_map[resource].get();
+                    if (const auto *back_buffer = dynamic_cast<const PhysicalBackBuffer *>(phys_resource)) {
+                        back_buffers.push_back(back_buffer);
+                    } else if (const auto *image = dynamic_cast<const PhysicalImage *>(phys_resource)) {
+                        images.push_back(image);
+                    }
+                }
+
+                std::vector<VkImageView> image_views;
+                for (std::uint32_t i = 0; i < m_swapchain.get_image_count(); i++) {
+                    image_views.clear();
+                    for (const auto *back_buffer : back_buffers) {
+                        image_views.push_back(back_buffer->m_swapchain.get_image_view(i));
+                    }
+
+                    for (const auto *image : images) {
+                        image_views.push_back(image->m_image_view);
+                    }
+
+                    phys->m_framebuffers.emplace_back(m_device, phys->m_render_pass, image_views, m_swapchain);
+                }
             }
         }
-    }
-
-    const auto *back_buffer_writer = dynamic_cast<const GraphicsStage *>(writers[&target][0]);
-    assert(back_buffer_writer != nullptr);
-    assert(depth_buffer != nullptr);
-
-    // Create framebuffers
-    auto *phys_back_buffer = dynamic_cast<PhysicalBackBuffer *>(m_resource_map[&target].get());
-    assert(phys_back_buffer != nullptr);
-    for (std::uint32_t i = 0; i < m_swapchain.get_image_count(); i++) {
-        phys_back_buffer->m_framebuffers.emplace_back(
-            m_device, m_swapchain.get_image_view(i),
-            dynamic_cast<PhysicalImage *>(m_resource_map[depth_buffer].get())->m_image_view,
-            dynamic_cast<PhysicalGraphicsStage *>(m_stage_map[back_buffer_writer].get())->m_render_pass, m_swapchain);
     }
 
     // Allocate and record command buffers
     for (const auto *stage : m_stage_stack) {
         auto *phys = m_stage_map[stage].get();
         alloc_command_buffers(stage, phys);
-        record_command_buffers(stage, phys, phys_back_buffer);
+        record_command_buffers(stage, phys);
     }
 }
 
@@ -394,7 +403,7 @@ void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemapho
     // TODO(): Batch submit infos
     // TODO(): Loop over physical stages here
     for (const auto *stage : m_stage_stack) {
-        auto cmd_buf = m_stage_map.at(stage)->m_command_buffers[image_index].get();
+        auto *cmd_buf = m_stage_map.at(stage)->m_command_buffers[image_index].get();
         submit_info.pCommandBuffers = &cmd_buf;
         vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     }

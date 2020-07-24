@@ -176,14 +176,15 @@ public:
     PhysicalImage &operator=(PhysicalImage &&) = delete;
 };
 
-class PhysicalBackBuffer : public PhysicalImage {
+class PhysicalBackBuffer : public PhysicalResource {
     friend FrameGraph;
 
 private:
-    std::vector<wrapper::Framebuffer> m_framebuffers;
+    const wrapper::Swapchain &m_swapchain;
 
 public:
-    PhysicalBackBuffer(VmaAllocator allocator, VkDevice device) : PhysicalImage(allocator, device) {}
+    PhysicalBackBuffer(VmaAllocator allocator, VkDevice device, const wrapper::Swapchain &swapchain)
+        : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
     ~PhysicalBackBuffer() override = default;
@@ -225,6 +226,7 @@ class PhysicalGraphicsStage : public PhysicalStage {
 
 private:
     VkRenderPass m_render_pass{VK_NULL_HANDLE};
+    std::vector<wrapper::Framebuffer> m_framebuffers;
 
 public:
     explicit PhysicalGraphicsStage(VkDevice device) : PhysicalStage(device) {}
@@ -285,7 +287,7 @@ private:
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *);
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *);
     void alloc_command_buffers(const RenderStage *, PhysicalStage *);
-    void record_command_buffers(const RenderStage *, PhysicalStage *, const PhysicalBackBuffer *);
+    void record_command_buffers(const RenderStage *, PhysicalStage *);
 
 public:
     FrameGraph(VkDevice device, VkCommandPool command_pool, VmaAllocator allocator, const wrapper::Swapchain &swapchain)
