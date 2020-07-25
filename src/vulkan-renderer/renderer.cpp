@@ -162,12 +162,7 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
-    // TODO(): Add std::uint32_t wrapper::Swapchain::acquire_next_image(const wrapper::Semaphore &)
-    std::uint32_t image_index = 0;
-    VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
-                                            image_available_semaphore->get(), VK_NULL_HANDLE, &image_index);
-    assert(result == VK_SUCCESS);
-
+    const auto image_index = swapchain->acquire_next_image(*image_available_semaphore);
     m_frame_graph->render(image_index, rendering_finished_semaphore->get(), image_available_semaphore->get(),
                           vkdevice->get_graphics_queue());
 

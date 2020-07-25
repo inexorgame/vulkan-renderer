@@ -8,6 +8,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Semaphore;
+
 class Swapchain {
 private:
     // TODO: Move members which don't need to be members!
@@ -47,6 +49,11 @@ public:
               const std::string &name);
 
     ~Swapchain();
+
+    /// @brief Acquires the next writable image in the swapchain
+    /// @param semaphore A semaphore to signal once image acquisition has completed
+    /// @returns The image index
+    [[nodiscard]] std::uint32_t acquire_next_image(const wrapper::Semaphore &semaphore);
 
     /// @brief The swapchain needs to be recreated if it has been invalidated.
     /// @note We must pass width and height as call by reference!

@@ -2,9 +2,11 @@
 
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 
+#include <limits>
 #include <optional>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -134,6 +136,13 @@ Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card
     assert(surface);
 
     setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
+}
+
+std::uint32_t Swapchain::acquire_next_image(const wrapper::Semaphore &semaphore) {
+    std::uint32_t image_index;
+    vkAcquireNextImageKHR(device, swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(), VK_NULL_HANDLE,
+                          &image_index);
+    return image_index;
 }
 
 void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height) {
