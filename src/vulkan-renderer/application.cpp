@@ -25,7 +25,7 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
 
     // This is actually the way it is handled by the official Vulkan samples.
     auto *app = reinterpret_cast<VulkanRenderer *>(glfwGetWindowUserPointer(window));
-    // app->frame_buffer_resized = true;
+    app->window_resized = true;
 }
 
 VkResult Application::load_toml_configuration_file(const std::string &file_name) {

@@ -122,6 +122,8 @@ protected:
 
     VkResult create_descriptor_writes();
 
+    void recreate_swapchain();
+
     void render_frame();
 
 public:
@@ -129,6 +131,8 @@ public:
 
     /// @brief Run Vulkan memory allocator's memory statistics
     void calculate_memory_budget();
+
+    bool window_resized = false;
 
     /// Neccesary for taking into account the relative speed of the system's CPU.
     float time_passed = 0.0f;

@@ -135,7 +135,33 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     return VK_SUCCESS;
 }
 
+void VulkanRenderer::recreate_swapchain() {
+    window->wait_for_focus();
+    vkDeviceWaitIdle(vkdevice->get_device());
+
+    // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
+    m_frame_graph.reset();
+    swapchain->recreate(window->get_width(), window->get_height());
+    m_frame_graph =
+        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vkdevice->allocator(), *swapchain);
+    setup_frame_graph();
+
+    image_available_semaphore.reset();
+    rendering_finished_semaphore.reset();
+    image_available_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Image available semaphore");
+    rendering_finished_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Rendering finished semaphore");
+    vkDeviceWaitIdle(vkdevice->get_device());
+}
+
 void VulkanRenderer::render_frame() {
+    if (window_resized) {
+        window_resized = false;
+        recreate_swapchain();
+        return;
+    }
+
     // TODO(): Add std::uint32_t wrapper::Swapchain::acquire_next_image(const wrapper::Semaphore &)
     std::uint32_t image_index = 0;
     VkResult result = vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
