@@ -1,7 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
 #include "inexor/vulkan-renderer/error_handling.hpp"
-#include "inexor/vulkan-renderer/octree_vertex.hpp"
+#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/info.hpp"
 
@@ -23,12 +23,15 @@ void VulkanRenderer::setup_frame_graph() {
 
     auto &vertex_buffer = m_frame_graph->add<BufferResource>("vertex buffer");
     vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
+    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position));
+    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));
     vertex_buffer.upload_data(m_octree_vertices);
 
     auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
     main_stage.reads_from(vertex_buffer);
+    main_stage.bind_buffer(vertex_buffer, 0);
     main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(descriptors[0], phys->pipeline_layout());
         cmd_buf.draw(m_octree_vertices.size());
@@ -38,14 +41,7 @@ void VulkanRenderer::setup_frame_graph() {
         main_stage.uses_shader(shader);
     }
 
-    // TODO(): Make a vertex buffer wrapper class that wraps this information
-    for (const auto &attribute_binding : OctreeVertex::get_attribute_binding_description()) {
-        main_stage.add_attribute_binding(attribute_binding);
-    }
-
     main_stage.add_descriptor_layout(descriptors[0].get_descriptor_set_layout());
-    // TODO(): Handle this in the frame graph
-    main_stage.add_vertex_binding(OctreeVertex::get_vertex_binding_description());
     m_frame_graph->compile(back_buffer);
 }
 

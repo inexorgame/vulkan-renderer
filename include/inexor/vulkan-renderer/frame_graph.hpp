@@ -55,10 +55,12 @@ class BufferResource : public RenderResource {
 
 private:
     BufferUsage m_usage{BufferUsage::INVALID};
+    std::vector<VkVertexInputAttributeDescription> m_vertex_attributes;
 
     // Data to upload during frame graph compilation
     const void *m_data{nullptr};
     std::size_t m_data_size{0};
+    std::size_t m_element_size{0};
 
 public:
     explicit BufferResource(std::string &&name) : RenderResource(name) {}
@@ -67,17 +69,14 @@ public:
         m_usage = usage;
     }
 
+    void add_vertex_attribute(VkFormat format, std::uint32_t offset);
+
     // TODO(): Use std::span when we switch to C++ 20
     template <typename T>
-    void upload_data(const T *data, std::size_t count) {
-        m_data = data;
-        m_data_size = count * sizeof(T);
-    }
+    void upload_data(const T *data, std::size_t count);
 
     template <typename T>
-    void upload_data(const std::vector<T> &data) {
-        upload_data(data.data(), data.size());
-    }
+    void upload_data(const std::vector<T> &data);
 };
 
 enum class TextureUsage {
@@ -149,9 +148,8 @@ class GraphicsStage : public RenderStage {
     friend FrameGraph;
 
 private:
+    std::unordered_map<const BufferResource *, std::uint32_t> m_buffer_bindings;
     std::vector<VkPipelineShaderStageCreateInfo> m_shaders;
-    std::vector<VkVertexInputAttributeDescription> m_attribute_bindings;
-    std::vector<VkVertexInputBindingDescription> m_vertex_bindings;
 
 public:
     explicit GraphicsStage(std::string &&name) : RenderStage(name) {}
@@ -162,15 +160,8 @@ public:
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
+    void bind_buffer(const BufferResource &buffer, std::uint32_t binding);
     void uses_shader(const wrapper::Shader &shader);
-
-    void add_attribute_binding(VkVertexInputAttributeDescription attribute_binding) {
-        m_attribute_bindings.push_back(attribute_binding);
-    }
-
-    void add_vertex_binding(VkVertexInputBindingDescription vertex_binding) {
-        m_vertex_bindings.push_back(vertex_binding);
-    }
 };
 
 // TODO(): Add wrapper::Allocation that can be made by doing device->make<Allocation>(...);
@@ -362,5 +353,16 @@ public:
     void render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
                 VkQueue graphics_queue) const;
 };
+
+template <typename T>
+void BufferResource::upload_data(const T *data, std::size_t count) {
+    m_data = data,
+    m_data_size = count * (m_element_size = sizeof(T));
+}
+
+template <typename T>
+void BufferResource::upload_data(const std::vector<T> &data) {
+    upload_data(data.data(), data.size());
+}
 
 } // namespace inexor::vulkan_renderer

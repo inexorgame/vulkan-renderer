@@ -16,12 +16,24 @@
 
 namespace inexor::vulkan_renderer {
 
+void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
+    VkVertexInputAttributeDescription vertex_attribute = {};
+    vertex_attribute.format = format;
+    vertex_attribute.location = m_vertex_attributes.size();
+    vertex_attribute.offset = offset;
+    m_vertex_attributes.push_back(vertex_attribute);
+}
+
 void RenderStage::writes_to(const RenderResource &resource) {
     m_writes.push_back(&resource);
 }
 
 void RenderStage::reads_from(const RenderResource &resource) {
     m_reads.push_back(&resource);
+}
+
+void GraphicsStage::bind_buffer(const BufferResource &buffer, std::uint32_t binding) {
+    m_buffer_bindings.emplace(&buffer, binding);
 }
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
@@ -164,12 +176,32 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     phys->m_pipeline_layout =
         std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, "Default pipeline layout");
 
-    // TODO(): Add wrapper::VertexBuffer (as well as UniformBuffer)
+    std::vector<VkVertexInputAttributeDescription> attribute_bindings;
+    std::vector<VkVertexInputBindingDescription> vertex_bindings;
+    for (const auto *resource : stage->m_reads) {
+        const auto *buffer_resource = dynamic_cast<const BufferResource *>(resource);
+        if (buffer_resource == nullptr) {
+            continue;
+        }
+
+        std::uint32_t binding = stage->m_buffer_bindings.at(buffer_resource);
+        for (auto attribute_binding : buffer_resource->m_vertex_attributes) {
+            attribute_binding.binding = binding;
+            attribute_bindings.push_back(attribute_binding);
+        }
+
+        VkVertexInputBindingDescription vertex_binding = {};
+        vertex_binding.binding = binding;
+        vertex_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        vertex_binding.stride = buffer_resource->m_element_size;
+        vertex_bindings.push_back(vertex_binding);
+    }
+
     auto vertex_input = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
-    vertex_input.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(stage->m_attribute_bindings.size());
-    vertex_input.vertexBindingDescriptionCount = static_cast<std::uint32_t>(stage->m_vertex_bindings.size());
-    vertex_input.pVertexAttributeDescriptions = stage->m_attribute_bindings.data();
-    vertex_input.pVertexBindingDescriptions = stage->m_vertex_bindings.data();
+    vertex_input.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_bindings.size());
+    vertex_input.vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_bindings.size());
+    vertex_input.pVertexAttributeDescriptions = attribute_bindings.data();
+    vertex_input.pVertexBindingDescriptions = vertex_bindings.data();
 
     // TODO(): Support primitives other than triangles
     auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();

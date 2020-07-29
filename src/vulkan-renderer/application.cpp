@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/debug_callback.hpp"
 #include "inexor/vulkan-renderer/error_handling.hpp"
-#include "inexor/vulkan-renderer/octree_vertex.hpp"
+#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
