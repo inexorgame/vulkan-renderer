@@ -27,6 +27,8 @@ namespace inexor::vulkan_renderer {
 
 class FrameGraph;
 
+/// @brief A single resource in the frame graph
+/// @note May become multiple physical (vulkan) resources during frame graph compilation
 class RenderResource {
     friend FrameGraph;
 
@@ -46,7 +48,11 @@ public:
 };
 
 enum class BufferUsage {
+    /// @brief Invalid buffer usage
+    /// @note Leaving a buffer as this usage will cause frame graph compilation to fail!
     INVALID,
+
+    /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader
     VERTEX_BUFFER,
 };
 
@@ -65,24 +71,45 @@ private:
 public:
     explicit BufferResource(std::string &&name) : RenderResource(name) {}
 
+    /// @brief Specifies the usage of this buffer resource
+    /// @note Currently, the only valid value of usage is BufferUsage::VERTEX_BUFFER
+    /// @see BufferUsage
     void set_usage(BufferUsage usage) {
         m_usage = usage;
     }
 
+    /// @brief Specifies that element `offset` of this vertex buffer is of format `format`
+    /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER!
     void add_vertex_attribute(VkFormat format, std::uint32_t offset);
 
+    /// @brief Specifies that data should be uploaded to this buffer during frame graph compilation
+    /// @param count The number of elements (not bytes) to upload from CPU memory to GPU memory
+    /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
     // TODO(): Use std::span when we switch to C++ 20
     template <typename T>
     void upload_data(const T *data, std::size_t count);
 
+    /// @brief @copybrief upload_data(const T *, std::size_t)
+    /// @note This is equivalent to doing `upload_data(data.data(), data.size() * sizeof(T))`
+    /// @see upload_data(const T *data, std::size_t count)
     template <typename T>
     void upload_data(const std::vector<T> &data);
 };
 
 enum class TextureUsage {
+    /// @brief Invalid texture usage
+    /// @note Leaving a texture as this usage will cause frame graph compilation to fail!
     INVALID,
+
+    /// @brief Specifies that this texture is the result of the frame graph
+    // TODO(): Refactor back buffer system more (remove need for BACK_BUFFER texture usage)
     BACK_BUFFER,
+
+    /// @brief Specifies that this texture is a combined depth/stencil buffer
+    /// @note This may mean that this texture is completely GPU-sided and cannot be accessed by the CPU in any way!
     DEPTH_STENCIL_BUFFER,
+
+    /// @brief Specifies that this texture isn't used for any special purpose (can be accessed by both the CPU and GPU)
     NORMAL,
 };
 
@@ -96,10 +123,15 @@ private:
 public:
     explicit TextureResource(std::string &&name) : RenderResource(name) {}
 
+    /// @brief Specifies the format of this texture that is required when a physical resource is made
+    /// @details For TextureUsage::BACK_BUFFER textures, using the swapchain image format is preferable in most cases.
+    /// @details For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used!
     void set_format(VkFormat format) {
         m_format = format;
     }
 
+    /// @brief Specifies the usage of this texture resource
+    /// @see TextureUsage
     void set_usage(TextureUsage usage) {
         m_usage = usage;
     }
@@ -129,16 +161,22 @@ public:
     RenderStage &operator=(const RenderStage &) = delete;
     RenderStage &operator=(RenderStage &&) = delete;
 
-    /// @brief Specifies that this stage writes to @param resource
+    /// @brief Specifies that this stage writes to `resource`
     void writes_to(const RenderResource &resource);
 
-    /// @brief Specifies that this stage reads from @param resource
+    /// @brief Specifies that this stage reads from `resource`
     void reads_from(const RenderResource &resource);
 
+    /// @brief Binds a descriptor set layout to this render stage
+    /// @note This function will soon be removed
+    // TODO(): Refactor descriptor management in the frame graph
     void add_descriptor_layout(VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
     }
 
+    /// @brief Specifies a function that will be called during command buffer recordation for this stage
+    /// @details This function can be used to specify other vulkan commands during command buffer recordation. The most
+    /// @details common use for this is for draw commands.
     void set_on_record(std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
     }
@@ -160,7 +198,11 @@ public:
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
+    /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage
     void bind_buffer(const BufferResource &buffer, std::uint32_t binding);
+
+    /// @brief Specifies that `shader` should be used during the pipeline of this stage
+    /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour!
     void uses_shader(const wrapper::Shader &shader);
 };
 
@@ -258,6 +300,8 @@ public:
     PhysicalStage &operator=(const PhysicalStage &) = delete;
     PhysicalStage &operator=(PhysicalStage &&) = delete;
 
+    /// @brief Retrieve the pipeline layout of this physical stage
+    // TODO(): This can be removed once descriptors are properly implemented in the frame graph
     [[nodiscard]] VkPipelineLayout pipeline_layout() const {
         return m_pipeline_layout->get();
     }
@@ -335,6 +379,8 @@ public:
     FrameGraph(VkDevice device, VkCommandPool command_pool, VmaAllocator allocator, const wrapper::Swapchain &swapchain)
         : m_device(device), m_command_pool(command_pool), m_allocator(allocator), m_swapchain(swapchain) {}
 
+    /// @brief Adds either a render resource or render stage to the frame graph
+    /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
     T &add(Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
@@ -349,14 +395,19 @@ public:
         return ret;
     }
 
+    /// @brief Compiles the frame graph resources/stages into physical vulkan objects
+    /// @param target The resource to start the depth first search from
     void compile(const RenderResource &target);
+
+    /// @brief Submits the command frame's command buffers for drawing
+    /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
     void render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
                 VkQueue graphics_queue) const;
 };
 
 template <typename T>
 void BufferResource::upload_data(const T *data, std::size_t count) {
-    m_data = data,
+    m_data = data;
     m_data_size = count * (m_element_size = sizeof(T));
 }
 
