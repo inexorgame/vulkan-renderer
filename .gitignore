@@ -45,6 +45,7 @@ build/
 vma-dumps/*.json
 *.ini
 *.csv
+*__pycache__*
 
 # auto generated documentations paths
 documentation/doxygen-output/
