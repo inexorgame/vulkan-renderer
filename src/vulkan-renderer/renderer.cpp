@@ -70,25 +70,19 @@ VkResult VulkanRenderer::create_descriptor_pool() {
 
     // Create the descriptor pool.
     descriptors[0].create_descriptor_pool(
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER});
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_descriptor_set_layouts() {
-    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings(2);
+    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings(1);
 
     descriptor_set_layout_bindings[0].binding = 0;
     descriptor_set_layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor_set_layout_bindings[0].descriptorCount = 1;
     descriptor_set_layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     descriptor_set_layout_bindings[0].pImmutableSamplers = nullptr;
-
-    descriptor_set_layout_bindings[1].binding = 1;
-    descriptor_set_layout_bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_set_layout_bindings[1].descriptorCount = 1;
-    descriptor_set_layout_bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    descriptor_set_layout_bindings[1].pImmutableSamplers = nullptr;
 
     descriptors[0].create_descriptor_set_layouts(descriptor_set_layout_bindings);
 
@@ -98,7 +92,7 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 VkResult VulkanRenderer::create_descriptor_writes() {
     assert(!textures.empty());
 
-    std::vector<VkWriteDescriptorSet> descriptor_writes(2);
+    std::vector<VkWriteDescriptorSet> descriptor_writes(1);
 
     // Link the matrices uniform buffer to the descriptor set so the shader can access it.
 
@@ -114,19 +108,6 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &uniform_buffer_info;
-
-    // Link the texture to the descriptor set so the shader can access it.
-    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    descriptor_image_info.imageView = textures[0].get_image_view();
-    descriptor_image_info.sampler = textures[0].get_sampler();
-
-    descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[1].dstSet = nullptr;
-    descriptor_writes[1].dstBinding = 1;
-    descriptor_writes[1].dstArrayElement = 0;
-    descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_writes[1].descriptorCount = 1;
-    descriptor_writes[1].pImageInfo = &descriptor_image_info;
 
     descriptors[0].add_descriptor_writes(descriptor_writes);
 

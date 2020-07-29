@@ -108,9 +108,6 @@ protected:
 
     std::vector<OctreeVertex> m_octree_vertices;
 
-    // TODO(Hanni): Remove this with RAII refactoring of descriptors!
-    VkDescriptorImageInfo descriptor_image_info = {};
-
     void setup_frame_graph();
 
     /// @brief Creates the semaphores neccesary for synchronisation.

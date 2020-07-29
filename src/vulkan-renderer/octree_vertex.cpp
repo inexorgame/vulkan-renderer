@@ -16,7 +16,7 @@ VkVertexInputBindingDescription OctreeVertex::get_vertex_binding_description() {
 }
 
 std::vector<VkVertexInputAttributeDescription> OctreeVertex::get_attribute_binding_description() {
-    std::vector<VkVertexInputAttributeDescription> vertex_input_attribute_description(3);
+    std::vector<VkVertexInputAttributeDescription> vertex_input_attribute_description(2);
 
     vertex_input_attribute_description[0].location = 0;
     vertex_input_attribute_description[0].binding = 0;
@@ -27,11 +27,6 @@ std::vector<VkVertexInputAttributeDescription> OctreeVertex::get_attribute_bindi
     vertex_input_attribute_description[1].binding = 0;
     vertex_input_attribute_description[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     vertex_input_attribute_description[1].offset = offsetof(OctreeVertex, color);
-
-    vertex_input_attribute_description[2].location = 2;
-    vertex_input_attribute_description[2].binding = 0;
-    vertex_input_attribute_description[2].format = VK_FORMAT_R32G32_SFLOAT;
-    vertex_input_attribute_description[2].offset = offsetof(OctreeVertex, texture_coordinate);
 
     return vertex_input_attribute_description;
 }

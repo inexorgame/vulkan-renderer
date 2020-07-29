@@ -12,7 +12,6 @@ class OctreeVertex {
 public:
     glm::vec3 pos;
     glm::vec3 color;
-    glm::vec2 texture_coordinate;
 
     OctreeVertex(glm::vec3 pos, glm::vec3 color);
 
