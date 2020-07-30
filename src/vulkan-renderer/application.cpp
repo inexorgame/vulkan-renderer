@@ -461,7 +461,7 @@ Application::Application(int argc, char **argv) {
 VkResult Application::update_uniform_buffers() {
     float time = time_step.get_time_step_since_initialisation();
 
-    UniformBufferObject ubo = {};
+    UniformBufferObject ubo{};
 
     // Rotate the model as a function of time.
     ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));

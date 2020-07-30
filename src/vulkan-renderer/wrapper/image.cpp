@@ -36,7 +36,7 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     image_ci.samples = sample_count;
     image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VmaAllocationCreateInfo vma_allocation_ci = {};
+    VmaAllocationCreateInfo vma_allocation_ci{};
     vma_allocation_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 #if VMA_RECORDING_ENABLED

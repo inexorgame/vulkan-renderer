@@ -74,7 +74,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         instance_extension_wishlist.push_back(requested_instance_extension.c_str());
     }
 
-    std::vector<const char *> enabled_instance_extensions = {};
+    std::vector<const char *> enabled_instance_extensions {};
 
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &instance_extension : instance_extension_wishlist) {
@@ -86,7 +86,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         }
     }
 
-    std::vector<const char *> instance_layers_wishlist = {};
+    std::vector<const char *> instance_layers_wishlist {};
 
 #ifndef NDEBUG
     // RenderDoc is a very useful open source graphics debugger for Vulkan and other APIs.
@@ -120,7 +120,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         instance_layers_wishlist.push_back(instance_layer.c_str());
     }
 
-    std::vector<const char *> enabled_instance_layers = {};
+    std::vector<const char *> enabled_instance_layers {};
 
     // We have to check which instance layers of our wishlist are available on the current system!
     // We are not checking for duplicated entries but this is no problem.

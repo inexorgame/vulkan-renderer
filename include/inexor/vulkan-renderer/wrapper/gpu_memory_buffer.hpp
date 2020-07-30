@@ -16,8 +16,8 @@ protected:
     VkBuffer buffer = VK_NULL_HANDLE;
     VkDeviceSize buffer_size = 0;
     VmaAllocation allocation = VK_NULL_HANDLE;
-    VmaAllocationInfo allocation_info = {};
-    VmaAllocationCreateInfo allocation_ci = {};
+    VmaAllocationInfo allocation_info{};
+    VmaAllocationCreateInfo allocation_ci{};
 
 public:
     /// Delete the copy constructor so gpu memory buffers are move-only objects.

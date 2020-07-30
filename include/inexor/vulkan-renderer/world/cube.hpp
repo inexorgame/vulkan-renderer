@@ -53,8 +53,8 @@ private:
     std::weak_ptr<Cube> m_parent = this->weak_from_this();
 
     /// Indentations, should only be used if it is a geometry cube.
-    std::array<Indentation, Cube::EDGES> m_indentations = {};
-    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs = {};
+    std::array<Indentation, Cube::EDGES> m_indentations{};
+    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs{};
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
     mutable PolygonCache m_polygon_cache = nullptr;

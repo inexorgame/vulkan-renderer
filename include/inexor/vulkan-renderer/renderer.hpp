@@ -52,7 +52,7 @@ protected:
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
-    VkDebugReportCallbackEXT debug_report_callback = {};
+    VkDebugReportCallbackEXT debug_report_callback {};
 
     bool debug_report_callback_initialised = false;
 
@@ -67,7 +67,7 @@ protected:
     FPSCounter fps_counter;
 
     // TODO: Refactor this!
-    VkDescriptorBufferInfo uniform_buffer_info = {};
+    VkDescriptorBufferInfo uniform_buffer_info {};
 
     bool vsync_enabled = false;
 

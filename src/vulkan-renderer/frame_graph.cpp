@@ -17,7 +17,7 @@
 namespace inexor::vulkan_renderer {
 
 void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
-    VkVertexInputAttributeDescription vertex_attribute = {};
+    VkVertexInputAttributeDescription vertex_attribute {};
     vertex_attribute.format = format;
     vertex_attribute.location = m_vertex_attributes.size();
     vertex_attribute.offset = offset;
@@ -119,7 +119,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
             continue;
         }
 
-        VkAttachmentDescription attachment = {};
+        VkAttachmentDescription attachment {};
         attachment.format = texture->m_format;
         attachment.samples = VK_SAMPLE_COUNT_1_BIT;
         attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -146,13 +146,13 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
         attachments.push_back(attachment);
     }
 
-    VkSubpassDependency subpass_dependency = {};
+    VkSubpassDependency subpass_dependency {};
     subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-    VkSubpassDescription subpass_description = {};
+    VkSubpassDescription subpass_description {};
     subpass_description.colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size());
     subpass_description.pColorAttachments = colour_refs.data();
     subpass_description.pDepthStencilAttachment = depth_refs.data();
@@ -190,7 +190,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
             attribute_bindings.push_back(attribute_binding);
         }
 
-        VkVertexInputBindingDescription vertex_binding = {};
+        VkVertexInputBindingDescription vertex_binding {};
         vertex_binding.binding = binding;
         vertex_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         vertex_binding.stride = buffer_resource->m_element_size;
@@ -225,7 +225,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     multisample_state.minSampleShading = 1.0F;
     multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    VkPipelineColorBlendAttachmentState blend_attachment = {};
+    VkPipelineColorBlendAttachmentState blend_attachment {};
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
@@ -233,10 +233,10 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     blend_state.attachmentCount = 1;
     blend_state.pAttachments = &blend_attachment;
 
-    VkRect2D scissor = {};
+    VkRect2D scissor {};
     scissor.extent = m_swapchain.get_extent();
 
-    VkViewport viewport = {};
+    VkViewport viewport {};
     viewport.width = static_cast<float>(m_swapchain.get_extent().width);
     viewport.height = static_cast<float>(m_swapchain.get_extent().height);
     viewport.maxDepth = 1.0F;
@@ -288,7 +288,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             assert(phys_graphics_stage != nullptr);
 
             // TODO(): Allow custom clear values (or no clearing at all)
-            std::array<VkClearValue, 2> clear_values = {};
+            std::array<VkClearValue, 2> clear_values {};
             clear_values[0].color = {0, 0, 0, 0};
             clear_values[1].depthStencil = {1.0F, 0};
 
@@ -365,7 +365,7 @@ void FrameGraph::compile(const RenderResource &target) {
     for (const auto &resource : m_resources) {
         // Build allocation (using VMA for now)
         m_log->trace("Allocating physical resource for resource '{}'", resource->m_name);
-        VmaAllocationCreateInfo alloc_ci = {};
+        VmaAllocationCreateInfo alloc_ci {};
 
         // TODO(): Use a constexpr bool
 #if VMA_RECORDING_ENABLED

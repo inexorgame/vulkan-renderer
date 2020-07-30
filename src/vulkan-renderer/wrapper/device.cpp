@@ -185,7 +185,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         }
     }
 
-    VkPhysicalDeviceFeatures used_features = {};
+    VkPhysicalDeviceFeatures used_features{};
 
     // Enable anisotropic filtering.
     used_features.samplerAnisotropy = VK_TRUE;
@@ -285,7 +285,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
     vma_record_settings.pFilePath = vma_replay_file.c_str();
 
-    VmaAllocatorCreateInfo vma_allocator_ci = {};
+    VmaAllocatorCreateInfo vma_allocator_ci{};
     vma_allocator_ci.physicalDevice = graphics_card;
     vma_allocator_ci.instance = instance;
     vma_allocator_ci.device = device;

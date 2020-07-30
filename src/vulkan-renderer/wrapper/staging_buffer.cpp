@@ -25,7 +25,7 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
 
     spdlog::debug("Specifying vertex buffer copy operation in command buffer.");
 
-    VkBufferCopy vertex_buffer_copy = {};
+    VkBufferCopy vertex_buffer_copy{};
     vertex_buffer_copy.srcOffset = 0;
     vertex_buffer_copy.dstOffset = 0;
     vertex_buffer_copy.size = buffer_size;

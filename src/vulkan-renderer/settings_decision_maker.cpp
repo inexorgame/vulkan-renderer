@@ -19,7 +19,7 @@ VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const Vk
 
     std::uint32_t number_of_images_in_swapchain = 0;
 
-    VkSurfaceCapabilitiesKHR surface_capabilities = {};
+    VkSurfaceCapabilitiesKHR surface_capabilities{};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
@@ -70,7 +70,7 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
                                                   available_surface_formats.data());
     vulkan_error_check(result);
 
-    VkSurfaceFormatKHR accepted_color_format = {};
+    VkSurfaceFormatKHR accepted_color_format{};
 
     // If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
     // there is no preferred format, so we assume VK_FORMAT_B8G8R8A8_UNORM.
@@ -498,9 +498,9 @@ VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPh
     assert(surface);
 
     // Bitmask of VkSurfaceTransformFlagBitsKHR.
-    VkSurfaceTransformFlagsKHR pre_transform = {};
+    VkSurfaceTransformFlagsKHR pre_transform {};
 
-    VkSurfaceCapabilitiesKHR surface_capabilities = {};
+    VkSurfaceCapabilitiesKHR surface_capabilities {};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
@@ -528,7 +528,7 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice 
         VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
     };
 
-    VkSurfaceCapabilitiesKHR surface_capabilities = {};
+    VkSurfaceCapabilitiesKHR surface_capabilities {};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(selected_graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
@@ -649,7 +649,7 @@ void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(co
     assert(graphics_card);
     assert(surface);
 
-    VkSurfaceCapabilitiesKHR surface_capabilities = {};
+    VkSurfaceCapabilitiesKHR surface_capabilities {};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);

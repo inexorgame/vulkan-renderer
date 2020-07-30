@@ -90,7 +90,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     transition_image_layout(texture_image->get(), texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    VkBufferImageCopy buffer_image_region = {};
+    VkBufferImageCopy buffer_image_region{};
 
     buffer_image_region.bufferOffset = 0;
     buffer_image_region.bufferRowLength = 0;
