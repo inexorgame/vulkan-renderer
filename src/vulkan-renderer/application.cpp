@@ -421,12 +421,7 @@ Application::Application(int argc, char **argv) {
     spdlog::debug("Vulkan initialisation finished.");
 
     spdlog::debug("Showing window.");
-
     window->show();
-
-    // We must store the window user pointer to be able to call the window resize callback.
-    window->set_user_ptr(this);
-
     recreate_swapchain();
 }
 
