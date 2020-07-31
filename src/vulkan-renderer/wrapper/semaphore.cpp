@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -13,14 +15,9 @@ Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(de
     assert(device);
     assert(!name.empty());
 
-    // So far, there is nothing to fill into this structure.
-    // This may change in the future!
-    VkSemaphoreCreateInfo semaphore_ci = {};
-    semaphore_ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphore_ci.flags = 0;
-
     spdlog::debug("Creating semaphore {}.", name);
 
+    auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
     if (vkCreateSemaphore(device, &semaphore_ci, nullptr, &semaphore) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSemaphore failed for " + name + " !");
     }

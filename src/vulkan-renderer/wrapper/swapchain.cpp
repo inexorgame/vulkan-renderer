@@ -1,9 +1,12 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 
+#include <limits>
 #include <optional>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -40,8 +43,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     surface_format = *surface_format_candidate;
 
-    VkSwapchainCreateInfoKHR swapchain_ci = {};
-    swapchain_ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>();
     swapchain_ci.surface = surface;
     swapchain_ci.minImageCount = swapchain_image_count;
     swapchain_ci.imageFormat = surface_format.format;
@@ -96,8 +98,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     swapchain_image_views.resize(swapchain_image_count);
 
-    VkImageViewCreateInfo image_view_ci = {};
-    image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    auto image_view_ci = make_info<VkImageViewCreateInfo>();
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = surface_format.format;
     image_view_ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -135,6 +136,13 @@ Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card
     assert(surface);
 
     setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
+}
+
+std::uint32_t Swapchain::acquire_next_image(const wrapper::Semaphore &semaphore) {
+    std::uint32_t image_index;
+    vkAcquireNextImageKHR(device, swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(), VK_NULL_HANDLE,
+                          &image_index);
+    return image_index;
 }
 
 void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height) {

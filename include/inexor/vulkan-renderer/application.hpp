@@ -14,11 +14,6 @@
 namespace inexor::vulkan_renderer {
 
 class Application : public VulkanRenderer {
-public:
-    Application() = default;
-
-    ~Application() = default;
-
 private:
     std::string application_name = "";
 
@@ -33,8 +28,6 @@ private:
     // A task system is used to distribute work over worker threads.
     // Call thread_pool->execute(); to order new tasks to be worked on.
     std::shared_ptr<ThreadPool> thread_pool;
-
-    std::size_t current_frame = 0;
 
     // TODO: Refactor into a manger class.
     struct ShaderSetup {
@@ -68,13 +61,9 @@ private:
 
     VkResult check_application_specific_features();
 
-    VkResult render_frame();
-
     /// @brief Implementation of the uniform buffer update method.
     /// @param current_image [in] The current image index.
-    VkResult update_uniform_buffers(const std::size_t current_image);
-
-    VkResult update_keyboard_input();
+    VkResult update_uniform_buffers();
 
     VkResult update_mouse_input();
 
@@ -82,7 +71,7 @@ private:
     double cursor_x, cursor_y;
 
 public:
-    VkResult init(int argc, char **argv);
+    Application(int argc, char **argv);
 
     /// @brief Keyboard input callback.
     /// @param window [in] The glfw window.
@@ -93,8 +82,6 @@ public:
     void keyboard_input_callback(GLFWwindow *window, int key, int scan_code, int action, int mods);
 
     void run();
-
-    void cleanup();
 };
 
 } // namespace inexor::vulkan_renderer

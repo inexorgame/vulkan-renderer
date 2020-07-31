@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -36,8 +38,7 @@ void Descriptor::create_descriptor_pool(const std::initializer_list<VkDescriptor
 
     spdlog::debug("Creating new descriptor pool.");
 
-    VkDescriptorPoolCreateInfo descriptor_pool_ci = {};
-    descriptor_pool_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    auto descriptor_pool_ci = make_info<VkDescriptorPoolCreateInfo>();
     descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
     descriptor_pool_ci.pPoolSizes = pool_sizes.data();
     descriptor_pool_ci.maxSets = static_cast<std::uint32_t>(number_of_images_in_swapchain);
@@ -62,8 +63,7 @@ void Descriptor::create_descriptor_set_layouts(
 
     spdlog::debug("Creating descriptor set layout for descriptor '{}'.", name);
 
-    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci = {};
-    descriptor_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>();
     descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(descriptor_set_layout_bindings.size());
     descriptor_set_layout_ci.pBindings = descriptor_set_layout_bindings.data();
 
@@ -117,8 +117,7 @@ void Descriptor::create_descriptor_sets() {
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(number_of_images_in_swapchain,
                                                                     descriptor_set_layout);
 
-    VkDescriptorSetAllocateInfo descriptor_set_ai = {};
-    descriptor_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    auto descriptor_set_ai = make_info<VkDescriptorSetAllocateInfo>();
     descriptor_set_ai.descriptorPool = descriptor_pool;
     descriptor_set_ai.descriptorSetCount = static_cast<std::uint32_t>(number_of_images_in_swapchain);
     descriptor_set_ai.pSetLayouts = descriptor_set_layouts.data();

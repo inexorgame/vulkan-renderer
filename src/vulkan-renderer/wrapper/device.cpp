@@ -1,9 +1,26 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
+#define VMA_IMPLEMENTATION
+
+// It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
+// Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
+// Memory is automatically mapped and unmapped if necessary.
+#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
+
+// Enforce specified number of bytes as a margin before and after every allocation.
+#define VMA_DEBUG_MARGIN 16
+
+// Enable validation of contents of the margins.
+#define VMA_DEBUG_DETECT_CORRUPTION 1
 
 #include <spdlog/spdlog.h>
+#include <vma/vk_mem_alloc.h>
 
+#include <fstream>
 #include <stdexcept>
 
 namespace {
@@ -54,8 +71,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         present_queue_family_index = graphics_queue_family_index;
 
         // In this case, there is one queue family which can be used for both graphics and presentation.
-        VkDeviceQueueCreateInfo device_queue_ci = {};
-        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
@@ -91,8 +107,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
 
         // Set up one queue for graphics.
-        VkDeviceQueueCreateInfo device_queue_ci = {};
-        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = graphics_queue_family_index;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
@@ -100,8 +115,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         queues_to_create.push_back(device_queue_ci);
 
         // Set up one queue for presentation.
-        device_queue_ci = {};
-        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = present_queue_family_index;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
@@ -124,8 +138,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
 
-        VkDeviceQueueCreateInfo device_queue_ci = {};
-        device_queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = transfer_queue_family_index;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
@@ -172,13 +185,12 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         }
     }
 
-    VkPhysicalDeviceFeatures used_features = {};
+    VkPhysicalDeviceFeatures used_features{};
 
     // Enable anisotropic filtering.
     used_features.samplerAnisotropy = VK_TRUE;
 
-    VkDeviceCreateInfo device_ci = {};
-    device_ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    auto device_ci = make_info<VkDeviceCreateInfo>();
     device_ci.queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size());
     device_ci.pQueueCreateInfos = queues_to_create.data();
     // Device layers were deprecated in Vulkan some time ago, essentially making all layers instance layers.
@@ -244,12 +256,56 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         vkGetDeviceQueue(device, transfer_queue_family_index, 0, &transfer_queue);
     }
 
+    spdlog::debug("Creating vma allocator");
+
+    // Make sure to set the root directory of this repository as working directory in the debugger!
+    // Otherwise, VMA won't be able to open this allocation replay file for writing.
+    const std::string vma_replay_file = "vma-replays/vma_replay.csv";
+    spdlog::debug("Opening VMA memory recording file for writing.");
+
+    std::ofstream replay_file_test(vma_replay_file, std::ios::out);
+
+    // Check if we can open the csv file.
+    // This causes problems when the debugging path is set incorrectly!
+    if (!replay_file_test) {
+        throw std::runtime_error("Could not open VMA replay file " + vma_replay_file + " !");
+    }
+
+    spdlog::debug("VMA memory recording file opened successfully.");
+
+    replay_file_test.close();
+
+    // VMA allows to record memory allocations to a .csv file.
+    // This .csv file can be replayed using tools from the repository.
+    // This is very useful every time there is a bug in memory management.
+    VmaRecordSettings vma_record_settings;
+
+    // We flush the stream after every write operation because we are expecting unforseen program crashes.
+    // This might has a negative effect on the application's performance but it's worth it for now.
+    vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
+    vma_record_settings.pFilePath = vma_replay_file.c_str();
+
+    VmaAllocatorCreateInfo vma_allocator_ci{};
+    vma_allocator_ci.physicalDevice = graphics_card;
+    vma_allocator_ci.instance = instance;
+    vma_allocator_ci.device = device;
+#if VMA_RECORDING_ENABLED
+    vma_allocator_ci.pRecordSettings = &vma_record_settings;
+#endif
+
+    spdlog::debug("Creating Vulkan memory allocator instance.");
+
+    if (vmaCreateAllocator(&vma_allocator_ci, &m_allocator) != VK_SUCCESS) {
+        throw std::runtime_error("Error: vmaCreateAllocator failed!");
+    }
+
     spdlog::debug("Created device successfully.");
 }
 
 Device::~Device() {
     assert(device);
     spdlog::trace("Destroying device.");
+    vmaDestroyAllocator(m_allocator);
     vkDestroyDevice(device, nullptr);
 }
 
@@ -261,8 +317,7 @@ void Device::set_object_name(const std::uint64_t object, const VkDebugReportObje
     assert(object);
     assert(vk_debug_marker_set_object_name);
 
-    VkDebugMarkerObjectNameInfoEXT name_info = {};
-    name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+    auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
     name_info.objectType = type;
     name_info.object = object;
     name_info.pObjectName = name.c_str();
@@ -278,8 +333,7 @@ void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjec
     assert(tag);
     assert(vk_debug_marker_set_object_tag);
 
-    VkDebugMarkerObjectTagInfoEXT tagInfo = {};
-    tagInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
+    auto tagInfo = make_info<VkDebugMarkerObjectTagInfoEXT>();
     tagInfo.objectType = type;
     tagInfo.object = object;
     tagInfo.tagName = name;
@@ -295,8 +349,7 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
     assert(!name.empty());
     assert(vk_cmd_debug_marker_begin);
 
-    VkDebugMarkerMarkerInfoEXT debug_marker = {};
-    debug_marker.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+    auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
     debug_marker.color[0] = color[0];
     debug_marker.color[1] = color[1];
     debug_marker.color[2] = color[2];
@@ -312,8 +365,7 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
     assert(!name.empty());
     assert(vk_cmd_debug_marker_insert);
 
-    VkDebugMarkerMarkerInfoEXT debug_marker = {};
-    debug_marker.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+    auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
     debug_marker.color[0] = color[0];
     debug_marker.color[1] = color[1];
     debug_marker.color[2] = color[2];

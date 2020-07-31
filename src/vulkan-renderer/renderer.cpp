@@ -1,8 +1,9 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
 #include "inexor/vulkan-renderer/error_handling.hpp"
-#include "inexor/vulkan-renderer/octree_vertex.hpp"
+#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -11,154 +12,37 @@
 
 namespace inexor::vulkan_renderer {
 
-VkResult VulkanRenderer::create_uniform_buffers() {
-    uniform_buffers.emplace_back(vkdevice->get_device(), vma->get_allocator(), std::string("matrices uniform buffer"),
-                                 sizeof(UniformBufferObject));
+void VulkanRenderer::setup_frame_graph() {
+    auto &back_buffer = m_frame_graph->add<TextureResource>("back buffer");
+    back_buffer.set_format(swapchain->get_image_format());
+    back_buffer.set_usage(TextureUsage::BACK_BUFFER);
 
-    return VK_SUCCESS;
-}
+    auto &depth_buffer = m_frame_graph->add<TextureResource>("depth buffer");
+    depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
+    depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
 
-VkResult VulkanRenderer::create_depth_buffer() {
+    auto &vertex_buffer = m_frame_graph->add<BufferResource>("vertex buffer");
+    vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
+    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position));
+    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));
+    vertex_buffer.upload_data(m_octree_vertices);
 
-    const std::vector<VkFormat> supported_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
-                                                     VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT,
-                                                     VK_FORMAT_D16_UNORM};
+    auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
+    main_stage.writes_to(back_buffer);
+    main_stage.writes_to(depth_buffer);
+    main_stage.reads_from(vertex_buffer);
+    main_stage.bind_buffer(vertex_buffer, 0);
+    main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
+        cmd_buf.bind_descriptor(descriptors[0], phys->pipeline_layout());
+        cmd_buf.draw(m_octree_vertices.size());
+    });
 
-    VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-    VkFormatFeatureFlags format = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-
-    auto depth_buffer_format_candidate = settings_decision_maker->find_depth_buffer_format(
-        vkdevice->get_physical_device(), supported_formats, tiling, format);
-
-    if (!depth_buffer_format_candidate) {
-        throw std::runtime_error("Error: Could not find appropriate image format for depth buffer!");
+    for (const auto &shader : shaders) {
+        main_stage.uses_shader(shader);
     }
 
-    // Create depth buffer image and image view.
-    depth_buffer = std::make_unique<wrapper::Image>(
-        vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
-        depth_buffer_format_candidate.value(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT,
-        VK_SAMPLE_COUNT_1_BIT, "Depth buffer", swapchain->get_extent());
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_command_buffers() {
-    assert(vkdevice->get_device());
-    assert(swapchain->get_image_count() > 0);
-
-    spdlog::debug("Allocating command buffers.");
-    spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
-
-    for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
-        command_buffers.emplace_back(vkdevice->get_device(), command_pool->get());
-    }
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::record_command_buffers() {
-    assert(window->get_width() > 0);
-    assert(window->get_height() > 0);
-
-    spdlog::debug("Recording command buffers.");
-
-    VkCommandBufferBeginInfo command_buffer_bi = {};
-    command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_bi.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-    command_buffer_bi.pInheritanceInfo = nullptr;
-
-    // TODO: Setup clear colors by TOML configuration file.
-    std::array<VkClearValue, 3> clear_values;
-
-    // Note that the order of clear_values must be identical to the order of the attachments.
-    if (multisampling_enabled) {
-        clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clear_values[1].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clear_values[2].depthStencil = {1.0f, 0};
-    } else {
-        clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clear_values[1].depthStencil = {1.0f, 0};
-    }
-
-    VkExtent2D render_area;
-    render_area.width = window->get_width();
-    render_area.height = window->get_height();
-
-    VkRenderPassBeginInfo render_pass_bi = {};
-    render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_bi.renderPass = renderpass->get();
-    render_pass_bi.renderArea.offset = {0, 0};
-    render_pass_bi.renderArea.extent = render_area;
-    render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
-    render_pass_bi.pClearValues = clear_values.data();
-
-    VkViewport viewport{};
-
-    viewport.width = static_cast<float>(window->get_width());
-    viewport.height = static_cast<float>(window->get_height());
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor{};
-
-    scissor.extent.width = window->get_width();
-    scissor.extent.height = window->get_height();
-
-    for (std::size_t i = 0; i < swapchain->get_image_count(); i++) {
-        spdlog::debug("Recording command buffer #{}.", i);
-
-        VkCommandBuffer current_command_buffer = command_buffers[i].get();
-
-        // TODO: Start debug marker region.
-
-        VkResult result = vkBeginCommandBuffer(current_command_buffer, &command_buffer_bi);
-        if (VK_SUCCESS != result)
-            return result;
-
-        // Update only the necessary parts of VkRenderPassBeginInfo.
-        render_pass_bi.framebuffer = framebuffer->get(i);
-
-        vkCmdBeginRenderPass(current_command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
-
-        // ----------------------------------------------------------------------------------------------------------------
-        // Begin of render pass.
-        {
-            vkCmdSetViewport(current_command_buffer, 0, 1, &viewport);
-
-            vkCmdSetScissor(current_command_buffer, 0, 1, &scissor);
-
-            // TODO: Render skybox!
-
-            vkCmdBindPipeline(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline->get());
-
-            vkCmdBindDescriptorSets(current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get(), 0,
-                                    1, descriptors[0].get_descriptor_sets_data(), 0, nullptr);
-
-            VkBuffer vertexBuffers[] = {mesh_buffers[0].get_vertex_buffer()};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(current_command_buffer, 0, 1, vertexBuffers, offsets);
-
-            vkCmdDraw(current_command_buffer, mesh_buffers[0].get_vertex_count(), 1, 0, 0);
-
-            // TODO: This does not specify the order of rendering!
-            // gltf_model_manager->render_all_models(command_buffers[i], pipeline_layout, i);
-
-            // TODO: Draw imgui user interface.
-        }
-        // End of render pass.
-        // ----------------------------------------------------------------------------------------------------------------
-
-        vkCmdEndRenderPass(current_command_buffer);
-
-        result = vkEndCommandBuffer(current_command_buffer);
-        if (VK_SUCCESS != result)
-            return result;
-
-        // TODO: End debug marker region
-    }
-
-    return VK_SUCCESS;
+    main_stage.add_descriptor_layout(descriptors[0].get_descriptor_set_layout());
+    m_frame_graph->compile(back_buffer);
 }
 
 VkResult VulkanRenderer::create_synchronisation_objects() {
@@ -167,118 +51,12 @@ VkResult VulkanRenderer::create_synchronisation_objects() {
     spdlog::debug("Creating synchronisation objects: semaphores and fences.");
     spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
 
-    in_flight_fences.clear();
-    image_available_semaphores.clear();
-    rendering_finished_semaphores.clear();
-
     // TODO: Add method to create several fences/semaphores.
 
-    for (std::size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        in_flight_fences.emplace_back(vkdevice->get_device(), "In flight fence #" + std::to_string(i), true);
-        image_available_semaphores.emplace_back(vkdevice->get_device(),
-                                                "Image available semaphore #" + std::to_string(i));
-        rendering_finished_semaphores.emplace_back(vkdevice->get_device(),
-                                                   "Rendering finished semaphore #" + std::to_string(i));
-    }
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::cleanup_swapchain() {
-    spdlog::debug("Cleaning up swapchain.");
-
-    spdlog::debug("Waiting for device to be idle.");
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    spdlog::debug("Device is idle.");
-
-    framebuffer.reset();
-
-    depth_buffer.reset();
-
-    depth_stencil.reset();
-
-    if (multisampling_enabled) {
-        msaa_target_buffer.color.reset();
-        msaa_target_buffer.depth.reset();
-    }
-
-    command_buffers.clear();
-
-    graphics_pipeline.reset();
-
-    pipeline_layout.reset();
-
-    renderpass.reset();
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::update_cameras() {
-
-    game_camera.update(time_passed);
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::recreate_swapchain() {
-    assert(vkdevice->get_device());
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    // TODO: outsource cleanup_swapchain() methods!
-
-    spdlog::debug("Querying new window size.");
-
-    window->wait_for_focus();
-
-    window_width = window->get_width();
-    window_height = window->get_height();
-
-    spdlog::debug("New window size: width: {}, height: {}.", window_width, window_height);
-
-    swapchain->recreate(window_width, window_height);
-
-    depth_buffer.reset();
-
-    depth_stencil.reset();
-
-    if (multisampling_enabled) {
-        msaa_target_buffer.color.reset();
-        msaa_target_buffer.depth.reset();
-    }
-
-    framebuffer.reset();
-
-    VkResult result = create_depth_buffer();
-    vulkan_error_check(result);
-
-    result = create_frame_buffers();
-    vulkan_error_check(result);
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    // Calculate the new aspect ratio so we can update game camera matrices.
-    float aspect_ratio = window_width / static_cast<float>(window_height);
-
-    spdlog::debug("New aspect ratio: {}.", aspect_ratio);
-
-    vkDeviceWaitIdle(vkdevice->get_device());
-
-    // Setup game camera.
-    game_camera.type = Camera::CameraType::LOOKAT;
-
-    game_camera.set_perspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
-    game_camera.rotation_speed = 0.25f;
-    game_camera.movement_speed = 0.1f;
-    game_camera.set_position({0.0f, 0.0f, 5.0f});
-    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
-
-    result = record_command_buffers();
-    vulkan_error_check(result);
-
-    vkDeviceWaitIdle(vkdevice->get_device());
+    image_available_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Image available semaphore");
+    rendering_finished_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Rendering finished semaphore");
 
     return VK_SUCCESS;
 }
@@ -288,25 +66,19 @@ VkResult VulkanRenderer::create_descriptor_pool() {
 
     // Create the descriptor pool.
     descriptors[0].create_descriptor_pool(
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER});
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER});
 
     return VK_SUCCESS;
 }
 
 VkResult VulkanRenderer::create_descriptor_set_layouts() {
-    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings(2);
+    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings(1);
 
     descriptor_set_layout_bindings[0].binding = 0;
     descriptor_set_layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor_set_layout_bindings[0].descriptorCount = 1;
     descriptor_set_layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     descriptor_set_layout_bindings[0].pImmutableSamplers = nullptr;
-
-    descriptor_set_layout_bindings[1].binding = 1;
-    descriptor_set_layout_bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_set_layout_bindings[1].descriptorCount = 1;
-    descriptor_set_layout_bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    descriptor_set_layout_bindings[1].pImmutableSamplers = nullptr;
 
     descriptors[0].create_descriptor_set_layouts(descriptor_set_layout_bindings);
 
@@ -316,7 +88,7 @@ VkResult VulkanRenderer::create_descriptor_set_layouts() {
 VkResult VulkanRenderer::create_descriptor_writes() {
     assert(!textures.empty());
 
-    std::vector<VkWriteDescriptorSet> descriptor_writes(2);
+    std::vector<VkWriteDescriptorSet> descriptor_writes(1);
 
     // Link the matrices uniform buffer to the descriptor set so the shader can access it.
 
@@ -333,19 +105,6 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &uniform_buffer_info;
 
-    // Link the texture to the descriptor set so the shader can access it.
-    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    descriptor_image_info.imageView = textures[0].get_image_view();
-    descriptor_image_info.sampler = textures[0].get_sampler();
-
-    descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[1].dstSet = nullptr;
-    descriptor_writes[1].dstBinding = 1;
-    descriptor_writes[1].dstArrayElement = 0;
-    descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_writes[1].descriptorCount = 1;
-    descriptor_writes[1].pImageInfo = &descriptor_image_info;
-
     descriptors[0].add_descriptor_writes(descriptor_writes);
 
     descriptors[0].create_descriptor_sets();
@@ -353,229 +112,63 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     return VK_SUCCESS;
 }
 
-VkResult VulkanRenderer::create_pipeline() {
-    assert(vkdevice->get_device());
+void VulkanRenderer::recreate_swapchain() {
+    window->wait_for_focus();
+    vkDeviceWaitIdle(vkdevice->get_device());
 
-    spdlog::debug("Creating graphics pipeline.");
+    // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
+    m_frame_graph.reset();
+    swapchain->recreate(window->get_width(), window->get_height());
+    m_frame_graph =
+        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vkdevice->allocator(), *swapchain);
+    setup_frame_graph();
 
-    shader_stages.clear();
-
-    assert(!shaders.empty());
-
-    spdlog::debug("Setting up shader stages.");
-
-    // Loop through all shaders in Vulkan shader manager's list and add them to the setup.
-    for (const auto &shader : shaders) {
-        VkPipelineShaderStageCreateInfo shader_stage_ci = {};
-        shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shader_stage_ci.stage = shader.get_type();
-        shader_stage_ci.module = shader.get_module();
-        shader_stage_ci.pSpecializationInfo = nullptr;
-        shader_stage_ci.pName = shader.get_entry_point().c_str();
-
-        shader_stages.push_back(shader_stage_ci);
-    }
-
-    std::vector<VkAttachmentDescription> attachments;
-
-    VkSubpassDescription subpass_description = {};
-
-    VkAttachmentReference color_reference = {};
-    color_reference.attachment = 0;
-    color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference resolve_reference = {};
-    resolve_reference.attachment = 1;
-    resolve_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depth_reference = {};
-    depth_reference.attachment = multisampling_enabled ? 2 : 1;
-    depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    if (multisampling_enabled) {
-        spdlog::debug("Multisampling is enabled.");
-
-        attachments.resize(4);
-
-        // Multisampled attachment that we render to.
-        attachments[0].format = swapchain->get_image_format();
-        attachments[0].samples = multisampling_sample_count;
-        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        // This is the frame buffer attachment to where the multisampled image
-        // will be resolved to and which will be presented to the swapchain.
-        attachments[1].format = swapchain->get_image_format();
-        attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[1].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        // Multisampled depth attachment we render to.
-        attachments[2].format = depth_buffer->get_image_format();
-        attachments[2].samples = multisampling_sample_count;
-        attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[2].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        // Depth resolve attachment.
-        attachments[3].format = depth_buffer->get_image_format();
-        attachments[3].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[3].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[3].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[3].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[3].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[3].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass_description.colorAttachmentCount = 1;
-        subpass_description.pColorAttachments = &color_reference;
-        subpass_description.pResolveAttachments = &resolve_reference;
-        subpass_description.pDepthStencilAttachment = &depth_reference;
-    } else {
-        spdlog::debug("Multisampling is disabled.");
-
-        attachments.resize(2);
-
-        // Color attachment.
-        attachments[0].format = swapchain->get_image_format();
-        attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        // Depth attachment.
-        attachments[1].format = depth_buffer->get_image_format();
-        attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass_description.colorAttachmentCount = 1;
-        subpass_description.pColorAttachments = &color_reference;
-        subpass_description.pDepthStencilAttachment = &depth_reference;
-        subpass_description.inputAttachmentCount = 0;
-        subpass_description.pInputAttachments = nullptr;
-        subpass_description.preserveAttachmentCount = 0;
-        subpass_description.pPreserveAttachments = nullptr;
-        subpass_description.pResolveAttachments = nullptr;
-    }
-
-    std::vector<VkSubpassDependency> dependencies(2);
-
-    // Subpass dependencies for layout transitions.
-    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependencies[0].dstSubpass = 0;
-    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-    dependencies[1] = dependencies[0];
-
-    renderpass = std::make_unique<wrapper::RenderPass>(vkdevice->get_device(), attachments, dependencies,
-                                                       subpass_description, "Default renderpass");
-
-    const std::vector<VkDescriptorSetLayout> set_layouts = {descriptors[0].get_descriptor_set_layout()};
-
-    pipeline_layout =
-        std::make_unique<wrapper::PipelineLayout>(vkdevice->get_device(), set_layouts, "Default pipeline layout");
-
-    const auto vertex_binding_desc = OctreeVertex::get_vertex_binding_description();
-    const auto attribute_binding_desc = OctreeVertex::get_attribute_binding_description();
-
-    graphics_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
-        vkdevice->get_device(), pipeline_layout->get(), renderpass->get(), shader_stages, vertex_binding_desc,
-        attribute_binding_desc, window->get_width(), window->get_height(), multisampling_enabled,
-        "Default graphics pipeline");
-
-    return VK_SUCCESS;
+    image_available_semaphore.reset();
+    rendering_finished_semaphore.reset();
+    image_available_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Image available semaphore");
+    rendering_finished_semaphore =
+        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Rendering finished semaphore");
+    game_camera.set_perspective(
+        45.0f, static_cast<float>(window->get_width()) / static_cast<float>(window->get_height()), 0.1f, 256.0f);
+    vkDeviceWaitIdle(vkdevice->get_device());
 }
 
-VkResult VulkanRenderer::create_frame_buffers() {
-    assert(vkdevice->get_device());
-    assert(window->get_width() > 0);
-    assert(window->get_height() > 0);
-    assert(swapchain->get_image_count() > 0);
-
-    // Create depth stencil buffer.
-    depth_stencil = std::make_unique<wrapper::Image>(
-        vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(), depth_buffer->get_image_format(),
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, VK_SAMPLE_COUNT_1_BIT, "Depth stencil image",
-        swapchain->get_extent());
-
-    std::vector<VkImageView> attachments(multisampling_enabled ? 4 : 2, nullptr);
-
-    if (multisampling_enabled) {
-        // Check if device supports requested sample count for color and depth frame buffer
-        // assert((deviceProperties.limits.framebufferColorSampleCounts >= sampleCount) &&
-        // (deviceProperties.limits.framebufferDepthSampleCounts >= sampleCount));
-
-        // Create color buffer for MSAA target.
-        msaa_target_buffer.color = std::make_unique<wrapper::Image>(
-            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
-            swapchain->get_image_format(),
-            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-            multisampling_sample_count, "MSAA color image", swapchain->get_extent());
-
-        // Create depth buffer for MSAA target.
-        msaa_target_buffer.depth = std::make_unique<wrapper::Image>(
-            vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
-            depth_buffer->get_image_format(),
-            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, multisampling_sample_count, "MSAA depth image",
-            swapchain->get_extent());
-
-        attachments[0] = msaa_target_buffer.color->get_image_view();
-        attachments[2] = msaa_target_buffer.depth->get_image_view();
-        attachments[3] = depth_stencil->get_image_view();
-    } else {
-        attachments[1] = depth_stencil->get_image_view();
+void VulkanRenderer::render_frame() {
+    if (window_resized) {
+        window_resized = false;
+        recreate_swapchain();
+        return;
     }
 
-    // Create frames for frame buffer.
-    framebuffer = std::make_unique<wrapper::Framebuffer>(
-        vkdevice->get_device(), renderpass->get(), attachments, swapchain->get_image_views(), window->get_width(),
-        window->get_height(), swapchain->get_image_count(), multisampling_enabled, "Standard framebuffer");
+    const auto image_index = swapchain->acquire_next_image(*image_available_semaphore);
+    m_frame_graph->render(image_index, rendering_finished_semaphore->get(), image_available_semaphore->get(),
+                          vkdevice->get_graphics_queue());
 
-    return VK_SUCCESS;
+    // TODO(): Create a queue wrapper class
+    auto present_info = wrapper::make_info<VkPresentInfoKHR>();
+    present_info.swapchainCount = 1;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pImageIndices = &image_index;
+    present_info.pSwapchains = swapchain->get_swapchain_ptr();
+    present_info.pWaitSemaphores = rendering_finished_semaphore->get_ptr();
+    vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
+
+    if (auto fps_value = fps_counter.update()) {
+        window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
+        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, window->get_width(), window->get_height());
+    }
 }
 
-VkResult VulkanRenderer::calculate_memory_budget() {
+void VulkanRenderer::calculate_memory_budget() {
     VmaStats memory_stats;
+    vmaCalculateStats(vkdevice->allocator(), &memory_stats);
 
-    spdlog::debug(
-        "------------------------------------------------------------------------------------------------------------");
-    spdlog::debug("Calculating memory statistics before shutdown.");
-
-    // Use Vulkan memory allocator's statistics.
-    vmaCalculateStats(vma->get_allocator(), &memory_stats);
-
-    spdlog::debug("VMA heap:");
-
-    spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryHeap->blockCount);
-    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}",
-                  memory_stats.memoryHeap->allocationCount);
+    spdlog::debug("-------------VMA stats-------------");
+    spdlog::debug("Number of `VkDeviceMemory` (physical memory) blocks allocated: {} still alive, {} in total",
+                  memory_stats.memoryHeap->blockCount, memory_stats.total.blockCount);
+    spdlog::debug("Number of VmaAlllocation objects allocated (requested memory): {} still alive, {} in total",
+                  memory_stats.memoryHeap->allocationCount, memory_stats.total.allocationCount);
     spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryHeap->unusedRangeCount);
     spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryHeap->usedBytes);
     spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryHeap->unusedBytes);
@@ -585,109 +178,32 @@ VkResult VulkanRenderer::calculate_memory_budget() {
     spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeMin: {}", memory_stats.memoryHeap->unusedRangeSizeMin);
     spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeAvg: {}", memory_stats.memoryHeap->unusedRangeSizeAvg);
     spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeMax: {}", memory_stats.memoryHeap->unusedRangeSizeMax);
-
-    spdlog::debug("VMA memory type:");
-
-    spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.memoryType->blockCount);
-    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}",
-                  memory_stats.memoryType->allocationCount);
-    spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryType->unusedRangeCount);
-    spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryType->usedBytes);
-    spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryType->unusedBytes);
-    spdlog::debug("memory_stats.memoryType->allocationSizeMin: {}", memory_stats.memoryType->allocationSizeMin);
-    spdlog::debug("memory_stats.memoryType->allocationSizeAvg: {}", memory_stats.memoryType->allocationSizeAvg);
-    spdlog::debug("memory_stats.memoryType->allocationSizeMax: {}", memory_stats.memoryType->allocationSizeMax);
-    spdlog::debug("memory_stats.memoryType->unusedRangeSizeMin: {}", memory_stats.memoryType->unusedRangeSizeMin);
-    spdlog::debug("memory_stats.memoryType->unusedRangeSizeAvg: {}", memory_stats.memoryType->unusedRangeSizeAvg);
-    spdlog::debug("memory_stats.memoryType->unusedRangeSizeMax: {}", memory_stats.memoryType->unusedRangeSizeMax);
-
-    spdlog::debug("VMA total:");
-
-    spdlog::debug("Number of `VkDeviceMemory` Vulkan memory blocks allocated: {}", memory_stats.total.blockCount);
-    spdlog::debug("Number of #VmaAllocation allocation objects allocated: {}", memory_stats.total.allocationCount);
-    spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.total.unusedRangeCount);
-    spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.total.usedBytes);
-    spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.total.unusedBytes);
-    spdlog::debug("memory_stats.total.allocationSizeMin: {}", memory_stats.total.allocationSizeMin);
-    spdlog::debug("memory_stats.total.allocationSizeAvg: {}", memory_stats.total.allocationSizeAvg);
-    spdlog::debug("memory_stats.total.allocationSizeMax: {}", memory_stats.total.allocationSizeMax);
-    spdlog::debug("memory_stats.total.unusedRangeSizeMin: {}", memory_stats.total.unusedRangeSizeMin);
-    spdlog::debug("memory_stats.total.unusedRangeSizeAvg: {}", memory_stats.total.unusedRangeSizeAvg);
-    spdlog::debug("memory_stats.total.unusedRangeSizeMax: {}", memory_stats.total.unusedRangeSizeMax);
+    spdlog::debug("-------------VMA stats-------------");
 
     char *vma_stats_string = nullptr;
+    vmaBuildStatsString(vkdevice->allocator(), &vma_stats_string, VK_TRUE);
 
-    vmaBuildStatsString(vma->get_allocator(), &vma_stats_string, true);
-
-    std::ofstream vma_memory_dump;
-
-    std::string memory_dump_file_name = "vma-dumps/inexor_VMA_dump_" + std::to_string(vma_dump_index) + ".json";
-
-    vma_memory_dump.open(memory_dump_file_name, std::ios::out);
-
+    std::string memory_dump_file_name = "vma-dumps/dump.json";
+    std::ofstream vma_memory_dump(memory_dump_file_name, std::ios::out);
     vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string));
-
     vma_memory_dump.close();
 
-    vma_dump_index++;
-
-    vmaFreeStatsString(vma->get_allocator(), vma_stats_string);
-
-    return VK_SUCCESS;
+    vmaFreeStatsString(vkdevice->allocator(), vma_stats_string);
 }
 
-VkResult VulkanRenderer::shutdown_vulkan() {
-    // It is important to destroy the objects in reversal of the order of creation.
-    spdlog::debug(
-        "------------------------------------------------------------------------------------------------------------");
-    spdlog::debug("Shutting down Vulkan API.");
-
-    cleanup_swapchain();
-
-    // @todo: (yeetari) Remove once this class is RAII-ified.
-    shaders.clear();
-    textures.clear();
-    uniform_buffers.clear();
-    mesh_buffers.clear();
-    descriptors.clear();
-
-    image_available_semaphores.clear();
-    rendering_finished_semaphores.clear();
-
-    in_flight_fences.clear();
-
-    vma.reset();
-
-    // @todo: (Hanni) Remove them once this class is RAII-ified.
-    command_pool.reset();
-    swapchain.reset();
-    surface.reset();
-    vkdevice.reset();
-
-    // Destroy Vulkan debug callback.
+VulkanRenderer::~VulkanRenderer() {
+    spdlog::debug("Shutting down vulkan renderer");
+    vkDeviceWaitIdle(vkdevice->get_device());
     if (debug_report_callback_initialised) {
-        // We have to explicitly load this function.
+        // We have to explicitly load this function
         PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
             reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
                 vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
 
-        if (nullptr != vkDestroyDebugReportCallbackEXT) {
+        if (vkDestroyDebugReportCallbackEXT != nullptr) {
             vkDestroyDebugReportCallbackEXT(vkinstance->get_instance(), debug_report_callback, nullptr);
-            debug_report_callback_initialised = false;
         }
     }
-
-    spdlog::debug("Shutdown finished.");
-    spdlog::debug(
-        "------------------------------------------------------------------------------------------------------------");
-
-    in_flight_fences.clear();
-    image_available_semaphores.clear();
-    rendering_finished_semaphores.clear();
-
-    vkinstance.reset();
-
-    return VK_SUCCESS;
 }
 
 } // namespace inexor::vulkan_renderer

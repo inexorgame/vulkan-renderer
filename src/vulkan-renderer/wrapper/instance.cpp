@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <GLFW/glfw3.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
@@ -31,8 +33,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(vulkan_api_version),
                   VK_VERSION_MINOR(vulkan_api_version), VK_VERSION_PATCH(vulkan_api_version));
 
-    VkApplicationInfo app_info = {};
-    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    auto app_info = make_info<VkApplicationInfo>();
     app_info.pApplicationName = application_name.c_str();
     app_info.applicationVersion = application_version;
     app_info.pEngineName = engine_name.c_str();
@@ -73,7 +74,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         instance_extension_wishlist.push_back(requested_instance_extension.c_str());
     }
 
-    std::vector<const char *> enabled_instance_extensions = {};
+    std::vector<const char *> enabled_instance_extensions {};
 
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &instance_extension : instance_extension_wishlist) {
@@ -85,7 +86,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         }
     }
 
-    std::vector<const char *> instance_layers_wishlist = {};
+    std::vector<const char *> instance_layers_wishlist {};
 
 #ifndef NDEBUG
     // RenderDoc is a very useful open source graphics debugger for Vulkan and other APIs.
@@ -119,7 +120,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         instance_layers_wishlist.push_back(instance_layer.c_str());
     }
 
-    std::vector<const char *> enabled_instance_layers = {};
+    std::vector<const char *> enabled_instance_layers {};
 
     // We have to check which instance layers of our wishlist are available on the current system!
     // We are not checking for duplicated entries but this is no problem.
@@ -138,8 +139,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         }
     }
 
-    VkInstanceCreateInfo instance_ci = {};
-    instance_ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    auto instance_ci = make_info<VkInstanceCreateInfo>();
     instance_ci.pApplicationInfo = &app_info;
     instance_ci.ppEnabledExtensionNames = enabled_instance_extensions.data();
     instance_ci.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());

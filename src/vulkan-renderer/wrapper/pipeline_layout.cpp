@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -17,8 +19,7 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
     assert(!descriptor_set_layouts.empty());
     assert(!name.empty());
 
-    VkPipelineLayoutCreateInfo pipeline_layout_ci = {};
-    pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    auto pipeline_layout_ci = make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(descriptor_set_layouts.size());
     pipeline_layout_ci.pSetLayouts = descriptor_set_layouts.data();
 

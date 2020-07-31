@@ -1,34 +1,48 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
+// TODO(): Forward declare
 #include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Descriptor;
+
+// TODO(): Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper)
 class CommandBuffer {
 private:
-    VkCommandBuffer command_buffer;
+    VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
 
 public:
-    /// Delete the copy constructor so command buffers are move-only objects.
+    CommandBuffer(VkDevice device, VkCommandPool command_pool);
     CommandBuffer(const CommandBuffer &) = delete;
-    CommandBuffer(CommandBuffer &&other) noexcept;
+    CommandBuffer(CommandBuffer &&) noexcept;
+    ~CommandBuffer() = default;
 
-    /// Delete the copy assignment operator so command buffers are move-only objects.
     CommandBuffer &operator=(const CommandBuffer &) = delete;
-    CommandBuffer &operator=(CommandBuffer &&other) noexcept = default;
+    CommandBuffer &operator=(CommandBuffer &&) = default;
 
-    CommandBuffer(const VkDevice device, const VkCommandPool command_pool);
+    // General commands
+    void begin(VkCommandBufferUsageFlags flags = 0) const;
+    void bind_descriptor(const Descriptor &descriptor, VkPipelineLayout layout) const;
+    void end() const;
 
-    /// @note We don't need to destroy the command buffer because it will be destroyed along with it's associated
-    /// command pool automatically.
+    // Graphics commands
+    // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
+    void begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const;
+    void bind_graphics_pipeline(VkPipeline pipeline) const;
+    void bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const;
+    void draw(std::uint32_t vertex_count) const;
+    void end_render_pass() const;
 
     [[nodiscard]] VkCommandBuffer get() const {
-        return command_buffer;
+        return m_command_buffer;
     }
 
     [[nodiscard]] const VkCommandBuffer *get_ptr() const {
-        return &command_buffer;
+        return &m_command_buffer;
     }
 };
 

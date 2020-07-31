@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -21,8 +23,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
 
     spdlog::debug("Creating GPU memory buffer of size {} for '{}'.", size, name);
 
-    VkBufferCreateInfo buffer_ci = {};
-    buffer_ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    auto buffer_ci = make_info<VkBufferCreateInfo>();
     buffer_ci.size = size;
     buffer_ci.usage = buffer_usage;
     buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -51,8 +52,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     if (vkDebugMarkerSetObjectNameEXT != nullptr) {
         // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for
         // debugging.
-        VkDebugMarkerObjectNameInfoEXT name_info = {};
-        name_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+        auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
         name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT;
         name_info.object = reinterpret_cast<std::uint64_t>(buffer);
         name_info.pObjectName = name.c_str();

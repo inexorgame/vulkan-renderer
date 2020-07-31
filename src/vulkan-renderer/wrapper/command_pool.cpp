@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
+
 namespace inexor::vulkan_renderer::wrapper {
 
 CommandPool::CommandPool(CommandPool &&other) noexcept
@@ -8,8 +10,7 @@ CommandPool::CommandPool(CommandPool &&other) noexcept
 CommandPool::CommandPool(const VkDevice device, const std::uint32_t queue_family_index) : device(device) {
     assert(device);
 
-    VkCommandPoolCreateInfo command_pool_ci = {};
-    command_pool_ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    auto command_pool_ci = make_info<VkCommandPoolCreateInfo>();
     command_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     command_pool_ci.queueFamilyIndex = queue_family_index;
 

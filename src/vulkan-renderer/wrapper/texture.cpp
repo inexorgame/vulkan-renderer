@@ -1,4 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/texture.hpp"
+
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -88,7 +90,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     transition_image_layout(texture_image->get(), texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    VkBufferImageCopy buffer_image_region = {};
+    VkBufferImageCopy buffer_image_region{};
 
     buffer_image_region.bufferOffset = 0;
     buffer_image_region.bufferRowLength = 0;
@@ -116,9 +118,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
 void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
                                       VkImageLayout new_layout) {
 
-    VkImageMemoryBarrier barrier = {};
-
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = old_layout;
     barrier.newLayout = new_layout;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -164,8 +164,7 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 }
 
 void Texture::create_texture_sampler() {
-    VkSamplerCreateInfo sampler_ci = {};
-    sampler_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    auto sampler_ci = make_info<VkSamplerCreateInfo>();
     sampler_ci.magFilter = VK_FILTER_LINEAR;
     sampler_ci.minFilter = VK_FILTER_LINEAR;
     sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;

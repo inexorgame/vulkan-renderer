@@ -2,10 +2,11 @@
 
 #include "inexor/vulkan-renderer/debug_callback.hpp"
 #include "inexor/vulkan-renderer/error_handling.hpp"
-#include "inexor/vulkan-renderer/octree_vertex.hpp"
+#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/wrapper/info.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/spdlog.h>
@@ -24,7 +25,7 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
 
     // This is actually the way it is handled by the official Vulkan samples.
     auto *app = reinterpret_cast<VulkanRenderer *>(glfwGetWindowUserPointer(window));
-    app->frame_buffer_resized = true;
+    app->window_resized = true;
 }
 
 VkResult Application::load_toml_configuration_file(const std::string &file_name) {
@@ -114,7 +115,7 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 VkResult Application::load_textures() {
     assert(vkdevice->get_device());
     assert(vkdevice->get_physical_device());
-    assert(vma->get_allocator());
+    assert(vkdevice->allocator());
 
     // TODO: Refactor! use key from TOML file as name!
     std::size_t texture_number = 1;
@@ -123,7 +124,7 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : texture_files) {
-        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vma->get_allocator(),
+        textures.emplace_back(vkdevice->get_device(), vkdevice->get_physical_device(), vkdevice->allocator(),
                               texture_file, texture_name, vkdevice->get_graphics_queue(),
                               vkdevice->get_graphics_queue_family_index());
     }
@@ -171,89 +172,6 @@ VkResult Application::load_shaders() {
     return VK_SUCCESS;
 }
 
-/// TODO: Refactor rendering method!
-/// TODO: Finish present call using transfer queue.
-VkResult Application::render_frame() {
-    assert(vkdevice->get_device());
-    assert(vkdevice->get_graphics_queue());
-    assert(vkdevice->get_present_queue());
-
-    in_flight_fences[current_frame].block();
-
-    std::uint32_t image_index = 0;
-    VkResult result =
-        vkAcquireNextImageKHR(vkdevice->get_device(), swapchain->get_swapchain(), UINT64_MAX,
-                              image_available_semaphores[current_frame].get(), VK_NULL_HANDLE, &image_index);
-
-    // Update the data which changes every frame!
-    update_uniform_buffers(current_frame);
-
-    // Is it time to regenerate the swapchain because window has been resized or minimized?
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        // VK_ERROR_OUT_OF_DATE_KHR: The swap chain has become incompatible with the surface
-        // and can no longer be used for rendering. Usually happens after a window resize.
-        return recreate_swapchain();
-    }
-
-    // Did something else fail?
-    // VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present
-    // to the surface, but the surface properties are no longer matched exactly.
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        std::string error_message = "Error: Failed to acquire swapchain image!";
-        display_error_message(error_message);
-        exit(-1);
-    }
-
-    const VkPipelineStageFlags wait_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.pNext = nullptr;
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitDstStageMask = wait_stage_mask;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = command_buffers[image_index].get_ptr();
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = image_available_semaphores[current_frame].get_ptr();
-    submit_info.pSignalSemaphores = rendering_finished_semaphores[current_frame].get_ptr();
-
-    in_flight_fences[current_frame].reset();
-
-    result = vkQueueSubmit(vkdevice->get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame].get());
-    if (result != VK_SUCCESS) {
-        return result;
-    }
-
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.pNext = nullptr;
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = rendering_finished_semaphores[current_frame].get_ptr();
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = swapchain->get_swapchain_ptr();
-    present_info.pImageIndices = &image_index;
-    present_info.pResults = nullptr;
-
-    result = vkQueuePresentKHR(vkdevice->get_present_queue(), &present_info);
-
-    // Some notes on frame_buffer_resized:
-    // It is important to do this after vkQueuePresentKHR to ensure that the semaphores are
-    // in a consistent state, otherwise a signalled semaphore may never be properly waited upon.
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frame_buffer_resized) {
-        frame_buffer_resized = false;
-        recreate_swapchain();
-    }
-
-    current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-    auto fps_value = fps_counter.update();
-
-    if (fps_value) {
-        window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
-        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, window->get_width(), window->get_height());
-    }
-
-    return VK_SUCCESS;
-}
-
 VkResult Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
@@ -266,7 +184,6 @@ VkResult Application::load_octree_geometry() {
         child->indent(1, false, 2);
     }
 
-    std::vector<OctreeVertex> octree_vertices;
     for (const auto &polygons : cube->polygons(true)) {
         for (const auto &triangle : *polygons) {
             for (const auto &vertex : triangle) {
@@ -275,17 +192,10 @@ VkResult Application::load_octree_geometry() {
                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
                 };
-                octree_vertices.emplace_back(vertex, color);
+                m_octree_vertices.emplace_back(vertex, color);
             }
         }
     }
-
-    const std::string octree_mesh_name = "unnamed octree";
-
-    // Create a mesh buffer for octree vertex geometry.
-    mesh_buffers.emplace_back(vkdevice->get_device(), vkdevice->get_transfer_queue(),
-                              vkdevice->get_transfer_queue_family_index(), vma->get_allocator(), octree_mesh_name,
-                              sizeof(OctreeVertex), octree_vertices.size(), octree_vertices.data());
 
     return VK_SUCCESS;
 }
@@ -320,7 +230,7 @@ VkResult Application::check_application_specific_features() {
     return VK_SUCCESS;
 }
 
-VkResult Application::init(int argc, char **argv) {
+Application::Application(int argc, char **argv) {
     spdlog::debug("Initialising vulkan-renderer.");
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
 
@@ -384,9 +294,7 @@ VkResult Application::init(int argc, char **argv) {
         spdlog::debug("Khronos validation layer is enabled.");
 
         if (availability_checks_manager->has_instance_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
-            VkDebugReportCallbackCreateInfoEXT debug_report_ci = {};
-
-            debug_report_ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+            auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
             debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
                                     VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
             debug_report_ci.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
@@ -491,15 +399,9 @@ VkResult Application::init(int argc, char **argv) {
     result = check_application_specific_features();
     vulkan_error_check(result);
 
-    vma = std::make_unique<wrapper::VulkanMemoryAllocator>(vkinstance->get_instance(), vkdevice->get_device(),
-                                                           vkdevice->get_physical_device());
-
     swapchain = std::make_unique<wrapper::Swapchain>(vkdevice->get_device(), vkdevice->get_physical_device(),
                                                      surface->get(), window->get_width(), window->get_height(),
                                                      vsync_enabled, "Standard swapchain.");
-
-    result = create_depth_buffer();
-    vulkan_error_check(result);
 
     spdlog::debug("Starting to load textures using threadpool.");
 
@@ -515,22 +417,13 @@ VkResult Application::init(int argc, char **argv) {
     result = create_descriptor_set_layouts();
     vulkan_error_check(result);
 
-    result = create_pipeline();
-    vulkan_error_check(result);
-
-    result = create_frame_buffers();
-    vulkan_error_check(result);
-
     command_pool =
         std::make_unique<wrapper::CommandPool>(vkdevice->get_device(), vkdevice->get_graphics_queue_family_index());
 
-    result = create_uniform_buffers();
-    vulkan_error_check(result);
+    uniform_buffers.emplace_back(vkdevice->get_device(), vkdevice->allocator(), "matrices uniform buffer",
+                                 sizeof(UniformBufferObject));
 
     result = create_descriptor_writes();
-    vulkan_error_check(result);
-
-    result = create_command_buffers();
     vulkan_error_check(result);
 
     result = load_models();
@@ -539,11 +432,12 @@ VkResult Application::init(int argc, char **argv) {
     result = load_octree_geometry();
     vulkan_error_check(result);
 
-    result = record_command_buffers();
-    vulkan_error_check(result);
-
     result = create_synchronisation_objects();
     vulkan_error_check(result);
+
+    m_frame_graph =
+        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vkdevice->allocator(), *swapchain);
+    setup_frame_graph();
 
     spdlog::debug("Vulkan initialisation finished.");
 
@@ -554,13 +448,20 @@ VkResult Application::init(int argc, char **argv) {
     // We must store the window user pointer to be able to call the window resize callback.
     window->set_user_ptr(this);
 
-    return recreate_swapchain();
+    // Setup game camera
+    game_camera.type = Camera::CameraType::LOOKAT;
+
+    game_camera.set_perspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
+    game_camera.rotation_speed = 0.25f;
+    game_camera.movement_speed = 0.1f;
+    game_camera.set_position({0.0f, 0.0f, 5.0f});
+    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
 }
 
-VkResult Application::update_uniform_buffers(const std::size_t current_image) {
+VkResult Application::update_uniform_buffers() {
     float time = time_step.get_time_step_since_initialisation();
 
-    UniformBufferObject ubo = {};
+    UniformBufferObject ubo{};
 
     // Rotate the model as a function of time.
     ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -602,41 +503,21 @@ VkResult Application::update_mouse_input() {
     return VK_SUCCESS;
 }
 
-VkResult Application::update_keyboard_input() {
-    return VK_SUCCESS;
-}
-
 void Application::run() {
     spdlog::debug("Running Application.");
 
     while (!window->should_close()) {
         window->poll();
+        update_uniform_buffers();
         render_frame();
 
         // TODO: Run this in a separated thread?
         // TODO: Merge into one update_game_data() method?
-        update_keyboard_input();
         update_mouse_input();
-        update_cameras();
+        game_camera.update(time_passed);
 
         time_passed = stopwatch.get_time_step();
     }
-}
-
-void Application::cleanup() {
-    spdlog::debug("Cleaning up Application.");
-
-    shutdown_vulkan();
-
-    window.reset();
-
-    glfw_context.reset();
-
-    vertex_shader_files.clear();
-    fragment_shader_files.clear();
-    texture_files.clear();
-    shader_files.clear();
-    gltf_model_files.clear();
 }
 
 } // namespace inexor::vulkan_renderer

@@ -6,8 +6,8 @@ set(SOURCE_FILES
     vulkan-renderer/debug_callback.cpp
     vulkan-renderer/error_handling.cpp
     vulkan-renderer/fps_counter.cpp
+    vulkan-renderer/frame_graph.cpp
     vulkan-renderer/gpu_info.cpp
-    vulkan-renderer/octree_vertex.cpp
     vulkan-renderer/renderer.cpp
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/thread_pool.cpp
@@ -26,20 +26,18 @@ set(SOURCE_FILES
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
-    vulkan-renderer/wrapper/graphics_pipeline.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/image.cpp
+    vulkan-renderer/wrapper/info.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/mesh_buffer.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
     vulkan-renderer/wrapper/pipeline_layout.cpp
-    vulkan-renderer/wrapper/renderpass.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/staging_buffer.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/texture.cpp
-    vulkan-renderer/wrapper/vma.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
