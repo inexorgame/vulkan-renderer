@@ -200,17 +200,6 @@ VkResult Application::load_octree_geometry() {
     return VK_SUCCESS;
 }
 
-VkResult Application::load_models() {
-    spdlog::debug("Loading models.");
-
-    // TODO: Load models from TOML list.
-    // TODO: Load glTF 2 models here.
-
-    spdlog::debug("Loading models finished.");
-
-    return VK_SUCCESS;
-}
-
 VkResult Application::check_application_specific_features() {
     assert(vkdevice->get_physical_device());
 
@@ -424,9 +413,6 @@ Application::Application(int argc, char **argv) {
                                  sizeof(UniformBufferObject));
 
     result = create_descriptor_writes();
-    vulkan_error_check(result);
-
-    result = load_models();
     vulkan_error_check(result);
 
     result = load_octree_geometry();

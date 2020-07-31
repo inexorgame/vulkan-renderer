@@ -55,8 +55,6 @@ private:
 
     VkResult load_shaders();
 
-    VkResult load_models();
-
     VkResult load_octree_geometry();
 
     VkResult check_application_specific_features();
