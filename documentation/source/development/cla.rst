@@ -1,30 +1,30 @@
 Command Line Arguments
 ======================
 
-.. option:: -gpu <index>
+.. option:: --gpu <index>
 
-    Defines which GPU to use (by array index).
+    Specifies which GPU to use (by array index)
 
-.. option:: -nostats
+.. option:: --no-separate-data-queue
 
-    Defines if we will print stats about graphics cards.
+    Disables the use of the special data transfer queue (forces use of graphics queue)
 
-.. option:: -vsync
+.. option:: --no-stats
 
-    Use vertical synchronisation.
+    Disables GPU info printing
 
-.. option:: -renderdoc
+.. option:: --no-validation
 
-    Use RenderDoc layer.
+    Disables the Khronos vulkan validation layer
 
-.. option:: -novalidation
+.. option:: --no-vk-debug-markers
 
-    Disable Khronos validation layer.
+    Disables vulkan debug markers (even if ``-renderdoc`` is specified)
 
-.. option:: -no_separate_data_queue
+.. option:: --renderdoc
 
-    Do not use distinct data transfer queue, use graphics queue.
+    Enables RenderDoc debug layer
 
-.. option:: -no_vk_debug_markers
+.. option:: --vsync
 
-    Disable debug markers (even if ``-renderdoc`` is specified)
+    Enables vertical synchronisation (limits FPS to monitor refresh rate)
