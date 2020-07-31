@@ -177,7 +177,7 @@ VkResult Application::load_octree_geometry() {
 
     std::shared_ptr<world::Cube> cube =
         std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2, glm::vec3{0, -1, -1});
-    for (auto child : cube->childs()) {
+    for (const auto &child : cube->childs()) {
         child->set_type(world::Cube::Type::NORMAL);
         child->indent(8, true, 3);
         child->indent(11, true, 5);
