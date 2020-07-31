@@ -73,14 +73,6 @@ private:
 public:
     Application(int argc, char **argv);
 
-    /// @brief Keyboard input callback.
-    /// @param window [in] The glfw window.
-    /// @param key [in] The key which was pressed or released.
-    /// @param scan_code [in] The system-specific scancode of the key.
-    /// @param action [in] The key action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
-    /// @param mods [in] Bit field describing which modifier keys were held down.
-    void keyboard_input_callback(GLFWwindow *window, int key, int scan_code, int action, int mods);
-
     void run();
 };
 
