@@ -6,6 +6,7 @@ Checks: >
 
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -google-readability-todo,
   -hicpp-no-array-decay,
   -hicpp-uppercase-literal-suffix,
   -llvm-header-guard,
