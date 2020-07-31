@@ -418,13 +418,6 @@ Application::Application(int argc, char **argv) {
     result = load_octree_geometry();
     vulkan_error_check(result);
 
-    result = create_synchronisation_objects();
-    vulkan_error_check(result);
-
-    m_frame_graph =
-        std::make_unique<FrameGraph>(vkdevice->get_device(), command_pool->get(), vkdevice->allocator(), *swapchain);
-    setup_frame_graph();
-
     spdlog::debug("Vulkan initialisation finished.");
 
     spdlog::debug("Showing window.");
@@ -434,14 +427,7 @@ Application::Application(int argc, char **argv) {
     // We must store the window user pointer to be able to call the window resize callback.
     window->set_user_ptr(this);
 
-    // Setup game camera
-    game_camera.type = Camera::CameraType::LOOKAT;
-
-    game_camera.set_perspective(45.0f, (float)window_width / (float)window_height, 0.1f, 256.0f);
-    game_camera.rotation_speed = 0.25f;
-    game_camera.movement_speed = 0.1f;
-    game_camera.set_position({0.0f, 0.0f, 5.0f});
-    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
+    recreate_swapchain();
 }
 
 VkResult Application::update_uniform_buffers() {

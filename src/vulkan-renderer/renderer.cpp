@@ -45,22 +45,6 @@ void VulkanRenderer::setup_frame_graph() {
     m_frame_graph->compile(back_buffer);
 }
 
-VkResult VulkanRenderer::create_synchronisation_objects() {
-    assert(swapchain->get_image_count() > 0);
-
-    spdlog::debug("Creating synchronisation objects: semaphores and fences.");
-    spdlog::debug("Number of images in swapchain: {}.", swapchain->get_image_count());
-
-    // TODO: Add method to create several fences/semaphores.
-
-    image_available_semaphore =
-        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Image available semaphore");
-    rendering_finished_semaphore =
-        std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Rendering finished semaphore");
-
-    return VK_SUCCESS;
-}
-
 VkResult VulkanRenderer::create_descriptor_pool() {
     descriptors.emplace_back(vkdevice->get_device(), swapchain->get_image_count(), std::string("unnamed descriptor"));
 
@@ -128,9 +112,15 @@ void VulkanRenderer::recreate_swapchain() {
         std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Image available semaphore");
     rendering_finished_semaphore =
         std::make_unique<wrapper::Semaphore>(vkdevice->get_device(), "Rendering finished semaphore");
+    vkDeviceWaitIdle(vkdevice->get_device());
+
+    game_camera.type = Camera::CameraType::LOOKAT;
+    game_camera.rotation_speed = 0.25f;
+    game_camera.movement_speed = 0.1f;
+    game_camera.set_position({0.0f, 0.0f, 5.0f});
+    game_camera.set_rotation({0.0f, 0.0f, 0.0f});
     game_camera.set_perspective(
         45.0f, static_cast<float>(window->get_width()) / static_cast<float>(window->get_height()), 0.1f, 256.0f);
-    vkDeviceWaitIdle(vkdevice->get_device());
 }
 
 void VulkanRenderer::render_frame() {

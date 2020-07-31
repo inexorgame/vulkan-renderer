@@ -110,9 +110,6 @@ protected:
 
     void setup_frame_graph();
 
-    /// @brief Creates the semaphores neccesary for synchronisation.
-    VkResult create_synchronisation_objects();
-
     VkResult create_descriptor_pool();
 
     VkResult create_descriptor_set_layouts();
