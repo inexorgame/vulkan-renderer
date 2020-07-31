@@ -65,8 +65,7 @@ VkResult VulkanRenderer::create_descriptor_pool() {
     descriptors.emplace_back(vkdevice->get_device(), swapchain->get_image_count(), std::string("unnamed descriptor"));
 
     // Create the descriptor pool.
-    descriptors[0].create_descriptor_pool(
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER});
+    descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER});
 
     return VK_SUCCESS;
 }
@@ -193,16 +192,18 @@ void VulkanRenderer::calculate_memory_budget() {
 
 VulkanRenderer::~VulkanRenderer() {
     spdlog::debug("Shutting down vulkan renderer");
+    // TODO: Add wrapper::Device::wait_idle()
     vkDeviceWaitIdle(vkdevice->get_device());
-    if (debug_report_callback_initialised) {
-        // We have to explicitly load this function
-        PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
-            reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-                vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
 
-        if (vkDestroyDebugReportCallbackEXT != nullptr) {
-            vkDestroyDebugReportCallbackEXT(vkinstance->get_instance(), debug_report_callback, nullptr);
-        }
+    if (!debug_report_callback_initialised) {
+        return;
+    }
+
+    // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
+    auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+        vkGetInstanceProcAddr(vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
+    if (vk_destroy_debug_report_callback != nullptr) {
+        vk_destroy_debug_report_callback(vkinstance->get_instance(), debug_report_callback, nullptr);
     }
 }
 
