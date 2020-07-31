@@ -47,7 +47,7 @@ CommandLineArgumentParser::get_arg_template(const std::string &argument_name) co
 void CommandLineArgumentParser::parse_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         // NOLINTNEXTLINE
-        std::string arg_name = {argv[i]};
+        std::string arg_name(argv[i]);
         auto arg_template = get_arg_template(arg_name);
 
         if (!arg_template) {
@@ -65,7 +65,7 @@ void CommandLineArgumentParser::parse_args(int argc, char **argv) {
         }
 
         // NOLINTNEXTLINE
-        std::string arg_value = {argv[++i]};
+        std::string arg_value(argv[++i]);
         parsed_arguments.insert(std::make_pair(arg_name, arg_value));
     }
 }
