@@ -47,11 +47,12 @@ void CommandBuffer::bind_graphics_pipeline(VkPipeline pipeline) const {
 
 void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {
     std::vector<VkDeviceSize> offsets(buffers.size(), 0);
-    vkCmdBindVertexBuffers(m_command_buffer, 0, buffers.size(), buffers.data(), offsets.data());
+    vkCmdBindVertexBuffers(m_command_buffer, 0, static_cast<std::uint32_t>(buffers.size()), buffers.data(),
+                           offsets.data());
 }
 
-void CommandBuffer::draw(std::uint32_t vertex_count) const {
-    vkCmdDraw(m_command_buffer, vertex_count, 1, 0, 0);
+void CommandBuffer::draw(std::size_t vertex_count) const {
+    vkCmdDraw(m_command_buffer, static_cast<std::uint32_t>(vertex_count), 1, 0, 0);
 }
 
 void CommandBuffer::end_render_pass() const {

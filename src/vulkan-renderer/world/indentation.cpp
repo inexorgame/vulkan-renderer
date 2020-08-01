@@ -69,6 +69,6 @@ void Indentation::indent_end(std::int8_t steps) noexcept {
 }
 
 std::uint8_t Indentation::uid() const {
-    return 10 * m_start + offset() - (std::pow(m_start, 2) + m_start) / 2;
+    return static_cast<std::uint8_t>(10 * m_start + offset() - (std::pow(m_start, 2) + m_start) / 2);
 }
 } // namespace inexor::vulkan_renderer::world
