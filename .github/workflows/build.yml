@@ -122,13 +122,6 @@ jobs:
             cmake_configure_options: '-G "Visual Studio 16 2019" -A x64',
             conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=16 default',
           }
-          - {
-            name: "Windows MinGW",
-            artifact: "windows-mingw.zip",
-            cc: "gcc", cxx: "g++",
-            cmake_configure_options: '-GNinja',
-            conan_profile_update: 'conan profile update settings.compiler.libcxx=libstdc++11 default',
-          }
 
     steps:
       - name: Checkout
