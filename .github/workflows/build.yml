@@ -42,13 +42,27 @@ jobs:
             clang \
             cmake \
             curl \
-            libx11-dev \
             libgl1-mesa-dev \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxcb-icccm4-dev \
+            libxcb-image0-dev \
+            libxcb-keysyms1-dev \
+            libxcb-randr0-dev \
+            libxcb-render-util0-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-sync-dev \
+            libxcb-xfixes0-dev \
+            libxcb-xinerama0-dev \
+            libxcb-xkb-dev \
             lld \
             ninja-build \
             pkg-config \
             python3 \
-            python3-pip
+            python3-pip \
+            xkb-data \
+            xorg-dev
 
           pip3 install wheel setuptools
           pip3 install conan mako
