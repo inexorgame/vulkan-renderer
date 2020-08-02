@@ -6,7 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <spdlog/spdlog.h>
 #include <stb_image.h>
-#include <vma/vk_mem_alloc.h>
+#include <vma/vma_usage.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 

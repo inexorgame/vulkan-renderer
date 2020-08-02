@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/wrapper/info.hpp"
 
 #include <spdlog/spdlog.h>
-#include <vma/vk_mem_alloc.h>
+#include <vma/vma_usage.h>
 #include <vulkan/vulkan_core.h>
 
 #include <array>
