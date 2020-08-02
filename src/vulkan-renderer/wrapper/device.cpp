@@ -33,11 +33,12 @@ constexpr float default_queue_priority = 1.0f;
 namespace inexor::vulkan_renderer::wrapper {
 
 Device::Device(Device &&other) noexcept
-    : device(std::exchange(other.device, nullptr)), graphics_card(std::exchange(other.graphics_card, nullptr)) {}
+    : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)) {
+}
 
 Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
                bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
-    : graphics_card(graphics_card), surface(surface) {
+    : m_surface(surface) {
 
     VulkanSettingsDecisionMaker settings_decision_maker;
 
@@ -48,7 +49,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         throw std::runtime_error("Error: Could not find suitable graphics card!");
     }
 
-    graphics_card = *selected_graphics_card;
+    m_graphics_card = *selected_graphics_card;
 
     spdlog::debug("Creating Vulkan device queues.");
 
@@ -62,13 +63,13 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     // Check if there is one queue family which can be used for both graphics and presentation.
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
-        settings_decision_maker.find_queue_family_for_both_graphics_and_presentation(graphics_card, surface);
+        settings_decision_maker.find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation) {
         spdlog::debug("One queue for both graphics and presentation will be used.");
 
-        graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
-        present_queue_family_index = graphics_queue_family_index;
+        m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
+        m_present_queue_family_index = m_graphics_queue_family_index;
 
         // In this case, there is one queue family which can be used for both graphics and presentation.
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
@@ -86,29 +87,29 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
         // Check which queue family index can be used for graphics.
         std::optional<std::uint32_t> queue_candidate =
-            settings_decision_maker.find_graphics_queue_family(graphics_card);
+            settings_decision_maker.find_graphics_queue_family(m_graphics_card);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
         }
 
-        graphics_queue_family_index = *queue_candidate;
+        m_graphics_queue_family_index = *queue_candidate;
 
         // Check which queue family index can be used for presentation.
-        queue_candidate = settings_decision_maker.find_presentation_queue_family(graphics_card, surface);
+        queue_candidate = settings_decision_maker.find_presentation_queue_family(m_graphics_card, surface);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
         }
 
-        present_queue_family_index = *queue_candidate;
+        m_present_queue_family_index = *queue_candidate;
 
-        spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index);
-        spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
+        spdlog::debug("Graphics queue family index: {}.", m_graphics_queue_family_index);
+        spdlog::debug("Presentation queue family index: {}.", m_present_queue_family_index);
 
         // Set up one queue for graphics.
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = graphics_queue_family_index;
+        device_queue_ci.queueFamilyIndex = m_graphics_queue_family_index;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
@@ -116,7 +117,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
         // Set up one queue for presentation.
         device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = present_queue_family_index;
+        device_queue_ci.queueFamilyIndex = m_present_queue_family_index;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
@@ -125,21 +126,21 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     // Add another device queue just for data transfer.
     std::optional<std::uint32_t> queue_candidate =
-        settings_decision_maker.find_distinct_data_transfer_queue_family(graphics_card);
+        settings_decision_maker.find_distinct_data_transfer_queue_family(m_graphics_card);
 
     bool use_distinct_data_transfer_queue = false;
 
     if (queue_candidate && prefer_distinct_transfer_queue) {
-        transfer_queue_family_index = *queue_candidate;
+        m_transfer_queue_family_index = *queue_candidate;
 
         spdlog::debug("A separate queue will be used for data transfer.");
-        spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index);
+        spdlog::debug("Data transfer queue family index: {}.", m_transfer_queue_family_index);
 
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
 
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = transfer_queue_family_index;
+        device_queue_ci.queueFamilyIndex = m_transfer_queue_family_index;
         device_queue_ci.queueCount = 1;
         device_queue_ci.pQueuePriorities = &::default_queue_priority;
 
@@ -154,7 +155,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         spdlog::warn("The application is forces to avoid distinct data transfer queues.");
         spdlog::warn("Because of this, the graphics queue will be used for data transfer.");
 
-        transfer_queue_family_index = graphics_queue_family_index;
+        m_transfer_queue_family_index = m_graphics_queue_family_index;
     }
 
     std::vector<const char *> device_extensions_wishlist = {
@@ -176,7 +177,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     std::vector<const char *> enabled_device_extensions;
 
     for (const auto &device_extension_name : device_extensions_wishlist) {
-        if (availability_checks.has_device_extension(graphics_card, device_extension_name)) {
+        if (availability_checks.has_device_extension(m_graphics_card, device_extension_name)) {
             spdlog::debug("Device extension '{}' is available on this system.", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
         } else {
@@ -202,7 +203,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     spdlog::debug("Creating physical device (graphics card interface).");
 
-    if (vkCreateDevice(graphics_card, &device_ci, nullptr, &device) != VK_SUCCESS) {
+    if (vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateDevice failed!");
     }
 
@@ -211,29 +212,29 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         spdlog::debug("Initializing Vulkan debug markers.");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
-        vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>(
-            vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectTagEXT"));
-        assert(vk_debug_marker_set_object_tag);
+        m_vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>(
+            vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectTagEXT"));
+        assert(m_vk_debug_marker_set_object_tag);
 
-        vk_debug_marker_set_object_name = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
-            vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
-        assert(vk_debug_marker_set_object_name);
+        m_vk_debug_marker_set_object_name = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
+            vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectNameEXT"));
+        assert(m_vk_debug_marker_set_object_name);
 
-        vk_cmd_debug_marker_begin =
-            reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerBeginEXT"));
-        assert(vk_cmd_debug_marker_begin);
+        m_vk_cmd_debug_marker_begin =
+            reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerBeginEXT"));
+        assert(m_vk_cmd_debug_marker_begin);
 
-        vk_cmd_debug_marker_end =
-            reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerEndEXT"));
-        assert(vk_cmd_debug_marker_end);
+        m_vk_cmd_debug_marker_end =
+            reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerEndEXT"));
+        assert(m_vk_cmd_debug_marker_end);
 
-        vk_cmd_debug_marker_insert =
-            reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>(vkGetDeviceProcAddr(device, "vkCmdDebugMarkerInsertEXT"));
-        assert(vk_cmd_debug_marker_insert);
+        m_vk_cmd_debug_marker_insert =
+            reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerInsertEXT"));
+        assert(m_vk_cmd_debug_marker_insert);
 
-        vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
-            vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
-        assert(vk_set_debug_utils_object_name);
+        m_vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+            vkGetDeviceProcAddr(m_device, "vkSetDebugUtilsObjectNameEXT"));
+        assert(m_vk_set_debug_utils_object_name);
     } else {
         spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
         spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
@@ -241,19 +242,19 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 #endif
 
     spdlog::debug("Initialising GPU queues.");
-    spdlog::debug("Graphics queue family index: {}.", graphics_queue_family_index);
-    spdlog::debug("Presentation queue family index: {}.", present_queue_family_index);
-    spdlog::debug("Data transfer queue family index: {}.", transfer_queue_family_index);
+    spdlog::debug("Graphics queue family index: {}.", m_graphics_queue_family_index);
+    spdlog::debug("Presentation queue family index: {}.", m_present_queue_family_index);
+    spdlog::debug("Data transfer queue family index: {}.", m_transfer_queue_family_index);
 
     // Setup the queues for presentation and graphics.
     // Since we only have one queue per queue family, we acquire index 0.
-    vkGetDeviceQueue(device, present_queue_family_index, 0, &present_queue);
-    vkGetDeviceQueue(device, graphics_queue_family_index, 0, &graphics_queue);
+    vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
+    vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
 
     // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
     if (use_distinct_data_transfer_queue) {
         // Use a separate queue for data transfer to GPU.
-        vkGetDeviceQueue(device, transfer_queue_family_index, 0, &transfer_queue);
+        vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
     }
 
     spdlog::debug("Creating vma allocator");
@@ -286,9 +287,9 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     vma_record_settings.pFilePath = vma_replay_file.c_str();
 
     VmaAllocatorCreateInfo vma_allocator_ci{};
-    vma_allocator_ci.physicalDevice = graphics_card;
+    vma_allocator_ci.physicalDevice = m_graphics_card;
     vma_allocator_ci.instance = instance;
-    vma_allocator_ci.device = device;
+    vma_allocator_ci.device = m_device;
 #if VMA_RECORDING_ENABLED
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif
@@ -303,35 +304,35 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 }
 
 Device::~Device() {
-    assert(device);
+    assert(m_device);
     spdlog::trace("Destroying device.");
     vmaDestroyAllocator(m_allocator);
-    vkDestroyDevice(device, nullptr);
+    vkDestroyDevice(m_device, nullptr);
 }
 
 #ifndef NDEBUG
 void Device::set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type,
                              const std::string &name) {
-    assert(device);
+    assert(m_device);
     assert(!name.empty());
     assert(object);
-    assert(vk_debug_marker_set_object_name);
+    assert(m_vk_debug_marker_set_object_name);
 
     auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
     name_info.objectType = type;
     name_info.object = object;
     name_info.pObjectName = name.c_str();
 
-    vk_debug_marker_set_object_name(device, &name_info);
+    m_vk_debug_marker_set_object_name(m_device, &name_info);
 }
 
 void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
                             const std::size_t tag_size, const void *tag) {
-    assert(device);
+    assert(m_device);
     assert(name);
     assert(tag_size > 0);
     assert(tag);
-    assert(vk_debug_marker_set_object_tag);
+    assert(m_vk_debug_marker_set_object_tag);
 
     auto tagInfo = make_info<VkDebugMarkerObjectTagInfoEXT>();
     tagInfo.objectType = type;
@@ -340,14 +341,14 @@ void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjec
     tagInfo.tagSize = tag_size;
     tagInfo.pTag = tag;
 
-    vk_debug_marker_set_object_tag(device, &tagInfo);
+    m_vk_debug_marker_set_object_tag(m_device, &tagInfo);
 }
 
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                                const std::array<float, 4> color) {
     assert(command_buffer);
     assert(!name.empty());
-    assert(vk_cmd_debug_marker_begin);
+    assert(m_vk_cmd_debug_marker_begin);
 
     auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
     debug_marker.color[0] = color[0];
@@ -356,14 +357,14 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
     debug_marker.color[3] = color[3];
     debug_marker.pMarkerName = name.c_str();
 
-    vk_cmd_debug_marker_begin(command_buffer, &debug_marker);
+    m_vk_cmd_debug_marker_begin(command_buffer, &debug_marker);
 }
 
 void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
                                  const std::array<float, 4> color) {
     assert(command_buffer);
     assert(!name.empty());
-    assert(vk_cmd_debug_marker_insert);
+    assert(m_vk_cmd_debug_marker_insert);
 
     auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
     debug_marker.color[0] = color[0];
@@ -372,12 +373,12 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
     debug_marker.color[3] = color[3];
     debug_marker.pMarkerName = name.c_str();
 
-    vk_cmd_debug_marker_insert(command_buffer, &debug_marker);
+    m_vk_cmd_debug_marker_insert(command_buffer, &debug_marker);
 }
 
 void Device::end_debug_region(const VkCommandBuffer command_buffer) {
-    assert(vk_cmd_debug_marker_end);
-    vk_cmd_debug_marker_end(command_buffer);
+    assert(m_vk_cmd_debug_marker_end);
+    m_vk_cmd_debug_marker_end(command_buffer);
 }
 #endif
 

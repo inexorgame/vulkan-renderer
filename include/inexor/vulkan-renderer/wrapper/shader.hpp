@@ -9,12 +9,12 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Shader {
 private:
-    VkDevice device;
-    VkShaderStageFlagBits type;
-    std::string name;
-    std::string entry_point;
+    VkDevice m_device;
+    VkShaderStageFlagBits m_type;
+    std::string m_name;
+    std::string m_entry_point;
 
-    VkShaderModule shader_module;
+    VkShaderModule m_shader_module;
 
 public:
     /// Delete the copy constructor so shaders are move-only objects.
@@ -46,19 +46,19 @@ public:
     ~Shader();
 
     [[nodiscard]] const std::string &get_name() const {
-        return name;
+        return m_name;
     }
 
     [[nodiscard]] const std::string &get_entry_point() const {
-        return entry_point;
+        return m_entry_point;
     }
 
     [[nodiscard]] VkShaderStageFlagBits get_type() const {
-        return type;
+        return m_type;
     }
 
     [[nodiscard]] VkShaderModule get_module() const {
-        return shader_module;
+        return m_shader_module;
     }
 };
 

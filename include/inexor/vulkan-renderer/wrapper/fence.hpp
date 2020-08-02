@@ -10,9 +10,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Fence {
 private:
-    VkFence fence;
-    VkDevice device;
-    std::string name;
+    VkFence m_fence;
+    VkDevice m_device;
+    std::string m_name;
 
 public:
     Fence(const Fence &) = default;
@@ -30,8 +30,8 @@ public:
     ~Fence();
 
     [[nodiscard]] VkFence get() const {
-        assert(fence);
-        return fence;
+        assert(m_fence);
+        return m_fence;
     }
 
     ///

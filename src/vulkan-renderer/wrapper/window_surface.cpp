@@ -2,13 +2,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : instance(instance) {
+WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_instance(instance) {
     assert(instance);
     assert(window);
 
     spdlog::debug("Creating window surface.");
 
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+    if (glfwCreateWindowSurface(instance, window, nullptr, &m_surface) != VK_SUCCESS) {
         throw std::runtime_error("Error: glfwCreateWindowSurface failed!");
     }
 
@@ -17,7 +17,7 @@ WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : in
 
 WindowSurface::~WindowSurface() {
     spdlog::trace("Destroying window surface.");
-    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

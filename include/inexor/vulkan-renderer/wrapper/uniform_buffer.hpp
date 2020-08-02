@@ -10,8 +10,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class UniformBuffer : public GPUMemoryBuffer {
 protected:
-    VkDescriptorBufferInfo descriptor_buffer_info{};
-    VkDescriptorSet descriptor_set{};
+    VkDescriptorBufferInfo m_descriptor_buffer_info{};
+    VkDescriptorSet m_descriptor_set{};
 
 public:
     // Delete the copy constructor so uniform buffers are move-only objects.

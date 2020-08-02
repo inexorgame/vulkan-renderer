@@ -60,13 +60,13 @@ struct BezierOutputPoint : public BezierInputPoint {
 /// @brief This struct bundles describes everything about the bezier curve.
 /// It contains both the input points and the generated output points.
 class BezierCurve {
-    bool curve_generated;
+    bool m_curve_generated;
 
-    float curve_precision;
+    float m_curve_precision;
 
-    std::vector<BezierInputPoint> input_points;
+    std::vector<BezierInputPoint> m_input_points;
 
-    std::vector<BezierOutputPoint> output_points;
+    std::vector<BezierOutputPoint> m_output_points;
 
     uint32_t binomial_coefficient(uint32_t n, const uint32_t k);
 

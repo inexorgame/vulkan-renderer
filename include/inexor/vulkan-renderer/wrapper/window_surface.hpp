@@ -10,8 +10,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class WindowSurface {
 private:
-    VkInstance instance;
-    VkSurfaceKHR surface;
+    VkInstance m_instance;
+    VkSurfaceKHR m_surface;
 
 public:
     /// Delete the copy constructor so window surfaces are move-only objects.
@@ -30,11 +30,11 @@ public:
     ~WindowSurface();
 
     [[nodiscard]] VkSurfaceKHR get() const {
-        return surface;
+        return m_surface;
     }
 
     const VkSurfaceKHR *operator&() const {
-        return &surface;
+        return &m_surface;
     }
 };
 

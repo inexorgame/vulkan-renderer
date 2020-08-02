@@ -25,19 +25,19 @@ namespace inexor::vulkan_renderer::wrapper {
 class MeshBuffer {
 
 private:
-    std::string name = "";
+    std::string m_name = "";
 
-    GPUMemoryBuffer vertex_buffer;
+    GPUMemoryBuffer m_vertex_buffer;
 
     // Index buffer, if available.
-    std::optional<GPUMemoryBuffer> index_buffer;
+    std::optional<GPUMemoryBuffer> m_index_buffer;
 
-    std::uint32_t number_of_vertices = 0;
+    std::uint32_t m_number_of_vertices = 0;
 
-    std::uint32_t number_of_indices = 0;
+    std::uint32_t m_number_of_indices = 0;
 
     // Don't forget that index buffers are optional!
-    bool index_buffer_available = false;
+    bool m_index_buffer_available = false;
 
 public:
     // Delete the copy constructor so mesh buffers are move-only objects.
@@ -62,24 +62,24 @@ public:
     ~MeshBuffer();
 
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
-        return vertex_buffer.get_buffer();
+        return m_vertex_buffer.get_buffer();
     }
 
     [[nodiscard]] bool has_index_buffer() const {
-        return index_buffer.has_value();
+        return m_index_buffer.has_value();
     }
 
     [[nodiscard]] std::optional<VkBuffer> get_index_buffer() const {
-        assert(index_buffer);
-        return index_buffer->get_buffer();
+        assert(m_index_buffer);
+        return m_index_buffer->get_buffer();
     }
 
     [[nodiscard]] const std::uint32_t get_vertex_count() const {
-        return number_of_vertices;
+        return m_number_of_vertices;
     }
 
     [[nodiscard]] const std::uint32_t get_index_cound() const {
-        return number_of_indices;
+        return m_number_of_indices;
     }
 
     // TODO: Update data!

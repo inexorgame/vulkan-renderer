@@ -12,8 +12,8 @@ namespace inexor::vulkan_renderer::wrapper {
 /// a queue command can be executed to use a transfer queue to upload the data to the GPU memory.
 class StagingBuffer : public GPUMemoryBuffer {
 private:
-    VkQueue data_transfer_queue;
-    OnceCommandBuffer command_buffer_for_copying;
+    VkQueue m_data_transfer_queue;
+    OnceCommandBuffer m_command_buffer_for_copying;
 
 public:
     // Delete the copy constructor so staging buffers are move-only objects.

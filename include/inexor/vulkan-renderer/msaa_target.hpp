@@ -8,10 +8,10 @@ namespace inexor::vulkan_renderer {
 
 struct MSAATarget {
     // The color buffer.
-    std::unique_ptr<wrapper::Image> color;
+    std::unique_ptr<wrapper::Image> m_color;
 
     // The depth buffer.
-    std::unique_ptr<wrapper::Image> depth;
+    std::unique_ptr<wrapper::Image> m_depth;
 };
 
 } // namespace inexor::vulkan_renderer

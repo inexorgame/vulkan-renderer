@@ -7,34 +7,34 @@ namespace inexor::vulkan_renderer {
 // TODO: Refactor method naming!
 class Camera {
 private:
-    float fov;
-    float z_near, z_far;
+    float m_fov;
+    float m_z_near, m_z_far;
 
     void update_view_matrix();
 
 public:
     enum CameraType { LOOKAT, FIRSTPERSON };
-    CameraType type = CameraType::LOOKAT;
+    CameraType m_type = CameraType::LOOKAT;
 
-    glm::vec3 rotation = glm::vec3();
-    glm::vec3 position = glm::vec3();
+    glm::vec3 m_rotation = glm::vec3();
+    glm::vec3 m_position = glm::vec3();
 
-    float rotation_speed = 1.0f;
-    float movement_speed = 1.0f;
+    float m_rotation_speed = 1.0f;
+    float m_movement_speed = 1.0f;
 
-    bool updated = false;
+    bool m_updated = false;
 
     struct {
         glm::mat4 perspective;
         glm::mat4 view;
-    } matrices;
+    } m_matrices;
 
     struct {
         bool left = false;
         bool right = false;
         bool up = false;
         bool down = false;
-    } keys;
+    } m_keys;
 
     bool moving();
 

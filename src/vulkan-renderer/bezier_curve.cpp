@@ -35,39 +35,39 @@ void BezierCurve::clear() {
 }
 
 bool BezierCurve::is_curve_generated() {
-    return curve_generated;
+    return m_curve_generated;
 }
 
 std::vector<BezierOutputPoint> BezierCurve::get_output_points() {
-    assert(curve_generated);
-    assert(output_points.size() > 0);
-    return output_points;
+    assert(m_curve_generated);
+    assert(m_output_points.size() > 0);
+    return m_output_points;
 }
 
 void BezierCurve::add_input_point(const BezierInputPoint &input_point) {
-    assert(!curve_generated);
-    input_points.push_back(input_point);
+    assert(!m_curve_generated);
+    m_input_points.push_back(input_point);
 }
 
 void BezierCurve::add_input_point(const glm::vec3 &position, const float weight) {
-    assert(!curve_generated);
+    assert(!m_curve_generated);
     assert(weight > 0.0f);
 
     BezierInputPoint input_point;
     input_point.pos = position;
     input_point.weight = weight;
 
-    input_points.push_back(input_point);
+    m_input_points.push_back(input_point);
 }
 
 BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precision) {
     BezierOutputPoint temp_output;
 
-    std::uint32_t n = static_cast<std::uint32_t>(input_points.size() - 1);
+    std::uint32_t n = static_cast<std::uint32_t>(m_input_points.size() - 1);
 
     // Calculate the coordinates of the output points of the bezier curve.
-    for (std::size_t i = 0; i < input_points.size(); i++) {
-        auto current_point = input_points[i];
+    for (std::size_t i = 0; i < m_input_points.size(); i++) {
+        auto current_point = m_input_points[i];
 
         std::uint32_t index = static_cast<std::uint32_t>(i);
 
@@ -85,8 +85,8 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
     // precision of the derivation depends on the curve precision!
     // With this technique, we can have precise derivations even if we have a precision of only 10.0f units!
     for (std::size_t i = 0; i < n; i++) {
-        auto current_point = input_points[i];
-        auto next_point = input_points[i + 1];
+        auto current_point = m_input_points[i];
+        auto next_point = m_input_points[i + 1];
 
         std::uint32_t index = static_cast<std::uint32_t>(i);
 
@@ -118,21 +118,21 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
 
 void BezierCurve::calculate_bezier_curve(const float curve_precision) {
     // We need at least 2 input points!
-    assert(input_points.size() > 2);
+    assert(m_input_points.size() > 2);
 
-    if (curve_generated) {
+    if (m_curve_generated) {
         clear();
-        curve_generated = false;
+        m_curve_generated = false;
     }
 
     float curve_precision_interval = 1.0f / curve_precision;
 
     for (float position_on_curve = 0.0f; position_on_curve <= 1.0f; position_on_curve += curve_precision_interval) {
         BezierOutputPoint temp_output = calculate_point_on_curve(position_on_curve);
-        output_points.push_back(temp_output);
+        m_output_points.push_back(temp_output);
     }
 
-    curve_generated = true;
+    m_curve_generated = true;
 }
 
 } // namespace inexor::vulkan_renderer

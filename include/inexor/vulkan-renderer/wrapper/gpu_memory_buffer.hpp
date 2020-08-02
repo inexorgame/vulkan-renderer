@@ -9,15 +9,15 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class GPUMemoryBuffer {
 protected:
-    std::string name;
+    std::string m_name;
 
-    VkDevice device;
-    VmaAllocator vma_allocator;
-    VkBuffer buffer = VK_NULL_HANDLE;
-    VkDeviceSize buffer_size = 0;
-    VmaAllocation allocation = VK_NULL_HANDLE;
-    VmaAllocationInfo allocation_info{};
-    VmaAllocationCreateInfo allocation_ci{};
+    VkDevice m_device;
+    VmaAllocator m_vma_allocator;
+    VkBuffer m_buffer = VK_NULL_HANDLE;
+    VkDeviceSize m_buffer_size = 0;
+    VmaAllocation m_allocation = VK_NULL_HANDLE;
+    VmaAllocationInfo m_allocation_info{};
+    VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
     /// Delete the copy constructor so gpu memory buffers are move-only objects.
@@ -55,23 +55,23 @@ public:
     virtual ~GPUMemoryBuffer();
 
     [[nodiscard]] const std::string &get_name() const {
-        return name;
+        return m_name;
     }
 
     [[nodiscard]] const VkBuffer get_buffer() const {
-        return buffer;
+        return m_buffer;
     }
 
     [[nodiscard]] const VmaAllocation get_allocation() const {
-        return allocation;
+        return m_allocation;
     }
 
     [[nodiscard]] const VmaAllocationInfo get_allocation_info() const {
-        return allocation_info;
+        return m_allocation_info;
     }
 
     [[nodiscard]] const VmaAllocationCreateInfo get_allocation_create_info() const {
-        return allocation_ci;
+        return m_allocation_ci;
     }
 };
 

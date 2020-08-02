@@ -9,16 +9,17 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 Semaphore::Semaphore(Semaphore &&other) noexcept
-    : device(other.device), semaphore(std::exchange(other.semaphore, nullptr)), name(std::move(other.name)) {}
+    : m_device(other.m_device), m_semaphore(std::exchange(other.m_semaphore, nullptr)),
+      m_name(std::move(other.m_name)) {}
 
-Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(device), name(name) {
+Semaphore::Semaphore(const VkDevice device, const std::string &name) : m_device(device), m_name(name) {
     assert(device);
     assert(!name.empty());
 
     spdlog::debug("Creating semaphore {}.", name);
 
     auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
-    if (vkCreateSemaphore(device, &semaphore_ci, nullptr, &semaphore) != VK_SUCCESS) {
+    if (vkCreateSemaphore(device, &semaphore_ci, nullptr, &m_semaphore) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSemaphore failed for " + name + " !");
     }
 
@@ -28,8 +29,8 @@ Semaphore::Semaphore(const VkDevice device, const std::string &name) : device(de
 }
 
 Semaphore::~Semaphore() {
-    spdlog::trace("Destroying semaphore {}.", name);
-    vkDestroySemaphore(device, semaphore, nullptr);
+    spdlog::trace("Destroying semaphore {}.", m_name);
+    vkDestroySemaphore(m_device, m_semaphore, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -8,16 +8,16 @@ namespace inexor::vulkan_renderer::tools {
 
 template <>
 int CommandLineArgumentValue::as() const {
-    return std::stoi(value);
+    return std::stoi(m_value);
 }
 
 template <>
 bool CommandLineArgumentValue::as() const {
-    if (value == "false") {
+    if (m_value == "false") {
         return false;
     }
 
-    if (value == "true") {
+    if (m_value == "true") {
         return true;
     }
 
@@ -32,12 +32,12 @@ std::uint32_t CommandLineArgumentValue::as() const {
 std::optional<CommandLineArgumentTemplate>
 CommandLineArgumentParser::get_arg_template(const std::string &argument_name) const {
     // clang-format off
-    auto it = std::find_if(accepted_args.begin(), accepted_args.end(), [&](const auto &accepted_arg) {
+    auto it = std::find_if(m_accepted_args.begin(), m_accepted_args.end(), [&](const auto &accepted_arg) {
         return argument_name == accepted_arg.get_argument();
     });
     // clang-format on
 
-    if (it == accepted_args.end()) {
+    if (it == m_accepted_args.end()) {
         return std::nullopt;
     }
 
@@ -56,7 +56,7 @@ void CommandLineArgumentParser::parse_args(int argc, char **argv) {
         }
 
         if (!arg_template->does_take_values()) {
-            parsed_arguments.insert(std::make_pair(arg_name, ""));
+            m_parsed_arguments.insert(std::make_pair(arg_name, ""));
             continue;
         }
 
@@ -66,7 +66,7 @@ void CommandLineArgumentParser::parse_args(int argc, char **argv) {
 
         // NOLINTNEXTLINE
         std::string arg_value(argv[++i]);
-        parsed_arguments.insert(std::make_pair(arg_name, arg_value));
+        m_parsed_arguments.insert(std::make_pair(arg_name, arg_value));
     }
 }
 

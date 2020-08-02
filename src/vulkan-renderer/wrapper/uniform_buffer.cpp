@@ -6,8 +6,8 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 UniformBuffer::UniformBuffer(UniformBuffer &&other) noexcept
-    : GPUMemoryBuffer(std::move(other)), descriptor_buffer_info(std::move(other.descriptor_buffer_info)),
-      descriptor_set(std::move(other.descriptor_set)) {}
+    : GPUMemoryBuffer(std::move(other)), m_descriptor_buffer_info(std::move(other.m_descriptor_buffer_info)),
+      m_descriptor_set(std::move(other.m_descriptor_set)) {}
 
 UniformBuffer::UniformBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
                              const VkDeviceSize &buffer_size)
@@ -15,9 +15,9 @@ UniformBuffer::UniformBuffer(const VkDevice &device, const VmaAllocator &vma_all
                       VMA_MEMORY_USAGE_CPU_TO_GPU) {}
 
 void UniformBuffer::update(void *data, const std::size_t size) {
-    assert(allocation_info.pMappedData);
+    assert(m_allocation_info.pMappedData);
 
-    std::memcpy(allocation_info.pMappedData, data, size);
+    std::memcpy(m_allocation_info.pMappedData, data, size);
 }
 
 }; // namespace inexor::vulkan_renderer::wrapper

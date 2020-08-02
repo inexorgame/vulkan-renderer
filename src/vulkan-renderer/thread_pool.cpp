@@ -43,12 +43,12 @@ ThreadPool::ThreadPool(std::size_t thread_count) {
 ThreadPool::~ThreadPool() {
     // spdlog::debug("Shutting down worker threads.");
 
-    stop_threads = true;
+    m_stop_threads = true;
 
     // Notify all worker threads about program stop.
-    tasklist_cv.notify_all();
+    m_tasklist_cv.notify_all();
 
-    for (std::thread &thread : threads) {
+    for (std::thread &thread : m_threads) {
         thread.join();
     }
 
@@ -61,11 +61,11 @@ void ThreadPool::start_thread() {
 
     // Start waiting for threads.
     // Working threads listen for new tasks through ThreadPool's condition_variable.
-    threads.emplace_back(
+    m_threads.emplace_back(
 
         std::thread([&]() {
             // Lock the queue so we can see which tasks are to ne done.
-            std::unique_lock<std::mutex> queue_lock(tasklist_mutex, std::defer_lock);
+            std::unique_lock<std::mutex> queue_lock(m_tasklist_mutex, std::defer_lock);
 
             while (true) {
                 // Lock the queue
@@ -74,12 +74,12 @@ void ThreadPool::start_thread() {
                 // spdlog::debug("Waiting for work!.");
 
                 // Use the conditional variable to wait for new tasks.
-                tasklist_cv.wait(queue_lock, [&]() -> bool { return !tasklist.empty() || stop_threads; });
+                m_tasklist_cv.wait(queue_lock, [&]() -> bool { return !m_tasklist.empty() || m_stop_threads; });
 
                 // spdlog::debug("Starting a new task!.");
 
                 // Check if we should finish the task.
-                if (stop_threads && tasklist.empty()) {
+                if (m_stop_threads && m_tasklist.empty()) {
                     return;
                 }
 
@@ -87,10 +87,10 @@ void ThreadPool::start_thread() {
                 // from the queue to the loal stakc. Since a unique pointer
                 // cannot be copie, it must be explicitly moved. This transfers
                 // ownershp of the pointed-to object to *this.
-                auto temp_task = std::move(tasklist.front());
+                auto temp_task = std::move(m_tasklist.front());
 
                 // Remove the task from the task list.
-                tasklist.pop();
+                m_tasklist.pop();
 
                 queue_lock.unlock();
 

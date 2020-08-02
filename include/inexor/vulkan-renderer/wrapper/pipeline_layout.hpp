@@ -9,9 +9,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class PipelineLayout {
 private:
-    VkDevice device;
-    VkPipelineLayout pipeline_layout;
-    std::string name;
+    VkDevice m_device;
+    VkPipelineLayout m_pipeline_layout;
+    std::string m_name;
 
 public:
     /// Delete the copy constructor so pipeline layouts are move-only objects.
@@ -32,7 +32,7 @@ public:
     ~PipelineLayout();
 
     [[nodiscard]] VkPipelineLayout get() const {
-        return pipeline_layout;
+        return m_pipeline_layout;
     }
 };
 

@@ -8,9 +8,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Semaphore {
 private:
-    VkSemaphore semaphore;
-    VkDevice device;
-    std::string name;
+    VkSemaphore m_semaphore;
+    VkDevice m_device;
+    std::string m_name;
 
 public:
     /// Delete the copy constructor so Vulkan semaphores are move-only objects.
@@ -26,11 +26,11 @@ public:
     ~Semaphore();
 
     [[nodiscard]] VkSemaphore get() const {
-        return semaphore;
+        return m_semaphore;
     }
 
     [[nodiscard]] const VkSemaphore *get_ptr() const {
-        return &semaphore;
+        return &m_semaphore;
     }
 };
 

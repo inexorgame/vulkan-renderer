@@ -13,8 +13,8 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @note The instantiation of this class must be synchronized externally.
 class Instance {
 protected:
-    VkInstance instance = VK_NULL_HANDLE;
-    AvailabilityChecksManager availability_checks;
+    VkInstance m_instance = VK_NULL_HANDLE;
+    AvailabilityChecksManager m_availability_checks;
 
 public:
     /// Delete the copy constructor so Vulkan instances are move-only objects.
@@ -60,7 +60,7 @@ public:
     ~Instance();
 
     [[nodiscard]] const VkInstance get_instance() const {
-        return instance;
+        return m_instance;
     }
 };
 

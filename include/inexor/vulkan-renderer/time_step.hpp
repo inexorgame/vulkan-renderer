@@ -10,10 +10,10 @@ namespace inexor::vulkan_renderer {
 class TimeStep {
 private:
     // The time point of the last render call.
-    std::chrono::time_point<std::chrono::high_resolution_clock> last_time;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time;
 
     // The time point of initialisation.
-    std::chrono::time_point<std::chrono::high_resolution_clock> initialisation_time;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_initialisation_time;
 
 public:
     TimeStep();

@@ -9,8 +9,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class CommandPool {
 private:
-    VkDevice device;
-    VkCommandPool command_pool;
+    VkDevice m_device;
+    VkCommandPool m_command_pool;
 
 public:
     /// Delete the copy constructor so Vulkan command pools are move-only objects.
@@ -29,11 +29,11 @@ public:
     ~CommandPool();
 
     [[nodiscard]] VkCommandPool get() const {
-        return command_pool;
+        return m_command_pool;
     }
 
     [[nodiscard]] const VkCommandPool *get_ptr() const {
-        return &command_pool;
+        return &m_command_pool;
     }
 };
 

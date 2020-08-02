@@ -107,17 +107,17 @@ private:
     }
 
     // The threads.
-    std::vector<std::thread> threads;
+    std::vector<std::thread> m_threads;
 
     /// The tasklist contains the list of work that should be done.
-    std::queue<std::unique_ptr<TaskContainerBase>> tasklist;
+    std::queue<std::unique_ptr<TaskContainerBase>> m_tasklist;
 
     /// This mutex locks tasklist access.
-    std::mutex tasklist_mutex;
+    std::mutex m_tasklist_mutex;
 
-    std::condition_variable tasklist_cv;
+    std::condition_variable m_tasklist_cv;
 
-    std::atomic<bool> stop_threads = false;
+    std::atomic<bool> m_stop_threads = false;
 };
 
 template <typename F, typename... Args, typename>
@@ -125,7 +125,7 @@ auto ThreadPool::execute(F function, Args &&... args) {
     spdlog::warn("Executing task from task list.");
 
     // Lock the task list so we can add the new task.
-    std::unique_lock<std::mutex> queue_lock(tasklist_mutex, std::defer_lock);
+    std::unique_lock<std::mutex> queue_lock(m_tasklist_mutex, std::defer_lock);
 
     // Bind the function pointer and the parameters to the task package.
     std::packaged_task<std::invoke_result_t<F, Args...>()> task_package(std::bind(function, args...));
@@ -142,7 +142,7 @@ auto ThreadPool::execute(F function, Args &&... args) {
     // Since the packaged_task type is not CopyConstructible, the
     // function is not CopyConstructible either, hence the need
     // for a TaskContainer to wrap around it.
-    tasklist.emplace(allocate_task_container(std::move(task_package)));
+    m_tasklist.emplace(allocate_task_container(std::move(task_package)));
 
     //
     queue_lock.unlock();
@@ -150,7 +150,7 @@ auto ThreadPool::execute(F function, Args &&... args) {
     spdlog::warn("Unlocking queue_lock.");
 
     //
-    tasklist_cv.notify_one();
+    m_tasklist_cv.notify_one();
 
     //
     return std::move(future);

@@ -11,16 +11,16 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @brief TODO
 class Descriptor {
 protected:
-    std::string name = "";
-    std::uint32_t number_of_images_in_swapchain = 0;
+    std::string m_name = "";
+    std::uint32_t m_number_of_images_in_swapchain = 0;
 
-    std::vector<VkDescriptorSet> descriptor_sets{};
-    std::vector<VkWriteDescriptorSet> write_descriptor_sets{};
-    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings{};
+    std::vector<VkDescriptorSet> m_descriptor_sets{};
+    std::vector<VkWriteDescriptorSet> m_write_descriptor_sets{};
+    std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings{};
 
-    VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
-    VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
-    VkDevice device = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_descriptor_set_layout = VK_NULL_HANDLE;
+    VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
+    VkDevice m_device = VK_NULL_HANDLE;
 
 public:
     /// Delete the copy constructor so descriptors are move-only objects.
@@ -50,11 +50,11 @@ public:
     void reset(const bool clear_descriptor_layout_bindings = false);
 
     const auto get_descriptor_sets_data() const {
-        return descriptor_sets.data();
+        return m_descriptor_sets.data();
     }
 
     const auto get_descriptor_set_layout() const {
-        return descriptor_set_layout;
+        return m_descriptor_set_layout;
     }
 };
 

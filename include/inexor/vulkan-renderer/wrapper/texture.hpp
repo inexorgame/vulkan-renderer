@@ -17,25 +17,25 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Texture {
 private:
-    std::unique_ptr<wrapper::Image> texture_image;
+    std::unique_ptr<wrapper::Image> m_texture_image;
 
-    std::string name = "";
-    std::string file_name = "";
-    int texture_width = 0;
-    int texture_height = 0;
-    int texture_channels = 0;
-    int mip_levels = 0;
+    std::string m_name = "";
+    std::string m_file_name = "";
+    int m_texture_width = 0;
+    int m_texture_height = 0;
+    int m_texture_channels = 0;
+    int m_mip_levels = 0;
 
-    VkDevice device;
-    VkSampler sampler;
-    VmaAllocator vma_allocator;
-    VkQueue data_transfer_queue;
-    VkPhysicalDevice graphics_card;
+    VkDevice m_device;
+    VkSampler m_sampler;
+    VmaAllocator m_vma_allocator;
+    VkQueue m_data_transfer_queue;
+    VkPhysicalDevice m_graphics_card;
 
-    std::uint32_t data_transfer_queue_family_index;
-    const VkFormat texture_image_format = VK_FORMAT_R8G8B8A8_UNORM;
+    std::uint32_t m_data_transfer_queue_family_index;
+    const VkFormat m_texture_image_format = VK_FORMAT_R8G8B8A8_UNORM;
 
-    OnceCommandBuffer copy_command_buffer;
+    OnceCommandBuffer m_copy_command_buffer;
 
     ///
     void create_texture(void *texture_data, const std::size_t texture_size);
@@ -83,26 +83,26 @@ public:
     ~Texture();
 
     [[nodiscard]] const std::string &get_name() const {
-        return name;
+        return m_name;
     }
 
     [[nodiscard]] const std::string &get_file_name() const {
-        return file_name;
+        return m_file_name;
     }
 
     [[nodiscard]] const VkImage get_image() const {
-        assert(texture_image);
-        return texture_image->get();
+        assert(m_texture_image);
+        return m_texture_image->get();
     }
 
     [[nodiscard]] const VkImageView get_image_view() const {
-        assert(texture_image);
-        return texture_image->get_image_view();
+        assert(m_texture_image);
+        return m_texture_image->get_image_view();
     }
 
     [[nodiscard]] const VkSampler get_sampler() const {
-        assert(texture_image);
-        return sampler;
+        assert(m_texture_image);
+        return m_sampler;
     }
 };
 

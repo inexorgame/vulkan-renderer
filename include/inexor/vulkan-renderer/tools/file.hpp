@@ -10,10 +10,10 @@ namespace inexor::vulkan_renderer::tools {
 class File {
 private:
     /// The file data.
-    std::vector<char> file_data;
+    std::vector<char> m_file_data;
 
     /// The size of the file.
-    std::size_t file_size;
+    std::size_t m_file_size;
 
 public:
     File() = default;

@@ -10,7 +10,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Instance::Instance(Instance &&other) noexcept : instance(std::exchange(other.instance, nullptr)) {}
+Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m_instance, nullptr)) {}
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
@@ -78,7 +78,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &instance_extension : instance_extension_wishlist) {
-        if (availability_checks.has_instance_extension(instance_extension)) {
+        if (m_availability_checks.has_instance_extension(instance_extension)) {
             spdlog::debug("Adding '{}' to list of enabled instance extensions.", instance_extension);
             enabled_instance_extensions.push_back(instance_extension);
         } else {
@@ -125,7 +125,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // We have to check which instance layers of our wishlist are available on the current system!
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &current_layer : instance_layers_wishlist) {
-        if (availability_checks.has_instance_layer(current_layer)) {
+        if (m_availability_checks.has_instance_layer(current_layer)) {
             spdlog::debug("Adding '{}' to list of enabled instance layers.", current_layer);
             enabled_instance_layers.push_back(current_layer);
         } else {
@@ -146,7 +146,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     instance_ci.ppEnabledLayerNames = enabled_instance_layers.data();
     instance_ci.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
 
-    if (vkCreateInstance(&instance_ci, nullptr, &instance) != VK_SUCCESS) {
+    if (vkCreateInstance(&instance_ci, nullptr, &m_instance) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateInstance failed!");
     }
 
@@ -163,7 +163,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 }
 
 Instance::~Instance() {
-    vkDestroyInstance(instance, nullptr);
+    vkDestroyInstance(m_instance, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

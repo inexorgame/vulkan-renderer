@@ -9,9 +9,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Window {
 private:
-    GLFWwindow *window;
-    std::uint32_t width;
-    std::uint32_t height;
+    GLFWwindow *m_window;
+    std::uint32_t m_width;
+    std::uint32_t m_height;
 
 public:
     /// Delete the copy constructor so windows are move-only objects.
@@ -69,15 +69,15 @@ public:
     bool should_close();
 
     [[nodiscard]] GLFWwindow *get() const {
-        return window;
+        return m_window;
     }
 
     [[nodiscard]] int get_width() const {
-        return width;
+        return m_width;
     }
 
     [[nodiscard]] int get_height() const {
-        return height;
+        return m_height;
     }
 };
 

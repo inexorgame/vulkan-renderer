@@ -13,18 +13,18 @@ class Semaphore;
 class Swapchain {
 private:
     // TODO: Move members which don't need to be members!
-    VkDevice device;
-    VkPhysicalDevice graphics_card;
-    VkSurfaceKHR surface;
-    VkSwapchainKHR swapchain;
-    VkSurfaceFormatKHR surface_format;
-    VkExtent2D extent;
+    VkDevice m_device;
+    VkPhysicalDevice m_graphics_card;
+    VkSurfaceKHR m_surface;
+    VkSwapchainKHR m_swapchain;
+    VkSurfaceFormatKHR m_surface_format;
+    VkExtent2D m_extent;
 
-    std::vector<VkImage> swapchain_images;
-    std::vector<VkImageView> swapchain_image_views;
-    std::uint32_t swapchain_image_count;
-    std::string name;
-    bool vsync_enabled;
+    std::vector<VkImage> m_swapchain_images;
+    std::vector<VkImageView> m_swapchain_image_views;
+    std::uint32_t m_swapchain_image_count;
+    std::string m_name;
+    bool m_vsync_enabled;
 
     /// @brief (Re)creates the swapchain.
     /// @param window_width [in] The requested width of the window.
@@ -61,36 +61,37 @@ public:
     void recreate(std::uint32_t window_width, std::uint32_t window_height);
 
     [[nodiscard]] const VkSwapchainKHR *get_swapchain_ptr() const {
-        return &swapchain;
+        return &m_swapchain;
     }
 
     [[nodiscard]] VkSwapchainKHR get_swapchain() const {
-        return swapchain;
+        return m_swapchain;
     }
 
     [[nodiscard]] std::uint32_t get_image_count() const {
-        return swapchain_image_count;
+        return m_swapchain_image_count;
     }
 
     [[nodiscard]] VkFormat get_image_format() const {
-        return surface_format.format;
+        return m_surface_format.format;
     }
 
     [[nodiscard]] VkExtent2D get_extent() const {
-        return extent;
+        return m_extent;
     }
 
     [[nodiscard]] VkImageView get_image_view(std::size_t index) const {
-        if (index >= swapchain_image_views.size()) {
-            throw std::out_of_range("Error: swapchain_image_views has " + std::to_string(swapchain_image_views.size()) +
-                                    " entries. Requested index " + std::to_string(index) + " is out of bounds!");
+        if (index >= m_swapchain_image_views.size()) {
+            throw std::out_of_range("Error: swapchain_image_views has " +
+                                    std::to_string(m_swapchain_image_views.size()) + " entries. Requested index " +
+                                    std::to_string(index) + " is out of bounds!");
         }
 
-        return swapchain_image_views.at(index);
+        return m_swapchain_image_views.at(index);
     }
 
     [[nodiscard]] std::vector<VkImageView> get_image_views() const {
-        return swapchain_image_views;
+        return m_swapchain_image_views;
     }
 };
 
