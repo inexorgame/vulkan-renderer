@@ -70,15 +70,6 @@ public:
     decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
                                                           const VkSurfaceKHR &surface);
 
-    /// @brief Automatically decides which surface color format to use in swapchain.
-    /// @param graphics_card The selected graphics card.
-    /// @param surface The window surface.
-    /// @param window_width [out] The width of the window.
-    /// @param window_height [out] The height of the window.
-    void decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
-                                                               const VkSurfaceKHR &surface, std::uint32_t &image_width,
-                                                               std::uint32_t &image_height);
-
     /// @brief Automatically decides which width and height to use as swapchain extent.
     /// @param graphics_card The selected graphics card.
     /// @param surface The window surface.
