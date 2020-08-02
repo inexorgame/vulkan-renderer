@@ -43,21 +43,20 @@ set(SOURCE_FILES
     vulkan-renderer/wrapper/uniform_buffer.cpp
 
     vulkan-renderer/world/cube.cpp
-    vulkan-renderer/world/indentation.cpp
-)
+    vulkan-renderer/world/indentation.cpp)
 
 foreach(FILE ${SOURCE_FILES})
-  get_filename_component(PARENT_DIR "${FILE}" PATH)
+    get_filename_component(PARENT_DIR "${FILE}" PATH)
 
-  string(REPLACE "/" "\\" GROUP "${PARENT_DIR}")
+    string(REPLACE "/" "\\" GROUP "${PARENT_DIR}")
 
-  if ("${FILE}" MATCHES ".*\\.cpp")
-    set(GROUP "Source Files\\${GROUP}")
-  elseif("${FILE}" MATCHES ".*\\.hpp")
-    set(GROUP "Header Files\\${GROUP}")
-  endif()
+    if("${FILE}" MATCHES ".*\\.cpp")
+        set(GROUP "Source Files\\${GROUP}")
+    elseif("${FILE}" MATCHES ".*\\.hpp")
+        set(GROUP "Header Files\\${GROUP}")
+    endif()
 
-  source_group("${GROUP}" FILES "${FILE}")
+    source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
 add_library(inexor-vulkan-renderer ${SOURCE_FILES})

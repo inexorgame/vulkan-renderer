@@ -32,7 +32,7 @@ using Polygon = std::array<glm::vec3, 3>;
 using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 
 class Cube : public std::enable_shared_from_this<Cube> {
-    friend void ::swap(Cube& lhs, Cube& rhs) noexcept;
+    friend void ::swap(Cube &lhs, Cube &rhs) noexcept;
     template <std::size_t version>
     friend std::shared_ptr<world::Cube> io::deserialize_octree_impl(const io::ByteStream &stream);
 

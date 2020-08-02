@@ -14,9 +14,9 @@ protected:
     std::string name = "";
     std::uint32_t number_of_images_in_swapchain = 0;
 
-    std::vector<VkDescriptorSet> descriptor_sets {};
-    std::vector<VkWriteDescriptorSet> write_descriptor_sets {};
-    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings {};
+    std::vector<VkDescriptorSet> descriptor_sets{};
+    std::vector<VkWriteDescriptorSet> write_descriptor_sets{};
+    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings{};
 
     VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
     VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;

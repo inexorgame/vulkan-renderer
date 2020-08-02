@@ -498,9 +498,9 @@ VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPh
     assert(surface);
 
     // Bitmask of VkSurfaceTransformFlagBitsKHR.
-    VkSurfaceTransformFlagsKHR pre_transform {};
+    VkSurfaceTransformFlagsKHR pre_transform{};
 
-    VkSurfaceCapabilitiesKHR surface_capabilities {};
+    VkSurfaceCapabilitiesKHR surface_capabilities{};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
@@ -528,7 +528,7 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice 
         VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
     };
 
-    VkSurfaceCapabilitiesKHR surface_capabilities {};
+    VkSurfaceCapabilitiesKHR surface_capabilities{};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(selected_graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
@@ -649,7 +649,7 @@ void VulkanSettingsDecisionMaker::decide_width_and_height_of_swapchain_extent(co
     assert(graphics_card);
     assert(surface);
 
-    VkSurfaceCapabilitiesKHR surface_capabilities {};
+    VkSurfaceCapabilitiesKHR surface_capabilities{};
 
     VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
     vulkan_error_check(result);
