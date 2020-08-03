@@ -107,7 +107,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     buffer_image_region.imageExtent = {static_cast<uint32_t>(m_texture_width), static_cast<uint32_t>(m_texture_height),
                                        1};
 
-    vkCmdCopyBufferToImage(m_copy_command_buffer.get_command_buffer(), texture_staging_buffer.get_buffer(),
+    vkCmdCopyBufferToImage(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
                            m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_image_region);
 
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", m_name);
@@ -162,7 +162,7 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
     image_transition_change.create_command_buffer();
     image_transition_change.start_recording();
 
-    vkCmdPipelineBarrier(image_transition_change.get_command_buffer(), source_stage, destination_stage, 0, 0, nullptr,
+    vkCmdPipelineBarrier(image_transition_change.command_buffer(), source_stage, destination_stage, 0, 0, nullptr,
                          0, nullptr, 1, &barrier);
 
     image_transition_change.end_recording_and_submit_command();

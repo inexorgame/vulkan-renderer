@@ -7,11 +7,11 @@
 
 namespace inexor::vulkan_renderer::tools {
 
-const std::size_t File::get_file_size() const {
+const std::size_t File::file_size() const {
     return m_file_size;
 }
 
-const std::vector<char> &File::get_file_data() const {
+const std::vector<char> &File::file_data() const {
     return m_file_data;
 }
 

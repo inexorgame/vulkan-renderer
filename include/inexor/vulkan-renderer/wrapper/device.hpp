@@ -55,12 +55,12 @@ public:
 
     ~Device();
 
-    [[nodiscard]] const VkDevice get_device() const {
+    [[nodiscard]] const VkDevice device() const {
         assert(m_device);
         return m_device;
     }
 
-    [[nodiscard]] const VkPhysicalDevice get_physical_device() const {
+    [[nodiscard]] const VkPhysicalDevice physical_device() const {
         assert(m_graphics_card);
         return m_graphics_card;
     }
@@ -69,12 +69,12 @@ public:
         return m_allocator;
     }
 
-    [[nodiscard]] const VkQueue get_graphics_queue() const {
+    [[nodiscard]] const VkQueue graphics_queue() const {
         assert(m_graphics_queue);
         return m_graphics_queue;
     }
 
-    [[nodiscard]] const VkQueue get_present_queue() const {
+    [[nodiscard]] const VkQueue present_queue() const {
         assert(m_present_queue);
         return m_present_queue;
     }
@@ -82,20 +82,20 @@ public:
     /// @note Transfer queues are the fastest way to copy data across the PCIe bus.
     /// They are heavily underutilized even in modern games.
     /// Transfer queues can be used asynchronously to graphics queuey.
-    [[nodiscard]] const VkQueue get_transfer_queue() const {
+    [[nodiscard]] const VkQueue transfer_queue() const {
         assert(m_transfer_queue);
         return m_transfer_queue;
     }
 
-    [[nodiscard]] std::uint32_t get_graphics_queue_family_index() const {
+    [[nodiscard]] std::uint32_t graphics_queue_family_index() const {
         return m_graphics_queue_family_index;
     }
 
-    [[nodiscard]] std::uint32_t get_present_queue_family_index() const {
+    [[nodiscard]] std::uint32_t present_queue_family_index() const {
         return m_present_queue_family_index;
     }
 
-    [[nodiscard]] std::uint32_t get_transfer_queue_family_index() const {
+    [[nodiscard]] std::uint32_t transfer_queue_family_index() const {
         return m_transfer_queue_family_index;
     }
 

@@ -21,11 +21,11 @@ public:
     CommandLineArgumentTemplate(std::string argument, bool takes_args)
         : m_argument(std::move(argument)), m_takes_values(takes_args) {}
 
-    [[nodiscard]] const std::string &get_argument() const {
+    [[nodiscard]] const std::string &argument() const {
         return m_argument;
     }
 
-    [[nodiscard]] bool does_take_values() const {
+    [[nodiscard]] bool takes_values() const {
         return m_takes_values;
     }
 };
@@ -71,15 +71,15 @@ class CommandLineArgumentParser {
 
     std::unordered_map<std::string, CommandLineArgumentValue> m_parsed_arguments;
 
-    std::optional<CommandLineArgumentTemplate> get_arg_template(const std::string &argument_name) const;
+    std::optional<CommandLineArgumentTemplate> make_arg_template(const std::string &argument_name) const;
 
 public:
     /// @brief Parses the command line arguments
     void parse_args(int argc, char **argv);
 
     template <typename T>
-    std::optional<T> get_arg(const std::string &name) const {
-        auto arg_template = get_arg_template(name);
+    std::optional<T> arg(const std::string &name) const {
+        auto arg_template = make_arg_template(name);
         if (!arg_template) {
             return std::nullopt;
         }
@@ -89,7 +89,7 @@ public:
             return std::nullopt;
         }
 
-        if (!arg_template->does_take_values()) {
+        if (!arg_template->takes_values()) {
             return true;
         }
 
@@ -97,7 +97,7 @@ public:
     }
 
     /// @brief Returns the number of command line arguments.
-    [[nodiscard]] std::size_t get_parsed_arg_count() const {
+    [[nodiscard]] std::size_t parsed_arg_count() const {
         return m_parsed_arguments.size();
     }
 };

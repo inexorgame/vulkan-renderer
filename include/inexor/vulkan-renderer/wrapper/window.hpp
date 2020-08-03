@@ -56,7 +56,7 @@ public:
     void hide();
 
     /// @brief Queries the current position of the cursor.
-    void get_cursor_pos(double &pos_x, double &pos_y);
+    void cursor_pos(double &pos_x, double &pos_y);
 
     /// @brief Checks if a button is pressed.
     /// @param button [in] The glfw button index.
@@ -72,11 +72,11 @@ public:
         return m_window;
     }
 
-    [[nodiscard]] int get_width() const {
+    [[nodiscard]] int width() const {
         return m_width;
     }
 
-    [[nodiscard]] int get_height() const {
+    [[nodiscard]] int height() const {
         return m_height;
     }
 };

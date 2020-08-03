@@ -51,7 +51,7 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
     VkResult result =
         vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr);
     if (result != VK_SUCCESS) {
-        std::string error_message = get_error_description_text(result);
+        std::string error_message = error_description_text(result);
         display_error_message(error_message);
         return std::nullopt;
     }
@@ -195,7 +195,7 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     return true;
 }
 
-VkPhysicalDeviceType VulkanSettingsDecisionMaker::get_graphics_card_type(const VkPhysicalDevice &graphics_card) {
+VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(const VkPhysicalDevice &graphics_card) {
     assert(graphics_card);
 
     // The properties of the graphics card.
@@ -353,8 +353,8 @@ std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphi
         bool discrete_graphics_card_exists = false;
 
         // Both indices are available because number_of_available_graphics_cards is 2.
-        VkPhysicalDeviceType gpu_type_1 = get_graphics_card_type(available_graphics_cards[0]);
-        VkPhysicalDeviceType gpu_type_2 = get_graphics_card_type(available_graphics_cards[1]);
+        VkPhysicalDeviceType gpu_type_1 = graphics_card_type(available_graphics_cards[0]);
+        VkPhysicalDeviceType gpu_type_2 = graphics_card_type(available_graphics_cards[1]);
 
         if (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == gpu_type_1 || VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == gpu_type_2) {
             discrete_graphics_card_exists = true;

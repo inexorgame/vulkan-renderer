@@ -38,7 +38,7 @@ bool BezierCurve::is_curve_generated() {
     return m_curve_generated;
 }
 
-std::vector<BezierOutputPoint> BezierCurve::get_output_points() {
+std::vector<BezierOutputPoint> BezierCurve::output_points() {
     assert(m_curve_generated);
     assert(m_output_points.size() > 0);
     return m_output_points;

@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer {
 // @brief Returns an error text.
 // @param result_code The result code.
 // @return A string which describes the error.
-[[nodiscard]] std::string get_error_description_text(const VkResult &result_code);
+[[nodiscard]] std::string error_description_text(const VkResult &result_code);
 
 // @brief Displays an error message as a message.
 // @param error_message The error message.

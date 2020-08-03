@@ -8,7 +8,7 @@ TimeStep::TimeStep() {
     m_last_time = std::chrono::high_resolution_clock::now();
 }
 
-float TimeStep::get_time_step() {
+float TimeStep::time_step() {
     auto current_time = std::chrono::high_resolution_clock::now();
 
     auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - m_last_time).count();
@@ -18,7 +18,7 @@ float TimeStep::get_time_step() {
     return time_duration;
 }
 
-float TimeStep::get_time_step_since_initialisation() {
+float TimeStep::time_step_since_initialisation() {
     auto current_time = std::chrono::high_resolution_clock::now();
 
     auto time_duration =

@@ -113,8 +113,8 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
 }
 
 VkResult Application::load_textures() {
-    assert(m_vkdevice->get_device());
-    assert(m_vkdevice->get_physical_device());
+    assert(m_vkdevice->device());
+    assert(m_vkdevice->physical_device());
     assert(m_vkdevice->allocator());
 
     // TODO: Refactor! use key from TOML file as name!
@@ -124,16 +124,16 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : m_texture_files) {
-        m_textures.emplace_back(m_vkdevice->get_device(), m_vkdevice->get_physical_device(), m_vkdevice->allocator(),
-                                texture_file, texture_name, m_vkdevice->get_graphics_queue(),
-                                m_vkdevice->get_graphics_queue_family_index());
+        m_textures.emplace_back(m_vkdevice->device(), m_vkdevice->physical_device(), m_vkdevice->allocator(),
+                                texture_file, texture_name, m_vkdevice->graphics_queue(),
+                                m_vkdevice->graphics_queue_family_index());
     }
 
     return VK_SUCCESS;
 }
 
 VkResult Application::load_shaders() {
-    assert(m_vkdevice->get_device());
+    assert(m_vkdevice->device());
 
     spdlog::debug("Loading vertex shaders.");
 
@@ -148,7 +148,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(m_vkdevice->get_device(), VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader",
+        m_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader",
                                vertex_shader_file);
     }
 
@@ -163,7 +163,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(m_vkdevice->get_device(), VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
+        m_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
                                fragment_shader_file);
     }
 
@@ -201,11 +201,11 @@ VkResult Application::load_octree_geometry() {
 }
 
 VkResult Application::check_application_specific_features() {
-    assert(m_vkdevice->get_physical_device());
+    assert(m_vkdevice->physical_device());
 
     VkPhysicalDeviceFeatures graphics_card_features;
 
-    vkGetPhysicalDeviceFeatures(m_vkdevice->get_physical_device(), &graphics_card_features);
+    vkGetPhysicalDeviceFeatures(m_vkdevice->physical_device(), &graphics_card_features);
 
     // Check if anisotropic filtering is available!
     if (!graphics_card_features.samplerAnisotropy) {
@@ -235,7 +235,7 @@ Application::Application(int argc, char **argv) {
 
     bool enable_renderdoc_instance_layer = false;
 
-    auto enable_renderdoc = cla_parser.get_arg<bool>("--renderdoc");
+    auto enable_renderdoc = cla_parser.arg<bool>("--renderdoc");
     if (enable_renderdoc) {
 #ifdef NDEBUG
         spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code "
@@ -252,7 +252,7 @@ Application::Application(int argc, char **argv) {
 
     // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
     // disabled. For debug builds, this is not advisable! Always use validation layers during development!
-    auto disable_validation = cla_parser.get_arg<bool>("--no-validation");
+    auto disable_validation = cla_parser.arg<bool>("--no-validation");
     if (disable_validation.value_or(false)) {
         spdlog::warn("--no-validation specified, disabling validation layers.");
         enable_khronos_validation_instance_layer = false;
@@ -267,7 +267,7 @@ Application::Application(int argc, char **argv) {
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
 
-    m_surface = std::make_unique<wrapper::WindowSurface>(m_vkinstance->get_instance(), m_window->get());
+    m_surface = std::make_unique<wrapper::WindowSurface>(m_vkinstance->instance(), m_window->get());
 
     spdlog::debug("Storing GLFW window user pointer.");
 
@@ -291,11 +291,11 @@ Application::Application(int argc, char **argv) {
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
                 reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-                    vkGetInstanceProcAddr(m_vkinstance->get_instance(), "vkCreateDebugReportCallbackEXT"));
+                    vkGetInstanceProcAddr(m_vkinstance->instance(), "vkCreateDebugReportCallbackEXT"));
 
             if (vkCreateDebugReportCallbackEXT) {
                 // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(m_vkinstance->get_instance(), &debug_report_ci,
+                VkResult result = vkCreateDebugReportCallbackEXT(m_vkinstance->instance(), &debug_report_ci,
                                                                  nullptr, &m_debug_report_callback);
                 if (VK_SUCCESS == result) {
                     spdlog::debug("Creating Vulkan debug callback.");
@@ -317,7 +317,7 @@ Application::Application(int argc, char **argv) {
     spdlog::debug("Creating window surface.");
 
     // The user can specify with "--gpu <number>" which graphics card to prefer.
-    auto prefered_graphics_card = cla_parser.get_arg<std::uint32_t>("--gpu");
+    auto prefered_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
     if (prefered_graphics_card) {
         spdlog::debug("Preferential graphics card index {} specified.", *prefered_graphics_card);
     }
@@ -326,7 +326,7 @@ Application::Application(int argc, char **argv) {
 
     // If the user specified command line argument "--nostats", no information will be
     // displayed about all the graphics cards which are available on the system.
-    auto hide_gpu_stats = cla_parser.get_arg<bool>("--no-stats");
+    auto hide_gpu_stats = cla_parser.arg<bool>("--no-stats");
     if (hide_gpu_stats.value_or(false)) {
         spdlog::debug("--no-stats specified, no extended information about graphics cards will be shown.");
         display_graphics_card_info = false;
@@ -334,7 +334,7 @@ Application::Application(int argc, char **argv) {
 
     // If the user specified command line argument "--vsync", the presentation engine waits
     // for the next vertical blanking period to update the current image.
-    auto enable_vertical_synchronisation = cla_parser.get_arg<bool>("--vsync");
+    auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
     if (enable_vertical_synchronisation.value_or(false)) {
         spdlog::debug("V-sync enabled!");
         m_vsync_enabled = true;
@@ -352,13 +352,13 @@ Application::Application(int argc, char **argv) {
         m_gpu_info_manager->print_instance_extensions();
 
         // Print all information that we can find about all graphics card available.
-        // gpu_info_manager->print_all_physical_devices(vkinstance->get_instance(), surface);
+        // gpu_info_manager->print_all_physical_devices(vkinstance->instance(), surface);
     }
 
     bool use_distinct_data_transfer_queue = true;
 
     // Ignore distinct data transfer queue
-    auto forbid_distinct_data_transfer_queue = cla_parser.get_arg<bool>("--no-separate-data-queue");
+    auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
     if (forbid_distinct_data_transfer_queue.value_or(false)) {
         spdlog::warn("Command line argument --no-separate-data-queue specified.");
         spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
@@ -375,21 +375,21 @@ Application::Application(int argc, char **argv) {
 
     // Check if Vulkan debug markers should be disabled.
     // Those are only available if RenderDoc instance layer is enabled!
-    auto no_vulkan_debug_markers = cla_parser.get_arg<bool>("--no-vk-debug-markers");
+    auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");
     if (no_vulkan_debug_markers.value_or(false)) {
         spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
         enable_debug_marker_device_extension = false;
     }
 
     m_vkdevice =
-        std::make_unique<wrapper::Device>(m_vkinstance->get_instance(), m_surface->get(),
+        std::make_unique<wrapper::Device>(m_vkinstance->instance(), m_surface->get(),
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
     result = check_application_specific_features();
     vulkan_error_check(result);
 
-    m_swapchain = std::make_unique<wrapper::Swapchain>(m_vkdevice->get_device(), m_vkdevice->get_physical_device(),
-                                                       m_surface->get(), m_window->get_width(), m_window->get_height(),
+    m_swapchain = std::make_unique<wrapper::Swapchain>(m_vkdevice->device(), m_vkdevice->physical_device(),
+                                                       m_surface->get(), m_window->width(), m_window->height(),
                                                        m_vsync_enabled, "Standard swapchain.");
 
     spdlog::debug("Starting to load textures using threadpool.");
@@ -407,9 +407,9 @@ Application::Application(int argc, char **argv) {
     vulkan_error_check(result);
 
     m_command_pool =
-        std::make_unique<wrapper::CommandPool>(m_vkdevice->get_device(), m_vkdevice->get_graphics_queue_family_index());
+        std::make_unique<wrapper::CommandPool>(m_vkdevice->device(), m_vkdevice->graphics_queue_family_index());
 
-    m_uniform_buffers.emplace_back(m_vkdevice->get_device(), m_vkdevice->allocator(), "matrices uniform buffer",
+    m_uniform_buffers.emplace_back(m_vkdevice->device(), m_vkdevice->allocator(), "matrices uniform buffer",
                                    sizeof(UniformBufferObject));
 
     result = create_descriptor_writes();
@@ -426,7 +426,7 @@ Application::Application(int argc, char **argv) {
 }
 
 VkResult Application::update_uniform_buffers() {
-    float time = m_time_step.get_time_step_since_initialisation();
+    float time = m_time_step.time_step_since_initialisation();
 
     UniformBufferObject ubo{};
 
@@ -448,7 +448,7 @@ VkResult Application::update_mouse_input() {
     double current_cursor_x;
     double current_cursor_y;
 
-    m_window->get_cursor_pos(current_cursor_x, current_cursor_y);
+    m_window->cursor_pos(current_cursor_x, current_cursor_y);
 
     double cursor_delta_x = current_cursor_x - m_cursor_x;
     double cursor_delta_y = current_cursor_y - m_cursor_y;
@@ -483,7 +483,7 @@ void Application::run() {
         update_mouse_input();
         m_game_camera.update(m_time_passed);
 
-        m_time_passed = m_stopwatch.get_time_step();
+        m_time_passed = m_stopwatch.time_step();
     }
 }
 

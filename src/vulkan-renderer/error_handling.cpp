@@ -10,7 +10,7 @@ namespace inexor::vulkan_renderer {
 
 /// @brief Returns a user friendly error description text.
 /// @param result_code The error code.
-std::string get_error_description_text(const VkResult &result_code) {
+std::string error_description_text(const VkResult &result_code) {
     std::string error_string = "";
 
     // For more information on error codes see:
@@ -175,7 +175,7 @@ void display_warning_message(const std::string &warning_message, const std::stri
 
 void vulkan_error_check(const VkResult &result) {
     if (result != VK_SUCCESS) {
-        std::string error_message = "Error: " + get_error_description_text(result);
+        std::string error_message = "Error: " + error_description_text(result);
         display_error_message(error_message);
     }
 }

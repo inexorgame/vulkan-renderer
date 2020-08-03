@@ -54,23 +54,23 @@ public:
 
     virtual ~GPUMemoryBuffer();
 
-    [[nodiscard]] const std::string &get_name() const {
+    [[nodiscard]] const std::string &name() const {
         return m_name;
     }
 
-    [[nodiscard]] const VkBuffer get_buffer() const {
+    [[nodiscard]] const VkBuffer buffer() const {
         return m_buffer;
     }
 
-    [[nodiscard]] const VmaAllocation get_allocation() const {
+    [[nodiscard]] const VmaAllocation allocation() const {
         return m_allocation;
     }
 
-    [[nodiscard]] const VmaAllocationInfo get_allocation_info() const {
+    [[nodiscard]] const VmaAllocationInfo allocation_info() const {
         return m_allocation_info;
     }
 
-    [[nodiscard]] const VmaAllocationCreateInfo get_allocation_create_info() const {
+    [[nodiscard]] const VmaAllocationCreateInfo allocation_create_info() const {
         return m_allocation_ci;
     }
 };

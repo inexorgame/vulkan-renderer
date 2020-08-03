@@ -29,7 +29,7 @@ public:
         return m_semaphore;
     }
 
-    [[nodiscard]] const VkSemaphore *get_ptr() const {
+    [[nodiscard]] const VkSemaphore *ptr() const {
         return &m_semaphore;
     }
 };

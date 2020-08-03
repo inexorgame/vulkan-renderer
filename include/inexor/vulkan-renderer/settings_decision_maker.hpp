@@ -41,7 +41,7 @@ public:
     /// @brief Gets the VkPhysicalDeviceType of a graphics card.
     /// @param graphics_card The graphics card.
     /// @return The graphics_card of the graphics card.
-    [[nodiscard]] VkPhysicalDeviceType get_graphics_card_type(const VkPhysicalDevice &graphics_card);
+    [[nodiscard]] VkPhysicalDeviceType graphics_card_type(const VkPhysicalDevice &graphics_card);
 
     /// @brief Automatically selects the best graphics card considering all available ones.
     /// @note If there is only one graphics card available, we can't choose and must use it obviously.

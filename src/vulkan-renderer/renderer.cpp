@@ -14,7 +14,7 @@ namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_frame_graph() {
     auto &back_buffer = m_frame_graph->add<TextureResource>("back buffer");
-    back_buffer.set_format(m_swapchain->get_image_format());
+    back_buffer.set_format(m_swapchain->image_format());
     back_buffer.set_usage(TextureUsage::BACK_BUFFER);
 
     auto &depth_buffer = m_frame_graph->add<TextureResource>("depth buffer");
@@ -41,12 +41,12 @@ void VulkanRenderer::setup_frame_graph() {
         main_stage.uses_shader(shader);
     }
 
-    main_stage.add_descriptor_layout(m_descriptors[0].get_descriptor_set_layout());
+    main_stage.add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
     m_frame_graph->compile(back_buffer);
 }
 
 VkResult VulkanRenderer::create_descriptor_pool() {
-    m_descriptors.emplace_back(m_vkdevice->get_device(), m_swapchain->get_image_count(),
+    m_descriptors.emplace_back(m_vkdevice->device(), m_swapchain->image_count(),
                                std::string("unnamed descriptor"));
 
     // Create the descriptor pool.
@@ -77,7 +77,7 @@ VkResult VulkanRenderer::create_descriptor_writes() {
     // Link the matrices uniform buffer to the descriptor set so the shader can access it.
 
     // We can do better than this, but therefore RAII refactoring needs to be done..
-    m_uniform_buffer_info.buffer = m_uniform_buffers[0].get_buffer();
+    m_uniform_buffer_info.buffer = m_uniform_buffers[0].buffer();
     m_uniform_buffer_info.offset = 0;
     m_uniform_buffer_info.range = sizeof(UniformBufferObject);
 
@@ -98,22 +98,22 @@ VkResult VulkanRenderer::create_descriptor_writes() {
 
 void VulkanRenderer::recreate_swapchain() {
     m_window->wait_for_focus();
-    vkDeviceWaitIdle(m_vkdevice->get_device());
+    vkDeviceWaitIdle(m_vkdevice->device());
 
     // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
     m_frame_graph.reset();
-    m_swapchain->recreate(m_window->get_width(), m_window->get_height());
-    m_frame_graph = std::make_unique<FrameGraph>(m_vkdevice->get_device(), m_command_pool->get(),
+    m_swapchain->recreate(m_window->width(), m_window->height());
+    m_frame_graph = std::make_unique<FrameGraph>(m_vkdevice->device(), m_command_pool->get(),
                                                  m_vkdevice->allocator(), *m_swapchain);
     setup_frame_graph();
 
     m_image_available_semaphore.reset();
     m_rendering_finished_semaphore.reset();
     m_image_available_semaphore =
-        std::make_unique<wrapper::Semaphore>(m_vkdevice->get_device(), "Image available semaphore");
+        std::make_unique<wrapper::Semaphore>(m_vkdevice->device(), "Image available semaphore");
     m_rendering_finished_semaphore =
-        std::make_unique<wrapper::Semaphore>(m_vkdevice->get_device(), "Rendering finished semaphore");
-    vkDeviceWaitIdle(m_vkdevice->get_device());
+        std::make_unique<wrapper::Semaphore>(m_vkdevice->device(), "Rendering finished semaphore");
+    vkDeviceWaitIdle(m_vkdevice->device());
 
     m_game_camera.m_type = Camera::CameraType::LOOKAT;
     m_game_camera.m_rotation_speed = 0.25f;
@@ -121,7 +121,7 @@ void VulkanRenderer::recreate_swapchain() {
     m_game_camera.set_position({0.0f, 0.0f, 5.0f});
     m_game_camera.set_rotation({0.0f, 0.0f, 0.0f});
     m_game_camera.set_perspective(
-        45.0f, static_cast<float>(m_window->get_width()) / static_cast<float>(m_window->get_height()), 0.1f, 256.0f);
+        45.0f, static_cast<float>(m_window->width()) / static_cast<float>(m_window->height()), 0.1f, 256.0f);
 }
 
 void VulkanRenderer::render_frame() {
@@ -133,20 +133,20 @@ void VulkanRenderer::render_frame() {
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
     m_frame_graph->render(image_index, m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
-                          m_vkdevice->get_graphics_queue());
+                          m_vkdevice->graphics_queue());
 
     // TODO(): Create a queue wrapper class
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;
     present_info.waitSemaphoreCount = 1;
     present_info.pImageIndices = &image_index;
-    present_info.pSwapchains = m_swapchain->get_swapchain_ptr();
-    present_info.pWaitSemaphores = m_rendering_finished_semaphore->get_ptr();
-    vkQueuePresentKHR(m_vkdevice->get_present_queue(), &present_info);
+    present_info.pSwapchains = m_swapchain->swapchain_ptr();
+    present_info.pWaitSemaphores = m_rendering_finished_semaphore->ptr();
+    vkQueuePresentKHR(m_vkdevice->present_queue(), &present_info);
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
-        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, m_window->get_width(), m_window->get_height());
+        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, m_window->width(), m_window->height());
     }
 }
 
@@ -184,7 +184,7 @@ void VulkanRenderer::calculate_memory_budget() {
 VulkanRenderer::~VulkanRenderer() {
     spdlog::debug("Shutting down vulkan renderer");
     // TODO: Add wrapper::Device::wait_idle()
-    vkDeviceWaitIdle(m_vkdevice->get_device());
+    vkDeviceWaitIdle(m_vkdevice->device());
 
     if (!m_debug_report_callback_initialised) {
         return;
@@ -192,9 +192,9 @@ VulkanRenderer::~VulkanRenderer() {
 
     // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
     auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-        vkGetInstanceProcAddr(m_vkinstance->get_instance(), "vkDestroyDebugReportCallbackEXT"));
+        vkGetInstanceProcAddr(m_vkinstance->instance(), "vkDestroyDebugReportCallbackEXT"));
     if (vk_destroy_debug_report_callback != nullptr) {
-        vk_destroy_debug_report_callback(m_vkinstance->get_instance(), m_debug_report_callback, nullptr);
+        vk_destroy_debug_report_callback(m_vkinstance->instance(), m_debug_report_callback, nullptr);
     }
 }
 

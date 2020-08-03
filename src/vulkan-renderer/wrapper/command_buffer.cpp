@@ -30,7 +30,7 @@ void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
 
 void CommandBuffer::bind_descriptor(const Descriptor &descriptor, VkPipelineLayout layout) const {
     vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1,
-                            descriptor.get_descriptor_sets_data(), 0, nullptr);
+                            descriptor.descriptor_sets_data(), 0, nullptr);
 }
 
 void CommandBuffer::end() const {

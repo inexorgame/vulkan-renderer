@@ -61,24 +61,24 @@ public:
 
     ~MeshBuffer();
 
-    [[nodiscard]] VkBuffer get_vertex_buffer() const {
-        return m_vertex_buffer.get_buffer();
+    [[nodiscard]] VkBuffer vertex_buffer() const {
+        return m_vertex_buffer.buffer();
     }
 
     [[nodiscard]] bool has_index_buffer() const {
         return m_index_buffer.has_value();
     }
 
-    [[nodiscard]] std::optional<VkBuffer> get_index_buffer() const {
+    [[nodiscard]] std::optional<VkBuffer> index_buffer() const {
         assert(m_index_buffer);
-        return m_index_buffer->get_buffer();
+        return m_index_buffer->buffer();
     }
 
-    [[nodiscard]] const std::uint32_t get_vertex_count() const {
+    [[nodiscard]] const std::uint32_t vertex_count() const {
         return m_number_of_vertices;
     }
 
-    [[nodiscard]] const std::uint32_t get_index_cound() const {
+    [[nodiscard]] const std::uint32_t index_cound() const {
         return m_number_of_indices;
     }
 

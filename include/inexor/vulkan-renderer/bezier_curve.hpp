@@ -85,7 +85,7 @@ public:
 
     void calculate_bezier_curve(const float curve_precision);
 
-    [[nodiscard]] std::vector<BezierOutputPoint> get_output_points();
+    [[nodiscard]] std::vector<BezierOutputPoint> output_points();
 
     void clear_output();
 

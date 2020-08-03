@@ -44,11 +44,11 @@ public:
 
     ~Image();
 
-    [[nodiscard]] VkFormat get_image_format() const {
+    [[nodiscard]] VkFormat image_format() const {
         return m_format;
     }
 
-    [[nodiscard]] VkImageView get_image_view() const {
+    [[nodiscard]] VkImageView image_view() const {
         assert(m_image_view);
         return m_image_view;
     }

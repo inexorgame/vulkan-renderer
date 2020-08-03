@@ -22,11 +22,11 @@ public:
 
     /// @brief Returns a scaling factor which corresponds to the
     /// time which has passed since last render call and now.
-    [[nodiscard]] float get_time_step();
+    [[nodiscard]] float time_step();
 
     /// @brief Returns a scaling factor which corresponds to the
     /// time which has passed since initialisation and now.
-    [[nodiscard]] float get_time_step_since_initialisation();
+    [[nodiscard]] float time_step_since_initialisation();
 };
 
 } // namespace inexor::vulkan_renderer

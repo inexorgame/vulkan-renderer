@@ -90,7 +90,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
 
     auto submit_info = make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = m_command_buffer->get_ptr();
+    submit_info.pCommandBuffers = m_command_buffer->ptr();
 
     if (vkQueueSubmit(m_data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueSubmit failed for once command buffer!");
@@ -104,7 +104,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     spdlog::debug("Destroying once command buffer.");
 
     // Because we destroy the command buffer after submission, we have to allocate it every time.
-    vkFreeCommandBuffers(m_device, m_command_pool.get(), 1, m_command_buffer->get_ptr());
+    vkFreeCommandBuffers(m_device, m_command_pool.get(), 1, m_command_buffer->ptr());
 
     m_command_buffer_created = false;
 

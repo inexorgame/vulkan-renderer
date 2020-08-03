@@ -37,7 +37,7 @@ public:
                   const VkDeviceSize buffer_size, void *data, const std::size_t data_size);
 
     ///
-    void upload_data_to_gpu(const GPUMemoryBuffer &target_buffer);
+    void upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer);
 
     ~StagingBuffer() = default;
 };

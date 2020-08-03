@@ -27,11 +27,11 @@ bool Camera::moving() {
     return m_keys.left || m_keys.right || m_keys.up || m_keys.down;
 }
 
-float Camera::get_near_clip() {
+float Camera::near_clip() {
     return m_z_near;
 }
 
-float Camera::get_far_clip() {
+float Camera::far_clip() {
     return m_z_far;
 }
 

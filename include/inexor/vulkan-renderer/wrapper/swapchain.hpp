@@ -60,27 +60,27 @@ public:
     /// This happens for example when the window gets resized.
     void recreate(std::uint32_t window_width, std::uint32_t window_height);
 
-    [[nodiscard]] const VkSwapchainKHR *get_swapchain_ptr() const {
+    [[nodiscard]] const VkSwapchainKHR *swapchain_ptr() const {
         return &m_swapchain;
     }
 
-    [[nodiscard]] VkSwapchainKHR get_swapchain() const {
+    [[nodiscard]] VkSwapchainKHR swapchain() const {
         return m_swapchain;
     }
 
-    [[nodiscard]] std::uint32_t get_image_count() const {
+    [[nodiscard]] std::uint32_t image_count() const {
         return m_swapchain_image_count;
     }
 
-    [[nodiscard]] VkFormat get_image_format() const {
+    [[nodiscard]] VkFormat image_format() const {
         return m_surface_format.format;
     }
 
-    [[nodiscard]] VkExtent2D get_extent() const {
+    [[nodiscard]] VkExtent2D extent() const {
         return m_extent;
     }
 
-    [[nodiscard]] VkImageView get_image_view(std::size_t index) const {
+    [[nodiscard]] VkImageView image_view(std::size_t index) const {
         if (index >= m_swapchain_image_views.size()) {
             throw std::out_of_range("Error: swapchain_image_views has " +
                                     std::to_string(m_swapchain_image_views.size()) + " entries. Requested index " +
@@ -90,7 +90,7 @@ public:
         return m_swapchain_image_views.at(index);
     }
 
-    [[nodiscard]] std::vector<VkImageView> get_image_views() const {
+    [[nodiscard]] std::vector<VkImageView> image_views() const {
         return m_swapchain_image_views;
     }
 };

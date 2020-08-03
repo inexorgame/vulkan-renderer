@@ -59,7 +59,7 @@ public:
 
     ~Instance();
 
-    [[nodiscard]] const VkInstance get_instance() const {
+    [[nodiscard]] const VkInstance instance() const {
         return m_instance;
     }
 };

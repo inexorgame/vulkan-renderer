@@ -32,7 +32,7 @@ public:
         return m_command_pool;
     }
 
-    [[nodiscard]] const VkCommandPool *get_ptr() const {
+    [[nodiscard]] const VkCommandPool *ptr() const {
         return &m_command_pool;
     }
 };

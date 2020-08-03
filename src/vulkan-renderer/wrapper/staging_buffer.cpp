@@ -16,7 +16,7 @@ StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_alloc
       m_data_transfer_queue(data_transfer_queue),
       m_command_buffer_for_copying(device, data_transfer_queue, data_transfer_queueu_family_index) {}
 
-void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
+void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer) {
     spdlog::debug("Beginning command buffer recording for copy of staging buffer for vertices.");
 
     m_command_buffer_for_copying.create_command_buffer();
@@ -30,7 +30,7 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
     vertex_buffer_copy.dstOffset = 0;
     vertex_buffer_copy.size = m_buffer_size;
 
-    vkCmdCopyBuffer(m_command_buffer_for_copying.get_command_buffer(), m_buffer, target_buffer.get_buffer(), 1,
+    vkCmdCopyBuffer(m_command_buffer_for_copying.command_buffer(), m_buffer, tarbuffer.buffer(), 1,
                     &vertex_buffer_copy);
 
     spdlog::debug("Finished uploading mesh data to graphics card memory.");

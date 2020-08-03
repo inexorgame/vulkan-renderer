@@ -69,7 +69,7 @@ void Window::hide() {
     glfwHideWindow(m_window);
 }
 
-void Window::get_cursor_pos(double &pos_x, double &pos_y) {
+void Window::cursor_pos(double &pos_x, double &pos_y) {
     assert(m_window);
     glfwGetCursorPos(m_window, &pos_x, &pos_y);
 }

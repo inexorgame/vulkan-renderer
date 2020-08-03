@@ -38,9 +38,9 @@ public:
 
     bool moving();
 
-    float get_near_clip();
+    float near_clip();
 
-    float get_far_clip();
+    float far_clip();
 
     void set_perspective(float fov, float aspect, float z_near, float z_far);
 

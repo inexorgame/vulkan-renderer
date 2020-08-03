@@ -49,11 +49,11 @@ public:
     /// @note This will be called when swapchain needs to be recreated.
     void reset(const bool clear_descriptor_layout_bindings = false);
 
-    const auto get_descriptor_sets_data() const {
+    const auto descriptor_sets_data() const {
         return m_descriptor_sets.data();
     }
 
-    const auto get_descriptor_set_layout() const {
+    const auto descriptor_set_layout() const {
         return m_descriptor_set_layout;
     }
 };

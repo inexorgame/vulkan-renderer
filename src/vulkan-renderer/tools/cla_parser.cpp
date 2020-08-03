@@ -30,10 +30,10 @@ std::uint32_t CommandLineArgumentValue::as() const {
 }
 
 std::optional<CommandLineArgumentTemplate>
-CommandLineArgumentParser::get_arg_template(const std::string &argument_name) const {
+CommandLineArgumentParser::make_arg_template(const std::string &argument_name) const {
     // clang-format off
     auto it = std::find_if(m_accepted_args.begin(), m_accepted_args.end(), [&](const auto &accepted_arg) {
-        return argument_name == accepted_arg.get_argument();
+        return argument_name == accepted_arg.argument();
     });
     // clang-format on
 
@@ -48,14 +48,14 @@ void CommandLineArgumentParser::parse_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         // NOLINTNEXTLINE
         std::string arg_name(argv[i]);
-        auto arg_template = get_arg_template(arg_name);
+        auto arg_template = make_arg_template(arg_name);
 
         if (!arg_template) {
             spdlog::warn("Unknown command line argument {}!", arg_name);
             continue;
         }
 
-        if (!arg_template->does_take_values()) {
+        if (!arg_template->takes_values()) {
             m_parsed_arguments.insert(std::make_pair(arg_name, ""));
             continue;
         }

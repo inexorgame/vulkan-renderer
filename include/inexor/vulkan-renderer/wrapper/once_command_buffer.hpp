@@ -45,7 +45,7 @@ public:
 
     void end_recording_and_submit_command();
 
-    [[nodiscard]] VkCommandBuffer get_command_buffer() const {
+    [[nodiscard]] VkCommandBuffer command_buffer() const {
         return m_command_buffer->get();
     }
 };

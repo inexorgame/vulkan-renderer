@@ -82,25 +82,25 @@ public:
 
     ~Texture();
 
-    [[nodiscard]] const std::string &get_name() const {
+    [[nodiscard]] const std::string &name() const {
         return m_name;
     }
 
-    [[nodiscard]] const std::string &get_file_name() const {
+    [[nodiscard]] const std::string &file_name() const {
         return m_file_name;
     }
 
-    [[nodiscard]] const VkImage get_image() const {
+    [[nodiscard]] const VkImage image() const {
         assert(m_texture_image);
         return m_texture_image->get();
     }
 
-    [[nodiscard]] const VkImageView get_image_view() const {
+    [[nodiscard]] const VkImageView image_view() const {
         assert(m_texture_image);
-        return m_texture_image->get_image_view();
+        return m_texture_image->image_view();
     }
 
-    [[nodiscard]] const VkSampler get_sampler() const {
+    [[nodiscard]] const VkSampler sampler() const {
         assert(m_texture_image);
         return m_sampler;
     }
