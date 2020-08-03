@@ -4,10 +4,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
-    : m_data_transfer_queue(std::move(other.m_data_transfer_queue)),
-      m_command_buffer_for_copying(std::move(other.m_command_buffer_for_copying)), GPUMemoryBuffer(std::move(other)) {}
-
 StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkQueue data_transfer_queue,
                              const std::uint32_t data_transfer_queueu_family_index, const std::string &name,
                              const VkDeviceSize buffer_size, void *data, const std::size_t data_size)
@@ -15,6 +11,10 @@ StagingBuffer::StagingBuffer(const VkDevice device, const VmaAllocator vma_alloc
                       VMA_MEMORY_USAGE_CPU_ONLY),
       m_data_transfer_queue(data_transfer_queue),
       m_command_buffer_for_copying(device, data_transfer_queue, data_transfer_queueu_family_index) {}
+
+StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
+    : m_data_transfer_queue(std::move(other.m_data_transfer_queue)),
+      m_command_buffer_for_copying(std::move(other.m_command_buffer_for_copying)), GPUMemoryBuffer(std::move(other)) {}
 
 void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer) {
     spdlog::debug("Beginning command buffer recording for copy of staging buffer for vertices.");

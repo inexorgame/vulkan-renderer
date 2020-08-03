@@ -5,11 +5,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
-    : m_name(std::move(other.m_name)), m_vertex_buffer(std::move(other.m_vertex_buffer)),
-      m_index_buffer(std::move(other.m_index_buffer)), m_number_of_vertices(other.m_number_of_vertices),
-      m_number_of_indices(other.m_number_of_indices) {}
-
 MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
                        const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                        const std::string &name, const VkDeviceSize size_of_vertex_structure,
@@ -93,6 +88,11 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
 
     staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
 }
+
+MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
+    : m_name(std::move(other.m_name)), m_vertex_buffer(std::move(other.m_vertex_buffer)),
+      m_index_buffer(std::move(other.m_index_buffer)), m_number_of_vertices(other.m_number_of_vertices),
+      m_number_of_indices(other.m_number_of_indices) {}
 
 MeshBuffer::~MeshBuffer() {}
 

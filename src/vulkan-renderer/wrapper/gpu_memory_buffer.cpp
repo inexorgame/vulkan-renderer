@@ -8,11 +8,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
-    : m_name(std::move(other.m_name)), m_device(std::exchange(other.m_device, nullptr)),
-      m_buffer(std::exchange(other.m_buffer, nullptr)), m_allocation(std::exchange(other.m_allocation, nullptr)),
-      m_allocation_info(std::move(other.m_allocation_info)), m_allocation_ci(std::move(other.m_allocation_ci)) {}
-
 GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
                                  const VkDeviceSize &size, const VkBufferUsageFlags &buffer_usage,
                                  const VmaMemoryUsage &memory_usage)
@@ -78,6 +73,11 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     // Copy the memory into the buffer!
     std::memcpy(m_allocation_info.pMappedData, data, data_size);
 }
+
+GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
+    : m_name(std::move(other.m_name)), m_device(std::exchange(other.m_device, nullptr)),
+      m_buffer(std::exchange(other.m_buffer, nullptr)), m_allocation(std::exchange(other.m_allocation, nullptr)),
+      m_allocation_info(std::move(other.m_allocation_info)), m_allocation_ci(std::move(other.m_allocation_ci)) {}
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
     spdlog::trace("Destroying GPU memory buffer.");

@@ -13,20 +13,16 @@ private:
     VkCommandPool m_command_pool;
 
 public:
-    /// Delete the copy constructor so Vulkan command pools are move-only objects.
-    CommandPool(const CommandPool &) = delete;
-    CommandPool(CommandPool &&other) noexcept;
-
-    /// Delete the copy assignment operator so Vulkan command pools are move-only objects.
-    CommandPool &operator=(const CommandPool &) = delete;
-    CommandPool &operator=(CommandPool &&) noexcept = default;
-
     /// @brief Creates a Vulkan command pool.
     /// @param device [in] The Vulkan device.
     /// @param queue_family_index [in] The queue family index for the command pool.
     CommandPool(const VkDevice device, const std::uint32_t queue_family_index);
-
+    CommandPool(const CommandPool &) = delete;
+    CommandPool(CommandPool &&) noexcept;
     ~CommandPool();
+
+    CommandPool &operator=(const CommandPool &) = delete;
+    CommandPool &operator=(CommandPool &&) = default;
 
     [[nodiscard]] VkCommandPool get() const {
         return m_command_pool;

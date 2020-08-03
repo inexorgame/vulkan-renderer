@@ -34,21 +34,17 @@ private:
     void setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
 
 public:
-    /// Delete the copy constructor so swapchains are move-only objects.
-    Swapchain(const Swapchain &) = delete;
-    Swapchain(Swapchain &&other) noexcept;
-
-    /// Delete the copy assignment operator so swapchains are move-only objects.
-    Swapchain &operator=(const Swapchain &) = delete;
-    Swapchain &operator=(Swapchain &&) noexcept = delete;
-
     /// @brief
     /// @note We must pass width and height as call by reference!
     Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
               std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
               const std::string &name);
-
+    Swapchain(const Swapchain &) = delete;
+    Swapchain(Swapchain &&) noexcept;
     ~Swapchain();
+
+    Swapchain &operator=(const Swapchain &) = delete;
+    Swapchain &operator=(Swapchain &&) = default;
 
     /// @brief Acquires the next writable image in the swapchain
     /// @param semaphore A semaphore to signal once image acquisition has completed

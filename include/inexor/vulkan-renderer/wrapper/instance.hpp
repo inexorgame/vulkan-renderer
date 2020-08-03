@@ -17,14 +17,6 @@ protected:
     AvailabilityChecksManager m_availability_checks;
 
 public:
-    /// Delete the copy constructor so Vulkan instances are move-only objects.
-    Instance(const Instance &) = delete;
-    Instance(Instance &&other) noexcept;
-
-    /// Delete the copy assignment operator so Vulkan instances are move-only objects.
-    Instance &operator=(const Instance &) = delete;
-    Instance &operator=(Instance &&) noexcept = default;
-
     /// @brief Creates a VkInstance.
     /// @param application_name [in] The name of the application.
     /// @param engine_name [in] The name of the engine.
@@ -56,8 +48,12 @@ public:
     Instance(const std::string &application_name, const std::string &engine_name,
              const std::uint32_t application_version, const std::uint32_t engine_version,
              const std::uint32_t vulkan_api_version);
-
+    Instance(const Instance &) = delete;
+    Instance(Instance &&) noexcept;
     ~Instance();
+
+    Instance &operator=(const Instance &) = delete;
+    Instance &operator=(Instance &&) = default;
 
     [[nodiscard]] const VkInstance instance() const {
         return m_instance;

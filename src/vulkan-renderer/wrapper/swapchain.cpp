@@ -11,6 +11,19 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+                     std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
+                     const std::string &name)
+    : m_device(device), m_graphics_card(graphics_card), m_surface(surface), m_vsync_enabled(enable_vsync),
+      m_name(name) {
+
+    assert(device);
+    assert(graphics_card);
+    assert(surface);
+
+    setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
+}
+
 Swapchain::Swapchain(Swapchain &&other) noexcept
     : m_device(other.m_device), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
       m_surface(std::exchange(other.m_surface, nullptr)), m_swapchain(std::exchange(other.m_swapchain, nullptr)),
@@ -127,19 +140,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     }
 
     spdlog::debug("Created {} swapchain image views successfully.", m_swapchain_image_count);
-}
-
-Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
-                     std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
-                     const std::string &name)
-    : m_device(device), m_graphics_card(graphics_card), m_surface(surface), m_vsync_enabled(enable_vsync),
-      m_name(name) {
-
-    assert(device);
-    assert(graphics_card);
-    assert(surface);
-
-    setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
 }
 
 std::uint32_t Swapchain::acquire_next_image(const wrapper::Semaphore &semaphore) {

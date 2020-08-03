@@ -32,10 +32,6 @@ constexpr float default_queue_priority = 1.0f;
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Device::Device(Device &&other) noexcept
-    : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)) {
-}
-
 Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
                bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
     : m_surface(surface) {
@@ -301,6 +297,10 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     }
 
     spdlog::debug("Created device successfully.");
+}
+
+Device::Device(Device &&other) noexcept
+    : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)) {
 }
 
 Device::~Device() {

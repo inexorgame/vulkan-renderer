@@ -8,10 +8,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Semaphore::Semaphore(Semaphore &&other) noexcept
-    : m_device(other.m_device), m_semaphore(std::exchange(other.m_semaphore, nullptr)),
-      m_name(std::move(other.m_name)) {}
-
 Semaphore::Semaphore(const VkDevice device, const std::string &name) : m_device(device), m_name(name) {
     assert(device);
     assert(!name.empty());
@@ -27,6 +23,10 @@ Semaphore::Semaphore(const VkDevice device, const std::string &name) : m_device(
 
     spdlog::debug("Created semaphore successfully.");
 }
+
+Semaphore::Semaphore(Semaphore &&other) noexcept
+    : m_device(other.m_device), m_semaphore(std::exchange(other.m_semaphore, nullptr)),
+      m_name(std::move(other.m_name)) {}
 
 Semaphore::~Semaphore() {
     spdlog::trace("Destroying semaphore {}.", m_name);

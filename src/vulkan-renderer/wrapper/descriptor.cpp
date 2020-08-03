@@ -9,6 +9,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+Descriptor::Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain,
+                       const std::string &name)
+    : m_device(device), m_number_of_images_in_swapchain(number_of_images_in_swapchain), m_name(name) {}
+
 Descriptor::Descriptor(Descriptor &&other) noexcept
     : m_name(std::move(other.m_name)), m_number_of_images_in_swapchain(other.m_number_of_images_in_swapchain),
       m_descriptor_sets(std::move(other.m_descriptor_sets)),
@@ -17,9 +21,12 @@ Descriptor::Descriptor(Descriptor &&other) noexcept
       m_descriptor_set_layout(std::exchange(other.m_descriptor_set_layout, nullptr)),
       m_descriptor_pool(std::exchange(other.m_descriptor_pool, nullptr)), m_device(other.m_device) {}
 
-Descriptor::Descriptor(const VkDevice device, const std::uint32_t number_of_images_in_swapchain,
-                       const std::string &name)
-    : m_device(device), m_number_of_images_in_swapchain(number_of_images_in_swapchain), m_name(name) {}
+Descriptor::~Descriptor() {
+    assert(m_device);
+    spdlog::trace("Destroying descriptor {}.", m_name);
+
+    reset(true);
+}
 
 void Descriptor::create_descriptor_pool(const std::initializer_list<VkDescriptorType> descriptor_pool_types) {
     assert(m_device);
@@ -148,13 +155,6 @@ void Descriptor::create_descriptor_sets() {
     }
 
     spdlog::debug("Created descriptor sets for descriptor {} successfully.", m_name);
-}
-
-Descriptor::~Descriptor() {
-    assert(m_device);
-    spdlog::trace("Destroying descriptor {}.", m_name);
-
-    reset(true);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

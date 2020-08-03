@@ -10,15 +10,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Texture::Texture(Texture &&other) noexcept
-    : m_texture_image(std::exchange(other.m_texture_image, nullptr)), m_name(std::move(other.m_name)),
-      m_file_name(std::move(other.m_file_name)), m_texture_width(other.m_texture_width),
-      m_texture_height(other.m_texture_height), m_texture_channels(other.m_texture_channels),
-      m_mip_levels(other.m_mip_levels), m_device(other.m_device), m_graphics_card(other.m_graphics_card),
-      m_data_transfer_queue(other.m_data_transfer_queue), m_vma_allocator(other.m_vma_allocator),
-      m_sampler(std::exchange(other.m_sampler, nullptr)), m_texture_image_format(other.m_texture_image_format),
-      m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
-
 Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
                  void *texture_data, const std::size_t texture_size, const std::string &name,
                  const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
@@ -64,6 +55,20 @@ Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, co
 
     // We can discard the texture data since we copied it already to GPU memory.
     stbi_image_free(texture_data);
+}
+
+Texture::Texture(Texture &&other) noexcept
+    : m_texture_image(std::exchange(other.m_texture_image, nullptr)), m_name(std::move(other.m_name)),
+      m_file_name(std::move(other.m_file_name)), m_texture_width(other.m_texture_width),
+      m_texture_height(other.m_texture_height), m_texture_channels(other.m_texture_channels),
+      m_mip_levels(other.m_mip_levels), m_device(other.m_device), m_graphics_card(other.m_graphics_card),
+      m_data_transfer_queue(other.m_data_transfer_queue), m_vma_allocator(other.m_vma_allocator),
+      m_sampler(std::exchange(other.m_sampler, nullptr)), m_texture_image_format(other.m_texture_image_format),
+      m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
+
+Texture::~Texture() {
+    spdlog::trace("Destroying texture {}.", m_name);
+    vkDestroySampler(m_device, m_sampler, nullptr);
 }
 
 void Texture::create_texture(void *texture_data, const std::size_t texture_size) {
@@ -162,8 +167,8 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
     image_transition_change.create_command_buffer();
     image_transition_change.start_recording();
 
-    vkCmdPipelineBarrier(image_transition_change.command_buffer(), source_stage, destination_stage, 0, 0, nullptr,
-                         0, nullptr, 1, &barrier);
+    vkCmdPipelineBarrier(image_transition_change.command_buffer(), source_stage, destination_stage, 0, 0, nullptr, 0,
+                         nullptr, 1, &barrier);
 
     image_transition_change.end_recording_and_submit_command();
 }
@@ -231,11 +236,6 @@ void Texture::create_texture_sampler() {
     // TODO: Vulkan debug markers!
 
     spdlog::debug("Image sampler created successfully.");
-}
-
-Texture::~Texture() {
-    spdlog::trace("Destroying texture {}.", m_name);
-    vkDestroySampler(m_device, m_sampler, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

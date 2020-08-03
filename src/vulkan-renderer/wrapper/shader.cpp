@@ -36,10 +36,6 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
                const std::string &entry_point)
     : Shader(device, type, name, read_binary(file_name), entry_point) {}
 
-Shader::Shader(Shader &&shader) noexcept
-    : m_device(shader.m_device), m_type(shader.m_type), m_name(std::move(shader.m_name)),
-      m_entry_point(std::move(shader.m_entry_point)), m_shader_module(std::exchange(shader.m_shader_module, nullptr)) {}
-
 Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name,
                const std::vector<char> &code, const std::string &entry_point)
     : m_device(device), m_type(type), m_name(name), m_entry_point(entry_point) {
@@ -79,6 +75,10 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
         }
     }
 }
+
+Shader::Shader(Shader &&shader) noexcept
+    : m_device(shader.m_device), m_type(shader.m_type), m_name(std::move(shader.m_name)),
+      m_entry_point(std::move(shader.m_entry_point)), m_shader_module(std::exchange(shader.m_shader_module, nullptr)) {}
 
 Shader::~Shader() {
     vkDestroyShaderModule(m_device, m_shader_module, nullptr);

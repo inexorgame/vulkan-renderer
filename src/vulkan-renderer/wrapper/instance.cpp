@@ -10,8 +10,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m_instance, nullptr)) {}
-
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
                    const std::uint32_t vulkan_api_version, std::vector<std::string> requested_instance_extensions,
@@ -161,6 +159,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("No instance extensions or instance layers specified.");
     spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
 }
+
+Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m_instance, nullptr)) {}
 
 Instance::~Instance() {
     vkDestroyInstance(m_instance, nullptr);

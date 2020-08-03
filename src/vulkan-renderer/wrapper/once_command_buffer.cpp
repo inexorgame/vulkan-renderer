@@ -10,12 +10,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
-    : m_device(other.m_device), m_command_pool(std::move(other.m_command_pool)),
-      m_command_buffer(std::exchange(other.m_command_buffer, nullptr)),
-      m_data_transfer_queue(other.m_data_transfer_queue), m_recording_started(other.m_recording_started),
-      m_command_buffer_created(other.m_command_buffer_created) {}
-
 OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue,
                                      const std::uint32_t data_transfer_queue_family_index)
     : m_device(device), m_data_transfer_queue(data_transfer_queue),
@@ -26,6 +20,12 @@ OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_t
     m_command_buffer_created = false;
     m_recording_started = false;
 }
+
+OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
+    : m_device(other.m_device), m_command_pool(std::move(other.m_command_pool)),
+      m_command_buffer(std::exchange(other.m_command_buffer, nullptr)),
+      m_data_transfer_queue(other.m_data_transfer_queue), m_recording_started(other.m_recording_started),
+      m_command_buffer_created(other.m_command_buffer_created) {}
 
 OnceCommandBuffer::~OnceCommandBuffer() {
     m_command_buffer.reset();

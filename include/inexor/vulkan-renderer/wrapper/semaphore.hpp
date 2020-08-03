@@ -13,17 +13,13 @@ private:
     std::string m_name;
 
 public:
-    /// Delete the copy constructor so Vulkan semaphores are move-only objects.
-    Semaphore(const Semaphore &) = delete;
-    Semaphore(Semaphore &&other) noexcept;
-
-    /// Delete the move assignment operator so Vulkan semaphores are move-only objects.
-    Semaphore &operator=(const Semaphore &) = delete;
-    Semaphore &operator=(Semaphore &&) noexcept = default;
-
     Semaphore(const VkDevice device, const std::string &name);
-
+    Semaphore(const Semaphore &) = delete;
+    Semaphore(Semaphore &&) noexcept;
     ~Semaphore();
+
+    Semaphore &operator=(const Semaphore &) = delete;
+    Semaphore &operator=(Semaphore &&) = default;
 
     [[nodiscard]] VkSemaphore get() const {
         return m_semaphore;

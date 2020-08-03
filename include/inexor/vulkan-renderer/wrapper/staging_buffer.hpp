@@ -16,14 +16,6 @@ private:
     OnceCommandBuffer m_command_buffer_for_copying;
 
 public:
-    // Delete the copy constructor so staging buffers are move-only objects.
-    StagingBuffer(const StagingBuffer &) = delete;
-    StagingBuffer(StagingBuffer &&other) noexcept;
-
-    // Delete the copy assignment operator so staging buffers are move-only objects.
-    StagingBuffer &operator=(const StagingBuffer &) = delete;
-    StagingBuffer &operator=(StagingBuffer &&) noexcept = default;
-
     /// @brief Creates a new staging buffer.
     /// @param device [in] The Vulkan device from which the buffer will be created.
     /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
@@ -35,11 +27,15 @@ public:
     StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkQueue data_transfer_queue,
                   const std::uint32_t data_transfer_queueu_family_index, const std::string &name,
                   const VkDeviceSize buffer_size, void *data, const std::size_t data_size);
+    StagingBuffer(const StagingBuffer &) = delete;
+    StagingBuffer(StagingBuffer &&) noexcept;
+    ~StagingBuffer() = default;
+
+    StagingBuffer &operator=(const StagingBuffer &) = delete;
+    StagingBuffer &operator=(StagingBuffer &&) = default;
 
     ///
     void upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer);
-
-    ~StagingBuffer() = default;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

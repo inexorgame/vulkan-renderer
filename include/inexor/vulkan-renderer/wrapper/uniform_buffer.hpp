@@ -14,14 +14,6 @@ protected:
     VkDescriptorSet m_descriptor_set{};
 
 public:
-    // Delete the copy constructor so uniform buffers are move-only objects.
-    UniformBuffer(const UniformBuffer &) = delete;
-    UniformBuffer(UniformBuffer &&buffer) noexcept;
-
-    // Delete the copy assignment operator so uniform buffers are move-only objects.
-    UniformBuffer &operator=(const UniformBuffer &) = delete;
-    UniformBuffer &operator=(UniformBuffer &&) noexcept = default;
-
     /// @brief Creates a new uniform buffer.
     /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
     /// @param name [in] The internal name of the buffer.
@@ -30,8 +22,12 @@ public:
     /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
     UniformBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
                   const VkDeviceSize &size);
-
+    UniformBuffer(const UniformBuffer &) = delete;
+    UniformBuffer(UniformBuffer &&) noexcept;
     ~UniformBuffer() = default;
+
+    UniformBuffer &operator=(const UniformBuffer &) = delete;
+    UniformBuffer &operator=(UniformBuffer &&) = default;
 
     /// @brief Updates the data of a uniform buffer.
     void update(void *data, const std::size_t size);

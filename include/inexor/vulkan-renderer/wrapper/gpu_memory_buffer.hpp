@@ -20,14 +20,6 @@ protected:
     VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
-    /// Delete the copy constructor so gpu memory buffers are move-only objects.
-    GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
-    GPUMemoryBuffer(GPUMemoryBuffer &&buffer) noexcept;
-
-    /// Delete the copy assignment operator so gpu memory buffers are move-only objects.
-    GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;
-    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) noexcept = default;
-
     /// @brief Creates a new GPU memory buffer.
     /// @param device [in] The Vulkan device from which the buffer will be created.
     /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
@@ -51,8 +43,12 @@ public:
     GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
                     const VkDeviceSize &buffer_size, void *data, const std::size_t data_size,
                     const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage);
-
+    GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
+    GPUMemoryBuffer(GPUMemoryBuffer &&) noexcept;
     virtual ~GPUMemoryBuffer();
+
+    GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;
+    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) = default;
 
     [[nodiscard]] const std::string &name() const {
         return m_name;

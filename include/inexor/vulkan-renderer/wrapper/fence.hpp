@@ -15,19 +15,17 @@ private:
     std::string m_name;
 
 public:
-    Fence(const Fence &) = default;
-    Fence(Fence &&other) noexcept;
-
-    Fence &operator=(const Fence &other) = default;
-    Fence &operator=(Fence &&other) noexcept = default;
-
     /// @brief Creates a new fence.
     /// @param device [in] The Vulkan device.
     /// @param name [in] The internal name of the fence.
     /// @param in_signaled_state [in] If true, the fence will be created in signaled state.
     Fence(const VkDevice device, const std::string &name, const bool in_signaled_state);
-
+    Fence(const Fence &) = delete;
+    Fence(Fence &&) noexcept;
     ~Fence();
+
+    Fence &operator=(const Fence &) = delete;
+    Fence &operator=(Fence &&) = default;
 
     [[nodiscard]] VkFence get() const {
         assert(m_fence);

@@ -295,8 +295,8 @@ Application::Application(int argc, char **argv) {
 
             if (vkCreateDebugReportCallbackEXT) {
                 // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(m_vkinstance->instance(), &debug_report_ci,
-                                                                 nullptr, &m_debug_report_callback);
+                VkResult result = vkCreateDebugReportCallbackEXT(m_vkinstance->instance(), &debug_report_ci, nullptr,
+                                                                 &m_debug_report_callback);
                 if (VK_SUCCESS == result) {
                     spdlog::debug("Creating Vulkan debug callback.");
                     m_debug_report_callback_initialised = true;

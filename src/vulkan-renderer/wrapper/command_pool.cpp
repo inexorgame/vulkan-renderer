@@ -4,9 +4,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandPool::CommandPool(CommandPool &&other) noexcept
-    : m_device(other.m_device), m_command_pool(std::exchange(other.m_command_pool, nullptr)) {}
-
 CommandPool::CommandPool(const VkDevice device, const std::uint32_t queue_family_index) : m_device(device) {
     assert(device);
 
@@ -22,6 +19,9 @@ CommandPool::CommandPool(const VkDevice device, const std::uint32_t queue_family
 
     spdlog::debug("Created command pool successfully.");
 }
+
+CommandPool::CommandPool(CommandPool &&other) noexcept
+    : m_device(other.m_device), m_command_pool(std::exchange(other.m_command_pool, nullptr)) {}
 
 CommandPool::~CommandPool() {
     vkDestroyCommandPool(m_device, m_command_pool, nullptr);

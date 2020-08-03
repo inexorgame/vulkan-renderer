@@ -8,10 +8,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
-    : m_device(other.m_device), m_pipeline_layout(std::exchange(other.m_pipeline_layout, nullptr)),
-      m_name(std::move(other.m_name)) {}
-
 PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
                                const std::string &name)
     : m_device(device), m_name(name) {
@@ -33,6 +29,10 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
 
     spdlog::debug("Created pipeline layout successfully.");
 }
+
+PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
+    : m_device(other.m_device), m_pipeline_layout(std::exchange(other.m_pipeline_layout, nullptr)),
+      m_name(std::move(other.m_name)) {}
 
 PipelineLayout::~PipelineLayout() {
     spdlog::trace("Destroying pipeline layout {}.", m_name);

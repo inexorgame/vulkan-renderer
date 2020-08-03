@@ -37,23 +37,19 @@ private:
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name;
 
 public:
-    /// Delete the copy constructor so shaders are move-only objects.
-    Device(const Device &) = delete;
-    Device(Device &&other) noexcept;
-
-    /// Delete the copy assignment operator so shaders are move-only objects.
-    Device &operator=(const Device &) = delete;
-    Device &operator=(Device &&) noexcept = default;
-
     /// @brief Creates a graphics card interface.
     /// @param preferred_gpu_index [in] The index of the preferred physical device to use.
     Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
+    Device(const Device &) = delete;
+    Device(Device &&) noexcept;
+    ~Device();
 
     // TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
 
-    ~Device();
+    Device &operator=(const Device &) = delete;
+    Device &operator=(Device &&) = default;
 
     [[nodiscard]] const VkDevice device() const {
         assert(m_device);

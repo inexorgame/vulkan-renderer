@@ -6,11 +6,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Image::Image(Image &&other) noexcept
-    : m_device(other.m_device), m_vma_allocator(other.m_vma_allocator), m_allocation(other.m_allocation),
-      m_allocation_info(other.m_allocation_info), m_image(other.m_image), m_format(other.m_format),
-      m_image_view(other.m_image_view), m_name(std::move(other.m_name)) {}
-
 Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
              const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
              const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent)
@@ -69,6 +64,11 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
 
     // TODO: Assign an internal name using Vulkan debug markers.
 }
+
+Image::Image(Image &&other) noexcept
+    : m_device(other.m_device), m_vma_allocator(other.m_vma_allocator), m_allocation(other.m_allocation),
+      m_allocation_info(other.m_allocation_info), m_image(other.m_image), m_format(other.m_format),
+      m_image_view(other.m_image_view), m_name(std::move(other.m_name)) {}
 
 Image::~Image() {
     spdlog::trace("Destroying image view {} .", m_name);

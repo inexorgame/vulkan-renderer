@@ -47,14 +47,6 @@ private:
     void create_texture_sampler();
 
 public:
-    /// Delete the copy constructor so textures are move-only objects.
-    Texture(const Texture &) = delete;
-    Texture(Texture &&other) noexcept;
-
-    /// Delete the copy assignment operator so shaders are move-only objects.
-    Texture &operator=(const Texture &) = delete;
-    Texture &operator=(Texture &&) noexcept = default;
-
     /// @brief Creates a texture from a file.
     /// @param device [in] The Vulkan device from which the texture will be created.
     /// @param graphics_card [in] The graphics card.
@@ -79,8 +71,12 @@ public:
     Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
             void *texture_data, const std::size_t texture_size, const std::string &name,
             const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
-
+    Texture(const Texture &) = delete;
+    Texture(Texture &&) noexcept;
     ~Texture();
+
+    Texture &operator=(const Texture &) = delete;
+    Texture &operator=(Texture &&) = default;
 
     [[nodiscard]] const std::string &name() const {
         return m_name;

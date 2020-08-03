@@ -46,8 +46,7 @@ void VulkanRenderer::setup_frame_graph() {
 }
 
 VkResult VulkanRenderer::create_descriptor_pool() {
-    m_descriptors.emplace_back(m_vkdevice->device(), m_swapchain->image_count(),
-                               std::string("unnamed descriptor"));
+    m_descriptors.emplace_back(m_vkdevice->device(), m_swapchain->image_count(), std::string("unnamed descriptor"));
 
     // Create the descriptor pool.
     m_descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER});
@@ -103,8 +102,8 @@ void VulkanRenderer::recreate_swapchain() {
     // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
     m_frame_graph.reset();
     m_swapchain->recreate(m_window->width(), m_window->height());
-    m_frame_graph = std::make_unique<FrameGraph>(m_vkdevice->device(), m_command_pool->get(),
-                                                 m_vkdevice->allocator(), *m_swapchain);
+    m_frame_graph = std::make_unique<FrameGraph>(m_vkdevice->device(), m_command_pool->get(), m_vkdevice->allocator(),
+                                                 *m_swapchain);
     setup_frame_graph();
 
     m_image_available_semaphore.reset();
@@ -120,8 +119,8 @@ void VulkanRenderer::recreate_swapchain() {
     m_game_camera.m_movement_speed = 0.1f;
     m_game_camera.set_position({0.0f, 0.0f, 5.0f});
     m_game_camera.set_rotation({0.0f, 0.0f, 0.0f});
-    m_game_camera.set_perspective(
-        45.0f, static_cast<float>(m_window->width()) / static_cast<float>(m_window->height()), 0.1f, 256.0f);
+    m_game_camera.set_perspective(45.0f, static_cast<float>(m_window->width()) / static_cast<float>(m_window->height()),
+                                  0.1f, 256.0f);
 }
 
 void VulkanRenderer::render_frame() {

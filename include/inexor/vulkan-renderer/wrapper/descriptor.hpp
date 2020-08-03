@@ -23,19 +23,15 @@ protected:
     VkDevice m_device = VK_NULL_HANDLE;
 
 public:
-    /// Delete the copy constructor so descriptors are move-only objects.
-    Descriptor(const Descriptor &) = delete;
-    Descriptor(Descriptor &&other) noexcept;
-
-    /// Delete the copy assignment operator so descriptors are move-only objects.
-    Descriptor &operator=(const Descriptor &) = delete;
-    Descriptor &operator=(Descriptor &&) noexcept = default;
-
     /// @param device [in] The Vulkan device.
     /// @param number_of_images_in_swapchain [in] The number of images in the swapchain, usually 3 (triple buffering).
     Descriptor(VkDevice device, std::uint32_t number_of_images_in_swapchain, const std::string &name);
-
+    Descriptor(const Descriptor &) = delete;
+    Descriptor(Descriptor &&) noexcept;
     ~Descriptor();
+
+    Descriptor &operator=(const Descriptor &) = delete;
+    Descriptor &operator=(Descriptor &&) = default;
 
     void create_descriptor_pool(const std::initializer_list<VkDescriptorType> pool_types);
 

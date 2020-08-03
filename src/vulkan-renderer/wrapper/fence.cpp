@@ -8,9 +8,6 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Fence::Fence(Fence &&other) noexcept
-    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)), m_name(std::move(other.m_name)) {}
-
 Fence::Fence(const VkDevice device, const std::string &name, const bool in_signaled_state)
     : m_device(device), m_name(name) {
     assert(device);
@@ -29,6 +26,9 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
 
     spdlog::debug("Created fence successfully.");
 }
+
+Fence::Fence(Fence &&other) noexcept
+    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)), m_name(std::move(other.m_name)) {}
 
 Fence::~Fence() {
     spdlog::trace("Destroying fence {}.", m_name);
