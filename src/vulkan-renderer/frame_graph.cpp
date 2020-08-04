@@ -122,7 +122,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
         VkAttachmentDescription attachment{};
         attachment.format = texture->m_format;
         attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachment.loadOp = stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -287,14 +287,14 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             const auto *phys_graphics_stage = dynamic_cast<const PhysicalGraphicsStage *>(phys);
             assert(phys_graphics_stage != nullptr);
 
-            // TODO(): Allow custom clear values (or no clearing at all)
-            std::array<VkClearValue, 2> clear_values{};
-            clear_values[0].color = {0, 0, 0, 0};
-            clear_values[1].depthStencil = {1.0F, 0};
-
             auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
-            render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
-            render_pass_bi.pClearValues = clear_values.data();
+            if (graphics_stage->m_clears_screen) {
+                std::array<VkClearValue, 2> clear_values{};
+                clear_values[0].color = {0, 0, 0, 0};
+                clear_values[1].depthStencil = {1.0F, 0};
+                render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
+                render_pass_bi.pClearValues = clear_values.data();
+            }
             render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[i].get();
             render_pass_bi.renderArea.extent = m_swapchain.extent();
             render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
