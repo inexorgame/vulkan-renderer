@@ -74,25 +74,25 @@ protected:
     Camera m_game_camera;
 
     // RAII wrapper for glfw contexts.
-    std::unique_ptr<wrapper::GLFWContext> m_glfw_context = nullptr;
+    std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
 
     // RAII wrapper for glfw windows.
-    std::unique_ptr<wrapper::Window> m_window = nullptr;
+    std::unique_ptr<wrapper::Window> m_window;
 
     // RAII wrapper for VkInstance.
-    std::unique_ptr<wrapper::Instance> m_vkinstance = nullptr;
+    std::unique_ptr<wrapper::Instance> m_vkinstance;
 
     // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
-    std::unique_ptr<wrapper::Device> m_vkdevice = nullptr;
+    std::unique_ptr<wrapper::Device> m_vkdevice;
 
     // RAII wrapper for glfw compatible Vulkan surfaces.
-    std::unique_ptr<wrapper::WindowSurface> m_surface = nullptr;
+    std::unique_ptr<wrapper::WindowSurface> m_surface;
 
     // RAII wrapper for Swapchain.
-    std::unique_ptr<wrapper::Swapchain> m_swapchain = nullptr;
+    std::unique_ptr<wrapper::Swapchain> m_swapchain;
 
     // RAII wrapper for command pools.
-    std::unique_ptr<wrapper::CommandPool> m_command_pool = nullptr;
+    std::unique_ptr<wrapper::CommandPool> m_command_pool;
 
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
