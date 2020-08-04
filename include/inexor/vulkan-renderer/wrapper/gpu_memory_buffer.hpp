@@ -13,9 +13,9 @@ protected:
 
     VkDevice m_device;
     VmaAllocator m_vma_allocator;
-    VkBuffer m_buffer = VK_NULL_HANDLE;
-    VkDeviceSize m_buffer_size = 0;
-    VmaAllocation m_allocation = VK_NULL_HANDLE;
+    VkBuffer m_buffer{VK_NULL_HANDLE};
+    VkDeviceSize m_buffer_size{0};
+    VmaAllocation m_allocation{VK_NULL_HANDLE};
     VmaAllocationInfo m_allocation_info{};
     VmaAllocationCreateInfo m_allocation_ci{};
 

@@ -13,7 +13,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @note The instantiation of this class must be synchronized externally.
 class Instance {
 protected:
-    VkInstance m_instance = VK_NULL_HANDLE;
+    VkInstance m_instance{VK_NULL_HANDLE};
     AvailabilityChecksManager m_availability_checks;
 
 public:

@@ -19,12 +19,12 @@ class Texture {
 private:
     std::unique_ptr<wrapper::Image> m_texture_image;
 
-    std::string m_name = "";
-    std::string m_file_name = "";
-    int m_texture_width = 0;
-    int m_texture_height = 0;
-    int m_texture_channels = 0;
-    int m_mip_levels = 0;
+    std::string m_name;
+    std::string m_file_name;
+    int m_texture_width{0};
+    int m_texture_height{0};
+    int m_texture_channels{0};
+    int m_mip_levels{0};
 
     VkDevice m_device;
     VkSampler m_sampler;
@@ -33,7 +33,7 @@ private:
     VkPhysicalDevice m_graphics_card;
 
     std::uint32_t m_data_transfer_queue_family_index;
-    const VkFormat m_texture_image_format = VK_FORMAT_R8G8B8A8_UNORM;
+    const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
     OnceCommandBuffer m_copy_command_buffer;
 

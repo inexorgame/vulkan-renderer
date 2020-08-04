@@ -42,34 +42,32 @@ protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 
-    std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
+    std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager{new VulkanGraphicsCardInfoViewer};
 
-    std::shared_ptr<AvailabilityChecksManager> m_availability_checks_manager =
-        std::make_shared<AvailabilityChecksManager>();
+    std::shared_ptr<AvailabilityChecksManager> m_availability_checks_manager{new AvailabilityChecksManager};
 
-    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker =
-        std::make_shared<VulkanSettingsDecisionMaker>();
+    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
     VkDebugReportCallbackEXT m_debug_report_callback{};
 
-    bool m_debug_report_callback_initialised = false;
+    bool m_debug_report_callback_initialised{false};
 
     TimeStep m_time_step;
 
-    std::uint32_t m_window_width = 0;
+    std::uint32_t m_window_width{0};
 
-    std::uint32_t m_window_height = 0;
+    std::uint32_t m_window_height{0};
 
-    std::string m_window_title = "";
+    std::string m_window_title;
 
     FPSCounter m_fps_counter;
 
     // TODO: Refactor this!
     VkDescriptorBufferInfo m_uniform_buffer_info{};
 
-    bool m_vsync_enabled = false;
+    bool m_vsync_enabled{false};
 
     Camera m_game_camera;
 
@@ -126,10 +124,10 @@ public:
     /// @brief Run Vulkan memory allocator's memory statistics
     void calculate_memory_budget();
 
-    bool m_window_resized = false;
+    bool m_window_resized{false};
 
     /// Neccesary for taking into account the relative speed of the system's CPU.
-    float m_time_passed = 0.0f;
+    float m_time_passed{0.0f};
 
     //
     TimeStep m_stopwatch;

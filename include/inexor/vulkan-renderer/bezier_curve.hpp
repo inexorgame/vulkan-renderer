@@ -43,18 +43,18 @@ namespace inexor::vulkan_renderer {
 /// Every bezier curve will be generated from a list of BezierInputPoint.
 /// Every input point can have a custom weight coefficient.
 struct BezierInputPoint {
-    glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 pos{0.0f, 0.0f, 0.0f};
 
-    float weight = 1.0f;
+    float weight{1.0f};
 };
 
 /// @brief Those are the points which will be generated from the bezier curve generator.
 /// How many BezierOutputPoint points will be generated depends on the required precision.
 /// The higher the requested precision, the more points will be
 struct BezierOutputPoint : public BezierInputPoint {
-    glm::vec3 normal = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 normal{0.0f, 0.0f, 0.0f};
 
-    glm::vec3 tangent = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 tangent{0.0f, 0.0f, 0.0f};
 };
 
 /// @brief This struct bundles describes everything about the bezier curve.

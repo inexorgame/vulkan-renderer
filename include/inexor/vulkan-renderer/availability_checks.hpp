@@ -10,13 +10,13 @@ namespace inexor::vulkan_renderer {
 
 class AvailabilityChecksManager {
 private:
-    std::uint32_t m_available_instance_extensions = 0;
+    std::uint32_t m_available_instance_extensions{0};
 
-    std::uint32_t m_available_instance_layers = 0;
+    std::uint32_t m_available_instance_layers{0};
 
-    std::uint32_t m_available_device_layers = 0;
+    std::uint32_t m_available_device_layers{0};
 
-    std::uint32_t m_available_device_extensions = 0;
+    std::uint32_t m_available_device_extensions{0};
 
     std::vector<VkExtensionProperties> m_instance_extensions_cache;
 

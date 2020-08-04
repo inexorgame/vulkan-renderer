@@ -15,13 +15,13 @@ namespace inexor::vulkan_renderer {
 
 class Application : public VulkanRenderer {
 private:
-    std::string m_application_name = "";
+    std::string m_application_name;
 
-    std::string m_engine_name = "";
+    std::string m_engine_name;
 
-    std::uint32_t m_application_version = 0;
+    std::uint32_t m_application_version{};
 
-    std::uint32_t m_engine_version = 0;
+    std::uint32_t m_engine_version{};
 
     // The core concept of paralellization in Inexor is to use a
     // C++17 threadpool implementation which spawns worker threads.

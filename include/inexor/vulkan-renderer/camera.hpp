@@ -14,15 +14,15 @@ private:
 
 public:
     enum CameraType { LOOKAT, FIRSTPERSON };
-    CameraType m_type = CameraType::LOOKAT;
+    CameraType m_type{CameraType::LOOKAT};
 
-    glm::vec3 m_rotation = glm::vec3();
-    glm::vec3 m_position = glm::vec3();
+    glm::vec3 m_rotation{};
+    glm::vec3 m_position{};
 
-    float m_rotation_speed = 1.0f;
-    float m_movement_speed = 1.0f;
+    float m_rotation_speed{1.0f};
+    float m_movement_speed{1.0f};
 
-    bool m_updated = false;
+    bool m_updated{false};
 
     struct {
         glm::mat4 perspective;
@@ -30,10 +30,10 @@ public:
     } m_matrices;
 
     struct {
-        bool left = false;
-        bool right = false;
-        bool up = false;
-        bool down = false;
+        bool left{false};
+        bool right{false};
+        bool up{false};
+        bool down{false};
     } m_keys;
 
     bool moving();

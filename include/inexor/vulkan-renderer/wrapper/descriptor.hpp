@@ -11,16 +11,16 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @brief TODO
 class Descriptor {
 protected:
-    std::string m_name = "";
-    std::uint32_t m_number_of_images_in_swapchain = 0;
+    std::string m_name;
+    std::uint32_t m_number_of_images_in_swapchain{0};
 
     std::vector<VkDescriptorSet> m_descriptor_sets{};
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets{};
     std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings{};
 
-    VkDescriptorSetLayout m_descriptor_set_layout = VK_NULL_HANDLE;
-    VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
-    VkDevice m_device = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
+    VkDevice m_device{VK_NULL_HANDLE};
 
 public:
     /// @param device [in] The Vulkan device.

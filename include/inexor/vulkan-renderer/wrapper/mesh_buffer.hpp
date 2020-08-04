@@ -32,9 +32,9 @@ private:
     // Index buffer, if available.
     std::optional<GPUMemoryBuffer> m_index_buffer;
 
-    std::uint32_t m_number_of_vertices = 0;
+    std::uint32_t m_number_of_vertices{0};
 
-    std::uint32_t m_number_of_indices = 0;
+    std::uint32_t m_number_of_indices{0};
 
     // Don't forget that index buffers are optional!
     bool m_index_buffer_available = false;

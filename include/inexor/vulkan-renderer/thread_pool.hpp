@@ -117,7 +117,7 @@ private:
 
     std::condition_variable m_tasklist_cv;
 
-    std::atomic<bool> m_stop_threads = false;
+    std::atomic<bool> m_stop_threads{false};
 };
 
 template <typename F, typename... Args, typename>
