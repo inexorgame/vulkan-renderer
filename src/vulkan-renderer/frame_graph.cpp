@@ -350,10 +350,10 @@ void FrameGraph::compile(const RenderResource &target) {
         m_stage_stack.push_back(stage);
     };
 
-    // DFS starting from writer of target (initial stage executants)
-    // TODO(): Will there be more than one writer to the target (back buffer), maybe with blending?
-    assert(writers[&target].size() == 1);
-    dfs(writers[&target][0]);
+    // DFS starting from writers of target (initial stage executants)
+    for (auto *stage : writers[&target]) {
+        dfs(stage);
+    }
 
     m_log->debug("Final stage order:");
     for (auto *stage : m_stage_stack) {
