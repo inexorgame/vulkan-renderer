@@ -187,6 +187,7 @@ class GraphicsStage : public RenderStage {
     friend FrameGraph;
 
 private:
+    bool m_clears_screen{false};
     std::unordered_map<const BufferResource *, std::uint32_t> m_buffer_bindings;
     std::vector<VkPipelineShaderStageCreateInfo> m_shaders;
 
@@ -198,6 +199,11 @@ public:
 
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
+
+    /// @brief Specifies that this stage should clear the screen before rendering
+    void set_clears_screen(bool clears_screen) {
+        m_clears_screen = clears_screen;
+    }
 
     /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage
     void bind_buffer(const BufferResource &buffer, std::uint32_t binding);

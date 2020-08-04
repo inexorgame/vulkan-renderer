@@ -32,6 +32,7 @@ void VulkanRenderer::setup_frame_graph() {
     main_stage.writes_to(depth_buffer);
     main_stage.reads_from(vertex_buffer);
     main_stage.bind_buffer(vertex_buffer, 0);
+    main_stage.set_clears_screen(true);
     main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], phys->pipeline_layout());
         cmd_buf.draw(m_octree_vertices.size());
