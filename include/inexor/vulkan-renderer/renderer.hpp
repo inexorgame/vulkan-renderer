@@ -96,6 +96,7 @@ protected:
     std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
 
     std::vector<wrapper::Shader> m_shaders;
+    std::vector<wrapper::Shader> m_ui_shaders;
     std::vector<wrapper::Texture> m_textures;
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
     std::vector<wrapper::MeshBuffer> m_mesh_buffers;

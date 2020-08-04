@@ -167,6 +167,12 @@ VkResult Application::load_shaders() {
                                fragment_shader_file);
     }
 
+    // TODO: A bit hacky, resource management needs a cleanup
+    m_ui_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_VERTEX_BIT, "ui vertex shader",
+                              "shaders/ui.vert.spv");
+    m_ui_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "ui fragment shader",
+                              "shaders/ui.frag.spv");
+
     spdlog::debug("Loading shaders finished.");
 
     return VK_SUCCESS;
