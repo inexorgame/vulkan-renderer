@@ -9,19 +9,11 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Window {
 private:
-    GLFWwindow *window;
-    std::uint32_t width;
-    std::uint32_t height;
+    GLFWwindow *m_window;
+    std::uint32_t m_width;
+    std::uint32_t m_height;
 
 public:
-    /// Delete the copy constructor so windows are move-only objects.
-    Window(const Window &) = delete;
-    Window(Window &&other) noexcept;
-
-    /// Delete the copy assignment operator so windows are move-only objects.
-    Window &operator=(const Window &) = delete;
-    Window &operator=(Window &&) noexcept = default;
-
     /// @brief Creates a new window using glfw library.
     /// @param instance [in] The Vulkan instance.
     /// @param title [in] The title of the window.
@@ -31,8 +23,12 @@ public:
     /// @param resizable [in] True if the window should be resizable.
     Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
            const bool resizable);
-
+    Window(const Window &) = delete;
+    Window(Window &&) noexcept;
     ~Window();
+
+    Window &operator=(const Window &) = delete;
+    Window &operator=(Window &&) = default;
 
     /// @brief Waits until window size is greater than 0.
     void wait_for_focus();
@@ -56,7 +52,7 @@ public:
     void hide();
 
     /// @brief Queries the current position of the cursor.
-    void get_cursor_pos(double &pos_x, double &pos_y);
+    void cursor_pos(double &pos_x, double &pos_y);
 
     /// @brief Checks if a button is pressed.
     /// @param button [in] The glfw button index.
@@ -69,15 +65,15 @@ public:
     bool should_close();
 
     [[nodiscard]] GLFWwindow *get() const {
-        return window;
+        return m_window;
     }
 
-    [[nodiscard]] int get_width() const {
-        return width;
+    [[nodiscard]] int width() const {
+        return m_width;
     }
 
-    [[nodiscard]] int get_height() const {
-        return height;
+    [[nodiscard]] int height() const {
+        return m_height;
     }
 };
 

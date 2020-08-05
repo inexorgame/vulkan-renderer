@@ -13,18 +13,18 @@ class Semaphore;
 class Swapchain {
 private:
     // TODO: Move members which don't need to be members!
-    VkDevice device;
-    VkPhysicalDevice graphics_card;
-    VkSurfaceKHR surface;
-    VkSwapchainKHR swapchain;
-    VkSurfaceFormatKHR surface_format;
-    VkExtent2D extent;
+    VkDevice m_device;
+    VkPhysicalDevice m_graphics_card;
+    VkSurfaceKHR m_surface;
+    VkSwapchainKHR m_swapchain;
+    VkSurfaceFormatKHR m_surface_format;
+    VkExtent2D m_extent;
 
-    std::vector<VkImage> swapchain_images;
-    std::vector<VkImageView> swapchain_image_views;
-    std::uint32_t swapchain_image_count;
-    std::string name;
-    bool vsync_enabled;
+    std::vector<VkImage> m_swapchain_images;
+    std::vector<VkImageView> m_swapchain_image_views;
+    std::uint32_t m_swapchain_image_count;
+    std::string m_name;
+    bool m_vsync_enabled;
 
     /// @brief (Re)creates the swapchain.
     /// @param window_width [in] The requested width of the window.
@@ -34,21 +34,17 @@ private:
     void setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
 
 public:
-    /// Delete the copy constructor so swapchains are move-only objects.
-    Swapchain(const Swapchain &) = delete;
-    Swapchain(Swapchain &&other) noexcept;
-
-    /// Delete the copy assignment operator so swapchains are move-only objects.
-    Swapchain &operator=(const Swapchain &) = delete;
-    Swapchain &operator=(Swapchain &&) noexcept = delete;
-
     /// @brief
     /// @note We must pass width and height as call by reference!
     Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
               std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
               const std::string &name);
-
+    Swapchain(const Swapchain &) = delete;
+    Swapchain(Swapchain &&) noexcept;
     ~Swapchain();
+
+    Swapchain &operator=(const Swapchain &) = delete;
+    Swapchain &operator=(Swapchain &&) = default;
 
     /// @brief Acquires the next writable image in the swapchain
     /// @param semaphore A semaphore to signal once image acquisition has completed
@@ -60,37 +56,38 @@ public:
     /// This happens for example when the window gets resized.
     void recreate(std::uint32_t window_width, std::uint32_t window_height);
 
-    [[nodiscard]] const VkSwapchainKHR *get_swapchain_ptr() const {
-        return &swapchain;
+    [[nodiscard]] const VkSwapchainKHR *swapchain_ptr() const {
+        return &m_swapchain;
     }
 
-    [[nodiscard]] VkSwapchainKHR get_swapchain() const {
-        return swapchain;
+    [[nodiscard]] VkSwapchainKHR swapchain() const {
+        return m_swapchain;
     }
 
-    [[nodiscard]] std::uint32_t get_image_count() const {
-        return swapchain_image_count;
+    [[nodiscard]] std::uint32_t image_count() const {
+        return m_swapchain_image_count;
     }
 
-    [[nodiscard]] VkFormat get_image_format() const {
-        return surface_format.format;
+    [[nodiscard]] VkFormat image_format() const {
+        return m_surface_format.format;
     }
 
-    [[nodiscard]] VkExtent2D get_extent() const {
-        return extent;
+    [[nodiscard]] VkExtent2D extent() const {
+        return m_extent;
     }
 
-    [[nodiscard]] VkImageView get_image_view(std::size_t index) const {
-        if (index >= swapchain_image_views.size()) {
-            throw std::out_of_range("Error: swapchain_image_views has " + std::to_string(swapchain_image_views.size()) +
-                                    " entries. Requested index " + std::to_string(index) + " is out of bounds!");
+    [[nodiscard]] VkImageView image_view(std::size_t index) const {
+        if (index >= m_swapchain_image_views.size()) {
+            throw std::out_of_range("Error: swapchain_image_views has " +
+                                    std::to_string(m_swapchain_image_views.size()) + " entries. Requested index " +
+                                    std::to_string(index) + " is out of bounds!");
         }
 
-        return swapchain_image_views.at(index);
+        return m_swapchain_image_views.at(index);
     }
 
-    [[nodiscard]] std::vector<VkImageView> get_image_views() const {
-        return swapchain_image_views;
+    [[nodiscard]] std::vector<VkImageView> image_views() const {
+        return m_swapchain_image_views;
     }
 };
 

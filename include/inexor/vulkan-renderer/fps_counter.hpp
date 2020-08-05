@@ -8,11 +8,11 @@ namespace inexor::vulkan_renderer {
 
 class FPSCounter {
 private:
-    std::size_t frames = 0;
+    std::size_t m_frames = 0;
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> last_time;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time;
 
-    float fps_update_interval = 1.0f;
+    float m_fps_update_interval = 1.0f;
 
 public:
     FPSCounter() = default;

@@ -8,13 +8,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
-    : device(other.device), pipeline_layout(std::exchange(other.pipeline_layout, nullptr)),
-      name(std::move(other.name)) {}
-
 PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
                                const std::string &name)
-    : device(device), name(name) {
+    : m_device(device), m_name(name) {
     assert(device);
     assert(!descriptor_set_layouts.empty());
     assert(!name.empty());
@@ -25,7 +21,7 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
 
     spdlog::debug("Creating pipeline layout {}.", name);
 
-    if (vkCreatePipelineLayout(device, &pipeline_layout_ci, nullptr, &pipeline_layout)) {
+    if (vkCreatePipelineLayout(device, &pipeline_layout_ci, nullptr, &m_pipeline_layout)) {
         throw std::runtime_error("Error: vkCreatePipelineLayout failed for " + name + " !");
     }
 
@@ -34,9 +30,13 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
     spdlog::debug("Created pipeline layout successfully.");
 }
 
+PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
+    : m_device(other.m_device), m_pipeline_layout(std::exchange(other.m_pipeline_layout, nullptr)),
+      m_name(std::move(other.m_name)) {}
+
 PipelineLayout::~PipelineLayout() {
-    spdlog::trace("Destroying pipeline layout {}.", name);
-    vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+    spdlog::trace("Destroying pipeline layout {}.", m_name);
+    vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -8,15 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
-    : name(std::move(name)), device(std::exchange(other.device, nullptr)), buffer(std::exchange(other.buffer, nullptr)),
-      allocation(std::exchange(other.allocation, nullptr)), allocation_info(std::move(other.allocation_info)),
-      allocation_ci(std::move(other.allocation_ci)) {}
-
 GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
                                  const VkDeviceSize &size, const VkBufferUsageFlags &buffer_usage,
                                  const VmaMemoryUsage &memory_usage)
-    : device(device), vma_allocator(vma_allocator), name(name), buffer_size(size) {
+    : m_device(device), m_vma_allocator(vma_allocator), m_name(name), m_buffer_size(size) {
     assert(device);
     assert(vma_allocator);
     assert(!name.empty());
@@ -28,20 +23,20 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     buffer_ci.usage = buffer_usage;
     buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    allocation_ci.usage = memory_usage;
+    m_allocation_ci.usage = memory_usage;
 
 #if VMA_RECORDING_ENABLED
-    allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    allocation_ci.pUserData = this->name.data();
+    m_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+    m_allocation_ci.pUserData = m_name.data();
 #else
-    allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    m_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
     // TODO: Should we create this buffer as mapped?
     // TODO: Is it good to have memory mapped all the time?
     // TODO: When should memory be mapped / unmapped?
 
-    if (vmaCreateBuffer(vma_allocator, &buffer_ci, &allocation_ci, &buffer, &allocation, &allocation_info)) {
+    if (vmaCreateBuffer(vma_allocator, &buffer_ci, &m_allocation_ci, &m_buffer, &m_allocation, &m_allocation_info)) {
         throw std::runtime_error("Error: GPU memory buffer allocation for " + name + " failed!");
     }
 
@@ -54,7 +49,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
         // debugging.
         auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
         name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT;
-        name_info.object = reinterpret_cast<std::uint64_t>(buffer);
+        name_info.object = reinterpret_cast<std::uint64_t>(m_buffer);
         name_info.pObjectName = name.c_str();
 
         spdlog::debug("Assigning internal name '{}' to GPU memory buffer.", name);
@@ -76,12 +71,17 @@ GPUMemoryBuffer::GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma
     assert(data);
 
     // Copy the memory into the buffer!
-    std::memcpy(allocation_info.pMappedData, data, data_size);
+    std::memcpy(m_allocation_info.pMappedData, data, data_size);
 }
+
+GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
+    : m_name(std::move(other.m_name)), m_device(std::exchange(other.m_device, nullptr)),
+      m_buffer(std::exchange(other.m_buffer, nullptr)), m_allocation(std::exchange(other.m_allocation, nullptr)),
+      m_allocation_info(std::move(other.m_allocation_info)), m_allocation_ci(std::move(other.m_allocation_ci)) {}
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
     spdlog::trace("Destroying GPU memory buffer.");
-    vmaDestroyBuffer(vma_allocator, buffer, allocation);
+    vmaDestroyBuffer(m_vma_allocator, m_buffer, m_allocation);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

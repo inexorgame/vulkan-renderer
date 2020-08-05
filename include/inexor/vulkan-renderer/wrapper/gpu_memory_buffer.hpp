@@ -9,25 +9,17 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class GPUMemoryBuffer {
 protected:
-    std::string name;
+    std::string m_name;
 
-    VkDevice device;
-    VmaAllocator vma_allocator;
-    VkBuffer buffer = VK_NULL_HANDLE;
-    VkDeviceSize buffer_size = 0;
-    VmaAllocation allocation = VK_NULL_HANDLE;
-    VmaAllocationInfo allocation_info{};
-    VmaAllocationCreateInfo allocation_ci{};
+    VkDevice m_device;
+    VmaAllocator m_vma_allocator;
+    VkBuffer m_buffer{VK_NULL_HANDLE};
+    VkDeviceSize m_buffer_size{0};
+    VmaAllocation m_allocation{VK_NULL_HANDLE};
+    VmaAllocationInfo m_allocation_info{};
+    VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
-    /// Delete the copy constructor so gpu memory buffers are move-only objects.
-    GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
-    GPUMemoryBuffer(GPUMemoryBuffer &&buffer) noexcept;
-
-    /// Delete the copy assignment operator so gpu memory buffers are move-only objects.
-    GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;
-    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) noexcept = default;
-
     /// @brief Creates a new GPU memory buffer.
     /// @param device [in] The Vulkan device from which the buffer will be created.
     /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
@@ -51,27 +43,31 @@ public:
     GPUMemoryBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
                     const VkDeviceSize &buffer_size, void *data, const std::size_t data_size,
                     const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage);
-
+    GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
+    GPUMemoryBuffer(GPUMemoryBuffer &&) noexcept;
     virtual ~GPUMemoryBuffer();
 
-    [[nodiscard]] const std::string &get_name() const {
-        return name;
+    GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;
+    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) = default;
+
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
     }
 
-    [[nodiscard]] const VkBuffer get_buffer() const {
-        return buffer;
+    [[nodiscard]] const VkBuffer buffer() const {
+        return m_buffer;
     }
 
-    [[nodiscard]] const VmaAllocation get_allocation() const {
-        return allocation;
+    [[nodiscard]] const VmaAllocation allocation() const {
+        return m_allocation;
     }
 
-    [[nodiscard]] const VmaAllocationInfo get_allocation_info() const {
-        return allocation_info;
+    [[nodiscard]] const VmaAllocationInfo allocation_info() const {
+        return m_allocation_info;
     }
 
-    [[nodiscard]] const VmaAllocationCreateInfo get_allocation_create_info() const {
-        return allocation_ci;
+    [[nodiscard]] const VmaAllocationCreateInfo allocation_create_info() const {
+        return m_allocation_ci;
     }
 };
 

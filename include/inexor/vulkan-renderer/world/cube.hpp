@@ -45,20 +45,20 @@ public:
     enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
 
 private:
-    Type m_type = Type::SOLID;
-    float m_size = 32;
+    Type m_type{Type::SOLID};
+    float m_size{32};
     glm::vec3 m_position{0.0F, 0.0F, 0.0F};
 
     /// Root cube points to itself.
-    std::weak_ptr<Cube> m_parent = this->weak_from_this();
+    std::weak_ptr<Cube> m_parent{weak_from_this()};
 
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations{};
     std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs{};
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
-    mutable PolygonCache m_polygon_cache = nullptr;
-    mutable bool m_polygon_cache_valid = false;
+    mutable PolygonCache m_polygon_cache{nullptr};
+    mutable bool m_polygon_cache_valid{false};
 
     /// Removes all childs recursive.
     void remove_childs();

@@ -8,11 +8,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Fence::Fence(Fence &&other) noexcept
-    : device(other.device), fence(std::exchange(other.fence, nullptr)), name(std::move(other.name)) {}
-
 Fence::Fence(const VkDevice device, const std::string &name, const bool in_signaled_state)
-    : device(device), name(name) {
+    : m_device(device), m_name(name) {
     assert(device);
     assert(!name.empty());
 
@@ -21,7 +18,7 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
 
     spdlog::debug("Creating Vulkan synchronisation fence {}.", name);
 
-    if (vkCreateFence(device, &fence_ci, nullptr, &fence) != VK_SUCCESS) {
+    if (vkCreateFence(device, &fence_ci, nullptr, &m_fence) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateFence failed!");
     }
 
@@ -30,21 +27,24 @@ Fence::Fence(const VkDevice device, const std::string &name, const bool in_signa
     spdlog::debug("Created fence successfully.");
 }
 
+Fence::Fence(Fence &&other) noexcept
+    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)), m_name(std::move(other.m_name)) {}
+
 Fence::~Fence() {
-    spdlog::trace("Destroying fence {}.", name);
-    vkDestroyFence(device, fence, nullptr);
+    spdlog::trace("Destroying fence {}.", m_name);
+    vkDestroyFence(m_device, m_fence, nullptr);
 }
 
 void Fence::block(std::uint64_t timeout_limit) const {
-    assert(device);
-    assert(fence);
-    vkWaitForFences(device, 1, &fence, VK_TRUE, timeout_limit);
+    assert(m_device);
+    assert(m_fence);
+    vkWaitForFences(m_device, 1, &m_fence, VK_TRUE, timeout_limit);
 }
 
 void Fence::reset() const {
-    assert(device);
-    assert(fence);
-    vkResetFences(device, 1, &fence);
+    assert(m_device);
+    assert(m_fence);
+    vkResetFences(m_device, 1, &m_fence);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

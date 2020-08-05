@@ -42,66 +42,64 @@ protected:
     // We try to avoid inheritance here and prefer a composition pattern.
     // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
 
-    std::shared_ptr<VulkanGraphicsCardInfoViewer> gpu_info_manager = std::make_shared<VulkanGraphicsCardInfoViewer>();
+    std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager{new VulkanGraphicsCardInfoViewer};
 
-    std::shared_ptr<AvailabilityChecksManager> availability_checks_manager =
-        std::make_shared<AvailabilityChecksManager>();
+    std::shared_ptr<AvailabilityChecksManager> m_availability_checks_manager{new AvailabilityChecksManager};
 
-    std::shared_ptr<VulkanSettingsDecisionMaker> settings_decision_maker =
-        std::make_shared<VulkanSettingsDecisionMaker>();
+    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
 
-    std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
-    VkDebugReportCallbackEXT debug_report_callback{};
+    VkDebugReportCallbackEXT m_debug_report_callback{};
 
-    bool debug_report_callback_initialised = false;
+    bool m_debug_report_callback_initialised{false};
 
-    TimeStep time_step;
+    TimeStep m_time_step;
 
-    std::uint32_t window_width = 0;
+    std::uint32_t m_window_width{0};
 
-    std::uint32_t window_height = 0;
+    std::uint32_t m_window_height{0};
 
-    std::string window_title = "";
+    std::string m_window_title;
 
-    FPSCounter fps_counter;
+    FPSCounter m_fps_counter;
 
     // TODO: Refactor this!
-    VkDescriptorBufferInfo uniform_buffer_info{};
+    VkDescriptorBufferInfo m_uniform_buffer_info{};
 
-    bool vsync_enabled = false;
+    bool m_vsync_enabled{false};
 
-    Camera game_camera;
+    Camera m_game_camera;
 
     // RAII wrapper for glfw contexts.
-    std::unique_ptr<wrapper::GLFWContext> glfw_context = nullptr;
+    std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
 
     // RAII wrapper for glfw windows.
-    std::unique_ptr<wrapper::Window> window = nullptr;
+    std::unique_ptr<wrapper::Window> m_window;
 
     // RAII wrapper for VkInstance.
-    std::unique_ptr<wrapper::Instance> vkinstance = nullptr;
+    std::unique_ptr<wrapper::Instance> m_vkinstance;
 
     // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
-    std::unique_ptr<wrapper::Device> vkdevice = nullptr;
+    std::unique_ptr<wrapper::Device> m_vkdevice;
 
     // RAII wrapper for glfw compatible Vulkan surfaces.
-    std::unique_ptr<wrapper::WindowSurface> surface = nullptr;
+    std::unique_ptr<wrapper::WindowSurface> m_surface;
 
     // RAII wrapper for Swapchain.
-    std::unique_ptr<wrapper::Swapchain> swapchain = nullptr;
+    std::unique_ptr<wrapper::Swapchain> m_swapchain;
 
     // RAII wrapper for command pools.
-    std::unique_ptr<wrapper::CommandPool> command_pool = nullptr;
+    std::unique_ptr<wrapper::CommandPool> m_command_pool;
 
-    std::unique_ptr<wrapper::Semaphore> image_available_semaphore;
-    std::unique_ptr<wrapper::Semaphore> rendering_finished_semaphore;
+    std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
+    std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
 
-    std::vector<wrapper::Shader> shaders;
-    std::vector<wrapper::Texture> textures;
-    std::vector<wrapper::UniformBuffer> uniform_buffers;
-    std::vector<wrapper::MeshBuffer> mesh_buffers;
-    std::vector<wrapper::Descriptor> descriptors;
+    std::vector<wrapper::Shader> m_shaders;
+    std::vector<wrapper::Texture> m_textures;
+    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
+    std::vector<wrapper::MeshBuffer> m_mesh_buffers;
+    std::vector<wrapper::Descriptor> m_descriptors;
 
     // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
     std::unique_ptr<FrameGraph> m_frame_graph;
@@ -126,13 +124,13 @@ public:
     /// @brief Run Vulkan memory allocator's memory statistics
     void calculate_memory_budget();
 
-    bool window_resized = false;
+    bool m_window_resized{false};
 
     /// Neccesary for taking into account the relative speed of the system's CPU.
-    float time_passed = 0.0f;
+    float m_time_passed{0.0f};
 
     //
-    TimeStep stopwatch;
+    TimeStep m_stopwatch;
 };
 
 } // namespace inexor::vulkan_renderer

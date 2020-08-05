@@ -17,8 +17,8 @@ Framebuffer::Framebuffer(VkDevice device, VkRenderPass render_pass, const std::v
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
     framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
     framebuffer_ci.pAttachments = attachments.data();
-    framebuffer_ci.width = swapchain.get_extent().width;
-    framebuffer_ci.height = swapchain.get_extent().height;
+    framebuffer_ci.width = swapchain.extent().width;
+    framebuffer_ci.height = swapchain.extent().height;
     framebuffer_ci.layers = 1;
     framebuffer_ci.renderPass = render_pass;
 

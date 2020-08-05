@@ -10,24 +10,16 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Image {
 private:
-    VkDevice device;
-    VmaAllocator vma_allocator;
-    VmaAllocation allocation;
-    VmaAllocationInfo allocation_info;
-    VkImage image;
-    VkFormat format;
-    VkImageView image_view;
-    std::string name;
+    VkDevice m_device;
+    VmaAllocator m_vma_allocator;
+    VmaAllocation m_allocation;
+    VmaAllocationInfo m_allocation_info;
+    VkImage m_image;
+    VkFormat m_format;
+    VkImageView m_image_view;
+    std::string m_name;
 
 public:
-    /// Delete the copy constructor so depth stencil buffers are move-only objects.
-    Image(const Image &) = delete;
-    Image(Image &&other) noexcept;
-
-    /// Delete the copy assignment operator so depth stencil buffers are move-only objets.
-    Image &operator=(const Image &) = delete;
-    Image &operator=(Image &&) noexcept = default;
-
     /// @brief Creates an image and a corresponding image view.
     /// @param device [in] The Vulkan device.
     /// @param graphics_card [in] The graphics card.
@@ -41,21 +33,25 @@ public:
     Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
           const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
           const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent);
-
+    Image(const Image &) = delete;
+    Image(Image &&) noexcept;
     ~Image();
 
-    [[nodiscard]] VkFormat get_image_format() const {
-        return format;
+    Image &operator=(const Image &) = delete;
+    Image &operator=(Image &&) = default;
+
+    [[nodiscard]] VkFormat image_format() const {
+        return m_format;
     }
 
-    [[nodiscard]] VkImageView get_image_view() const {
-        assert(image_view);
-        return image_view;
+    [[nodiscard]] VkImageView image_view() const {
+        assert(m_image_view);
+        return m_image_view;
     }
 
     [[nodiscard]] VkImage get() const {
-        assert(image);
-        return image;
+        assert(m_image);
+        return m_image;
     }
 };
 

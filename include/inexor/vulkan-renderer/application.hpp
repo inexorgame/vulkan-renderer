@@ -15,19 +15,19 @@ namespace inexor::vulkan_renderer {
 
 class Application : public VulkanRenderer {
 private:
-    std::string application_name = "";
+    std::string m_application_name;
 
-    std::string engine_name = "";
+    std::string m_engine_name;
 
-    std::uint32_t application_version = 0;
+    std::uint32_t m_application_version{};
 
-    std::uint32_t engine_version = 0;
+    std::uint32_t m_engine_version{};
 
     // The core concept of paralellization in Inexor is to use a
     // C++17 threadpool implementation which spawns worker threads.
     // A task system is used to distribute work over worker threads.
     // Call thread_pool->execute(); to order new tasks to be worked on.
-    std::shared_ptr<ThreadPool> thread_pool;
+    std::shared_ptr<ThreadPool> m_thread_pool;
 
     // TODO: Refactor into a manger class.
     struct ShaderSetup {
@@ -35,15 +35,15 @@ private:
         std::string shader_file_name;
     };
 
-    std::vector<std::string> vertex_shader_files;
+    std::vector<std::string> m_vertex_shader_files;
 
-    std::vector<std::string> fragment_shader_files;
+    std::vector<std::string> m_fragment_shader_files;
 
-    std::vector<std::string> texture_files;
+    std::vector<std::string> m_texture_files;
 
-    std::vector<std::string> shader_files;
+    std::vector<std::string> m_shader_files;
 
-    std::vector<std::string> gltf_model_files;
+    std::vector<std::string> m_gltf_model_files;
 
 private:
     /// @brief Loads the configuration of the renderer from a TOML configuration file.
@@ -66,7 +66,7 @@ private:
     VkResult update_mouse_input();
 
     // TODO: Refactor!
-    double cursor_x, cursor_y;
+    double m_cursor_x, m_cursor_y;
 
 public:
     Application(int argc, char **argv);

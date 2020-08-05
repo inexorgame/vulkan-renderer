@@ -38,9 +38,9 @@ void GraphicsStage::bind_buffer(const BufferResource &buffer, std::uint32_t bind
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     auto create_info = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
-    create_info.module = shader.get_module();
-    create_info.stage = shader.get_type();
-    create_info.pName = shader.get_entry_point().c_str();
+    create_info.module = shader.module();
+    create_info.stage = shader.type();
+    create_info.pName = shader.entry_point().c_str();
     m_shaders.push_back(create_info);
 }
 
@@ -66,8 +66,8 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
     image_ci.imageType = VK_IMAGE_TYPE_2D;
 
     // TODO(): Support textures with dimensions not equal to back buffer size
-    image_ci.extent.width = m_swapchain.get_extent().width;
-    image_ci.extent.height = m_swapchain.get_extent().height;
+    image_ci.extent.width = m_swapchain.extent().width;
+    image_ci.extent.height = m_swapchain.extent().height;
     image_ci.extent.depth = 1;
 
     image_ci.arrayLayers = 1;
@@ -234,11 +234,11 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     blend_state.pAttachments = &blend_attachment;
 
     VkRect2D scissor{};
-    scissor.extent = m_swapchain.get_extent();
+    scissor.extent = m_swapchain.extent();
 
     VkViewport viewport{};
-    viewport.width = static_cast<float>(m_swapchain.get_extent().width);
-    viewport.height = static_cast<float>(m_swapchain.get_extent().height);
+    viewport.width = static_cast<float>(m_swapchain.extent().width);
+    viewport.height = static_cast<float>(m_swapchain.extent().height);
     viewport.maxDepth = 1.0F;
 
     // TODO(): Custom scissors?
@@ -269,7 +269,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
 
 void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
-    for (std::uint32_t i = 0; i < m_swapchain.get_image_count(); i++) {
+    for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
         phys->m_command_buffers.emplace_back(m_device, m_command_pool);
     }
 }
@@ -296,7 +296,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
             render_pass_bi.pClearValues = clear_values.data();
             render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[i].get();
-            render_pass_bi.renderArea.extent = m_swapchain.get_extent();
+            render_pass_bi.renderArea.extent = m_swapchain.extent();
             render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
             cmd_buf.begin_render_pass(render_pass_bi);
         }
@@ -444,10 +444,10 @@ void FrameGraph::compile(const RenderResource &target) {
                 }
 
                 std::vector<VkImageView> image_views;
-                for (std::uint32_t i = 0; i < m_swapchain.get_image_count(); i++) {
+                for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
                     image_views.clear();
                     for (const auto *back_buffer : back_buffers) {
-                        image_views.push_back(back_buffer->m_swapchain.get_image_view(i));
+                        image_views.push_back(back_buffer->m_swapchain.image_view(i));
                     }
 
                     for (const auto *image : images) {

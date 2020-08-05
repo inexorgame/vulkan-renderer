@@ -6,15 +6,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Image::Image(Image &&other) noexcept
-    : device(other.device), vma_allocator(other.vma_allocator), allocation(other.allocation),
-      allocation_info(other.allocation_info), image(other.image), format(other.format), image_view(other.image_view),
-      name(std::move(other.name)) {}
-
 Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
              const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
              const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent)
-    : device(device), vma_allocator(vma_allocator), format(format), name(name) {
+    : m_device(device), m_vma_allocator(vma_allocator), m_format(format), m_name(name) {
     assert(device);
     assert(graphics_card);
     assert(vma_allocator);
@@ -41,12 +36,12 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
 
 #if VMA_RECORDING_ENABLED
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    vma_allocation_ci.pUserData = this->name.data();
+    vma_allocation_ci.pUserData = m_name.data();
 #else
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
-    if (vmaCreateImage(vma_allocator, &image_ci, &vma_allocation_ci, &image, &allocation, &allocation_info) !=
+    if (vmaCreateImage(vma_allocator, &image_ci, &vma_allocation_ci, &m_image, &m_allocation, &m_allocation_info) !=
         VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateImage failed for depth buffer images!");
     }
@@ -54,7 +49,7 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     // TODO: Assign an internal name using Vulkan debug markers.
 
     auto image_view_ci = make_info<VkImageViewCreateInfo>();
-    image_view_ci.image = image;
+    image_view_ci.image = m_image;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = format;
     image_view_ci.subresourceRange.aspectMask = aspect_flags;
@@ -63,19 +58,24 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device, &image_view_ci, nullptr, &image_view) != VK_SUCCESS) {
+    if (vkCreateImageView(device, &image_view_ci, nullptr, &m_image_view) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateImageView failed!");
     }
 
     // TODO: Assign an internal name using Vulkan debug markers.
 }
 
-Image::~Image() {
-    spdlog::trace("Destroying image view {} .", name);
-    vkDestroyImageView(device, image_view, nullptr);
+Image::Image(Image &&other) noexcept
+    : m_device(other.m_device), m_vma_allocator(other.m_vma_allocator), m_allocation(other.m_allocation),
+      m_allocation_info(other.m_allocation_info), m_image(other.m_image), m_format(other.m_format),
+      m_image_view(other.m_image_view), m_name(std::move(other.m_name)) {}
 
-    spdlog::trace("Destroying image {} .", name);
-    vmaDestroyImage(vma_allocator, image, allocation);
+Image::~Image() {
+    spdlog::trace("Destroying image view {} .", m_name);
+    vkDestroyImageView(m_device, m_image_view, nullptr);
+
+    spdlog::trace("Destroying image {} .", m_name);
+    vmaDestroyImage(m_vma_allocator, m_image, m_allocation);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

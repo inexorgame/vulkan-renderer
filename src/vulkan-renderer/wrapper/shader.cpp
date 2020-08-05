@@ -36,13 +36,9 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
                const std::string &entry_point)
     : Shader(device, type, name, read_binary(file_name), entry_point) {}
 
-Shader::Shader(Shader &&shader) noexcept
-    : device(shader.device), type(shader.type), name(std::move(shader.name)),
-      entry_point(std::move(shader.entry_point)), shader_module(std::exchange(shader.shader_module, nullptr)) {}
-
 Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name,
                const std::vector<char> &code, const std::string &entry_point)
-    : device(device), type(type), name(name), entry_point(entry_point) {
+    : m_device(device), m_type(type), m_name(name), m_entry_point(entry_point) {
     assert(device);
     assert(!name.empty());
     assert(!code.empty());
@@ -57,7 +53,7 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
 
     spdlog::debug("Creating shader module {}.", name);
-    if (vkCreateShaderModule(device, &shader_module_ci, nullptr, &shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(device, &shader_module_ci, nullptr, &m_shader_module) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name + "!");
     }
 
@@ -70,7 +66,7 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
         // debugging.
         auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
         name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT;
-        name_info.object = reinterpret_cast<std::uint64_t>(shader_module);
+        name_info.object = reinterpret_cast<std::uint64_t>(m_shader_module);
         name_info.pObjectName = name.c_str();
 
         spdlog::debug("Assigning internal name {} to shader module.", name);
@@ -80,8 +76,12 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     }
 }
 
+Shader::Shader(Shader &&shader) noexcept
+    : m_device(shader.m_device), m_type(shader.m_type), m_name(std::move(shader.m_name)),
+      m_entry_point(std::move(shader.m_entry_point)), m_shader_module(std::exchange(shader.m_shader_module, nullptr)) {}
+
 Shader::~Shader() {
-    vkDestroyShaderModule(device, shader_module, nullptr);
+    vkDestroyShaderModule(m_device, m_shader_module, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

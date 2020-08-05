@@ -9,10 +9,10 @@ namespace inexor::vulkan_renderer {
 
 VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
     // First ask Vulkan how many instance extensions are available on the system.
-    VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &available_instance_extensions, nullptr);
+    VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &m_available_instance_extensions, nullptr);
     vulkan_error_check(result);
 
-    if (available_instance_extensions == 0) {
+    if (m_available_instance_extensions == 0) {
         // It should be a very rare case that no instance extensions are available at all. Still we have to consider
         // this!
         display_error_message("Error: No Vulkan instance extensions available!");
@@ -21,11 +21,11 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
         return VK_ERROR_INITIALIZATION_FAILED;
     } else {
         // Preallocate memory for extension properties.
-        instance_extensions_cache.resize(available_instance_extensions);
+        m_instance_extensions_cache.resize(m_available_instance_extensions);
 
         // Get the information about the available instance extensions.
-        result = vkEnumerateInstanceExtensionProperties(nullptr, &available_instance_extensions,
-                                                        instance_extensions_cache.data());
+        result = vkEnumerateInstanceExtensionProperties(nullptr, &m_available_instance_extensions,
+                                                        m_instance_extensions_cache.data());
         vulkan_error_check(result);
     }
 
@@ -35,12 +35,12 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
 bool AvailabilityChecksManager::has_instance_extension(const std::string &instance_extension_name) {
     assert(!instance_extension_name.empty());
 
-    if (instance_extensions_cache.empty()) {
+    if (m_instance_extensions_cache.empty()) {
         create_instance_extensions_cache();
     }
 
     // Loop through all available instance extensions and search for the requested one.
-    for (const VkExtensionProperties &instance_extension : instance_extensions_cache) {
+    for (const VkExtensionProperties &instance_extension : m_instance_extensions_cache) {
         // Compare the name of the current instance extension with the requested one.
         if (strcmp(instance_extension.extensionName, instance_extension_name.c_str()) == 0) {
             // Yes, this instance extension is supported!
@@ -54,10 +54,10 @@ bool AvailabilityChecksManager::has_instance_extension(const std::string &instan
 
 VkResult AvailabilityChecksManager::create_instance_layers_cache() {
     // First ask Vulkan how many instance layers are available on the system.
-    VkResult result = vkEnumerateInstanceLayerProperties(&available_instance_layers, nullptr);
+    VkResult result = vkEnumerateInstanceLayerProperties(&m_available_instance_layers, nullptr);
     vulkan_error_check(result);
 
-    if (available_instance_layers == 0) {
+    if (m_available_instance_layers == 0) {
         // It should be a very rare case that no instance layers are available at all. Still we have to consider this!
         display_error_message("Error: No Vulkan instance layers available!");
 
@@ -65,10 +65,10 @@ VkResult AvailabilityChecksManager::create_instance_layers_cache() {
         return VK_ERROR_INITIALIZATION_FAILED;
     }
     // Preallocate memory for layer properties.
-    instance_layers_cache.resize(available_instance_layers);
+    m_instance_layers_cache.resize(m_available_instance_layers);
 
     // Get the information about the available instance layers.
-    result = vkEnumerateInstanceLayerProperties(&available_instance_layers, instance_layers_cache.data());
+    result = vkEnumerateInstanceLayerProperties(&m_available_instance_layers, m_instance_layers_cache.data());
     vulkan_error_check(result);
 
     return VK_SUCCESS;
@@ -77,12 +77,12 @@ VkResult AvailabilityChecksManager::create_instance_layers_cache() {
 bool AvailabilityChecksManager::has_instance_layer(const std::string &instance_layer_name) {
     assert(!instance_layer_name.empty());
 
-    if (instance_layers_cache.empty()) {
+    if (m_instance_layers_cache.empty()) {
         create_instance_layers_cache();
     }
 
     // Loop through all available instance layers and search for the requested one.
-    for (const VkLayerProperties &instance_layer : instance_layers_cache) {
+    for (const VkLayerProperties &instance_layer : m_instance_layers_cache) {
         // Compare the name of the current instance extension with the requested one.
         if (strcmp(instance_layer.layerName, instance_layer_name.c_str()) == 0) {
             // Yes, this instance extension is supported!
@@ -96,10 +96,10 @@ bool AvailabilityChecksManager::has_instance_layer(const std::string &instance_l
 
 VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device layers are available on the system.
-    VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, nullptr);
+    VkResult result = vkEnumerateDeviceLayerProperties(graphics_card, &m_available_device_layers, nullptr);
     vulkan_error_check(result);
 
-    if (available_device_layers == 0) {
+    if (m_available_device_layers == 0) {
         // It should be a very rare case that no device layers are available at all. Still we have to consider this!
         display_error_message("Error: No Vulkan device layers available!");
 
@@ -107,11 +107,11 @@ VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalD
         return VK_ERROR_INITIALIZATION_FAILED;
     }
     // Preallocate memory for device layers.
-    device_layer_properties_cache.resize(available_device_layers);
+    m_device_layer_properties_cache.resize(m_available_device_layers);
 
     // Get the information about the available device layers.
-    result =
-        vkEnumerateDeviceLayerProperties(graphics_card, &available_device_layers, device_layer_properties_cache.data());
+    result = vkEnumerateDeviceLayerProperties(graphics_card, &m_available_device_layers,
+                                              m_device_layer_properties_cache.data());
     vulkan_error_check(result);
 
     return VK_SUCCESS;
@@ -122,12 +122,12 @@ bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphic
     assert(graphics_card);
     assert(!device_layer_name.empty());
 
-    if (device_layer_properties_cache.empty()) {
+    if (m_device_layer_properties_cache.empty()) {
         create_device_layers_cache(graphics_card);
     }
 
     // Loop through all available device layers and search for the requested one.
-    for (const VkLayerProperties &device_layer : device_layer_properties_cache) {
+    for (const VkLayerProperties &device_layer : m_device_layer_properties_cache) {
         if (0 == strcmp(device_layer.layerName, device_layer_name.c_str())) {
             // Yes, this device layer is supported!
             return true;
@@ -141,10 +141,10 @@ bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphic
 VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device extensions are available on the system.
     VkResult result =
-        vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &available_device_extensions, nullptr);
+        vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &m_available_device_extensions, nullptr);
     vulkan_error_check(result);
 
-    if (0 == available_device_extensions) {
+    if (0 == m_available_device_extensions) {
         // It should be a very rare case that no device extension are available at all. Still we have to consider this!
         display_error_message("Error: No Vulkan device extensions available!");
 
@@ -152,11 +152,11 @@ VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysi
         return VK_ERROR_INITIALIZATION_FAILED;
     } else {
         // Preallocate memory for device extensions.
-        device_extensions_cache.resize(available_device_extensions);
+        m_device_extensions_cache.resize(m_available_device_extensions);
 
         // Get the information about the available device extensions.
-        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &available_device_extensions,
-                                                      device_extensions_cache.data());
+        result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &m_available_device_extensions,
+                                                      m_device_extensions_cache.data());
         vulkan_error_check(result);
     }
 
@@ -168,12 +168,12 @@ bool AvailabilityChecksManager::has_device_extension(const VkPhysicalDevice &gra
     assert(graphics_card);
     assert(!device_extension_name.empty());
 
-    if (device_extensions_cache.empty()) {
+    if (m_device_extensions_cache.empty()) {
         create_device_extensions_cache(graphics_card);
     }
 
     // Loop through all available device extensions and search for the requested one.
-    for (const VkExtensionProperties &device_extension : device_extensions_cache) {
+    for (const VkExtensionProperties &device_extension : m_device_extensions_cache) {
         if (0 == strcmp(device_extension.extensionName, device_extension_name.c_str())) {
             // Yes, this device extension is supported!
             return true;

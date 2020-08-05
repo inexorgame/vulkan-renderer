@@ -41,7 +41,7 @@ public:
         return m_command_buffer;
     }
 
-    [[nodiscard]] const VkCommandBuffer *get_ptr() const {
+    [[nodiscard]] const VkCommandBuffer *ptr() const {
         return &m_command_buffer;
     }
 };

@@ -9,8 +9,8 @@ public:
     static constexpr std::uint8_t MAX = 8;
 
 private:
-    std::uint8_t m_start = 0;
-    std::uint8_t m_end = Indentation::MAX;
+    std::uint8_t m_start{0};
+    std::uint8_t m_end{Indentation::MAX};
 
 public:
     Indentation() = default;
