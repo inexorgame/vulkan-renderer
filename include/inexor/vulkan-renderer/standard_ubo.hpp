@@ -13,4 +13,9 @@ struct UniformBufferObject {
     glm::mat4 proj;
 };
 
+struct UiUniformBufferObject {
+    glm::vec2 translation;
+    glm::vec2 scale;
+};
+
 } // namespace inexor::vulkan_renderer

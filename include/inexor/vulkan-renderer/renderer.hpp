@@ -66,6 +66,7 @@ protected:
 
     // TODO: Refactor this!
     VkDescriptorBufferInfo m_uniform_buffer_info{};
+    VkDescriptorBufferInfo ui_ubo_info{};
 
     bool m_vsync_enabled{false};
 
@@ -94,6 +95,7 @@ protected:
 
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
+    std::unique_ptr<wrapper::Texture> m_imgui_texture;
 
     std::vector<wrapper::Shader> m_shaders;
     std::vector<wrapper::Shader> m_ui_shaders;
@@ -108,6 +110,7 @@ protected:
     std::vector<OctreeGpuVertex> m_octree_vertices;
 
     void setup_frame_graph();
+    void setup_ui();
 
     void recreate_swapchain();
 

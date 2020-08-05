@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/info.hpp"
 
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
 #include <array>
@@ -31,19 +32,82 @@ void VulkanRenderer::setup_frame_graph() {
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
     main_stage.reads_from(vertex_buffer);
+    main_stage.add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
     main_stage.bind_buffer(vertex_buffer, 0);
     main_stage.set_clears_screen(true);
     main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], phys->pipeline_layout());
         cmd_buf.draw(m_octree_vertices.size());
     });
-
     for (const auto &shader : m_shaders) {
         main_stage.uses_shader(shader);
     }
 
-    main_stage.add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
+    auto &ui_stage = m_frame_graph->add<GraphicsStage>("imgui stage");
+    ui_stage.writes_to(back_buffer);
+    ui_stage.add_descriptor_layout(m_descriptors[1].descriptor_set_layout());
+    for (const auto &shader : m_ui_shaders) {
+        ui_stage.uses_shader(shader);
+    }
+
     m_frame_graph->compile(back_buffer);
+}
+
+void VulkanRenderer::setup_ui() {
+    auto &io = ImGui::GetIO();
+    io.Fonts->AddFontFromFileTTF("assets/fonts/vegur/vegur.otf", 16.0f);
+
+    unsigned char *font_data = nullptr;
+    int texture_width = 0;
+    int texture_height = 0;
+    io.Fonts->GetTexDataAsRGBA32(&font_data, &texture_width, &texture_height);
+
+    // Create a GPU buffer and upload the texture
+    // NOTE: * 4 for 4 channels
+    VkDeviceSize texture_size = texture_width * texture_height * 4 * sizeof(*font_data);
+    m_imgui_texture = std::make_unique<wrapper::Texture>(
+        m_vkdevice->device(), m_vkdevice->physical_device(), m_vkdevice->allocator(), font_data, texture_size,
+        "imgui_overlay", m_vkdevice->transfer_queue(), m_vkdevice->transfer_queue_family_index());
+
+    std::vector<VkDescriptorSetLayoutBinding> layout_bindings(2);
+    std::vector<VkWriteDescriptorSet> descriptor_writes(2);
+    layout_bindings[0].binding = 0;
+    layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layout_bindings[0].descriptorCount = 1;
+    layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    layout_bindings[1].binding = 1;
+    layout_bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layout_bindings[1].descriptorCount = 1;
+    layout_bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    ui_ubo_info.buffer = m_uniform_buffers[1].buffer();
+    ui_ubo_info.offset = 0;
+    ui_ubo_info.range = sizeof(UiUniformBufferObject);
+
+    // Setup UBO
+    descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_writes[0].dstBinding = 0;
+    descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptor_writes[0].descriptorCount = 1;
+    descriptor_writes[0].pBufferInfo = &ui_ubo_info;
+
+    // Setup sampler
+    VkDescriptorImageInfo image_info{};
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.imageView = m_imgui_texture->image_view();
+    image_info.sampler = m_imgui_texture->sampler();
+    descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_writes[1].dstBinding = 1;
+    descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor_writes[1].descriptorCount = 1;
+    descriptor_writes[1].pImageInfo = &image_info;
+    m_descriptors.emplace_back(
+        wrapper::ResourceDescriptor{m_vkdevice->device(),
+                                    m_swapchain->image_count(),
+                                    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
+                                    layout_bindings,
+                                    descriptor_writes,
+                                    "UI descriptor"});
 }
 
 void VulkanRenderer::recreate_swapchain() {

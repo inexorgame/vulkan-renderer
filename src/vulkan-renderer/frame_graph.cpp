@@ -212,11 +212,25 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     depth_stencil.depthTestEnable = VK_TRUE;
     depth_stencil.depthWriteEnable = VK_TRUE;
+    // TODO: Don't do this!!
+    if (stage->m_name == "imgui stage") {
+        m_log->warn("TODO FIX THIS");
+        depth_stencil.depthCompareOp = VK_COMPARE_OP_ALWAYS;
+        depth_stencil.depthTestEnable = VK_FALSE;
+        depth_stencil.depthWriteEnable = VK_FALSE;
+    }
 
     // TODO(): Wireframe rendering
     auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
     rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    // TODO: Don't do this!!
+    if (stage->m_name == "imgui stage") {
+        m_log->warn("TODO FIX THIS");
+        rasterization_state.cullMode = VK_CULL_MODE_NONE;
+        rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    }
+
     rasterization_state.lineWidth = 1.0F;
     rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
 
@@ -228,6 +242,16 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     VkPipelineColorBlendAttachmentState blend_attachment{};
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    // TODO: Don't do this!!
+    if (stage->m_name == "imgui stage") {
+        m_log->warn("TODO FIX THIS");
+        blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+        blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    }
 
     auto blend_state = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
     blend_state.attachmentCount = 1;

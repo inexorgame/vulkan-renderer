@@ -409,6 +409,8 @@ Application::Application(int argc, char **argv) {
 
     m_uniform_buffers.emplace_back(m_vkdevice->device(), m_vkdevice->allocator(), "matrices uniform buffer",
                                    sizeof(UniformBufferObject));
+    m_uniform_buffers.emplace_back(m_vkdevice->device(), m_vkdevice->allocator(), "ui uniform buffer",
+                                 sizeof(UiUniformBufferObject));
 
     std::vector<VkDescriptorSetLayoutBinding> layout_bindings(1);
 
