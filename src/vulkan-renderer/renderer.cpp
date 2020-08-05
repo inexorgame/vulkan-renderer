@@ -45,56 +45,6 @@ void VulkanRenderer::setup_frame_graph() {
     m_frame_graph->compile(back_buffer);
 }
 
-VkResult VulkanRenderer::create_descriptor_pool() {
-    m_descriptors.emplace_back(m_vkdevice->device(), m_swapchain->image_count(), std::string("unnamed descriptor"));
-
-    // Create the descriptor pool.
-    m_descriptors[0].create_descriptor_pool({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER});
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_descriptor_set_layouts() {
-    std::vector<VkDescriptorSetLayoutBinding> descriptor_set_layout_bindings(1);
-
-    descriptor_set_layout_bindings[0].binding = 0;
-    descriptor_set_layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor_set_layout_bindings[0].descriptorCount = 1;
-    descriptor_set_layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    descriptor_set_layout_bindings[0].pImmutableSamplers = nullptr;
-
-    m_descriptors[0].create_descriptor_set_layouts(descriptor_set_layout_bindings);
-
-    return VK_SUCCESS;
-}
-
-VkResult VulkanRenderer::create_descriptor_writes() {
-    assert(!m_textures.empty());
-
-    std::vector<VkWriteDescriptorSet> descriptor_writes(1);
-
-    // Link the matrices uniform buffer to the descriptor set so the shader can access it.
-
-    // We can do better than this, but therefore RAII refactoring needs to be done..
-    m_uniform_buffer_info.buffer = m_uniform_buffers[0].buffer();
-    m_uniform_buffer_info.offset = 0;
-    m_uniform_buffer_info.range = sizeof(UniformBufferObject);
-
-    descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[0].dstSet = nullptr;
-    descriptor_writes[0].dstBinding = 0;
-    descriptor_writes[0].dstArrayElement = 0;
-    descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor_writes[0].descriptorCount = 1;
-    descriptor_writes[0].pBufferInfo = &m_uniform_buffer_info;
-
-    m_descriptors[0].add_descriptor_writes(descriptor_writes);
-
-    m_descriptors[0].create_descriptor_sets();
-
-    return VK_SUCCESS;
-}
-
 void VulkanRenderer::recreate_swapchain() {
     m_window->wait_for_focus();
     vkDeviceWaitIdle(m_vkdevice->device());
