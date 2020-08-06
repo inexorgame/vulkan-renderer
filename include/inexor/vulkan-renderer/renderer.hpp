@@ -13,7 +13,7 @@
 // Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
@@ -99,7 +99,7 @@ protected:
     std::vector<wrapper::Texture> m_textures;
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
     std::vector<wrapper::MeshBuffer> m_mesh_buffers;
-    std::vector<wrapper::Descriptor> m_descriptors;
+    std::vector<wrapper::ResourceDescriptor> m_descriptors;
 
     // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
     std::unique_ptr<FrameGraph> m_frame_graph;
@@ -107,12 +107,6 @@ protected:
     std::vector<OctreeGpuVertex> m_octree_vertices;
 
     void setup_frame_graph();
-
-    VkResult create_descriptor_pool();
-
-    VkResult create_descriptor_set_layouts();
-
-    VkResult create_descriptor_writes();
 
     void recreate_swapchain();
 

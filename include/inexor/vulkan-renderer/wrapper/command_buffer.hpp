@@ -8,10 +8,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-class Descriptor;
+class ResourceDescriptor;
 
 // TODO(): Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper)
 class CommandBuffer {
+
 private:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
 
@@ -26,7 +27,7 @@ public:
 
     // General commands
     void begin(VkCommandBufferUsageFlags flags = 0) const;
-    void bind_descriptor(const Descriptor &descriptor, VkPipelineLayout layout) const;
+    void bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const;
     void end() const;
 
     // Graphics commands

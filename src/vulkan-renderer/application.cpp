@@ -392,18 +392,10 @@ Application::Application(int argc, char **argv) {
                                                        m_surface->get(), m_window->width(), m_window->height(),
                                                        m_vsync_enabled, "Standard swapchain.");
 
-    spdlog::debug("Starting to load textures using threadpool.");
-
     result = load_textures();
     vulkan_error_check(result);
 
     result = load_shaders();
-    vulkan_error_check(result);
-
-    result = create_descriptor_pool();
-    vulkan_error_check(result);
-
-    result = create_descriptor_set_layouts();
     vulkan_error_check(result);
 
     m_command_pool =
@@ -412,8 +404,37 @@ Application::Application(int argc, char **argv) {
     m_uniform_buffers.emplace_back(m_vkdevice->device(), m_vkdevice->allocator(), "matrices uniform buffer",
                                    sizeof(UniformBufferObject));
 
-    result = create_descriptor_writes();
-    vulkan_error_check(result);
+    std::vector<VkDescriptorSetLayoutBinding> layout_bindings(1);
+
+    layout_bindings[0].binding = 0;
+    layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layout_bindings[0].descriptorCount = 1;
+    layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    layout_bindings[0].pImmutableSamplers = nullptr;
+
+    std::vector<VkWriteDescriptorSet> descriptor_writes(1);
+
+    // Link the matrices uniform buffer to the descriptor set so the shader can access it.
+
+    // We can do better than this, but therefore RAII refactoring needs to be done..
+    m_uniform_buffer_info.buffer = m_uniform_buffers[0].buffer();
+    m_uniform_buffer_info.offset = 0;
+    m_uniform_buffer_info.range = sizeof(UniformBufferObject);
+
+    descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_writes[0].dstSet = nullptr;
+    descriptor_writes[0].dstBinding = 0;
+    descriptor_writes[0].dstArrayElement = 0;
+    descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptor_writes[0].descriptorCount = 1;
+    descriptor_writes[0].pBufferInfo = &m_uniform_buffer_info;
+
+    m_descriptors.emplace_back(wrapper::ResourceDescriptor{m_vkdevice->device(),
+                                                           m_swapchain->image_count(),
+                                                           {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
+                                                           layout_bindings,
+                                                           descriptor_writes,
+                                                           "Default descriptor"});
 
     result = load_octree_geometry();
     vulkan_error_check(result);

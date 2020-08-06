@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
 
 #include <array>
 #include <stdexcept>
@@ -28,9 +28,9 @@ void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
     vkBeginCommandBuffer(m_command_buffer, &begin_info);
 }
 
-void CommandBuffer::bind_descriptor(const Descriptor &descriptor, VkPipelineLayout layout) const {
+void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const {
     vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1,
-                            descriptor.descriptor_sets_data(), 0, nullptr);
+                            descriptor.descriptor_sets().data(), 0, nullptr);
 }
 
 void CommandBuffer::end() const {
