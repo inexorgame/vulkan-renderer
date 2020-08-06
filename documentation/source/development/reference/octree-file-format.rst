@@ -141,16 +141,15 @@ As Sauerbraten has one cube type more, the formats can only be compared to Inexo
         > uByte (1) : cube_type // cube type, actually only 3 bits are used, but only 4 types (the first two bits, can be compared to our cubes)
         switch (cube_type) {
             case 0: // octant
-                break // nothing
+                // nothing
             case 1: // empty
-                break // nothing
+                // nothing
             case 2: // solid
-                break // nothing
+                // nothing
             case 3: // normal
-                for corner_number in 0..11 {
+                for (0..11 : corner_number) {
                     > uByte (1) // edge indent
                 }
-                break
         }
     } // get_cube
     get_cube()
@@ -176,11 +175,11 @@ File Extension: ``.nxoc`` - Inexor Octree
 
         switch (cube_type) {
             case 0: // empty
-                break // nothing
+                // nothing
             case 1: // fully
-                break // nothing
+                // nothing
             case 2: // indented
-                for corner_number in 0..7 {
+                for (0..7 : corner_number) {
                     > bit (1) : x_axis // is x axis indented
                     if (x_axis == 1) { // x axis is indented
                         > bit (3) // indentation level as value + 1
@@ -194,12 +193,10 @@ File Extension: ``.nxoc`` - Inexor Octree
                         > bit (3) // indentation level as value + 1
                     }
                 }
-                break
             case 3: // octants
-                for sub_cube in  0..7) {
+                for (0..7 : sub_cube) {
                     get_cube() // recurse down
                 }
-                break
         }
     } // get_cube
     get_cube()
@@ -225,11 +222,11 @@ File Extention: ``.nxoc`` - Inexor Octree
 
         switch (cube_type) {
             case 0: // empty
-                break // nothing
+                // nothing
             case 1: // fully
-                break // nothing
+                // nothing
             case 2: // indented
-                for edge_id in 0..11 {
+                for (0..11 : edge_id) {
                     > bit (2) uByte : indent // edge indentation
                     switch (indent) {
                         case 0: // not indented
@@ -242,12 +239,10 @@ File Extention: ``.nxoc`` - Inexor Octree
                             > bit (5) // indentation level and offset, see below for more information
                     }
                 }
-                break
             case 3: // octants
-                for sub_cube in  0..7) {
+                for (0..7 : sub_cube) {
                     get_cube() // recurse down
                 }
-                break
         }
     } // get_cube
     get_cube()
@@ -284,19 +279,17 @@ File Extention: ``.nxoc`` - Inexor Octree
 
         switch (cube_type) {
             case 0: // empty
-                break // nothing
+                // nothing
             case 1: // fully
-                break // nothing
+                // nothing
             case 2: // indented
-                for edge_id in 0..11 {
+                for (0..11 : edge_id) {
                     > bit (6) // indentation level and offset, see below for more information
                 }
-                break
             case 3: // octants
-                for sub_cube in  0..7) {
+                for (0..7 : sub_cube) {
                     get_cube() // recurse down
                 }
-                break
         }
     } // get_cube
     get_cube()

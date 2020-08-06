@@ -86,7 +86,7 @@ If the reinterpreted type is bigger, it will be filled with 0 regarding to the e
 Conditions
 ----------
 
-``if``, ``if else``, ``else``. Available comparisons are ``==``, ``!=``, ``<``, ``>``, ``<=``, ``>=``. Which can be combined with ``&&`` (and) and ``||`` (or).
+``if``, ``else if``, ``else``. Available comparisons are ``==``, ``!=``, ``<``, ``>``, ``<=``, ``>=``. Which can be combined with ``&&`` (and) and ``||`` (or).
 Brackets are not required around the condition, but can improve the readability.
 You cannot compare a list to a number. You have to reinterpret it beforehand or cast it.
 
@@ -104,11 +104,29 @@ You cannot compare a list to a number. You have to reinterpret it beforehand or 
         > uInt (1) // roll over specifications
     }
 
+A short version for ``else if`` chaining is ``switch``, ``case``. ``default`` will be used if no other case matches.
+There is not default fallthrough, to get this behaviour use ``fallthrough``. A ``break`` inside a switch case will break out of it.
+
+.. code-block::
+
+    > Bit (2) uByte : roll_over // roll over simulation type
+    uInt : roll_over_int = roll_over
+    switch (roll_over_int) {
+    case 0: // roll over specification 0
+        > uInt (1) // roll over specifications
+    case 1: // roll over specification 1
+        > uInt (1) // roll over specifications
+        > uInt (1) // more roll over specifications
+    default: // default roll over specification
+        > uByte (1) // weight in kg
+        > uInt (1) // roll over specifications
+    }
+
 Loops
 -----
 
-There are three loops, a ``for``, ``for`` ranged based and a ``while`` loop.
-Brackets are not required around the condition, but can improve the readability.
+There are three types of loops, a ``for``, ``for`` ranged based and a ``while`` loop.
+Brackets are not required around the condition, but can improve the readability. You can break out of a loop with the ``break`` keyword.
 
 .. code-block::
 
@@ -116,7 +134,7 @@ Brackets are not required around the condition, but can improve the readability.
         // ...
     }
 
-    for id in 0..2) { // including both borders 0 and 2
+    for (0..2 : id) { // including both borders 0 and 2
         // ...
     }
 
