@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <cassert>
 #include <limits>
@@ -10,16 +10,16 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Fence {
 private:
-    VkFence m_fence;
-    VkDevice m_device;
+    wrapper::Device &m_device;
     std::string m_name;
+    VkFence m_fence;
 
 public:
     /// @brief Creates a new fence.
     /// @param device [in] The Vulkan device.
     /// @param name [in] The internal name of the fence.
     /// @param in_signaled_state [in] If true, the fence will be created in signaled state.
-    Fence(const VkDevice device, const std::string &name, const bool in_signaled_state);
+    Fence(wrapper::Device &device, const std::string &name, const bool in_signaled_state);
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
     ~Fence();
