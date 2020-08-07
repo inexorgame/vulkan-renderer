@@ -145,8 +145,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader",
-                               vertex_shader_file);
+        m_shaders.emplace_back(*m_vkdevice, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
     }
 
     spdlog::debug("Loading fragment shaders.");
@@ -160,7 +159,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
+        m_shaders.emplace_back(*m_vkdevice, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
                                fragment_shader_file);
     }
 
@@ -225,7 +224,7 @@ Application::Application(int argc, char **argv) {
 
     // Load the configuration from the TOML file.
     load_toml_configuration_file("configuration/renderer.toml");
-    
+
     bool enable_renderdoc_instance_layer = false;
 
     auto enable_renderdoc = cla_parser.arg<bool>("--renderdoc");

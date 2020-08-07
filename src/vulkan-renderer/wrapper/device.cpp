@@ -323,7 +323,10 @@ void Device::set_object_name(const std::uint64_t object, const VkDebugReportObje
     name_info.object = object;
     name_info.pObjectName = name.c_str();
 
-    m_vk_debug_marker_set_object_name(m_device, &name_info);
+    if (m_vk_debug_marker_set_object_name(m_device, &name_info) != VK_SUCCESS) {
+        throw std::runtime_error(
+            std::string("Failed to assign Vulkan debug marker name to Vulkan resource " + name + "!"));
+    }
 }
 
 void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
@@ -341,7 +344,9 @@ void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjec
     tagInfo.tagSize = tag_size;
     tagInfo.pTag = tag;
 
-    m_vk_debug_marker_set_object_tag(m_device, &tagInfo);
+    if (m_vk_debug_marker_set_object_tag(m_device, &tagInfo) != VK_SUCCESS) {
+        throw std::runtime_error(std::string("Failed to assign Vulkan debug marker data tag to Vulkan resource!"));
+    }
 }
 
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
