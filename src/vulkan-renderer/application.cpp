@@ -226,9 +226,6 @@ Application::Application(int argc, char **argv) {
     tools::CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);
 
-    // Initialise Inexor thread-pool.
-    m_thread_pool = std::make_shared<ThreadPool>();
-
     // Load the configuration from the TOML file.
     VkResult result = load_toml_configuration_file("configuration/renderer.toml");
     vulkan_error_check(result);

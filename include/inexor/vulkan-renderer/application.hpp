@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/thread_pool.hpp"
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_core.h>
@@ -22,12 +21,6 @@ private:
     std::uint32_t m_application_version{};
 
     std::uint32_t m_engine_version{};
-
-    // The core concept of paralellization in Inexor is to use a
-    // C++17 threadpool implementation which spawns worker threads.
-    // A task system is used to distribute work over worker threads.
-    // Call thread_pool->execute(); to order new tasks to be worked on.
-    std::shared_ptr<ThreadPool> m_thread_pool;
 
     // TODO: Refactor into a manger class.
     struct ShaderSetup {
