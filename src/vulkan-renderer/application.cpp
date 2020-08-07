@@ -28,13 +28,12 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->m_window_resized = true;
 }
 
-VkResult Application::load_toml_configuration_file(const std::string &file_name) {
+void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Loading TOML configuration file: '{}'", file_name);
 
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
-        spdlog::error("Could not open configuration file: '{}'!", file_name);
-        return VK_ERROR_INITIALIZATION_FAILED;
+        throw std::runtime_error(std::string("Could not open configuration file: " + file_name + "!"));
     }
 
     toml_file.close();
@@ -108,8 +107,6 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
     }
 
     // TODO: Load more info from TOML file.
-
-    return VK_SUCCESS;
 }
 
 VkResult Application::load_textures() {
@@ -227,9 +224,8 @@ Application::Application(int argc, char **argv) {
     cla_parser.parse_args(argc, argv);
 
     // Load the configuration from the TOML file.
-    VkResult result = load_toml_configuration_file("configuration/renderer.toml");
-    vulkan_error_check(result);
-
+    load_toml_configuration_file("configuration/renderer.toml");
+    
     bool enable_renderdoc_instance_layer = false;
 
     auto enable_renderdoc = cla_parser.arg<bool>("--renderdoc");
@@ -382,7 +378,7 @@ Application::Application(int argc, char **argv) {
         std::make_unique<wrapper::Device>(m_vkinstance->instance(), m_surface->get(),
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
-    result = check_application_specific_features();
+    VkResult result = check_application_specific_features();
     vulkan_error_check(result);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(m_vkdevice->device(), m_vkdevice->physical_device(),
