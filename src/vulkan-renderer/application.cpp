@@ -423,7 +423,7 @@ Application::Application(int argc, char **argv) {
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &m_uniform_buffer_info;
 
-    m_descriptors.emplace_back(wrapper::ResourceDescriptor{m_vkdevice->device(),
+    m_descriptors.emplace_back(wrapper::ResourceDescriptor{*m_vkdevice,
                                                            m_swapchain->image_count(),
                                                            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
                                                            layout_bindings,

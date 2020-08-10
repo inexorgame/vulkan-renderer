@@ -21,7 +21,7 @@ Semaphore::Semaphore(wrapper::Device &device, const std::string &name) : m_devic
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((uint64_t)m_semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
+    m_device.set_object_name((std::uint64_t)m_semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
 #endif
 
     spdlog::debug("Created semaphore successfully.");
