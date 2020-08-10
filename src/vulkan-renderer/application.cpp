@@ -12,6 +12,8 @@
 #include <spdlog/spdlog.h>
 #include <toml11/toml.hpp>
 
+#include <thread>
+
 namespace inexor::vulkan_renderer {
 
 /// @brief Static callback for window resize events.
