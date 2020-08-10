@@ -63,11 +63,12 @@ Shader::Shader(wrapper::Device &device, const VkShaderStageFlagBits type, const 
 #endif
 }
 
-Shader::Shader(Shader &&shader) noexcept
-    : m_device(shader.m_device), m_type(shader.m_type), m_name(std::move(shader.m_name)),
-      m_entry_point(std::move(shader.m_entry_point)), m_shader_module(std::exchange(shader.m_shader_module, nullptr)) {}
+Shader::Shader(Shader &&other) noexcept
+    : m_device(std::move(other.m_device)), m_type(other.m_type), m_name(std::move(other.m_name)),
+      m_entry_point(std::move(other.m_entry_point)), m_shader_module(std::exchange(other.m_shader_module, nullptr)) {}
 
 Shader::~Shader() {
+    spdlog::trace("Destroying shader module {}.", m_name);
     vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
 }
 

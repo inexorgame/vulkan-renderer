@@ -382,7 +382,7 @@ Application::Application(int argc, char **argv) {
     VkResult result = check_application_specific_features();
     vulkan_error_check(result);
 
-    m_swapchain = std::make_unique<wrapper::Swapchain>(m_vkdevice->device(), m_vkdevice->physical_device(),
+    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_vkdevice, m_vkdevice->physical_device(),
                                                        m_surface->get(), m_window->width(), m_window->height(),
                                                        m_vsync_enabled, "Standard swapchain.");
 

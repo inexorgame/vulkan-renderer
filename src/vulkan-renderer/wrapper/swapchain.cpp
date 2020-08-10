@@ -11,13 +11,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+Swapchain::Swapchain(wrapper::Device& device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
                      std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
                      const std::string &name)
     : m_device(device), m_graphics_card(graphics_card), m_surface(surface), m_vsync_enabled(enable_vsync),
       m_name(name) {
 
-    assert(device);
+    assert(device.device());
     assert(graphics_card);
     assert(surface);
 
@@ -25,7 +25,7 @@ Swapchain::Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept
-    : m_device(other.m_device), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
+    : m_device(std::move(other.m_device)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
       m_surface(std::exchange(other.m_surface, nullptr)), m_swapchain(std::exchange(other.m_swapchain, nullptr)),
       m_surface_format(other.m_surface_format), m_extent(other.m_extent),
       m_swapchain_images(std::move(other.m_swapchain_images)),
@@ -76,6 +76,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.pQueueFamilyIndices = nullptr;
     swapchain_ci.presentMode = *present_mode;
 
+    // Swapchain recreation can be accelerated a lot when storing the old swapchain.
     if (old_swapchain != VK_NULL_HANDLE) {
         swapchain_ci.oldSwapchain = old_swapchain;
     }
@@ -94,21 +95,24 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         swapchain_ci.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 
-    if (vkCreateSwapchainKHR(m_device, &swapchain_ci, nullptr, &m_swapchain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSwapchainKHR failed!");
     }
 
-    if (vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_swapchain_image_count, nullptr) != VK_SUCCESS) {
+    if (vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count, nullptr) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkGetSwapchainImagesKHR failed!");
     }
 
     m_swapchain_images.resize(m_swapchain_image_count);
 
-    if (vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_swapchain_image_count, m_swapchain_images.data())) {
+    if (vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count, m_swapchain_images.data())) {
         throw std::runtime_error("Error: vkGetSwapchainImagesKHR failed!");
     }
 
-    // TODO: Assign an appropriate debug marker name to the swapchain images.
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name((std::uint64_t)m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
+#endif
 
     spdlog::debug("Creating {} swapchain image views.", m_swapchain_image_count);
 
@@ -132,11 +136,14 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
         image_view_ci.image = m_swapchain_images[i];
 
-        if (vkCreateImageView(m_device, &image_view_ci, nullptr, &m_swapchain_image_views[i]) != VK_SUCCESS) {
+        if (vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &m_swapchain_image_views[i]) != VK_SUCCESS) {
             throw std::runtime_error("Error: vkCreateImageView failed!");
         }
 
-        // TODO: Use Vulkan debug markers to assign an appropriate name to this swapchain image view.
+#ifndef NDEBUG
+        // Assign an internal name using Vulkan debug markers.
+        m_device.set_object_name((std::uint64_t)m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+#endif
     }
 
     spdlog::debug("Created {} swapchain image views successfully.", m_swapchain_image_count);
@@ -144,7 +151,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
 std::uint32_t Swapchain::acquire_next_image(const wrapper::Semaphore &semaphore) {
     std::uint32_t image_index;
-    vkAcquireNextImageKHR(m_device, m_swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(),
+    vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(),
                           VK_NULL_HANDLE, &image_index);
     return image_index;
 }
@@ -159,7 +166,7 @@ void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height
     // Unlike swapchain images, the image views were created by us directly.
     // It is our job to destroy them again.
     for (auto *image_view : m_swapchain_image_views) {
-        vkDestroyImageView(m_device, image_view, nullptr);
+        vkDestroyImageView(m_device.device(), image_view, nullptr);
     }
 
     m_swapchain_image_views.clear();
@@ -171,10 +178,10 @@ void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height
 
 Swapchain::~Swapchain() {
     spdlog::trace("Destroying swapchain {}.", m_name);
-    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    vkDestroySwapchainKHR(m_device.device(), m_swapchain, nullptr);
 
     for (auto *image_view : m_swapchain_image_views) {
-        vkDestroyImageView(m_device, image_view, nullptr);
+        vkDestroyImageView(m_device.device(), image_view, nullptr);
     }
 }
 
