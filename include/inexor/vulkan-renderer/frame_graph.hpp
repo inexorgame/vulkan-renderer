@@ -2,6 +2,7 @@
 
 // TODO(): Forward declare
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
@@ -213,10 +214,10 @@ class PhysicalResource {
 protected:
     // TODO(): Add OOP device functions (see above todo) and only store a wrapper::Device here
     VmaAllocator m_allocator;
-    VkDevice m_device;
+    wrapper::Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
-    PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}
+    PhysicalResource(VmaAllocator allocator, wrapper::Device &device) : m_allocator(allocator), m_device(device) {}
 
 public:
     PhysicalResource(const PhysicalResource &) = delete;
@@ -234,7 +235,7 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
-    PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    PhysicalBuffer(VmaAllocator allocator, wrapper::Device &device) : PhysicalResource(allocator, device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;
     ~PhysicalBuffer() override;
@@ -251,7 +252,7 @@ private:
     VkImageView m_image_view{VK_NULL_HANDLE};
 
 public:
-    PhysicalImage(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    PhysicalImage(VmaAllocator allocator, wrapper::Device &device) : PhysicalResource(allocator, device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
     ~PhysicalImage() override;
@@ -267,7 +268,7 @@ private:
     const wrapper::Swapchain &m_swapchain;
 
 public:
-    PhysicalBackBuffer(VmaAllocator allocator, VkDevice device, const wrapper::Swapchain &swapchain)
+    PhysicalBackBuffer(VmaAllocator allocator, wrapper::Device &device, const wrapper::Swapchain &swapchain)
         : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
@@ -282,17 +283,17 @@ class PhysicalStage {
 
 private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
-    VkDevice m_device;
+    wrapper::Device &m_device;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
 
 protected:
     [[nodiscard]] VkDevice device() const {
-        return m_device;
+        return m_device.device();
     }
 
 public:
-    explicit PhysicalStage(VkDevice device) : m_device(device) {}
+    explicit PhysicalStage(wrapper::Device &device) : m_device(device) {}
     PhysicalStage(const PhysicalStage &) = delete;
     PhysicalStage(PhysicalStage &&) = delete;
     virtual ~PhysicalStage();
@@ -315,7 +316,7 @@ private:
     std::vector<wrapper::Framebuffer> m_framebuffers;
 
 public:
-    explicit PhysicalGraphicsStage(VkDevice device) : PhysicalStage(device) {}
+    explicit PhysicalGraphicsStage(wrapper::Device &device) : PhysicalStage(device) {}
     PhysicalGraphicsStage(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage(PhysicalGraphicsStage &&) = delete;
     ~PhysicalGraphicsStage() override;
@@ -326,7 +327,7 @@ public:
 
 class FrameGraph {
 private:
-    VkDevice m_device;
+    wrapper::Device &m_device;
     VkCommandPool m_command_pool;
     VmaAllocator m_allocator;
     const wrapper::Swapchain &m_swapchain;
@@ -376,7 +377,8 @@ private:
     void record_command_buffers(const RenderStage *, PhysicalStage *);
 
 public:
-    FrameGraph(VkDevice device, VkCommandPool command_pool, VmaAllocator allocator, const wrapper::Swapchain &swapchain)
+    FrameGraph(wrapper::Device &device, VkCommandPool command_pool, VmaAllocator allocator,
+               const wrapper::Swapchain &swapchain)
         : m_device(device), m_command_pool(command_pool), m_allocator(allocator), m_swapchain(swapchain) {}
 
     /// @brief Adds either a render resource or render stage to the frame graph

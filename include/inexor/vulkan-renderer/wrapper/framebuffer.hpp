@@ -1,8 +1,8 @@
 #pragma once
 
-// TODO(): Create a vulkan forward declaration header
-#include <vulkan/vulkan_core.h>
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
+#include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -11,12 +11,13 @@ class Swapchain;
 
 class Framebuffer {
 private:
-    VkDevice m_device;
+    wrapper::Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
+    std::string m_name;
 
 public:
-    Framebuffer(VkDevice device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                const wrapper::Swapchain &swapchain);
+    Framebuffer(wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
+                const wrapper::Swapchain &swapchain, const std::string &name);
     Framebuffer(const Framebuffer &) = delete;
     Framebuffer(Framebuffer &&) noexcept;
     ~Framebuffer();

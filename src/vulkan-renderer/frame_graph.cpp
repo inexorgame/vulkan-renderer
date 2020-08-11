@@ -49,12 +49,12 @@ PhysicalBuffer::~PhysicalBuffer() {
 }
 
 PhysicalImage::~PhysicalImage() {
-    vkDestroyImageView(m_device, m_image_view, nullptr);
+    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
     vmaDestroyImage(m_allocator, m_image, m_allocation);
 }
 
 PhysicalStage::~PhysicalStage() {
-    vkDestroyPipeline(m_device, m_pipeline, nullptr);
+    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
 }
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
@@ -99,7 +99,7 @@ void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    if (vkCreateImageView(m_device, &image_view_ci, nullptr, &phys->m_image_view) != VK_SUCCESS) {
+    if (vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &phys->m_image_view) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create image view!");
     }
 }
@@ -166,7 +166,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     render_pass_ci.pDependencies = &subpass_dependency;
     render_pass_ci.pSubpasses = &subpass_description;
 
-    if (vkCreateRenderPass(m_device, &render_pass_ci, nullptr, &phys->m_render_pass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &phys->m_render_pass) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create render pass!");
     }
 }
@@ -262,7 +262,8 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     pipeline_ci.pStages = stage->m_shaders.data();
 
     // TODO(): Pipeline caching (basically load the frame graph from a file)
-    if (vkCreateGraphicsPipelines(m_device, nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline!");
     }
 }
@@ -270,7 +271,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
 void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
     for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-        phys->m_command_buffers.emplace_back(m_device, m_command_pool);
+        phys->m_command_buffers.emplace_back(m_device.device(), m_command_pool);
     }
 }
 
@@ -454,7 +455,8 @@ void FrameGraph::compile(const RenderResource &target) {
                         image_views.push_back(image->m_image_view);
                     }
 
-                    phys->m_framebuffers.emplace_back(m_device, phys->m_render_pass, image_views, m_swapchain);
+                    phys->m_framebuffers.emplace_back(m_device, phys->m_render_pass, image_views, m_swapchain,
+                                                      "Framebuffer");
                 }
             }
         }

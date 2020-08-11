@@ -9,10 +9,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Framebuffer::Framebuffer(VkDevice device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                         const wrapper::Swapchain &swapchain)
-    : m_device(device) {
-    spdlog::trace("Creating framebuffer");
+Framebuffer::Framebuffer(wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
+                         const wrapper::Swapchain &swapchain, const std::string &name)
+    : m_device(device), m_name(name) {
+    spdlog::trace("Creating framebuffer {}.", m_name);
 
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
     framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
@@ -22,19 +22,25 @@ Framebuffer::Framebuffer(VkDevice device, VkRenderPass render_pass, const std::v
     framebuffer_ci.layers = 1;
     framebuffer_ci.renderPass = render_pass;
 
-    if (vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, &m_framebuffer) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create framebuffer!");
+    if (vkCreateFramebuffer(m_device.device(), &framebuffer_ci, nullptr, &m_framebuffer) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create framebuffer " + m_name + "!");
     }
+
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name((std::uint64_t)m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
+#endif
+
+    spdlog::debug("Created framebuffer {} successfully.", m_name);
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept
-    : m_device(other.m_device), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)) {}
+    : m_device(std::move(other.m_device)), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)),
+      m_name(std::move(other.m_name)) {}
 
 Framebuffer::~Framebuffer() {
-    if (m_framebuffer != VK_NULL_HANDLE) {
-        spdlog::trace("Destroying framebuffer");
-    }
-    vkDestroyFramebuffer(m_device, m_framebuffer, nullptr);
+    spdlog::trace("Destroying framebuffer {}.", m_name);
+    vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

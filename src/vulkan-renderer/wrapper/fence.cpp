@@ -16,7 +16,7 @@ Fence::Fence(wrapper::Device &device, const std::string &name, const bool in_sig
     auto fence_ci = make_info<VkFenceCreateInfo>();
     fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
-    spdlog::debug("Creating Vulkan synchronisation fence {}.", name);
+    spdlog::debug("Creating Vulkan synchronisation fence {}.", m_name);
 
     if (vkCreateFence(device.device(), &fence_ci, nullptr, &m_fence) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateFence failed!");
@@ -24,10 +24,10 @@ Fence::Fence(wrapper::Device &device, const std::string &name, const bool in_sig
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((std::uint64_t)m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, name);
+    m_device.set_object_name((std::uint64_t)m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
 #endif
 
-    spdlog::debug("Created fence successfully.");
+    spdlog::debug("Created fence {} successfully.", m_name);
 }
 
 Fence::Fence(Fence &&other) noexcept
