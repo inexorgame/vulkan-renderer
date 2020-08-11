@@ -35,7 +35,7 @@ PipelineLayout::PipelineLayout(wrapper::Device &device,
 }
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
-    : m_device(std::move(other.m_device)), m_pipeline_layout(std::exchange(other.m_pipeline_layout, nullptr)),
+    : m_device(other.m_device), m_pipeline_layout(std::exchange(other.m_pipeline_layout, nullptr)),
       m_name(std::move(other.m_name)) {}
 
 PipelineLayout::~PipelineLayout() {

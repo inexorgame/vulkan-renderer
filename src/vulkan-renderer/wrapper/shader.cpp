@@ -64,7 +64,7 @@ Shader::Shader(wrapper::Device &device, const VkShaderStageFlagBits type, const 
 }
 
 Shader::Shader(Shader &&other) noexcept
-    : m_device(std::move(other.m_device)), m_type(other.m_type), m_name(std::move(other.m_name)),
+    : m_device(other.m_device), m_type(other.m_type), m_name(std::move(other.m_name)),
       m_entry_point(std::move(other.m_entry_point)), m_shader_module(std::exchange(other.m_shader_module, nullptr)) {}
 
 Shader::~Shader() {

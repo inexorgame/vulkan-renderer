@@ -9,7 +9,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
-    : m_device(std::move(other.m_device)), m_name(std::move(other.m_name)),
+    : m_device(other.m_device), m_name(std::move(other.m_name)),
       m_descriptor_pool(std::exchange(other.m_descriptor_pool, nullptr)),
       m_descriptor_set_layout(std::exchange(other.m_descriptor_set_layout, nullptr)),
       m_descriptor_set_layout_bindings(std::move(other.m_descriptor_set_layout_bindings)),

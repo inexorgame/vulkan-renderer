@@ -25,7 +25,7 @@ Swapchain::Swapchain(wrapper::Device& device, const VkPhysicalDevice graphics_ca
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept
-    : m_device(std::move(other.m_device)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
+    : m_device(other.m_device), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
       m_surface(std::exchange(other.m_surface, nullptr)), m_swapchain(std::exchange(other.m_swapchain, nullptr)),
       m_surface_format(other.m_surface_format), m_extent(other.m_extent),
       m_swapchain_images(std::move(other.m_swapchain_images)),

@@ -31,7 +31,7 @@ Fence::Fence(wrapper::Device &device, const std::string &name, const bool in_sig
 }
 
 Fence::Fence(Fence &&other) noexcept
-    : m_device(std::move(other.m_device)), m_fence(std::exchange(other.m_fence, nullptr)),
+    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)),
       m_name(std::move(other.m_name)) {}
 
 Fence::~Fence() {

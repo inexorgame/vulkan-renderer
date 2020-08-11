@@ -35,7 +35,7 @@ Framebuffer::Framebuffer(wrapper::Device &device, VkRenderPass render_pass, cons
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept
-    : m_device(std::move(other.m_device)), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)),
+    : m_device(other.m_device), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)),
       m_name(std::move(other.m_name)) {}
 
 Framebuffer::~Framebuffer() {

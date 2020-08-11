@@ -28,7 +28,7 @@ Semaphore::Semaphore(wrapper::Device &device, const std::string &name) : m_devic
 }
 
 Semaphore::Semaphore(Semaphore &&other) noexcept
-    : m_device(std::move(other.m_device)), m_semaphore(std::exchange(other.m_semaphore, nullptr)),
+    : m_device(other.m_device), m_semaphore(std::exchange(other.m_semaphore, nullptr)),
       m_name(std::move(other.m_name)) {}
 
 Semaphore::~Semaphore() {
