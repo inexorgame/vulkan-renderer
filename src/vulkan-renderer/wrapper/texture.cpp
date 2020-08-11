@@ -10,24 +10,24 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
                  void *texture_data, const std::size_t texture_size, const std::string &name,
                  const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : m_name(name), m_file_name(m_file_name), m_device(device), m_graphics_card(graphics_card),
       m_data_transfer_queue(data_transfer_queue), m_vma_allocator(vma_allocator),
-      m_copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
+      m_copy_command_buffer(device.device(), data_transfer_queue, data_transfer_queue_family_index) {
 
     create_texture(texture_data, texture_size);
 }
 
-Texture::Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
                  const std::string &file_name, const std::string &name, const VkQueue data_transfer_queue,
                  const std::uint32_t data_transfer_queue_family_index)
     : m_name(name), m_file_name(file_name), m_device(device), m_graphics_card(graphics_card),
       m_data_transfer_queue(data_transfer_queue), m_data_transfer_queue_family_index(data_transfer_queue_family_index),
       m_vma_allocator(vma_allocator),
-      m_copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
-    assert(device);
+      m_copy_command_buffer(device.device(), data_transfer_queue, data_transfer_queue_family_index) {
+    assert(device.device());
     assert(vma_allocator);
     assert(!file_name.empty());
     assert(!name.empty());
@@ -68,7 +68,7 @@ Texture::Texture(Texture &&other) noexcept
 
 Texture::~Texture() {
     spdlog::trace("Destroying texture {}.", m_name);
-    vkDestroySampler(m_device, m_sampler, nullptr);
+    vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
 void Texture::create_texture(void *texture_data, const std::size_t texture_size) {
@@ -77,7 +77,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     // TODO: Generate mip-maps automatically!
     m_mip_levels = 1;
 
-    StagingBuffer texture_staging_buffer(m_device, m_vma_allocator, m_data_transfer_queue,
+    StagingBuffer texture_staging_buffer(m_device.device(), m_vma_allocator, m_data_transfer_queue,
                                          m_data_transfer_queue_family_index, m_name, texture_size, texture_data,
                                          texture_size);
 
@@ -162,7 +162,8 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 
     spdlog::debug("Recording pipeline barrier for image layer transition");
 
-    OnceCommandBuffer image_transition_change(m_device, m_data_transfer_queue, m_data_transfer_queue_family_index);
+    OnceCommandBuffer image_transition_change(m_device.device(), m_data_transfer_queue,
+                                              m_data_transfer_queue_family_index);
 
     image_transition_change.create_command_buffer();
     image_transition_change.start_recording();
@@ -229,13 +230,16 @@ void Texture::create_texture_sampler() {
 
     spdlog::debug("Creating image sampler for texture {}.", m_name);
 
-    if (vkCreateSampler(m_device, &sampler_ci, nullptr, &m_sampler) != VK_SUCCESS) {
+    if (vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateSampler failed for texture " + m_name + " !");
     }
 
-    // TODO: Vulkan debug markers!
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name((std::uint64_t)m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
+#endif
 
-    spdlog::debug("Image sampler created successfully.");
+    spdlog::debug("Image sampler {} created successfully.", m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -123,9 +123,8 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : m_texture_files) {
-        m_textures.emplace_back(m_vkdevice->device(), m_vkdevice->physical_device(), m_vkdevice->allocator(),
-                                texture_file, texture_name, m_vkdevice->graphics_queue(),
-                                m_vkdevice->graphics_queue_family_index());
+        m_textures.emplace_back(*m_vkdevice, m_vkdevice->physical_device(), m_vkdevice->allocator(), texture_file,
+                                texture_name, m_vkdevice->graphics_queue(), m_vkdevice->graphics_queue_family_index());
     }
 
     return VK_SUCCESS;
@@ -382,9 +381,9 @@ Application::Application(int argc, char **argv) {
     VkResult result = check_application_specific_features();
     vulkan_error_check(result);
 
-    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_vkdevice, m_vkdevice->physical_device(),
-                                                       m_surface->get(), m_window->width(), m_window->height(),
-                                                       m_vsync_enabled, "Standard swapchain.");
+    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_vkdevice, m_vkdevice->physical_device(), m_surface->get(),
+                                                       m_window->width(), m_window->height(), m_vsync_enabled,
+                                                       "Standard swapchain.");
 
     result = load_textures();
     vulkan_error_check(result);
