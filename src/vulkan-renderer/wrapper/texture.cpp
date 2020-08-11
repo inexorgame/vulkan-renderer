@@ -15,7 +15,7 @@ Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, 
                  const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : m_name(name), m_file_name(m_file_name), m_device(device), m_graphics_card(graphics_card),
       m_data_transfer_queue(data_transfer_queue), m_vma_allocator(vma_allocator),
-      m_copy_command_buffer(device.device(), data_transfer_queue, data_transfer_queue_family_index) {
+      m_copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
 
     create_texture(texture_data, texture_size);
 }
@@ -26,7 +26,7 @@ Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, 
     : m_name(name), m_file_name(file_name), m_device(device), m_graphics_card(graphics_card),
       m_data_transfer_queue(data_transfer_queue), m_data_transfer_queue_family_index(data_transfer_queue_family_index),
       m_vma_allocator(vma_allocator),
-      m_copy_command_buffer(device.device(), data_transfer_queue, data_transfer_queue_family_index) {
+      m_copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
     assert(device.device());
     assert(vma_allocator);
     assert(!file_name.empty());
@@ -77,7 +77,7 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     // TODO: Generate mip-maps automatically!
     m_mip_levels = 1;
 
-    StagingBuffer texture_staging_buffer(m_device.device(), m_vma_allocator, m_data_transfer_queue,
+    StagingBuffer texture_staging_buffer(m_device, m_vma_allocator, m_data_transfer_queue,
                                          m_data_transfer_queue_family_index, m_name, texture_size, texture_data,
                                          texture_size);
 
@@ -162,8 +162,7 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 
     spdlog::debug("Recording pipeline barrier for image layer transition");
 
-    OnceCommandBuffer image_transition_change(m_device.device(), m_data_transfer_queue,
-                                              m_data_transfer_queue_family_index);
+    OnceCommandBuffer image_transition_change(m_device, m_data_transfer_queue, m_data_transfer_queue_family_index);
 
     image_transition_change.create_command_buffer();
     image_transition_change.start_recording();

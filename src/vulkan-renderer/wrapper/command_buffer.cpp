@@ -9,18 +9,26 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool command_pool) {
+CommandBuffer::CommandBuffer(wrapper::Device &device, VkCommandPool command_pool, const std::string &name)
+    : m_device(device), m_name(name) {
     auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
     alloc_info.commandBufferCount = 1;
     alloc_info.commandPool = command_pool;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    if (vkAllocateCommandBuffers(device, &alloc_info, &m_command_buffer) != VK_SUCCESS) {
+
+    if (vkAllocateCommandBuffers(device.device(), &alloc_info, &m_command_buffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate command buffer!");
     }
+
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name((std::uint64_t)m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
+#endif
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
-    : m_command_buffer(std::exchange(other.m_command_buffer, nullptr)) {}
+    : m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_device(other.m_device), m_name(other.m_name) {
+}
 
 void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();

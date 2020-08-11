@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
@@ -24,7 +25,7 @@ public:
     /// @param size [in] The size of the buffer in bytes.
     /// @note Staging buffers always have VK_BUFFER_USAGE_TRANSFER_SRC_BIT as VkBufferUsageFlags.
     /// @note Staging buffers always have VMA_MEMORY_USAGE_CPU_ONLY as VmaMemoryUsage.
-    StagingBuffer(const VkDevice device, const VmaAllocator vma_allocator, const VkQueue data_transfer_queue,
+    StagingBuffer(wrapper::Device &device, const VmaAllocator vma_allocator, const VkQueue data_transfer_queue,
                   const std::uint32_t data_transfer_queueu_family_index, const std::string &name,
                   const VkDeviceSize buffer_size, void *data, const std::size_t data_size);
     StagingBuffer(const StagingBuffer &) = delete;

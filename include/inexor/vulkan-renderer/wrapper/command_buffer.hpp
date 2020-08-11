@@ -1,9 +1,9 @@
 #pragma once
 
-// TODO(): Forward declare
-#include <vulkan/vulkan_core.h>
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -15,9 +15,11 @@ class CommandBuffer {
 
 private:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
+    wrapper::Device &m_device;
+    std::string m_name;
 
 public:
-    CommandBuffer(VkDevice device, VkCommandPool command_pool);
+    CommandBuffer(wrapper::Device &device, VkCommandPool command_pool, const std::string &name);
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
     ~CommandBuffer() = default;

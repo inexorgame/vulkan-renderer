@@ -5,7 +5,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
+MeshBuffer::MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
                        const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                        const std::string &name, const VkDeviceSize size_of_vertex_structure,
                        const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
@@ -13,12 +13,13 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
 
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are
     // created!.
-    : m_vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
+    : m_vertex_buffer(device.device(), vma_allocator, name, size_of_vertex_structure * number_of_vertices,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      m_index_buffer(GPUMemoryBuffer(device, vma_allocator, name, size_of_index_structure * number_of_vertices,
+      m_index_buffer(GPUMemoryBuffer(device.device(), vma_allocator, name, size_of_index_structure * number_of_vertices,
                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                     VMA_MEMORY_USAGE_CPU_ONLY)) {
-    assert(device);
+                                     VMA_MEMORY_USAGE_CPU_ONLY)),
+      m_device(device) {
+    assert(device.device());
     assert(vma_allocator);
     assert(!name.empty());
     assert(size_of_vertex_structure > 0);
@@ -57,17 +58,17 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
     }
 }
 
-MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
+MeshBuffer::MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
                        const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                        const std::string &name, const VkDeviceSize size_of_vertex_structure,
                        const std::size_t number_of_vertices, void *vertices)
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are
     // created!.
-    : m_vertex_buffer(device, vma_allocator, name, size_of_vertex_structure * number_of_vertices,
+    : m_vertex_buffer(device.device(), vma_allocator, name, size_of_vertex_structure * number_of_vertices,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
       m_index_buffer(std::nullopt), m_number_of_vertices(static_cast<std::uint32_t>(number_of_vertices)),
-      m_number_of_indices(static_cast<std::uint32_t>(m_number_of_indices)) {
-    assert(device);
+      m_number_of_indices(static_cast<std::uint32_t>(m_number_of_indices)), m_device(device) {
+    assert(device.device());
     assert(vma_allocator);
     assert(!name.empty());
     assert(size_of_vertex_structure > 0);
@@ -92,7 +93,7 @@ MeshBuffer::MeshBuffer(const VkDevice device, VkQueue data_transfer_queue,
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : m_name(std::move(other.m_name)), m_vertex_buffer(std::move(other.m_vertex_buffer)),
       m_index_buffer(std::move(other.m_index_buffer)), m_number_of_vertices(other.m_number_of_vertices),
-      m_number_of_indices(other.m_number_of_indices) {}
+      m_number_of_indices(other.m_number_of_indices), m_device(other.m_device) {}
 
 MeshBuffer::~MeshBuffer() {}
 

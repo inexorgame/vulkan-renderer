@@ -271,7 +271,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
 void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
     for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-        phys->m_command_buffers.emplace_back(m_device.device(), m_command_pool);
+        phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
     }
 }
 
