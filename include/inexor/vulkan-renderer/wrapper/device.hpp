@@ -36,6 +36,8 @@ private:
     PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert;
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name;
 
+    bool m_enable_vulkan_debug_markers;
+
 public:
     /// @brief Creates a graphics card interface.
     /// @param preferred_gpu_index [in] The index of the preferred physical device to use.

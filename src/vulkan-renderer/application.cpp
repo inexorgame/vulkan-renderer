@@ -383,7 +383,7 @@ Application::Application(int argc, char **argv) {
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_vkdevice, m_vkdevice->physical_device(), m_surface->get(),
                                                        m_window->width(), m_window->height(), m_vsync_enabled,
-                                                       "Standard swapchain.");
+                                                       "Standard swapchain");
 
     result = load_textures();
     vulkan_error_check(result);
