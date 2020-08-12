@@ -155,7 +155,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
                    const std::uint32_t application_version, const std::uint32_t engine_version,
                    const std::uint32_t vulkan_api_version)
     : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version, {}, {}, true,
-               true) {
+               false) {
     spdlog::debug("No instance extensions or instance layers specified.");
     spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
 }
