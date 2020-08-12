@@ -27,7 +27,7 @@ class MeshBuffer {
 
 private:
     const wrapper::Device &m_device;
-    std::string m_name;
+    const std::string m_name;
     GPUMemoryBuffer m_vertex_buffer;
     std::optional<GPUMemoryBuffer> m_index_buffer;
     std::uint32_t m_number_of_vertices{0};

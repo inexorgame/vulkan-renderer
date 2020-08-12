@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class Fence {
 private:
     const wrapper::Device &m_device;
-    std::string m_name;
+    const std::string m_name;
     VkFence m_fence;
 
 public:

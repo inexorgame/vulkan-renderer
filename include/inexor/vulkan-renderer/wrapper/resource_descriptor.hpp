@@ -14,7 +14,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// Descriptor sets are allocated from descriptor pools.
 class ResourceDescriptor {
 private:
-    std::string m_name;
+    const std::string m_name;
     const wrapper::Device &m_device;
     VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};

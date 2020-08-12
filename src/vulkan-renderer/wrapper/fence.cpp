@@ -24,7 +24,7 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_fence), VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
 #endif
 
     spdlog::debug("Created fence {} successfully.", m_name);

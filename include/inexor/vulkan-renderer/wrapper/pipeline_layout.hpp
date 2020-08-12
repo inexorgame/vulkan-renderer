@@ -11,7 +11,7 @@ class PipelineLayout {
 private:
     const wrapper::Device &m_device;
     VkPipelineLayout m_pipeline_layout;
-    std::string m_name;
+    const std::string m_name;
 
 public:
     /// @brief Creates a pipeline layout

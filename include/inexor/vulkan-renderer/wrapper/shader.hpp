@@ -11,8 +11,8 @@ class Shader {
 private:
     const wrapper::Device &m_device;
     VkShaderStageFlagBits m_type;
-    std::string m_name;
-    std::string m_entry_point;
+    const std::string m_name;
+    const std::string m_entry_point;
 
     VkShaderModule m_shader_module;
 

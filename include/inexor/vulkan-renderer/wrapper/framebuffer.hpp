@@ -13,7 +13,7 @@ class Framebuffer {
 private:
     const wrapper::Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
-    std::string m_name;
+    const std::string m_name;
 
 public:
     Framebuffer(const wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,

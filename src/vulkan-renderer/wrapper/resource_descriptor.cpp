@@ -55,7 +55,8 @@ ResourceDescriptor::ResourceDescriptor(const wrapper::Device &device, std::uint3
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_descriptor_pool),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
 #endif
 
     spdlog::debug("Created descriptor pool for descriptor {} successfully.", m_name);
@@ -73,7 +74,8 @@ ResourceDescriptor::ResourceDescriptor(const wrapper::Device &device, std::uint3
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(m_descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, m_name);
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_descriptor_set_layout),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, m_name);
 #endif
 
     spdlog::debug("Created descriptor sets for descriptor {} successfully.", m_name);
@@ -96,7 +98,8 @@ ResourceDescriptor::ResourceDescriptor(const wrapper::Device &device, std::uint3
 #ifndef NDEBUG
     for (const auto &descriptor_set : m_descriptor_sets) {
         // Assign an internal name using Vulkan debug markers.
-        m_device.set_object_name(descriptor_set, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, m_name);
+        m_device.set_object_name(reinterpret_cast<std::uint64_t>(descriptor_set),
+                                 VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, m_name);
     }
 #endif
 

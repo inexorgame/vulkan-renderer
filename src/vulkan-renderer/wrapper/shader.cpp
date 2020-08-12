@@ -59,7 +59,8 @@ Shader::Shader(const wrapper::Device &device, const VkShaderStageFlagBits type, 
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(m_shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_shader_module),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
 #endif
 }
 

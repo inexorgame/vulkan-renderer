@@ -36,7 +36,7 @@ private:
     PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert;
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name;
 
-    bool m_enable_vulkan_debug_markers;
+    const bool m_enable_vulkan_debug_markers;
 
 public:
     /// @brief Creates a graphics card interface.
@@ -104,7 +104,7 @@ public:
     /// @param object [in] A pointer to the Vulkan object.
     /// @param type [in] The type of the Vulkan object.
     /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
-    void set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name) const;
+    void set_object_name(std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string &name) const;
 
     /// @brief Vulkan debug marker: Links a memory dump block to a Vulkan resource.
     /// The object will be visible in external debuggers like RenderDoc.

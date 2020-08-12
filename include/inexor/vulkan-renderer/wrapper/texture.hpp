@@ -20,8 +20,8 @@ class Texture {
 private:
     std::unique_ptr<wrapper::Image> m_texture_image;
 
-    std::string m_name;
-    std::string m_file_name;
+    const std::string m_name;
+    const std::string m_file_name;
     int m_texture_width{0};
     int m_texture_height{0};
     int m_texture_channels{0};

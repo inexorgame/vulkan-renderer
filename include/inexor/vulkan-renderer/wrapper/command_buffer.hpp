@@ -16,7 +16,7 @@ class CommandBuffer {
 private:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const wrapper::Device &m_device;
-    std::string m_name;
+    const std::string m_name;
 
 public:
     CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, const std::string &name);

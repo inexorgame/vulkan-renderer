@@ -20,6 +20,7 @@
 #include <spdlog/spdlog.h>
 #include <vma/vma_usage.h>
 
+#include <algorithm>
 #include <fstream>
 #include <stdexcept>
 
@@ -300,8 +301,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 }
 
 Device::Device(Device &&other) noexcept
-    : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)) {
-}
+    : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
+      m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {}
 
 Device::~Device() {
     assert(m_device);
@@ -311,7 +312,8 @@ Device::~Device() {
 }
 
 #ifndef NDEBUG
-void Device::set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name) const {
+void Device::set_object_name(std::uint64_t object, const VkDebugReportObjectTypeEXT type,
+                             const std::string &name) const {
 
     if (m_enable_vulkan_debug_markers) {
         assert(m_device);
@@ -321,7 +323,7 @@ void Device::set_object_name(const void *object, const VkDebugReportObjectTypeEX
 
         auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
         name_info.objectType = type;
-        name_info.object = reinterpret_cast<std::uint64_t>(object);
+        name_info.object = object;
         name_info.pObjectName = name.c_str();
 
         if (m_vk_debug_marker_set_object_name(m_device, &name_info) != VK_SUCCESS) {
@@ -360,10 +362,9 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
         assert(m_vk_cmd_debug_marker_begin);
 
         auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
-        debug_marker.color[0] = color[0];
-        debug_marker.color[1] = color[1];
-        debug_marker.color[2] = color[2];
-        debug_marker.color[3] = color[3];
+
+        std::copy(color.begin(), color.end(), debug_marker.color);
+
         debug_marker.pMarkerName = name.c_str();
 
         m_vk_cmd_debug_marker_begin(command_buffer, &debug_marker);
@@ -378,10 +379,9 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
         assert(m_vk_cmd_debug_marker_insert);
 
         auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
-        debug_marker.color[0] = color[0];
-        debug_marker.color[1] = color[1];
-        debug_marker.color[2] = color[2];
-        debug_marker.color[3] = color[3];
+
+        std::copy(color.begin(), color.end(), debug_marker.color);
+
         debug_marker.pMarkerName = name.c_str();
 
         m_vk_cmd_debug_marker_insert(command_buffer, &debug_marker);

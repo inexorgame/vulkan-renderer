@@ -22,7 +22,7 @@ private:
     std::vector<VkImage> m_swapchain_images;
     std::vector<VkImageView> m_swapchain_image_views;
     std::uint32_t m_swapchain_image_count;
-    std::string m_name;
+    const std::string m_name;
     bool m_vsync_enabled;
 
     /// @brief (Re)creates the swapchain.

@@ -10,7 +10,7 @@ class Semaphore {
 private:
     const wrapper::Device &m_device;
     VkSemaphore m_semaphore;
-    std::string m_name;
+    const std::string m_name;
 
 public:
     Semaphore(const wrapper::Device &device, const std::string &name);
