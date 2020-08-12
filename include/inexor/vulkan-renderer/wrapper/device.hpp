@@ -104,7 +104,7 @@ public:
     /// @param object [in] A pointer to the Vulkan object.
     /// @param type [in] The type of the Vulkan object.
     /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
-    void set_object_name(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string &name);
+    void set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name);
 
     /// @brief Vulkan debug marker: Links a memory dump block to a Vulkan resource.
     /// The object will be visible in external debuggers like RenderDoc.

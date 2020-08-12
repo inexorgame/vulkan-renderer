@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(wrapper::Device& device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+Swapchain::Swapchain(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
                      std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
                      const std::string &name)
     : m_device(device), m_graphics_card(graphics_card), m_surface(surface), m_vsync_enabled(enable_vsync),
@@ -111,7 +111,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((std::uint64_t)m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
+    m_device.set_object_name(m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
 #endif
 
     spdlog::debug("Creating {} swapchain image views.", m_swapchain_image_count);
@@ -142,7 +142,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
 #ifndef NDEBUG
         // Assign an internal name using Vulkan debug markers.
-        m_device.set_object_name((std::uint64_t)m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+        m_device.set_object_name(m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 #endif
     }
 

@@ -235,7 +235,7 @@ void Texture::create_texture_sampler() {
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((std::uint64_t)m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
+    m_device.set_object_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
 #endif
 
     spdlog::debug("Image sampler {} created successfully.", m_name);

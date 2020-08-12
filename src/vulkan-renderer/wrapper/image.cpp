@@ -48,7 +48,7 @@ Image::Image(wrapper::Device &device, const VkPhysicalDevice graphics_card, cons
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((std::uint64_t)m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
+    m_device.set_object_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
 #endif
 
     auto image_view_ci = make_info<VkImageViewCreateInfo>();
@@ -67,7 +67,7 @@ Image::Image(wrapper::Device &device, const VkPhysicalDevice graphics_card, cons
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((std::uint64_t)m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+    m_device.set_object_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 #endif
 }
 

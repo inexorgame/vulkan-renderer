@@ -24,15 +24,14 @@ Fence::Fence(wrapper::Device &device, const std::string &name, const bool in_sig
 
 #ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name((std::uint64_t)m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
+    m_device.set_object_name(m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
 #endif
 
     spdlog::debug("Created fence {} successfully.", m_name);
 }
 
 Fence::Fence(Fence &&other) noexcept
-    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)),
-      m_name(std::move(other.m_name)) {}
+    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)), m_name(std::move(other.m_name)) {}
 
 Fence::~Fence() {
     spdlog::trace("Destroying fence {}.", m_name);

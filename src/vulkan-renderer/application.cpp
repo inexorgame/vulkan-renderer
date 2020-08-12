@@ -255,8 +255,9 @@ Application::Application(int argc, char **argv) {
 
     m_glfw_context = std::make_unique<wrapper::GLFWContext>();
 
-    m_vkinstance = std::make_unique<wrapper::Instance>(m_application_name, m_engine_name, m_application_version,
-                                                       m_engine_version, VK_API_VERSION_1_1);
+    m_vkinstance = std::make_unique<wrapper::Instance>(
+        m_application_name, m_engine_name, m_application_version, m_engine_version, VK_API_VERSION_1_1,
+        enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
 
