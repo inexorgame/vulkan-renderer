@@ -5,7 +5,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-MeshBuffer::MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
+MeshBuffer::MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
                        const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                        const std::string &name, const VkDeviceSize size_of_vertex_structure,
                        const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
@@ -58,7 +58,7 @@ MeshBuffer::MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
     }
 }
 
-MeshBuffer::MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
+MeshBuffer::MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
                        const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                        const std::string &name, const VkDeviceSize size_of_vertex_structure,
                        const std::size_t number_of_vertices, void *vertices)

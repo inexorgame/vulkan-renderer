@@ -10,7 +10,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Fence {
 private:
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     std::string m_name;
     VkFence m_fence;
 
@@ -19,7 +19,7 @@ public:
     /// @param device [in] The Vulkan device.
     /// @param name [in] The internal name of the fence.
     /// @param in_signaled_state [in] If true, the fence will be created in signaled state.
-    Fence(wrapper::Device &device, const std::string &name, const bool in_signaled_state);
+    Fence(const wrapper::Device &device, const std::string &name, const bool in_signaled_state);
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
     ~Fence();

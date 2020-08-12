@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+Swapchain::Swapchain(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
                      std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
                      const std::string &name)
     : m_device(device), m_graphics_card(graphics_card), m_surface(surface), m_vsync_enabled(enable_vsync),

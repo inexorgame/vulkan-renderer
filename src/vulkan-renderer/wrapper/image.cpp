@@ -6,7 +6,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Image::Image(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+Image::Image(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
              const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
              const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent)
     : m_device(device), m_vma_allocator(vma_allocator), m_format(format), m_name(name) {

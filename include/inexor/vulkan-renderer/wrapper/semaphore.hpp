@@ -8,12 +8,12 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Semaphore {
 private:
+    const wrapper::Device &m_device;
     VkSemaphore m_semaphore;
-    wrapper::Device &m_device;
     std::string m_name;
 
 public:
-    Semaphore(wrapper::Device &device, const std::string &name);
+    Semaphore(const wrapper::Device &device, const std::string &name);
     Semaphore(const Semaphore &) = delete;
     Semaphore(Semaphore &&) noexcept;
     ~Semaphore();

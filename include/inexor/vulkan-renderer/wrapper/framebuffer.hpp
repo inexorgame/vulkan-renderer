@@ -11,12 +11,12 @@ class Swapchain;
 
 class Framebuffer {
 private:
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
     std::string m_name;
 
 public:
-    Framebuffer(wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
+    Framebuffer(const wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
                 const wrapper::Swapchain &swapchain, const std::string &name);
     Framebuffer(const Framebuffer &) = delete;
     Framebuffer(Framebuffer &&) noexcept;

@@ -15,11 +15,11 @@ class CommandBuffer {
 
 private:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     std::string m_name;
 
 public:
-    CommandBuffer(wrapper::Device &device, VkCommandPool command_pool, const std::string &name);
+    CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, const std::string &name);
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
     ~CommandBuffer() = default;

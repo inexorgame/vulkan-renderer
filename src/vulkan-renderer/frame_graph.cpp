@@ -49,7 +49,7 @@ PhysicalBuffer::~PhysicalBuffer() {
 }
 
 PhysicalImage::~PhysicalImage() {
-    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
+    vkDestroyImageView(m_device, m_image_view, nullptr);
     vmaDestroyImage(m_allocator, m_image, m_allocation);
 }
 
@@ -376,7 +376,7 @@ void FrameGraph::compile(const RenderResource &target) {
 
         if (const auto *buffer_resource = dynamic_cast<const BufferResource *>(resource.get())) {
             assert(buffer_resource->m_usage != BufferUsage::INVALID);
-            auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device);
+            auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device.device());
 
             bool is_uploading_data = buffer_resource->m_data != nullptr;
             alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0U;
@@ -411,9 +411,9 @@ void FrameGraph::compile(const RenderResource &target) {
             // Back buffer gets special handling
             if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
                 // TODO(): Move image views from wrapper::Swapchain to PhysicalBackBuffer
-                create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device, m_swapchain);
+                create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device.device(), m_swapchain);
             } else {
-                auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device);
+                auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device.device());
                 alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
                 build_image(texture_resource, phys, &alloc_ci);
                 build_image_view(texture_resource, phys);

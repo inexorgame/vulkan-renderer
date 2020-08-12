@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Image {
 private:
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     VmaAllocator m_vma_allocator;
     VmaAllocation m_allocation;
     VmaAllocationInfo m_allocation_info;
@@ -31,7 +31,7 @@ public:
     /// @param sample_count [in] The sample count, mostly 1 if multisampling for this image is disabled.
     /// @param name [in] The internal name of this image.
     /// @param image_extent [in] The width and height of the image.
-    Image(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+    Image(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
           const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
           const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent);
     Image(const Image &) = delete;

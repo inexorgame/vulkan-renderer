@@ -10,7 +10,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(wrapper::Device &device, const VkQueue data_transfer_queue,
+OnceCommandBuffer::OnceCommandBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
                                      const std::uint32_t data_transfer_queue_family_index)
     : m_device(device), m_data_transfer_queue(data_transfer_queue),
       m_command_pool(device.device(), data_transfer_queue_family_index) {

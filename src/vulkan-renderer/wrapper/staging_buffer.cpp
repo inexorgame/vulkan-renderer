@@ -4,7 +4,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-StagingBuffer::StagingBuffer(wrapper::Device &device, const VmaAllocator vma_allocator,
+StagingBuffer::StagingBuffer(const wrapper::Device &device, const VmaAllocator vma_allocator,
                              const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queueu_family_index,
                              const std::string &name, const VkDeviceSize buffer_size, void *data,
                              const std::size_t data_size)

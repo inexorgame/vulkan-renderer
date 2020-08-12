@@ -10,7 +10,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+Texture::Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
                  void *texture_data, const std::size_t texture_size, const std::string &name,
                  const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index)
     : m_name(name), m_file_name(m_file_name), m_device(device), m_graphics_card(graphics_card),
@@ -20,7 +20,7 @@ Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, 
     create_texture(texture_data, texture_size);
 }
 
-Texture::Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+Texture::Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
                  const std::string &file_name, const std::string &name, const VkQueue data_transfer_queue,
                  const std::uint32_t data_transfer_queue_family_index)
     : m_name(name), m_file_name(file_name), m_device(device), m_graphics_card(graphics_card),

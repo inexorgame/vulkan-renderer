@@ -27,7 +27,7 @@ private:
     int m_texture_channels{0};
     int m_mip_levels{0};
 
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     VkSampler m_sampler;
     VmaAllocator m_vma_allocator;
     VkQueue m_data_transfer_queue;
@@ -56,7 +56,7 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+    Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
             const std::string &file_name, const std::string &name, const VkQueue data_transfer_queue,
             const std::uint32_t data_transfer_queue_family_index);
 
@@ -69,7 +69,7 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+    Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
             void *texture_data, const std::size_t texture_size, const std::string &name,
             const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
     Texture(const Texture &) = delete;

@@ -214,10 +214,10 @@ class PhysicalResource {
 protected:
     // TODO(): Add OOP device functions (see above todo) and only store a wrapper::Device here
     VmaAllocator m_allocator;
-    wrapper::Device &m_device;
+    VkDevice m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
-    PhysicalResource(VmaAllocator allocator, wrapper::Device &device) : m_allocator(allocator), m_device(device) {}
+    PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}
 
 public:
     PhysicalResource(const PhysicalResource &) = delete;
@@ -235,7 +235,7 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
-    PhysicalBuffer(VmaAllocator allocator, wrapper::Device &device) : PhysicalResource(allocator, device) {}
+    PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;
     ~PhysicalBuffer() override;
@@ -252,7 +252,7 @@ private:
     VkImageView m_image_view{VK_NULL_HANDLE};
 
 public:
-    PhysicalImage(VmaAllocator allocator, wrapper::Device &device) : PhysicalResource(allocator, device) {}
+    PhysicalImage(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
     ~PhysicalImage() override;
@@ -268,7 +268,7 @@ private:
     const wrapper::Swapchain &m_swapchain;
 
 public:
-    PhysicalBackBuffer(VmaAllocator allocator, wrapper::Device &device, const wrapper::Swapchain &swapchain)
+    PhysicalBackBuffer(VmaAllocator allocator, VkDevice device, const wrapper::Swapchain &swapchain)
         : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;

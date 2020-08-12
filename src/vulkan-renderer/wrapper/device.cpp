@@ -311,7 +311,7 @@ Device::~Device() {
 }
 
 #ifndef NDEBUG
-void Device::set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name) {
+void Device::set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name) const {
 
     if (m_enable_vulkan_debug_markers) {
         assert(m_device);
@@ -331,7 +331,7 @@ void Device::set_object_name(const void *object, const VkDebugReportObjectTypeEX
 }
 
 void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
-                            const std::size_t tag_size, const void *tag) {
+                            const std::size_t tag_size, const void *tag) const {
     if (m_enable_vulkan_debug_markers) {
         assert(m_device);
         assert(name);
@@ -353,7 +353,7 @@ void Device::set_object_tag(const std::uint64_t object, const VkDebugReportObjec
 }
 
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
-                               const std::array<float, 4> color) {
+                               const std::array<float, 4> color) const {
     if (m_enable_vulkan_debug_markers) {
         assert(command_buffer);
         assert(!name.empty());
@@ -371,7 +371,7 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
 }
 
 void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
-                                 const std::array<float, 4> color) {
+                                 const std::array<float, 4> color) const {
     if (m_enable_vulkan_debug_markers) {
         assert(command_buffer);
         assert(!name.empty());
@@ -388,7 +388,7 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
     }
 }
 
-void Device::end_debug_region(const VkCommandBuffer command_buffer) {
+void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
     if (m_enable_vulkan_debug_markers) {
         assert(m_vk_cmd_debug_marker_end);
         m_vk_cmd_debug_marker_end(command_buffer);

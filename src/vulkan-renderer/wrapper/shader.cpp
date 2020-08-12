@@ -32,11 +32,11 @@ std::vector<char> read_binary(const std::string &file_name) {
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Shader::Shader(wrapper::Device &device, const VkShaderStageFlagBits type, const std::string &name,
+Shader::Shader(const wrapper::Device &device, const VkShaderStageFlagBits type, const std::string &name,
                const std::string &file_name, const std::string &entry_point)
     : Shader(device, type, name, read_binary(file_name), entry_point) {}
 
-Shader::Shader(wrapper::Device &device, const VkShaderStageFlagBits type, const std::string &name,
+Shader::Shader(const wrapper::Device &device, const VkShaderStageFlagBits type, const std::string &name,
                const std::vector<char> &code, const std::string &entry_point)
     : m_device(device), m_type(type), m_name(name), m_entry_point(entry_point) {
     assert(device.device());

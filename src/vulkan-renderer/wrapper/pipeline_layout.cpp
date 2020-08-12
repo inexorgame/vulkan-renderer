@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-PipelineLayout::PipelineLayout(wrapper::Device &device,
+PipelineLayout::PipelineLayout(const wrapper::Device &device,
                                const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
                                const std::string &name)
     : m_device(device), m_name(name) {

@@ -104,7 +104,7 @@ public:
     /// @param object [in] A pointer to the Vulkan object.
     /// @param type [in] The type of the Vulkan object.
     /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
-    void set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name);
+    void set_object_name(const void *object, const VkDebugReportObjectTypeEXT type, const std::string &name) const;
 
     /// @brief Vulkan debug marker: Links a memory dump block to a Vulkan resource.
     /// The object will be visible in external debuggers like RenderDoc.
@@ -114,7 +114,7 @@ public:
     /// @param tag_size [in] The size of the memory dump.
     /// @param tag [in] A pointer to the memory dump.
     void set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
-                        const std::size_t tag_size, const void *tag);
+                        const std::size_t tag_size, const void *tag) const;
 
     /// @brief Vulkan debug markers: Annotation of a rendering region.
     /// The rendering region will be visible in external debuggers like RenderDoc.
@@ -122,7 +122,7 @@ public:
     /// @param name [in] The name of the rendering region.
     /// @param color [in] The rgba color of the rendering region.
     void bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
-                           const std::array<float, 4> color);
+                           const std::array<float, 4> color) const;
 
     /// @brief Vulkan debug markers: Inserts a debug marker into a renderpass.
     /// The debug marker will be visible in external debuggers like RenderDoc.
@@ -130,14 +130,14 @@ public:
     /// @param name [in] The name of the rendering region.
     /// @param color [in] The rgba color of the rendering region.
     void insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
-                             const std::array<float, 4> color);
+                             const std::array<float, 4> color) const;
 
     /// @brief Vulkan debug markers: Annotation of a rendering region.
     /// The rendering region will be visible in external debuggers like RenderDoc.
     /// @param command_buffer [in] The associated command buffer.
     /// @param name [in] The name of the rendering region.
     /// @param color [in] The rgba color of the rendering region.
-    void end_debug_region(const VkCommandBuffer command_buffer);
+    void end_debug_region(const VkCommandBuffer command_buffer) const;
 
 #endif
 };

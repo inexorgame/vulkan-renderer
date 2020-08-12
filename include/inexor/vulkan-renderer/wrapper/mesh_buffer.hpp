@@ -26,7 +26,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class MeshBuffer {
 
 private:
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     std::string m_name;
     GPUMemoryBuffer m_vertex_buffer;
     std::optional<GPUMemoryBuffer> m_index_buffer;
@@ -38,14 +38,14 @@ private:
 
 public:
     /// @brief Creates a new vertex buffer and an associated index buffer.
-    MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
+    MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
                const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
                const std::size_t number_of_indices, void *indices);
 
     /// @brief Creates a vertex buffer without index buffer.
-    MeshBuffer(wrapper::Device &device, VkQueue data_transfer_queue,
+    MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
                const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices);

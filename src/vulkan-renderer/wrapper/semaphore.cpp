@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Semaphore::Semaphore(wrapper::Device &device, const std::string &name) : m_device(device), m_name(name) {
+Semaphore::Semaphore(const wrapper::Device &device, const std::string &name) : m_device(device), m_name(name) {
     assert(device.device());
     assert(!name.empty());
 

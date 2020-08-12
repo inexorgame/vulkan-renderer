@@ -12,7 +12,7 @@ class Semaphore;
 
 class Swapchain {
 private:
-    wrapper::Device& m_device;
+    const wrapper::Device &m_device;
     VkPhysicalDevice m_graphics_card;
     VkSurfaceKHR m_surface;
     VkSwapchainKHR m_swapchain;
@@ -35,7 +35,7 @@ private:
 public:
     /// @brief
     /// @note We must pass width and height as call by reference!
-    Swapchain(wrapper::Device& device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+    Swapchain(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
               std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
               const std::string &name);
     Swapchain(const Swapchain &) = delete;

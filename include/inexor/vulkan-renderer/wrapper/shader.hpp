@@ -9,7 +9,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Shader {
 private:
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     VkShaderStageFlagBits m_type;
     std::string m_name;
     std::string m_entry_point;
@@ -23,7 +23,7 @@ public:
     /// @param name [in] The internal name of the shader module.
     /// @param code [in] The SPIR-V shader code.
     /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
-    Shader(wrapper::Device &m_device, VkShaderStageFlagBits type, const std::string &name,
+    Shader(const wrapper::Device &m_device, VkShaderStageFlagBits type, const std::string &name,
            const std::vector<char> &code, const std::string &entry_point = "main");
 
     /// @brief Creates a shader from a SPIR-V file.
@@ -32,8 +32,8 @@ public:
     /// @param name [in] The internal name of the shader module.
     /// @param file_name [in] The name of the SPIR-V shader file.
     /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
-    Shader(wrapper::Device &m_device, VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
-           const std::string &entry_point = "main");
+    Shader(const wrapper::Device &m_device, VkShaderStageFlagBits type, const std::string &name,
+           const std::string &file_name, const std::string &entry_point = "main");
     Shader(const Shader &) = delete;
     Shader(Shader &&) noexcept;
     ~Shader();
