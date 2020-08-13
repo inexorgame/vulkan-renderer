@@ -10,7 +10,6 @@ set(SOURCE_FILES
     vulkan-renderer/gpu_info.cpp
     vulkan-renderer/renderer.cpp
     vulkan-renderer/settings_decision_maker.cpp
-    vulkan-renderer/thread_pool.cpp
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/io/byte_stream.cpp

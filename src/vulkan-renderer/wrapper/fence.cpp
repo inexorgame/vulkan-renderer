@@ -8,23 +8,26 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Fence::Fence(const VkDevice device, const std::string &name, const bool in_signaled_state)
+Fence::Fence(const wrapper::Device &device, const std::string &name, const bool in_signaled_state)
     : m_device(device), m_name(name) {
-    assert(device);
     assert(!name.empty());
+    assert(device.device());
 
     auto fence_ci = make_info<VkFenceCreateInfo>();
     fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
-    spdlog::debug("Creating Vulkan synchronisation fence {}.", name);
+    spdlog::debug("Creating Vulkan synchronisation fence {}.", m_name);
 
-    if (vkCreateFence(device, &fence_ci, nullptr, &m_fence) != VK_SUCCESS) {
+    if (vkCreateFence(device.device(), &fence_ci, nullptr, &m_fence) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateFence failed!");
     }
 
-    // TODO: Assign an internal name using Vulkan debug markers.
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_fence), VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
+#endif
 
-    spdlog::debug("Created fence successfully.");
+    spdlog::debug("Created fence {} successfully.", m_name);
 }
 
 Fence::Fence(Fence &&other) noexcept
@@ -32,19 +35,19 @@ Fence::Fence(Fence &&other) noexcept
 
 Fence::~Fence() {
     spdlog::trace("Destroying fence {}.", m_name);
-    vkDestroyFence(m_device, m_fence, nullptr);
+    vkDestroyFence(m_device.device(), m_fence, nullptr);
 }
 
 void Fence::block(std::uint64_t timeout_limit) const {
-    assert(m_device);
+    assert(m_device.device());
     assert(m_fence);
-    vkWaitForFences(m_device, 1, &m_fence, VK_TRUE, timeout_limit);
+    vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
 }
 
 void Fence::reset() const {
-    assert(m_device);
+    assert(m_device.device());
     assert(m_fence);
-    vkResetFences(m_device, 1, &m_fence);
+    vkResetFences(m_device.device(), 1, &m_fence);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

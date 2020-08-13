@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <stdexcept>
 
 namespace inexor::vulkan_renderer {
 
@@ -15,10 +16,7 @@ VkResult AvailabilityChecksManager::create_instance_extensions_cache() {
     if (m_available_instance_extensions == 0) {
         // It should be a very rare case that no instance extensions are available at all. Still we have to consider
         // this!
-        display_error_message("Error: No Vulkan instance extensions available!");
-
-        // Since there are no instance extensions available at all, the desired one is not supported either.
-        return VK_ERROR_INITIALIZATION_FAILED;
+        throw std::runtime_error("Error: No Vulkan instance extensions available!");
     } else {
         // Preallocate memory for extension properties.
         m_instance_extensions_cache.resize(m_available_instance_extensions);
@@ -59,10 +57,7 @@ VkResult AvailabilityChecksManager::create_instance_layers_cache() {
 
     if (m_available_instance_layers == 0) {
         // It should be a very rare case that no instance layers are available at all. Still we have to consider this!
-        display_error_message("Error: No Vulkan instance layers available!");
-
-        // Since there are no instance layers available at all, the desired one is not supported either.
-        return VK_ERROR_INITIALIZATION_FAILED;
+        throw std::runtime_error("Error: No Vulkan instance layers available!");
     }
     // Preallocate memory for layer properties.
     m_instance_layers_cache.resize(m_available_instance_layers);
@@ -101,10 +96,7 @@ VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalD
 
     if (m_available_device_layers == 0) {
         // It should be a very rare case that no device layers are available at all. Still we have to consider this!
-        display_error_message("Error: No Vulkan device layers available!");
-
-        // Since there are no device layers available at all, the desired one is not supported either.
-        return VK_ERROR_INITIALIZATION_FAILED;
+        throw std::runtime_error("Error: No Vulkan device layers available!");
     }
     // Preallocate memory for device layers.
     m_device_layer_properties_cache.resize(m_available_device_layers);
@@ -146,10 +138,7 @@ VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysi
 
     if (0 == m_available_device_extensions) {
         // It should be a very rare case that no device extension are available at all. Still we have to consider this!
-        display_error_message("Error: No Vulkan device extensions available!");
-
-        // Since there are no device extensions available at all, the desired one is not supported either.
-        return VK_ERROR_INITIALIZATION_FAILED;
+        throw std::runtime_error("Error: No Vulkan device extensions available!");
     } else {
         // Preallocate memory for device extensions.
         m_device_extensions_cache.resize(m_available_device_extensions);

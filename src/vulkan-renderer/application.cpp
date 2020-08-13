@@ -12,6 +12,8 @@
 #include <spdlog/spdlog.h>
 #include <toml11/toml.hpp>
 
+#include <thread>
+
 namespace inexor::vulkan_renderer {
 
 /// @brief Static callback for window resize events.
@@ -28,13 +30,12 @@ static void frame_buffer_resize_callback(GLFWwindow *window, int width, int heig
     app->m_window_resized = true;
 }
 
-VkResult Application::load_toml_configuration_file(const std::string &file_name) {
+void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Loading TOML configuration file: '{}'", file_name);
 
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
-        spdlog::error("Could not open configuration file: '{}'!", file_name);
-        return VK_ERROR_INITIALIZATION_FAILED;
+        throw std::runtime_error(std::string("Could not open configuration file: " + file_name + "!"));
     }
 
     toml_file.close();
@@ -108,8 +109,6 @@ VkResult Application::load_toml_configuration_file(const std::string &file_name)
     }
 
     // TODO: Load more info from TOML file.
-
-    return VK_SUCCESS;
 }
 
 VkResult Application::load_textures() {
@@ -124,9 +123,8 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : m_texture_files) {
-        m_textures.emplace_back(m_vkdevice->device(), m_vkdevice->physical_device(), m_vkdevice->allocator(),
-                                texture_file, texture_name, m_vkdevice->graphics_queue(),
-                                m_vkdevice->graphics_queue_family_index());
+        m_textures.emplace_back(*m_vkdevice, m_vkdevice->physical_device(), m_vkdevice->allocator(), texture_file,
+                                texture_name, m_vkdevice->graphics_queue(), m_vkdevice->graphics_queue_family_index());
     }
 
     return VK_SUCCESS;
@@ -148,8 +146,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader",
-                               vertex_shader_file);
+        m_shaders.emplace_back(*m_vkdevice, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
     }
 
     spdlog::debug("Loading fragment shaders.");
@@ -163,7 +160,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(m_vkdevice->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
+        m_shaders.emplace_back(*m_vkdevice, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
                                fragment_shader_file);
     }
 
@@ -176,7 +173,7 @@ VkResult Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
     std::shared_ptr<world::Cube> cube =
-        std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2, glm::vec3{0, -1, -1});
+        std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2.0f, glm::vec3{0, -1, -1});
     for (const auto &child : cube->childs()) {
         child->set_type(world::Cube::Type::NORMAL);
         child->indent(8, true, 3);
@@ -226,12 +223,8 @@ Application::Application(int argc, char **argv) {
     tools::CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);
 
-    // Initialise Inexor thread-pool.
-    m_thread_pool = std::make_shared<ThreadPool>();
-
     // Load the configuration from the TOML file.
-    VkResult result = load_toml_configuration_file("configuration/renderer.toml");
-    vulkan_error_check(result);
+    load_toml_configuration_file("configuration/renderer.toml");
 
     bool enable_renderdoc_instance_layer = false;
 
@@ -262,8 +255,9 @@ Application::Application(int argc, char **argv) {
 
     m_glfw_context = std::make_unique<wrapper::GLFWContext>();
 
-    m_vkinstance = std::make_unique<wrapper::Instance>(m_application_name, m_engine_name, m_application_version,
-                                                       m_engine_version, VK_API_VERSION_1_1);
+    m_vkinstance = std::make_unique<wrapper::Instance>(
+        m_application_name, m_engine_name, m_application_version, m_engine_version, VK_API_VERSION_1_1,
+        enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
 
@@ -385,12 +379,12 @@ Application::Application(int argc, char **argv) {
         std::make_unique<wrapper::Device>(m_vkinstance->instance(), m_surface->get(),
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
-    result = check_application_specific_features();
+    VkResult result = check_application_specific_features();
     vulkan_error_check(result);
 
-    m_swapchain = std::make_unique<wrapper::Swapchain>(m_vkdevice->device(), m_vkdevice->physical_device(),
-                                                       m_surface->get(), m_window->width(), m_window->height(),
-                                                       m_vsync_enabled, "Standard swapchain.");
+    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_vkdevice, m_vkdevice->physical_device(), m_surface->get(),
+                                                       m_window->width(), m_window->height(), m_vsync_enabled,
+                                                       "Standard swapchain");
 
     result = load_textures();
     vulkan_error_check(result);
@@ -429,7 +423,7 @@ Application::Application(int argc, char **argv) {
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &m_uniform_buffer_info;
 
-    m_descriptors.emplace_back(wrapper::ResourceDescriptor{m_vkdevice->device(),
+    m_descriptors.emplace_back(wrapper::ResourceDescriptor{*m_vkdevice,
                                                            m_swapchain->image_count(),
                                                            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
                                                            layout_bindings,

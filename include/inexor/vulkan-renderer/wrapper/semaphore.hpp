@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <string>
 
@@ -8,12 +8,12 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Semaphore {
 private:
+    const wrapper::Device &m_device;
     VkSemaphore m_semaphore;
-    VkDevice m_device;
-    std::string m_name;
+    const std::string m_name;
 
 public:
-    Semaphore(const VkDevice device, const std::string &name);
+    Semaphore(const wrapper::Device &device, const std::string &name);
     Semaphore(const Semaphore &) = delete;
     Semaphore(Semaphore &&) noexcept;
     ~Semaphore();

@@ -32,14 +32,14 @@ std::vector<char> read_binary(const std::string &file_name) {
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
-               const std::string &entry_point)
+Shader::Shader(const wrapper::Device &device, const VkShaderStageFlagBits type, const std::string &name,
+               const std::string &file_name, const std::string &entry_point)
     : Shader(device, type, name, read_binary(file_name), entry_point) {}
 
-Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::string &name,
+Shader::Shader(const wrapper::Device &device, const VkShaderStageFlagBits type, const std::string &name,
                const std::vector<char> &code, const std::string &entry_point)
     : m_device(device), m_type(type), m_name(name), m_entry_point(entry_point) {
-    assert(device);
+    assert(device.device());
     assert(!name.empty());
     assert(!code.empty());
     assert(!entry_point.empty());
@@ -53,35 +53,24 @@ Shader::Shader(VkDevice device, const VkShaderStageFlagBits type, const std::str
     shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
 
     spdlog::debug("Creating shader module {}.", name);
-    if (vkCreateShaderModule(device, &shader_module_ci, nullptr, &m_shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name + "!");
     }
 
-    // Try to find the Vulkan debug marker function.
-    auto *vkDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
-        vkGetDeviceProcAddr(device, "vkDebugMarkerSetObjectNameEXT"));
-
-    if (vkDebugMarkerSetObjectNameEXT != nullptr) {
-        // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for
-        // debugging.
-        auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
-        name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT;
-        name_info.object = reinterpret_cast<std::uint64_t>(m_shader_module);
-        name_info.pObjectName = name.c_str();
-
-        spdlog::debug("Assigning internal name {} to shader module.", name);
-        if (vkDebugMarkerSetObjectNameEXT(device, &name_info) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkDebugMarkerSetObjectNameEXT failed for shader " + name + "!");
-        }
-    }
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_shader_module),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
+#endif
 }
 
-Shader::Shader(Shader &&shader) noexcept
-    : m_device(shader.m_device), m_type(shader.m_type), m_name(std::move(shader.m_name)),
-      m_entry_point(std::move(shader.m_entry_point)), m_shader_module(std::exchange(shader.m_shader_module, nullptr)) {}
+Shader::Shader(Shader &&other) noexcept
+    : m_device(other.m_device), m_type(other.m_type), m_name(std::move(other.m_name)),
+      m_entry_point(std::move(other.m_entry_point)), m_shader_module(std::exchange(other.m_shader_module, nullptr)) {}
 
 Shader::~Shader() {
-    vkDestroyShaderModule(m_device, m_shader_module, nullptr);
+    spdlog::trace("Destroying shader module {}.", m_name);
+    vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

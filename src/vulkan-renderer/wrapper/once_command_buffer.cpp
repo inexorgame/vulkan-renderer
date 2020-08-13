@@ -10,12 +10,12 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(const VkDevice device, const VkQueue data_transfer_queue,
+OnceCommandBuffer::OnceCommandBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
                                      const std::uint32_t data_transfer_queue_family_index)
     : m_device(device), m_data_transfer_queue(data_transfer_queue),
-      m_command_pool(device, data_transfer_queue_family_index) {
+      m_command_pool(device.device(), data_transfer_queue_family_index) {
 
-    assert(device);
+    assert(device.device());
     assert(data_transfer_queue);
     m_command_buffer_created = false;
     m_recording_started = false;
@@ -34,19 +34,19 @@ OnceCommandBuffer::~OnceCommandBuffer() {
 }
 
 void OnceCommandBuffer::create_command_buffer() {
-    assert(m_device);
+    assert(m_device.device());
     assert(m_command_pool.get());
     assert(m_data_transfer_queue);
     assert(!m_recording_started);
     assert(!m_command_buffer_created);
 
-    m_command_buffer = std::make_unique<wrapper::CommandBuffer>(m_device, m_command_pool.get());
+    m_command_buffer = std::make_unique<wrapper::CommandBuffer>(m_device, m_command_pool.get(), "Once command buffer");
 
     m_command_buffer_created = true;
 }
 
 void OnceCommandBuffer::start_recording() {
-    assert(m_device);
+    assert(m_device.device());
     assert(m_command_pool.get());
     assert(m_data_transfer_queue);
     assert(m_command_buffer_created);
@@ -66,12 +66,10 @@ void OnceCommandBuffer::start_recording() {
     }
 
     m_recording_started = true;
-
-    // TODO: Set object name using Vulkan debug markers.
 }
 
 void OnceCommandBuffer::end_recording_and_submit_command() {
-    assert(m_device);
+    assert(m_device.device());
     assert(m_command_pool.get());
     assert(m_command_buffer);
     assert(m_data_transfer_queue);
@@ -104,7 +102,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     spdlog::debug("Destroying once command buffer.");
 
     // Because we destroy the command buffer after submission, we have to allocate it every time.
-    vkFreeCommandBuffers(m_device, m_command_pool.get(), 1, m_command_buffer->ptr());
+    vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, m_command_buffer->ptr());
 
     m_command_buffer_created = false;
 

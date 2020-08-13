@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/thread_pool.hpp"
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_core.h>
@@ -23,12 +22,6 @@ private:
 
     std::uint32_t m_engine_version{};
 
-    // The core concept of paralellization in Inexor is to use a
-    // C++17 threadpool implementation which spawns worker threads.
-    // A task system is used to distribute work over worker threads.
-    // Call thread_pool->execute(); to order new tasks to be worked on.
-    std::shared_ptr<ThreadPool> m_thread_pool;
-
     // TODO: Refactor into a manger class.
     struct ShaderSetup {
         VkShaderStageFlagBits shader_type;
@@ -49,7 +42,7 @@ private:
     /// @brief Loads the configuration of the renderer from a TOML configuration file.
     /// @brief file_name [in] The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
-    VkResult load_toml_configuration_file(const std::string &file_name);
+    void load_toml_configuration_file(const std::string &file_name);
 
     VkResult load_textures();
 

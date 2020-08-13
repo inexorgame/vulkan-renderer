@@ -54,7 +54,7 @@ PhysicalImage::~PhysicalImage() {
 }
 
 PhysicalStage::~PhysicalStage() {
-    vkDestroyPipeline(m_device, m_pipeline, nullptr);
+    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
 }
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
@@ -99,7 +99,7 @@ void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    if (vkCreateImageView(m_device, &image_view_ci, nullptr, &phys->m_image_view) != VK_SUCCESS) {
+    if (vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &phys->m_image_view) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create image view!");
     }
 }
@@ -166,7 +166,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     render_pass_ci.pDependencies = &subpass_dependency;
     render_pass_ci.pSubpasses = &subpass_description;
 
-    if (vkCreateRenderPass(m_device, &render_pass_ci, nullptr, &phys->m_render_pass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &phys->m_render_pass) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create render pass!");
     }
 }
@@ -262,7 +262,8 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     pipeline_ci.pStages = stage->m_shaders.data();
 
     // TODO(): Pipeline caching (basically load the frame graph from a file)
-    if (vkCreateGraphicsPipelines(m_device, nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline!");
     }
 }
@@ -270,7 +271,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
 void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
     for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-        phys->m_command_buffers.emplace_back(m_device, m_command_pool);
+        phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
     }
 }
 
@@ -375,7 +376,7 @@ void FrameGraph::compile(const RenderResource &target) {
 
         if (const auto *buffer_resource = dynamic_cast<const BufferResource *>(resource.get())) {
             assert(buffer_resource->m_usage != BufferUsage::INVALID);
-            auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device);
+            auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device.device());
 
             bool is_uploading_data = buffer_resource->m_data != nullptr;
             alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0U;
@@ -410,9 +411,9 @@ void FrameGraph::compile(const RenderResource &target) {
             // Back buffer gets special handling
             if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
                 // TODO(): Move image views from wrapper::Swapchain to PhysicalBackBuffer
-                create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device, m_swapchain);
+                create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device.device(), m_swapchain);
             } else {
-                auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device);
+                auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device.device());
                 alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
                 build_image(texture_resource, phys, &alloc_ci);
                 build_image_view(texture_resource, phys);
@@ -454,7 +455,8 @@ void FrameGraph::compile(const RenderResource &target) {
                         image_views.push_back(image->m_image_view);
                     }
 
-                    phys->m_framebuffers.emplace_back(m_device, phys->m_render_pass, image_views, m_swapchain);
+                    phys->m_framebuffers.emplace_back(m_device, phys->m_render_pass, image_views, m_swapchain,
+                                                      "Framebuffer");
                 }
             }
         }

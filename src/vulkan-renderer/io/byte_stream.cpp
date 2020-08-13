@@ -21,7 +21,7 @@ std::size_t ByteStream::size() const {
 }
 
 void ByteStreamReader::check_end(const std::size_t size) const {
-    if (std::distance(m_iter, m_stream.buffer().end()) < size) {
+    if (static_cast<std::size_t>(std::distance(m_iter, m_stream.buffer().end())) < size) {
         throw std::runtime_error("end would be overrun");
     }
 }

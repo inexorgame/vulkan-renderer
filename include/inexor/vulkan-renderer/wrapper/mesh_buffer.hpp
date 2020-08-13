@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <vma/vma_usage.h>
@@ -25,15 +26,11 @@ namespace inexor::vulkan_renderer::wrapper {
 class MeshBuffer {
 
 private:
-    std::string m_name = "";
-
+    const wrapper::Device &m_device;
+    const std::string m_name;
     GPUMemoryBuffer m_vertex_buffer;
-
-    // Index buffer, if available.
     std::optional<GPUMemoryBuffer> m_index_buffer;
-
     std::uint32_t m_number_of_vertices{0};
-
     std::uint32_t m_number_of_indices{0};
 
     // Don't forget that index buffers are optional!
@@ -41,14 +38,16 @@ private:
 
 public:
     /// @brief Creates a new vertex buffer and an associated index buffer.
-    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index,
-               const VmaAllocator vma_allocator, const std::string &name, const VkDeviceSize size_of_vertex_structure,
+    MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
+               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
+               const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
                const std::size_t number_of_indices, void *indices);
 
     /// @brief Creates a vertex buffer without index buffer.
-    MeshBuffer(const VkDevice device, VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index,
-               const VmaAllocator vma_allocator, const std::string &name, const VkDeviceSize size_of_vertex_structure,
+    MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
+               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
+               const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices);
     MeshBuffer(const MeshBuffer &) = delete;
     MeshBuffer(MeshBuffer &&) noexcept;

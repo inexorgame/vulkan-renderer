@@ -8,10 +8,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
+PipelineLayout::PipelineLayout(const wrapper::Device &device,
+                               const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
                                const std::string &name)
     : m_device(device), m_name(name) {
-    assert(device);
+    assert(device.device());
     assert(!descriptor_set_layouts.empty());
     assert(!name.empty());
 
@@ -19,15 +20,19 @@ PipelineLayout::PipelineLayout(const VkDevice device, const std::vector<VkDescri
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(descriptor_set_layouts.size());
     pipeline_layout_ci.pSetLayouts = descriptor_set_layouts.data();
 
-    spdlog::debug("Creating pipeline layout {}.", name);
+    spdlog::debug("Creating pipeline layout {}.", m_name);
 
-    if (vkCreatePipelineLayout(device, &pipeline_layout_ci, nullptr, &m_pipeline_layout)) {
-        throw std::runtime_error("Error: vkCreatePipelineLayout failed for " + name + " !");
+    if (vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout)) {
+        throw std::runtime_error("Error: vkCreatePipelineLayout failed for " + m_name + " !");
     }
 
-    // TODO: Assign an internal name to this pipeline layout using Vulkan debug markers.
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_pipeline_layout),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, m_name);
+#endif
 
-    spdlog::debug("Created pipeline layout successfully.");
+    spdlog::debug("Created pipeline layout {} successfully.", m_name);
 }
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
@@ -36,7 +41,7 @@ PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept
 
 PipelineLayout::~PipelineLayout() {
     spdlog::trace("Destroying pipeline layout {}.", m_name);
-    vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
+    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

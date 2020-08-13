@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -12,8 +12,7 @@ class Semaphore;
 
 class Swapchain {
 private:
-    // TODO: Move members which don't need to be members!
-    VkDevice m_device;
+    const wrapper::Device &m_device;
     VkPhysicalDevice m_graphics_card;
     VkSurfaceKHR m_surface;
     VkSwapchainKHR m_swapchain;
@@ -23,7 +22,7 @@ private:
     std::vector<VkImage> m_swapchain_images;
     std::vector<VkImageView> m_swapchain_image_views;
     std::uint32_t m_swapchain_image_count;
-    std::string m_name;
+    const std::string m_name;
     bool m_vsync_enabled;
 
     /// @brief (Re)creates the swapchain.
@@ -36,7 +35,7 @@ private:
 public:
     /// @brief
     /// @note We must pass width and height as call by reference!
-    Swapchain(const VkDevice device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
+    Swapchain(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
               std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
               const std::string &name);
     Swapchain(const Swapchain &) = delete;

@@ -12,9 +12,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const std::uint32_t vulkan_api_version, std::vector<std::string> requested_instance_extensions,
-                   std::vector<std::string> requested_instance_layers, bool enable_validation_layers,
-                   bool enable_renderdoc_instance_layer) {
+                   const std::uint32_t vulkan_api_version, bool enable_validation_layers,
+                   bool enable_renderdoc_instance_layer, std::vector<std::string> requested_instance_extensions,
+                   std::vector<std::string> requested_instance_layers) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
@@ -153,9 +153,9 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const std::uint32_t vulkan_api_version)
-    : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version, {}, {}, true,
-               false) {
+                   const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer)
+    : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version,
+               enable_validation_layers, enable_renderdoc_layer, {}, {}) {
     spdlog::debug("No instance extensions or instance layers specified.");
     spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
 }

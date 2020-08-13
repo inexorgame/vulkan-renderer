@@ -6,11 +6,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+Image::Image(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
              const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
              const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent)
     : m_device(device), m_vma_allocator(vma_allocator), m_format(format), m_name(name) {
-    assert(device);
+    assert(device.device());
     assert(graphics_card);
     assert(vma_allocator);
     assert(image_extent.width > 0);
@@ -43,10 +43,13 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
 
     if (vmaCreateImage(vma_allocator, &image_ci, &vma_allocation_ci, &m_image, &m_allocation, &m_allocation_info) !=
         VK_SUCCESS) {
-        throw std::runtime_error("Error: vmaCreateImage failed for depth buffer images!");
+        throw std::runtime_error("Error: vmaCreateImage failed for image " + m_name + "!");
     }
 
-    // TODO: Assign an internal name using Vulkan debug markers.
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
+#endif
 
     auto image_view_ci = make_info<VkImageViewCreateInfo>();
     image_view_ci.image = m_image;
@@ -58,11 +61,15 @@ Image::Image(const VkDevice device, const VkPhysicalDevice graphics_card, const 
     image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device, &image_view_ci, nullptr, &m_image_view) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateImageView failed!");
+    if (vkCreateImageView(device.device(), &image_view_ci, nullptr, &m_image_view) != VK_SUCCESS) {
+        throw std::runtime_error("Error: vkCreateImageView failed for image view " + m_name + "!");
     }
 
-    // TODO: Assign an internal name using Vulkan debug markers.
+#ifndef NDEBUG
+    // Assign an internal name using Vulkan debug markers.
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+                             m_name);
+#endif
 }
 
 Image::Image(Image &&other) noexcept
@@ -71,10 +78,10 @@ Image::Image(Image &&other) noexcept
       m_image_view(other.m_image_view), m_name(std::move(other.m_name)) {}
 
 Image::~Image() {
-    spdlog::trace("Destroying image view {} .", m_name);
-    vkDestroyImageView(m_device, m_image_view, nullptr);
+    spdlog::trace("Destroying image view {}.", m_name);
+    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
 
-    spdlog::trace("Destroying image {} .", m_name);
+    spdlog::trace("Destroying image {}.", m_name);
     vmaDestroyImage(m_vma_allocator, m_image, m_allocation);
 }
 

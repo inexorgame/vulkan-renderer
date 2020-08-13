@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
@@ -19,14 +20,14 @@ class Texture {
 private:
     std::unique_ptr<wrapper::Image> m_texture_image;
 
-    std::string m_name;
-    std::string m_file_name;
+    const std::string m_name;
+    const std::string m_file_name;
     int m_texture_width{0};
     int m_texture_height{0};
     int m_texture_channels{0};
     int m_mip_levels{0};
 
-    VkDevice m_device;
+    const wrapper::Device &m_device;
     VkSampler m_sampler;
     VmaAllocator m_vma_allocator;
     VkQueue m_data_transfer_queue;
@@ -55,7 +56,7 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+    Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
             const std::string &file_name, const std::string &name, const VkQueue data_transfer_queue,
             const std::uint32_t data_transfer_queue_family_index);
 
@@ -68,7 +69,7 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(const VkDevice device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
+    Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
             void *texture_data, const std::size_t texture_size, const std::string &name,
             const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
     Texture(const Texture &) = delete;

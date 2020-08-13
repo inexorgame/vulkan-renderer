@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <string>
 #include <vector>
@@ -9,10 +9,10 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Shader {
 private:
-    VkDevice m_device;
+    const wrapper::Device &m_device;
     VkShaderStageFlagBits m_type;
-    std::string m_name;
-    std::string m_entry_point;
+    const std::string m_name;
+    const std::string m_entry_point;
 
     VkShaderModule m_shader_module;
 
@@ -23,8 +23,8 @@ public:
     /// @param name [in] The internal name of the shader module.
     /// @param code [in] The SPIR-V shader code.
     /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
-    Shader(VkDevice device, VkShaderStageFlagBits type, const std::string &name, const std::vector<char> &code,
-           const std::string &entry_point = "main");
+    Shader(const wrapper::Device &m_device, VkShaderStageFlagBits type, const std::string &name,
+           const std::vector<char> &code, const std::string &entry_point = "main");
 
     /// @brief Creates a shader from a SPIR-V file.
     /// @param device [in] The Vulkan device which will be used to create the shader module.
@@ -32,8 +32,8 @@ public:
     /// @param name [in] The internal name of the shader module.
     /// @param file_name [in] The name of the SPIR-V shader file.
     /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
-    Shader(VkDevice device, VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
-           const std::string &entry_point = "main");
+    Shader(const wrapper::Device &m_device, VkShaderStageFlagBits type, const std::string &name,
+           const std::string &file_name, const std::string &entry_point = "main");
     Shader(const Shader &) = delete;
     Shader(Shader &&) noexcept;
     ~Shader();
