@@ -289,7 +289,7 @@ class PhysicalStage {
 
 private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
 
@@ -299,7 +299,7 @@ protected:
     }
 
 public:
-    explicit PhysicalStage(wrapper::Device &device) : m_device(device) {}
+    explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
     PhysicalStage(const PhysicalStage &) = delete;
     PhysicalStage(PhysicalStage &&) = delete;
     virtual ~PhysicalStage();
@@ -322,7 +322,7 @@ private:
     std::vector<wrapper::Framebuffer> m_framebuffers;
 
 public:
-    explicit PhysicalGraphicsStage(wrapper::Device &device) : PhysicalStage(device) {}
+    explicit PhysicalGraphicsStage(const wrapper::Device &device) : PhysicalStage(device) {}
     PhysicalGraphicsStage(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage(PhysicalGraphicsStage &&) = delete;
     ~PhysicalGraphicsStage() override;
@@ -333,7 +333,7 @@ public:
 
 class FrameGraph {
 private:
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     VkCommandPool m_command_pool;
     VmaAllocator m_allocator;
     const wrapper::Swapchain &m_swapchain;
@@ -383,7 +383,7 @@ private:
     void record_command_buffers(const RenderStage *, PhysicalStage *);
 
 public:
-    FrameGraph(wrapper::Device &device, VkCommandPool command_pool, VmaAllocator allocator,
+    FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, VmaAllocator allocator,
                const wrapper::Swapchain &swapchain)
         : m_device(device), m_command_pool(command_pool), m_allocator(allocator), m_swapchain(swapchain) {}
 
