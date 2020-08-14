@@ -126,7 +126,7 @@ public:
 
     /// @brief Specifies the format of this texture that is required when a physical resource is made
     /// @details For TextureUsage::BACK_BUFFER textures, using the swapchain image format is preferable in most cases.
-    /// @details For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used!
+    ///          For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used!
     void set_format(VkFormat format) {
         m_format = format;
     }
@@ -177,7 +177,7 @@ public:
 
     /// @brief Specifies a function that will be called during command buffer recordation for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recordation. The most
-    /// @details common use for this is for draw commands.
+    ///          common use for this is for draw commands.
     void set_on_record(std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
     }
