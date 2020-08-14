@@ -1,0 +1,34 @@
+name: Code Style
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  clang-format:
+    name: Clang Format
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: "noninteractive"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Update environment
+        shell: bash
+        run: |
+          # Update package lists
+          apt update -qq
+
+          # Install tools
+          apt install -y \
+            clang-format \
+            git
+
+      - name: Style check
+        shell: bash
+        run: |
+          git-clang-format origin/master
+          git diff | tee format-diff
+          if [ -s format-diff ]; then exit 1; fi
