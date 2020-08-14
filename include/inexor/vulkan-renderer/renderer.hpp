@@ -98,7 +98,6 @@ protected:
     std::vector<wrapper::Shader> m_shaders;
     std::vector<wrapper::Texture> m_textures;
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
-    std::vector<wrapper::MeshBuffer> m_mesh_buffers;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
 
     // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
