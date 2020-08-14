@@ -65,7 +65,7 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
 
-    // TODO(): Support textures with dimensions not equal to back buffer size
+    // TODO: Support textures with dimensions not equal to back buffer size
     image_ci.extent.width = m_swapchain.extent().width;
     image_ci.extent.height = m_swapchain.extent().height;
     image_ci.extent.depth = 1;
@@ -110,8 +110,8 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     std::vector<VkAttachmentReference> depth_refs;
 
     // Build attachments
-    // TODO(): Support multisampled attachments
-    // TODO(): Use range-based for loop initialization statements when we switch to C++ 20
+    // TODO(GH-203): Support multisampled attachments
+    // TODO: Use range-based for loop initialization statements when we switch to C++ 20
     for (std::size_t i = 0; i < stage->m_writes.size(); i++) {
         const auto *resource = stage->m_writes[i];
         const auto *texture = dynamic_cast<const TextureResource *>(resource);
@@ -203,7 +203,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     vertex_input.pVertexAttributeDescriptions = attribute_bindings.data();
     vertex_input.pVertexBindingDescriptions = vertex_bindings.data();
 
-    // TODO(): Support primitives other than triangles
+    // TODO: Support primitives other than triangles
     auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
     input_assembly.primitiveRestartEnable = VK_FALSE;
     input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -213,14 +213,14 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     depth_stencil.depthTestEnable = VK_TRUE;
     depth_stencil.depthWriteEnable = VK_TRUE;
 
-    // TODO(): Wireframe rendering
+    // TODO: Wireframe rendering
     auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
     rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterization_state.lineWidth = 1.0F;
     rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
 
-    // TODO(): Support multisampling again
+    // TODO(GH-203): Support multisampling again
     auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
     multisample_state.minSampleShading = 1.0F;
     multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -241,7 +241,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     viewport.height = static_cast<float>(m_swapchain.extent().height);
     viewport.maxDepth = 1.0F;
 
-    // TODO(): Custom scissors?
+    // TODO: Custom scissors?
     auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
     viewport_state.scissorCount = 1;
     viewport_state.viewportCount = 1;
@@ -261,7 +261,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     pipeline_ci.stageCount = static_cast<std::uint32_t>(stage->m_shaders.size());
     pipeline_ci.pStages = stage->m_shaders.data();
 
-    // TODO(): Pipeline caching (basically load the frame graph from a file)
+    // TODO: Pipeline caching (basically load the frame graph from a file)
     if (vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline) !=
         VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline!");
@@ -278,7 +278,7 @@ void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *
 void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
     m_log->trace("Recording command buffers for stage '{}'", stage->m_name);
     for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
-        // TODO(): Remove simultaneous usage once we have proper max frames in flight control
+        // TODO: Remove simultaneous usage once we have proper max frames in flight control
         auto &cmd_buf = phys->m_command_buffers[i];
         cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
@@ -327,8 +327,8 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
 }
 
 void FrameGraph::compile(const RenderResource &target) {
-    // TODO(): Better logging and input validation
-    // TODO(): Many opportunities for optimisation
+    // TODO(GH-204): Better logging and input validation
+    // TODO: Many opportunities for optimisation
 
     // Build a simple helper map to lookup resources writers
     std::unordered_map<const RenderResource *, std::vector<RenderStage *>> writers;
@@ -338,10 +338,9 @@ void FrameGraph::compile(const RenderResource &target) {
         }
     }
 
-    // Post order depth first search
-    // NOTE: Doesn't do any colouring, only works on acyclic graphs!
-    // TODO(): Stage graph validation (ensuring no cycles, etc.)
-    // TODO(): Move away from recursive dfs algo
+    // Post order depth first search. Note that this doesn't do any colouring, so it only works on acyclic graphs.
+    // TODO(GH-204): Stage graph validation (ensuring no cycles, etc.)
+    // TODO: Move away from recursive dfs algo
     std::function<void(RenderStage *)> dfs = [&](RenderStage *stage) {
         for (const auto *resource : stage->m_reads) {
             for (auto *writer : writers[resource]) {
@@ -362,13 +361,13 @@ void FrameGraph::compile(const RenderResource &target) {
     }
 
     // Create physical resources
-    // TODO(): Resource aliasing (i.e. reusing the same physical resource for multiple resources)
+    // TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources)
     for (const auto &resource : m_resources) {
         // Build allocation (using VMA for now)
         m_log->trace("Allocating physical resource for resource '{}'", resource->m_name);
         VmaAllocationCreateInfo alloc_ci{};
 
-        // TODO(): Use a constexpr bool
+        // TODO: Use a constexpr bool
 #if VMA_RECORDING_ENABLED
         alloc_ci.flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
         alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
@@ -410,7 +409,7 @@ void FrameGraph::compile(const RenderResource &target) {
 
             // Back buffer gets special handling
             if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
-                // TODO(): Move image views from wrapper::Swapchain to PhysicalBackBuffer
+                // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer
                 create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device.device(), m_swapchain);
             } else {
                 auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device.device());
@@ -421,18 +420,17 @@ void FrameGraph::compile(const RenderResource &target) {
         }
     }
 
-    // Create physical stages
-    // NOTE: Each render stage, after merging and reordering, maps to a vulkan pipeline and list of command buffers
-    // NOTE: Each graphics stage maps to a vulkan render pass and graphics pipeline
+    // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
+    // command buffers. Each graphics stage also maps to a vulkan render pass.
     for (const auto *stage : m_stage_stack) {
         if (const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage)) {
             auto *phys = create<PhysicalGraphicsStage>(graphics_stage, m_device);
             build_render_pass(graphics_stage, phys);
             build_graphics_pipeline(graphics_stage, phys);
 
-            // If we write to at least one texture, we need to make framebuffers
+            // If we write to at least one texture, we need to make framebuffers.
             if (!stage->m_writes.empty()) {
-                // For every texture that this stage writes to, we need to attach it to the framebuffer
+                // For every texture that this stage writes to, we need to attach it to the framebuffer.
                 std::vector<const PhysicalBackBuffer *> back_buffers;
                 std::vector<const PhysicalImage *> images;
                 for (const auto *resource : stage->m_writes) {
@@ -482,8 +480,8 @@ void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemapho
     std::array<VkPipelineStageFlags, 1> wait_stage_mask = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submit_info.pWaitDstStageMask = wait_stage_mask.data();
 
-    // TODO(): Batch submit infos
-    // TODO(): Loop over physical stages here
+    // TODO: Batch submit infos
+    // TODO: Loop over physical stages here
     for (const auto *stage : m_stage_stack) {
         auto *cmd_buf = m_stage_map.at(stage)->m_command_buffers[image_index].get();
         submit_info.pCommandBuffers = &cmd_buf;
