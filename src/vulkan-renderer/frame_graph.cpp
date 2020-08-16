@@ -289,8 +289,8 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             assert(phys_graphics_stage != nullptr);
 
             auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
+            std::array<VkClearValue, 2> clear_values{};
             if (graphics_stage->m_clears_screen) {
-                std::array<VkClearValue, 2> clear_values{};
                 clear_values[0].color = {0, 0, 0, 0};
                 clear_values[1].depthStencil = {1.0F, 0};
                 render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
