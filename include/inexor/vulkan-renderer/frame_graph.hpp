@@ -64,7 +64,7 @@ private:
     BufferUsage m_usage{BufferUsage::INVALID};
     std::vector<VkVertexInputAttributeDescription> m_vertex_attributes;
 
-    // Data to upload during frame graph compilation
+    // Data to upload during frame graph compilation.
     const void *m_data{nullptr};
     std::size_t m_data_size{0};
     std::size_t m_element_size{0};
@@ -86,7 +86,7 @@ public:
     /// @brief Specifies that data should be uploaded to this buffer during frame graph compilation
     /// @param count The number of elements (not bytes) to upload from CPU memory to GPU memory
     /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
-    // TODO: Use std::span when we switch to C++ 20
+    // TODO: Use std::span when we switch to C++ 20.
     template <typename T>
     void upload_data(const T *data, std::size_t count);
 
@@ -213,12 +213,12 @@ public:
     void uses_shader(const wrapper::Shader &shader);
 };
 
-// TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`
+// TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.
 class PhysicalResource {
     friend FrameGraph;
 
 protected:
-    // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here
+    // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
     VmaAllocator m_allocator;
     VkDevice m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
@@ -308,7 +308,7 @@ public:
     PhysicalStage &operator=(PhysicalStage &&) = delete;
 
     /// @brief Retrieve the pipeline layout of this physical stage
-    // TODO: This can be removed once descriptors are properly implemented in the frame graph
+    // TODO: This can be removed once descriptors are properly implemented in the frame graph.
     [[nodiscard]] VkPipelineLayout pipeline_layout() const {
         return m_pipeline_layout->get();
     }
@@ -339,21 +339,22 @@ private:
     const wrapper::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log = spdlog::default_logger()->clone("frame-graph");
 
-    // NOTE: unique_ptr must be used as Render* is just the base class
+    // Vectors of render resources and stages. These own the memory. Note that unique_ptr must be used as Render* is
+    // just an inheritable base class.
     std::vector<std::unique_ptr<RenderResource>> m_resources;
     std::vector<std::unique_ptr<RenderStage>> m_stages;
 
-    // Stage execution order
+    // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
 
-    // Resource to physical resource map
+    // Resource to physical resource map.
     std::unordered_map<const RenderResource *, std::unique_ptr<PhysicalResource>> m_resource_map;
 
-    // Stage to physical stage map
+    // Stage to physical stage map.
     std::unordered_map<const RenderStage *, std::unique_ptr<PhysicalStage>> m_stage_map;
 
-    // Helper function used to create a physical resource during frame graph compilation
-    // TODO: Use concepts when we switch to C++ 20
+    // Helper function used to create a physical resource during frame graph compilation.
+    // TODO: Use concepts when we switch to C++ 20.
     template <typename T, typename... Args, std::enable_if_t<std::is_base_of_v<PhysicalResource, T>, int> = 0>
     T *create(const RenderResource *resource, Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
@@ -362,8 +363,8 @@ private:
         return ret;
     }
 
-    // Helper function used to create a physical stage during frame graph compilation
-    // TODO: Use concepts when we switch to C++ 20
+    // Helper function used to create a physical stage during frame graph compilation.
+    // TODO: Use concepts when we switch to C++ 20.
     template <typename T, typename... Args, std::enable_if_t<std::is_base_of_v<PhysicalStage, T>, int> = 0>
     T *create(const RenderStage *stage, Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
@@ -372,11 +373,11 @@ private:
         return ret;
     }
 
-    // Physical resources
+    // Functions for building resource-related vulkan objects.
     void build_image(const TextureResource *, PhysicalImage *, VmaAllocationCreateInfo *);
     void build_image_view(const TextureResource *, PhysicalImage *);
 
-    // Physical stages
+    // Functions for building stage-related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *);
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *);
     void alloc_command_buffers(const RenderStage *, PhysicalStage *);
