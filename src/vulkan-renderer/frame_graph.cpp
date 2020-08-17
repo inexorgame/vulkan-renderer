@@ -134,9 +134,9 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
         cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
         // Record render pass for graphics stages.
-        const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage);
+        const auto *graphics_stage = stage->as<GraphicsStage>();
         if (graphics_stage != nullptr) {
-            const auto *phys_graphics_stage = dynamic_cast<const PhysicalGraphicsStage *>(phys);
+            const auto *phys_graphics_stage = phys->as<PhysicalGraphicsStage>();
             assert(phys_graphics_stage != nullptr);
 
             auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
@@ -158,7 +158,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             const auto *phys_resource = m_resource_map[resource].get();
             assert(phys_resource != nullptr);
 
-            if (const auto *phys_buffer = dynamic_cast<const PhysicalBuffer *>(phys_resource)) {
+            if (const auto *phys_buffer = phys_resource->as<PhysicalBuffer>()) {
                 bind_buffers.push_back(phys_buffer->m_buffer);
             }
         }
@@ -188,7 +188,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     // TODO: Use range-based for loop initialization statements when we switch to C++ 20.
     for (std::size_t i = 0; i < stage->m_writes.size(); i++) {
         const auto *resource = stage->m_writes[i];
-        const auto *texture = dynamic_cast<const TextureResource *>(resource);
+        const auto *texture = resource->as<TextureResource>();
         if (texture == nullptr) {
             continue;
         }
@@ -251,7 +251,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;
     std::vector<VkVertexInputBindingDescription> vertex_bindings;
     for (const auto *resource : stage->m_reads) {
-        const auto *buffer_resource = dynamic_cast<const BufferResource *>(resource);
+        const auto *buffer_resource = resource->as<BufferResource>();
         if (buffer_resource == nullptr) {
             continue;
         }
@@ -392,7 +392,7 @@ void FrameGraph::compile(const RenderResource &target) {
         alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
 #endif
 
-        if (const auto *buffer_resource = dynamic_cast<const BufferResource *>(resource.get())) {
+        if (const auto *buffer_resource = resource->as<BufferResource>()) {
             assert(buffer_resource->m_usage != BufferUsage::INVALID);
             auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device.device());
 
@@ -423,7 +423,7 @@ void FrameGraph::compile(const RenderResource &target) {
             }
         }
 
-        if (const auto *texture_resource = dynamic_cast<const TextureResource *>(resource.get())) {
+        if (const auto *texture_resource = resource->as<TextureResource>()) {
             assert(texture_resource->m_usage != TextureUsage::INVALID);
 
             // Back buffer gets special handling.
@@ -442,7 +442,7 @@ void FrameGraph::compile(const RenderResource &target) {
     // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
     // command buffers. Each graphics stage also maps to a vulkan render pass.
     for (const auto *stage : m_stage_stack) {
-        if (const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage)) {
+        if (const auto *graphics_stage = stage->as<GraphicsStage>()) {
             auto *phys = create<PhysicalGraphicsStage>(graphics_stage, m_device);
             build_render_pass(graphics_stage, phys);
             build_pipeline_layout(graphics_stage, phys);
@@ -455,9 +455,9 @@ void FrameGraph::compile(const RenderResource &target) {
                 std::vector<const PhysicalImage *> images;
                 for (const auto *resource : stage->m_writes) {
                     const auto *phys_resource = m_resource_map[resource].get();
-                    if (const auto *back_buffer = dynamic_cast<const PhysicalBackBuffer *>(phys_resource)) {
+                    if (const auto *back_buffer = phys_resource->as<PhysicalBackBuffer>()) {
                         back_buffers.push_back(back_buffer);
-                    } else if (const auto *image = dynamic_cast<const PhysicalImage *>(phys_resource)) {
+                    } else if (const auto *image = phys_resource->as<PhysicalImage>()) {
                         images.push_back(image);
                     }
                 }

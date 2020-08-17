@@ -27,9 +27,24 @@ namespace inexor::vulkan_renderer {
 
 class FrameGraph;
 
+/// @brief Base class of all frame graph objects (resources and stages)
+/// @note This is just for internal use
+struct FrameGraphObject {
+    virtual ~FrameGraphObject() = default;
+
+    /// @brief Casts this object to type `T`
+    /// @return The object as type `T` or `nullptr` if the cast failed
+    template <typename T>
+    T *as();
+
+    /// @copydoc as
+    template <typename T>
+    const T *as() const;
+};
+
 /// @brief A single resource in the frame graph
 /// @note May become multiple physical (vulkan) resources during frame graph compilation
-class RenderResource {
+class RenderResource : public FrameGraphObject {
     friend FrameGraph;
 
 private:
@@ -41,7 +56,6 @@ protected:
 public:
     RenderResource(const RenderResource &) = delete;
     RenderResource(RenderResource &&) = delete;
-    virtual ~RenderResource() = default;
 
     RenderResource &operator=(const RenderResource &) = delete;
     RenderResource &operator=(RenderResource &&) = delete;
@@ -139,7 +153,7 @@ public:
 
 /// @brief A single render stage in the frame graph
 /// @note Not to be confused with a vulkan render pass!
-class RenderStage {
+class RenderStage : public FrameGraphObject {
     friend FrameGraph;
 
 private:
@@ -156,7 +170,6 @@ protected:
 public:
     RenderStage(const RenderStage &) = delete;
     RenderStage(RenderStage &&) = delete;
-    virtual ~RenderStage() = default;
 
     RenderStage &operator=(const RenderStage &) = delete;
     RenderStage &operator=(RenderStage &&) = delete;
@@ -194,7 +207,6 @@ public:
     explicit GraphicsStage(std::string &&name) : RenderStage(name) {}
     GraphicsStage(const GraphicsStage &) = delete;
     GraphicsStage(GraphicsStage &&) = delete;
-    ~GraphicsStage() override = default;
 
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
@@ -213,7 +225,7 @@ public:
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.
-class PhysicalResource {
+class PhysicalResource : public FrameGraphObject {
     friend FrameGraph;
 
 protected:
@@ -227,7 +239,6 @@ protected:
 public:
     PhysicalResource(const PhysicalResource &) = delete;
     PhysicalResource(PhysicalResource &&) = delete;
-    virtual ~PhysicalResource() = default;
 
     PhysicalResource &operator=(const PhysicalResource &) = delete;
     PhysicalResource &operator=(PhysicalResource &&) = delete;
@@ -277,13 +288,12 @@ public:
         : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
-    ~PhysicalBackBuffer() override = default;
 
     PhysicalBackBuffer &operator=(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer &operator=(PhysicalBackBuffer &&) = delete;
 };
 
-class PhysicalStage {
+class PhysicalStage : public FrameGraphObject {
     friend FrameGraph;
 
 private:
@@ -301,7 +311,7 @@ public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
     PhysicalStage(const PhysicalStage &) = delete;
     PhysicalStage(PhysicalStage &&) = delete;
-    virtual ~PhysicalStage();
+    ~PhysicalStage() override;
 
     PhysicalStage &operator=(const PhysicalStage &) = delete;
     PhysicalStage &operator=(PhysicalStage &&) = delete;
@@ -415,6 +425,16 @@ public:
     void render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
                 VkQueue graphics_queue) const;
 };
+
+template <typename T>
+T *FrameGraphObject::as() {
+    return dynamic_cast<T *>(this);
+}
+
+template <typename T>
+const T *FrameGraphObject::as() const {
+    return dynamic_cast<const T *>(this);
+}
 
 template <typename T>
 void BufferResource::upload_data(const T *data, std::size_t count) {
