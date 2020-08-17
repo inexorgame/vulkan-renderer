@@ -83,7 +83,7 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
                          : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     VmaAllocationInfo alloc_info;
-    if (vmaCreateImage(m_allocator, &image_ci, alloc_ci, &phys->m_image, &phys->m_allocation, &alloc_info) !=
+    if (vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &phys->m_image, &phys->m_allocation, &alloc_info) !=
         VK_SUCCESS) {
         throw std::runtime_error("Failed to create image!");
     }
@@ -394,7 +394,7 @@ void FrameGraph::compile(const RenderResource &target) {
 
         if (const auto *buffer_resource = resource->as<BufferResource>()) {
             assert(buffer_resource->m_usage != BufferUsage::INVALID);
-            auto *phys = create<PhysicalBuffer>(buffer_resource, m_allocator, m_device.device());
+            auto *phys = create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
 
             bool is_uploading_data = buffer_resource->m_data != nullptr;
             alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0U;
@@ -412,7 +412,7 @@ void FrameGraph::compile(const RenderResource &target) {
             }
 
             VmaAllocationInfo alloc_info;
-            if (vmaCreateBuffer(m_allocator, &buffer_ci, &alloc_ci, &phys->m_buffer, &phys->m_allocation,
+            if (vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &phys->m_buffer, &phys->m_allocation,
                                 &alloc_info) != VK_SUCCESS) {
                 throw std::runtime_error("Failed to create buffer!");
             }
@@ -429,9 +429,9 @@ void FrameGraph::compile(const RenderResource &target) {
             // Back buffer gets special handling.
             if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
                 // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
-                create<PhysicalBackBuffer>(texture_resource, m_allocator, m_device.device(), m_swapchain);
+                create<PhysicalBackBuffer>(texture_resource, m_device.allocator(), m_device.device(), m_swapchain);
             } else {
-                auto *phys = create<PhysicalImage>(texture_resource, m_allocator, m_device.device());
+                auto *phys = create<PhysicalImage>(texture_resource, m_device.allocator(), m_device.device());
                 alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
                 build_image(texture_resource, phys, &alloc_ci);
                 build_image_view(texture_resource, phys);

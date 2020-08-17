@@ -344,7 +344,6 @@ class FrameGraph {
 private:
     const wrapper::Device &m_device;
     VkCommandPool m_command_pool;
-    VmaAllocator m_allocator;
     const wrapper::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log = spdlog::default_logger()->clone("frame-graph");
 
@@ -398,9 +397,8 @@ private:
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *);
 
 public:
-    FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, VmaAllocator allocator,
-               const wrapper::Swapchain &swapchain)
-        : m_device(device), m_command_pool(command_pool), m_allocator(allocator), m_swapchain(swapchain) {}
+    FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
+        : m_device(device), m_command_pool(command_pool), m_swapchain(swapchain) {}
 
     /// @brief Adds either a render resource or render stage to the frame graph
     /// @return A mutable reference to the just-added resource or stage
