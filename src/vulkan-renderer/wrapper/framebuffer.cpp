@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
