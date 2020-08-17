@@ -105,6 +105,78 @@ void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage
     }
 }
 
+void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
+    m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
+    for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
+        phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
+    }
+}
+
+void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) {
+    auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
+    pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
+    pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout)) {
+        throw std::runtime_error("Failed to create pipeline layout!");
+    }
+
+#ifndef NDEBUG
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(phys->m_pipeline_layout),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, stage->m_name + " pipeline layout");
+#endif
+}
+
+void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
+    m_log->trace("Recording command buffers for stage '{}'", stage->m_name);
+    for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
+        // TODO: Remove simultaneous usage once we have proper max frames in flight control.
+        auto &cmd_buf = phys->m_command_buffers[i];
+        cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+
+        // Record render pass for graphics stages.
+        const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage);
+        if (graphics_stage != nullptr) {
+            const auto *phys_graphics_stage = dynamic_cast<const PhysicalGraphicsStage *>(phys);
+            assert(phys_graphics_stage != nullptr);
+
+            auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
+            std::array<VkClearValue, 2> clear_values{};
+            if (graphics_stage->m_clears_screen) {
+                clear_values[0].color = {0, 0, 0, 0};
+                clear_values[1].depthStencil = {1.0F, 0};
+                render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
+                render_pass_bi.pClearValues = clear_values.data();
+            }
+            render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[i].get();
+            render_pass_bi.renderArea.extent = m_swapchain.extent();
+            render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
+            cmd_buf.begin_render_pass(render_pass_bi);
+        }
+
+        std::vector<VkBuffer> bind_buffers;
+        for (const auto *resource : stage->m_reads) {
+            const auto *phys_resource = m_resource_map[resource].get();
+            assert(phys_resource != nullptr);
+
+            if (const auto *phys_buffer = dynamic_cast<const PhysicalBuffer *>(phys_resource)) {
+                bind_buffers.push_back(phys_buffer->m_buffer);
+            }
+        }
+
+        if (!bind_buffers.empty()) {
+            cmd_buf.bind_vertex_buffers(bind_buffers);
+        }
+
+        cmd_buf.bind_graphics_pipeline(phys->m_pipeline);
+        stage->m_on_record(phys, cmd_buf);
+
+        if (graphics_stage != nullptr) {
+            cmd_buf.end_render_pass();
+        }
+        cmd_buf.end();
+    }
+}
+
 void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage *phys) {
     std::vector<VkAttachmentDescription> attachments;
     std::vector<VkAttachmentReference> colour_refs;
@@ -270,78 +342,6 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
         VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline!");
     }
-}
-
-void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
-    m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
-    for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-        phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
-    }
-}
-
-void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
-    m_log->trace("Recording command buffers for stage '{}'", stage->m_name);
-    for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
-        // TODO: Remove simultaneous usage once we have proper max frames in flight control.
-        auto &cmd_buf = phys->m_command_buffers[i];
-        cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
-
-        // Record render pass for graphics stages.
-        const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage);
-        if (graphics_stage != nullptr) {
-            const auto *phys_graphics_stage = dynamic_cast<const PhysicalGraphicsStage *>(phys);
-            assert(phys_graphics_stage != nullptr);
-
-            auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
-            std::array<VkClearValue, 2> clear_values{};
-            if (graphics_stage->m_clears_screen) {
-                clear_values[0].color = {0, 0, 0, 0};
-                clear_values[1].depthStencil = {1.0F, 0};
-                render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
-                render_pass_bi.pClearValues = clear_values.data();
-            }
-            render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[i].get();
-            render_pass_bi.renderArea.extent = m_swapchain.extent();
-            render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
-            cmd_buf.begin_render_pass(render_pass_bi);
-        }
-
-        std::vector<VkBuffer> bind_buffers;
-        for (const auto *resource : stage->m_reads) {
-            const auto *phys_resource = m_resource_map[resource].get();
-            assert(phys_resource != nullptr);
-
-            if (const auto *phys_buffer = dynamic_cast<const PhysicalBuffer *>(phys_resource)) {
-                bind_buffers.push_back(phys_buffer->m_buffer);
-            }
-        }
-
-        if (!bind_buffers.empty()) {
-            cmd_buf.bind_vertex_buffers(bind_buffers);
-        }
-
-        cmd_buf.bind_graphics_pipeline(phys->m_pipeline);
-        stage->m_on_record(phys, cmd_buf);
-
-        if (graphics_stage != nullptr) {
-            cmd_buf.end_render_pass();
-        }
-        cmd_buf.end();
-    }
-}
-
-void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) {
-    auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
-    pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
-    pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
-    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout)) {
-        throw std::runtime_error("Failed to create pipeline layout!");
-    }
-
-#ifndef NDEBUG
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(phys->m_pipeline_layout),
-                             VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, stage->m_name + " pipeline layout");
-#endif
 }
 
 void FrameGraph::compile(const RenderResource &target) {

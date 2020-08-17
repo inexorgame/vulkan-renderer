@@ -372,16 +372,18 @@ private:
         return ret;
     }
 
-    // Functions for building resource-related vulkan objects.
+    // Functions for building resource related vulkan objects.
     void build_image(const TextureResource *, PhysicalImage *, VmaAllocationCreateInfo *);
     void build_image_view(const TextureResource *, PhysicalImage *);
 
-    // Functions for building stage-related vulkan objects.
+    // Functions for building stage related vulkan objects.
+    void alloc_command_buffers(const RenderStage *, PhysicalStage *);
+    void build_pipeline_layout(const RenderStage *, PhysicalStage *);
+    void record_command_buffers(const RenderStage *, PhysicalStage *);
+
+    // Functions for building graphics stage related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *);
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *);
-    void alloc_command_buffers(const RenderStage *, PhysicalStage *);
-    void record_command_buffers(const RenderStage *, PhysicalStage *);
-    void build_pipeline_layout(const RenderStage *, PhysicalStage *);
 
 public:
     FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, VmaAllocator allocator,
