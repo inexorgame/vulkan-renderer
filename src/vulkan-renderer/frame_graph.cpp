@@ -501,9 +501,8 @@ void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemapho
     submit_info.pWaitDstStageMask = wait_stage_mask.data();
 
     // TODO: Batch submit infos.
-    // TODO: Loop over physical stages here.
-    for (const auto *stage : m_stage_stack) {
-        auto *cmd_buf = m_stage_map.at(stage)->m_command_buffers[image_index].get();
+    for (const auto *stage : m_phys_stage_stack) {
+        auto *cmd_buf = stage->m_command_buffers[image_index].get();
         submit_info.pCommandBuffers = &cmd_buf;
         vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     }

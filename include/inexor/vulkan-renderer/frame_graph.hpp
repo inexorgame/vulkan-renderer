@@ -355,6 +355,7 @@ private:
 
     // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
+    std::vector<PhysicalStage *> m_phys_stage_stack;
 
     // Resource to physical resource map.
     std::unordered_map<const RenderResource *, std::unique_ptr<PhysicalResource>> m_resource_map;
@@ -379,6 +380,7 @@ private:
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         auto *ret = ptr.get();
         m_stage_map.emplace(stage, std::move(ptr));
+        m_phys_stage_stack.push_back(ret);
         return ret;
     }
 
