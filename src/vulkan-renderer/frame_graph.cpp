@@ -55,6 +55,7 @@ PhysicalImage::~PhysicalImage() {
 
 PhysicalStage::~PhysicalStage() {
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
+    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
@@ -173,9 +174,6 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
 }
 
 void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage *phys) {
-    phys->m_pipeline_layout =
-        std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, "Default pipeline layout");
-
     // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;
@@ -262,7 +260,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     pipeline_ci.pMultisampleState = &multisample_state;
     pipeline_ci.pColorBlendState = &blend_state;
     pipeline_ci.pViewportState = &viewport_state;
-    pipeline_ci.layout = phys->m_pipeline_layout->get();
+    pipeline_ci.layout = phys->m_pipeline_layout;
     pipeline_ci.renderPass = phys->m_render_pass;
     pipeline_ci.stageCount = static_cast<std::uint32_t>(stage->m_shaders.size());
     pipeline_ci.pStages = stage->m_shaders.data();
@@ -330,6 +328,20 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
         }
         cmd_buf.end();
     }
+}
+
+void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) {
+    auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
+    pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
+    pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout)) {
+        throw std::runtime_error("Failed to create pipeline layout!");
+    }
+
+#ifndef NDEBUG
+    m_device.set_object_name(reinterpret_cast<std::uint64_t>(phys->m_pipeline_layout),
+                             VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, stage->m_name + " pipeline layout");
+#endif
 }
 
 void FrameGraph::compile(const RenderResource &target) {
@@ -433,6 +445,7 @@ void FrameGraph::compile(const RenderResource &target) {
         if (const auto *graphics_stage = dynamic_cast<const GraphicsStage *>(stage)) {
             auto *phys = create<PhysicalGraphicsStage>(graphics_stage, m_device);
             build_render_pass(graphics_stage, phys);
+            build_pipeline_layout(graphics_stage, phys);
             build_graphics_pipeline(graphics_stage, phys);
 
             // If we write to at least one texture, we need to make framebuffers.

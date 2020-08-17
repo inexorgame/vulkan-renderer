@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
@@ -291,7 +290,7 @@ private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
     const wrapper::Device &m_device;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
-    std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
+    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
 protected:
     [[nodiscard]] VkDevice device() const {
@@ -310,7 +309,7 @@ public:
     /// @brief Retrieve the pipeline layout of this physical stage
     // TODO: This can be removed once descriptors are properly implemented in the frame graph.
     [[nodiscard]] VkPipelineLayout pipeline_layout() const {
-        return m_pipeline_layout->get();
+        return m_pipeline_layout;
     }
 };
 
@@ -382,6 +381,7 @@ private:
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *);
     void alloc_command_buffers(const RenderStage *, PhysicalStage *);
     void record_command_buffers(const RenderStage *, PhysicalStage *);
+    void build_pipeline_layout(const RenderStage *, PhysicalStage *);
 
 public:
     FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, VmaAllocator allocator,
