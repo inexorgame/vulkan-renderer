@@ -21,7 +21,7 @@ ByteStream serialize_octree_impl<0>(const std::shared_ptr<const world::Cube> cub
     iter_func = [&iter_func, &writer](const std::shared_ptr<const world::Cube> &cube) {
         writer.write(cube->type());
         if (cube->type() == world::Cube::Type::OCTANT) {
-            for (const auto &child : cube->childs()) {
+            for (const auto &child : cube->children()) {
                 iter_func(child);
             }
             return;
@@ -51,7 +51,7 @@ std::shared_ptr<world::Cube> deserialize_octree_impl<0>(const ByteStream &stream
     iter_func = [&iter_func, &reader](std::shared_ptr<world::Cube> &cube) {
         cube->set_type(reader.read<world::Cube::Type>());
         if (cube->type() == world::Cube::Type::OCTANT) {
-            for (auto child : cube->childs()) {
+            for (auto child : cube->children()) {
                 iter_func(child);
             }
             return;

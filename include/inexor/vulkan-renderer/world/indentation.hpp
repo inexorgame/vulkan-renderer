@@ -34,7 +34,7 @@ public:
     [[nodiscard]] std::uint8_t end() const noexcept;
     /// Difference between start and end.
     [[nodiscard]] std::uint8_t offset() const noexcept;
-
+    /// Mirror the indentation, such that the distance from 0 to start and distance from end to max switches
     void mirror();
 
     /// Positive steps into the direction of end.

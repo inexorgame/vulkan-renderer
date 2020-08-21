@@ -174,15 +174,15 @@ VkResult Application::load_octree_geometry() {
 
     std::shared_ptr<world::Cube> cube =
         std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2.0f, glm::vec3{0, -1, -1});
-    for (const auto &child : cube->childs()) {
+    for (const auto &child : cube->children()) {
         child->set_type(world::Cube::Type::NORMAL);
         child->indent(8, true, 3);
         child->indent(11, true, 5);
         child->indent(1, false, 2);
     }
 
-    cube->childs()[3]->rotate({0, 1, 0});
-    cube->childs()[6]->rotate({0, 0, 1});
+    cube->children()[3]->rotate({0, 1, 0});
+    cube->children()[6]->rotate({0, 0, 1});
 
     for (const auto &polygons : cube->polygons(true)) {
         for (const auto &triangle : *polygons) {
