@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
-#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -53,8 +53,7 @@ void VulkanRenderer::recreate_swapchain() {
     // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
     m_frame_graph.reset();
     m_swapchain->recreate(m_window->width(), m_window->height());
-    m_frame_graph =
-        std::make_unique<FrameGraph>(*m_vkdevice, m_command_pool->get(), m_vkdevice->allocator(), *m_swapchain);
+    m_frame_graph = std::make_unique<FrameGraph>(*m_vkdevice, m_command_pool->get(), *m_swapchain);
     setup_frame_graph();
 
     m_image_available_semaphore.reset();

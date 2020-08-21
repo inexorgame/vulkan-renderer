@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #define VMA_IMPLEMENTATION
 

@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/texture.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION

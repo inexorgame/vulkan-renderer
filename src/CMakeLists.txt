@@ -26,11 +26,10 @@ set(SOURCE_FILES
     vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/image.cpp
-    vulkan-renderer/wrapper/info.cpp
     vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/mesh_buffer.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
-    vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/resource_descriptor.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp

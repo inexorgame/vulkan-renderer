@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <GLFW/glfw3.h>
 #include <fmt/ranges.h>

@@ -6,7 +6,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
-#include "inexor/vulkan-renderer/wrapper/info.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/spdlog.h>
