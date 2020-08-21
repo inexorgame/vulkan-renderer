@@ -31,6 +31,9 @@ using Polygon = std::array<glm::vec3, 3>;
 
 using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 
+using ChildRotationOrder = std::array<std::array<uint8_t, 4>, 2>;
+using EdgeRotationOrder = std::array<std::array<uint8_t, 4>, 3>;
+
 class Cube : public std::enable_shared_from_this<Cube> {
     friend void ::swap(Cube &lhs, Cube &rhs) noexcept;
     template <std::size_t version>
@@ -41,6 +44,42 @@ public:
     static constexpr std::size_t SUB_CUBES = 8;
     /// Cube edges.
     static constexpr std::size_t EDGES = 12;
+
+    // First two arrays are the edges not parallel to the axis, last array is parallel to the axis
+    static constexpr EdgeRotationOrder X_EDGE_ROTATION_ORDER {{
+          // First edge need to point to (crossing with) second, second to third, third to second (again) and fourth to third
+        {{2, 4, 11, 1}},
+        {{5, 7, 8, 10}},
+        {{0, 9, 6, 3}}
+    }};
+
+    static constexpr EdgeRotationOrder Y_EDGE_ROTATION_ORDER {{
+        {{0, 5, 9, 2}},
+        {{3, 8, 6, 11}},
+        {{1, 10, 7, 4}}
+    }};
+
+    static constexpr EdgeRotationOrder Z_EDGE_ROTATION_ORDER {{
+        {{1, 3, 10, 0}},
+        {{4, 6, 7, 9}},
+        {{2, 11, 8, 5}}
+    }};
+
+    static constexpr ChildRotationOrder X_CHILD_ROTATION_ORDER {{
+        {{0, 1, 3, 2}},
+        {{4, 5, 7, 6}}
+    }};
+
+    static constexpr ChildRotationOrder Y_CHILD_ROTATION_ORDER {{
+        {{0, 4, 5, 1}},
+        {{2, 6, 7, 3}}
+    }};
+
+    static constexpr ChildRotationOrder Z_CHILD_ROTATION_ORDER {{
+        {{0, 2, 6, 4}},
+        {{1, 3, 7, 5}}
+    }};
+
     /// Cube Type.
     enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
 
@@ -62,6 +101,8 @@ private:
 
     /// Removes all childs recursive.
     void remove_childs();
+
+    void rotate(const uint8_t rotation_level, const EdgeRotationOrder corner_order, const ChildRotationOrder child_order);
 
     /// Get the root to this cube.
     [[nodiscard]] std::weak_ptr<Cube> root() const noexcept;
@@ -105,6 +146,11 @@ public:
     /// Indent a specific edge by steps.
     /// @param positive_direction Indent in  positive axis direction.
     void indent(std::uint8_t edge_id, bool positive_direction, std::uint8_t steps);
+    /// Rotate a cube on one axis.
+    /// @param axis Axis to rotate on (all values except must be 0 or a multiple of 4 [which indicates no rotation]).
+    ///             0 = rotate by 0°, 1 = rotate by 90°, 2 = rotate by 180°, 3 = rotate by 270°
+    ///             -1 = rotate by 270°, -2 = rotate by 180°, -3 = rotate by 90°
+    void rotate(const glm::vec<3, int8_t> &axis);
 
     /// TODO: in special cases some polygons have no surface, if completely surrounded by others
     /// \warning Will update the cache even if it is considered as valid.

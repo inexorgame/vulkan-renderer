@@ -35,6 +35,8 @@ public:
     /// Difference between start and end.
     [[nodiscard]] std::uint8_t offset() const noexcept;
 
+    void mirror();
+
     /// Positive steps into the direction of end.
     void indent_start(std::int8_t steps) noexcept;
     /// Positive steps into the direction of start.

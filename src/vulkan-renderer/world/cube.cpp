@@ -213,6 +213,117 @@ void Cube::indent(const std::uint8_t edge_id, const bool positive_direction, con
     m_polygon_cache_valid = false;
 }
 
+void Cube::rotate(const glm::vec<3, int8_t> &axis) {
+    auto x = axis.x % 4;
+    auto y = axis.y % 4;
+    auto z = axis.z % 4;
+    assert(x == 0 && y == 0 || x == 0 && z == 0 || y == 0 && z == 0);
+    const auto rotation_level = x + y + z;
+    if (rotation_level == 0) {
+        return;
+    }
+    const auto edge_order = x != 0 ? X_EDGE_ROTATION_ORDER : y != 0 ? Y_EDGE_ROTATION_ORDER : Z_EDGE_ROTATION_ORDER;
+    const auto child_order = x != 0 ? X_CHILD_ROTATION_ORDER : y != 0 ? Y_CHILD_ROTATION_ORDER : Z_CHILD_ROTATION_ORDER;
+    rotate(rotation_level, edge_order, child_order);
+}
+void Cube::rotate(const uint8_t rotation_level, const EdgeRotationOrder edge_order, const ChildRotationOrder child_order) {
+    if (m_type == Type::EMPTY || m_type == Type::SOLID) {
+        return;
+    }
+    if (m_type == Type::NORMAL) {
+        // We could of course only implement rotation_level == 1 and do a recursive call, but to save moves
+        // we'll implement each rotation_level by hand.
+        if (rotation_level == 1) {
+            // Rotate the indentations by 90°
+            uint8_t i = 0;
+            for (const auto &order: edge_order) {
+                auto tmp = m_indentations[order[3]];
+                m_indentations[order[3]] = std::move(m_indentations[order[2]]);
+                m_indentations[order[2]] = std::move(m_indentations[order[1]]);
+                m_indentations[order[1]] = std::move(m_indentations[order[0]]);
+                m_indentations[order[0]] = tmp;
+                // Some indentations need to be mirrored, as the direction has changed. But only in the first two arrays
+                // (as the last array contains the edges parallel to the axis around which we rotate)
+                if (i < 2) {
+                    m_indentations[order[0]].mirror();
+                    m_indentations[order[2]].mirror();
+                }
+                i++;
+            }
+            return;
+        }
+        if (rotation_level == 2) {
+            // Rotate the indentations by 180°
+            uint8_t i = 0;
+            for (const auto &order: edge_order) {
+                std::swap(m_indentations[order[0]], m_indentations[order[2]]);
+                std::swap(m_indentations[order[1]], m_indentations[order[3]]);
+                // All indentations need to be mirrored.
+                if (i < 2) {
+                    m_indentations[order[0]].mirror();
+                    m_indentations[order[1]].mirror();
+                    m_indentations[order[2]].mirror();
+                    m_indentations[order[3]].mirror();
+                }
+                i++;
+            }
+            return;
+        }
+        if (rotation_level == 3) {
+            // Rotate the indentations by 270°
+            uint8_t i = 0;
+            for (const auto &order: edge_order) {
+                auto tmp = m_indentations[order[1]];
+                m_indentations[order[3]] = std::move(m_indentations[order[0]]);
+                m_indentations[order[2]] = std::move(m_indentations[order[3]]);
+                m_indentations[order[1]] = std::move(m_indentations[order[2]]);
+                m_indentations[order[0]] = tmp;
+                // Some indentations need to be mirrored, as the direction has changed. But only in the first two arrays
+                // (as the last array contains the edges parallel to the axis around which we rotate)
+                if (i < 2) {
+                    m_indentations[order[1]].mirror();
+                    m_indentations[order[3]].mirror();
+                }
+                i++;
+            }
+            return;
+        }
+    }
+    if (m_type == Type::OCTANT) {
+        for (const auto &child: childs()) {
+            child->rotate(rotation_level, edge_order, child_order);
+        }
+        if (rotation_level == 1) {
+            for (const auto &order: child_order) {
+                auto tmp = m_childs[order[3]];
+                m_childs[order[3]] = std::move(m_childs[order[2]]);
+                m_childs[order[2]] = std::move(m_childs[order[1]]);
+                m_childs[order[1]] = std::move(m_childs[order[0]]);
+                m_childs[order[0]] = tmp;
+            }
+            return;
+        }
+        if (rotation_level == 2) {
+            for (const auto &order: child_order) {
+                std::swap(m_childs[order[0]], m_childs[order[2]]);
+                std::swap(m_childs[order[1]], m_childs[order[3]]);
+            }
+            return;
+        }
+        if (rotation_level == 3) {
+            for (const auto &order: child_order) {
+                auto tmp = m_childs[order[1]];
+                m_childs[order[3]] = std::move(m_childs[order[0]]);
+                m_childs[order[2]] = std::move(m_childs[order[3]]);
+                m_childs[order[1]] = std::move(m_childs[order[2]]);
+                m_childs[order[0]] = tmp;
+            }
+            return;
+        }
+    }
+    assert(false);
+}
+
 void Cube::update_polygon_cache() const {
     if (m_type == Type::OCTANT || m_type == Type::EMPTY) {
         m_polygon_cache = nullptr;

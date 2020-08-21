@@ -181,6 +181,9 @@ VkResult Application::load_octree_geometry() {
         child->indent(1, false, 2);
     }
 
+    cube->childs()[3]->rotate({0, 1, 0});
+    cube->childs()[6]->rotate({0, 0, 1});
+
     for (const auto &polygons : cube->polygons(true)) {
         for (const auto &triangle : *polygons) {
             for (const auto &vertex : triangle) {
