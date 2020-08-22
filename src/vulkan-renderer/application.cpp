@@ -431,6 +431,7 @@ Application::Application(int argc, char **argv) {
                                                            "Default descriptor"});
 
     result = load_octree_geometry();
+    generate_octree_indices();
     vulkan_error_check(result);
 
     spdlog::debug("Vulkan initialisation finished.");

@@ -8,7 +8,10 @@
 #include <spdlog/spdlog.h>
 
 #include <array>
+#include <cassert>
 #include <fstream>
+#include <limits>
+#include <unordered_map>
 
 namespace inexor::vulkan_renderer {
 
@@ -21,6 +24,10 @@ void VulkanRenderer::setup_frame_graph() {
     depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
     depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
 
+    auto &index_buffer = m_frame_graph->add<BufferResource>("index buffer");
+    index_buffer.set_usage(BufferUsage::INDEX_BUFFER);
+    index_buffer.upload_data(m_octree_indices);
+
     auto &vertex_buffer = m_frame_graph->add<BufferResource>("vertex buffer");
     vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
     vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position));
@@ -30,12 +37,13 @@ void VulkanRenderer::setup_frame_graph() {
     auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
+    main_stage.reads_from(index_buffer);
     main_stage.reads_from(vertex_buffer);
     main_stage.bind_buffer(vertex_buffer, 0);
     main_stage.set_clears_screen(true);
     main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], phys->pipeline_layout());
-        cmd_buf.draw(m_octree_vertices.size());
+        cmd_buf.draw_indexed(m_octree_indices.size());
     });
 
     for (const auto &shader : m_shaders) {
@@ -44,6 +52,21 @@ void VulkanRenderer::setup_frame_graph() {
 
     main_stage.add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
     m_frame_graph->compile(back_buffer);
+}
+
+void VulkanRenderer::generate_octree_indices() {
+    auto old_vertices = std::move(m_octree_vertices);
+    std::unordered_map<OctreeGpuVertex, std::uint16_t> vertex_map;
+    for (auto &vertex : old_vertices) {
+        // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
+        if (vertex_map.count(vertex) == 0) {
+            assert(vertex_map.size() < std::numeric_limits<std::uint16_t>::max() && "Octree too big!");
+            vertex_map.emplace(vertex, static_cast<std::uint16_t>(vertex_map.size()));
+            m_octree_vertices.push_back(vertex);
+        }
+        m_octree_indices.push_back(vertex_map.at(vertex));
+    }
+    spdlog::trace("Reduced octree by {} vertices", old_vertices.size() - m_octree_vertices.size());
 }
 
 void VulkanRenderer::recreate_swapchain() {
