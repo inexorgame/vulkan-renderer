@@ -36,8 +36,10 @@ public:
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
     void begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const;
     void bind_graphics_pipeline(VkPipeline pipeline) const;
+    void bind_index_buffer(VkBuffer buffer) const;
     void bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const;
     void draw(std::size_t vertex_count) const;
+    void draw_indexed(std::size_t index_count) const;
     void end_render_pass() const;
 
     [[nodiscard]] VkCommandBuffer get() const {
