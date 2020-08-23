@@ -97,11 +97,16 @@ public:
     }};
 
     /// Cube Type.
-    /// EMPTY: The cube does not have any faces.
-    /// SOLID: The cube has six equal faces (no indentations).
-    /// NORMAL: The cube has at least one indentation.
-    /// OCTANT: The cube is divided in 8 sub-cubes (children/octants).
-    enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
+    enum class Type {
+        /// The cube does not have any faces.
+        EMPTY = 0b00U,
+        /// The cube has six equal faces (no indentations).
+        SOLID = 0b01U,
+        /// The cube has at least one indentation.
+        NORMAL = 0b10U,
+        /// The cube is divided in 8 sub-cubes (children/octants).
+        OCTANT = 0b11U
+    };
 
 private:
     Type m_type{Type::SOLID};

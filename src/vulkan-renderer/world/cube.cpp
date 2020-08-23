@@ -249,11 +249,10 @@ void Cube::rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrd
             rotate_elements_90(order, m_indentations);
             // Some indentations need to be mirrored, as the direction has changed. But only in the first two arrays
             // (as the last array contains the edges parallel to the axis around which we rotate)
-            if (i < 2) {
+            if (i++ < 2) {
                 m_indentations[order[0]].mirror();
                 m_indentations[order[2]].mirror();
             }
-            i++;
         }
         return;
     }
