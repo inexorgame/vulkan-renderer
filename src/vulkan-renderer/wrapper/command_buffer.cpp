@@ -54,6 +54,11 @@ void CommandBuffer::bind_graphics_pipeline(VkPipeline pipeline) const {
     vkCmdBindPipeline(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
+void CommandBuffer::bind_index_buffer(VkBuffer buffer) const {
+    // TODO: Don't hardcode 16 for index bit width here.
+    vkCmdBindIndexBuffer(m_command_buffer, buffer, 0, VK_INDEX_TYPE_UINT16);
+}
+
 void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {
     std::vector<VkDeviceSize> offsets(buffers.size(), 0);
     vkCmdBindVertexBuffers(m_command_buffer, 0, static_cast<std::uint32_t>(buffers.size()), buffers.data(),
@@ -62,6 +67,10 @@ void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) co
 
 void CommandBuffer::draw(std::size_t vertex_count) const {
     vkCmdDraw(m_command_buffer, static_cast<std::uint32_t>(vertex_count), 1, 0, 0);
+}
+
+void CommandBuffer::draw_indexed(std::size_t index_count) const {
+    vkCmdDrawIndexed(m_command_buffer, static_cast<std::uint32_t>(index_count), 1, 0, 0, 0);
 }
 
 void CommandBuffer::end_render_pass() const {

@@ -182,13 +182,13 @@ VkResult Application::load_octree_geometry() {
     }
 
     for (const auto &polygons : cube->polygons(true)) {
+        glm::vec3 color = {
+            static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+            static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+            static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+        };
         for (const auto &triangle : *polygons) {
             for (const auto &vertex : triangle) {
-                glm::vec3 color = {
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                };
                 m_octree_vertices.emplace_back(vertex, color);
             }
         }
@@ -431,6 +431,7 @@ Application::Application(int argc, char **argv) {
                                                            "Default descriptor"});
 
     result = load_octree_geometry();
+    generate_octree_indices();
     vulkan_error_check(result);
 
     spdlog::debug("Vulkan initialisation finished.");

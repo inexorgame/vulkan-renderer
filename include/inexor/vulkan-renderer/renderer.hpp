@@ -104,8 +104,10 @@ protected:
     std::unique_ptr<FrameGraph> m_frame_graph;
 
     std::vector<OctreeGpuVertex> m_octree_vertices;
+    std::vector<std::uint16_t> m_octree_indices;
 
     void setup_frame_graph();
+    void generate_octree_indices();
 
     void recreate_swapchain();
 

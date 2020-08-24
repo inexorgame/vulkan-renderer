@@ -66,6 +66,9 @@ enum class BufferUsage {
     /// @note Leaving a buffer as this usage will cause frame graph compilation to fail!
     INVALID,
 
+    /// @brief Specifies that the buffer will be used to input index data
+    INDEX_BUFFER,
+
     /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader
     VERTEX_BUFFER,
 };

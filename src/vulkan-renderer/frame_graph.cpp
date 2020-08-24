@@ -153,18 +153,25 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
             cmd_buf.begin_render_pass(render_pass_bi);
         }
 
-        std::vector<VkBuffer> bind_buffers;
+        std::vector<VkBuffer> vertex_buffers;
         for (const auto *resource : stage->m_reads) {
-            const auto *phys_resource = m_resource_map[resource].get();
-            assert(phys_resource != nullptr);
+            const auto *buffer_resource = resource->as<BufferResource>();
+            if (buffer_resource == nullptr) {
+                continue;
+            }
 
-            if (const auto *phys_buffer = phys_resource->as<PhysicalBuffer>()) {
-                bind_buffers.push_back(phys_buffer->m_buffer);
+            const auto *phys_buffer = m_resource_map[resource]->as<PhysicalBuffer>();
+            assert(phys_buffer != nullptr);
+
+            if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
+                cmd_buf.bind_index_buffer(phys_buffer->m_buffer);
+            } else if (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) {
+                vertex_buffers.push_back(phys_buffer->m_buffer);
             }
         }
 
-        if (!bind_buffers.empty()) {
-            cmd_buf.bind_vertex_buffers(bind_buffers);
+        if (!vertex_buffers.empty()) {
+            cmd_buf.bind_vertex_buffers(vertex_buffers);
         }
 
         cmd_buf.bind_graphics_pipeline(phys->m_pipeline);
@@ -253,6 +260,11 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     for (const auto *resource : stage->m_reads) {
         const auto *buffer_resource = resource->as<BufferResource>();
         if (buffer_resource == nullptr) {
+            continue;
+        }
+
+        // Don't mess with index buffers here.
+        if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
             continue;
         }
 
@@ -404,6 +416,9 @@ void FrameGraph::compile(const RenderResource &target) {
             buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             buffer_ci.size = buffer_resource->m_data_size;
             switch (buffer_resource->m_usage) {
+            case BufferUsage::INDEX_BUFFER:
+                buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+                break;
             case BufferUsage::VERTEX_BUFFER:
                 buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
                 break;
