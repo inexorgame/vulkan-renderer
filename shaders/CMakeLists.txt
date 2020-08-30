@@ -5,8 +5,8 @@ endif()
 
 set(
     SHADERS
-    fragmentshader.frag
-    vertexshader.vert
+    main.frag
+    main.vert
 )
 
 foreach(SHADER ${SHADERS})
