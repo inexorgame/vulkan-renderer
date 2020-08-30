@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/error_handling.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <stdexcept>
@@ -38,16 +39,15 @@ bool AvailabilityChecksManager::has_instance_extension(const std::string &instan
     }
 
     // Loop through all available instance extensions and search for the requested one.
-    for (const VkExtensionProperties &instance_extension : m_instance_extensions_cache) {
-        // Compare the name of the current instance extension with the requested one.
-        if (strcmp(instance_extension.extensionName, instance_extension_name.c_str()) == 0) {
-            // Yes, this instance extension is supported!
-            return true;
-        }
-    }
+    auto result =
+        std::find_if(m_instance_extensions_cache.begin(), m_instance_extensions_cache.end(),
+                     [&](const VkExtensionProperties &instance_extension) {
+                         // Compare the name of the current instance extension with the requested one.
+                         return (strcmp(instance_extension.extensionName, instance_extension_name.c_str()) == 0);
+                     });
 
-    // No, this instance extension could not be found and thus is not supported!
-    return false;
+    // True if instance extension was found and is supported!
+    return result != m_instance_extensions_cache.end();
 }
 
 VkResult AvailabilityChecksManager::create_instance_layers_cache() {
@@ -77,16 +77,14 @@ bool AvailabilityChecksManager::has_instance_layer(const std::string &instance_l
     }
 
     // Loop through all available instance layers and search for the requested one.
-    for (const VkLayerProperties &instance_layer : m_instance_layers_cache) {
-        // Compare the name of the current instance extension with the requested one.
-        if (strcmp(instance_layer.layerName, instance_layer_name.c_str()) == 0) {
-            // Yes, this instance extension is supported!
-            return true;
-        }
-    }
+    auto result = std::find_if(m_instance_layers_cache.begin(), m_instance_layers_cache.end(),
+                               [&](const VkLayerProperties &instance_layer) {
+                                   // Compare the name of the current instance layer with the requested one.
+                                   return (strcmp(instance_layer.layerName, instance_layer_name.c_str()) == 0);
+                               });
 
-    // No, this instance layer could not be found and thus is not supported!
-    return false;
+    // True if instance layer was found and is supported!
+    return result != m_instance_layers_cache.end();
 }
 
 VkResult AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalDevice &graphics_card) {
@@ -119,15 +117,13 @@ bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphic
     }
 
     // Loop through all available device layers and search for the requested one.
-    for (const VkLayerProperties &device_layer : m_device_layer_properties_cache) {
-        if (0 == strcmp(device_layer.layerName, device_layer_name.c_str())) {
-            // Yes, this device layer is supported!
-            return true;
-        }
-    }
+    auto result = std::find_if(m_device_layer_properties_cache.begin(), m_device_layer_properties_cache.end(),
+                               [&](const VkLayerProperties &device_layer) {
+                                   return (strcmp(device_layer.layerName, device_layer_name.c_str()) == 0);
+                               });
 
-    // No, this device layer could not be found and thus is not supported!
-    return false;
+    // True if device layer was found and is supported!
+    return result != m_device_layer_properties_cache.end();
 }
 
 VkResult AvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalDevice &graphics_card) {
@@ -161,16 +157,13 @@ bool AvailabilityChecksManager::has_device_extension(const VkPhysicalDevice &gra
         create_device_extensions_cache(graphics_card);
     }
 
-    // Loop through all available device extensions and search for the requested one.
-    for (const VkExtensionProperties &device_extension : m_device_extensions_cache) {
-        if (0 == strcmp(device_extension.extensionName, device_extension_name.c_str())) {
-            // Yes, this device extension is supported!
-            return true;
-        }
-    }
+    auto result = std::find_if(m_device_extensions_cache.begin(), m_device_extensions_cache.end(),
+                               [&](const VkExtensionProperties &device_extension) {
+                                   return (strcmp(device_extension.extensionName, device_extension_name.c_str()) == 0);
+                               });
 
-    // No, this device extension could not be found and thus is not supported!
-    return false;
+    // True if device extension was found and is supported!
+    return result != m_device_extensions_cache.end();
 }
 
 bool AvailabilityChecksManager::has_presentation(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface) {
