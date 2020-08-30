@@ -12,7 +12,7 @@ option(INEXOR_BUILD_DOC "Build documentation" OFF)
 option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
 set(INEXOR_CONAN_PROFILE "default" CACHE STRING "conan profile")
-option(INEXOR_USE_VMA_RECORDING "Use VulkanMemoryAllocator recording feature" ON)
+option(INEXOR_USE_VMA_RECORDING "Use VulkanMemoryAllocator recording feature" OFF)
 
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
