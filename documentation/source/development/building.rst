@@ -35,7 +35,7 @@ Available CMake options
     Default: ``OFF``
 - INEXOR_USE_VMA_RECORDING
     Enables or disables VulkanMemoryAllocator's recording feature.
-    Default: ``ON``
+    Default: ``OFF``
 
 .. note::
     When building a VS solution add ``--config Debug/Release`` to define the build type.
@@ -137,32 +137,24 @@ Clone the repository:
     git clone https://github.com/inexorgame/vulkan-renderer
     cd vulkan-renderer
 
-Create build directory:
-
-.. code-block:: bash
-
-    mkdir build
-    cd $_
-
 Configure cmake:
 
 .. note::
 
-    - ``INEXOR_USE_VMA_RECORDING`` is required to be ``OFF`` in linux builds.
+    - ``INEXOR_USE_VMA_RECORDING`` is required to be ``OFF`` in linux builds (it is by default).
     - Only pass ``-GNinja`` if the ninja build tool is installed.
 
 .. code-block:: bash
 
     cmake .. \
+     -Bbuild \
      -DCMAKE_BUILD_TYPE=Debug \
-     -DINEXOR_USE_VMA_RECORDING=OFF \
      -GNinja
 
 Build and run:
 
 .. code-block:: bash
 
-    cd ..
     cmake --build build --target inexor-vulkan-renderer-example
     ./build/bin/inexor-vulkan-renderer-example
 
