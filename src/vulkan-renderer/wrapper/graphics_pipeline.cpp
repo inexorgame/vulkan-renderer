@@ -13,7 +13,7 @@ GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept
 GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout,
                                    const VkRenderPass render_pass,
                                    const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
-                                   const VkVertexInputBindingDescription vertex_binding,
+                                   const std::vector<VkVertexInputBindingDescription> &vertex_binding,
                                    const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
                                    const std::uint32_t window_width, const std::uint32_t window_height,
                                    const std::string &name)
@@ -30,8 +30,8 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
 
     VkPipelineVertexInputStateCreateInfo vertex_input_ci = {};
     vertex_input_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input_ci.vertexBindingDescriptionCount = 1;
-    vertex_input_ci.pVertexBindingDescriptions = &vertex_binding;
+    vertex_input_ci.vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_binding.size());
+    vertex_input_ci.pVertexBindingDescriptions = vertex_binding.data();
     vertex_input_ci.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_binding.size());
     vertex_input_ci.pVertexAttributeDescriptions = attribute_binding.data();
 

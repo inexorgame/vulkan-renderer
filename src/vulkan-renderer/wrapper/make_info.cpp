@@ -103,6 +103,13 @@ VkDeviceQueueCreateInfo make_info() {
 }
 
 template <>
+VkFenceCreateInfo make_info() {
+    VkFenceCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    return ret;
+}
+
+template <>
 VkFramebufferCreateInfo make_info() {
     VkFramebufferCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

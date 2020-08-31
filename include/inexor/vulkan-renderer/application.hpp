@@ -15,30 +15,17 @@ namespace inexor::vulkan_renderer {
 class Application : public VulkanRenderer {
 private:
     std::string m_application_name;
-
     std::string m_engine_name;
 
     std::uint32_t m_application_version{};
-
     std::uint32_t m_engine_version{};
 
-    // TODO: Refactor into a manger class.
-    struct ShaderSetup {
-        VkShaderStageFlagBits shader_type;
-        std::string shader_file_name;
-    };
-
     std::vector<std::string> m_vertex_shader_files;
-
     std::vector<std::string> m_fragment_shader_files;
-
     std::vector<std::string> m_texture_files;
-
     std::vector<std::string> m_shader_files;
-
     std::vector<std::string> m_gltf_model_files;
 
-private:
     /// @brief Loads the configuration of the renderer from a TOML configuration file.
     /// @brief file_name [in] The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
@@ -49,6 +36,8 @@ private:
     VkResult load_shaders();
 
     VkResult load_octree_geometry();
+
+    void update_imgui_overlay();
 
     VkResult check_application_specific_features();
 

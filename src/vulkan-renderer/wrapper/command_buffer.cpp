@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
 
 #include <array>
+#include <cassert>
 #include <stdexcept>
 #include <utility>
 

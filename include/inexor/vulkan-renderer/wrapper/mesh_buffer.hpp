@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -27,9 +28,12 @@ class MeshBuffer {
 
 private:
     const wrapper::Device &m_device;
-    const std::string m_name;
+    std::string m_name;
+
     GPUMemoryBuffer m_vertex_buffer;
+
     std::optional<GPUMemoryBuffer> m_index_buffer;
+
     std::uint32_t m_number_of_vertices{0};
     std::uint32_t m_number_of_indices{0};
 
@@ -37,26 +41,44 @@ private:
     bool m_index_buffer_available = false;
 
 public:
-    /// @brief Creates a new vertex buffer and an associated index buffer.
-    MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
+    // Delete the copy constructor so mesh buffers are move-only objects.
+    MeshBuffer(const MeshBuffer &) = delete;
+    MeshBuffer(MeshBuffer &&buffer) noexcept;
+
+    // Delete the copy assignment operator so uniform buffers are move-only objects.
+    MeshBuffer &operator=(const MeshBuffer &) = delete;
+    MeshBuffer &operator=(MeshBuffer &&) = default;
+
+    /// @brief Creates a new vertex buffer with an associated index buffer and copies memory into it.
+    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
                const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
                const std::size_t number_of_indices, void *indices);
 
-    /// @brief Creates a vertex buffer without index buffer.
-    MeshBuffer(const wrapper::Device &device, VkQueue data_transfer_queue,
+    /// @brief Creates a new vertex buffer with an associated index buffer but does not copy memory into it.
+    /// This is useful when you know the size of the buffer but you don't know it's data values yet.
+    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
+               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
+               const std::string &name, const VkDeviceSize size_of_vertex_structure,
+               const std::size_t number_of_vertices, const VkDeviceSize size_of_index_structure,
+               const std::size_t number_of_indices);
+
+    /// @brief Creates a vertex buffer without index buffer, but copies the vertex data into it.
+    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
                const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
                const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices);
-    MeshBuffer(const MeshBuffer &) = delete;
-    MeshBuffer(MeshBuffer &&) noexcept;
-    ~MeshBuffer();
 
-    MeshBuffer &operator=(const MeshBuffer &) = delete;
-    MeshBuffer &operator=(MeshBuffer &&) = default;
+    /// @brief Creates a vertex buffer without index buffer and copies no vertex data into it.
+    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
+               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
+               const std::string &name, const VkDeviceSize size_of_vertex_structure,
+               const std::size_t number_of_vertices);
 
-    [[nodiscard]] VkBuffer vertex_buffer() const {
+    ~MeshBuffer() = default;
+
+    [[nodiscard]] VkBuffer get_vertex_buffer() const {
         return m_vertex_buffer.buffer();
     }
 
@@ -64,22 +86,32 @@ public:
         return m_index_buffer.has_value();
     }
 
-    [[nodiscard]] std::optional<VkBuffer> index_buffer() const {
+    [[nodiscard]] VkBuffer get_index_buffer() const {
         assert(m_index_buffer);
-        return m_index_buffer->buffer();
+        return m_index_buffer.value().buffer();
     }
 
-    [[nodiscard]] const std::uint32_t vertex_count() const {
+    [[nodiscard]] std::uint32_t get_vertex_count() const {
         return m_number_of_vertices;
     }
 
-    [[nodiscard]] const std::uint32_t index_cound() const {
+    [[nodiscard]] std::uint32_t get_index_count() const {
         return m_number_of_indices;
     }
 
-    // TODO: Update data!
-    // void update_vertex_buffer();
-    // void update_index_buffer();
+    [[nodiscard]] auto get_vertex_buffer_address() const {
+        return m_vertex_buffer.allocation_info().pMappedData;
+    }
+
+    [[nodiscard]] auto get_index_buffer_address() const {
+        if (!m_index_buffer) {
+            throw std::runtime_error(std::string("Error: No index buffer for mesh " + m_name + "!"));
+        }
+
+        return m_index_buffer.value().allocation_info().pMappedData;
+    }
+
+    // TODO() Add update method for vertices and indices!
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

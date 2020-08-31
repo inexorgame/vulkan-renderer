@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -35,6 +36,10 @@ public:
     ~RenderPass();
 
     [[nodiscard]] VkRenderPass get() const {
+        assert(device);
+        assert(!name.empty());
+        assert(renderpass);
+
         return renderpass;
     }
 };

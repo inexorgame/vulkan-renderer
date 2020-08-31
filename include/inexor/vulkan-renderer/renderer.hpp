@@ -5,12 +5,11 @@
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/frame_graph.hpp"
 #include "inexor/vulkan-renderer/gpu_info.hpp"
+#include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
-
-// Those components have been refactored to fulfill RAII idioms.
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -71,38 +70,22 @@ protected:
 
     Camera m_game_camera;
 
-    // RAII wrapper for glfw contexts.
     std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
-
-    // RAII wrapper for glfw windows.
     std::unique_ptr<wrapper::Window> m_window;
-
-    // RAII wrapper for VkInstance.
     std::unique_ptr<wrapper::Instance> m_vkinstance;
-
-    // RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
     std::unique_ptr<wrapper::Device> m_vkdevice;
-
-    // RAII wrapper for glfw compatible Vulkan surfaces.
     std::unique_ptr<wrapper::WindowSurface> m_surface;
-
-    // RAII wrapper for Swapchain.
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
-
-    // RAII wrapper for command pools.
     std::unique_ptr<wrapper::CommandPool> m_command_pool;
-
+    std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
+    std::unique_ptr<FrameGraph> m_frame_graph;
 
     std::vector<wrapper::Shader> m_shaders;
     std::vector<wrapper::Texture> m_textures;
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
-
-    // NOTE: We use unique_ptr for easy frame graph recreation during swapchain invalidation
-    std::unique_ptr<FrameGraph> m_frame_graph;
-
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint16_t> m_octree_indices;
 
@@ -124,7 +107,7 @@ public:
     /// Neccesary for taking into account the relative speed of the system's CPU.
     float m_time_passed{0.0f};
 
-    //
+    ///
     TimeStep m_stopwatch;
 };
 

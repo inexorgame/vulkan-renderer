@@ -16,6 +16,7 @@ private:
     VkDevice m_device;
     VkPhysicalDevice m_graphics_card;
     VmaAllocator m_allocator;
+    std::string m_gpu_name;
 
     // TODO(): Create a queue wrapper
     VkQueue m_graphics_queue;
@@ -75,6 +76,10 @@ public:
     [[nodiscard]] const VkQueue present_queue() const {
         assert(m_present_queue);
         return m_present_queue;
+    }
+
+    [[nodiscard]] const std::string &gpu_name() const {
+        return m_gpu_name;
     }
 
     /// @note Transfer queues are the fastest way to copy data across the PCIe bus.

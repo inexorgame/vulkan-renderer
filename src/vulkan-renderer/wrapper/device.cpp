@@ -48,6 +48,15 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     m_graphics_card = *selected_graphics_card;
 
+    VkPhysicalDeviceProperties graphics_card_properties;
+
+    // Get the information about that graphics card's properties.
+    vkGetPhysicalDeviceProperties(m_graphics_card, &graphics_card_properties);
+
+    spdlog::debug("Creating device using graphics card: {}.", graphics_card_properties.deviceName);
+
+    m_gpu_name = graphics_card_properties.deviceName;
+
     spdlog::debug("Creating Vulkan device queues.");
 
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;

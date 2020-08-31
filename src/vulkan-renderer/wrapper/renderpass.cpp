@@ -18,7 +18,7 @@ RenderPass::RenderPass(const VkDevice device, const std::vector<VkAttachmentDesc
     renderpass_ci.pAttachments = attachments.data();
     renderpass_ci.subpassCount = 1;
     renderpass_ci.pSubpasses = &subpass_description;
-    renderpass_ci.dependencyCount = 2;
+    renderpass_ci.dependencyCount = static_cast<std::uint32_t>(dependencies.size());
     renderpass_ci.pDependencies = dependencies.data();
 
     spdlog::debug("Creating renderpass {}.", name);

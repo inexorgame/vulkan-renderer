@@ -9,6 +9,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <toml11/toml.hpp>
 
@@ -460,18 +461,15 @@ VkResult Application::update_uniform_buffers() {
 }
 
 VkResult Application::update_mouse_input() {
-
-    double current_cursor_x;
-    double current_cursor_y;
+    double current_cursor_x{0.0};
+    double current_cursor_y{0.0};
 
     m_window->cursor_pos(current_cursor_x, current_cursor_y);
 
     double cursor_delta_x = current_cursor_x - m_cursor_x;
     double cursor_delta_y = current_cursor_y - m_cursor_y;
 
-    int state =
-
-        m_window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
+    int state = m_window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
 
     if (state == GLFW_PRESS) {
         m_game_camera.rotate(glm::vec3(cursor_delta_y * m_game_camera.m_rotation_speed,
@@ -486,12 +484,49 @@ VkResult Application::update_mouse_input() {
     return VK_SUCCESS;
 }
 
+void Application::update_imgui_overlay() {
+    double current_cursor_x{0.0};
+    double current_cursor_y{0.0};
+
+    glfwGetCursorPos(m_window->get(), &current_cursor_x, &current_cursor_y);
+
+    ImGuiIO &io = ImGui::GetIO();
+
+    // TODO: Does that work? We can't just pass time_passed since it's 0 in the beginning and imgui doesn't accept that.
+    io.DeltaTime = std::clamp(m_time_passed, 0.001f, 100.0f);
+    // TODO() move to update() method: mouse buttons left+right and cursor position
+    // TODO: Use a keyboard/mouse input callback!
+    io.MousePos = ImVec2(static_cast<float>(current_cursor_x), static_cast<float>(current_cursor_y));
+    io.MouseDown[0] = (glfwGetMouseButton(m_window->get(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+    io.MouseDown[1] = (glfwGetMouseButton(m_window->get(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+    io.DisplaySize =
+        ImVec2(static_cast<float>(m_swapchain->extent().width), static_cast<float>(m_swapchain->extent().height));
+
+    ImGui::NewFrame();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::SetNextWindowPos(ImVec2(10, 10));
+    ImGui::SetNextWindowSize(ImVec2(200, 0));
+    ImGui::Begin("Inexor Vulkan-renderer", nullptr,
+                 ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Text("%s", m_vkdevice->gpu_name().c_str());
+    ImGui::Text("Engine version %d.%d.%d", VK_VERSION_MAJOR(m_engine_version), VK_VERSION_MINOR(m_engine_version),
+                VK_VERSION_PATCH(m_engine_version));
+    ImGui::PushItemWidth(150.0f * m_imgui_overlay->get_scale());
+    ImGui::PopItemWidth();
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::Render();
+
+    m_imgui_overlay->update();
+}
+
 void Application::run() {
     spdlog::debug("Running Application.");
 
     while (!m_window->should_close()) {
         m_window->poll();
         update_uniform_buffers();
+        update_imgui_overlay();
         render_frame();
 
         // TODO: Run this in a separated thread?
