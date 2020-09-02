@@ -119,9 +119,15 @@ ResourceDescriptor::ResourceDescriptor(const wrapper::Device &device, std::uint3
 }
 
 ResourceDescriptor::~ResourceDescriptor() {
-    spdlog::trace("Destroying resource descriptor {}.", m_name);
-    vkDestroyDescriptorSetLayout(m_device.device(), m_descriptor_set_layout, nullptr);
-    vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
+    if (m_descriptor_set_layout != nullptr) {
+        spdlog::trace("Destroying resource descriptor set layout {}.", m_name);
+        vkDestroyDescriptorSetLayout(m_device.device(), m_descriptor_set_layout, nullptr);
+    }
+
+    if (m_descriptor_pool != nullptr) {
+        spdlog::trace("Destroying resource descriptor pool {}.", m_name);
+        vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -34,8 +34,10 @@ Fence::Fence(Fence &&other) noexcept
     : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)), m_name(std::move(other.m_name)) {}
 
 Fence::~Fence() {
-    spdlog::trace("Destroying fence {}.", m_name);
-    vkDestroyFence(m_device.device(), m_fence, nullptr);
+    if (m_fence != nullptr) {
+        spdlog::trace("Destroying fence {}.", m_name);
+        vkDestroyFence(m_device.device(), m_fence, nullptr);
+    }
 }
 
 void Fence::block(std::uint64_t timeout_limit) const {

@@ -67,8 +67,10 @@ Texture::Texture(Texture &&other) noexcept
       m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
 
 Texture::~Texture() {
-    spdlog::trace("Destroying texture {}.", m_name);
-    vkDestroySampler(m_device.device(), m_sampler, nullptr);
+    if (m_sampler != nullptr) {
+        spdlog::trace("Destroying texture sampler {}.", m_name);
+        vkDestroySampler(m_device.device(), m_sampler, nullptr);
+    }
 }
 
 void Texture::create_texture(void *texture_data, const std::size_t texture_size) {

@@ -21,8 +21,10 @@ WindowSurface::WindowSurface(WindowSurface &&other) noexcept
     : m_instance(other.m_instance), m_surface(std::exchange(other.m_surface, nullptr)) {}
 
 WindowSurface::~WindowSurface() {
-    spdlog::trace("Destroying window surface.");
-    vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+    if (m_surface != nullptr) {
+        spdlog::trace("Destroying window surface.");
+        vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
