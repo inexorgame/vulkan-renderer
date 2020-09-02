@@ -1,4 +1,4 @@
-set(SOURCE_FILES
+set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
     vulkan-renderer/availability_checks.cpp
     vulkan-renderer/bezier_curve.cpp
@@ -43,7 +43,7 @@ set(SOURCE_FILES
     vulkan-renderer/world/cube.cpp
     vulkan-renderer/world/indentation.cpp)
 
-foreach(FILE ${SOURCE_FILES})
+foreach(FILE ${INEXOR_SOURCE_FILES})
     get_filename_component(PARENT_DIR "${FILE}" PATH)
 
     string(REPLACE "/" "\\" GROUP "${PARENT_DIR}")
@@ -57,7 +57,7 @@ foreach(FILE ${SOURCE_FILES})
     source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
-add_library(inexor-vulkan-renderer ${SOURCE_FILES})
+add_library(inexor-vulkan-renderer ${INEXOR_SOURCE_FILES})
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)
 
