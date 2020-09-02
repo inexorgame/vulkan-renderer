@@ -58,6 +58,9 @@ Building vulkan-renderer
 Windows
 ^^^^^^^
 
+.. note::
+    If you use the CMake GUI add `CMAKE_BUILD_TYPE` with value `Debug` or `Release`. `#228 <https://github.com/inexorgame/vulkan-renderer/issues/228>`__.
+
 - Choose any IDE that CMake can generate a project map for. If in doubt use `Visual Studio 2019 <https://visualstudio.microsoft.com/>`__.
 - Clone the source code. Free and good tools are `GitHub Desktop <https://desktop.github.com/>`__ or `GitKraken Git GUI <https://www.gitkraken.com/git-client>`__.
 - Open CMake and select the root folder which contains ``CMakeLists.txt`` (not just ``src`` folder!).
