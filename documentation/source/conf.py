@@ -39,6 +39,7 @@ html_js_files = [
 ]
 html_favicon = "../../assets/textures/logo_rendered.png"
 
+mermaid_version = "8.7.0"
 # Setup the breathe extension
 breathe_projects = {
     "vulkan-renderer": "../doxygen-output/xml"

@@ -23,3 +23,35 @@ Naming Convention
 -----------------
 
 In the ``.clang-tidy`` file and search for ``readability-identifier-naming`` to get the naming convention used by this project.
+
+Removed Clang Tidy Checks
+-------------------------
+
+bugprone-narrowing-conversions
+    Same as ``cppcoreguidelines-narrowing-conversions``
+cppcoreguidelines-avoid-magic-numbers
+    Alias of ``readability-magic-numbers``
+cppcoreguidelines-c-copy-assignment-signature
+    Alias of ``misc-unconventional-assign-operator``
+cppcoreguidelines-non-private-member-variables-in-classes
+    Alias of ``misc-non-private-member-variables-in-classes``
+cppcoreguidelines-pro-bounds-array-to-pointer-decay
+    Not suitable for this project.
+google-readability-todo
+    We do not care about an TODO assignment or connected issue.
+hicpp-explicit-conversions
+    Alias of ``google-explicit-constructor``
+hicpp-move-const-arg
+    Alias of ``performance-move-const-arg``
+hicpp-no-array-decay
+    Alias of ``cppcoreguidelines-pro-bounds-array-to-pointer-decay``
+hicpp-uppercase-literal-suffix
+    Alias of ``readability-uppercase-literal-suffix``
+llvm-header-guard
+    ``#pragma once`` is used.
+modernize-use-trailing-return-type
+    Trailing return types are not used.
+readability-magic-numbers
+    Too many places where it would be useless to introduce a constexpr value.
+readability-uppercase-literal-suffix
+    Just a style preference.

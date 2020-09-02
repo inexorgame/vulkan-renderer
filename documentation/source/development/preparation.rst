@@ -15,6 +15,7 @@ Required Software
 
 `Vulkan SDK <https://vulkan.lunarg.com/sdk/home>`__
     Vulkan is a new generation graphics and compute API that provides high-efficiency, cross-platform access to modern GPUs used in a wide variety of devices from PCs and consoles to mobile phones and embedded platforms.
+    Make sure you add the ``glslangValidator`` in the Vulkan SDK's bin folder to your path variable.
 
 Optional Software
 -----------------

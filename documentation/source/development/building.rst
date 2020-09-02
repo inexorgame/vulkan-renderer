@@ -18,9 +18,6 @@ There are three CMake targets.
 
 Available CMake options
 
-- INEXOR_CONAN_PROFILE
-    To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``. The building type will be overriden by CMake.
-    Default: ``default``
 - INEXOR_BUILD_BENCHMARKS
     Builds inexor-renderer-benchmarks.
     Default: ``OFF``
@@ -33,6 +30,9 @@ Available CMake options
 - INEXOR_BUILD_TESTS
     Builds inexor-renderer tests.
     Default: ``OFF``
+- INEXOR_CONAN_PROFILE
+    To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``. The building type will be overriden by CMake.
+    Default: ``default``
 - INEXOR_USE_VMA_RECORDING
     Enables or disables VulkanMemoryAllocator's recording feature.
     Default: ``OFF``
@@ -58,14 +58,13 @@ Building vulkan-renderer
 Windows
 ^^^^^^^
 
-- It is recommended to use `Visual Studio 2019 <https://visualstudio.microsoft.com/>`__. You can use any IDE that CMake can generate a project map for.
-- Clone the source code. We recommend `GitHub Desktop <https://desktop.github.com/>`__.
+- Choose any IDE that CMake can generate a project map for. If in doubt use `Visual Studio 2019 <https://visualstudio.microsoft.com/>`__.
+- Clone the source code. Free and good tools are `GitHub Desktop <https://desktop.github.com/>`__ or `GitKraken Git GUI <https://www.gitkraken.com/git-client>`__.
 - Open CMake and select the root folder which contains ``CMakeLists.txt`` (not just ``src`` folder!).
 - You can choose any location for the ``build`` folder.
 - Click "Configure" and select ``Visual Studio 16 2019``. Click "Finish".
 - CMake will now set up dependencies automatically for you. This might take a while. If this fails, you really should open a ticket!
 - Click "Generate". You can now open the Visual Studio project file in your ``build`` folder.
-- You must compile all ``.glsl`` shaders in the ``shaders`` folder to the `SPIR-V <https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation>`__ format. Therefore, you need to execute ``compile_shaders.bat``. Make sure you have found ``glslangValidator.exe`` in the Vulkan SDK's bin folder and add it to your path variable.
 - Please check that the root directory of the repository is set as working directory for debugging. Usually, CMake should take care of this already.
 - You are now ready to start debugging! We want master branch to stay stable at all time.
 
@@ -76,7 +75,6 @@ Install dependencies and tools:
 
 +--------+--------------------------------------+
 | Ubuntu | .. code-block:: bash                 |
-|        |                                      |
 |        |                                      |
 |        |     sudo apt install -y \            |
 |        |       libglm-dev \                   |
@@ -102,7 +100,6 @@ Install dependencies and tools:
 |        |       conan                          |
 +--------+--------------------------------------+
 | Gentoo | .. code-block:: bash                 |
-|        |                                      |
 |        |                                      |
 |        |     emerge \                         |
 |        |      dev-util/cmake \                |
@@ -141,7 +138,6 @@ Configure cmake:
 
 .. note::
 
-    - ``INEXOR_USE_VMA_RECORDING`` is required to be ``OFF`` in linux builds (it is by default).
     - Only pass ``-GNinja`` if the ninja build tool is installed.
 
 .. code-block:: bash

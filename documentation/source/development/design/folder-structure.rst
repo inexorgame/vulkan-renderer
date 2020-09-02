@@ -7,14 +7,18 @@ Source
 .. code-block:: none
 
     connector/  «project root»
+    ├── .clang-format  «Clang Format configuration»
+    ├── .clang-tidy  «Clang Tidy configuration»
+    ├── .git-blame-ignore-revs  «git ignore revisions»
     ├── .gitignore  «git ignore»
-    ├── .travis.yml  «Travis CI configuration»
+    ├── .readthedocs.yml  «Read The Docs configuration»
+    ├── CHANGELOG.rst
     ├── CMakeLists.txt
     ├── CODE_OF_CONDUCT.md
     ├── conanfile.py  «Conan configuration»
     ├── CONTRIBUTING.md
     ├── LICENSE.md
-    ├── README.md
+    ├── README.rst
     ├── .github/  «GitHub templates and action configurations»
     ├── assets/
     │   ├── models/
@@ -26,6 +30,7 @@ Source
     │   ├── CMakeLists.txt  «CMake file for the documentation»
     │   ├── cmake/  «documentation cmake helpers»
     │   └── source/  «documentation source code»
+    ├── example/  «example application»
     ├── include/  «header files»
     ├── shaders/
     ├── src/  «source code»
