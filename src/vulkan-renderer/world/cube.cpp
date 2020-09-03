@@ -288,7 +288,7 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     polygons.reserve(count_geometry_cubes());
 
     std::function<void(std::shared_ptr<const world::Cube>)> collect;
-    // pre-order traversal
+    // post-order traversal
     collect = [&collect, &polygons, &update_invalid](std::shared_ptr<const world::Cube> cube) {
         if (cube->type() == world::Cube::Type::OCTANT) {
             for (const auto &child : cube->childs()) {
