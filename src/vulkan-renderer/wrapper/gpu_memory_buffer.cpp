@@ -80,8 +80,10 @@ GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
       m_allocation_info(std::move(other.m_allocation_info)), m_allocation_ci(std::move(other.m_allocation_ci)) {}
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
-    spdlog::trace("Destroying GPU memory buffer.");
-    vmaDestroyBuffer(m_vma_allocator, m_buffer, m_allocation);
+    if (m_buffer != nullptr) {
+        spdlog::trace("Destroying GPU memory buffer.");
+        vmaDestroyBuffer(m_vma_allocator, m_buffer, m_allocation);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

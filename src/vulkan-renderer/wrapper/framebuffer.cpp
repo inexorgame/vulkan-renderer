@@ -41,8 +41,10 @@ Framebuffer::Framebuffer(Framebuffer &&other) noexcept
       m_name(std::move(other.m_name)) {}
 
 Framebuffer::~Framebuffer() {
-    spdlog::trace("Destroying framebuffer {}.", m_name);
-    vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
+    if (m_framebuffer != nullptr) {
+        spdlog::trace("Destroying framebuffer {}.", m_name);
+        vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -178,11 +178,15 @@ void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height
 }
 
 Swapchain::~Swapchain() {
-    spdlog::trace("Destroying swapchain {}.", m_name);
-    vkDestroySwapchainKHR(m_device.device(), m_swapchain, nullptr);
+    if (m_swapchain != nullptr) {
+        spdlog::trace("Destroying swapchain {}.", m_name);
+        vkDestroySwapchainKHR(m_device.device(), m_swapchain, nullptr);
+    }
 
     for (auto *image_view : m_swapchain_image_views) {
-        vkDestroyImageView(m_device.device(), image_view, nullptr);
+        if (image_view != nullptr) {
+            vkDestroyImageView(m_device.device(), image_view, nullptr);
+        }
     }
 }
 

@@ -78,11 +78,15 @@ Image::Image(Image &&other) noexcept
       m_image_view(other.m_image_view), m_name(std::move(other.m_name)) {}
 
 Image::~Image() {
-    spdlog::trace("Destroying image view {}.", m_name);
-    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
+    if (m_image_view != nullptr) {
+        spdlog::trace("Destroying image view {}.", m_name);
+        vkDestroyImageView(m_device.device(), m_image_view, nullptr);
+    }
 
-    spdlog::trace("Destroying image {}.", m_name);
-    vmaDestroyImage(m_vma_allocator, m_image, m_allocation);
+    if (m_image != nullptr) {
+        spdlog::trace("Destroying image {}.", m_name);
+        vmaDestroyImage(m_vma_allocator, m_image, m_allocation);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

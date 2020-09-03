@@ -305,10 +305,14 @@ Device::Device(Device &&other) noexcept
       m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {}
 
 Device::~Device() {
-    assert(m_device);
-    spdlog::trace("Destroying device.");
-    vmaDestroyAllocator(m_allocator);
-    vkDestroyDevice(m_device, nullptr);
+    if (m_allocator != nullptr) {
+        vmaDestroyAllocator(m_allocator);
+    }
+
+    if (m_device != nullptr) {
+        spdlog::trace("Destroying device.");
+        vkDestroyDevice(m_device, nullptr);
+    }
 }
 
 #ifndef NDEBUG

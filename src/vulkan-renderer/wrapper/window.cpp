@@ -90,8 +90,10 @@ bool Window::should_close() {
 }
 
 Window::~Window() {
-    spdlog::trace("Destroying window.");
-    glfwDestroyWindow(m_window);
+    if (m_window != nullptr) {
+        spdlog::trace("Destroying window.");
+        glfwDestroyWindow(m_window);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

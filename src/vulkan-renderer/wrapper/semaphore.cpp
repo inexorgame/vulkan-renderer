@@ -33,8 +33,10 @@ Semaphore::Semaphore(Semaphore &&other) noexcept
       m_name(std::move(other.m_name)) {}
 
 Semaphore::~Semaphore() {
-    spdlog::trace("Destroying semaphore {}.", m_name);
-    vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);
+    if (m_semaphore != nullptr) {
+        spdlog::trace("Destroying semaphore {}.", m_name);
+        vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

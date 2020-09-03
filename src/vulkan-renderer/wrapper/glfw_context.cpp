@@ -8,16 +8,21 @@ namespace inexor::vulkan_renderer::wrapper {
 GLFWContext::GLFWContext() {
     spdlog::debug("Creating GLFW context.");
 
-    if (!glfwInit()) {
+    m_initialized = static_cast<bool>(glfwInit());
+    if (!m_initialized) {
         throw std::runtime_error("Error: glfwInit failed!");
     }
 
     spdlog::debug("Created GLFW context successfully.");
 }
 
+GLFWContext::GLFWContext(GLFWContext &&other) noexcept : m_initialized(other.m_initialized) {}
+
 GLFWContext::~GLFWContext() {
-    spdlog::trace("Destroying glfw context.");
-    glfwTerminate();
+    if (m_initialized) {
+        spdlog::trace("Destroying glfw context.");
+        glfwTerminate();
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
