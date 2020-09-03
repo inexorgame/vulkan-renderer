@@ -32,10 +32,10 @@ void Window::wait_for_focus() {
     int current_width = 0;
     int current_height = 0;
 
-    while (current_width == 0 || current_height == 0) {
-        glfwGetFramebufferSize(m_window, &current_width, &current_height);
+    do {
         glfwWaitEvents();
-    }
+        glfwGetFramebufferSize(m_window, &current_width, &current_height);
+    } while (current_width == 0 || current_height == 0);
 
     m_width = current_width;
     m_height = current_height;

@@ -37,8 +37,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
                                 std::uint32_t window_height) {
     VulkanSettingsDecisionMaker settings_decision_maker;
 
-    settings_decision_maker.decide_width_and_height_of_swapchain_extent(m_graphics_card, m_surface, window_width,
-                                                                        window_height, m_extent);
+    settings_decision_maker.decide_swapchain_extent(m_graphics_card, m_surface, window_width, window_height, m_extent);
 
     std::optional<VkPresentModeKHR> present_mode =
         settings_decision_maker.decide_which_presentation_mode_to_use(m_graphics_card, m_surface, m_vsync_enabled);

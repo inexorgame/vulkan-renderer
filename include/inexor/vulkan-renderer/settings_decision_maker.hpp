@@ -76,9 +76,9 @@ public:
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
     /// @param swapchain_extent The extent of the swapchain.
-    void decide_width_and_height_of_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                                     std::uint32_t &window_width, std::uint32_t &window_height,
-                                                     VkExtent2D &swapchain_extent);
+    void decide_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
+                                 std::uint32_t &window_width, std::uint32_t &window_height,
+                                 VkExtent2D &swapchain_extent);
 
     /// @brief Automatically finds the transform, relative to the presentation engine's natural orientation, applied to
     /// the image content prior to presentation.

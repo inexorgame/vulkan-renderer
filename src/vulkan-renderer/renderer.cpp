@@ -83,7 +83,6 @@ void VulkanRenderer::recreate_swapchain() {
     m_rendering_finished_semaphore.reset();
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_vkdevice, "Image available semaphore");
     m_rendering_finished_semaphore = std::make_unique<wrapper::Semaphore>(*m_vkdevice, "Rendering finished semaphore");
-    vkDeviceWaitIdle(m_vkdevice->device());
 
     m_game_camera.m_type = Camera::CameraType::LOOKAT;
     m_game_camera.m_rotation_speed = 0.25f;
