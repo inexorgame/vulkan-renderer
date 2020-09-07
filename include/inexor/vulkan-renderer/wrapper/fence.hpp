@@ -32,11 +32,11 @@ public:
         return m_fence;
     }
 
-    ///
-    ///
+    /// @brief Blocks fence and waits until fence condition is fulfilled.
+    /// @param timeout_limit [in] The maximum time to wait in milliseconds.
     void block(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
 
-    ///
+    /// @brief Resets the fence.
     void reset() const;
 };
 

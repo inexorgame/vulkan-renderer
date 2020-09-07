@@ -29,12 +29,7 @@ ResourceDescriptor::ResourceDescriptor(const wrapper::Device &device, std::uint3
     assert(!m_write_descriptor_sets.empty());
     assert(layout_bindings.size() == m_write_descriptor_sets.size());
 
-    for (const auto &descriptor_write : m_write_descriptor_sets) {
-        // The target memory to which the descriptor write points must be valid!
-        if (descriptor_write.pBufferInfo == nullptr) {
-            throw std::runtime_error("Error: descriptor_write.pBufferInfo was nullptr!");
-        }
-    }
+    // TODO() Check if descriptor writes match descriptor set layout!
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
 

@@ -5,8 +5,10 @@ endif()
 
 set(
     SHADERS
-    main.frag
     main.vert
+    main.frag
+    ui.frag
+    ui.vert
 )
 
 foreach(SHADER ${SHADERS})
