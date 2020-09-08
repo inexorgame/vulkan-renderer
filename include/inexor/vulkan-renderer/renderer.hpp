@@ -16,6 +16,7 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
@@ -23,7 +24,6 @@
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
-#include "inexor/vulkan-renderer/wrapper/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
@@ -83,7 +83,7 @@ protected:
     std::unique_ptr<FrameGraph> m_frame_graph;
 
     std::vector<wrapper::Shader> m_shaders;
-    std::vector<wrapper::Texture> m_textures;
+    std::vector<wrapper::GpuTexture> m_textures;
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;

@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/application.hpp"
+﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/debug_callback.hpp"
 #include "inexor/vulkan-renderer/error_handling.hpp"
@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -124,7 +125,8 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : m_texture_files) {
-        m_textures.emplace_back(*m_device, texture_file, texture_name);
+        wrapper::CpuTexture cpu_texture(texture_file, texture_name);
+        m_textures.emplace_back(*m_device, cpu_texture);
     }
 
     return VK_SUCCESS;

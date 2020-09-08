@@ -1,76 +1,44 @@
-#include "inexor/vulkan-renderer/wrapper/texture.hpp"
+﻿#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <spdlog/spdlog.h>
-#include <stb_image.h>
 #include <vma/vma_usage.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Texture::Texture(const Device &device, void *texture_data, const std::uint32_t texture_width,
-                 const std::uint32_t texture_height, const std::size_t texture_size, const std::string &name)
-    : m_name(name), m_device(device),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()),
-      m_texture_width(texture_width), m_texture_height(texture_height) {
-
-    create_texture(texture_data, texture_size);
-}
-
-Texture::Texture(const Device &device, const std::string &file_name, const std::string &name)
-    : m_name(name), m_file_name(file_name), m_device(device),
+GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
+    : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
+      m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    assert(device.device());
-    assert(device.allocator());
-    assert(!file_name.empty());
-    assert(!name.empty());
-
-    spdlog::debug("Loading texture file {}.", file_name);
-
-    // Load the texture file using stb_image library.
-    // Force stb_image to load an alpha channel as well.
-    stbi_uc *texture_data =
-        stbi_load(file_name.c_str(), &m_texture_width, &m_texture_height, &m_texture_channels, STBI_rgb_alpha);
-
-    if (texture_data == nullptr) {
-        throw std::runtime_error("Error: Could not load texture file " + file_name + " using stbi_load!");
-    }
-
-    spdlog::debug("Texture dimensions: width: {}, height: {}, channels: {}.", m_texture_width, m_texture_height,
-                  m_texture_channels);
-
-    // Calculate the memory size of the texture.
-    // We need 4 times the size since we have 4 channels: red, green, blue and alpha channel.
-    VkDeviceSize texture_memory_size = 4 * m_texture_width * m_texture_height;
-
-    create_texture(texture_data, texture_memory_size);
-
-    // We can discard the texture data since we copied it already to GPU memory.
-    stbi_image_free(texture_data);
+    create_texture(cpu_texture.data(), cpu_texture.data_size());
 }
 
-Texture::Texture(Texture &&other) noexcept
+GpuTexture::GpuTexture(const wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
+                       const int texture_height, const int texture_channels, const int mip_levels, std::string name)
+    : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
+      m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
+      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
+    create_texture(data, data_size);
+}
+
+GpuTexture::GpuTexture(GpuTexture &&other) noexcept
     : m_texture_image(std::exchange(other.m_texture_image, nullptr)), m_name(std::move(other.m_name)),
-      m_file_name(std::move(other.m_file_name)), m_texture_width(other.m_texture_width),
-      m_texture_height(other.m_texture_height), m_texture_channels(other.m_texture_channels),
-      m_mip_levels(other.m_mip_levels), m_device(other.m_device), m_sampler(std::exchange(other.m_sampler, nullptr)),
-      m_texture_image_format(other.m_texture_image_format),
+      m_texture_width(other.m_texture_width), m_texture_height(other.m_texture_height),
+      m_texture_channels(other.m_texture_channels), m_mip_levels(other.m_mip_levels), m_device(other.m_device),
+      m_sampler(std::exchange(other.m_sampler, nullptr)), m_texture_image_format(other.m_texture_image_format),
       m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
 
-Texture::~Texture() {
+GpuTexture::~GpuTexture() {
     if (m_sampler != nullptr) {
         spdlog::trace("Destroying texture sampler {}.", m_name);
         vkDestroySampler(m_device.device(), m_sampler, nullptr);
     }
 }
 
-void Texture::create_texture(void *texture_data, const std::size_t texture_size) {
-
-    // For now, we will not generate mip-maps automatically.
-    // TODO: Generate mip-maps automatically!
-    m_mip_levels = 1;
+void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
 
     StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
@@ -115,8 +83,8 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     create_texture_sampler();
 }
 
-void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
-                                      VkImageLayout new_layout) {
+void GpuTexture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
+                                         VkImageLayout new_layout) {
 
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = old_layout;
@@ -164,7 +132,7 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
     image_transition_change.end_recording_and_submit_command();
 }
 
-void Texture::create_texture_sampler() {
+void GpuTexture::create_texture_sampler() {
     auto sampler_ci = make_info<VkSamplerCreateInfo>();
     sampler_ci.magFilter = VK_FILTER_LINEAR;
     sampler_ci.minFilter = VK_FILTER_LINEAR;

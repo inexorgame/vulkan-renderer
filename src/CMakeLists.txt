@@ -21,12 +21,14 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
+    vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/glfw_context.cpp
-    vulkan-renderer/wrapper/graphics_pipeline.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
+    vulkan-renderer/wrapper/gpu_texture.cpp
+    vulkan-renderer/wrapper/graphics_pipeline.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
@@ -38,10 +40,9 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/staging_buffer.cpp
     vulkan-renderer/wrapper/swapchain.cpp
-    vulkan-renderer/wrapper/texture.cpp
+    vulkan-renderer/wrapper/uniform_buffer.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
-    vulkan-renderer/wrapper/uniform_buffer.cpp
 
     vulkan-renderer/world/cube.cpp
     vulkan-renderer/world/indentation.cpp)
