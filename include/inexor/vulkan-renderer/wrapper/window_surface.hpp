@@ -9,7 +9,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 class WindowSurface {
-private:
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
 

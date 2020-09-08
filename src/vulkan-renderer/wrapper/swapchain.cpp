@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
@@ -11,24 +12,19 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
-                     std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
-                     const std::string &name)
-    : m_device(device), m_graphics_card(graphics_card), m_surface(surface), m_vsync_enabled(enable_vsync),
-      m_name(name) {
-
+Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint32_t window_width,
+                     std::uint32_t window_height, const bool enable_vsync, const std::string &name)
+    : m_device(device), m_surface(surface), m_vsync_enabled(enable_vsync), m_name(name) {
     assert(device.device());
-    assert(graphics_card);
     assert(surface);
 
     setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept
-    : m_device(other.m_device), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
-      m_surface(std::exchange(other.m_surface, nullptr)), m_swapchain(std::exchange(other.m_swapchain, nullptr)),
-      m_surface_format(other.m_surface_format), m_extent(other.m_extent),
-      m_swapchain_images(std::move(other.m_swapchain_images)),
+    : m_device(other.m_device), m_surface(std::exchange(other.m_surface, nullptr)),
+      m_swapchain(std::exchange(other.m_swapchain, nullptr)), m_surface_format(other.m_surface_format),
+      m_extent(other.m_extent), m_swapchain_images(std::move(other.m_swapchain_images)),
       m_swapchain_image_views(std::move(other.m_swapchain_image_views)),
       m_swapchain_image_count(other.m_swapchain_image_count), m_vsync_enabled(other.m_vsync_enabled),
       m_name(std::move(other.m_name)) {}
@@ -37,20 +33,21 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
                                 std::uint32_t window_height) {
     VulkanSettingsDecisionMaker settings_decision_maker;
 
-    settings_decision_maker.decide_swapchain_extent(m_graphics_card, m_surface, window_width, window_height, m_extent);
+    settings_decision_maker.decide_swapchain_extent(m_device.physical_device(), m_surface, window_width, window_height,
+                                                    m_extent);
 
-    std::optional<VkPresentModeKHR> present_mode =
-        settings_decision_maker.decide_which_presentation_mode_to_use(m_graphics_card, m_surface, m_vsync_enabled);
+    std::optional<VkPresentModeKHR> present_mode = settings_decision_maker.decide_which_presentation_mode_to_use(
+        m_device.physical_device(), m_surface, m_vsync_enabled);
 
     if (!present_mode) {
         throw std::runtime_error("Error: Could not find a suitable present mode!");
     }
 
     m_swapchain_image_count =
-        settings_decision_maker.decide_how_many_images_in_swapchain_to_use(m_graphics_card, m_surface);
+        settings_decision_maker.decide_how_many_images_in_swapchain_to_use(m_device.physical_device(), m_surface);
 
-    auto surface_format_candidate =
-        settings_decision_maker.decide_which_surface_color_format_in_swapchain_to_use(m_graphics_card, m_surface);
+    auto surface_format_candidate = settings_decision_maker.decide_which_surface_color_format_in_swapchain_to_use(
+        m_device.physical_device(), m_surface);
 
     if (!surface_format_candidate) {
         throw std::runtime_error("Error: Could not find an image format for images in swapchain!");
@@ -67,8 +64,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.imageExtent.height = m_extent.height;
     swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     swapchain_ci.preTransform =
-        (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(m_graphics_card,
-                                                                                                        m_surface);
+        (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(
+            m_device.physical_device(), m_surface);
     swapchain_ci.imageArrayLayers = 1;
     swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchain_ci.queueFamilyIndexCount = 0;
@@ -82,12 +79,13 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
     swapchain_ci.clipped = VK_TRUE;
-    swapchain_ci.compositeAlpha = settings_decision_maker.find_composite_alpha_format(m_graphics_card, m_surface);
+    swapchain_ci.compositeAlpha =
+        settings_decision_maker.find_composite_alpha_format(m_device.physical_device(), m_surface);
 
     // Set additional usage flag for blitting from the swapchain images if supported.
     VkFormatProperties formatProps;
 
-    vkGetPhysicalDeviceFormatProperties(m_graphics_card, m_surface_format.format, &formatProps);
+    vkGetPhysicalDeviceFormatProperties(m_device.physical_device(), m_surface_format.format, &formatProps);
 
     if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) ||
         (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
@@ -150,7 +148,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     spdlog::debug("Created {} swapchain image views successfully.", m_swapchain_image_count);
 }
 
-std::uint32_t Swapchain::acquire_next_image(const wrapper::Semaphore &semaphore) {
+std::uint32_t Swapchain::acquire_next_image(const Semaphore &semaphore) {
     std::uint32_t image_index;
     vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(),
                           VK_NULL_HANDLE, &image_index);

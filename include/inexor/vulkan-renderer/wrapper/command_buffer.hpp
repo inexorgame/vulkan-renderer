@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <cstdint>
 #include <string>
@@ -8,12 +8,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
 class ResourceDescriptor;
 
 // TODO(): Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper)
 class CommandBuffer {
-
-private:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const wrapper::Device &m_device;
     const std::string m_name;

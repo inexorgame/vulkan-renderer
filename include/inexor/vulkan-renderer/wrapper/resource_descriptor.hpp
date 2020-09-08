@@ -1,11 +1,13 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+class Device;
 
 /// @brief A class for descriptor management.
 /// Shader access of data is managed through descriptors.
@@ -13,9 +15,8 @@ namespace inexor::vulkan_renderer::wrapper {
 /// Descriptors sets are described through their descriptor set layout.
 /// Descriptor sets are allocated from descriptor pools.
 class ResourceDescriptor {
-private:
     const std::string m_name;
-    const wrapper::Device &m_device;
+    const Device &m_device;
     VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings;
@@ -25,7 +26,7 @@ private:
 
 public:
     // @note Creates a descriptor pool.
-    ResourceDescriptor(const wrapper::Device &device, std::uint32_t swapchain_image_count,
+    ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
                        std::initializer_list<VkDescriptorType> pool_types,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                        const std::vector<VkWriteDescriptorSet> &descriptor_writes, const std::string &name);

@@ -1,23 +1,23 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
 class Swapchain;
 
 class Framebuffer {
-private:
     const wrapper::Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
     const std::string m_name;
 
 public:
-    Framebuffer(const wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                const wrapper::Swapchain &swapchain, const std::string &name);
+    Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
+                const Swapchain &swapchain, const std::string &name);
     Framebuffer(const Framebuffer &) = delete;
     Framebuffer(Framebuffer &&) noexcept;
     ~Framebuffer();

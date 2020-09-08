@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
@@ -16,7 +17,7 @@ ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
       m_write_descriptor_sets(std::move(other.m_write_descriptor_sets)),
       m_descriptor_sets(std::move(other.m_descriptor_sets)), m_swapchain_image_count(other.m_swapchain_image_count) {}
 
-ResourceDescriptor::ResourceDescriptor(const wrapper::Device &device, std::uint32_t swapchain_image_count,
+ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
                                        std::initializer_list<VkDescriptorType> pool_types,
                                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                                        const std::vector<VkWriteDescriptorSet> &descriptor_writes,

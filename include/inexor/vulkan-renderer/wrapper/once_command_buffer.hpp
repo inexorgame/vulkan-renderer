@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -12,23 +11,24 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 /// @brief A OnceCommandBuffer is a command buffer which is being used only once.
 class OnceCommandBuffer {
-private:
-    wrapper::CommandPool m_command_pool;
-    std::unique_ptr<wrapper::CommandBuffer> m_command_buffer;
-    VkQueue m_data_transfer_queue;
-    const wrapper::Device &m_device;
+    const Device &m_device;
+    // We must store the VkQueue separately since we don't know from
+    // the context of the use of this OnceCommandBuffer which queue to use!
+    const VkQueue m_queue;
+    CommandPool m_command_pool;
+    std::unique_ptr<CommandBuffer> m_command_buffer;
 
     bool m_command_buffer_created;
     bool m_recording_started;
 
 public:
     /// @brief Creates a new commandbuffer which is being called only once.
-    /// @param device [in] The Vulkan device.
-    /// @param data_transfer_queue [in] The data transfer queue.
-    OnceCommandBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
-                      const std::uint32_t data_transfer_queue_family_index);
+    /// @param device [in] A const reference to the Vulkan device.
+    OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index);
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;
     ~OnceCommandBuffer();

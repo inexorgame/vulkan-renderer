@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <cassert>
 #include <limits>
@@ -8,8 +8,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class Fence {
-private:
     const wrapper::Device &m_device;
     const std::string m_name;
     VkFence m_fence;
@@ -28,7 +29,6 @@ public:
     Fence &operator=(Fence &&) = default;
 
     [[nodiscard]] VkFence get() const {
-        assert(m_fence);
         return m_fence;
     }
 

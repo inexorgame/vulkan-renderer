@@ -1,19 +1,20 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class Semaphore {
-private:
-    const wrapper::Device &m_device;
+    const Device &m_device;
     VkSemaphore m_semaphore;
     const std::string m_name;
 
 public:
-    Semaphore(const wrapper::Device &device, const std::string &name);
+    Semaphore(const Device &device, const std::string &name);
     Semaphore(const Semaphore &) = delete;
     Semaphore(Semaphore &&) noexcept;
     ~Semaphore();
