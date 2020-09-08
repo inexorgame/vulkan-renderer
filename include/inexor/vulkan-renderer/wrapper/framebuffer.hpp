@@ -16,8 +16,8 @@ private:
     const std::string m_name;
 
 public:
-    Framebuffer(const wrapper::Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                const wrapper::Swapchain &swapchain, const std::string &name);
+    Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
+                const Swapchain &swapchain, const std::string &name);
     Framebuffer(const Framebuffer &) = delete;
     Framebuffer(Framebuffer &&) noexcept;
     ~Framebuffer();
@@ -26,6 +26,7 @@ public:
     Framebuffer &operator=(Framebuffer &&) = default;
 
     [[nodiscard]] VkFramebuffer get() const {
+        assert(m_framebuffer);
         return m_framebuffer;
     }
 };

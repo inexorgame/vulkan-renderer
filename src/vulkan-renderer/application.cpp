@@ -113,9 +113,9 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 }
 
 VkResult Application::load_textures() {
-    assert(m_vkdevice->device());
-    assert(m_vkdevice->physical_device());
-    assert(m_vkdevice->allocator());
+    assert(m_device->device());
+    assert(m_device->physical_device());
+    assert(m_device->allocator());
 
     // TODO: Refactor! use key from TOML file as name!
     std::size_t texture_number = 1;
@@ -124,15 +124,14 @@ VkResult Application::load_textures() {
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : m_texture_files) {
-        m_textures.emplace_back(*m_vkdevice, m_vkdevice->physical_device(), m_vkdevice->allocator(), texture_file,
-                                texture_name, m_vkdevice->graphics_queue(), m_vkdevice->graphics_queue_family_index());
+        m_textures.emplace_back(*m_device, texture_file, texture_name);
     }
 
     return VK_SUCCESS;
 }
 
 VkResult Application::load_shaders() {
-    assert(m_vkdevice->device());
+    assert(m_device->device());
 
     spdlog::debug("Loading vertex shaders.");
 
@@ -147,7 +146,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_vkdevice, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
+        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
     }
 
     spdlog::debug("Loading fragment shaders.");
@@ -161,7 +160,7 @@ VkResult Application::load_shaders() {
         spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_vkdevice, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
+        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
                                fragment_shader_file);
     }
 
@@ -199,11 +198,11 @@ VkResult Application::load_octree_geometry() {
 }
 
 VkResult Application::check_application_specific_features() {
-    assert(m_vkdevice->physical_device());
+    assert(m_device->physical_device());
 
     VkPhysicalDeviceFeatures graphics_card_features;
 
-    vkGetPhysicalDeviceFeatures(m_vkdevice->physical_device(), &graphics_card_features);
+    vkGetPhysicalDeviceFeatures(m_device->physical_device(), &graphics_card_features);
 
     // Check if anisotropic filtering is available!
     if (!graphics_card_features.samplerAnisotropy) {
@@ -376,16 +375,15 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    m_vkdevice =
+    m_device =
         std::make_unique<wrapper::Device>(m_vkinstance->instance(), m_surface->get(),
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
     VkResult result = check_application_specific_features();
     vulkan_error_check(result);
 
-    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_vkdevice, m_vkdevice->physical_device(), m_surface->get(),
-                                                       m_window->width(), m_window->height(), m_vsync_enabled,
-                                                       "Standard swapchain");
+    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
+                                                       m_window->height(), m_vsync_enabled, "Standard swapchain");
 
     result = load_textures();
     vulkan_error_check(result);
@@ -393,11 +391,9 @@ Application::Application(int argc, char **argv) {
     result = load_shaders();
     vulkan_error_check(result);
 
-    m_command_pool =
-        std::make_unique<wrapper::CommandPool>(m_vkdevice->device(), m_vkdevice->graphics_queue_family_index());
+    m_command_pool = std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index());
 
-    m_uniform_buffers.emplace_back(m_vkdevice->device(), m_vkdevice->allocator(), "matrices uniform buffer",
-                                   sizeof(UniformBufferObject));
+    m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
 
     std::vector<VkDescriptorSetLayoutBinding> layout_bindings(1);
 
@@ -424,7 +420,7 @@ Application::Application(int argc, char **argv) {
     descriptor_writes[0].descriptorCount = 1;
     descriptor_writes[0].pBufferInfo = &m_uniform_buffer_info;
 
-    m_descriptors.emplace_back(wrapper::ResourceDescriptor{*m_vkdevice,
+    m_descriptors.emplace_back(wrapper::ResourceDescriptor{*m_device,
                                                            m_swapchain->image_count(),
                                                            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
                                                            layout_bindings,
@@ -508,7 +504,7 @@ void Application::update_imgui_overlay() {
     ImGui::SetNextWindowSize(ImVec2(200, 0));
     ImGui::Begin("Inexor Vulkan-renderer", nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    ImGui::Text("%s", m_vkdevice->gpu_name().c_str());
+    ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d", VK_VERSION_MAJOR(m_engine_version), VK_VERSION_MINOR(m_engine_version),
                 VK_VERSION_PATCH(m_engine_version));
     ImGui::PushItemWidth(150.0f * m_imgui_overlay->get_scale());

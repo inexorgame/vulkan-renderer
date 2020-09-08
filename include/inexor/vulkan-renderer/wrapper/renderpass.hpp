@@ -1,16 +1,18 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <vulkan/vulkan_core.h>
 
+#include <cassert>
 #include <string>
 #include <vector>
-#include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
 
 class RenderPass {
 private:
-    VkDevice device;
+    const Device &m_device;
     VkRenderPass renderpass;
     std::string name;
 
@@ -24,22 +26,19 @@ public:
     RenderPass &operator=(RenderPass &&) noexcept = default;
 
     /// @brief Creates a renderpass.
-    /// @param device [in] The Vulkan device.
+    /// @param device [in] A const reference to the Vulkan device wrapper.
     /// @param attachments [in] The renderpass attachments.
     /// @param dependencies [in] The subpass dependencies.
     /// @param subpass_description [in] The subpass description.
     /// @param name [in] The internal name of this renderpass.
-    RenderPass(const VkDevice device, const std::vector<VkAttachmentDescription> &attachments,
+    RenderPass(const Device &device, const std::vector<VkAttachmentDescription> &attachments,
                const std::vector<VkSubpassDependency> &dependencies, const VkSubpassDescription subpass_description,
                const std::string &name);
 
     ~RenderPass();
 
     [[nodiscard]] VkRenderPass get() const {
-        assert(device);
-        assert(!name.empty());
         assert(renderpass);
-
         return renderpass;
     }
 };

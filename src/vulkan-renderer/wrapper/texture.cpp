@@ -10,30 +10,22 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Texture::Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
-                 void *texture_data, const std::uint32_t texture_width, const std::uint32_t texture_height,
-                 const std::size_t texture_size, const std::string &name, const VkQueue data_transfer_queue,
-                 const std::uint32_t data_transfer_queue_family_index)
-    : m_name(name), m_device(device), m_graphics_card(graphics_card), m_data_transfer_queue(data_transfer_queue),
-      m_vma_allocator(vma_allocator), m_data_transfer_queue_family_index(data_transfer_queue_family_index),
-      m_copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index),
+Texture::Texture(const Device &device, void *texture_data, const std::uint32_t texture_width,
+                 const std::uint32_t texture_height, const std::size_t texture_size, const std::string &name)
+    : m_name(name), m_device(device),
+      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()),
       m_texture_width(texture_width), m_texture_height(texture_height) {
 
     create_texture(texture_data, texture_size);
 }
 
-Texture::Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
-                 const std::string &file_name, const std::string &name, const VkQueue data_transfer_queue,
-                 const std::uint32_t data_transfer_queue_family_index)
-    : m_name(name), m_file_name(file_name), m_device(device), m_graphics_card(graphics_card),
-      m_data_transfer_queue(data_transfer_queue), m_data_transfer_queue_family_index(data_transfer_queue_family_index),
-      m_vma_allocator(vma_allocator),
-      m_copy_command_buffer(device, data_transfer_queue, data_transfer_queue_family_index) {
+Texture::Texture(const Device &device, const std::string &file_name, const std::string &name)
+    : m_name(name), m_file_name(file_name), m_device(device),
+      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
     assert(device.device());
-    assert(vma_allocator);
+    assert(device.allocator());
     assert(!file_name.empty());
     assert(!name.empty());
-    assert(data_transfer_queue);
 
     spdlog::debug("Loading texture file {}.", file_name);
 
@@ -63,9 +55,8 @@ Texture::Texture(Texture &&other) noexcept
     : m_texture_image(std::exchange(other.m_texture_image, nullptr)), m_name(std::move(other.m_name)),
       m_file_name(std::move(other.m_file_name)), m_texture_width(other.m_texture_width),
       m_texture_height(other.m_texture_height), m_texture_channels(other.m_texture_channels),
-      m_mip_levels(other.m_mip_levels), m_device(other.m_device), m_graphics_card(other.m_graphics_card),
-      m_data_transfer_queue(other.m_data_transfer_queue), m_vma_allocator(other.m_vma_allocator),
-      m_sampler(std::exchange(other.m_sampler, nullptr)), m_texture_image_format(other.m_texture_image_format),
+      m_mip_levels(other.m_mip_levels), m_device(other.m_device), m_sampler(std::exchange(other.m_sampler, nullptr)),
+      m_texture_image_format(other.m_texture_image_format),
       m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
 
 Texture::~Texture() {
@@ -81,21 +72,17 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
     // TODO: Generate mip-maps automatically!
     m_mip_levels = 1;
 
-    StagingBuffer texture_staging_buffer(m_device, m_vma_allocator, m_data_transfer_queue,
-                                         m_data_transfer_queue_family_index, m_name, texture_size, texture_data,
-                                         texture_size);
+    StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
     VkExtent2D extent;
     extent.width = m_texture_width;
     extent.height = m_texture_height;
 
-    m_texture_image =
-        std::make_unique<wrapper::Image>(m_device, m_graphics_card, m_vma_allocator, m_texture_image_format,
-                                         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                         VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
+    m_texture_image = std::make_unique<wrapper::Image>(
+        m_device, m_texture_image_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
 
     m_copy_command_buffer.create_command_buffer();
-
     m_copy_command_buffer.start_recording();
 
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
@@ -104,7 +91,6 @@ void Texture::create_texture(void *texture_data, const std::size_t texture_size)
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region{};
-
     buffer_image_region.bufferOffset = 0;
     buffer_image_region.bufferRowLength = 0;
     buffer_image_region.bufferImageHeight = 0;
@@ -166,7 +152,8 @@ void Texture::transition_image_layout(VkImage image, VkFormat format, VkImageLay
 
     spdlog::debug("Recording pipeline barrier for image layer transition");
 
-    OnceCommandBuffer image_transition_change(m_device, m_data_transfer_queue, m_data_transfer_queue_family_index);
+    OnceCommandBuffer image_transition_change(m_device, m_device.graphics_queue(),
+                                              m_device.graphics_queue_family_index());
 
     image_transition_change.create_command_buffer();
     image_transition_change.start_recording();
@@ -216,10 +203,10 @@ void Texture::create_texture_sampler() {
     sampler_ci.maxLod = 0.0f;
 
     VkPhysicalDeviceFeatures device_features;
-    vkGetPhysicalDeviceFeatures(m_graphics_card, &device_features);
+    vkGetPhysicalDeviceFeatures(m_device.physical_device(), &device_features);
 
     VkPhysicalDeviceProperties graphics_card_properties;
-    vkGetPhysicalDeviceProperties(m_graphics_card, &graphics_card_properties);
+    vkGetPhysicalDeviceProperties(m_device.physical_device(), &graphics_card_properties);
 
     if (VK_TRUE == device_features.samplerAnisotropy) {
         // Anisotropic filtering is available.

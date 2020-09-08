@@ -72,18 +72,18 @@ void VulkanRenderer::generate_octree_indices() {
 
 void VulkanRenderer::recreate_swapchain() {
     m_window->wait_for_focus();
-    vkDeviceWaitIdle(m_vkdevice->device());
+    vkDeviceWaitIdle(m_device->device());
 
     // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
     m_frame_graph.reset();
     m_swapchain->recreate(m_window->width(), m_window->height());
-    m_frame_graph = std::make_unique<FrameGraph>(*m_vkdevice, m_command_pool->get(), *m_swapchain);
+    m_frame_graph = std::make_unique<FrameGraph>(*m_device, m_command_pool->get(), *m_swapchain);
     setup_frame_graph();
 
     m_image_available_semaphore.reset();
     m_rendering_finished_semaphore.reset();
-    m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_vkdevice, "Image available semaphore");
-    m_rendering_finished_semaphore = std::make_unique<wrapper::Semaphore>(*m_vkdevice, "Rendering finished semaphore");
+    m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
+    m_rendering_finished_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Rendering finished semaphore");
 
     m_game_camera.m_type = Camera::CameraType::LOOKAT;
     m_game_camera.m_rotation_speed = 0.25f;
@@ -94,7 +94,7 @@ void VulkanRenderer::recreate_swapchain() {
                                   0.1f, 256.0f);
 
     m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_vkdevice, *m_swapchain);
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain);
 }
 
 void VulkanRenderer::render_frame() {
@@ -106,7 +106,7 @@ void VulkanRenderer::render_frame() {
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
     m_frame_graph->render(image_index, m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
-                          m_vkdevice->graphics_queue());
+                          m_device->graphics_queue());
 
     m_imgui_overlay->render(image_index);
 
@@ -118,7 +118,7 @@ void VulkanRenderer::render_frame() {
     present_info.pSwapchains = m_swapchain->swapchain_ptr();
     present_info.pWaitSemaphores = m_rendering_finished_semaphore->ptr();
 
-    vkQueuePresentKHR(m_vkdevice->present_queue(), &present_info);
+    vkQueuePresentKHR(m_device->present_queue(), &present_info);
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
@@ -128,7 +128,7 @@ void VulkanRenderer::render_frame() {
 
 void VulkanRenderer::calculate_memory_budget() {
     VmaStats memory_stats;
-    vmaCalculateStats(m_vkdevice->allocator(), &memory_stats);
+    vmaCalculateStats(m_device->allocator(), &memory_stats);
 
     spdlog::debug("-------------VMA stats-------------");
     spdlog::debug("Number of `VkDeviceMemory` (physical memory) blocks allocated: {} still alive, {} in total",
@@ -147,20 +147,20 @@ void VulkanRenderer::calculate_memory_budget() {
     spdlog::debug("-------------VMA stats-------------");
 
     char *vma_stats_string = nullptr;
-    vmaBuildStatsString(m_vkdevice->allocator(), &vma_stats_string, VK_TRUE);
+    vmaBuildStatsString(m_device->allocator(), &vma_stats_string, VK_TRUE);
 
     std::string memory_dump_file_name = "vma-dumps/dump.json";
     std::ofstream vma_memory_dump(memory_dump_file_name, std::ios::out);
     vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string));
     vma_memory_dump.close();
 
-    vmaFreeStatsString(m_vkdevice->allocator(), vma_stats_string);
+    vmaFreeStatsString(m_device->allocator(), vma_stats_string);
 }
 
 VulkanRenderer::~VulkanRenderer() {
     spdlog::debug("Shutting down vulkan renderer");
     // TODO: Add wrapper::Device::wait_idle()
-    vkDeviceWaitIdle(m_vkdevice->device());
+    vkDeviceWaitIdle(m_device->device());
 
     if (!m_debug_report_callback_initialised) {
         return;

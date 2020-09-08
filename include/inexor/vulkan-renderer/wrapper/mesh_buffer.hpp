@@ -27,7 +27,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class MeshBuffer {
 
 private:
-    const wrapper::Device &m_device;
+    const Device &m_device;
     std::string m_name;
 
     GPUMemoryBuffer m_vertex_buffer;
@@ -50,35 +50,28 @@ public:
     MeshBuffer &operator=(MeshBuffer &&) = default;
 
     /// @brief Creates a new vertex buffer with an associated index buffer and copies memory into it.
-    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
-               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
-               const std::string &name, const VkDeviceSize size_of_vertex_structure,
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
                const std::size_t number_of_indices, void *indices);
 
     /// @brief Creates a new vertex buffer with an associated index buffer but does not copy memory into it.
     /// This is useful when you know the size of the buffer but you don't know it's data values yet.
-    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
-               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
-               const std::string &name, const VkDeviceSize size_of_vertex_structure,
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, const VkDeviceSize size_of_index_structure,
                const std::size_t number_of_indices);
 
     /// @brief Creates a vertex buffer without index buffer, but copies the vertex data into it.
-    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
-               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
-               const std::string &name, const VkDeviceSize size_of_vertex_structure,
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices);
 
     /// @brief Creates a vertex buffer without index buffer and copies no vertex data into it.
-    MeshBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
-               const std::uint32_t data_transfer_queue_family_index, const VmaAllocator vma_allocator,
-               const std::string &name, const VkDeviceSize size_of_vertex_structure,
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices);
 
     ~MeshBuffer() = default;
 
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
+        assert(m_vertex_buffer.buffer());
         return m_vertex_buffer.buffer();
     }
 
@@ -100,6 +93,7 @@ public:
     }
 
     [[nodiscard]] auto get_vertex_buffer_address() const {
+        assert(m_vertex_buffer.allocation_info().pMappedData);
         return m_vertex_buffer.allocation_info().pMappedData;
     }
 

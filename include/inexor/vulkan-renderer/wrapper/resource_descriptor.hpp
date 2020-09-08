@@ -15,7 +15,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class ResourceDescriptor {
 private:
     const std::string m_name;
-    const wrapper::Device &m_device;
+    const Device &m_device;
     VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings;
@@ -25,7 +25,7 @@ private:
 
 public:
     // @note Creates a descriptor pool.
-    ResourceDescriptor(const wrapper::Device &device, std::uint32_t swapchain_image_count,
+    ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
                        std::initializer_list<VkDescriptorType> pool_types,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                        const std::vector<VkWriteDescriptorSet> &descriptor_writes, const std::string &name);
@@ -38,14 +38,17 @@ public:
     ResourceDescriptor &operator=(ResourceDescriptor &&) noexcept = default;
 
     [[nodiscard]] const auto &descriptor_sets() const {
+        assert(!m_descriptor_sets.empty());
         return m_descriptor_sets;
     }
 
     [[nodiscard]] auto descriptor_set_layout() const {
+        assert(m_descriptor_set_layout);
         return m_descriptor_set_layout;
     }
 
     [[nodiscard]] const auto &descriptor_set_layout_bindings() const {
+        assert(!m_descriptor_set_layout_bindings.empty());
         return m_descriptor_set_layout_bindings;
     }
 };

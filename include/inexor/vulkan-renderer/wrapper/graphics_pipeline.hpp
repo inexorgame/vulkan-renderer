@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <vulkan/vulkan_core.h>
 
 #include <string>
@@ -9,7 +11,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class GraphicsPipeline {
 private:
-    VkDevice device;
+    const Device &m_device;
     VkPipeline graphics_pipeline;
     VkPipelineCache pipeline_cache;
     std::string name;
@@ -33,7 +35,7 @@ public:
     /// @param window_width [in] The width of the window.
     /// @param window_height [in] The height of the window.
     /// @param name [in] The internal name of the graphics pipeline.
-    GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
+    GraphicsPipeline(const Device &device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
                      const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
                      const std::vector<VkVertexInputBindingDescription> &vertex_binding,
                      const std::vector<VkVertexInputAttributeDescription> &attribute_binding,

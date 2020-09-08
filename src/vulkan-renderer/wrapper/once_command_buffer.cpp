@@ -10,21 +10,16 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(const wrapper::Device &device, const VkQueue data_transfer_queue,
-                                     const std::uint32_t data_transfer_queue_family_index)
-    : m_device(device), m_data_transfer_queue(data_transfer_queue),
-      m_command_pool(device.device(), data_transfer_queue_family_index) {
-
+OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index)
+    : m_device(device), m_queue(queue), m_command_pool(device, queue_family_index) {
     assert(device.device());
-    assert(data_transfer_queue);
     m_command_buffer_created = false;
     m_recording_started = false;
 }
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
-    : m_device(other.m_device), m_command_pool(std::move(other.m_command_pool)),
-      m_command_buffer(std::exchange(other.m_command_buffer, nullptr)),
-      m_data_transfer_queue(other.m_data_transfer_queue), m_recording_started(other.m_recording_started),
+    : m_device(other.m_device), m_queue(other.m_queue), m_command_pool(std::move(other.m_command_pool)),
+      m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_recording_started(other.m_recording_started),
       m_command_buffer_created(other.m_command_buffer_created) {}
 
 OnceCommandBuffer::~OnceCommandBuffer() {
@@ -36,19 +31,16 @@ OnceCommandBuffer::~OnceCommandBuffer() {
 void OnceCommandBuffer::create_command_buffer() {
     assert(m_device.device());
     assert(m_command_pool.get());
-    assert(m_data_transfer_queue);
     assert(!m_recording_started);
     assert(!m_command_buffer_created);
 
     m_command_buffer = std::make_unique<wrapper::CommandBuffer>(m_device, m_command_pool.get(), "Once command buffer");
-
     m_command_buffer_created = true;
 }
 
 void OnceCommandBuffer::start_recording() {
     assert(m_device.device());
     assert(m_command_pool.get());
-    assert(m_data_transfer_queue);
     assert(m_command_buffer_created);
     assert(!m_recording_started);
 
@@ -72,7 +64,6 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     assert(m_device.device());
     assert(m_command_pool.get());
     assert(m_command_buffer);
-    assert(m_data_transfer_queue);
     assert(m_command_buffer_created);
     assert(m_recording_started);
 
@@ -90,12 +81,12 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = m_command_buffer->ptr();
 
-    if (vkQueueSubmit(m_data_transfer_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
+    if (vkQueueSubmit(m_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueSubmit failed for once command buffer!");
     }
 
     // TODO: Refactor! Introduce proper synchronisation using VkFence!
-    if (vkQueueWaitIdle(m_data_transfer_queue) != VK_SUCCESS) {
+    if (vkQueueWaitIdle(m_queue) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueWaitIdle failed for once command buffer!");
     }
 
@@ -105,7 +96,6 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, m_command_buffer->ptr());
 
     m_command_buffer_created = false;
-
     m_recording_started = false;
 }
 

@@ -19,24 +19,18 @@ namespace inexor::vulkan_renderer::wrapper {
 class Texture {
 private:
     std::unique_ptr<wrapper::Image> m_texture_image;
+    OnceCommandBuffer m_copy_command_buffer;
+    VkSampler m_sampler;
 
-    const std::string m_name;
-    const std::string m_file_name;
     int m_texture_width{0};
     int m_texture_height{0};
     int m_texture_channels{0};
     int m_mip_levels{0};
 
+    const std::string m_name;
+    const std::string m_file_name;
     const wrapper::Device &m_device;
-    VkSampler m_sampler;
-    VmaAllocator m_vma_allocator;
-    VkQueue m_data_transfer_queue;
-    VkPhysicalDevice m_graphics_card;
-
-    std::uint32_t m_data_transfer_queue_family_index;
     const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
-
-    OnceCommandBuffer m_copy_command_buffer;
 
     ///
     void create_texture(void *texture_data, const std::size_t texture_size);
@@ -56,9 +50,7 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
-            const std::string &file_name, const std::string &name, const VkQueue data_transfer_queue,
-            const std::uint32_t data_transfer_queue_family_index);
+    Texture(const Device &device, const std::string &file_name, const std::string &name);
 
     /// @brief Creates a texture from memory.
     /// @param device [in] The Vulkan device from which the texture will be created.
@@ -71,9 +63,8 @@ public:
     /// @param name [in] The internal memory allocation name of the texture.
     /// @param data_transfer_queue [in] The Vulkan data transfer queue.
     /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
-    Texture(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
-            void *texture_data, const std::uint32_t texture_width, const std::uint32_t texture_height, const std::size_t texture_size, const std::string &name,
-            const VkQueue data_transfer_queue, const std::uint32_t data_transfer_queue_family_index);
+    Texture(const Device &device, void *texture_data, const std::uint32_t texture_width,
+            const std::uint32_t texture_height, const std::size_t texture_size, const std::string &name);
     Texture(const Texture &) = delete;
     Texture(Texture &&) noexcept;
     ~Texture();
@@ -90,17 +81,17 @@ public:
     }
 
     [[nodiscard]] const VkImage image() const {
-        assert(m_texture_image);
+        assert(m_texture_image->get());
         return m_texture_image->get();
     }
 
     [[nodiscard]] const VkImageView image_view() const {
-        assert(m_texture_image);
+        assert(m_texture_image->image_view());
         return m_texture_image->image_view();
     }
 
     [[nodiscard]] const VkSampler sampler() const {
-        assert(m_texture_image);
+        assert(m_sampler);
         return m_sampler;
     }
 };

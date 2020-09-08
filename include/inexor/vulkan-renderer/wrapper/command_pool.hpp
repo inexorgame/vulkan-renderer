@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan_core.h>
 
@@ -9,14 +11,14 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class CommandPool {
 private:
-    VkDevice m_device;
+    const Device &m_device;
     VkCommandPool m_command_pool;
 
 public:
     /// @brief Creates a Vulkan command pool.
     /// @param device [in] The Vulkan device.
     /// @param queue_family_index [in] The queue family index for the command pool.
-    CommandPool(const VkDevice device, const std::uint32_t queue_family_index);
+    CommandPool(const Device &device, const std::uint32_t queue_family_index);
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;
     ~CommandPool();
