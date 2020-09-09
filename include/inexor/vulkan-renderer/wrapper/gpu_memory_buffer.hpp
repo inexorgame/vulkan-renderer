@@ -51,19 +51,19 @@ public:
         return m_name;
     }
 
-    [[nodiscard]] const VkBuffer buffer() const {
+    [[nodiscard]] VkBuffer buffer() const {
         return m_buffer;
     }
 
-    [[nodiscard]] const VmaAllocation allocation() const {
+    [[nodiscard]] VmaAllocation allocation() const {
         return m_allocation;
     }
 
-    [[nodiscard]] const VmaAllocationInfo allocation_info() const {
+    [[nodiscard]] VmaAllocationInfo allocation_info() const {
         return m_allocation_info;
     }
 
-    [[nodiscard]] const VmaAllocationCreateInfo allocation_create_info() const {
+    [[nodiscard]] VmaAllocationCreateInfo allocation_create_info() const {
         return m_allocation_ci;
     }
 };

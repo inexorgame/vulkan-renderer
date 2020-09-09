@@ -13,7 +13,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
-class GPUMemoryBuffer;
 class OnceCommandBuffer;
 
 // TODO: 3D textures and cube maps.
@@ -83,15 +82,15 @@ public:
         return m_file_name;
     }
 
-    [[nodiscard]] const VkImage image() const {
+    [[nodiscard]] VkImage image() const {
         return m_texture_image->get();
     }
 
-    [[nodiscard]] const VkImageView image_view() const {
+    [[nodiscard]] VkImageView image_view() const {
         return m_texture_image->image_view();
     }
 
-    [[nodiscard]] const VkSampler sampler() const {
+    [[nodiscard]] VkSampler sampler() const {
         return m_sampler;
     }
 };

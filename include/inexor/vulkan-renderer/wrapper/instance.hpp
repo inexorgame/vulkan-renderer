@@ -57,7 +57,7 @@ public:
     Instance &operator=(const Instance &) = delete;
     Instance &operator=(Instance &&) = default;
 
-    [[nodiscard]] const VkInstance instance() const {
+    [[nodiscard]] VkInstance instance() const {
         return m_instance;
     }
 };
