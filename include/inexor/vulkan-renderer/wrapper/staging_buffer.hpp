@@ -14,7 +14,7 @@ class Device;
 /// a queue command can be executed to use a transfer queue to upload the data to the GPU memory.
 class StagingBuffer : public GPUMemoryBuffer {
     const Device &m_device;
-    OnceCommandBuffer m_command_buffer_for_copying;
+    OnceCommandBuffer m_command_buffer;
 
 public:
     /// @brief Creates a new staging buffer.

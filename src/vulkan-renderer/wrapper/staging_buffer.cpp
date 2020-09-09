@@ -10,18 +10,17 @@ StagingBuffer::StagingBuffer(const Device &device, const std::string &name, cons
                              const std::size_t data_size)
     : GPUMemoryBuffer(device, name, buffer_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                       VMA_MEMORY_USAGE_CPU_ONLY),
-      m_command_buffer_for_copying(device, device.transfer_queue(), device.transfer_queue_family_index()),
-      m_device(device) {}
+      m_command_buffer(device, device.transfer_queue(), device.transfer_queue_family_index()), m_device(device) {}
 
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
-    : m_command_buffer_for_copying(std::move(other.m_command_buffer_for_copying)), GPUMemoryBuffer(std::move(other)),
-      m_device(other.m_device) {}
+    : m_command_buffer(std::move(other.m_command_buffer)), GPUMemoryBuffer(std::move(other)), m_device(other.m_device) {
+}
 
 void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer) {
     spdlog::debug("Beginning command buffer recording for copy of staging buffer for vertices.");
 
-    m_command_buffer_for_copying.create_command_buffer();
-    m_command_buffer_for_copying.start_recording();
+    m_command_buffer.create_command_buffer();
+    m_command_buffer.start_recording();
 
     spdlog::debug("Specifying vertex buffer copy operation in command buffer.");
 
@@ -30,12 +29,11 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer) {
     vertex_buffer_copy.dstOffset = 0;
     vertex_buffer_copy.size = m_buffer_size;
 
-    vkCmdCopyBuffer(m_command_buffer_for_copying.command_buffer(), m_buffer, tarbuffer.buffer(), 1,
-                    &vertex_buffer_copy);
+    vkCmdCopyBuffer(m_command_buffer.command_buffer(), m_buffer, tarbuffer.buffer(), 1, &vertex_buffer_copy);
 
     spdlog::debug("Finished uploading mesh data to graphics card memory.");
 
-    m_command_buffer_for_copying.end_recording_and_submit_command();
+    m_command_buffer.end_recording_and_submit();
 
     // No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
 }

@@ -36,18 +36,18 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     settings_decision_maker.decide_swapchain_extent(m_device.physical_device(), m_surface, window_width, window_height,
                                                     m_extent);
 
-    std::optional<VkPresentModeKHR> present_mode = settings_decision_maker.decide_which_presentation_mode_to_use(
-        m_device.physical_device(), m_surface, m_vsync_enabled);
+    std::optional<VkPresentModeKHR> present_mode =
+        settings_decision_maker.pick_presentation_mode(m_device.physical_device(), m_surface, m_vsync_enabled);
 
     if (!present_mode) {
         throw std::runtime_error("Error: Could not find a suitable present mode!");
     }
 
     m_swapchain_image_count =
-        settings_decision_maker.decide_how_many_images_in_swapchain_to_use(m_device.physical_device(), m_surface);
+        settings_decision_maker.decide_swapchain_image_count(m_device.physical_device(), m_surface);
 
-    auto surface_format_candidate = settings_decision_maker.decide_which_surface_color_format_in_swapchain_to_use(
-        m_device.physical_device(), m_surface);
+    auto surface_format_candidate =
+        settings_decision_maker.decide_swapchain_surface_color_format(m_device.physical_device(), m_surface);
 
     if (!surface_format_candidate) {
         throw std::runtime_error("Error: Could not find an image format for images in swapchain!");
@@ -63,9 +63,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.imageExtent.width = m_extent.width;
     swapchain_ci.imageExtent.height = m_extent.height;
     swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchain_ci.preTransform =
-        (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(
-            m_device.physical_device(), m_surface);
+    swapchain_ci.preTransform = (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_image_transformation(
+        m_device.physical_device(), m_surface);
     swapchain_ci.imageArrayLayers = 1;
     swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchain_ci.queueFamilyIndexCount = 0;
@@ -169,7 +168,6 @@ void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height
     }
 
     m_swapchain_image_views.clear();
-
     m_swapchain_images.clear();
 
     setup_swapchain(old_swapchain, window_width, window_height);

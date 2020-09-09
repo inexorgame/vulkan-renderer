@@ -7,12 +7,13 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 RenderPass::RenderPass(RenderPass &&other) noexcept
-    : m_device(other.m_device), renderpass(std::exchange(other.renderpass, nullptr)), name(std::move(other.name)) {}
+    : m_device(other.m_device), m_renderpass(std::exchange(other.m_renderpass, nullptr)),
+      m_name(std::move(other.m_name)) {}
 
 RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescription> &attachments,
                        const std::vector<VkSubpassDependency> &dependencies,
                        const VkSubpassDescription subpass_description, const std::string &name)
-    : m_device(device), name(name) {
+    : m_device(device), m_name(m_name) {
 
     VkRenderPassCreateInfo renderpass_ci = {};
     renderpass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -25,7 +26,7 @@ RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescr
 
     spdlog::debug("Creating renderpass {}.", name);
 
-    if (vkCreateRenderPass(m_device.device(), &renderpass_ci, nullptr, &renderpass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(m_device.device(), &renderpass_ci, nullptr, &m_renderpass) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateRenderPass failed for " + name + " !");
     }
 
@@ -33,8 +34,10 @@ RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescr
 }
 
 RenderPass::~RenderPass() {
-    spdlog::trace("Destroying render pass {}.", name);
-    vkDestroyRenderPass(m_device.device(), renderpass, nullptr);
+    if (m_renderpass != nullptr) {
+        spdlog::trace("Destroying render pass {}.", m_name);
+        vkDestroyRenderPass(m_device.device(), m_renderpass, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

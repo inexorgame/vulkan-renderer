@@ -23,12 +23,6 @@ OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
       m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_recording_started(other.m_recording_started),
       m_command_buffer_created(other.m_command_buffer_created) {}
 
-OnceCommandBuffer::~OnceCommandBuffer() {
-    m_command_buffer.reset();
-    m_command_buffer_created = false;
-    m_recording_started = false;
-}
-
 void OnceCommandBuffer::create_command_buffer() {
     assert(m_device.device());
     assert(m_command_pool.get());
@@ -61,7 +55,7 @@ void OnceCommandBuffer::start_recording() {
     m_recording_started = true;
 }
 
-void OnceCommandBuffer::end_recording_and_submit_command() {
+void OnceCommandBuffer::end_recording_and_submit() {
     assert(m_device.device());
     assert(m_command_pool.get());
     assert(m_command_buffer);

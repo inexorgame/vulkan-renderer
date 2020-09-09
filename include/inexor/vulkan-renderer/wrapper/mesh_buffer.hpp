@@ -27,14 +27,11 @@ class Device;
 /// flags to specify that you want to do this.
 class MeshBuffer {
     const Device &m_device;
-    std::string m_name;
-
     GPUMemoryBuffer m_vertex_buffer;
-
+    std::string m_name;
+    std::uint32_t m_vertex_count{0};
+    std::uint32_t m_index_count{0};
     std::optional<GPUMemoryBuffer> m_index_buffer;
-
-    std::uint32_t m_number_of_vertices{0};
-    std::uint32_t m_number_of_indices{0};
 
     // Don't forget that index buffers are optional!
     bool m_index_buffer_available = false;
@@ -49,23 +46,22 @@ public:
     MeshBuffer &operator=(MeshBuffer &&) = default;
 
     /// @brief Creates a new vertex buffer with an associated index buffer and copies memory into it.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
-               const std::size_t number_of_indices, void *indices);
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+               const std::size_t vertex_count, void *vertices, const VkDeviceSize index_struct_size,
+               const std::size_t index_count, void *indices);
 
     /// @brief Creates a new vertex buffer with an associated index buffer but does not copy memory into it.
     /// This is useful when you know the size of the buffer but you don't know it's data values yet.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices, const VkDeviceSize size_of_index_structure,
-               const std::size_t number_of_indices);
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+               const std::size_t vertex_count, const VkDeviceSize index_struct_size, const std::size_t index_count);
 
     /// @brief Creates a vertex buffer without index buffer, but copies the vertex data into it.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices, void *vertices);
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+               const std::size_t vertex_count, void *vertices);
 
     /// @brief Creates a vertex buffer without index buffer and copies no vertex data into it.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices);
+    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+               const std::size_t vertex_count);
 
     ~MeshBuffer() = default;
 
@@ -82,11 +78,11 @@ public:
     }
 
     [[nodiscard]] std::uint32_t get_vertex_count() const {
-        return m_number_of_vertices;
+        return m_vertex_count;
     }
 
     [[nodiscard]] std::uint32_t get_index_count() const {
-        return m_number_of_indices;
+        return m_index_count;
     }
 
     [[nodiscard]] auto get_vertex_buffer_address() const {

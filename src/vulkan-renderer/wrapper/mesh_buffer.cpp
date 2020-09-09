@@ -9,29 +9,29 @@
 namespace inexor::vulkan_renderer::wrapper {
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : m_name(std::move(other.m_name)), m_vertex_buffer(std::move(other.m_vertex_buffer)),
-      m_index_buffer(std::exchange(other.m_index_buffer, std::nullopt)),
-      m_number_of_vertices(other.m_number_of_vertices), m_number_of_indices(other.m_number_of_indices),
-      m_device(other.m_device) {}
+      m_index_buffer(std::exchange(other.m_index_buffer, std::nullopt)), m_vertex_count(other.m_vertex_count),
+      m_index_count(other.m_index_count), m_device(other.m_device) {}
 
-MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-                       const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
-                       const std::size_t number_of_indices, void *indices)
+MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+                       const std::size_t vertex_count, void *vertices, const VkDeviceSize index_struct_size,
+                       const std::size_t index_count, void *indices)
 
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are
     // created!.
-    : m_vertex_buffer(device, name, size_of_vertex_structure * number_of_vertices,
+    : m_vertex_buffer(device, name, vertex_struct_size * vertex_count,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
       m_index_buffer(std::make_optional<GPUMemoryBuffer>(
-          device, name, size_of_index_structure * number_of_indices,
+          device, name, index_struct_size * index_count,
           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY)),
       m_device(device) {
     assert(device.device());
     assert(device.allocator());
     assert(!name.empty());
-    assert(size_of_vertex_structure > 0);
+    assert(vertex_struct_size > 0);
+    // Do not add assert for index_struct_size > 0 because this constructor is also called when no index buffer is used
 
-    std::size_t vertex_buffer_size = size_of_vertex_structure * number_of_vertices;
-    std::size_t index_buffer_size = size_of_index_structure * number_of_indices;
+    std::size_t vertex_buffer_size = vertex_struct_size * vertex_count;
+    std::size_t index_buffer_size = index_struct_size * index_count;
 
     spdlog::debug("Creating vertex buffer of size {} for mesh {}.", vertex_buffer_size, name);
     spdlog::debug("Creating index buffer of size {} for mesh {}.", index_buffer_size, name);
@@ -43,14 +43,14 @@ MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDe
             "Always use an index buffer if possible! Not using an index buffer decreases performance drastically!");
     }
 
-    VkDeviceSize vertices_memory_size = number_of_vertices * size_of_vertex_structure;
+    VkDeviceSize vertices_memory_size = vertex_count * vertex_struct_size;
 
     StagingBuffer staging_buffer_for_vertices(m_device, name, vertex_buffer_size, vertices, vertices_memory_size);
 
     staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
 
-    if (number_of_indices > 0) {
-        VkDeviceSize indices_memory_size = number_of_indices * size_of_index_structure;
+    if (index_count > 0) {
+        VkDeviceSize indices_memory_size = index_count * index_struct_size;
 
         StagingBuffer staging_buffer_for_indices(m_device, name, index_buffer_size, indices, indices_memory_size);
 
@@ -60,31 +60,31 @@ MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDe
     }
 }
 
-MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-                       const std::size_t number_of_vertices, const VkDeviceSize size_of_index_structure,
-                       const std::size_t number_of_indices)
+MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+                       const std::size_t vertex_count, const VkDeviceSize index_struct_size,
+                       const std::size_t index_count)
 
-    : m_vertex_buffer(device, name, size_of_vertex_structure * number_of_vertices,
+    : m_vertex_buffer(device, name, vertex_struct_size * vertex_count,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
       m_index_buffer(std::make_optional<GPUMemoryBuffer>(
-          device, name, size_of_index_structure * number_of_indices,
+          device, name, index_struct_size * index_count,
           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY)),
       m_device(device) {}
 
-MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-                       const std::size_t number_of_vertices, void *vertices)
+MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+                       const std::size_t vertex_count, void *vertices)
     // It's no problem to create the vertex buffer and index buffer before the corresponding staging buffers are
     // created!.
-    : m_vertex_buffer(device, name, size_of_vertex_structure * number_of_vertices,
+    : m_vertex_buffer(device, name, vertex_struct_size * vertex_count,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      m_index_buffer(std::nullopt), m_number_of_vertices(static_cast<std::uint32_t>(number_of_vertices)),
-      m_number_of_indices(static_cast<std::uint32_t>(m_number_of_indices)), m_device(device) {
+      m_index_buffer(std::nullopt), m_vertex_count(static_cast<std::uint32_t>(vertex_count)), m_index_count(0),
+      m_device(device) {
     assert(device.device());
     assert(device.allocator());
     assert(!name.empty());
-    assert(size_of_vertex_structure > 0);
+    assert(vertex_struct_size > 0);
 
-    std::size_t size_of_vertex_buffer = size_of_vertex_structure * number_of_vertices;
+    std::size_t size_of_vertex_buffer = vertex_struct_size * vertex_count;
 
     spdlog::debug("Creating vertex buffer of size {} for mesh {}.", size_of_vertex_buffer, name);
 
@@ -92,19 +92,19 @@ MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDe
     spdlog::warn("Creating a vertex buffer without an index buffer!");
     spdlog::warn("Always use an index buffer if possible. The performance will decrease drastically otherwise!");
 
-    VkDeviceSize vertices_memory_size = size_of_vertex_structure * number_of_vertices;
+    VkDeviceSize vertices_memory_size = vertex_struct_size * vertex_count;
 
     StagingBuffer staging_buffer_for_vertices(m_device, name, size_of_vertex_buffer, vertices, vertices_memory_size);
 
     staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
 }
 
-MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-                       const std::size_t number_of_vertices)
+MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
+                       const std::size_t vertex_count)
 
-    : m_vertex_buffer(device, name, size_of_vertex_structure * number_of_vertices,
+    : m_vertex_buffer(device, name, vertex_struct_size * vertex_count,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      m_index_buffer(std::nullopt), m_number_of_indices(static_cast<std::uint32_t>(m_number_of_indices)),
+      m_index_buffer(std::nullopt), m_index_count(0), m_vertex_count(static_cast<std::uint32_t>(vertex_count)),
       m_device(device) {}
 
 } // namespace inexor::vulkan_renderer::wrapper

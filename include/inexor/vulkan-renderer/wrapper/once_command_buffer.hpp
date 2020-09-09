@@ -22,8 +22,8 @@ class OnceCommandBuffer {
     CommandPool m_command_pool;
     std::unique_ptr<CommandBuffer> m_command_buffer;
 
-    bool m_command_buffer_created;
-    bool m_recording_started;
+    bool m_command_buffer_created{false};
+    bool m_recording_started{false};
 
 public:
     /// @brief Creates a new commandbuffer which is being called only once.
@@ -31,16 +31,14 @@ public:
     OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index);
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;
-    ~OnceCommandBuffer();
+    ~OnceCommandBuffer() = default;
 
     OnceCommandBuffer &operator=(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer &operator=(OnceCommandBuffer &&) = default;
 
     void create_command_buffer();
-
     void start_recording();
-
-    void end_recording_and_submit_command();
+    void end_recording_and_submit();
 
     [[nodiscard]] VkCommandBuffer command_buffer() const {
         return m_command_buffer->get();

@@ -88,13 +88,13 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     rasterization_state_ci.lineWidth = 1.0f;
 
     // TODO: Make compare function a parameter.
-    VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
-    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth_stencil.depthTestEnable = VK_TRUE;
-    depth_stencil.depthWriteEnable = VK_TRUE;
-    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depth_stencil.depthBoundsTestEnable = VK_FALSE;
-    depth_stencil.stencilTestEnable = VK_FALSE;
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_ci = {};
+    depth_stencil_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil_ci.depthTestEnable = VK_TRUE;
+    depth_stencil_ci.depthWriteEnable = VK_TRUE;
+    depth_stencil_ci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_stencil_ci.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil_ci.stencilTestEnable = VK_FALSE;
 
     // TODO: Examine how this could be parameterized.
     VkPipelineColorBlendAttachmentState color_blend_attachment = {};
@@ -141,7 +141,7 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     pipeline_ci.pViewportState = &viewport_state_ci;
     pipeline_ci.pRasterizationState = &rasterization_state_ci;
     pipeline_ci.pMultisampleState = &multisample_state_ci;
-    pipeline_ci.pDepthStencilState = &depth_stencil;
+    pipeline_ci.pDepthStencilState = &depth_stencil_ci;
     pipeline_ci.pColorBlendState = &color_blend_state_ci;
     pipeline_ci.pDynamicState = &dynamic_state_ci;
     pipeline_ci.layout = pipeline_layout;
@@ -174,11 +174,15 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
 }
 
 GraphicsPipeline::~GraphicsPipeline() {
-    spdlog::trace("Destroying pipeline cache {}.", name);
-    vkDestroyPipelineCache(m_device.device(), pipeline_cache, nullptr);
+    if (pipeline_cache != nullptr) {
+        spdlog::trace("Destroying pipeline cache {}.", name);
+        vkDestroyPipelineCache(m_device.device(), pipeline_cache, nullptr);
+    }
 
-    spdlog::trace("Destroying pipeline {}.", name);
-    vkDestroyPipeline(m_device.device(), graphics_pipeline, nullptr);
+    if (graphics_pipeline != nullptr) {
+        spdlog::trace("Destroying pipeline {}.", name);
+        vkDestroyPipeline(m_device.device(), graphics_pipeline, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

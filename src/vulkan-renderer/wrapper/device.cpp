@@ -40,7 +40,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     VulkanSettingsDecisionMaker settings_decision_maker;
 
     std::optional<VkPhysicalDevice> selected_graphics_card =
-        settings_decision_maker.decide_which_graphics_card_to_use(instance, surface, preferred_physical_device_index);
+        settings_decision_maker.pick_graphics_card(instance, surface, preferred_physical_device_index);
 
     if (!selected_graphics_card) {
         throw std::runtime_error("Error: Could not find suitable graphics card!");

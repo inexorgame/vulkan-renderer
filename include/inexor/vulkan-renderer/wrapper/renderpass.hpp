@@ -12,8 +12,8 @@ class Device;
 
 class RenderPass {
     const Device &m_device;
-    VkRenderPass renderpass;
-    std::string name;
+    VkRenderPass m_renderpass;
+    std::string m_name;
 
 public:
     /// Delete the copy constructor so renderpasses are move-only objects.
@@ -37,7 +37,7 @@ public:
     ~RenderPass();
 
     [[nodiscard]] VkRenderPass get() const {
-        return renderpass;
+        return m_renderpass;
     }
 };
 

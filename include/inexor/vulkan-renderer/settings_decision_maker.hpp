@@ -14,18 +14,15 @@ namespace inexor::vulkan_renderer {
 /// - Which graphics card's queue families should be used?
 /// - Which presentation modes should be used?
 class VulkanSettingsDecisionMaker {
-public:
-    VulkanSettingsDecisionMaker() = default;
-
-    ~VulkanSettingsDecisionMaker() = default;
-
-private:
     /// @brief Rates a graphcs card by its features.
     /// @param graphics_card The graphics card.
     /// @return A score which is greater or equal to 0.
     [[nodiscard]] std::size_t rate_graphics_card(const VkPhysicalDevice &graphics_card);
 
 public:
+    VulkanSettingsDecisionMaker() = default;
+    ~VulkanSettingsDecisionMaker() = default;
+
     /// @brief Automatically decides if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.
@@ -51,15 +48,15 @@ public:
     /// @param preferred_graphics_card_index The preferred graphics card (by array index).
     /// @return The physical device which was chosen to be the best one.
     [[nodiscard]] std::optional<VkPhysicalDevice>
-    decide_which_graphics_card_to_use(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
-                                      const std::optional<std::uint32_t> &preferred_graphics_card_index = std::nullopt);
+    pick_graphics_card(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
+                       const std::optional<std::uint32_t> &preferred_graphics_card_index = std::nullopt);
 
     /// @brief Automatically decides how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The number of images that will be used in swap chain.
-    [[nodiscard]] std::uint32_t decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
-                                                                           const VkSurfaceKHR &surface);
+    [[nodiscard]] std::uint32_t decide_swapchain_image_count(const VkPhysicalDevice &graphics_card,
+                                                             const VkSurfaceKHR &surface);
 
     /// @brief Automatically decides whcih surface color to use in swapchain.
     /// @param graphics_card The selected graphics card.
@@ -67,8 +64,7 @@ public:
     /// @param color_format The chosen color format.
     /// @param color_space The chosen color space.
     [[nodiscard]] std::optional<VkSurfaceFormatKHR>
-    decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
-                                                          const VkSurfaceKHR &surface);
+    decide_swapchain_surface_color_format(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
 
     /// @brief Automatically decides which width and height to use as swapchain extent.
     /// @param graphics_card The selected graphics card.
@@ -85,8 +81,8 @@ public:
     /// @param graphics_card The selected graphics card.
     /// @param surface [in] The window surface.
     /// @return The image transform.
-    [[nodiscard]] VkSurfaceTransformFlagsKHR
-    decide_which_image_transformation_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
+    [[nodiscard]] VkSurfaceTransformFlagsKHR decide_image_transformation(const VkPhysicalDevice &graphics_card,
+                                                                         const VkSurfaceKHR &surface);
 
     /// @brief Finds a supported composite alpha format.
     /// @param graphics_card [in] The selected graphics card.
@@ -104,8 +100,7 @@ public:
     /// @param surface The selected (window) surface.
     /// @return The presentation mode which will be used by the presentation engine.
     [[nodiscard]] std::optional<VkPresentModeKHR>
-    decide_which_presentation_mode_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                          bool vsync = false);
+    pick_presentation_mode(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface, bool vsync = false);
 
     /// @brief Decides which graphics queue family index to use in case it is not possible to use one for both graphics
     /// and presentation.

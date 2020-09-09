@@ -13,15 +13,14 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @brief A RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
 class Device {
     VkDevice m_device;
+    VkSurfaceKHR m_surface;
     VkPhysicalDevice m_graphics_card;
     VmaAllocator m_allocator;
     std::string m_gpu_name;
 
-    // TODO(): Create a queue wrapper
     VkQueue m_graphics_queue;
     VkQueue m_present_queue;
     VkQueue m_transfer_queue;
-    VkSurfaceKHR m_surface;
 
     std::uint32_t m_present_queue_family_index;
     std::uint32_t m_graphics_queue_family_index;
@@ -41,14 +40,13 @@ class Device {
 public:
     /// @brief Creates a graphics card interface.
     /// @param preferred_gpu_index [in] The index of the preferred physical device to use.
+    /// TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
     Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
     ~Device();
-
-    // TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
 
     Device &operator=(const Device &) = delete;
     Device &operator=(Device &&) = default;
