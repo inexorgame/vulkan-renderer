@@ -168,9 +168,9 @@ VulkanRenderer::~VulkanRenderer() {
 
     // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
     auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-        vkGetInstanceProcAddr(m_vkinstance->instance(), "vkDestroyDebugReportCallbackEXT"));
+        vkGetInstanceProcAddr(m_instance->instance(), "vkDestroyDebugReportCallbackEXT"));
     if (vk_destroy_debug_report_callback != nullptr) {
-        vk_destroy_debug_report_callback(m_vkinstance->instance(), m_debug_report_callback, nullptr);
+        vk_destroy_debug_report_callback(m_instance->instance(), m_debug_report_callback, nullptr);
     }
 }
 

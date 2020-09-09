@@ -255,13 +255,13 @@ Application::Application(int argc, char **argv) {
 
     m_glfw_context = std::make_unique<wrapper::GLFWContext>();
 
-    m_vkinstance = std::make_unique<wrapper::Instance>(
+    m_instance = std::make_unique<wrapper::Instance>(
         m_application_name, m_engine_name, m_application_version, m_engine_version, VK_API_VERSION_1_1,
         enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
 
-    m_surface = std::make_unique<wrapper::WindowSurface>(m_vkinstance->instance(), m_window->get());
+    m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
 
     spdlog::debug("Storing GLFW window user pointer.");
 
@@ -285,11 +285,11 @@ Application::Application(int argc, char **argv) {
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
                 reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-                    vkGetInstanceProcAddr(m_vkinstance->instance(), "vkCreateDebugReportCallbackEXT"));
+                    vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
 
             if (vkCreateDebugReportCallbackEXT) {
                 // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(m_vkinstance->instance(), &debug_report_ci, nullptr,
+                VkResult result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci, nullptr,
                                                                  &m_debug_report_callback);
                 if (VK_SUCCESS == result) {
                     spdlog::debug("Creating Vulkan debug callback.");
@@ -376,7 +376,7 @@ Application::Application(int argc, char **argv) {
     }
 
     m_device =
-        std::make_unique<wrapper::Device>(m_vkinstance->instance(), m_surface->get(),
+        std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
     VkResult result = check_application_specific_features();

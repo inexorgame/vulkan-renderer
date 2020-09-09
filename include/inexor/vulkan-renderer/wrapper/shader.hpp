@@ -1,19 +1,19 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class Shader {
-private:
     const Device &m_device;
-    VkShaderStageFlagBits m_type;
     const std::string m_name;
     const std::string m_entry_point;
-
+    VkShaderStageFlagBits m_type;
     VkShaderModule m_shader_module;
 
 public:
@@ -42,12 +42,10 @@ public:
     Shader &operator=(Shader &&) = default;
 
     [[nodiscard]] const std::string &name() const {
-        assert(!m_name.empty());
         return m_name;
     }
 
     [[nodiscard]] const std::string &entry_point() const {
-        assert(!m_entry_point.empty());
         return m_entry_point;
     }
 
@@ -56,7 +54,6 @@ public:
     }
 
     [[nodiscard]] VkShaderModule module() const {
-        assert(m_shader_module);
         return m_shader_module;
     }
 };

@@ -12,12 +12,15 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+class GPUMemoryBuffer;
+class OnceCommandBuffer;
+
 // TODO: 3D textures and cube maps.
 // TODO: Scan asset directory automatically.
 // TODO: Create multiple textures from file and submit them in 1 command buffer for performance reasons.
 
 class Texture {
-private:
     std::unique_ptr<wrapper::Image> m_texture_image;
     OnceCommandBuffer m_copy_command_buffer;
     VkSampler m_sampler;
@@ -81,17 +84,14 @@ public:
     }
 
     [[nodiscard]] const VkImage image() const {
-        assert(m_texture_image->get());
         return m_texture_image->get();
     }
 
     [[nodiscard]] const VkImageView image_view() const {
-        assert(m_texture_image->image_view());
         return m_texture_image->image_view();
     }
 
     [[nodiscard]] const VkSampler sampler() const {
-        assert(m_sampler);
         return m_sampler;
     }
 };

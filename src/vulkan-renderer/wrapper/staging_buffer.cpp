@@ -1,5 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer::wrapper {

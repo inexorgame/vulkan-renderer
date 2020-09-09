@@ -1,7 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan_core.h>
 
@@ -9,8 +7,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class CommandPool {
-private:
     const Device &m_device;
     VkCommandPool m_command_pool;
 

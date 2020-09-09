@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer::wrapper {

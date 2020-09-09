@@ -1,16 +1,16 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
 class Swapchain;
 
 class Framebuffer {
-private:
     const wrapper::Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
     const std::string m_name;
@@ -26,7 +26,6 @@ public:
     Framebuffer &operator=(Framebuffer &&) = default;
 
     [[nodiscard]] VkFramebuffer get() const {
-        assert(m_framebuffer);
         return m_framebuffer;
     }
 };

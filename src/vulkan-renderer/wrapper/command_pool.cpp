@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 namespace inexor::vulkan_renderer::wrapper {

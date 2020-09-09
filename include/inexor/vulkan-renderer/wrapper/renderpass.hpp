@@ -1,7 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
 #include <vulkan/vulkan_core.h>
 
 #include <cassert>
@@ -10,8 +8,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class RenderPass {
-private:
     const Device &m_device;
     VkRenderPass renderpass;
     std::string name;
@@ -38,7 +37,6 @@ public:
     ~RenderPass();
 
     [[nodiscard]] VkRenderPass get() const {
-        assert(renderpass);
         return renderpass;
     }
 };

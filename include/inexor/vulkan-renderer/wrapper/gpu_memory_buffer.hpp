@@ -1,13 +1,13 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+class Device;
 
 class GPUMemoryBuffer {
 protected:
@@ -48,12 +48,10 @@ public:
     GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) = default;
 
     [[nodiscard]] const std::string &name() const {
-        assert(!m_name.empty());
         return m_name;
     }
 
     [[nodiscard]] const VkBuffer buffer() const {
-        assert(m_buffer);
         return m_buffer;
     }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
@@ -8,11 +7,12 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 /// @brief In general, it is inefficient to use normal memory mapping to a vertex buffer.
 /// It is highly advised to use a staging buffer. Once the staging buffer is filled with data,
 /// a queue command can be executed to use a transfer queue to upload the data to the GPU memory.
 class StagingBuffer : public GPUMemoryBuffer {
-private:
     const Device &m_device;
     OnceCommandBuffer m_command_buffer_for_copying;
 

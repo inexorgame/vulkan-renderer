@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <vma/vma_usage.h>
@@ -14,6 +13,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 /// @brief A structure which bundles vertex buffer and index buffer (if existent).
 /// It contains all data which are related to memory allocations for these buffers.
 /// @todo Driver developers recommend that you store multiple
@@ -25,8 +26,6 @@ namespace inexor::vulkan_renderer::wrapper {
 /// of course. This is known as aliasing and some Vulkan functions have explicit
 /// flags to specify that you want to do this.
 class MeshBuffer {
-
-private:
     const Device &m_device;
     std::string m_name;
 
@@ -71,7 +70,6 @@ public:
     ~MeshBuffer() = default;
 
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
-        assert(m_vertex_buffer.buffer());
         return m_vertex_buffer.buffer();
     }
 
@@ -80,7 +78,6 @@ public:
     }
 
     [[nodiscard]] VkBuffer get_index_buffer() const {
-        assert(m_index_buffer);
         return m_index_buffer.value().buffer();
     }
 
@@ -93,7 +90,6 @@ public:
     }
 
     [[nodiscard]] auto get_vertex_buffer_address() const {
-        assert(m_vertex_buffer.allocation_info().pMappedData);
         return m_vertex_buffer.allocation_info().pMappedData;
     }
 

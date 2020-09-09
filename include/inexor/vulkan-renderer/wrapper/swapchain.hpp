@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <stdexcept>
 #include <string>
@@ -8,10 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
 class Semaphore;
 
 class Swapchain {
-private:
     const wrapper::Device &m_device;
     VkSurfaceKHR m_surface;
     VkSwapchainKHR m_swapchain;

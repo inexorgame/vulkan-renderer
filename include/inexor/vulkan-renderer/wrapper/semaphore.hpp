@@ -1,13 +1,14 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class Semaphore {
-private:
     const Device &m_device;
     VkSemaphore m_semaphore;
     const std::string m_name;
@@ -22,12 +23,10 @@ public:
     Semaphore &operator=(Semaphore &&) = default;
 
     [[nodiscard]] VkSemaphore get() const {
-        assert(m_semaphore);
         return m_semaphore;
     }
 
     [[nodiscard]] const VkSemaphore *ptr() const {
-        assert(m_semaphore);
         return &m_semaphore;
     }
 };

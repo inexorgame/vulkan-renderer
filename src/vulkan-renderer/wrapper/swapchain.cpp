@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 

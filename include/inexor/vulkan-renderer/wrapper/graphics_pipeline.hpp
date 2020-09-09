@@ -1,13 +1,13 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
 #include <vulkan/vulkan_core.h>
 
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+class Device;
 
 class GraphicsPipeline {
 private:

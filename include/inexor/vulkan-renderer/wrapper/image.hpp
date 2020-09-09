@@ -1,13 +1,13 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
 #include <vma/vk_mem_alloc.h>
 
 #include <cassert>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+class Device;
 
 class Image {
 private:
@@ -43,12 +43,10 @@ public:
     }
 
     [[nodiscard]] VkImageView image_view() const {
-        assert(m_image_view);
         return m_image_view;
     }
 
     [[nodiscard]] VkImage get() const {
-        assert(m_image);
         return m_image;
     }
 };

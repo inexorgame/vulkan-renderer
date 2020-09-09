@@ -8,7 +8,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 class Window {
-private:
     GLFWwindow *m_window;
     std::uint32_t m_width;
     std::uint32_t m_height;

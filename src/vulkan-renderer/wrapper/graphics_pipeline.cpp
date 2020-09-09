@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>

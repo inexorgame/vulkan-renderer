@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -12,9 +11,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 /// @brief A OnceCommandBuffer is a command buffer which is being used only once.
 class OnceCommandBuffer {
-private:
     const Device &m_device;
     // We must store the VkQueue separately since we don't know from
     // the context of the use of this OnceCommandBuffer which queue to use!

@@ -8,6 +8,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class UniformBuffer : public GPUMemoryBuffer {
 protected:
     VkDescriptorBufferInfo m_descriptor_buffer_info{};

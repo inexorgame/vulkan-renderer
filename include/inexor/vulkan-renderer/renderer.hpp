@@ -72,7 +72,7 @@ protected:
 
     std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
     std::unique_ptr<wrapper::Window> m_window;
-    std::unique_ptr<wrapper::Instance> m_vkinstance;
+    std::unique_ptr<wrapper::Instance> m_instance;
     std::unique_ptr<wrapper::Device> m_device;
     std::unique_ptr<wrapper::WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;

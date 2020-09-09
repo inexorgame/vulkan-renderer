@@ -1,4 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
+
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #include <spdlog/spdlog.h>
