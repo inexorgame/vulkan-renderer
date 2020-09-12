@@ -9,6 +9,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
+/// @class Shader
+/// @brief RAII wrapper class for VkShaderModules.
 class Shader {
     const Device &m_device;
     const std::string m_name;
@@ -17,25 +19,28 @@ class Shader {
     VkShaderModule m_shader_module;
 
 public:
-    /// @brief Creates a shader from memory.
-    /// @param device [in] The Vulkan device which will be used to create the shader module.
-    /// @param type [in] The shader type (vertex shader, fragment shader, tesselation shader..).
-    /// @param name [in] The internal name of the shader module.
-    /// @param code [in] The SPIR-V shader code.
-    /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
-    Shader(const Device &m_device, VkShaderStageFlagBits type, const std::string &name, const std::vector<char> &code,
+    /// @brief Constructs a shader module from a block of SPIR-V memory.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param type [in] The shader type.
+    /// @param name
+    /// @param code [in] The memory block of the SPIR-V shader.
+    /// @param entry_point [in] The name of the entry point, "main" by default.
+    Shader(const Device &device, VkShaderStageFlagBits type, const std::string &name, const std::vector<char> &code,
            const std::string &entry_point = "main");
 
-    /// @brief Creates a shader from a SPIR-V file.
-    /// @param device [in] The Vulkan device which will be used to create the shader module.
-    /// @param type [in] The shader type (vertex shader, fragment shader, tesselation shader..).
-    /// @param name [in] The internal name of the shader module.
-    /// @param file_name [in] The name of the SPIR-V shader file.
-    /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
-    Shader(const Device &m_device, VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
+    /// @brief Constructs a shader module from a SPIR-V file.
+    /// This constructor loads the file content and just calls the other constructor.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param type [in] The shader type.
+    /// @param name [in] The internal debug marker name of the VkShaderModule.
+    /// @param file_name [in] The name of the SPIR-V shader file to load.
+    /// @param entry_point [in] The name of the entry point, "main" by default.
+    Shader(const Device &device, VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
            const std::string &entry_point = "main");
+
     Shader(const Shader &) = delete;
     Shader(Shader &&) noexcept;
+
     ~Shader();
 
     Shader &operator=(const Shader &) = delete;

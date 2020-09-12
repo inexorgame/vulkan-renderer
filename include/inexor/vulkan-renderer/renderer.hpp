@@ -38,16 +38,29 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    // We try to avoid inheritance here and prefer a composition pattern.
-    // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
+    std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
+    std::unique_ptr<wrapper::Window> m_window;
+    std::unique_ptr<wrapper::Instance> m_instance;
+    std::unique_ptr<wrapper::Device> m_device;
+    std::unique_ptr<wrapper::WindowSurface> m_surface;
+    std::unique_ptr<wrapper::Swapchain> m_swapchain;
+    std::unique_ptr<wrapper::CommandPool> m_command_pool;
+    std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
+    std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
+    std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
+    std::unique_ptr<FrameGraph> m_frame_graph;
 
     std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager{new VulkanGraphicsCardInfoViewer};
-
     std::shared_ptr<AvailabilityChecksManager> m_availability_checks_manager{new AvailabilityChecksManager};
-
     std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
+    std::vector<wrapper::Shader> m_shaders;
+    std::vector<wrapper::Texture> m_textures;
+    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
+    std::vector<wrapper::ResourceDescriptor> m_descriptors;
+    std::vector<OctreeGpuVertex> m_octree_vertices;
+    std::vector<std::uint16_t> m_octree_indices;
 
     VkDebugReportCallbackEXT m_debug_report_callback{};
 
@@ -56,7 +69,6 @@ protected:
     TimeStep m_time_step;
 
     std::uint32_t m_window_width{0};
-
     std::uint32_t m_window_height{0};
 
     std::string m_window_title;
@@ -70,30 +82,9 @@ protected:
 
     Camera m_game_camera;
 
-    std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
-    std::unique_ptr<wrapper::Window> m_window;
-    std::unique_ptr<wrapper::Instance> m_instance;
-    std::unique_ptr<wrapper::Device> m_device;
-    std::unique_ptr<wrapper::WindowSurface> m_surface;
-    std::unique_ptr<wrapper::Swapchain> m_swapchain;
-    std::unique_ptr<wrapper::CommandPool> m_command_pool;
-    std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
-    std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
-    std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
-    std::unique_ptr<FrameGraph> m_frame_graph;
-
-    std::vector<wrapper::Shader> m_shaders;
-    std::vector<wrapper::Texture> m_textures;
-    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
-    std::vector<wrapper::ResourceDescriptor> m_descriptors;
-    std::vector<OctreeGpuVertex> m_octree_vertices;
-    std::vector<std::uint16_t> m_octree_indices;
-
     void setup_frame_graph();
     void generate_octree_indices();
-
     void recreate_swapchain();
-
     void render_frame();
 
 public:
@@ -107,7 +98,6 @@ public:
     /// Neccesary for taking into account the relative speed of the system's CPU.
     float m_time_passed{0.0f};
 
-    ///
     TimeStep m_stopwatch;
 };
 

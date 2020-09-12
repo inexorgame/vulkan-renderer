@@ -9,44 +9,40 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// @brief A RAII wrapper class for VkInstance.
-/// @note The instantiation of this class must be synchronized externally.
+/// @class Instance
+/// @brief RAII wrapper class for VkInstances.
 class Instance {
 protected:
     VkInstance m_instance{VK_NULL_HANDLE};
     AvailabilityChecksManager m_availability_checks;
 
 public:
-    /// @brief Creates a VkInstance.
-    /// @param application_name [in] The name of the application.
-    /// @param engine_name [in] The name of the engine.
-    /// @param application_version [in] The version of the application.
-    /// @param engine_version [in] The version of the engine.
-    /// @param vulkan_api_version [in] The requested version of Vulkan API.
-    /// @note In Vulkan API we can use the VK_MAKE_VERSION() macro to create a std::uint32_t value from major, minor and
-    /// patch number.
-    /// @param enable_validation_layers [in] True if validation layers are requested, false otherwise.
-    /// @param enable_renderdoc_layer [in] True if RenderDoc instance layer is requested, false otherwise.
-    /// @param requested_instance_extensions [in] A vector of required Vulkan instance extensions.
-    /// @param requested_instance_layers [in] A vector of required Vulkan instance layers.
+    /// @brief Constructs the Vulkan instance and specifies the requested instance layers and instance extensions.
+    /// @param application_name [in] The Vulkan application's internal application name.
+    /// @param engine_name [in] The Vulkan appliation's internal engine name.
+    /// @param application_version [in] The Vulkan application's internal version.
+    /// @param engine_version [in] The Vulkan application's internal engine version.
+    /// @param vulkan_api_version [in] The requested version of Vulkan API from which an instance will be created.
+    /// If the requested version of Vulkan API is not available, the creation of the instance will fail!
+    /// @param enable_validation_layers [in] True if validation layers should be enabled, false otherwise.
+    /// @param enable_renderdoc_layer [in] True if renderdoc layer should be enabled, false otherwise.
+    /// @param requested_instance_extensions [in] The instance extensions which are requested.
+    /// @param requested_instance_layers [in] The instance layers which are requested.
     Instance(const std::string &application_name, const std::string &engine_name,
              const std::uint32_t application_version, const std::uint32_t engine_version,
              const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer,
              std::vector<std::string> requested_instance_extensions,
              std::vector<std::string> requested_instance_layers);
 
-    /// @brief Creates a VkInstance.
-    /// @note When this constructor is used, no instance layers or instance extensions will be requested,
-    /// Vulkan validation layers will be requested, and RenderDoc instance layer will not be requested.
-    /// @param application_name [in] The name of the application.
-    /// @param engine_name [in] The name of the engine.
-    /// @param application_version [in] The version of the application.
-    /// @param engine_version [in] The version of the engine.
-    /// @param vulkan_api_version [in] The requested version of Vulkan API.
-    /// @param enable_validation_layers [in] True if validation layers are requested, false otherwise.
-    /// @param enable_renderdoc_layer [in] True if RenderDoc instance layer is requested, false otherwise.
-    /// @note In Vulkan API we can use the VK_MAKE_VERSION() macro to create a std::uint32_t value from major, minor and
-    /// patch number.
+    /// @brief Constructs the Vulkan instance without the requested instance layers and instance extensions.
+    /// @param application_name [in] The Vulkan application's internal application name.
+    /// @param engine_name [in] The Vulkan appliation's internal engine name.
+    /// @param application_version [in] The Vulkan application's internal version.
+    /// @param engine_version [in] The Vulkan application's internal engine version.
+    /// @param vulkan_api_version [in] The requested version of Vulkan API from which an instance will be created.
+    /// If the requested version of Vulkan API is not available, the creation of the instance will fail!
+    /// @param enable_validation_layers [in] True if validation layers should be enabled, false otherwise.
+    /// @param enable_renderdoc_layer [in] True if renderdoc layer should be enabled, false otherwise.
     Instance(const std::string &application_name, const std::string &engine_name,
              const std::uint32_t application_version, const std::uint32_t engine_version,
              const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer);

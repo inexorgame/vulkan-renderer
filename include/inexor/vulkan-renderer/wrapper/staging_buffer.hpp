@@ -9,32 +9,32 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
-/// @brief In general, it is inefficient to use normal memory mapping to a vertex buffer.
-/// It is highly advised to use a staging buffer. Once the staging buffer is filled with data,
-/// a queue command can be executed to use a transfer queue to upload the data to the GPU memory.
+/// @class StagingBuffer
+/// @brief RAII wrapper class for staging buffers.
+/// A staging buffer is a buffer which is used for copying data.
+/// Using a staging buffer is the most efficient way to copy memory from RAM to GPU.
 class StagingBuffer : public GPUMemoryBuffer {
     const Device &m_device;
     OnceCommandBuffer m_command_buffer;
 
 public:
-    /// @brief Creates a new staging buffer.
-    /// @param device [in] The Vulkan device from which the buffer will be created.
-    /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
-    /// @param name [in] The internal name of the buffer.
-    /// @param data [in] The address of the data which will be copied.
-    /// @param size [in] The size of the buffer in bytes.
-    /// @note Staging buffers always have VK_BUFFER_USAGE_TRANSFER_SRC_BIT as VkBufferUsageFlags.
-    /// @note Staging buffers always have VMA_MEMORY_USAGE_CPU_ONLY as VmaMemoryUsage.
+    /// @brief Default constructor.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param name [in] The internal debug marker name of the staging buffer.
+    /// @param buffer_size [in] The size of the memory buffer to copy.
+    /// @param data [in] A pointer to the memory buffer.
+    /// @param data_size [in] The size of the memory buffer to copy.
     StagingBuffer(const Device &device, const std::string &name, const VkDeviceSize buffer_size, void *data,
                   const std::size_t data_size);
+
     StagingBuffer(const StagingBuffer &) = delete;
     StagingBuffer(StagingBuffer &&) noexcept;
-    ~StagingBuffer() = default;
 
     StagingBuffer &operator=(const StagingBuffer &) = delete;
     StagingBuffer &operator=(StagingBuffer &&) = default;
 
-    ///
+    /// @brief
+    /// @param tarbuffer
     void upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer);
 };
 

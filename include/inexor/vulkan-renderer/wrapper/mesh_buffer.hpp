@@ -15,16 +15,11 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
-/// @brief A structure which bundles vertex buffer and index buffer (if existent).
-/// It contains all data which are related to memory allocations for these buffers.
-/// @todo Driver developers recommend that you store multiple
-/// buffers, like the vertex and index buffer, into a single VkBuffer and use offsets
-/// in commands like vkCmdBindVertexBuffers. The advantage is that your data
-/// is more cache friendly in that case, because it’s closer together. It is even possible
-/// to reuse the same chunk of memory for multiple resources if they are not
-/// used during the same render operations, provided that their data is refreshed,
-/// of course. This is known as aliasing and some Vulkan functions have explicit
-/// flags to specify that you want to do this.
+/// @class MeshBuffer
+/// @brief RAII wrapper class for mesh buffers.
+/// In Inexor engine, a mesh buffer is a vertex buffer with an associated index buffer.
+/// @todo Add 'update' method for vertices and indices. If the size of the new vertices/indices
+/// exceedes the current memory allocation, we must re-allocate GPU memory.
 class MeshBuffer {
     const Device &m_device;
     GPUMemoryBuffer m_vertex_buffer;
@@ -37,33 +32,58 @@ class MeshBuffer {
     bool m_index_buffer_available = false;
 
 public:
-    // Delete the copy constructor so mesh buffers are move-only objects.
-    MeshBuffer(const MeshBuffer &) = delete;
-    MeshBuffer(MeshBuffer &&buffer) noexcept;
-
-    // Delete the copy assignment operator so uniform buffers are move-only objects.
-    MeshBuffer &operator=(const MeshBuffer &) = delete;
-    MeshBuffer &operator=(MeshBuffer &&) = default;
-
-    /// @brief Creates a new vertex buffer with an associated index buffer and copies memory into it.
+    /// @brief Constructs the mesh buffer by copying the vertexb buffers's data and index buffer's data.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param name [in] The internal debug marker name of the vertex buffer and index buffer.
+    /// @param vertex_struct_size [in] The size of the vertex structure.
+    /// @param vertex_count [in] The number of vertices in the vertex buffer.
+    /// @note The size of the required memory will be calculated by vertex_struct_size * vertex_count.
+    /// @param vertices [in] A pointer to the vertex data.
+    /// @param index_struct_size [in] The size of the index structure, most likely std::uint32_t.
+    /// @param index_count [in] The number of indices in the index buffer.
+    /// @param indices [in]  A pointer to the index data.
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
                const std::size_t vertex_count, void *vertices, const VkDeviceSize index_struct_size,
                const std::size_t index_count, void *indices);
 
-    /// @brief Creates a new vertex buffer with an associated index buffer but does not copy memory into it.
-    /// This is useful when you know the size of the buffer but you don't know it's data values yet.
+    /// @brief Constructs the mesh buffer by specifying the size of the vertex buffer and index buffer.
+    /// This constructor will does not yet copy any memory from the vertices or indices!
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param name [in] The internal debug marker name of the vertex buffer and index buffer.
+    /// @param vertex_struct_size [in] The size of the vertex structure.
+    /// @param vertex_count [in] The number of vertices in the vertex buffer.
+    /// @note The size of the required memory will be calculated by vertex_struct_size * vertex_count.
+    /// @param index_struct_size [in] The size of the index structure, most likely std::uint32_t.
+    /// @param index_count [in] The number of indices in the index buffer.
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
                const std::size_t vertex_count, const VkDeviceSize index_struct_size, const std::size_t index_count);
 
-    /// @brief Creates a vertex buffer without index buffer, but copies the vertex data into it.
+    /// @brief Constructs the vertex buffer by copying the vertex data. The index buffer will not be used.
+    /// @warning You should avoid using a vertex buffer without using an associated index buffer!
+    /// Not using an index buffer will slow down the performance drastically!
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param name [in] The internal debug marker name of the vertex buffer and index buffer.
+    /// @param vertex_struct_size [in] The size of the vertex structure.
+    /// @param vertex_count [in] The number of vertices in the vertex buffer.
+    /// @param vertices [in] A pointer to the vertex data.
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
                const std::size_t vertex_count, void *vertices);
 
-    /// @brief Creates a vertex buffer without index buffer and copies no vertex data into it.
+    /// @brief Constructs the vertex buffer by specifying it's size. The index buffer will not be used.
+    /// @warning You should avoid using a vertex buffer without using an associated index buffer!
+    /// Not using an index buffer will slow down the performance drastically!
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param name [in] The internal debug marker name of the vertex buffer and index buffer.
+    /// @param vertex_struct_size [in] The size of the vertex structure.
+    /// @param vertex_count [in] The number of vertices in the vertex buffer.
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize vertex_struct_size,
                const std::size_t vertex_count);
 
-    ~MeshBuffer() = default;
+    MeshBuffer(const MeshBuffer &) = delete;
+    MeshBuffer(MeshBuffer &&buffer) noexcept;
+
+    MeshBuffer &operator=(const MeshBuffer &) = delete;
+    MeshBuffer &operator=(MeshBuffer &&) = default;
 
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
         return m_vertex_buffer.buffer();
@@ -96,8 +116,6 @@ public:
 
         return m_index_buffer.value().allocation_info().pMappedData;
     }
-
-    // TODO() Add update method for vertices and indices!
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

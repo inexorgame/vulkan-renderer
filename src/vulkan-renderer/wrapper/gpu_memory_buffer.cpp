@@ -9,17 +9,17 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &size,
+GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size,
                                  const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage)
-    : m_device(device), m_name(name), m_buffer_size(size) {
+    : m_device(device), m_name(name), m_buffer_size(buffer_size) {
     assert(device.device());
     assert(device.allocator());
     assert(!name.empty());
 
-    spdlog::debug("Creating GPU memory buffer of size {} for '{}'.", size, name);
+    spdlog::debug("Creating GPU memory buffer of size {} for '{}'.", buffer_size, name);
 
     auto buffer_ci = make_info<VkBufferCreateInfo>();
-    buffer_ci.size = size;
+    buffer_ci.size = buffer_size;
     buffer_ci.usage = buffer_usage;
     buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 

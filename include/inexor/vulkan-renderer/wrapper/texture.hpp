@@ -19,6 +19,8 @@ class OnceCommandBuffer;
 // TODO: Scan asset directory automatically.
 // TODO: Create multiple textures from file and submit them in 1 command buffer for performance reasons.
 
+/// @class Texture
+/// @brief RAII wrapper class for textures.
 class Texture {
     std::unique_ptr<wrapper::Image> m_texture_image;
     OnceCommandBuffer m_copy_command_buffer;
@@ -34,41 +36,42 @@ class Texture {
     const wrapper::Device &m_device;
     const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
-    ///
+    /// @brief Creates the texture.
+    /// @param texture_data [in] A pointer to the texture data.
+    /// @param texture_size [in] The size of the texture.
     void create_texture(void *texture_data, const std::size_t texture_size);
 
-    ///
+    /// @brief Transforms the image layout.
+    /// @param image [in] The image.
+    /// @param format [in] The format.
+    /// @param old_layout [in] The old image layout.
+    /// @param new_layout [in] The new image layout.
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
-    ///
+    /// @brief Create the texture sampler.
     void create_texture_sampler();
 
 public:
-    /// @brief Creates a texture from a file.
-    /// @param device [in] The Vulkan device from which the texture will be created.
-    /// @param graphics_card [in] The graphics card.
-    /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
-    /// @param file_name [in] The file name of the texture.
-    /// @param name [in] The internal memory allocation name of the texture.
-    /// @param data_transfer_queue [in] The Vulkan data transfer queue.
-    /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
+    /// @brief Constructs a texture from a file.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param file_name [in] The name of the texture file.
+    /// @param name [in] The internal debug marker name of the texture.
     Texture(const Device &device, const std::string &file_name, const std::string &name);
 
-    /// @brief Creates a texture from memory.
-    /// @param device [in] The Vulkan device from which the texture will be created.
-    /// @param graphics_card [in] The graphics card.
-    /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
-    /// @param texture_data [in] The texture data.
+    /// @brief Constructs a texture from a block of memory.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param texture_data [in] A pointer to the texture data.
     /// @param texture_width [in] The width of the texture.
     /// @param texture_height [in] The height of the texture.
     /// @param texture_size [in] The size of the texture.
-    /// @param name [in] The internal memory allocation name of the texture.
-    /// @param data_transfer_queue [in] The Vulkan data transfer queue.
-    /// @param data_transfer_queue_family_index [in] The queue family index of the data transfer queue to use.
+    /// @param name [in] The internal debug marker name of the texture.
     Texture(const Device &device, void *texture_data, const std::uint32_t texture_width,
             const std::uint32_t texture_height, const std::size_t texture_size, const std::string &name);
+
     Texture(const Texture &) = delete;
     Texture(Texture &&) noexcept;
+
     ~Texture();
 
     Texture &operator=(const Texture &) = delete;

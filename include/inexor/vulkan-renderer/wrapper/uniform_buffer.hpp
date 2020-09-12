@@ -10,27 +10,32 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
+/// @class UniformBuffer
+/// @brief RAII wrapper class for uniform buffers.
 class UniformBuffer : public GPUMemoryBuffer {
 protected:
     VkDescriptorBufferInfo m_descriptor_buffer_info{};
     VkDescriptorSet m_descriptor_set{};
 
 public:
-    /// @brief Creates a new uniform buffer.
-    /// @param vma_allocator [in] The Vulkan Memory Allocator library handle.
-    /// @param name [in] The internal name of the buffer.
-    /// @param size [in] The size of the buffer in bytes.
-    /// @param buffer_usage [in] The Vulkan buffer usage flags.
-    /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
+    /// @brief Default constructor.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param name [in] The internal debug marker name of the uniform buffer.
+    /// @param size [in] The size of the uniform buffer.
+    /// @todo Add overloaded constructor which directly accepts the uniform buffer data.
     UniformBuffer(const Device &device, const std::string &name, const VkDeviceSize &size);
+
     UniformBuffer(const UniformBuffer &) = delete;
     UniformBuffer(UniformBuffer &&) noexcept;
+
     ~UniformBuffer() = default;
 
     UniformBuffer &operator=(const UniformBuffer &) = delete;
     UniformBuffer &operator=(UniformBuffer &&) = default;
 
-    /// @brief Updates the data of a uniform buffer.
+    /// @brief Updates uniform buffer data.
+    /// @param data [in] A pointer to the uniform buffer data.
+    /// @param size [in] The size of the uniform buffer memory to copy.
     void update(void *data, const std::size_t size);
 };
 

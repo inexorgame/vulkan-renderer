@@ -10,13 +10,15 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// @brief A RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
+/// @class Device
+/// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
 class Device {
+    std::string m_gpu_name;
+    VmaAllocator m_allocator;
+
     VkDevice m_device;
     VkSurfaceKHR m_surface;
     VkPhysicalDevice m_graphics_card;
-    VmaAllocator m_allocator;
-    std::string m_gpu_name;
 
     VkQueue m_graphics_queue;
     VkQueue m_present_queue;
@@ -38,9 +40,17 @@ class Device {
     const bool m_enable_vulkan_debug_markers;
 
 public:
-    /// @brief Creates a graphics card interface.
-    /// @param preferred_gpu_index [in] The index of the preferred physical device to use.
-    /// TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
+    /// @brief Default constructor.
+    /// @param instance [in] The Vulkan instance from which the device will be created.
+    /// @param surface [in] The surface which will be associated with the device.
+    /// @param enable_vulkan_debug_markers [in] True if Vulkan debug markers should be enabled, false otherwise.
+    /// @param prefer_distinct_transfer_queue [in] True if a distinct data transfer queue (if available) should be
+    /// enabled, false otherwise.
+    /// @param preferred_physical_device_index [in] The index of the preferred graphics card which should be used,
+    /// starting from 0. If the graphics card index is invalid or if the graphics card is unsuitable for the
+    /// application's purpose, another graphics card will be selected automatically. See the details of the device
+    /// selection mechanism!
+    /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
     Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
@@ -75,9 +85,8 @@ public:
         return m_present_queue;
     }
 
-    /// @note Transfer queues are the fastest way to copy data across the PCIe bus.
-    /// They are heavily underutilized even in modern games.
-    /// Transfer queues can be used asynchronously to graphics queuey.
+    /// @note Transfer queues are the fastest way to copy data across the PCIe bus. They are heavily underutilized even
+    /// in modern games. Transfer queues can be used asynchronously to graphics queuey.
     [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
     }
@@ -96,44 +105,49 @@ public:
 
 #ifndef NDEBUG
 
-    /// @brief Vulkan debug marker: Sets the name of a Vulkan resource.
-    /// The debug marker name will be visible in external debuggers like RenderDoc.
-    /// @param object [in] A pointer to the Vulkan object.
+    /// For more information about Vulkan debugging tools check
+    /// https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/
+    /// Also check our RenderDoc's official website: https://renderdoc.org/
+
+    /// @note Vulkan debug markers are only available in debug mode when VK_EXT_debug_marker device extension is used.
+    /// @todo Add overloaded methods like "set_image_name" which accept a specific type instead of a pointer. This would
+    /// also remove the need for a "type" argument.
+
+    /// @brief Sets the internal name of a Vulkan resource using vkDebugMarkerSetObjectNameEXT. This internal name can
+    /// be seen in external debuggers like RenderDoc.
+    /// @param object [in] A pointer to the Vulkan object whose name will be set.
     /// @param type [in] The type of the Vulkan object.
-    /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
+    /// @param name [in] The internal name which will be assigned to the Vulkan object.
     void set_object_name(std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string &name) const;
 
-    /// @brief Vulkan debug marker: Links a memory dump block to a Vulkan resource.
-    /// The object will be visible in external debuggers like RenderDoc.
-    /// @param object [in] A pointer to the Vulkan object.
+    /// @brief Assigns a memory block for debugging to a Vulkan resource using vkDebugMarkerSetObjectTagEXT. This memory
+    /// block can later be seen in external debuggers like RenderDoc.
+    /// @param object [in] A pointer to the Vulkan object to which a memory tag will be assigned.
     /// @param type [in] The type of the Vulkan object.
-    /// @param name [in] The name of the debug marker which will be associated to the Vulkan object.
-    /// @param tag_size [in] The size of the memory dump.
-    /// @param tag [in] A pointer to the memory dump.
+    /// @param name [in] The internal name of the object ag.
+    /// @param tag_size [in] The size of the memory tag in bytes.
+    /// @param tag [in] A pointer to the memory tag.
     void set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
                         const std::size_t tag_size, const void *tag) const;
 
-    /// @brief Vulkan debug markers: Annotation of a rendering region.
-    /// The rendering region will be visible in external debuggers like RenderDoc.
-    /// @param command_buffer [in] The associated command buffer.
-    /// @param name [in] The name of the rendering region.
-    /// @param color [in] The rgba color of the rendering region.
+    /// @brief Sets the color of the current rendering region using vkCmdDebugMarkerBeginEXT. This color can be seen in
+    /// external debuggers like RenderDoc.
+    /// @param command_buffer [in] The command buffer which is associated to the debug region.
+    /// @param name [in] The name of the debug region.
+    /// @param color [in] An array of red, green, blue and alpha values for the debug region's color.
     void bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                            const std::array<float, 4> color) const;
 
-    /// @brief Vulkan debug markers: Inserts a debug marker into a renderpass.
-    /// The debug marker will be visible in external debuggers like RenderDoc.
-    /// @param command_buffer [in] The associated command buffer.
-    /// @param name [in] The name of the rendering region.
-    /// @param color [in] The rgba color of the rendering region.
+    /// @brief Inserts a debug markers into the current renderpass using vkCmdDebugMarkerInsertEXT. This debug markers
+    /// can be seen in external debuggers like RenderDoc.
+    /// @param command_buffer [in] The command buffer which is associated to the debug marker.
+    /// @param name [in] The name of the debug marker.
+    /// @param color [in] An array of red, green, blue and alpha values for the debug region's color.
     void insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
                              const std::array<float, 4> color) const;
 
-    /// @brief Vulkan debug markers: Annotation of a rendering region.
-    /// The rendering region will be visible in external debuggers like RenderDoc.
-    /// @param command_buffer [in] The associated command buffer.
-    /// @param name [in] The name of the rendering region.
-    /// @param color [in] The rgba color of the rendering region.
+    /// @brief Ends the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
+    /// @param command_buffer [in] The command buffer which is associated to the debug marker.
     void end_debug_region(const VkCommandBuffer command_buffer) const;
 
 #endif

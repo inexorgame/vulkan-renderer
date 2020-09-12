@@ -11,6 +11,8 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 class Semaphore;
 
+/// @class Swapchain
+/// @brief RAII wrapper class for VkSwapchainKHR.
 class Swapchain {
     const wrapper::Device &m_device;
     VkSurfaceKHR m_surface;
@@ -24,18 +26,27 @@ class Swapchain {
     const std::string m_name;
     bool m_vsync_enabled;
 
-    /// @brief (Re)creates the swapchain.
-    /// @param window_width [in] The requested width of the window.
-    /// @param window_height [in] The requested height of the window.
-    /// @note We are passing width and height of the window as reference since the API
-    /// needs to check if the swapchain can support the requested resolution.
+    /// @brief Sets up the swapchain.
+    /// @param old_swapchain [in] The old swapchain.
+    /// @note Swapchain recreation can be speeded up drastically when passing the old swapchian.
+    /// @param window_width [in] The width of the window.
+    /// @param window_height [in] The height of the window.
     void setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
 
 public:
+    /// @brief Default constructor.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param surface [in] The surface.
+    /// @param window_width [in] The width of the window.
+    /// @param window_height [in] The height of the window.
+    /// @param enable_vsync [in] True if vertical synchronization is requested, false otherwise.
+    /// @param name [in] The internal debug marker name of the VkSwapchainKHR.
     Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
               const bool enable_vsync, const std::string &name);
+
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
+
     ~Swapchain();
 
     Swapchain &operator=(const Swapchain &) = delete;
@@ -46,9 +57,9 @@ public:
     /// @returns The image index
     [[nodiscard]] std::uint32_t acquire_next_image(const Semaphore &semaphore);
 
-    /// @brief The swapchain needs to be recreated if it has been invalidated.
-    /// @note We must pass width and height as call by reference!
-    /// This happens for example when the window gets resized.
+    /// @brief Recreates the swapchain.
+    /// @param window_width [in] The width of the window.
+    /// @param window_height [in] The height of the window.
     void recreate(std::uint32_t window_width, std::uint32_t window_height);
 
     [[nodiscard]] const VkSwapchainKHR *swapchain_ptr() const {
@@ -71,6 +82,8 @@ public:
         return m_extent;
     }
 
+    /// @brief Returns an image view of requested index.
+    /// @param index [in] The requested image index.
     [[nodiscard]] VkImageView image_view(std::size_t index) const {
         if (index >= m_swapchain_image_views.size()) {
             throw std::out_of_range("Error: swapchain_image_views has " +

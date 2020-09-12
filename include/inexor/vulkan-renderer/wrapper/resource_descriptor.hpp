@@ -9,11 +9,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
-/// @brief A class for descriptor management.
-/// Shader access of data is managed through descriptors.
-/// Descriptors are organized in descriptor sets.
-/// Descriptors sets are described through their descriptor set layout.
-/// Descriptor sets are allocated from descriptor pools.
+/// @class ResourceDescriptor
+/// @brief RAII wrapper class for resource descriptors.
 class ResourceDescriptor {
     const std::string m_name;
     const Device &m_device;
@@ -25,7 +22,13 @@ class ResourceDescriptor {
     std::uint32_t m_swapchain_image_count{};
 
 public:
-    // @note Creates a descriptor pool.
+    /// @brief Default constructor.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param swapchain_image_count [in] The number of images in swapchain.
+    /// @param pool_types [in] The descriptor pool types.
+    /// @param layout_bindings [in] The descriptor layout bindings.
+    /// @param descriptor_writes [in] The write descriptor sets.
+    /// @param name [in] The internal debug marker name of the resource descriptor.
     ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
                        std::initializer_list<VkDescriptorType> pool_types,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
@@ -33,6 +36,7 @@ public:
 
     ResourceDescriptor(const ResourceDescriptor &) = delete;
     ResourceDescriptor(ResourceDescriptor &&) noexcept;
+
     ~ResourceDescriptor();
 
     ResourceDescriptor &operator=(const ResourceDescriptor &) = delete;

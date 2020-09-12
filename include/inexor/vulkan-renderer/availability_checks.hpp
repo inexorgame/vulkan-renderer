@@ -11,33 +11,35 @@ namespace inexor::vulkan_renderer {
 class AvailabilityChecksManager {
 private:
     std::uint32_t m_available_instance_extensions{0};
-
     std::uint32_t m_available_instance_layers{0};
-
     std::uint32_t m_available_device_layers{0};
-
     std::uint32_t m_available_device_extensions{0};
 
     std::vector<VkExtensionProperties> m_instance_extensions_cache;
-
     std::vector<VkLayerProperties> m_instance_layers_cache;
-
     std::vector<VkLayerProperties> m_device_layer_properties_cache;
-
     std::vector<VkExtensionProperties> m_device_extensions_cache;
 
+    /// @brief
+    /// @return
     VkResult create_instance_layers_cache();
 
+    /// @brief
+    /// @param graphics_card
+    /// @return
     VkResult create_device_layers_cache(const VkPhysicalDevice &graphics_card);
 
+    /// @brief
+    /// @param graphics_card
+    /// @return
     VkResult create_device_extensions_cache(const VkPhysicalDevice &graphics_card);
 
+    /// @brief
+    /// @return
     VkResult create_instance_extensions_cache();
 
 public:
     AvailabilityChecksManager() = default;
-
-    ~AvailabilityChecksManager() = default;
 
     /// @brief Checks if a certain Vulkan instance layer is available on the system.
     /// https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkEnumerateInstanceLayerProperties.html

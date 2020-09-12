@@ -61,17 +61,28 @@ struct BezierOutputPoint : public BezierInputPoint {
 /// It contains both the input points and the generated output points.
 class BezierCurve {
     bool m_curve_generated;
-
     float m_curve_precision;
 
     std::vector<BezierInputPoint> m_input_points;
-
     std::vector<BezierOutputPoint> m_output_points;
 
+    /// @brief
+    /// @param n
+    /// @param k
+    /// @return
     uint32_t binomial_coefficient(uint32_t n, const uint32_t k);
 
+    /// @brief
+    /// @param n
+    /// @param k
+    /// @param curve_precision
+    /// @param coordinate_value
+    /// @return
     float bernstein_polynomial(uint32_t n, uint32_t k, const float curve_precision, const float coordinate_value);
 
+    /// @brief
+    /// @param curve_precision
+    /// @return
     BezierOutputPoint calculate_point_on_curve(const float curve_precision);
 
 public:
@@ -79,10 +90,17 @@ public:
 
     ~BezierCurve() = default;
 
+    /// @brief
+    /// @param input_point
     void add_input_point(const BezierInputPoint &input_point);
 
+    /// @brief
+    /// @param position
+    /// @param weight
     void add_input_point(const glm::vec3 &position, const float weight = 1.0f);
 
+    /// @brief
+    /// @param curve_precision
     void calculate_bezier_curve(const float curve_precision);
 
     [[nodiscard]] std::vector<BezierOutputPoint> output_points();

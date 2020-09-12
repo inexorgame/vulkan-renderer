@@ -9,14 +9,19 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
+/// @class CommandPool
+/// @brief RAII wrapper class for VkCommandPool.
 class CommandPool {
     const Device &m_device;
     VkCommandPool m_command_pool;
 
 public:
-    /// @brief Creates a Vulkan command pool.
-    /// @param device [in] The Vulkan device.
-    /// @param queue_family_index [in] The queue family index for the command pool.
+    /// @brief Default constructor.
+    /// @param device [in] The const reference to a device RAII wrapper instance.
+    /// @param queue_family_index [in] The queue family index which is used by this command pool.
+    /// @note It is important that the queue family index is specified in the abstraction
+    /// above this command pool wrapper. We can't choose one queue family index automatically
+    /// inside of this wrapper which fits every purpose!
     CommandPool(const Device &device, const std::uint32_t queue_family_index);
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;

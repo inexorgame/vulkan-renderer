@@ -6,7 +6,16 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @brief Vulkan validation layer callback.
+/// @brief
+/// @param flags
+/// @param object_type
+/// @param object
+/// @param location
+/// @param message_code
+/// @param layer_prefix
+/// @param message
+/// @param user_data
+/// @return
 VKAPI_ATTR VkBool32 VKAPI_CALL vulkan_debug_message_callback(VkDebugReportFlagsEXT flags,
                                                              VkDebugReportObjectTypeEXT object_type,
                                                              std::uint64_t object, std::size_t location,
