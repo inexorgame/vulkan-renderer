@@ -87,15 +87,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     rasterization_state_ci.depthBiasSlopeFactor = 0.0f;
     rasterization_state_ci.lineWidth = 1.0f;
 
-    // TODO: Make compare function a parameter.
-    VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
-    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth_stencil.depthTestEnable = VK_TRUE;
-    depth_stencil.depthWriteEnable = VK_TRUE;
-    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depth_stencil.depthBoundsTestEnable = VK_FALSE;
-    depth_stencil.stencilTestEnable = VK_FALSE;
-
     // TODO: Examine how this could be parameterized.
     VkPipelineColorBlendAttachmentState color_blend_attachment = {};
     color_blend_attachment.blendEnable = VK_TRUE;
@@ -128,7 +119,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     pipeline_ci.pViewportState = &viewport_state_ci;
     pipeline_ci.pRasterizationState = &rasterization_state_ci;
     pipeline_ci.pMultisampleState = &multisample_state_ci;
-    pipeline_ci.pDepthStencilState = &depth_stencil;
     pipeline_ci.pColorBlendState = &color_blend_state_ci;
     pipeline_ci.layout = pipeline_layout;
     pipeline_ci.renderPass = render_pass;
