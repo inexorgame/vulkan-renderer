@@ -336,15 +336,6 @@ void ImGUIOverlay::update() {
             render_pass_bi.pClearValues = clear_values.data();
 
             m_command_buffers[k]->begin_render_pass(render_pass_bi);
-
-            VkViewport viewport{};
-            viewport.width = static_cast<float>(m_swapchain.extent().width);
-            viewport.height = static_cast<float>(m_swapchain.extent().height);
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
-
-            vkCmdSetViewport(m_command_buffers[k]->get(), 0, 1, &viewport);
-
             m_command_buffers[k]->bind_graphics_pipeline(m_pipeline->get());
 
             auto descriptor_sets = m_descriptor->descriptor_sets();
@@ -375,16 +366,6 @@ void ImGUIOverlay::update() {
                 const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
                 for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                     const ImDrawCmd *imgui_draw_command = &cmd_list->CmdBuffer[j];
-
-                    VkRect2D scissorRect;
-                    scissorRect.offset.x = std::max(static_cast<int32_t>(imgui_draw_command->ClipRect.x), 0);
-                    scissorRect.offset.y = std::max(static_cast<int32_t>(imgui_draw_command->ClipRect.y), 0);
-                    scissorRect.extent.width =
-                        static_cast<uint32_t>(imgui_draw_command->ClipRect.z - imgui_draw_command->ClipRect.x);
-                    scissorRect.extent.height =
-                        static_cast<uint32_t>(imgui_draw_command->ClipRect.w - imgui_draw_command->ClipRect.y);
-
-                    vkCmdSetScissor(m_command_buffers[k]->get(), 0, 1, &scissorRect);
                     vkCmdDrawIndexed(m_command_buffers[k]->get(), imgui_draw_command->ElemCount, 1, index_offset,
                                      vertex_offset, 0);
 

@@ -122,12 +122,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
 
     // TODO: Parameterize this.
     // Tell Vulkan that we want to change viewport and scissor during runtime so it's a dynamic state.
-    const std::vector<VkDynamicState> enabled_dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-
-    VkPipelineDynamicStateCreateInfo dynamic_state_ci = {};
-    dynamic_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamic_state_ci.pDynamicStates = enabled_dynamic_states.data();
-    dynamic_state_ci.dynamicStateCount = static_cast<std::uint32_t>(enabled_dynamic_states.size());
 
     // TODO: Support tesselation stage in the future.
     // TODO: Examine in how far sub-passes should be used?
@@ -143,7 +137,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     pipeline_ci.pMultisampleState = &multisample_state_ci;
     pipeline_ci.pDepthStencilState = &depth_stencil;
     pipeline_ci.pColorBlendState = &color_blend_state_ci;
-    pipeline_ci.pDynamicState = &dynamic_state_ci;
     pipeline_ci.layout = pipeline_layout;
     pipeline_ci.renderPass = render_pass;
     pipeline_ci.subpass = 0;
