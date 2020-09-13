@@ -1,18 +1,19 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Image::Image(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VmaAllocator vma_allocator,
-             const VkFormat format, const VkImageUsageFlags image_usage, const VkImageAspectFlags aspect_flags,
-             const VkSampleCountFlagBits sample_count, const std::string &name, const VkExtent2D image_extent)
-    : m_device(device), m_vma_allocator(vma_allocator), m_format(format), m_name(name) {
+Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
+             const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
+             const VkExtent2D image_extent)
+    : m_device(device), m_format(format), m_name(name) {
     assert(device.device());
-    assert(graphics_card);
-    assert(vma_allocator);
+    assert(device.physical_device());
+    assert(device.allocator());
     assert(image_extent.width > 0);
     assert(image_extent.height > 0);
     assert(!name.empty());
@@ -41,8 +42,8 @@ Image::Image(const wrapper::Device &device, const VkPhysicalDevice graphics_card
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
-    if (vmaCreateImage(vma_allocator, &image_ci, &vma_allocation_ci, &m_image, &m_allocation, &m_allocation_info) !=
-        VK_SUCCESS) {
+    if (vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
+                       &m_allocation_info) != VK_SUCCESS) {
         throw std::runtime_error("Error: vmaCreateImage failed for image " + m_name + "!");
     }
 
@@ -73,9 +74,9 @@ Image::Image(const wrapper::Device &device, const VkPhysicalDevice graphics_card
 }
 
 Image::Image(Image &&other) noexcept
-    : m_device(other.m_device), m_vma_allocator(other.m_vma_allocator), m_allocation(other.m_allocation),
-      m_allocation_info(other.m_allocation_info), m_image(other.m_image), m_format(other.m_format),
-      m_image_view(other.m_image_view), m_name(std::move(other.m_name)) {}
+    : m_device(other.m_device), m_allocation(other.m_allocation), m_allocation_info(other.m_allocation_info),
+      m_image(other.m_image), m_format(other.m_format), m_image_view(other.m_image_view),
+      m_name(std::move(other.m_name)) {}
 
 Image::~Image() {
     if (m_image_view != nullptr) {
@@ -85,7 +86,7 @@ Image::~Image() {
 
     if (m_image != nullptr) {
         spdlog::trace("Destroying image {}.", m_name);
-        vmaDestroyImage(m_vma_allocator, m_image, m_allocation);
+        vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
     }
 }
 

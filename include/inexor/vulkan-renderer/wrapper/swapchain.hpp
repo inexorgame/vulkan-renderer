@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include <stdexcept>
 #include <string>
@@ -8,12 +8,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
 class Semaphore;
 
 class Swapchain {
-private:
     const wrapper::Device &m_device;
-    VkPhysicalDevice m_graphics_card;
     VkSurfaceKHR m_surface;
     VkSwapchainKHR m_swapchain;
     VkSurfaceFormatKHR m_surface_format;
@@ -33,11 +32,8 @@ private:
     void setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
 
 public:
-    /// @brief
-    /// @note We must pass width and height as call by reference!
-    Swapchain(const wrapper::Device &device, const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface,
-              std::uint32_t window_width, std::uint32_t window_height, const bool enable_vsync,
-              const std::string &name);
+    Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
+              const bool enable_vsync, const std::string &name);
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
     ~Swapchain();
@@ -48,7 +44,7 @@ public:
     /// @brief Acquires the next writable image in the swapchain
     /// @param semaphore A semaphore to signal once image acquisition has completed
     /// @returns The image index
-    [[nodiscard]] std::uint32_t acquire_next_image(const wrapper::Semaphore &semaphore);
+    [[nodiscard]] std::uint32_t acquire_next_image(const Semaphore &semaphore);
 
     /// @brief The swapchain needs to be recreated if it has been invalidated.
     /// @note We must pass width and height as call by reference!

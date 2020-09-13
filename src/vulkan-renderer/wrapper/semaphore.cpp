@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
@@ -8,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Semaphore::Semaphore(const wrapper::Device &device, const std::string &name) : m_device(device), m_name(name) {
+Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(device), m_name(name) {
     assert(device.device());
     assert(!name.empty());
 

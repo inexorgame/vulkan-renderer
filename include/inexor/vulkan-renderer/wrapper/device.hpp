@@ -12,7 +12,6 @@ namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief A RAII wrapper for VkDevice, VkPhysicalDevice and VkQueues.
 class Device {
-private:
     VkDevice m_device;
     VkPhysicalDevice m_graphics_card;
     VmaAllocator m_allocator;
@@ -55,12 +54,10 @@ public:
     Device &operator=(Device &&) = default;
 
     [[nodiscard]] const VkDevice device() const {
-        assert(m_device);
         return m_device;
     }
 
     [[nodiscard]] const VkPhysicalDevice physical_device() const {
-        assert(m_graphics_card);
         return m_graphics_card;
     }
 
@@ -68,25 +65,22 @@ public:
         return m_allocator;
     }
 
+    [[nodiscard]] const std::string &gpu_name() const {
+        return m_gpu_name;
+    }
+
     [[nodiscard]] const VkQueue graphics_queue() const {
-        assert(m_graphics_queue);
         return m_graphics_queue;
     }
 
     [[nodiscard]] const VkQueue present_queue() const {
-        assert(m_present_queue);
         return m_present_queue;
-    }
-
-    [[nodiscard]] const std::string &gpu_name() const {
-        return m_gpu_name;
     }
 
     /// @note Transfer queues are the fastest way to copy data across the PCIe bus.
     /// They are heavily underutilized even in modern games.
     /// Transfer queues can be used asynchronously to graphics queuey.
     [[nodiscard]] const VkQueue transfer_queue() const {
-        assert(m_transfer_queue);
         return m_transfer_queue;
     }
 

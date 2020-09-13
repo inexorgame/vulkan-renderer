@@ -8,6 +8,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+class Device;
+
 class UniformBuffer : public GPUMemoryBuffer {
 protected:
     VkDescriptorBufferInfo m_descriptor_buffer_info{};
@@ -20,8 +22,7 @@ public:
     /// @param size [in] The size of the buffer in bytes.
     /// @param buffer_usage [in] The Vulkan buffer usage flags.
     /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
-    UniformBuffer(const VkDevice &device, const VmaAllocator &vma_allocator, const std::string &name,
-                  const VkDeviceSize &size);
+    UniformBuffer(const Device &device, const std::string &name, const VkDeviceSize &size);
     UniformBuffer(const UniformBuffer &) = delete;
     UniformBuffer(UniformBuffer &&) noexcept;
     ~UniformBuffer() = default;

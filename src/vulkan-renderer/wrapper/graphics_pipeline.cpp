@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -7,19 +9,18 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept
-    : device(other.device), graphics_pipeline(std::exchange(other.graphics_pipeline, nullptr)),
+    : m_device(other.m_device), graphics_pipeline(std::exchange(other.graphics_pipeline, nullptr)),
       pipeline_cache(std::exchange(other.pipeline_cache, nullptr)), name(std::move(other.name)) {}
 
-GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout pipeline_layout,
+GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout pipeline_layout,
                                    const VkRenderPass render_pass,
                                    const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
                                    const std::vector<VkVertexInputBindingDescription> &vertex_binding,
                                    const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
                                    const std::uint32_t window_width, const std::uint32_t window_height,
                                    const std::string &name)
-    : device(device), name(name) {
-
-    assert(device);
+    : m_device(device), name(name) {
+    assert(device.device());
     assert(pipeline_layout);
     assert(render_pass);
     assert(!shader_stages.empty());
@@ -154,7 +155,7 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
     VkPipelineCacheCreateInfo cache_ci = {};
     cache_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
-    if (vkCreatePipelineCache(device, &cache_ci, nullptr, &pipeline_cache) != VK_SUCCESS) {
+    if (vkCreatePipelineCache(m_device.device(), &cache_ci, nullptr, &pipeline_cache) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreatePipelineCache failed for " + name + " !");
     }
 
@@ -162,7 +163,8 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
 
     spdlog::debug("Creating graphics pipeline.");
 
-    if (vkCreateGraphicsPipelines(device, pipeline_cache, 1, &pipeline_ci, nullptr, &graphics_pipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(m_device.device(), pipeline_cache, 1, &pipeline_ci, nullptr, &graphics_pipeline) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Error: vkCreateGraphicsPipelines failed for " + name + " !");
     }
 
@@ -173,10 +175,10 @@ GraphicsPipeline::GraphicsPipeline(const VkDevice device, const VkPipelineLayout
 
 GraphicsPipeline::~GraphicsPipeline() {
     spdlog::trace("Destroying pipeline cache {}.", name);
-    vkDestroyPipelineCache(device, pipeline_cache, nullptr);
+    vkDestroyPipelineCache(m_device.device(), pipeline_cache, nullptr);
 
     spdlog::trace("Destroying pipeline {}.", name);
-    vkDestroyPipeline(device, graphics_pipeline, nullptr);
+    vkDestroyPipeline(m_device.device(), graphics_pipeline, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

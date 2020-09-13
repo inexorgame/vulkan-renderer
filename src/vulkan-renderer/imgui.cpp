@@ -98,12 +98,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     spdlog::debug("Creating ImGUI font texture");
 
-    m_imgui_texture = std::make_unique<wrapper::Texture>(m_device, m_device.physical_device(), m_device.allocator(),
-                                                         font_texture_data, font_texture_width, font_texture_height,
-                                                         uploadSize, "ImGUI font texture", m_device.graphics_queue(),
-                                                         m_device.graphics_queue_family_index());
+    m_imgui_texture = std::make_unique<wrapper::Texture>(m_device, font_texture_data, font_texture_width,
+                                                         font_texture_height, uploadSize, "ImGUI font texture");
 
-    m_command_pool = std::make_unique<wrapper::CommandPool>(m_device.device(), m_device.graphics_queue_family_index());
+    m_command_pool = std::make_unique<wrapper::CommandPool>(m_device, m_device.graphics_queue_family_index());
 
     VkDescriptorImageInfo font_desc{};
     font_desc.sampler = m_imgui_texture->sampler();
@@ -163,8 +161,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     spdlog::debug("Creating ImGUI renderpass");
 
-    m_renderpass =
-        std::make_unique<wrapper::RenderPass>(m_device.device(), attachments, subpass_deps, subpass_desc, "ImGUI");
+    m_renderpass = std::make_unique<wrapper::RenderPass>(m_device, attachments, subpass_deps, subpass_desc, "ImGUI");
 
     VkPushConstantRange push_constant_range{};
     push_constant_range.offset = 0;
@@ -224,7 +221,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     spdlog::debug("Creating ImGUI graphics pipeline");
 
     m_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
-        m_device.device(), m_pipeline_layout, m_renderpass->get(), m_shaders, vertex_input_bindings, vertex_input_attrs,
+        m_device, m_pipeline_layout, m_renderpass->get(), m_shaders, vertex_input_bindings, vertex_input_attrs,
         m_swapchain.extent().width, m_swapchain.extent().height, "ImGUI");
 
     m_ui_rendering_finished = std::make_unique<wrapper::Fence>(m_device, "ImGUI rendering done", true);
@@ -253,10 +250,9 @@ void ImGUIOverlay::update() {
 
     // TODO() Do not allocate memory at runtime!
     if (!m_imgui_mesh) {
-        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(
-            m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(), m_device.allocator(),
-            "imgui_mesh_buffer", sizeof(ImDrawVert), imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
-            imgui_draw_data->TotalIdxCount);
+        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(m_device, "imgui_mesh_buffer", sizeof(ImDrawVert),
+                                                             imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
+                                                             imgui_draw_data->TotalIdxCount);
     }
 
     if ((m_imgui_mesh->get_vertex_buffer() == VK_NULL_HANDLE) || (m_vertex_count != imgui_draw_data->TotalVtxCount)) {
@@ -264,10 +260,9 @@ void ImGUIOverlay::update() {
 
         spdlog::debug("Creating ImGUI vertex buffer");
 
-        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(
-            m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(), m_device.allocator(),
-            "imgui_mesh_buffer", sizeof(ImDrawVert), imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
-            imgui_draw_data->TotalIdxCount);
+        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(m_device, "imgui_mesh_buffer", sizeof(ImDrawVert),
+                                                             imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
+                                                             imgui_draw_data->TotalIdxCount);
 
         m_vertex_count = imgui_draw_data->TotalVtxCount;
 
@@ -280,10 +275,9 @@ void ImGUIOverlay::update() {
 
         spdlog::debug("Creating ImGUI index buffer");
 
-        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(
-            m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(), m_device.allocator(),
-            "imgui_mesh_buffer", sizeof(ImDrawVert), imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
-            imgui_draw_data->TotalIdxCount);
+        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(m_device, "imgui_mesh_buffer", sizeof(ImDrawVert),
+                                                             imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
+                                                             imgui_draw_data->TotalIdxCount);
 
         m_index_count = imgui_draw_data->TotalIdxCount;
 
