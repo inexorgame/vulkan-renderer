@@ -125,7 +125,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_bindings[0].descriptorCount = 1;
     layout_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    layout_bindings[0].pImmutableSamplers = nullptr;
 
     std::vector<VkWriteDescriptorSet> desc_writes(1);
     desc_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -134,7 +133,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     desc_writes[0].dstArrayElement = 0;
     desc_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     desc_writes[0].descriptorCount = 1;
-    desc_writes[0].pBufferInfo = nullptr;
     desc_writes[0].pImageInfo = &font_desc;
 
     std::initializer_list<VkDescriptorType> pool_types = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER};
@@ -164,12 +162,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     std::vector<VkSubpassDependency> subpass_deps(1);
     subpass_deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    subpass_deps[0].dstSubpass = 0;
     subpass_deps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     subpass_deps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    subpass_deps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     subpass_deps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    subpass_deps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     spdlog::debug("Creating ImGUI renderpass");
 

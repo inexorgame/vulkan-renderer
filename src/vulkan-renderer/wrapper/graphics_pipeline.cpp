@@ -111,14 +111,8 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     // TODO: Examine how this could be parameterized.
     VkPipelineColorBlendStateCreateInfo color_blend_state_ci = {};
     color_blend_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    color_blend_state_ci.logicOpEnable = VK_FALSE;
-    color_blend_state_ci.logicOp = VK_LOGIC_OP_NO_OP;
     color_blend_state_ci.attachmentCount = 1;
     color_blend_state_ci.pAttachments = &color_blend_attachment;
-    color_blend_state_ci.blendConstants[0] = 0.0f;
-    color_blend_state_ci.blendConstants[1] = 0.0f;
-    color_blend_state_ci.blendConstants[2] = 0.0f;
-    color_blend_state_ci.blendConstants[3] = 0.0f;
 
     // TODO: Parameterize this.
     // Tell Vulkan that we want to change viewport and scissor during runtime so it's a dynamic state.
@@ -131,7 +125,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     pipeline_ci.pStages = shader_stages.data();
     pipeline_ci.pVertexInputState = &vertex_input_ci;
     pipeline_ci.pInputAssemblyState = &input_assembly_ci;
-    pipeline_ci.pTessellationState = nullptr;
     pipeline_ci.pViewportState = &viewport_state_ci;
     pipeline_ci.pRasterizationState = &rasterization_state_ci;
     pipeline_ci.pMultisampleState = &multisample_state_ci;
@@ -139,9 +132,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     pipeline_ci.pColorBlendState = &color_blend_state_ci;
     pipeline_ci.layout = pipeline_layout;
     pipeline_ci.renderPass = render_pass;
-    pipeline_ci.subpass = 0;
-    pipeline_ci.basePipelineHandle = VK_NULL_HANDLE;
-    pipeline_ci.basePipelineIndex = -1;
 
     spdlog::debug("Creating cache for graphics pipeline.");
 
