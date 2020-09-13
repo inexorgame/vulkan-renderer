@@ -115,7 +115,7 @@ void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
-    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout)) {
+    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline layout!");
     }
 
