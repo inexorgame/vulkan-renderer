@@ -25,7 +25,7 @@ namespace inexor::vulkan_renderer {
 class ImGUIOverlay {
     const wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
-    VkPipelineLayout m_pipeline_layout;
+    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
     float m_scale{1.0f};
 
@@ -51,7 +51,7 @@ class ImGUIOverlay {
     struct PushConstBlock {
         glm::vec2 scale;
         glm::vec2 translate;
-    } m_push_const_block;
+    } m_push_const_block{};
 
 public:
     ImGUIOverlay(const ImGUIOverlay &) = delete;

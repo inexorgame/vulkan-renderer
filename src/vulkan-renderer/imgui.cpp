@@ -30,11 +30,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     assert(device.graphics_queue());
 
     spdlog::debug("Creating ImGUI context");
-
     ImGui::CreateContext();
 
     ImGuiStyle &style = ImGui::GetStyle();
-
     style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
     style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.0f, 0.0f, 0.0f, 0.1f);
@@ -53,7 +51,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 
     ImGuiIO &io = ImGui::GetIO();
-
     io.FontGlobalScale = m_scale;
 
     spdlog::debug("Loading ImGUI vertex shader");
@@ -80,7 +77,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     m_shaders.push_back(shader_info);
 
-    // Initializ push constant block
+    // Initialize push constant block
     m_push_const_block.scale = glm::vec2(0.0f, 0.0f);
     m_push_const_block.translate = glm::vec2(0.0f, 0.0f);
 
@@ -217,21 +214,11 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     vertex_input_attrs[1].format = VK_FORMAT_R32G32_SFLOAT;
     vertex_input_attrs[1].offset = offsetof(ImDrawVert, uv);
 
-    // Location 0: Color
+    // Location 2: Color
     vertex_input_attrs[2].binding = 0;
     vertex_input_attrs[2].location = 2;
     vertex_input_attrs[2].format = VK_FORMAT_R8G8B8A8_UNORM;
     vertex_input_attrs[2].offset = offsetof(ImDrawVert, col);
-
-    VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo{};
-
-    pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount =
-        static_cast<uint32_t>(vertex_input_bindings.size());
-    pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertex_input_bindings.data();
-    pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount =
-        static_cast<uint32_t>(vertex_input_attrs.size());
-    pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertex_input_attrs.data();
 
     spdlog::debug("Creating ImGUI graphics pipeline");
 
@@ -301,8 +288,8 @@ void ImGUIOverlay::update() {
 
     if (update_command_buffers) {
         // TODO: Implement an update method for MeshBuffer !
-        ImDrawVert *vertex_buffer_address = static_cast<ImDrawVert *>(m_imgui_mesh->get_vertex_buffer_address());
-        ImDrawIdx *index_buffer_address = static_cast<ImDrawIdx *>(m_imgui_mesh->get_index_buffer_address());
+        auto *vertex_buffer_address = static_cast<ImDrawVert *>(m_imgui_mesh->get_vertex_buffer_address());
+        auto *index_buffer_address = static_cast<ImDrawIdx *>(m_imgui_mesh->get_index_buffer_address());
 
         for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
             const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
@@ -338,7 +325,7 @@ void ImGUIOverlay::update() {
 
             m_command_buffers[k]->begin();
 
-            VkClearValue clear_values[1];
+            std::array<VkClearValue, 1> clear_values{};
             clear_values[0].color = {0.0f, 0.0f, 0.0f};
 
             auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
@@ -346,7 +333,7 @@ void ImGUIOverlay::update() {
             render_pass_bi.renderArea.extent = m_swapchain.extent();
             render_pass_bi.renderPass = m_renderpass->get();
             render_pass_bi.clearValueCount = 1;
-            render_pass_bi.pClearValues = clear_values;
+            render_pass_bi.pClearValues = clear_values.data();
 
             m_command_buffers[k]->begin_render_pass(render_pass_bi);
 
@@ -371,12 +358,12 @@ void ImGUIOverlay::update() {
             vkCmdPushConstants(m_command_buffers[k]->get(), m_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
                                sizeof(PushConstBlock), &m_push_const_block);
 
-            VkDeviceSize offsets[1] = {0};
+            std::array<VkDeviceSize, 1> offsets{0};
 
             // TODO() Refactor this!
             auto *vertex_buffer = m_imgui_mesh->get_vertex_buffer();
 
-            vkCmdBindVertexBuffers(m_command_buffers[k]->get(), 0, 1, &vertex_buffer, offsets);
+            vkCmdBindVertexBuffers(m_command_buffers[k]->get(), 0, 1, &vertex_buffer, offsets.data());
 
             vkCmdBindIndexBuffer(m_command_buffers[k]->get(), m_imgui_mesh->get_index_buffer(), 0,
                                  VK_INDEX_TYPE_UINT16);
@@ -416,17 +403,17 @@ void ImGUIOverlay::update() {
 }
 
 void ImGUIOverlay::render(const std::uint32_t image_index) {
-    if (m_command_buffers.empty())
+    if (m_command_buffers.empty()) {
         return;
+    }
 
     auto *cmd_buf = m_command_buffers[image_index]->get();
-
-    const VkPipelineStageFlags wait_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
     auto submit_info = wrapper::make_info<VkSubmitInfo>();
-    submit_info.pWaitDstStageMask = wait_stage_mask;
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &cmd_buf;
+
+    std::array<VkPipelineStageFlags, 1> wait_stage_mask = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    submit_info.pWaitDstStageMask = wait_stage_mask.data();
 
     vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, m_ui_rendering_finished->get());
 
