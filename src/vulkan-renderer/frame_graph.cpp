@@ -61,7 +61,8 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(device(), m_render_pass, nullptr);
 }
 
-void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phys, VmaAllocationCreateInfo *alloc_ci) {
+void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phys,
+                             VmaAllocationCreateInfo *alloc_ci) const {
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
 
@@ -88,7 +89,7 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
     }
 }
 
-void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage *phys) {
+void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage *phys) const {
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
     image_view_ci.format = resource->m_format;
     image_view_ci.image = phys->m_image;
@@ -104,18 +105,19 @@ void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage
     }
 }
 
-void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
+void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
     for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
         phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
     }
 }
 
-void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) {
+void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) const {
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
-    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline layout!");
     }
 
@@ -125,8 +127,7 @@ void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *
 #endif
 }
 
-void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) {
-    m_log->trace("Recording command buffers for stage '{}'", stage->m_name);
+void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
     for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
         // TODO: Remove simultaneous usage once we have proper max frames in flight control.
         auto &cmd_buf = phys->m_command_buffers[i];
@@ -159,7 +160,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
                 continue;
             }
 
-            const auto *phys_buffer = m_resource_map[resource]->as<PhysicalBuffer>();
+            const auto *phys_buffer = m_resource_map.at(resource)->as<PhysicalBuffer>();
             assert(phys_buffer != nullptr);
 
             if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
@@ -183,7 +184,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
     }
 }
 
-void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage *phys) {
+void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
     std::vector<VkAttachmentDescription> attachments;
     std::vector<VkAttachmentReference> colour_refs;
     std::vector<VkAttachmentReference> depth_refs;
@@ -251,7 +252,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     }
 }
 
-void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage *phys) {
+void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
     // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;

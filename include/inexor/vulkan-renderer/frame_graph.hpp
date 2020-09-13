@@ -387,17 +387,17 @@ private:
     }
 
     // Functions for building resource related vulkan objects.
-    void build_image(const TextureResource *, PhysicalImage *, VmaAllocationCreateInfo *);
-    void build_image_view(const TextureResource *, PhysicalImage *);
+    void build_image(const TextureResource *, PhysicalImage *, VmaAllocationCreateInfo *) const;
+    void build_image_view(const TextureResource *, PhysicalImage *) const;
 
     // Functions for building stage related vulkan objects.
-    void alloc_command_buffers(const RenderStage *, PhysicalStage *);
-    void build_pipeline_layout(const RenderStage *, PhysicalStage *);
-    void record_command_buffers(const RenderStage *, PhysicalStage *);
+    void alloc_command_buffers(const RenderStage *, PhysicalStage *) const;
+    void build_pipeline_layout(const RenderStage *, PhysicalStage *) const;
+    void record_command_buffers(const RenderStage *, PhysicalStage *) const;
 
     // Functions for building graphics stage related vulkan objects.
-    void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *);
-    void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *);
+    void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *) const;
+    void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *) const;
 
 public:
     FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
