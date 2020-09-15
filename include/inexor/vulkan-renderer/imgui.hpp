@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
@@ -12,7 +13,6 @@
 #include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
-#include "inexor/vulkan-renderer/wrapper/texture.hpp"
 
 #include <glm/vec2.hpp>
 #include <vulkan/vulkan.h>
@@ -30,7 +30,7 @@ class ImGUIOverlay {
     float m_scale{1.0f};
 
     std::unique_ptr<wrapper::MeshBuffer> m_imgui_mesh;
-    std::unique_ptr<wrapper::Texture> m_imgui_texture;
+    std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
     std::unique_ptr<wrapper::RenderPass> m_renderpass;
     std::unique_ptr<wrapper::Shader> m_vert_shader;
     std::unique_ptr<wrapper::Shader> m_frag_shader;

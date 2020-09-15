@@ -1,4 +1,6 @@
-#include "inexor/vulkan-renderer/imgui.hpp"
+﻿#include "inexor/vulkan-renderer/imgui.hpp"
+
+#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
@@ -83,23 +85,36 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     m_push_const_block.translate = glm::vec2(0.0f, 0.0f);
 
     // Load font texture
+
+    // TODO: Move this data into a container class; have container class also support bold and italic.
+    constexpr char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
+    constexpr float FONT_SIZE = 18.0f;
+
+    spdlog::debug("Loading front '{}'", FONT_FILE_PATH);
+
+    ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
+
     unsigned char *font_texture_data{};
     int font_texture_width{0};
     int font_texture_height{0};
-
-    const char *font_filename = "assets/fonts/NotoSans-Bold.ttf";
-
-    spdlog::debug("Loading front '{}'", font_filename);
-
-    io.Fonts->AddFontFromFileTTF(font_filename, 18.0f);
-
     io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
-    VkDeviceSize uploadSize = font_texture_width * font_texture_height * 4 * sizeof(char);
 
-    spdlog::debug("Creating ImGUI font texture");
+    if (font == nullptr || font_texture_data == nullptr) {
+        spdlog::error("Unable to load font {}.  Falling back to error texture.", FONT_FILE_PATH);
+        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
+    } else {
+        spdlog::debug("Creating ImGUI font texture");
 
-    m_imgui_texture = std::make_unique<wrapper::Texture>(m_device, font_texture_data, font_texture_width,
-                                                         font_texture_height, uploadSize, "ImGUI font texture");
+        // Our font textures always have 4 channels and a single mip level by definition.
+        constexpr int FONT_TEXTURE_CHANNELS{4};
+        constexpr int FONT_MIP_LEVELS{1};
+
+        VkDeviceSize upload_size = font_texture_width * font_texture_height * FONT_TEXTURE_CHANNELS;
+
+        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
+            m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
+            FONT_MIP_LEVELS, "ImGUI font texture");
+    }
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(m_device, m_device.graphics_queue_family_index());
 
