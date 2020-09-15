@@ -4,7 +4,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
     vulkan-renderer/debug_callback.cpp
-    vulkan-renderer/error_handling.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/frame_graph.cpp
     vulkan-renderer/gpu_info.cpp
