@@ -87,15 +87,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     rasterization_state_ci.depthBiasSlopeFactor = 0.0f;
     rasterization_state_ci.lineWidth = 1.0f;
 
-    // TODO: Make compare function a parameter.
-    VkPipelineDepthStencilStateCreateInfo depth_stencil = {};
-    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth_stencil.depthTestEnable = VK_TRUE;
-    depth_stencil.depthWriteEnable = VK_TRUE;
-    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depth_stencil.depthBoundsTestEnable = VK_FALSE;
-    depth_stencil.stencilTestEnable = VK_FALSE;
-
     // TODO: Examine how this could be parameterized.
     VkPipelineColorBlendAttachmentState color_blend_attachment = {};
     color_blend_attachment.blendEnable = VK_TRUE;
@@ -111,23 +102,11 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     // TODO: Examine how this could be parameterized.
     VkPipelineColorBlendStateCreateInfo color_blend_state_ci = {};
     color_blend_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    color_blend_state_ci.logicOpEnable = VK_FALSE;
-    color_blend_state_ci.logicOp = VK_LOGIC_OP_NO_OP;
     color_blend_state_ci.attachmentCount = 1;
     color_blend_state_ci.pAttachments = &color_blend_attachment;
-    color_blend_state_ci.blendConstants[0] = 0.0f;
-    color_blend_state_ci.blendConstants[1] = 0.0f;
-    color_blend_state_ci.blendConstants[2] = 0.0f;
-    color_blend_state_ci.blendConstants[3] = 0.0f;
 
     // TODO: Parameterize this.
     // Tell Vulkan that we want to change viewport and scissor during runtime so it's a dynamic state.
-    const std::vector<VkDynamicState> enabled_dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-
-    VkPipelineDynamicStateCreateInfo dynamic_state_ci = {};
-    dynamic_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamic_state_ci.pDynamicStates = enabled_dynamic_states.data();
-    dynamic_state_ci.dynamicStateCount = static_cast<std::uint32_t>(enabled_dynamic_states.size());
 
     // TODO: Support tesselation stage in the future.
     // TODO: Examine in how far sub-passes should be used?
@@ -137,18 +116,12 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     pipeline_ci.pStages = shader_stages.data();
     pipeline_ci.pVertexInputState = &vertex_input_ci;
     pipeline_ci.pInputAssemblyState = &input_assembly_ci;
-    pipeline_ci.pTessellationState = nullptr;
     pipeline_ci.pViewportState = &viewport_state_ci;
     pipeline_ci.pRasterizationState = &rasterization_state_ci;
     pipeline_ci.pMultisampleState = &multisample_state_ci;
-    pipeline_ci.pDepthStencilState = &depth_stencil;
     pipeline_ci.pColorBlendState = &color_blend_state_ci;
-    pipeline_ci.pDynamicState = &dynamic_state_ci;
     pipeline_ci.layout = pipeline_layout;
     pipeline_ci.renderPass = render_pass;
-    pipeline_ci.subpass = 0;
-    pipeline_ci.basePipelineHandle = VK_NULL_HANDLE;
-    pipeline_ci.basePipelineIndex = -1;
 
     spdlog::debug("Creating cache for graphics pipeline.");
 
