@@ -2,6 +2,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// @brief RAII wrapper class for glfw context.
 class GLFWContext {
     bool m_initialized{false};
 

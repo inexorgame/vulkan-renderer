@@ -55,8 +55,8 @@ class ImGUIOverlay {
 
 public:
     /// @brief Default constructor
-    /// @param device [in] A reference to the device wrapper.
-    /// @param swapchain [in] A reference to the swapchain.
+    /// @param device A reference to the device wrapper.
+    /// @param swapchain A reference to the swapchain.
     ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain);
 
     ~ImGUIOverlay();

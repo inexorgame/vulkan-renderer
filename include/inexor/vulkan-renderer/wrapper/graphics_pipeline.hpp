@@ -9,6 +9,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
+/// @brief RAII wrapper class for VkPipeline.
 class GraphicsPipeline {
     const Device &m_device;
     VkPipeline graphics_pipeline;
@@ -16,16 +17,16 @@ class GraphicsPipeline {
     std::string name;
 
 public:
-    /// @brief Creates a graphics pipeline.
-    /// @param device [in] The Vulkan device.
-    /// @param pipeline_layout [in] The pipeline layout.
-    /// @param render_pass [in] The associated renderpass.
-    /// @param shader_stages [in] The shaders and the stages they are used in.
-    /// @param vertex_binding [in] The vertex binding description.
-    /// @param attribute_binding [in] The vertex attribute binding description.
-    /// @param window_width [in] The width of the window.
-    /// @param window_height [in] The height of the window.
-    /// @param name [in] The internal name of the graphics pipeline.
+    /// @brief Construct the graphics pipeline.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param pipeline_layout The layout of the graphics pipeline.
+    /// @param render_pass The associated renderpass.
+    /// @param shader_stages The shader stages which will be used.
+    /// @param vertex_binding The vertex input binding descriptions.
+    /// @param attribute_binding The vertex input attribute descriptions.
+    /// @param window_width The width of the window.
+    /// @param window_height The height of the window.
+    /// @param name The internal debug marker name of the graphics pipeline.
     GraphicsPipeline(const Device &device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
                      const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
                      const std::vector<VkVertexInputBindingDescription> &vertex_binding,

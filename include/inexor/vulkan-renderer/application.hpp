@@ -25,8 +25,8 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_shader_files;
     std::vector<std::string> m_gltf_model_files;
 
-    /// @brief Loads the configuration of the renderer from a TOML configuration file.
-    /// @brief file_name [in] The TOML configuration file.
+    /// @brief Load the configuration of the renderer from a TOML configuration file.
+    /// @brief file_name The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
     void load_toml_configuration_file(const std::string &file_name);
     void load_textures();

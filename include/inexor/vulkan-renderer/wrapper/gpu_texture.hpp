@@ -17,10 +17,9 @@ class Device;
 class GPUMemoryBuffer;
 class OnceCommandBuffer;
 
-// TODO: 3D textures and cube maps.
-// TODO: Scan asset directory automatically.
-// TODO: Create multiple textures from file and submit them in 1 command buffer for performance reasons.
-
+/// @note The code which loads textures from files is wrapped in CpuTexture.
+/// @brief RAII wrapper class for textures which are stored in GPU memory.
+/// @todo Support 3D textures and cube maps (implement new and separate wrappers though).
 class GpuTexture {
     std::unique_ptr<wrapper::Image> m_texture_image;
     OnceCommandBuffer m_copy_command_buffer;
@@ -35,30 +34,36 @@ class GpuTexture {
     const wrapper::Device &m_device;
     const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
-    ///
+    /// @brief Create the texture.
+    /// @param texture_data A pointer to the texture data.
+    /// @param texture_size The size of the texture.
     void create_texture(void *texture_data, const std::size_t texture_size);
 
-    ///
+    /// @brief Transform the image layout.
+    /// @param image The image.
+    /// @param format The image format.
+    /// @param old_layout The old image layout.
+    /// @param new_layout The new image layout.
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
-    ///
+    /// @brief Create the texture sampler.
     void create_texture_sampler();
 
 public:
-    /// @brief Loads texture data into the Gpu from a CpuTexture instance.
-    /// @param device [in] The Vulkan device from which the texture will be created.
-    /// @param cpu_texture [in] The CpuTexture instance containing the texture data.
+    /// @brief Construct a texture from a file.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param file_name The name of the texture file.
+    /// @param name The internal debug marker name of the texture.
     GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
 
-    /// @brief Loads texture data into the Gpu from memory.
-    /// @param device [in] The Vulkan device from which the texture will be created.
-    /// @param data [in] The texture data.
-    /// @param data_size [in] The size of the texture data.
-    /// @param texture_width [in] The width of the texture.
-    /// @param texture_height [in] The height of the texture.
-    /// @param texture_channels [in] The number of channels in the texture.
-    /// @param mip_levels [in] The number of mip levels in the texture.
-    /// @param name [in] The internal memory allocation name of the texture.
+    /// @brief Construct a texture from a block of memory.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param texture_data A pointer to the texture data.
+    /// @param texture_width The width of the texture.
+    /// @param texture_height The height of the texture.
+    /// @param texture_size The size of the texture.
+    /// @param name The internal debug marker name of the texture.
     GpuTexture(const wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
                const int texture_height, const int texture_channels, const int mip_levels, std::string name);
 

@@ -15,9 +15,9 @@ class CommandLineArgumentTemplate {
     const bool m_takes_values;
 
 public:
-    /// @param argument The argument to be passed on the command line (e.g. --vsync)
-    /// @param takes_args Whether this argument can take values (e.g. --gpu 1)
-    /// @note Only arguments that take zero or one values are supported
+    /// @param argument The argument to be passed on the command line (e.g. --vsync).
+    /// @param takes_args True if this argument can take values (e.g. --gpu 1), false otherwise.
+    /// @note Only arguments that take zero or one values are supported.
     CommandLineArgumentTemplate(std::string argument, bool takes_args)
         : m_argument(std::move(argument)), m_takes_values(takes_args) {}
 
@@ -43,8 +43,8 @@ public:
 /// @brief A simple command line argument parser.
 /// @note Only supports arguments with zero or one values (e.g. --vsync or --gpu 1)
 /// @note Only supports long arguments (e.g. --<arg>)
-// TODO: Support equals arguments and arguments with multiple values (e.g. --gpus=1,2,3).
-// TODO: Support short arguments, including stacking (e.g. -abc).
+/// @todo Support equals arguments and arguments with multiple values (e.g. --gpus=1,2,3).
+/// @todo Support short arguments, including stacking (e.g. -abc).
 class CommandLineArgumentParser {
     // TODO: Allow runtime addition of argument templates.
     const std::vector<CommandLineArgumentTemplate> m_accepted_args = {
@@ -75,8 +75,8 @@ class CommandLineArgumentParser {
 
 public:
     /// @brief Parses the command line arguments.
-    /// @param argc The number of arguments passed in the command line
-    /// @param argv An array of strings containing `argc` elements
+    /// @param argc The number of arguments passed in the command line.
+    /// @param argv An array of strings containing `argc` elements.
     void parse_args(int argc, char **argv);
 
     /// @brief Attempts to retrieve the argument `name` as type `T`.

@@ -38,13 +38,8 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    // We try to avoid inheritance here and prefer a composition pattern.
-    // TODO: VulkanSwapchainManager, VulkanPipelineManager, VulkanRenderPassManager?
-
     std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager{new VulkanGraphicsCardInfoViewer};
-
     std::shared_ptr<AvailabilityChecksManager> m_availability_checks_manager{new AvailabilityChecksManager};
-
     std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
@@ -56,7 +51,6 @@ protected:
     TimeStep m_time_step;
 
     std::uint32_t m_window_width{0};
-
     std::uint32_t m_window_height{0};
 
     std::string m_window_title;
@@ -91,9 +85,7 @@ protected:
 
     void setup_frame_graph();
     void generate_octree_indices();
-
     void recreate_swapchain();
-
     void render_frame();
 
 public:

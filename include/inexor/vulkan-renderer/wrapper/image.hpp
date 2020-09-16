@@ -9,6 +9,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
+/// @brief RAII wrapper class for VkImage.
 class Image {
     const wrapper::Device &m_device;
     VmaAllocation m_allocation;
@@ -19,14 +20,14 @@ class Image {
     std::string m_name;
 
 public:
-    /// @brief Creates an image and a corresponding image view.
-    /// @param device [in] A reference to the device wrapper.
-    /// @param format [in] The image format.
-    /// @param image_usage [in] The image usage flags.
-    /// @param aspect_flags [in] The image aspect flags for the image view.
-    /// @param sample_count [in] The sample count, mostly 1 if multisampling for this image is disabled.
-    /// @param name [in] The internal name of this image.
-    /// @param image_extent [in] The width and height of the image.
+    /// @brief Default constructor.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param format The color format.
+    /// @param image_usage The image usage flags.
+    /// @param aspect_flags The aspect flags.
+    /// @param sample_count The sample count.
+    /// @param name The internal debug marker name of the VkImage.
+    /// @param image_extent The width and height of the image.
     Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
           const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
           const VkExtent2D image_extent);

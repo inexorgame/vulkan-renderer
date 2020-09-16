@@ -17,11 +17,11 @@ class TimeStep {
 public:
     TimeStep();
 
-    /// @brief Returns a scaling factor which corresponds to the
+    /// @brief Return a scaling factor which corresponds to the
     /// time which has passed since last render call and now.
     [[nodiscard]] float time_step();
 
-    /// @brief Returns a scaling factor which corresponds to the
+    /// @brief Return a scaling factor which corresponds to the
     /// time which has passed since initialisation and now.
     [[nodiscard]] float time_step_since_initialisation();
 };

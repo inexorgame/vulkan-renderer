@@ -8,14 +8,15 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// @brief RAII wrapper class for VkSurfaceKHR.
 class WindowSurface {
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
 
 public:
-    /// @brief Creates a new window surface.
-    /// @param instance [in] The Vulkan instance.
-    /// @param window [in] The glfw3 window.
+    /// @brief Default constructor.
+    /// @param instance The Vulkan instance which will be associated with this surface.
+    /// @param window The window which will be associated with this surface.
     WindowSurface(const VkInstance instance, GLFWwindow *window);
 
     WindowSurface(const WindowSurface &) = delete;
