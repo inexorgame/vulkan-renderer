@@ -61,11 +61,6 @@ void Camera::rotate(glm::vec3 delta) {
     update_view_matrix();
 }
 
-void Camera::set_translation(glm::vec3 translation) {
-    m_position = translation;
-    update_view_matrix();
-}
-
 void Camera::translate(glm::vec3 delta) {
     m_position += delta;
     update_view_matrix();

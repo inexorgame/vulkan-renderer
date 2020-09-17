@@ -51,8 +51,6 @@ public:
 
     void rotate(glm::vec3 delta);
 
-    void set_translation(glm::vec3 translation);
-
     void translate(glm::vec3 delta);
 
     void update(float delta_time);
