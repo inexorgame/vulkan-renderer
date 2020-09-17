@@ -19,8 +19,10 @@ class CommandBuffer {
 
 public:
     CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, const std::string &name);
+
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
+
     ~CommandBuffer() = default;
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;

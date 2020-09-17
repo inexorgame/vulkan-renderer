@@ -17,8 +17,10 @@ public:
     /// @param instance [in] The Vulkan instance.
     /// @param window [in] The glfw3 window.
     WindowSurface(const VkInstance instance, GLFWwindow *window);
+
     WindowSurface(const WindowSurface &) = delete;
     WindowSurface(WindowSurface &&) noexcept;
+
     ~WindowSurface();
 
     WindowSurface &operator=(const WindowSurface &) = delete;

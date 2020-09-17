@@ -18,8 +18,10 @@ class Framebuffer {
 public:
     Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
                 const Swapchain &swapchain, const std::string &name);
+
     Framebuffer(const Framebuffer &) = delete;
     Framebuffer(Framebuffer &&) noexcept;
+
     ~Framebuffer();
 
     Framebuffer &operator=(const Framebuffer &) = delete;

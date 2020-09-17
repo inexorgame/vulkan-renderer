@@ -50,8 +50,10 @@ public:
     Instance(const std::string &application_name, const std::string &engine_name,
              const std::uint32_t application_version, const std::uint32_t engine_version,
              const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer);
+
     Instance(const Instance &) = delete;
     Instance(Instance &&) noexcept;
+
     ~Instance();
 
     Instance &operator=(const Instance &) = delete;

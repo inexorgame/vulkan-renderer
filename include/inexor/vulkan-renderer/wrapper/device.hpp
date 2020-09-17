@@ -44,8 +44,10 @@ public:
     Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
+
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
+
     ~Device();
 
     // TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!

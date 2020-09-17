@@ -30,8 +30,10 @@ public:
     Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
           const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
           const VkExtent2D image_extent);
+
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
+
     ~Image();
 
     Image &operator=(const Image &) = delete;

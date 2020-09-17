@@ -16,14 +16,6 @@ class RenderPass {
     std::string name;
 
 public:
-    /// Delete the copy constructor so renderpasses are move-only objects.
-    RenderPass(const RenderPass &) = delete;
-    RenderPass(RenderPass &&other) noexcept;
-
-    /// Delete the copy assignment operator so renderpasses are move-only objects.
-    RenderPass &operator=(const RenderPass &) = delete;
-    RenderPass &operator=(RenderPass &&) noexcept = default;
-
     /// @brief Creates a renderpass.
     /// @param device [in] A const reference to the Vulkan device wrapper.
     /// @param attachments [in] The renderpass attachments.
@@ -35,6 +27,12 @@ public:
                const std::string &name);
 
     ~RenderPass();
+
+    RenderPass(const RenderPass &) = delete;
+    RenderPass(RenderPass &&other) noexcept;
+
+    RenderPass &operator=(const RenderPass &) = delete;
+    RenderPass &operator=(RenderPass &&) noexcept = default;
 
     [[nodiscard]] VkRenderPass get() const {
         return renderpass;

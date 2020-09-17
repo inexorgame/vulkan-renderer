@@ -34,8 +34,10 @@ class Swapchain {
 public:
     Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
               const bool enable_vsync, const std::string &name);
+
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
+
     ~Swapchain();
 
     Swapchain &operator=(const Swapchain &) = delete;

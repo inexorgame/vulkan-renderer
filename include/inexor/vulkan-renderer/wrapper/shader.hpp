@@ -34,8 +34,10 @@ public:
     /// @param entry_point [in] The entry point of the shader code, in most cases just "main".
     Shader(const Device &m_device, VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
            const std::string &entry_point = "main");
+
     Shader(const Shader &) = delete;
     Shader(Shader &&) noexcept;
+
     ~Shader();
 
     Shader &operator=(const Shader &) = delete;

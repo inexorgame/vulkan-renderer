@@ -23,8 +23,10 @@ public:
     /// @param buffer_usage [in] The Vulkan buffer usage flags.
     /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
     UniformBuffer(const Device &device, const std::string &name, const VkDeviceSize &size);
+
     UniformBuffer(const UniformBuffer &) = delete;
     UniformBuffer(UniformBuffer &&) noexcept;
+
     ~UniformBuffer() = default;
 
     UniformBuffer &operator=(const UniformBuffer &) = delete;

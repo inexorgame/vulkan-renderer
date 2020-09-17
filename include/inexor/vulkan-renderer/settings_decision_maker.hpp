@@ -14,6 +14,7 @@ namespace inexor::vulkan_renderer {
 /// - Which graphics card's queue families should be used?
 /// - Which presentation modes should be used?
 struct VulkanSettingsDecisionMaker {
+
     /// @brief Rates a graphcs card by its features.
     /// @param graphics_card The graphics card.
     /// @return A score which is greater or equal to 0.

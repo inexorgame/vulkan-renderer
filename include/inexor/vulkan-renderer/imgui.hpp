@@ -54,18 +54,18 @@ class ImGUIOverlay {
     } m_push_const_block{};
 
 public:
-    ImGUIOverlay(const ImGUIOverlay &) = delete;
-    ImGUIOverlay(ImGUIOverlay &&other) noexcept;
-
-    ImGUIOverlay &operator=(const ImGUIOverlay &other) = delete;
-    ImGUIOverlay &operator=(ImGUIOverlay &&other) = default;
-
     /// @brief Default constructor
     /// @param device [in] A reference to the device wrapper.
     /// @param swapchain [in] A reference to the swapchain.
     ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain);
 
     ~ImGUIOverlay();
+
+    ImGUIOverlay(const ImGUIOverlay &) = delete;
+    ImGUIOverlay(ImGUIOverlay &&other) noexcept;
+
+    ImGUIOverlay &operator=(const ImGUIOverlay &other) = delete;
+    ImGUIOverlay &operator=(ImGUIOverlay &&other) = default;
 
     [[nodiscard]] float get_scale() const {
         return m_scale;

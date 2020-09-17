@@ -16,14 +16,6 @@ class GraphicsPipeline {
     std::string name;
 
 public:
-    /// Delete the copy constructor so graphics pipelines are move-only objects.
-    GraphicsPipeline(const GraphicsPipeline &) = delete;
-    GraphicsPipeline(GraphicsPipeline &&other) noexcept;
-
-    /// Delete the copy assignment operator so graphics pipelines are move-only objects.
-    GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
-    GraphicsPipeline &operator=(GraphicsPipeline &&) noexcept = default;
-
     /// @brief Creates a graphics pipeline.
     /// @param device [in] The Vulkan device.
     /// @param pipeline_layout [in] The pipeline layout.
@@ -40,7 +32,13 @@ public:
                      const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
                      const std::uint32_t window_width, const std::uint32_t window_height, const std::string &name);
 
+    GraphicsPipeline(const GraphicsPipeline &) = delete;
+    GraphicsPipeline(GraphicsPipeline &&other) noexcept;
+
     ~GraphicsPipeline();
+
+    GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
+    GraphicsPipeline &operator=(GraphicsPipeline &&) noexcept = default;
 
     [[nodiscard]] VkPipeline get() const {
         return graphics_pipeline;

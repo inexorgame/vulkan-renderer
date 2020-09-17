@@ -7,8 +7,10 @@ class GLFWContext {
 
 public:
     GLFWContext();
+
     GLFWContext(const GLFWContext &) = delete;
     GLFWContext(GLFWContext &&) noexcept;
+
     ~GLFWContext();
 
     GLFWContext &operator=(const GLFWContext &) = delete;
