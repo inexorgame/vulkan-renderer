@@ -1,6 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
-#include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"

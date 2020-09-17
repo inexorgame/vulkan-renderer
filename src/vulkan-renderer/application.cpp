@@ -1,7 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/debug_callback.hpp"
-#include "inexor/vulkan-renderer/error_handling.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
@@ -113,7 +112,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     // TODO: Load more info from TOML file.
 }
 
-VkResult Application::load_textures() {
+void Application::load_textures() {
     assert(m_device->device());
     assert(m_device->physical_device());
     assert(m_device->allocator());
@@ -128,11 +127,9 @@ VkResult Application::load_textures() {
         wrapper::CpuTexture cpu_texture(texture_file, texture_name);
         m_textures.emplace_back(*m_device, cpu_texture);
     }
-
-    return VK_SUCCESS;
 }
 
-VkResult Application::load_shaders() {
+void Application::load_shaders() {
     assert(m_device->device());
 
     spdlog::debug("Loading vertex shaders.");
@@ -167,11 +164,9 @@ VkResult Application::load_shaders() {
     }
 
     spdlog::debug("Loading shaders finished.");
-
-    return VK_SUCCESS;
 }
 
-VkResult Application::load_octree_geometry() {
+void Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
     std::shared_ptr<world::Cube> cube =
@@ -195,11 +190,9 @@ VkResult Application::load_octree_geometry() {
             }
         }
     }
-
-    return VK_SUCCESS;
 }
 
-VkResult Application::check_application_specific_features() {
+void Application::check_application_specific_features() {
     assert(m_device->physical_device());
 
     VkPhysicalDeviceFeatures graphics_card_features;
@@ -214,8 +207,6 @@ VkResult Application::check_application_specific_features() {
     }
 
     // TODO: Add more checks if necessary.
-
-    return VK_SUCCESS;
 }
 
 Application::Application(int argc, char **argv) {
@@ -290,15 +281,12 @@ Application::Application(int argc, char **argv) {
                     vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
 
             if (vkCreateDebugReportCallbackEXT) {
-                // Create the debug report callback.
-                VkResult result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci, nullptr,
-                                                                 &m_debug_report_callback);
-                if (VK_SUCCESS == result) {
-                    spdlog::debug("Creating Vulkan debug callback.");
-                    m_debug_report_callback_initialised = true;
-                } else {
-                    vulkan_error_check(result);
+                if (vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci, nullptr,
+                                                   &m_debug_report_callback) != VK_SUCCESS) {
+                    throw std::runtime_error("Error: vkCreateDebugReportCallbackEXT failed!");
                 }
+                spdlog::debug("Creating Vulkan debug callback.");
+                m_debug_report_callback_initialised = true;
             } else {
                 spdlog::error("vkCreateDebugReportCallbackEXT is a null-pointer! Function not available.");
             }
@@ -381,17 +369,13 @@ Application::Application(int argc, char **argv) {
         std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
                                           enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
 
-    VkResult result = check_application_specific_features();
-    vulkan_error_check(result);
+    check_application_specific_features();
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");
 
-    result = load_textures();
-    vulkan_error_check(result);
-
-    result = load_shaders();
-    vulkan_error_check(result);
+    load_textures();
+    load_shaders();
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index());
 
@@ -429,18 +413,17 @@ Application::Application(int argc, char **argv) {
                                                            descriptor_writes,
                                                            "Default descriptor"});
 
-    result = load_octree_geometry();
+    load_octree_geometry();
     generate_octree_indices();
-    vulkan_error_check(result);
 
     spdlog::debug("Vulkan initialisation finished.");
-
     spdlog::debug("Showing window.");
+
     m_window->show();
     recreate_swapchain();
 }
 
-VkResult Application::update_uniform_buffers() {
+void Application::update_uniform_buffers() {
     float time = m_time_step.time_step_since_initialisation();
 
     UniformBufferObject ubo{};
@@ -454,11 +437,9 @@ VkResult Application::update_uniform_buffers() {
 
     // TODO: Don't use vector of uniform buffers.
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
-
-    return VK_SUCCESS;
 }
 
-VkResult Application::update_mouse_input() {
+void Application::update_mouse_input() {
     double current_cursor_x{0.0};
     double current_cursor_y{0.0};
 
@@ -478,8 +459,6 @@ VkResult Application::update_mouse_input() {
 
     m_cursor_x = current_cursor_x;
     m_cursor_y = current_cursor_y;
-
-    return VK_SUCCESS;
 }
 
 void Application::update_imgui_overlay() {
