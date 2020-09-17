@@ -14,10 +14,6 @@ class FPSCounter {
     float m_fps_update_interval = 1.0f;
 
 public:
-    FPSCounter() = default;
-
-    ~FPSCounter() = default;
-
     std::optional<std::uint32_t> update();
 };
 

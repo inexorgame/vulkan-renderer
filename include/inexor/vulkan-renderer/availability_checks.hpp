@@ -25,8 +25,6 @@ class AvailabilityChecksManager {
     void create_instance_extensions_cache();
 
 public:
-    AvailabilityChecksManager() = default;
-
     /// @brief Checks if a certain Vulkan instance layer is available on the system.
     /// @note Available instance layers can be enabled by passing them as parameter during Vulkan instance creation.
     /// @param instance_layer_name [in] The name of the Vulkan instance layer.

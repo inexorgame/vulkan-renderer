@@ -20,10 +20,6 @@ class VulkanSettingsDecisionMaker {
     [[nodiscard]] std::size_t rate_graphics_card(const VkPhysicalDevice &graphics_card);
 
 public:
-    VulkanSettingsDecisionMaker() = default;
-
-    ~VulkanSettingsDecisionMaker() = default;
-
     /// @brief Automatically decides if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.

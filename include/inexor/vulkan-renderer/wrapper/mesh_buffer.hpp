@@ -67,8 +67,6 @@ public:
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices);
 
-    ~MeshBuffer() = default;
-
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
         return m_vertex_buffer.buffer();
     }

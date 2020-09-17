@@ -17,8 +17,6 @@ class TimeStep {
 public:
     TimeStep();
 
-    ~TimeStep() = default;
-
     /// @brief Returns a scaling factor which corresponds to the
     /// time which has passed since last render call and now.
     [[nodiscard]] float time_step();
