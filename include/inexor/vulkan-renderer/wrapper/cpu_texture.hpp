@@ -8,7 +8,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 class CpuTexture {
-private:
     std::string m_name;
 
     int m_texture_width{0};

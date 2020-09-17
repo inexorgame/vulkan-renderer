@@ -10,7 +10,6 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 
 class Image {
-private:
     const wrapper::Device &m_device;
     VmaAllocation m_allocation;
     VmaAllocationInfo m_allocation_info;

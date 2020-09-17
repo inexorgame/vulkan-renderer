@@ -6,7 +6,6 @@ namespace inexor::vulkan_renderer {
 
 // TODO: Refactor method naming!
 class Camera {
-private:
     float m_fov;
     float m_z_near, m_z_far;
 

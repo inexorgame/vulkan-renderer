@@ -10,7 +10,6 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 
 class GraphicsPipeline {
-private:
     const Device &m_device;
     VkPipeline graphics_pipeline;
     VkPipelineCache pipeline_cache;

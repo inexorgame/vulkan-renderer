@@ -7,7 +7,6 @@
 namespace inexor::vulkan_renderer {
 
 class FPSCounter {
-private:
     std::size_t m_frames = 0;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time;

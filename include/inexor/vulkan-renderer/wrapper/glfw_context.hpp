@@ -3,7 +3,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 class GLFWContext {
-private:
     bool m_initialized{false};
 
 public:
