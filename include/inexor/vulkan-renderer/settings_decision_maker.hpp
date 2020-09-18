@@ -8,6 +8,12 @@
 
 namespace inexor::vulkan_renderer {
 
+/// @brief A wrapper class for swapchain settings.
+struct SwapchainSettings {
+    VkExtent2D window_size;
+    VkExtent2D swapchain_size;
+};
+
 /// @brief This class makes automatic decisions about setting up Vulkan.
 /// Examples:
 /// - Which graphics card will be used if more than one is available?
@@ -74,9 +80,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param window_height The height of the window.
     /// @param swapchain_extent [out] The extent of the swapchain.
     /// @todo Make this function return a std::optional<VkExtend2D> instead of using call by reference!
-    void decide_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                 std::uint32_t &window_width, std::uint32_t &window_height,
-                                 VkExtent2D &swapchain_extent);
+    SwapchainSettings decide_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
+                                              std::uint32_t window_width, std::uint32_t window_height);
 
     /// @brief Automatically find the image transform, relative to the presentation engine's natural orientation,
     /// applied to the image content prior to presentation.

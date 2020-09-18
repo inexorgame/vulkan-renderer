@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include <array>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {

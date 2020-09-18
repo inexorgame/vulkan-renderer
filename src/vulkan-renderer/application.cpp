@@ -443,10 +443,8 @@ void Application::update_mouse_input() {
     double current_cursor_x{0.0};
     double current_cursor_y{0.0};
 
-    m_window->cursor_pos(current_cursor_x, current_cursor_y);
-
-    double cursor_delta_x = current_cursor_x - m_cursor_x;
-    double cursor_delta_y = current_cursor_y - m_cursor_y;
+    double cursor_delta_x = cursor_pos[0] - m_cursor_x;
+    double cursor_delta_y = cursor_pos[1] - m_cursor_y;
 
     int state = m_window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
 

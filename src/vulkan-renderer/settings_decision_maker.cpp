@@ -639,13 +639,15 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysi
     return std::nullopt;
 }
 
-void VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkPhysicalDevice &graphics_card,
-                                                          const VkSurfaceKHR &surface, std::uint32_t &window_width,
-                                                          std::uint32_t &window_height, VkExtent2D &swapchain_extent) {
+SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkPhysicalDevice &graphics_card,
+                                                                       const VkSurfaceKHR &surface,
+                                                                       std::uint32_t window_width,
+                                                                       std::uint32_t window_height) {
     assert(graphics_card);
     assert(surface);
 
     VkSurfaceCapabilitiesKHR surface_capabilities{};
+    SwapchainSettings updated_swapchain_settings{};
 
     if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
@@ -654,14 +656,15 @@ void VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkPhysicalDevice
     if (surface_capabilities.currentExtent.width == std::numeric_limits<std::uint32_t>::max() &&
         surface_capabilities.currentExtent.height == std::numeric_limits<std::uint32_t>::max()) {
         // The size of the window dictates the swapchain's extent.
-        swapchain_extent.width = window_width;
-        swapchain_extent.height = window_height;
+        updated_swapchain_settings.swapchain_size.width = window_width;
+        updated_swapchain_settings.swapchain_size.height = window_height;
     } else {
         // If the surface size is defined, the swap chain size must match.
-        swapchain_extent = surface_capabilities.currentExtent;
-        window_width = surface_capabilities.currentExtent.width;
-        window_height = surface_capabilities.currentExtent.height;
+        updated_swapchain_settings.swapchain_size = surface_capabilities.currentExtent;
+        updated_swapchain_settings.window_size = surface_capabilities.currentExtent;
     }
+
+    return updated_swapchain_settings;
 }
 
 std::optional<std::uint32_t>
