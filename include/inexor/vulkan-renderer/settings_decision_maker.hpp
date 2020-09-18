@@ -90,8 +90,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The composite alpha flag bits.
-    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
-                                                                          const VkSurfaceKHR surface);
+    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(VkPhysicalDevice selected_graphics_card,
+                                                                          VkSurfaceKHR surface);
 
     /// @brief Automatically decide which presentation mode the presentation engine will be using.
     /// @note We can only use presentation modes that are available in the current system. The preferred presentation
@@ -162,8 +162,8 @@ struct VulkanSettingsDecisionMaker {
     /// @return A VkFormat value if a suitable depth buffer format could be found, std::nullopt otherwise.
     [[nodiscard]] std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice &graphics_card,
                                                                    const std::vector<VkFormat> &formats,
-                                                                   const VkImageTiling tiling,
-                                                                   const VkFormatFeatureFlags feature_flags);
+                                                                   VkImageTiling tiling,
+                                                                   VkFormatFeatureFlags feature_flags);
 };
 
 } // namespace inexor::vulkan_renderer

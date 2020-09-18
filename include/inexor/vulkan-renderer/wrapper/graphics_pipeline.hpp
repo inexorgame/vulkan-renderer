@@ -31,7 +31,7 @@ public:
                      const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
                      const std::vector<VkVertexInputBindingDescription> &vertex_binding,
                      const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
-                     const std::uint32_t window_width, const std::uint32_t window_height, const std::string &name);
+                     std::uint32_t window_width, std::uint32_t window_height, const std::string &name);
 
     GraphicsPipeline(const GraphicsPipeline &) = delete;
     GraphicsPipeline(GraphicsPipeline &&other) noexcept;

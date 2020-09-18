@@ -72,7 +72,7 @@ public:
     }
 
     void update();
-    void render(const std::uint32_t image_index);
+    void render(std::uint32_t image_index);
 };
 
 } // namespace inexor::vulkan_renderer

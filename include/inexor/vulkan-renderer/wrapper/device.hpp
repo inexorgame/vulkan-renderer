@@ -49,7 +49,7 @@ public:
     /// application's purpose, another graphics card will be selected automatically. See the details of the device
     /// selection mechanism!
     /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
-    Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+    Device(VkInstance instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
 

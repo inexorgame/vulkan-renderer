@@ -36,7 +36,7 @@ public:
     /// @warn We can't determine the queue and queue family index to use automatically using the device wrapper
     /// reference because we might choose a queue which is unsuitable for the requested purpose!
     /// This is the reason we must specify the queue and queue family index in the constructor.
-    OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index);
+    OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index);
 
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;
