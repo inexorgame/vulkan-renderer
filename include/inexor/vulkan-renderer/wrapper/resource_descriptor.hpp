@@ -13,8 +13,8 @@ class Device;
 class ResourceDescriptor {
     const std::string m_name;
     const Device &m_device;
-    VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
-    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorPool m_descriptor_pool{nullptr};
+    VkDescriptorSetLayout m_descriptor_set_layout{nullptr};
     std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings;
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
     std::vector<VkDescriptorSet> m_descriptor_sets;

@@ -235,7 +235,7 @@ protected:
     // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
     VmaAllocator m_allocator;
     VkDevice m_device;
-    VmaAllocation m_allocation{VK_NULL_HANDLE};
+    VmaAllocation m_allocation{nullptr};
 
     PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}
 
@@ -251,7 +251,7 @@ class PhysicalBuffer : public PhysicalResource {
     friend FrameGraph;
 
 private:
-    VkBuffer m_buffer{VK_NULL_HANDLE};
+    VkBuffer m_buffer{nullptr};
 
 public:
     PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
@@ -267,8 +267,8 @@ class PhysicalImage : public PhysicalResource {
     friend FrameGraph;
 
 private:
-    VkImage m_image{VK_NULL_HANDLE};
-    VkImageView m_image_view{VK_NULL_HANDLE};
+    VkImage m_image{nullptr};
+    VkImageView m_image_view{nullptr};
 
 public:
     PhysicalImage(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
@@ -302,8 +302,8 @@ class PhysicalStage : public FrameGraphObject {
 private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
     const wrapper::Device &m_device;
-    VkPipeline m_pipeline{VK_NULL_HANDLE};
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
+    VkPipeline m_pipeline{nullptr};
+    VkPipelineLayout m_pipeline_layout{nullptr};
 
 protected:
     [[nodiscard]] VkDevice device() const {
@@ -330,7 +330,7 @@ class PhysicalGraphicsStage : public PhysicalStage {
     friend FrameGraph;
 
 private:
-    VkRenderPass m_render_pass{VK_NULL_HANDLE};
+    VkRenderPass m_render_pass{nullptr};
     std::vector<wrapper::Framebuffer> m_framebuffers;
 
 public:

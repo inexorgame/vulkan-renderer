@@ -12,7 +12,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @brief RAII wrapper class for VkInstances.
 class Instance {
 protected:
-    VkInstance m_instance{VK_NULL_HANDLE};
+    VkInstance m_instance{nullptr};
     AvailabilityChecksManager m_availability_checks;
 
 public:

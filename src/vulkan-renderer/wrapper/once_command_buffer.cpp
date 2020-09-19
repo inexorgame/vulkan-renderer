@@ -82,7 +82,7 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = m_command_buffer->ptr();
 
-    if (vkQueueSubmit(m_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
+    if (vkQueueSubmit(m_queue, 1, &submit_info, nullptr) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkQueueSubmit failed for once command buffer!");
     }
 

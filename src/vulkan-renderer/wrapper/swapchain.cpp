@@ -18,7 +18,7 @@ Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint
     assert(device.device());
     assert(surface);
 
-    setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
+    setup_swapchain(nullptr, window_width, window_height);
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept
@@ -77,7 +77,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.presentMode = *present_mode;
 
     // Swapchain recreation can be accelerated a lot when storing the old swapchain.
-    if (old_swapchain != VK_NULL_HANDLE) {
+    if (old_swapchain != nullptr) {
         swapchain_ci.oldSwapchain = old_swapchain;
     }
 
@@ -149,7 +149,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 std::uint32_t Swapchain::acquire_next_image(const Semaphore &semaphore) {
     std::uint32_t image_index;
     vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(),
-                          VK_NULL_HANDLE, &image_index);
+                          nullptr, &image_index);
     return image_index;
 }
 

@@ -25,7 +25,7 @@ namespace inexor::vulkan_renderer {
 class ImGUIOverlay {
     const wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
+    VkPipelineLayout m_pipeline_layout{nullptr};
 
     float m_scale{1.0f};
 

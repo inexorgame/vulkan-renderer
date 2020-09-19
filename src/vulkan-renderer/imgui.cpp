@@ -252,7 +252,7 @@ void ImGUIOverlay::update() {
                                                              imgui_draw_data->TotalIdxCount);
     }
 
-    if ((m_imgui_mesh->get_vertex_buffer() == VK_NULL_HANDLE) || (m_vertex_count != imgui_draw_data->TotalVtxCount)) {
+    if ((m_imgui_mesh->get_vertex_buffer() == nullptr) || (m_vertex_count != imgui_draw_data->TotalVtxCount)) {
         m_imgui_mesh.reset();
 
         spdlog::debug("Creating ImGUI vertex buffer");
@@ -266,7 +266,7 @@ void ImGUIOverlay::update() {
         update_command_buffers = true;
     }
 
-    if ((m_imgui_mesh->get_index_buffer() == VK_NULL_HANDLE) ||
+    if ((m_imgui_mesh->get_index_buffer() == nullptr) ||
         (m_index_count < static_cast<std::uint32_t>(imgui_draw_data->TotalIdxCount))) {
         m_imgui_mesh.reset();
 

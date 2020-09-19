@@ -14,7 +14,7 @@ class ResourceDescriptor;
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
-    VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
+    VkCommandBuffer m_command_buffer{nullptr};
     const wrapper::Device &m_device;
     const std::string m_name;
 

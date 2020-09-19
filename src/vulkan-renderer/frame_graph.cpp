@@ -517,7 +517,7 @@ void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemapho
     for (const auto *stage : m_phys_stage_stack) {
         auto *cmd_buf = stage->m_command_buffers[image_index].get();
         submit_info.pCommandBuffers = &cmd_buf;
-        vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+        vkQueueSubmit(graphics_queue, 1, &submit_info, nullptr);
     }
 }
 

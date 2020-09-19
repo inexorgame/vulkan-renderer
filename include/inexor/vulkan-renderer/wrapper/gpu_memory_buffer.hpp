@@ -16,9 +16,9 @@ class GPUMemoryBuffer {
 protected:
     std::string m_name;
     const Device &m_device;
-    VkBuffer m_buffer{VK_NULL_HANDLE};
+    VkBuffer m_buffer{nullptr};
     VkDeviceSize m_buffer_size{0};
-    VmaAllocation m_allocation{VK_NULL_HANDLE};
+    VmaAllocation m_allocation{nullptr};
     VmaAllocationInfo m_allocation_info{};
     VmaAllocationCreateInfo m_allocation_ci{};
 
