@@ -59,8 +59,8 @@ public:
         return m_mip_levels;
     }
 
-    [[nodiscard]] void *data() const {
-        return static_cast<void *>(m_texture_data);
+    [[nodiscard]] stbi_uc *data() const {
+        return m_texture_data;
     }
 
     [[nodiscard]] std::size_t data_size() const {
