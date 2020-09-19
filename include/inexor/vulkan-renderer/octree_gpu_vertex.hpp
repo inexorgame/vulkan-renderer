@@ -24,8 +24,8 @@ namespace std {
 template <>
 struct hash<inexor::vulkan_renderer::OctreeGpuVertex> {
     std::size_t operator()(const inexor::vulkan_renderer::OctreeGpuVertex &vertex) const {
-        auto h1 = std::hash<glm::vec3>{}(vertex.position);
-        auto h2 = std::hash<glm::vec3>{}(vertex.color);
+        const auto h1 = std::hash<glm::vec3>{}(vertex.position);
+        const auto h2 = std::hash<glm::vec3>{}(vertex.color);
         return h1 ^ h2;
     }
 };
