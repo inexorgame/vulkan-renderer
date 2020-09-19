@@ -65,7 +65,8 @@ public:
 
     [[nodiscard]] std::size_t data_size() const {
         // TODO: We will need to update this once we fully support mip levels.
-        return m_texture_width * m_texture_height * m_texture_channels;
+        return static_cast<std::size_t>(m_texture_width) * static_cast<std::size_t>(m_texture_height) *
+               static_cast<std::size_t>(m_texture_channels);
     }
 };
 
