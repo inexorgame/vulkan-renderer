@@ -37,9 +37,6 @@ class MeshBuffer {
     std::uint32_t m_number_of_vertices{0};
     std::uint32_t m_number_of_indices{0};
 
-    // Don't forget that index buffers are optional!
-    bool m_index_buffer_available = false;
-
 public:
     /// @brief Construct the mesh buffer and copy the vertex buffers's data and index buffer's data.
     /// @param device The const reference to a device RAII wrapper instance.

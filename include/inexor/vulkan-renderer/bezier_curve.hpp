@@ -62,8 +62,6 @@ struct BezierOutputPoint : public BezierInputPoint {
 class BezierCurve {
     bool m_curve_generated{false};
 
-    float m_curve_precision{1.0f};
-
     std::vector<BezierInputPoint> m_input_points;
 
     std::vector<BezierOutputPoint> m_output_points;
