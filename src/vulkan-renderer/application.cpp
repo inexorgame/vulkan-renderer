@@ -45,7 +45,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     auto renderer_configuration = toml::parse(file_name);
 
     // Search for the title of the configuration file and print it to debug output.
-    auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
+    const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
     spdlog::debug("Title: '{}'", configuration_title);
 
     m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
