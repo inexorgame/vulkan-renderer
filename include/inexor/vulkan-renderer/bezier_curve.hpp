@@ -66,18 +66,18 @@ class BezierCurve {
 
     std::vector<BezierOutputPoint> m_output_points;
 
-    uint32_t binomial_coefficient(uint32_t n, const uint32_t k);
+    uint32_t binomial_coefficient(uint32_t n, uint32_t k);
 
-    float bernstein_polynomial(uint32_t n, uint32_t k, const float curve_precision, const float coordinate_value);
+    float bernstein_polynomial(uint32_t n, uint32_t k, float curve_precision, float coordinate_value);
 
-    BezierOutputPoint calculate_point_on_curve(const float curve_precision);
+    BezierOutputPoint calculate_point_on_curve(float curve_precision);
 
 public:
     void add_input_point(const BezierInputPoint &input_point);
 
-    void add_input_point(const glm::vec3 &position, const float weight = 1.0f);
+    void add_input_point(const glm::vec3 &position, float weight = 1.0f);
 
-    void calculate_bezier_curve(const float curve_precision);
+    void calculate_bezier_curve(float curve_precision);
 
     [[nodiscard]] std::vector<BezierOutputPoint> output_points();
 

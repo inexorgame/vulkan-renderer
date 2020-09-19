@@ -23,8 +23,8 @@ public:
     /// @param buffer_size The size of the memory buffer to copy.
     /// @param data A pointer to the memory buffer.
     /// @param data_size The size of the memory buffer to copy.
-    StagingBuffer(const Device &device, const std::string &name, const VkDeviceSize buffer_size, void *data,
-                  const std::size_t data_size);
+    StagingBuffer(const Device &device, const std::string &name, VkDeviceSize buffer_size, void *data,
+                  std::size_t data_size);
 
     StagingBuffer(const StagingBuffer &) = delete;
     StagingBuffer(StagingBuffer &&) noexcept;
