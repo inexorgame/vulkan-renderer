@@ -17,7 +17,7 @@ class Camera {
 public:
     // TODO: Why is so much stuff here public? refactor!
 
-    enum CameraType { LOOKAT, FIRSTPERSON };
+    enum class CameraType { LOOKAT, FIRSTPERSON };
     CameraType m_type{CameraType::LOOKAT};
 
     glm::vec3 m_rotation{};
