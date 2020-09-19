@@ -118,7 +118,7 @@ void VulkanGraphicsCardInfoViewer::print_instance_layers() {
         }
 
         // Loop through all available instance layers and print information about them.
-        for (auto instance_layer : instance_layers) {
+        for (const auto &instance_layer : instance_layers) {
             std::uint32_t spec_major = VK_VERSION_MAJOR(instance_layer.specVersion);
             std::uint32_t spec_minor = VK_VERSION_MINOR(instance_layer.specVersion);
             std::uint32_t spec_patch = VK_VERSION_PATCH(instance_layer.specVersion);
@@ -158,7 +158,7 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
         }
 
         // Loop through all available instance extensions and print information about them.
-        for (auto extension : extensions) {
+        for (const auto &extension : extensions) {
             std::uint32_t spec_major = VK_VERSION_MAJOR(extension.specVersion);
             std::uint32_t spec_minor = VK_VERSION_MINOR(extension.specVersion);
             std::uint32_t spec_patch = VK_VERSION_PATCH(extension.specVersion);
@@ -198,7 +198,7 @@ void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &g
         }
 
         // Loop through all available device layers and print information about them.
-        for (auto device_layer : device_layers) {
+        for (const auto &device_layer : device_layers) {
             std::uint32_t spec_major = VK_VERSION_MAJOR(device_layer.specVersion);
             std::uint32_t spec_minor = VK_VERSION_MINOR(device_layer.specVersion);
             std::uint32_t spec_patch = VK_VERSION_PATCH(device_layer.specVersion);
@@ -241,7 +241,7 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
         }
 
         // Loop through all available device extensions and print information about them.
-        for (auto device_extension : device_extensions) {
+        for (const auto &device_extension : device_extensions) {
             std::uint32_t spec_major = VK_VERSION_MAJOR(device_extension.specVersion);
             std::uint32_t spec_minor = VK_VERSION_MINOR(device_extension.specVersion);
             std::uint32_t spec_patch = VK_VERSION_PATCH(device_extension.specVersion);
