@@ -61,11 +61,11 @@ public:
     Device &operator=(const Device &) = delete;
     Device &operator=(Device &&) = default;
 
-    [[nodiscard]] const VkDevice device() const {
+    [[nodiscard]] VkDevice device() const {
         return m_device;
     }
 
-    [[nodiscard]] const VkPhysicalDevice physical_device() const {
+    [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_graphics_card;
     }
 
@@ -77,17 +77,17 @@ public:
         return m_gpu_name;
     }
 
-    [[nodiscard]] const VkQueue graphics_queue() const {
+    [[nodiscard]] VkQueue graphics_queue() const {
         return m_graphics_queue;
     }
 
-    [[nodiscard]] const VkQueue present_queue() const {
+    [[nodiscard]] VkQueue present_queue() const {
         return m_present_queue;
     }
 
     /// @note Transfer queues are the fastest way to copy data across the PCIe bus. They are heavily underutilized even
     /// in modern games. Transfer queues can be used asynchronously to graphics queuey.
-    [[nodiscard]] const VkQueue transfer_queue() const {
+    [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
     }
 
