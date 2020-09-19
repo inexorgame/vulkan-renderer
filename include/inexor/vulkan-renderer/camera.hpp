@@ -7,8 +7,9 @@ namespace inexor::vulkan_renderer {
 /// @brief A RAII wrapper class for camera position and movement.
 /// @todo Refactor method naming!
 class Camera {
-    float m_fov;
-    float m_z_near, m_z_far;
+    float m_fov{0.0f};
+    float m_z_near{0.0f};
+    float m_z_far{0.0f};
 
     /// @brief Update the view matrix.
     /// @note The view matrix should only be updated if necessary.
@@ -29,8 +30,8 @@ public:
     bool m_updated{false};
 
     struct {
-        glm::mat4 perspective;
-        glm::mat4 view;
+        glm::mat4 perspective = glm::mat4();
+        glm::mat4 view = glm::mat4();
     } m_matrices;
 
     struct {

@@ -14,7 +14,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device {
     VkDevice m_device;
     VkPhysicalDevice m_graphics_card;
-    VmaAllocator m_allocator;
+    VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
 
     VkQueue m_graphics_queue;

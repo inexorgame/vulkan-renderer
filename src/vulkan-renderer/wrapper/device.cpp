@@ -311,6 +311,17 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
 Device::Device(Device &&other) noexcept
     : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
+      m_allocator(other.m_allocator), m_gpu_name(std::move(other.m_gpu_name)), m_graphics_queue(other.m_graphics_queue),
+      m_present_queue(other.m_present_queue), m_transfer_queue(other.m_transfer_queue), m_surface(other.m_surface),
+      m_present_queue_family_index(other.m_present_queue_family_index),
+      m_graphics_queue_family_index(other.m_graphics_queue_family_index),
+      m_transfer_queue_family_index(other.m_transfer_queue_family_index),
+      m_vk_debug_marker_set_object_tag(other.m_vk_debug_marker_set_object_tag),
+      m_vk_debug_marker_set_object_name(other.m_vk_debug_marker_set_object_name),
+      m_vk_cmd_debug_marker_begin(other.m_vk_cmd_debug_marker_begin),
+      m_vk_cmd_debug_marker_end(other.m_vk_cmd_debug_marker_end),
+      m_vk_cmd_debug_marker_insert(other.m_vk_cmd_debug_marker_insert),
+      m_vk_set_debug_utils_object_name(other.m_vk_set_debug_utils_object_name),
       m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {}
 
 Device::~Device() {
