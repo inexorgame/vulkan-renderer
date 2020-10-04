@@ -222,8 +222,8 @@ void Cube::rotate(const glm::vec<3, int8_t> &axis) {
     if (rotation_level == 0) {
         return;
     }
-    const auto edge_order = x != 0 ? X_EDGE_ROTATION_ORDER : y != 0 ? Y_EDGE_ROTATION_ORDER : Z_EDGE_ROTATION_ORDER;
-    const auto child_order = x != 0 ? X_CHILD_ROTATION_ORDER : y != 0 ? Y_CHILD_ROTATION_ORDER : Z_CHILD_ROTATION_ORDER;
+    const auto edge_order = x != 0 ? ROTATION_ORDER_EDGE_X : y != 0 ? ROTATION_ORDER_EDGE_Y : ROTATION_ORDER_EDGE_Z;
+    const auto child_order = x != 0 ? CHILD_ROTATION_ORDER_X : y != 0 ? CHILD_ROTATION_ORDER_Y : CHILD_ROTATION_ORDER_Z;
     switch (rotation_level) {
     case 1:
         rotate_90(edge_order, child_order);

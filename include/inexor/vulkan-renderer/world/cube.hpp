@@ -59,7 +59,7 @@ public:
     static constexpr std::size_t EDGES = 12;
 
     /// IDs of the edges in the order of for a 90° rotation around the X-axis.
-    static constexpr EdgeRotationOrder X_EDGE_ROTATION_ORDER{
+    static constexpr EdgeRotationOrder ROTATION_ORDER_EDGE_X{
         {// First edge need to point to (crossing with) second, second to third, third to second (again) and fourth to
          // third
          {{2, 4, 11, 1}},
@@ -67,19 +67,19 @@ public:
          {{0, 9, 6, 3}}}};
 
     /// IDs of the edges in the order of for a 90° rotation around the Y-axis.
-    static constexpr EdgeRotationOrder Y_EDGE_ROTATION_ORDER{{{{0, 5, 9, 2}}, {{3, 8, 6, 11}}, {{1, 10, 7, 4}}}};
+    static constexpr EdgeRotationOrder ROTATION_ORDER_EDGE_Y{{{{0, 5, 9, 2}}, {{3, 8, 6, 11}}, {{1, 10, 7, 4}}}};
 
     /// IDs of the edges in the order of for a 90° rotation around the Z-axis.
-    static constexpr EdgeRotationOrder Z_EDGE_ROTATION_ORDER{{{{1, 3, 10, 0}}, {{4, 6, 7, 9}}, {{2, 11, 8, 5}}}};
+    static constexpr EdgeRotationOrder ROTATION_ORDER_EDGE_Z{{{{1, 3, 10, 0}}, {{4, 6, 7, 9}}, {{2, 11, 8, 5}}}};
 
     /// IDs of the children in the order of for a 90° rotation around the X-axis.
-    static constexpr ChildRotationOrder X_CHILD_ROTATION_ORDER{{{{0, 1, 3, 2}}, {{4, 5, 7, 6}}}};
+    static constexpr ChildRotationOrder CHILD_ROTATION_ORDER_X{{{{0, 1, 3, 2}}, {{4, 5, 7, 6}}}};
 
     /// IDs of the children in the order of for a 90° rotation around the Y-axis.
-    static constexpr ChildRotationOrder Y_CHILD_ROTATION_ORDER{{{{0, 4, 5, 1}}, {{2, 6, 7, 3}}}};
+    static constexpr ChildRotationOrder CHILD_ROTATION_ORDER_Y{{{{0, 4, 5, 1}}, {{2, 6, 7, 3}}}};
 
     /// IDs of the children in the order of for a 90° rotation around the Z-axis.
-    static constexpr ChildRotationOrder Z_CHILD_ROTATION_ORDER{{{{0, 2, 6, 4}}, {{1, 3, 7, 5}}}};
+    static constexpr ChildRotationOrder CHILD_ROTATION_ORDER_Z{{{{0, 2, 6, 4}}, {{1, 3, 7, 5}}}};
 
     /// Cube Type.
     enum class Type {
