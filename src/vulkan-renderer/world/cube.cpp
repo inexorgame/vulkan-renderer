@@ -26,9 +26,6 @@ void Cube::remove_children() {
 }
 
 void Cube::rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order) {
-    if (m_type == Type::EMPTY || m_type == Type::SOLID) {
-        return;
-    }
     if (m_type == Type::NORMAL) {
         uint8_t i = 0;
         for (const auto &order : edge_order) {
@@ -41,8 +38,7 @@ void Cube::rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrd
             }
         }
         return;
-    }
-    if (m_type == Type::OCTANT) {
+    } else if (m_type == Type::OCTANT) {
         for (const auto &child : children()) {
             child->rotate_90(edge_order, child_order);
         }
@@ -62,9 +58,6 @@ void Cube::rotate_elements_90(const std::array<std::uint8_t, 4> &order, std::arr
 }
 
 void Cube::rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order) {
-    if (m_type == Type::EMPTY || m_type == Type::SOLID) {
-        return;
-    }
     if (m_type == Type::NORMAL) {
         uint8_t i = 0;
         for (const auto &order : edge_order) {
@@ -80,8 +73,7 @@ void Cube::rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOr
             }
             i++;
         }
-    }
-    if (m_type == Type::OCTANT) {
+    } else if (m_type == Type::OCTANT) {
         for (const auto &child : children()) {
             child->rotate_180(edge_order, child_order);
         }
@@ -98,9 +90,6 @@ void Cube::rotate_elements_180(const std::array<std::uint8_t, 4> &order, std::ar
 }
 
 void Cube::rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order) {
-    if (m_type == Type::EMPTY || m_type == Type::SOLID) {
-        return;
-    }
     if (m_type == Type::NORMAL) {
         uint8_t i = 0;
         for (const auto &order : edge_order) {
@@ -114,8 +103,7 @@ void Cube::rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOr
             i++;
         }
         return;
-    }
-    if (m_type == Type::OCTANT) {
+    } else if (m_type == Type::OCTANT) {
         for (const auto &child : children()) {
             child->rotate_270(edge_order, child_order);
         }
@@ -159,8 +147,7 @@ std::array<glm::vec3, 8> Cube::vertices() const noexcept {
                  {max.x, pos.y, max.z},
                  {max.x, max.y, pos.z},
                  {max.x, max.y, max.z}}};
-    }
-    if (m_type == Type::NORMAL) {
+    } else if (m_type == Type::NORMAL) {
         const float step = m_size / Indentation::MAX;
         const std::array<Indentation, Cube::EDGES> &ind = m_indentations;
 
@@ -243,8 +230,7 @@ std::size_t Cube::grid_level() const noexcept {
 std::size_t Cube::count_geometry_cubes() const noexcept {
     if (m_type == Type::SOLID || m_type == Type::NORMAL) {
         return 1;
-    }
-    if (m_type == Type::OCTANT) {
+    } else if (m_type == Type::OCTANT) {
         std::size_t count = 0;
         for (const auto &cube : m_children) {
             count += cube->count_geometry_cubes();
@@ -372,8 +358,7 @@ void Cube::update_polygon_cache() const {
     if (m_type == Type::SOLID) {
         m_polygon_cache_valid = true;
         return;
-    }
-    if (m_type == Type::NORMAL) {
+    } else if (m_type == Type::NORMAL) {
         const std::array<Indentation, Cube::EDGES> ind = m_indentations;
 
         // Check for each side if the side is convex, rotate the hypotenuse (middle diagonal edge) so it becomes convex!
