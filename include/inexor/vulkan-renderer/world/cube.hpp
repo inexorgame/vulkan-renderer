@@ -31,8 +31,8 @@ using Polygon = std::array<glm::vec3, 3>;
 
 using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 
-/// IDs of the children in a order so that we rotate the octants when moving the child with the first ID to the second ID,
-/// the second, to the third, ...
+/// IDs of the children in a order so that we rotate the octants when moving the child with the first ID to the second
+/// ID, the second, to the third, ...
 using ChildRotationOrder = std::array<std::array<uint8_t, 4>, 2>;
 
 /// IDs of the edges in a order so that we rotate the cube when moving the edge with the first ID to the second ID,
@@ -57,44 +57,27 @@ public:
     static constexpr std::size_t EDGES = 12;
 
     /// IDs of the edges in the order of for a 90° rotation around the X-axis.
-    static constexpr EdgeRotationOrder X_EDGE_ROTATION_ORDER {{
-          // First edge need to point to (crossing with) second, second to third, third to second (again) and fourth to third
-        {{2, 4, 11, 1}},
-        {{5, 7, 8, 10}},
-        {{0, 9, 6, 3}}
-    }};
+    static constexpr EdgeRotationOrder X_EDGE_ROTATION_ORDER{
+        {// First edge need to point to (crossing with) second, second to third, third to second (again) and fourth to
+         // third
+         {{2, 4, 11, 1}},
+         {{5, 7, 8, 10}},
+         {{0, 9, 6, 3}}}};
 
     /// IDs of the edges in the order of for a 90° rotation around the Y-axis.
-    static constexpr EdgeRotationOrder Y_EDGE_ROTATION_ORDER {{
-        {{0, 5, 9, 2}},
-        {{3, 8, 6, 11}},
-        {{1, 10, 7, 4}}
-    }};
+    static constexpr EdgeRotationOrder Y_EDGE_ROTATION_ORDER{{{{0, 5, 9, 2}}, {{3, 8, 6, 11}}, {{1, 10, 7, 4}}}};
 
     /// IDs of the edges in the order of for a 90° rotation around the Z-axis.
-    static constexpr EdgeRotationOrder Z_EDGE_ROTATION_ORDER {{
-        {{1, 3, 10, 0}},
-        {{4, 6, 7, 9}},
-        {{2, 11, 8, 5}}
-    }};
+    static constexpr EdgeRotationOrder Z_EDGE_ROTATION_ORDER{{{{1, 3, 10, 0}}, {{4, 6, 7, 9}}, {{2, 11, 8, 5}}}};
 
     /// IDs of the children in the order of for a 90° rotation around the X-axis.
-    static constexpr ChildRotationOrder X_CHILD_ROTATION_ORDER {{
-        {{0, 1, 3, 2}},
-        {{4, 5, 7, 6}}
-    }};
+    static constexpr ChildRotationOrder X_CHILD_ROTATION_ORDER{{{{0, 1, 3, 2}}, {{4, 5, 7, 6}}}};
 
     /// IDs of the children in the order of for a 90° rotation around the Y-axis.
-    static constexpr ChildRotationOrder Y_CHILD_ROTATION_ORDER {{
-        {{0, 4, 5, 1}},
-        {{2, 6, 7, 3}}
-    }};
+    static constexpr ChildRotationOrder Y_CHILD_ROTATION_ORDER{{{{0, 4, 5, 1}}, {{2, 6, 7, 3}}}};
 
     /// IDs of the children in the order of for a 90° rotation around the Z-axis.
-    static constexpr ChildRotationOrder Z_CHILD_ROTATION_ORDER {{
-        {{0, 2, 6, 4}},
-        {{1, 3, 7, 5}}
-    }};
+    static constexpr ChildRotationOrder Z_CHILD_ROTATION_ORDER{{{{0, 2, 6, 4}}, {{1, 3, 7, 5}}}};
 
     /// Cube Type.
     enum class Type {
@@ -138,7 +121,8 @@ private:
     ///                   element will go to the place of the second, each second to the third, etc.
     /// @param child_order The rotation-orders of the children which should be rotated. At a 90° rotation, each first
     ///                    element will go to the place of the second, each second to the third, etc.
-    void rotate(const uint8_t &rotation_level, const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
+    void rotate(const uint8_t &rotation_level, const EdgeRotationOrder &edge_order,
+                const ChildRotationOrder &child_order);
 
     /// Rotate a cube by 90°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
@@ -146,14 +130,14 @@ private:
     void rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
     /// Rotate elements by 90° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
-    template<typename TYPE, std::size_t SIZE>
+    template <typename TYPE, std::size_t SIZE>
     static void rotate_elements_90(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
 
     /// Rotate a cube by 180°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
     /// @param child_order The rotation-orders of the children which should be rotated.
     void rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
-    template<typename TYPE, std::size_t SIZE>
+    template <typename TYPE, std::size_t SIZE>
     /// Rotate elements by 180° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
     static void rotate_elements_180(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
@@ -164,7 +148,7 @@ private:
     void rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
     /// Rotate elements by 270° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
-    template<typename TYPE, std::size_t SIZE>
+    template <typename TYPE, std::size_t SIZE>
     static void rotate_elements_270(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
 
     /// Get the root to this cube.

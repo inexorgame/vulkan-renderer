@@ -225,17 +225,17 @@ void Cube::rotate(const glm::vec<3, int8_t> &axis) {
     const auto edge_order = x != 0 ? X_EDGE_ROTATION_ORDER : y != 0 ? Y_EDGE_ROTATION_ORDER : Z_EDGE_ROTATION_ORDER;
     const auto child_order = x != 0 ? X_CHILD_ROTATION_ORDER : y != 0 ? Y_CHILD_ROTATION_ORDER : Z_CHILD_ROTATION_ORDER;
     switch (rotation_level) {
-        case 1:
-            rotate_90(edge_order, child_order);
-            return;
-        case 2:
-            rotate_180(edge_order, child_order);
-            return;
-        case 3:
-            rotate_270(edge_order, child_order);
-            return;
-        default:
-            assert(false);
+    case 1:
+        rotate_90(edge_order, child_order);
+        return;
+    case 2:
+        rotate_180(edge_order, child_order);
+        return;
+    case 3:
+        rotate_270(edge_order, child_order);
+        return;
+    default:
+        assert(false);
     }
 }
 
@@ -245,7 +245,7 @@ void Cube::rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrd
     }
     if (m_type == Type::NORMAL) {
         uint8_t i = 0;
-        for (const auto &order: edge_order) {
+        for (const auto &order : edge_order) {
             rotate_elements_90(order, m_indentations);
             // Some indentations need to be mirrored, as the direction has changed. But only in the first two arrays
             // (as the last array contains the edges parallel to the axis around which we rotate)
@@ -257,16 +257,16 @@ void Cube::rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrd
         return;
     }
     if (m_type == Type::OCTANT) {
-        for (const auto &child: children()) {
+        for (const auto &child : children()) {
             child->rotate_90(edge_order, child_order);
         }
-        for (const auto &order: child_order) {
+        for (const auto &order : child_order) {
             rotate_elements_90(order, m_children);
         }
     }
 }
 
-template<typename TYPE, std::size_t SIZE>
+template <typename TYPE, std::size_t SIZE>
 void Cube::rotate_elements_90(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements) {
     auto tmp = elements[order[3]];
     elements[order[3]] = std::move(elements[order[2]]);
@@ -281,7 +281,7 @@ void Cube::rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOr
     }
     if (m_type == Type::NORMAL) {
         uint8_t i = 0;
-        for (const auto &order: edge_order) {
+        for (const auto &order : edge_order) {
             rotate_elements_180(order, m_indentations);
             // All indentations need to be mirrored.
             if (i < 2) {
@@ -294,16 +294,16 @@ void Cube::rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOr
         }
     }
     if (m_type == Type::OCTANT) {
-        for (const auto &child: children()) {
+        for (const auto &child : children()) {
             child->rotate_180(edge_order, child_order);
         }
-        for (const auto &order: child_order) {
+        for (const auto &order : child_order) {
             rotate_elements_180(order, m_children);
         }
     }
 }
 
-template<typename TYPE, std::size_t SIZE>
+template <typename TYPE, std::size_t SIZE>
 void Cube::rotate_elements_180(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements) {
     std::swap(elements[order[0]], elements[order[2]]);
     std::swap(elements[order[1]], elements[order[3]]);
@@ -315,7 +315,7 @@ void Cube::rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOr
     }
     if (m_type == Type::NORMAL) {
         uint8_t i = 0;
-        for (const auto &order: edge_order) {
+        for (const auto &order : edge_order) {
             rotate_elements_270(order, m_indentations);
             // Some indentations need to be mirrored, as the direction has changed. But only in the first two arrays
             // (as the last array contains the edges parallel to the axis around which we rotate)
@@ -328,16 +328,16 @@ void Cube::rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOr
         return;
     }
     if (m_type == Type::OCTANT) {
-        for (const auto &child: children()) {
+        for (const auto &child : children()) {
             child->rotate_270(edge_order, child_order);
         }
-        for (const auto &order: child_order) {
+        for (const auto &order : child_order) {
             rotate_elements_270(order, m_children);
         }
     }
 }
 
-template<typename TYPE, std::size_t SIZE>
+template <typename TYPE, std::size_t SIZE>
 void Cube::rotate_elements_270(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements) {
     auto tmp = elements[order[1]];
     elements[order[3]] = std::move(elements[order[0]]);
@@ -345,7 +345,6 @@ void Cube::rotate_elements_270(const std::array<uint8_t, 4> &order, std::array<T
     elements[order[1]] = std::move(elements[order[2]]);
     elements[order[0]] = tmp;
 }
-
 
 void Cube::update_polygon_cache() const {
     if (m_type == Type::OCTANT || m_type == Type::EMPTY) {
