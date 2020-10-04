@@ -112,20 +112,6 @@ private:
     /// Removes all children recursively.
     void remove_children();
 
-    /// Rotate a cube.
-    /// The (child-, and edge-)orders implicitly contain the axis around which the cube will be rotated.
-    /// @param rotation_level The degree to which a cube should be rotated:
-    ///                       lvl mod 4 = 0 -> no rotation
-    ///                       lvl mod 4 = 1 -> 90°
-    ///                       lvl mod 4 = 2 -> 180°
-    ///                       lvl mod 4 = 3 -> 270°
-    /// @param edge_order The rotation-orders of the edges which should be rotated. At a 90° rotation, each first
-    ///                   element will go to the place of the second, each second to the third, etc.
-    /// @param child_order The rotation-orders of the children which should be rotated. At a 90° rotation, each first
-    ///                    element will go to the place of the second, each second to the third, etc.
-    void rotate(const std::uint8_t &rotation_level, const EdgeRotationOrder &edge_order,
-                const ChildRotationOrder &child_order);
-
     /// Rotate a cube by 90°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
     /// @param child_order The rotation-orders of the children which should be rotated.
