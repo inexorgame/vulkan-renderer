@@ -123,7 +123,7 @@ private:
     ///                   element will go to the place of the second, each second to the third, etc.
     /// @param child_order The rotation-orders of the children which should be rotated. At a 90° rotation, each first
     ///                    element will go to the place of the second, each second to the third, etc.
-    void rotate(const uint8_t &rotation_level, const EdgeRotationOrder &edge_order,
+    void rotate(const std::uint8_t &rotation_level, const EdgeRotationOrder &edge_order,
                 const ChildRotationOrder &child_order);
 
     /// Rotate a cube by 90°.
