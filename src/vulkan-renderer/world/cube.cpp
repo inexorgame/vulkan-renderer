@@ -71,6 +71,8 @@ void Cube::rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOr
             rotate_elements_180(order, m_indentations);
             // All indentations need to be mirrored.
             if (i < 2) {
+                // only the first two arrays of edges in the EdgeRotationOrder are mirrored (as the last array contains
+                // the edges which are parallel to the axis and thus should not be mirrored).
                 m_indentations[order[0]].mirror();
                 m_indentations[order[1]].mirror();
                 m_indentations[order[2]].mirror();
