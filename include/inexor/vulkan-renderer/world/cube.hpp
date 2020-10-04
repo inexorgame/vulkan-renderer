@@ -33,7 +33,7 @@ using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 
 /// IDs of the children in a order so that we rotate the octants when moving the child with the first ID to the second
 /// ID, the second, to the third, ...
-using ChildRotationOrder = std::array<std::array<uint8_t, 4>, 2>;
+using ChildRotationOrder = std::array<std::array<std::uint8_t, 4>, 2>;
 
 /// IDs of the edges in a order so that we rotate the cube when moving the edge with the first ID to the second ID,
 /// the second, to the third, ...
@@ -43,7 +43,7 @@ using ChildRotationOrder = std::array<std::array<uint8_t, 4>, 2>;
 ///   ^    ^      Incorrect are all other variants.
 /// 0 |    | 2
 ///    -3->
-using EdgeRotationOrder = std::array<std::array<uint8_t, 4>, 3>;
+using EdgeRotationOrder = std::array<std::array<std::uint8_t, 4>, 3>;
 
 class Cube : public std::enable_shared_from_this<Cube> {
     friend void ::swap(Cube &lhs, Cube &rhs) noexcept;
@@ -131,7 +131,7 @@ private:
     /// Rotate elements by 90° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
     template <typename TYPE, std::size_t SIZE>
-    static void rotate_elements_90(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
+    static void rotate_elements_90(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
 
     /// Rotate a cube by 180°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
@@ -140,7 +140,7 @@ private:
     template <typename TYPE, std::size_t SIZE>
     /// Rotate elements by 180° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
-    static void rotate_elements_180(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
+    static void rotate_elements_180(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
 
     /// Rotate a cube by 270°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
@@ -149,7 +149,7 @@ private:
     /// Rotate elements by 270° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
     template <typename TYPE, std::size_t SIZE>
-    static void rotate_elements_270(const std::array<uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
+    static void rotate_elements_270(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
 
     /// Get the root to this cube.
     [[nodiscard]] std::weak_ptr<Cube> root() const noexcept;
