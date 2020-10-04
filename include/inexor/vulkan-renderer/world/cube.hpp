@@ -39,10 +39,12 @@ using ChildRotationOrder = std::array<std::array<std::uint8_t, 4>, 2>;
 /// the second, to the third, ...
 /// As we need to update the indentations, it is required that first two indentations in the array
 /// point in the correct order towards the same corner as the second two corners. Example:
-///    -1->       Correct are either {{0, 1, 3, 2}} or {{3, 2, 0, 1}}
-///   ^    ^      Incorrect are all other variants.
-/// 0 |    | 2
-///    -3->
+/// Correct are either ``{{0, 1, 3, 2}}`` or ``{{3, 2, 0, 1}}``. Incorrect are all other variants.
+///
+///        -1->
+///       ^    ^
+///     0 |    | 2
+///        -3->
 using EdgeRotationOrder = std::array<std::array<std::uint8_t, 4>, 3>;
 
 class Cube : public std::enable_shared_from_this<Cube> {
