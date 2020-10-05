@@ -118,17 +118,17 @@ private:
     void rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
     /// Rotate elements by 90° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
-    template <typename TYPE, std::size_t SIZE>
-    static void rotate_elements_90(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
+    template <typename T, std::size_t Size>
+    static void rotate_elements_90(const std::array<std::uint8_t, 4> &order, std::array<T, Size> &elements);
 
     /// Rotate a cube by 180°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
     /// @param child_order The rotation-orders of the children which should be rotated.
     void rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
-    template <typename TYPE, std::size_t SIZE>
+    template <typename T, std::size_t Size>
     /// Rotate elements by 180° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
-    static void rotate_elements_180(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
+    static void rotate_elements_180(const std::array<std::uint8_t, 4> &order, std::array<T, Size> &elements);
 
     /// Rotate a cube by 270°.
     /// @param edge_order The rotation-orders of the edges which should be rotated.
@@ -136,8 +136,8 @@ private:
     void rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOrder &child_order);
     /// Rotate elements by 270° (must contain the correct order for the rotation).
     /// @param order The rotation-order of the elements which should be rotated.
-    template <typename TYPE, std::size_t SIZE>
-    static void rotate_elements_270(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements);
+    template <typename T, std::size_t Size>
+    static void rotate_elements_270(const std::array<std::uint8_t, 4> &order, std::array<T, Size> &elements);
 
     /// Get the root to this cube.
     [[nodiscard]] std::weak_ptr<Cube> root() const noexcept;

@@ -48,8 +48,8 @@ void Cube::rotate_90(const EdgeRotationOrder &edge_order, const ChildRotationOrd
     }
 }
 
-template <typename TYPE, std::size_t SIZE>
-void Cube::rotate_elements_90(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements) {
+template <typename T, std::size_t Size>
+void Cube::rotate_elements_90(const std::array<std::uint8_t, 4> &order, std::array<T, Size> &elements) {
     auto tmp = elements[order[3]];
     elements[order[3]] = std::move(elements[order[2]]);
     elements[order[2]] = std::move(elements[order[1]]);
@@ -83,8 +83,8 @@ void Cube::rotate_180(const EdgeRotationOrder &edge_order, const ChildRotationOr
     }
 }
 
-template <typename TYPE, std::size_t SIZE>
-void Cube::rotate_elements_180(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements) {
+template <typename T, std::size_t Size>
+void Cube::rotate_elements_180(const std::array<std::uint8_t, 4> &order, std::array<T, Size> &elements) {
     std::swap(elements[order[0]], elements[order[2]]);
     std::swap(elements[order[1]], elements[order[3]]);
 }
@@ -113,8 +113,8 @@ void Cube::rotate_270(const EdgeRotationOrder &edge_order, const ChildRotationOr
     }
 }
 
-template <typename TYPE, std::size_t SIZE>
-void Cube::rotate_elements_270(const std::array<std::uint8_t, 4> &order, std::array<TYPE, SIZE> &elements) {
+template <typename T, std::size_t Size>
+void Cube::rotate_elements_270(const std::array<std::uint8_t, 4> &order, std::array<T, Size> &elements) {
     auto tmp = elements[order[1]];
     elements[order[3]] = std::move(elements[order[0]]);
     elements[order[2]] = std::move(elements[order[3]]);
