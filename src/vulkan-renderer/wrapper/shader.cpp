@@ -58,11 +58,8 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
         throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name + "!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_shader_module),
-                             VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
-#endif
+    m_device.set_debug_marker_name(m_shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
 }
 
 Shader::Shader(Shader &&other) noexcept

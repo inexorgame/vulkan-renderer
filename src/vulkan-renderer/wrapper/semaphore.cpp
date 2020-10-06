@@ -20,11 +20,8 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
         throw std::runtime_error("Error: vkCreateSemaphore failed for " + name + " !");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_semaphore), VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT,
-                             name);
-#endif
+    m_device.set_debug_marker_name(m_semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
 
     spdlog::debug("Created semaphore successfully.");
 }

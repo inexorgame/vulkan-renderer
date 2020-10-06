@@ -47,10 +47,8 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
         throw std::runtime_error("Error: vmaCreateImage failed for image " + m_name + "!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_image), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
-#endif
+    m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
 
     auto image_view_ci = make_info<VkImageViewCreateInfo>();
     image_view_ci.image = m_image;
@@ -66,11 +64,8 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
         throw std::runtime_error("Error: vkCreateImageView failed for image view " + m_name + "!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_image_view), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
-                             m_name);
-#endif
+    m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
 Image::Image(Image &&other) noexcept

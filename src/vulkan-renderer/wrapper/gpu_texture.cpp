@@ -192,11 +192,8 @@ void GpuTexture::create_texture_sampler() {
         throw std::runtime_error("Error: vkCreateSampler failed for texture " + m_name + " !");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_sampler), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT,
-                             m_name);
-#endif
+    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
 
     spdlog::debug("Image sampler {} created successfully.", m_name);
 }
