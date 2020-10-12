@@ -87,7 +87,7 @@ public:
     /// At which child level this cube is.
     /// root cube = 0
     [[nodiscard]] std::size_t grid_level() const noexcept;
-    /// Counts the number of Type::SOLID and Type::NORMAL cubes.
+    /// Count the number of Type::SOLID and Type::NORMAL cubes.
     [[nodiscard]] std::size_t count_geometry_cubes() const noexcept;
 
     /// Set a new type.

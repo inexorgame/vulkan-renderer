@@ -9,6 +9,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 
+/// @brief RAII wrapper class for GPU Memory buffers.
+/// Uniform buffers or vertex/index buffers use this as a base class.
+/// @note The core of Inexor's memory management is Vulkan Memory Allocator library (VMA).
 class GPUMemoryBuffer {
 protected:
     std::string m_name;
@@ -20,23 +23,23 @@ protected:
     VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
-    /// @brief Creates a new GPU memory buffer.
-    /// @param device [in] The Vulkan device from which the buffer will be created.
-    /// @param name [in] The internal name of the buffer.
-    /// @param size [in] The size of the buffer in bytes.
-    /// @param buffer_usage [in] The Vulkan buffer usage flags.
-    /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
+    /// @brief Construct the GPU memory buffer without specifying the actual data to fill in, only the memory size.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param name The internal debug marker name of the GPU memory buffer.
+    /// @param buffer_size The size of the memory buffer in bytes.
+    /// @param buffer_usage The buffer usage flags.
+    /// @param memory_usage The VMA memory usage flags which specify the required memory allocation.
     GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &size,
                     const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage);
 
-    /// @brief Creates a new GPU memory buffer.
-    /// @param device [in] The Vulkan device from which the buffer will be created.
-    /// @param name [in] The internal name of the buffer.
-    /// @param buffer_size [in] The size of the buffer in bytes.
-    /// @param data [in] The address of the data which will be copied.
-    /// @param data_size [in] The size of the data which will be copied.
-    /// @param buffer_usage [in] The Vulkan buffer usage flags.
-    /// @param memory_usage [in] The Vulkan Memory Allocator library's memory usage flags.
+    /// @brief Construct the GPU memory buffer and specifies the actual data to fill it in.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param name The internal debug marker name of the GPU memory buffer.
+    /// @param buffer_size The size of the memory buffer in bytes.
+    /// @param data A pointer to the data to fill the GPU memory buffer with.
+    /// @param data_size The size of the memory to copy from data pointer.
+    /// @param buffer_usage The buffer usage flags.
+    /// @param memory_usage The VMA memory usage flags which specify the required memory allocation.
     GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size, void *data,
                     const std::size_t data_size, const VkBufferUsageFlags &buffer_usage,
                     const VmaMemoryUsage &memory_usage);

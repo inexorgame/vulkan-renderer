@@ -7,6 +7,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// @brief RAII wrapper class for texture data.
+/// @todo Scan asset directory automatically.
 class CpuTexture {
     std::string m_name;
 
@@ -17,15 +19,16 @@ class CpuTexture {
 
     stbi_uc *m_texture_data{nullptr};
 
-    ///
+    /// @brief Generate a chessboard color pattern which will be used as error texture.
     void generate_error_texture_data();
 
 public:
-    /// @brief Creates a CpuTexture instance with a default texture.
+    /// @brief Create a CpuTexture instance with a default texture.
     CpuTexture();
-    /// @brief Reads a texture from a file.
-    /// @param file_name [in] The file name of the texture.
-    /// @param name [in] The internal memory allocation name of the texture.
+
+    /// @brief Read a texture from a file.
+    /// @param file_name The file name of the texture.
+    /// @param name The internal debug marker name of the command buffer. This must not be an empty string.
     CpuTexture(const std::string &file_name, std::string name);
 
     CpuTexture(const CpuTexture &) = delete;
