@@ -103,38 +103,30 @@ public:
         return m_transfer_queue_family_index;
     }
 
-#ifndef NDEBUG
+    /// @brief Assign an internal Vulkan debug marker name to a Vulkan object.
+    /// This internal name can be seen in external debuggers like RenderDoc.
+    /// @note This method is only available in debug mode with ``VK_EXT_debug_marker`` device extension enabled.
+    /// @param object The Vulkan object.
+    /// @param object_type The Vulkan debug report object type.
+    /// @param name The internal name of the Vulkan object.
+    void set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type, const std::string &name) const;
 
-    /// For more information about Vulkan debugging tools check
-    /// https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/
-    /// Also check our RenderDoc's official website: https://renderdoc.org/
+    /// @brief Assigns a block of memory to a Vulkan resource.
+    /// This memory block can be seen in external debuggers like RenderDoc.
+    /// @note This method is only available in debug mode with ``VK_EXT_debug_marker`` device extension enabled.
+    /// @param object The Vulkan object.
+    /// @param object_type The Vulkan debug report object type.
+    /// @param name The name of the memory block which will be connected to this object.
+    /// @param memory_size The size of the memory block in bytes.
+    /// @param memory_address The memory address to read from.
+    void set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
+                                     const std::size_t memory_size, const void *memory_block) const;
 
-    /// @note Vulkan debug markers are only available in debug mode when VK_EXT_debug_marker device extension is used.
-    /// @todo Add overloaded methods like "set_image_name" which accept a specific type instead of a pointer. This
-    /// increases type-safety and would also remove the need for a "type" argument.
-
-    /// @brief Set the internal name of a Vulkan resource using vkDebugMarkerSetObjectNameEXT. This internal name can
-    /// be seen in external debuggers like RenderDoc.
-    /// @param object A pointer to the Vulkan object whose name will be set.
-    /// @param type The type of the Vulkan object.
-    /// @param name The internal name which will be assigned to the Vulkan object.
-    void set_object_name(std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::string &name) const;
-
-    /// @brief Assign a memory block for debugging to a Vulkan resource using vkDebugMarkerSetObjectTagEXT. This memory
-    /// block can later be seen in external debuggers like RenderDoc.
-    /// @param object A pointer to the Vulkan object to which a memory tag will be assigned.
-    /// @param type The type of the Vulkan object.
-    /// @param name The internal name of the object ag.
-    /// @param tag_size The size of the memory tag in bytes.
-    /// @param tag A pointer to the memory tag.
-    void set_object_tag(const std::uint64_t object, const VkDebugReportObjectTypeEXT type, const std::uint64_t name,
-                        const std::size_t tag_size, const void *tag) const;
-
-    /// @brief Set the color of the current rendering region using vkCmdDebugMarkerBeginEXT. This color can be seen in
-    /// external debuggers like RenderDoc.
-    /// @param command_buffer The command buffer which is associated to the debug region.
-    /// @param name The name of the debug region.
-    /// @param color An array of red, green, blue and alpha values for the debug region's color.
+    /// @param color [in] The rgba color of the rendering region.
+    /// @param name [in] The name of the rendering region.
+    /// @param command_buffer [in] The associated command buffer.
+    /// The rendering region will be visible in external debuggers like RenderDoc.
+    /// @brief Vulkan debug markers: Annotation of a rendering region.
     void bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                            const std::array<float, 4> color) const;
 
@@ -149,8 +141,6 @@ public:
     /// @brief End the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
     /// @param command_buffer The command buffer which is associated to the debug marker.
     void end_debug_region(const VkCommandBuffer command_buffer) const;
-
-#endif
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

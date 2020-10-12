@@ -121,10 +121,8 @@ void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *
         throw std::runtime_error("Failed to create pipeline layout!");
     }
 
-#ifndef NDEBUG
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(phys->m_pipeline_layout),
-                             VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, stage->m_name + " pipeline layout");
-#endif
+    m_device.set_debug_marker_name(phys->m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
+                                   stage->m_name + " pipeline layout");
 }
 
 void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {

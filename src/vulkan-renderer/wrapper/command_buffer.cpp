@@ -22,11 +22,8 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool comman
         throw std::runtime_error("Failed to allocate command buffer!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_command_buffer),
-                             VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
-#endif
+    m_device.set_debug_marker_name(m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept

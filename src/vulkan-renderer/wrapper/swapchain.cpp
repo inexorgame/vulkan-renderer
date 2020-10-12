@@ -106,11 +106,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         throw std::runtime_error("Error: vkGetSwapchainImagesKHR failed!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_swapchain),
-                             VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
-#endif
+    m_device.set_debug_marker_name(m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
 
     spdlog::debug("Creating {} swapchain image views.", m_swapchain_image_count);
 
@@ -138,11 +135,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
             throw std::runtime_error("Error: vkCreateImageView failed!");
         }
 
-#ifndef NDEBUG
         // Assign an internal name using Vulkan debug markers.
-        m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_swapchain_image_views[i]),
-                                 VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
-#endif
+        m_device.set_debug_marker_name(m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
     }
 
     spdlog::debug("Created {} swapchain image views successfully.", m_swapchain_image_count);

@@ -41,23 +41,8 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
         throw std::runtime_error("Error: GPU memory buffer allocation for " + name + " failed!");
     }
 
-    // Try to find the Vulkan debug marker function.
-    auto *vkDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
-        vkGetDeviceProcAddr(m_device.device(), "vkDebugMarkerSetObjectNameEXT"));
-
-    if (vkDebugMarkerSetObjectNameEXT != nullptr) {
-        // Since the function vkDebugMarkerSetObjectNameEXT has been found, we can assign an internal name for
-        // debugging.
-        auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
-        name_info.objectType = VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT;
-        name_info.object = reinterpret_cast<std::uint64_t>(m_buffer);
-        name_info.pObjectName = name.c_str();
-
-        spdlog::debug("Assigning internal name '{}' to GPU memory buffer.", name);
-        if (vkDebugMarkerSetObjectNameEXT(m_device.device(), &name_info) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkDebugMarkerSetObjectNameEXT failed for GPU memory buffer " + name + "!");
-        }
-    }
+    // Assign an internal debug marker name to this buffer.
+    m_device.set_debug_marker_name(m_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, name);
 }
 
 GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size,

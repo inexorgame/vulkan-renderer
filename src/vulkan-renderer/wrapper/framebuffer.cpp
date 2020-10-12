@@ -27,11 +27,8 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
         throw std::runtime_error("Failed to create framebuffer " + m_name + "!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_framebuffer),
-                             VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
-#endif
+    m_device.set_debug_marker_name(m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
 
     spdlog::debug("Created framebuffer {} successfully.", m_name);
 }

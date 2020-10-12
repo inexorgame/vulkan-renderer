@@ -23,10 +23,8 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
         throw std::runtime_error("Error: vkCreateFence failed!");
     }
 
-#ifndef NDEBUG
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_object_name(reinterpret_cast<std::uint64_t>(m_fence), VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
-#endif
+    m_device.set_debug_marker_name(m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
 
     spdlog::debug("Created fence {} successfully.", m_name);
 }
