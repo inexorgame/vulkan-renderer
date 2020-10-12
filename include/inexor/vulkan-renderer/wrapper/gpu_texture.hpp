@@ -64,6 +64,7 @@ public:
 
     GpuTexture(const GpuTexture &) = delete;
     GpuTexture(GpuTexture &&) noexcept;
+
     ~GpuTexture();
 
     GpuTexture &operator=(const GpuTexture &) = delete;

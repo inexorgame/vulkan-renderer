@@ -27,8 +27,10 @@ public:
     /// @note Staging buffers always have VMA_MEMORY_USAGE_CPU_ONLY as VmaMemoryUsage.
     StagingBuffer(const Device &device, const std::string &name, const VkDeviceSize buffer_size, void *data,
                   const std::size_t data_size);
+
     StagingBuffer(const StagingBuffer &) = delete;
     StagingBuffer(StagingBuffer &&) noexcept;
+
     ~StagingBuffer() = default;
 
     StagingBuffer &operator=(const StagingBuffer &) = delete;

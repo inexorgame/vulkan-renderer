@@ -13,19 +13,13 @@ namespace inexor::vulkan_renderer {
 /// - Which surface color format should be used?
 /// - Which graphics card's queue families should be used?
 /// - Which presentation modes should be used?
-class VulkanSettingsDecisionMaker {
-public:
-    VulkanSettingsDecisionMaker() = default;
+struct VulkanSettingsDecisionMaker {
 
-    ~VulkanSettingsDecisionMaker() = default;
-
-private:
     /// @brief Rates a graphcs card by its features.
     /// @param graphics_card The graphics card.
     /// @return A score which is greater or equal to 0.
     [[nodiscard]] std::size_t rate_graphics_card(const VkPhysicalDevice &graphics_card);
 
-public:
     /// @brief Automatically decides if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.

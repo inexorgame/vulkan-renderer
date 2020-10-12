@@ -40,14 +40,6 @@ class MeshBuffer {
     bool m_index_buffer_available = false;
 
 public:
-    // Delete the copy constructor so mesh buffers are move-only objects.
-    MeshBuffer(const MeshBuffer &) = delete;
-    MeshBuffer(MeshBuffer &&buffer) noexcept;
-
-    // Delete the copy assignment operator so uniform buffers are move-only objects.
-    MeshBuffer &operator=(const MeshBuffer &) = delete;
-    MeshBuffer &operator=(MeshBuffer &&) = default;
-
     /// @brief Creates a new vertex buffer with an associated index buffer and copies memory into it.
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
@@ -67,7 +59,11 @@ public:
     MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
                const std::size_t number_of_vertices);
 
-    ~MeshBuffer() = default;
+    MeshBuffer(const MeshBuffer &) = delete;
+    MeshBuffer(MeshBuffer &&buffer) noexcept;
+
+    MeshBuffer &operator=(const MeshBuffer &) = delete;
+    MeshBuffer &operator=(MeshBuffer &&) = default;
 
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
         return m_vertex_buffer.buffer();

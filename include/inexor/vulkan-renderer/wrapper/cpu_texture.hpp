@@ -8,7 +8,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 class CpuTexture {
-private:
     std::string m_name;
 
     int m_texture_width{0};
@@ -24,7 +23,6 @@ private:
 public:
     /// @brief Creates a CpuTexture instance with a default texture.
     CpuTexture();
-
     /// @brief Reads a texture from a file.
     /// @param file_name [in] The file name of the texture.
     /// @param name [in] The internal memory allocation name of the texture.
@@ -32,6 +30,7 @@ public:
 
     CpuTexture(const CpuTexture &) = delete;
     CpuTexture(CpuTexture &&) noexcept;
+
     ~CpuTexture();
 
     CpuTexture &operator=(const CpuTexture &) = delete;

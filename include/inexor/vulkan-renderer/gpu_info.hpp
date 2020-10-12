@@ -5,11 +5,7 @@
 namespace inexor::vulkan_renderer {
 
 /// @brief Prints information related to graphics card's capabilities and limits.
-class VulkanGraphicsCardInfoViewer {
-public:
-    VulkanGraphicsCardInfoViewer() = default;
-
-    ~VulkanGraphicsCardInfoViewer() = default;
+struct VulkanGraphicsCardInfoViewer {
 
     // Uses vkEnumerateInstanceVersion to query which version of the Vulkan API is supported on this system.
     // https://vulkan.lunarg.com/doc/view/latest/windows/vkspec.html#vkEnumerateInstanceVersion

@@ -29,8 +29,10 @@ public:
     /// @brief Creates a new commandbuffer which is being called only once.
     /// @param device [in] A const reference to the Vulkan device.
     OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index);
+
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;
+
     ~OnceCommandBuffer();
 
     OnceCommandBuffer &operator=(const OnceCommandBuffer &) = delete;

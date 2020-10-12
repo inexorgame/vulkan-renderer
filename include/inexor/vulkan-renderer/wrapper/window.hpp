@@ -22,8 +22,10 @@ public:
     /// @param resizable [in] True if the window should be resizable.
     Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
            const bool resizable);
+
     Window(const Window &) = delete;
     Window(Window &&) noexcept;
+
     ~Window();
 
     Window &operator=(const Window &) = delete;

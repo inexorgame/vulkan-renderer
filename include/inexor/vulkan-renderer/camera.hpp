@@ -6,7 +6,6 @@ namespace inexor::vulkan_renderer {
 
 // TODO: Refactor method naming!
 class Camera {
-private:
     float m_fov;
     float m_z_near, m_z_far;
 
@@ -51,8 +50,6 @@ public:
     void set_rotation(glm::vec3 rotation);
 
     void rotate(glm::vec3 delta);
-
-    void set_translation(glm::vec3 translation);
 
     void translate(glm::vec3 delta);
 

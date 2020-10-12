@@ -40,8 +40,10 @@ public:
     GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size, void *data,
                     const std::size_t data_size, const VkBufferUsageFlags &buffer_usage,
                     const VmaMemoryUsage &memory_usage);
+
     GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
     GPUMemoryBuffer(GPUMemoryBuffer &&) noexcept;
+
     virtual ~GPUMemoryBuffer();
 
     GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;

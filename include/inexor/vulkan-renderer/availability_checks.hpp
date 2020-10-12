@@ -9,7 +9,6 @@
 namespace inexor::vulkan_renderer {
 
 class AvailabilityChecksManager {
-private:
     std::uint32_t m_available_instance_extensions{0};
     std::uint32_t m_available_instance_layers{0};
     std::uint32_t m_available_device_layers{0};
@@ -26,8 +25,6 @@ private:
     void create_instance_extensions_cache();
 
 public:
-    AvailabilityChecksManager() = default;
-
     /// @brief Checks if a certain Vulkan instance layer is available on the system.
     /// @note Available instance layers can be enabled by passing them as parameter during Vulkan instance creation.
     /// @param instance_layer_name [in] The name of the Vulkan instance layer.

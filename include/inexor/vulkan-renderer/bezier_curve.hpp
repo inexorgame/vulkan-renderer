@@ -75,10 +75,6 @@ class BezierCurve {
     BezierOutputPoint calculate_point_on_curve(const float curve_precision);
 
 public:
-    BezierCurve() = default;
-
-    ~BezierCurve() = default;
-
     void add_input_point(const BezierInputPoint &input_point);
 
     void add_input_point(const glm::vec3 &position, const float weight = 1.0f);

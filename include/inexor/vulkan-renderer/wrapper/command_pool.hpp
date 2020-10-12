@@ -18,8 +18,10 @@ public:
     /// @param device [in] The Vulkan device.
     /// @param queue_family_index [in] The queue family index for the command pool.
     CommandPool(const Device &device, const std::uint32_t queue_family_index);
+
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;
+
     ~CommandPool();
 
     CommandPool &operator=(const CommandPool &) = delete;
