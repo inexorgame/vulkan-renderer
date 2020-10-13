@@ -33,8 +33,12 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
                                 std::uint32_t window_height) {
     VulkanSettingsDecisionMaker settings_decision_maker;
 
-    settings_decision_maker.decide_swapchain_extent(m_device.physical_device(), m_surface, window_width, window_height,
-                                                    m_extent);
+    auto swapchain_settings = settings_decision_maker.decide_swapchain_extent(m_device.physical_device(), m_surface,
+                                                                              m_extent.width, m_extent.height);
+
+    window_width = swapchain_settings.window_size.width;
+    window_height = swapchain_settings.window_size.height;
+    m_extent = swapchain_settings.swapchain_size;
 
     std::optional<VkPresentModeKHR> present_mode = settings_decision_maker.decide_which_presentation_mode_to_use(
         m_device.physical_device(), m_surface, m_vsync_enabled);
@@ -79,8 +83,15 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
     swapchain_ci.clipped = VK_TRUE;
-    swapchain_ci.compositeAlpha =
+
+    const auto &composite_alpha =
         settings_decision_maker.find_composite_alpha_format(m_device.physical_device(), m_surface);
+
+    if (!composite_alpha) {
+        throw std::runtime_error("Error: Could not find composite alpha format while recreating swapchain!");
+    }
+
+    swapchain_ci.compositeAlpha = composite_alpha.value();
 
     // Set additional usage flag for blitting from the swapchain images if supported.
     VkFormatProperties formatProps;

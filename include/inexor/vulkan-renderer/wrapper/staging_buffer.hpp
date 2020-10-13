@@ -32,7 +32,7 @@ public:
     ~StagingBuffer() = default;
 
     StagingBuffer &operator=(const StagingBuffer &) = delete;
-    StagingBuffer &operator=(StagingBuffer &&) = default;
+    StagingBuffer &operator=(StagingBuffer &&) = delete;
 
     /// @brief Call vkCmdCopyBuffer inside of the once command buffer.
     /// @param tarbuffer The memory buffer to copy.

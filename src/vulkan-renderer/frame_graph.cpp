@@ -267,7 +267,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
         }
 
         // We use std::unordered_map::at() here to ensure that a binding value exists for buffer_resource.
-        std::uint32_t binding = stage->m_buffer_bindings.at(buffer_resource);
+        const std::uint32_t binding = stage->m_buffer_bindings.at(buffer_resource);
         for (auto attribute_binding : buffer_resource->m_vertex_attributes) {
             attribute_binding.binding = binding;
             attribute_bindings.push_back(attribute_binding);
@@ -406,7 +406,7 @@ void FrameGraph::compile(const RenderResource &target) {
             assert(buffer_resource->m_usage != BufferUsage::INVALID);
             auto *phys = create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
 
-            bool is_uploading_data = buffer_resource->m_data != nullptr;
+            const bool is_uploading_data = buffer_resource->m_data != nullptr;
             alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0U;
             alloc_ci.usage = is_uploading_data ? VMA_MEMORY_USAGE_CPU_TO_GPU : VMA_MEMORY_USAGE_GPU_ONLY;
 

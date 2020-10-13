@@ -5,8 +5,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-using namespace inexor::vulkan_renderer;
-
 int main(int argc, char *argv[]) {
     spdlog::init_thread_pool(8192, 2);
 
@@ -24,7 +22,7 @@ int main(int argc, char *argv[]) {
     spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
     spdlog::debug("Parsing command line arguments.");
 
-    Application renderer(argc, argv);
+    inexor::vulkan_renderer::Application renderer(argc, argv);
     renderer.run();
     renderer.calculate_memory_budget();
     spdlog::debug("Window closed");

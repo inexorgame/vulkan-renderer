@@ -24,7 +24,7 @@ public:
     /// @param subpass_description The subpass description.
     /// @param name The internal debug marker name of the VkRenderPass.
     RenderPass(const Device &device, const std::vector<VkAttachmentDescription> &attachments,
-               const std::vector<VkSubpassDependency> &dependencies, const VkSubpassDescription subpass_description,
+               const std::vector<VkSubpassDependency> &dependencies, VkSubpassDescription subpass_description,
                const std::string &name);
 
     RenderPass(const RenderPass &) = delete;
@@ -33,7 +33,7 @@ public:
     ~RenderPass();
 
     RenderPass &operator=(const RenderPass &) = delete;
-    RenderPass &operator=(RenderPass &&) noexcept = default;
+    RenderPass &operator=(RenderPass &&) = delete;
 
     [[nodiscard]] VkRenderPass get() const {
         return renderpass;

@@ -63,13 +63,13 @@ void BezierCurve::add_input_point(const glm::vec3 &position, const float weight)
 BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precision) {
     BezierOutputPoint temp_output;
 
-    std::uint32_t n = static_cast<std::uint32_t>(m_input_points.size() - 1);
+    const std::uint32_t n = static_cast<std::uint32_t>(m_input_points.size() - 1);
 
     // Calculate the coordinates of the output points of the bezier curve.
     for (std::size_t i = 0; i < m_input_points.size(); i++) {
         auto current_point = m_input_points[i];
 
-        std::uint32_t index = static_cast<std::uint32_t>(i);
+        const std::uint32_t index = static_cast<std::uint32_t>(i);
 
         // Compute bezier curve coordinates using bernstein polynomials.
         temp_output.pos.x += bernstein_polynomial(n, index, curve_precision, current_point.pos.x);
@@ -88,7 +88,7 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
         auto current_point = m_input_points[i];
         auto next_point = m_input_points[i + 1];
 
-        std::uint32_t index = static_cast<std::uint32_t>(i);
+        const std::uint32_t index = static_cast<std::uint32_t>(i);
 
         // Compute bezier curve point's first derivative.
         temp_output.tangent.x += bernstein_polynomial(n - 1, index, curve_precision, current_point.pos.x);
@@ -102,7 +102,7 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
     // Calculate a relative normal vector.
     // Please note that there is an infinite amount of normal vectors from vector a to b.
 
-    float length = glm::length(temp_output.tangent);
+    const float length = glm::length(temp_output.tangent);
     temp_output.normal = glm::vec3(-temp_output.tangent.y / length, temp_output.tangent.x / length, 0);
 
     // Do not normalize tangent vectors before you have copied the normal vector! They will be incorrect!
@@ -125,10 +125,10 @@ void BezierCurve::calculate_bezier_curve(const float curve_precision) {
         m_curve_generated = false;
     }
 
-    float curve_precision_interval = 1.0f / curve_precision;
+    const float curve_precision_interval = 1.0f / curve_precision;
 
     for (float position_on_curve = 0.0f; position_on_curve <= 1.0f; position_on_curve += curve_precision_interval) {
-        BezierOutputPoint temp_output = calculate_point_on_curve(position_on_curve);
+        const BezierOutputPoint temp_output = calculate_point_on_curve(position_on_curve);
         m_output_points.push_back(temp_output);
     }
 

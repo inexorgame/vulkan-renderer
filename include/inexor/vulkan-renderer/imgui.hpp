@@ -65,14 +65,14 @@ public:
     ImGUIOverlay(ImGUIOverlay &&other) noexcept;
 
     ImGUIOverlay &operator=(const ImGUIOverlay &other) = delete;
-    ImGUIOverlay &operator=(ImGUIOverlay &&other) = default;
+    ImGUIOverlay &operator=(ImGUIOverlay &&other) = delete;
 
     [[nodiscard]] float get_scale() const {
         return m_scale;
     }
 
     void update();
-    void render(const std::uint32_t image_index);
+    void render(std::uint32_t image_index);
 };
 
 } // namespace inexor::vulkan_renderer

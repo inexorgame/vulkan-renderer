@@ -218,7 +218,7 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevi
 
     // Loop through all memory heaps.
     for (std::size_t i = 0; i < graphics_card_memory_properties.memoryHeapCount; i++) {
-        auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
+        const auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
 
         if (propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
             // Use real GPU memory as score.
@@ -348,8 +348,8 @@ std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphi
         bool discrete_graphics_card_exists = false;
 
         // Both indices are available because number_of_available_graphics_cards is 2.
-        VkPhysicalDeviceType gpu_type_1 = graphics_card_type(available_graphics_cards[0]);
-        VkPhysicalDeviceType gpu_type_2 = graphics_card_type(available_graphics_cards[1]);
+        const VkPhysicalDeviceType gpu_type_1 = graphics_card_type(available_graphics_cards[0]);
+        const VkPhysicalDeviceType gpu_type_2 = graphics_card_type(available_graphics_cards[1]);
 
         if (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == gpu_type_1 || VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == gpu_type_2) {
             discrete_graphics_card_exists = true;
@@ -429,7 +429,8 @@ std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphi
     }
 
     // How many graphics cards have been sorted out?
-    auto how_many_graphics_card_disqualified = number_of_available_graphics_cards - suitable_graphics_cards.size();
+    const auto how_many_graphics_card_disqualified =
+        number_of_available_graphics_cards - suitable_graphics_cards.size();
 
     if (how_many_graphics_card_disqualified > 0) {
         spdlog::debug("{} have been disqualified because they are unsuitable for the application's purposes!",
@@ -511,12 +512,9 @@ VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPh
     return pre_transform;
 }
 
-// TOOD: std::optional?
-VkCompositeAlphaFlagBitsKHR
+std::optional<VkCompositeAlphaFlagBitsKHR>
 VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
                                                          const VkSurfaceKHR surface) {
-    VkCompositeAlphaFlagBitsKHR composite_alpha;
-
     const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags = {
         VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
@@ -533,12 +531,12 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice 
 
     for (auto &composite_alpha_flag : composite_alpha_flags) {
         if (surface_capabilities.supportedCompositeAlpha & composite_alpha_flag) {
-            composite_alpha = composite_alpha_flag;
+            return composite_alpha_flag;
             break;
         };
     }
 
-    return composite_alpha;
+    return std::nullopt;
 }
 
 std::optional<VkPresentModeKHR>
@@ -639,13 +637,15 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysi
     return std::nullopt;
 }
 
-void VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkPhysicalDevice &graphics_card,
-                                                          const VkSurfaceKHR &surface, std::uint32_t &window_width,
-                                                          std::uint32_t &window_height, VkExtent2D &swapchain_extent) {
+SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkPhysicalDevice &graphics_card,
+                                                                       const VkSurfaceKHR &surface,
+                                                                       std::uint32_t window_width,
+                                                                       std::uint32_t window_height) {
     assert(graphics_card);
     assert(surface);
 
     VkSurfaceCapabilitiesKHR surface_capabilities{};
+    SwapchainSettings updated_swapchain_settings{};
 
     if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities) != VK_SUCCESS) {
         throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
@@ -654,14 +654,15 @@ void VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkPhysicalDevice
     if (surface_capabilities.currentExtent.width == std::numeric_limits<std::uint32_t>::max() &&
         surface_capabilities.currentExtent.height == std::numeric_limits<std::uint32_t>::max()) {
         // The size of the window dictates the swapchain's extent.
-        swapchain_extent.width = window_width;
-        swapchain_extent.height = window_height;
+        updated_swapchain_settings.swapchain_size.width = window_width;
+        updated_swapchain_settings.swapchain_size.height = window_height;
     } else {
         // If the surface size is defined, the swap chain size must match.
-        swapchain_extent = surface_capabilities.currentExtent;
-        window_width = surface_capabilities.currentExtent.width;
-        window_height = surface_capabilities.currentExtent.height;
+        updated_swapchain_settings.swapchain_size = surface_capabilities.currentExtent;
+        updated_swapchain_settings.window_size = surface_capabilities.currentExtent;
     }
+
+    return updated_swapchain_settings;
 }
 
 std::optional<std::uint32_t>

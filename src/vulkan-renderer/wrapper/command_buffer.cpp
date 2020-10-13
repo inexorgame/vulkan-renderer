@@ -27,8 +27,8 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool comman
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
-    : m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_device(other.m_device), m_name(other.m_name) {
-}
+    : m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_device(other.m_device),
+      m_name(std::move(other.m_name)) {}
 
 void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();

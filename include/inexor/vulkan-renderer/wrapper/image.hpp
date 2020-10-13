@@ -28,9 +28,8 @@ public:
     /// @param sample_count The sample count.
     /// @param name The internal debug marker name of the VkImage.
     /// @param image_extent The width and height of the image.
-    Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
-          const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
-          const VkExtent2D image_extent);
+    Image(const Device &device, VkFormat format, VkImageUsageFlags image_usage, VkImageAspectFlags aspect_flags,
+          VkSampleCountFlagBits sample_count, const std::string &name, VkExtent2D image_extent);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
@@ -38,7 +37,7 @@ public:
     ~Image();
 
     Image &operator=(const Image &) = delete;
-    Image &operator=(Image &&) = default;
+    Image &operator=(Image &&) = delete;
 
     [[nodiscard]] VkFormat image_format() const {
         return m_format;

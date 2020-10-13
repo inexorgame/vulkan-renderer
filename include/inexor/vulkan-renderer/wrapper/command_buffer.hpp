@@ -16,7 +16,7 @@ class ResourceDescriptor;
 class CommandBuffer {
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const wrapper::Device &m_device;
-    const std::string m_name;
+    std::string m_name;
 
 public:
     /// @brief Default constructor.
@@ -31,7 +31,7 @@ public:
     ~CommandBuffer() = default;
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;
-    CommandBuffer &operator=(CommandBuffer &&) = default;
+    CommandBuffer &operator=(CommandBuffer &&) = delete;
 
     /// @brief Call vkBeginCommandBuffer.
     /// @note Sometimes it's useful to pass VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT to specify that a command

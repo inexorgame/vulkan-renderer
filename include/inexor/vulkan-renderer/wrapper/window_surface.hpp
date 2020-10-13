@@ -17,7 +17,7 @@ public:
     /// @brief Default constructor.
     /// @param instance The Vulkan instance which will be associated with this surface.
     /// @param window The window which will be associated with this surface.
-    WindowSurface(const VkInstance instance, GLFWwindow *window);
+    WindowSurface(VkInstance instance, GLFWwindow *window);
 
     WindowSurface(const WindowSurface &) = delete;
     WindowSurface(WindowSurface &&) noexcept;
@@ -29,10 +29,6 @@ public:
 
     [[nodiscard]] VkSurfaceKHR get() const {
         return m_surface;
-    }
-
-    const VkSurfaceKHR *operator&() const {
-        return &m_surface;
     }
 };
 

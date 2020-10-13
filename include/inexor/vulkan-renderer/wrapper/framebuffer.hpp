@@ -14,7 +14,7 @@ class Swapchain;
 class Framebuffer {
     const wrapper::Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
-    const std::string m_name;
+    std::string m_name;
 
 public:
     /// @brief Default constructor.
@@ -32,7 +32,7 @@ public:
     ~Framebuffer();
 
     Framebuffer &operator=(const Framebuffer &) = delete;
-    Framebuffer &operator=(Framebuffer &&) = default;
+    Framebuffer &operator=(Framebuffer &&) = delete;
 
     [[nodiscard]] VkFramebuffer get() const {
         return m_framebuffer;

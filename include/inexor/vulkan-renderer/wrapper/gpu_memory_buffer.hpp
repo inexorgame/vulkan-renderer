@@ -41,8 +41,7 @@ public:
     /// @param buffer_usage The buffer usage flags.
     /// @param memory_usage The VMA memory usage flags which specify the required memory allocation.
     GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size, void *data,
-                    const std::size_t data_size, const VkBufferUsageFlags &buffer_usage,
-                    const VmaMemoryUsage &memory_usage);
+                    std::size_t data_size, const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage);
 
     GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
     GPUMemoryBuffer(GPUMemoryBuffer &&) noexcept;
@@ -50,25 +49,25 @@ public:
     virtual ~GPUMemoryBuffer();
 
     GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;
-    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) = default;
+    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) = delete;
 
     [[nodiscard]] const std::string &name() const {
         return m_name;
     }
 
-    [[nodiscard]] const VkBuffer buffer() const {
+    [[nodiscard]] VkBuffer buffer() const {
         return m_buffer;
     }
 
-    [[nodiscard]] const VmaAllocation allocation() const {
+    [[nodiscard]] VmaAllocation allocation() const {
         return m_allocation;
     }
 
-    [[nodiscard]] const VmaAllocationInfo allocation_info() const {
+    [[nodiscard]] VmaAllocationInfo allocation_info() const {
         return m_allocation_info;
     }
 
-    [[nodiscard]] const VmaAllocationCreateInfo allocation_create_info() const {
+    [[nodiscard]] VmaAllocationCreateInfo allocation_create_info() const {
         return m_allocation_ci;
     }
 };

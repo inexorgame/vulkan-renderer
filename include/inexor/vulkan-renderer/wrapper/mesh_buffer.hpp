@@ -51,9 +51,9 @@ public:
     /// @param index_struct_size The size of the index structure, most likely std::uint32_t.
     /// @param index_count The number of indices in the index buffer.
     /// @param indices  A pointer to the index data.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices, void *vertices, const VkDeviceSize size_of_index_structure,
-               const std::size_t number_of_indices, void *indices);
+    MeshBuffer(const Device &device, const std::string &name, VkDeviceSize size_of_vertex_structure,
+               std::size_t number_of_vertices, void *vertices, VkDeviceSize size_of_index_structure,
+               std::size_t number_of_indices, void *indices);
 
     /// @brief Construct the mesh buffer and specify the size of the vertex buffer and index buffer.
     /// This constructor will does not yet copy any memory from the vertices or indices!
@@ -64,9 +64,8 @@ public:
     /// @note The size of the required memory will be calculated by vertex_struct_size * vertex_count.
     /// @param index_struct_size The size of the index structure, most likely std::uint32_t.
     /// @param index_count The number of indices in the index buffer.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices, const VkDeviceSize size_of_index_structure,
-               const std::size_t number_of_indices);
+    MeshBuffer(const Device &device, const std::string &name, VkDeviceSize size_of_vertex_structure,
+               std::size_t number_of_vertices, VkDeviceSize size_of_index_structure, std::size_t number_of_indices);
 
     /// @brief Construct the vertex buffer and copy the vertex data. The index buffer will not be used!
     /// @warning You should avoid using a vertex buffer without using an associated index buffer!
@@ -76,8 +75,8 @@ public:
     /// @param vertex_struct_size The size of the vertex structure.
     /// @param vertex_count The number of vertices in the vertex buffer.
     /// @param vertices A pointer to the vertex data.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices, void *vertices);
+    MeshBuffer(const Device &device, const std::string &name, VkDeviceSize size_of_vertex_structure,
+               std::size_t number_of_vertices, void *vertices);
 
     /// @brief Construct the vertex buffer and specify it's size. The index buffer will not be used!
     /// @warning You should avoid using a vertex buffer without using an associated index buffer!
@@ -86,14 +85,15 @@ public:
     /// @param name The internal debug marker name of the vertex buffer and index buffer.
     /// @param vertex_struct_size The size of the vertex structure.
     /// @param vertex_count The number of vertices in the vertex buffer.
-    MeshBuffer(const Device &device, const std::string &name, const VkDeviceSize size_of_vertex_structure,
-               const std::size_t number_of_vertices);
+    MeshBuffer(const Device &device, const std::string &name, VkDeviceSize size_of_vertex_structure,
+               std::size_t number_of_vertices);
 
     MeshBuffer(const MeshBuffer &) = delete;
     MeshBuffer(MeshBuffer &&buffer) noexcept;
+    ~MeshBuffer() = default;
 
     MeshBuffer &operator=(const MeshBuffer &) = delete;
-    MeshBuffer &operator=(MeshBuffer &&) = default;
+    MeshBuffer &operator=(MeshBuffer &&) = delete;
 
     [[nodiscard]] VkBuffer get_vertex_buffer() const {
         return m_vertex_buffer.buffer();

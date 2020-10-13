@@ -311,7 +311,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
 Device::Device(Device &&other) noexcept
     : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
-      m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {}
+      m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers), m_surface(other.m_surface) {}
 
 Device::~Device() {
     if (m_allocator != nullptr) {

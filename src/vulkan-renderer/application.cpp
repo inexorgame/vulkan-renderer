@@ -45,7 +45,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     auto renderer_configuration = toml::parse(file_name);
 
     // Search for the title of the configuration file and print it to debug output.
-    auto configuration_title = toml::find<std::string>(renderer_configuration, "title");
+    const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
     spdlog::debug("Title: '{}'", configuration_title);
 
     m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
@@ -58,9 +58,9 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Application name: '{}'", m_application_name);
     spdlog::debug("Engine name: '{}'", m_engine_name);
 
-    int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
-    int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor");
-    int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
+    const int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
+    const int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor");
+    const int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
     spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor,
                   application_version_patch);
 
@@ -68,9 +68,12 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     m_application_version =
         VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
 
-    int engine_version_major = toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
-    int engine_version_minor = toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
-    int engine_version_patch = toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
+    const int engine_version_major =
+        toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
+    const int engine_version_minor =
+        toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
+    const int engine_version_patch =
+        toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
     spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
 
     // Generate an std::uint32_t value from the major, minor and patch version info.
@@ -118,7 +121,7 @@ void Application::load_textures() {
     assert(m_device->allocator());
 
     // TODO: Refactor! use key from TOML file as name!
-    std::size_t texture_number = 1;
+    const std::size_t texture_number = 1;
 
     // Insert the new texture into the list of textures.
     std::string texture_name = "unnamed texture";
@@ -138,7 +141,7 @@ void Application::load_shaders() {
         spdlog::error("No vertex shaders to load!");
     }
 
-    auto total_number_of_shaders = m_vertex_shader_files.size() + m_fragment_shader_files.size();
+    const auto total_number_of_shaders = m_vertex_shader_files.size() + m_fragment_shader_files.size();
 
     // Loop through the list of vertex shaders and initialise all of them.
     for (const auto &vertex_shader_file : m_vertex_shader_files) {
@@ -238,7 +241,7 @@ Application::Application(int argc, char **argv) {
 
     // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
     // disabled. For debug builds, this is not advisable! Always use validation layers during development!
-    auto disable_validation = cla_parser.arg<bool>("--no-validation");
+    const auto disable_validation = cla_parser.arg<bool>("--no-validation");
     if (disable_validation.value_or(false)) {
         spdlog::warn("--no-validation specified, disabling validation layers.");
         enable_khronos_validation_instance_layer = false;
@@ -310,7 +313,7 @@ Application::Application(int argc, char **argv) {
 
     // If the user specified command line argument "--nostats", no information will be
     // displayed about all the graphics cards which are available on the system.
-    auto hide_gpu_stats = cla_parser.arg<bool>("--no-stats");
+    const auto hide_gpu_stats = cla_parser.arg<bool>("--no-stats");
     if (hide_gpu_stats.value_or(false)) {
         spdlog::debug("--no-stats specified, no extended information about graphics cards will be shown.");
         display_graphics_card_info = false;
@@ -318,7 +321,7 @@ Application::Application(int argc, char **argv) {
 
     // If the user specified command line argument "--vsync", the presentation engine waits
     // for the next vertical blanking period to update the current image.
-    auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
+    const auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
     if (enable_vertical_synchronisation.value_or(false)) {
         spdlog::debug("V-sync enabled!");
         m_vsync_enabled = true;
@@ -342,7 +345,7 @@ Application::Application(int argc, char **argv) {
     bool use_distinct_data_transfer_queue = true;
 
     // Ignore distinct data transfer queue
-    auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
+    const auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
     if (forbid_distinct_data_transfer_queue.value_or(false)) {
         spdlog::warn("Command line argument --no-separate-data-queue specified.");
         spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
@@ -359,7 +362,7 @@ Application::Application(int argc, char **argv) {
 
     // Check if Vulkan debug markers should be disabled.
     // Those are only available if RenderDoc instance layer is enabled!
-    auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");
+    const auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");
     if (no_vulkan_debug_markers.value_or(false)) {
         spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
         enable_debug_marker_device_extension = false;
@@ -424,15 +427,15 @@ Application::Application(int argc, char **argv) {
 }
 
 void Application::update_uniform_buffers() {
-    float time = m_time_step.time_step_since_initialisation();
+    const float time = m_time_step.time_step_since_initialisation();
 
     UniformBufferObject ubo{};
 
     // Rotate the model as a function of time.
     ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    ubo.view = m_game_camera.m_matrices.view;
-    ubo.proj = m_game_camera.m_matrices.perspective;
+    ubo.view = m_game_camera.get_view();
+    ubo.proj = m_game_camera.get_perspective();
     ubo.proj[1][1] *= -1;
 
     // TODO: Don't use vector of uniform buffers.
@@ -440,25 +443,22 @@ void Application::update_uniform_buffers() {
 }
 
 void Application::update_mouse_input() {
-    double current_cursor_x{0.0};
-    double current_cursor_y{0.0};
+    const auto cursor_position = m_window->cursor_pos();
 
-    m_window->cursor_pos(current_cursor_x, current_cursor_y);
+    const double cursor_delta_x = cursor_position[0] - m_cursor_x;
+    const double cursor_delta_y = cursor_position[1] - m_cursor_y;
 
-    double cursor_delta_x = current_cursor_x - m_cursor_x;
-    double cursor_delta_y = current_cursor_y - m_cursor_y;
-
-    int state = m_window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
+    const int state = m_window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
 
     if (state == GLFW_PRESS) {
-        m_game_camera.rotate(glm::vec3(cursor_delta_y * m_game_camera.m_rotation_speed,
-                                       -cursor_delta_x * m_game_camera.m_rotation_speed, 0.0f));
+        m_game_camera.rotate(glm::vec3(cursor_delta_y * m_game_camera.get_rotation_speed(),
+                                       -cursor_delta_x * m_game_camera.get_rotation_speed(), 0.0f));
     }
 
     m_window->is_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
 
-    m_cursor_x = current_cursor_x;
-    m_cursor_y = current_cursor_y;
+    m_cursor_x = cursor_position[0];
+    m_cursor_y = cursor_position[1];
 }
 
 void Application::update_imgui_overlay() {

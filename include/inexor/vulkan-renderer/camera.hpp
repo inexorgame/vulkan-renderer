@@ -4,33 +4,32 @@
 
 namespace inexor::vulkan_renderer {
 
+enum class CameraType { LOOKAT, FIRSTPERSON };
+
 /// @brief A RAII wrapper class for camera position and movement.
 /// @todo Refactor method naming!
 class Camera {
-    float m_fov;
-    float m_z_near, m_z_far;
-
     /// @brief Update the view matrix.
     /// @note The view matrix should only be updated if necessary.
     void update_view_matrix();
 
-public:
-    // TODO: Why is so much stuff here public? refactor!
-
-    enum CameraType { LOOKAT, FIRSTPERSON };
     CameraType m_type{CameraType::LOOKAT};
 
-    glm::vec3 m_rotation{};
     glm::vec3 m_position{};
+    glm::vec3 m_rotation{};
 
-    float m_rotation_speed{1.0f};
     float m_movement_speed{1.0f};
+    float m_rotation_speed{1.0f};
+
+    float m_fov{0.0f};
+    float m_z_near{0.0f};
+    float m_z_far{0.0f};
 
     bool m_updated{false};
 
     struct {
-        glm::mat4 perspective;
-        glm::mat4 view;
+        glm::mat4 perspective = glm::mat4();
+        glm::mat4 view = glm::mat4();
     } m_matrices;
 
     struct {
@@ -39,6 +38,28 @@ public:
         bool up{false};
         bool down{false};
     } m_keys;
+
+public:
+    Camera() = default;
+    /// @brief Constructs a camera based on camera properties.
+    /// @param type The type of the camera.
+    /// @param position The camera's position.
+    /// @param rotation The camera's rotation.
+    /// @param movement_speed The movement speed of the camera.
+    /// @param rotation_speed The rotation speed of the camera.
+    /// @param fov The camera's field of view.
+    /// @param z_near The near clipping value.
+    /// @param z_far The far clipping value.
+    /// @param window_width The width of the window which is used to calculate aspect ratio.
+    /// @param window_height The height of the window which is used to calculate aspect ratio.
+    Camera(CameraType type, glm::vec3 position, glm::vec3 rotation, float movement_speed, float rotation_speed,
+           float fov, float z_near, float z_far, std::uint32_t window_width, std::uint32_t window_height);
+    Camera(const Camera &) = default;
+    Camera(Camera &&) noexcept;
+    ~Camera() = default;
+
+    Camera &operator=(const Camera &) = default;
+    Camera &operator=(Camera &&) = default;
 
     /// @brief Check if any of the following keys is pressed: W, A, S, D.
     bool moving();
@@ -85,6 +106,22 @@ public:
     /// @param delta_time The amount of time which passed since last update.
     /// @return Returns true if view or position has been changed.
     bool update_pad(glm::vec2 axis_left, glm::vec2 axis_right, float delta_time);
+
+    [[nodiscard]] glm::mat4 get_perspective() const {
+        return m_matrices.perspective;
+    }
+
+    [[nodiscard]] glm::mat4 get_view() const {
+        return m_matrices.view;
+    }
+
+    [[nodiscard]] float get_rotation_speed() const {
+        return m_rotation_speed;
+    }
+
+    [[nodiscard]] float get_movement_speed() const {
+        return m_movement_speed;
+    }
 };
 
 } // namespace inexor::vulkan_renderer

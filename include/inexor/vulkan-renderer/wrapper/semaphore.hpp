@@ -12,7 +12,7 @@ class Device;
 class Semaphore {
     const Device &m_device;
     VkSemaphore m_semaphore;
-    const std::string m_name;
+    std::string m_name;
 
 public:
     /// @brief Default constructor.
@@ -24,7 +24,7 @@ public:
     ~Semaphore();
 
     Semaphore &operator=(const Semaphore &) = delete;
-    Semaphore &operator=(Semaphore &&) = default;
+    Semaphore &operator=(Semaphore &&) = delete;
 
     [[nodiscard]] VkSemaphore get() const {
         return m_semaphore;

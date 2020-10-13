@@ -22,7 +22,7 @@ class Swapchain {
     std::vector<VkImage> m_swapchain_images;
     std::vector<VkImageView> m_swapchain_image_views;
     std::uint32_t m_swapchain_image_count;
-    const std::string m_name;
+    std::string m_name;
     bool m_vsync_enabled;
 
     /// @brief Set up the swapchain.
@@ -30,7 +30,7 @@ class Swapchain {
     /// @note Swapchain recreation can be speeded up drastically when passing the old swapchian.
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
-    void setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
+    void setup_swapchain(VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
 
 public:
     /// @brief Default constructor.
@@ -40,8 +40,8 @@ public:
     /// @param window_height The height of the window.
     /// @param enable_vsync True if vertical synchronization is requested, false otherwise.
     /// @param name The internal debug marker name of the VkSwapchainKHR.
-    Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
-              const bool enable_vsync, const std::string &name);
+    Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
+              bool enable_vsync, const std::string &name);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
@@ -49,7 +49,7 @@ public:
     ~Swapchain();
 
     Swapchain &operator=(const Swapchain &) = delete;
-    Swapchain &operator=(Swapchain &&) = default;
+    Swapchain &operator=(Swapchain &&) = delete;
 
     /// @brief Call vkAcquireNextImageKHR.
     /// @param semaphore A semaphore to signal once image acquisition has completed.

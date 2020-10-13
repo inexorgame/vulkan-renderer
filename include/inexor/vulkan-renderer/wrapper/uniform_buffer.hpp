@@ -27,15 +27,15 @@ public:
     UniformBuffer(const UniformBuffer &) = delete;
     UniformBuffer(UniformBuffer &&) noexcept;
 
-    ~UniformBuffer() = default;
+    ~UniformBuffer() override = default;
 
     UniformBuffer &operator=(const UniformBuffer &) = delete;
-    UniformBuffer &operator=(UniformBuffer &&) = default;
+    UniformBuffer &operator=(UniformBuffer &&) = delete;
 
     /// @brief Update uniform buffer data.
     /// @param data A pointer to the uniform buffer data.
     /// @param size The size of the uniform buffer memory to copy.
-    void update(void *data, const std::size_t size);
+    void update(void *data, std::size_t size);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

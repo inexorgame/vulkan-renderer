@@ -89,7 +89,13 @@ protected:
     void render_frame();
 
 public:
+    VulkanRenderer() = default;
+    VulkanRenderer(const VulkanRenderer &) = delete;
+    VulkanRenderer(VulkanRenderer &&) = delete;
     ~VulkanRenderer();
+
+    VulkanRenderer &operator=(const VulkanRenderer &) = delete;
+    VulkanRenderer &operator=(VulkanRenderer &&) = delete;
 
     /// @brief Run Vulkan memory allocator's memory statistics
     void calculate_memory_budget();
