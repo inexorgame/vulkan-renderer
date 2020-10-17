@@ -15,6 +15,7 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <glm/vec2.hpp>
+#include <imgui.h>
 #include <vulkan/vulkan.h>
 
 #include <memory>
@@ -29,7 +30,7 @@ class ImGUIOverlay {
 
     float m_scale{1.0f};
 
-    std::unique_ptr<wrapper::MeshBuffer> m_imgui_mesh;
+    std::unique_ptr<wrapper::MeshBuffer<ImDrawVert, ImDrawIdx>> m_imgui_mesh;
     std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
     std::unique_ptr<wrapper::RenderPass> m_renderpass;
     std::unique_ptr<wrapper::Shader> m_vert_shader;
