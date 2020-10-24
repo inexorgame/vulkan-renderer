@@ -26,6 +26,5 @@ Optional Software
 `Doxygen <http://www.doxygen.nl/download.html>`__
     Required by the documentation. Must be available from command line.
 
-`Sphinx <https://www.sphinx-doc.org>`__ & `sphinx_rtd_theme <https://github.com/readthedocs/sphinx_rtd_theme>`__ & `Exhale <https://github.com/svenevs/exhale>`__ & `sphinxcontrib-mermaid <https://github.com/mgaitan/sphinxcontrib-mermaid>`__
-    Required by the documentation. Install with ``pip install sphinx sphinx_rtd_theme exhale sphinxcontrib-mermaid``.
-    Do not to forget to change the hard coded ``VERSION`` value in ``Python38\Lib\site-packages\sphinxcontrib`` to the newest available mermaid version.
+`Python <https://www.python.org/>`__ with pip available
+    Required by the documentation.
