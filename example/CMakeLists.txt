@@ -23,4 +23,4 @@ target_link_libraries(
     inexor-vulkan-renderer
 )
 
-set_property (DIRECTORY PROPERTY VS_STARTUP_PROJECT "inexor-vulkan-renderer-example")
+set_property (DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "inexor-vulkan-renderer-example")
