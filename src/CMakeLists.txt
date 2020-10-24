@@ -83,8 +83,14 @@ target_compile_definitions(
     VMA_RECORDING_ENABLED=$<BOOL:${INEXOR_USE_VMA_RECORDING}>
 )
 
-if(MSVC)
+# enable multi processor building if VS project
+if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
     target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
+endif()
+
+# enable exceptions when using MSVC toolchain, makes Clang on windows possible
+if(MSVC)
+    target_compile_options(inexor-vulkan-renderer PRIVATE "-EHs")
 endif()
 
 target_include_directories(
