@@ -30,7 +30,13 @@ class FrameGraph;
 /// @brief Base class of all frame graph objects (resources and stages)
 /// @note This is just for internal use
 struct FrameGraphObject {
+    FrameGraphObject() = default;
+    FrameGraphObject(const FrameGraphObject &) = delete;
+    FrameGraphObject(FrameGraphObject &&) = delete;
     virtual ~FrameGraphObject() = default;
+
+    FrameGraphObject &operator=(const FrameGraphObject &) = delete;
+    FrameGraphObject &operator=(FrameGraphObject &&) = delete;
 
     /// @brief Casts this object to type `T`
     /// @return The object as type `T` or `nullptr` if the cast failed
@@ -56,6 +62,7 @@ protected:
 public:
     RenderResource(const RenderResource &) = delete;
     RenderResource(RenderResource &&) = delete;
+    ~RenderResource() override = default;
 
     RenderResource &operator=(const RenderResource &) = delete;
     RenderResource &operator=(RenderResource &&) = delete;
@@ -173,6 +180,7 @@ protected:
 public:
     RenderStage(const RenderStage &) = delete;
     RenderStage(RenderStage &&) = delete;
+    ~RenderStage() override = default;
 
     RenderStage &operator=(const RenderStage &) = delete;
     RenderStage &operator=(RenderStage &&) = delete;
@@ -210,6 +218,7 @@ public:
     explicit GraphicsStage(std::string &&name) : RenderStage(name) {}
     GraphicsStage(const GraphicsStage &) = delete;
     GraphicsStage(GraphicsStage &&) = delete;
+    ~GraphicsStage() override = default;
 
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
@@ -242,6 +251,7 @@ protected:
 public:
     PhysicalResource(const PhysicalResource &) = delete;
     PhysicalResource(PhysicalResource &&) = delete;
+    ~PhysicalResource() override = default;
 
     PhysicalResource &operator=(const PhysicalResource &) = delete;
     PhysicalResource &operator=(PhysicalResource &&) = delete;
@@ -291,6 +301,7 @@ public:
         : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
+    ~PhysicalBackBuffer() override = default;
 
     PhysicalBackBuffer &operator=(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer &operator=(PhysicalBackBuffer &&) = delete;

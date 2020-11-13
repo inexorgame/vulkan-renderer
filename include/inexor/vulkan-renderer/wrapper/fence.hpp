@@ -13,7 +13,7 @@ class Device;
 /// @brief A RAII wrapper for VkFences.
 class Fence {
     const wrapper::Device &m_device;
-    const std::string m_name;
+    std::string m_name;
     VkFence m_fence;
 
 public:
@@ -22,7 +22,7 @@ public:
     /// @param name The internal debug marker name of the VkFence.
     /// @param in_signaled_state True if the VkFence will be constructored in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
-    Fence(const wrapper::Device &device, const std::string &name, const bool in_signaled_state);
+    Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
@@ -30,7 +30,7 @@ public:
     ~Fence();
 
     Fence &operator=(const Fence &) = delete;
-    Fence &operator=(Fence &&) = default;
+    Fence &operator=(Fence &&) = delete;
 
     [[nodiscard]] VkFence get() const {
         return m_fence;

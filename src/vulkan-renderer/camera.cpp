@@ -4,6 +4,15 @@
 
 namespace inexor::vulkan_renderer {
 
+Camera::Camera(const CameraType type, const glm::vec3 position, const glm::vec3 rotation, const float movement_speed,
+               const float rotation_speed, const float fov, const float z_near, const float z_far,
+               const std::uint32_t window_width, const std::uint32_t window_height)
+    : m_type(type), m_position(position), m_rotation(rotation), m_movement_speed(movement_speed),
+      m_rotation_speed(rotation_speed), m_fov(fov), m_z_near(z_near), m_z_far(z_far) {
+    set_perspective(m_fov, static_cast<float>(window_width) / static_cast<float>(window_height), m_z_near, m_z_far);
+    update_view_matrix();
+}
+
 void Camera::update_view_matrix() {
     glm::mat4 rot_m = glm::mat4(1.0f);
     glm::mat4 trans_m;
@@ -75,7 +84,7 @@ void Camera::update(float delta_time) {
         cam_front.z = cos(glm::radians(m_rotation.x)) * cos(glm::radians(m_rotation.y));
         cam_front = glm::normalize(cam_front);
 
-        float move_speed = delta_time * m_movement_speed;
+        const float move_speed = delta_time * m_movement_speed;
 
         if (m_keys.up) {
             m_position += cam_front * move_speed;
@@ -110,17 +119,17 @@ bool Camera::update_pad(glm::vec2 axis_left, glm::vec2 axis_right, float delta_t
         cam_front.z = cos(glm::radians(m_rotation.x)) * cos(glm::radians(m_rotation.y));
         cam_front = glm::normalize(cam_front);
 
-        float move_speed = delta_time * m_movement_speed * 2.0f;
-        float rot_speed = delta_time * m_rotation_speed * 50.0f;
+        const float move_speed = delta_time * m_movement_speed * 2.0f;
+        const float rot_speed = delta_time * m_rotation_speed * 50.0f;
 
         // Move
         if (fabsf(axis_left.y) > dead_zone) {
-            float pos = (fabsf(axis_left.y) - dead_zone) / range;
+            const float pos = (fabsf(axis_left.y) - dead_zone) / range;
             m_position -= cam_front * pos * ((axis_left.y < 0.0f) ? -1.0f : 1.0f) * move_speed;
             ret_val = true;
         }
         if (fabsf(axis_left.x) > dead_zone) {
-            float pos = (fabsf(axis_left.x) - dead_zone) / range;
+            const float pos = (fabsf(axis_left.x) - dead_zone) / range;
             m_position += glm::normalize(glm::cross(cam_front, glm::vec3(0.0f, 1.0f, 0.0f))) * pos *
                           ((axis_left.x < 0.0f) ? -1.0f : 1.0f) * move_speed;
             ret_val = true;
@@ -128,12 +137,12 @@ bool Camera::update_pad(glm::vec2 axis_left, glm::vec2 axis_right, float delta_t
 
         // Rotate
         if (fabsf(axis_right.x) > dead_zone) {
-            float pos = (fabsf(axis_right.x) - dead_zone) / range;
+            const float pos = (fabsf(axis_right.x) - dead_zone) / range;
             m_rotation.y += pos * ((axis_right.x < 0.0f) ? -1.0f : 1.0f) * rot_speed;
             ret_val = true;
         }
         if (fabsf(axis_right.y) > dead_zone) {
-            float pos = (fabsf(axis_right.y) - dead_zone) / range;
+            const float pos = (fabsf(axis_right.y) - dead_zone) / range;
             m_rotation.x -= pos * ((axis_right.y < 0.0f) ? -1.0f : 1.0f) * rot_speed;
             ret_val = true;
         }

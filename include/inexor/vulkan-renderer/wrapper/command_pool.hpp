@@ -21,7 +21,7 @@ public:
     /// because some wrappers require a queue family index which supports graphics bit, other require transfer bit.
     /// @param device The const reference to the device RAII wrapper class.
     /// @param queue_family_index The queue family index which is used by this command pool.
-    CommandPool(const Device &device, const std::uint32_t queue_family_index);
+    CommandPool(const Device &device, std::uint32_t queue_family_index);
 
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;
@@ -29,7 +29,7 @@ public:
     ~CommandPool();
 
     CommandPool &operator=(const CommandPool &) = delete;
-    CommandPool &operator=(CommandPool &&) = default;
+    CommandPool &operator=(CommandPool &&) = delete;
 
     [[nodiscard]] VkCommandPool get() const {
         return m_command_pool;

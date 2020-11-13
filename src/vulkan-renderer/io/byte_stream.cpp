@@ -29,7 +29,7 @@ void ByteStreamReader::check_end(const std::size_t size) const {
 ByteStreamReader::ByteStreamReader(const ByteStream &stream) : m_stream(stream), m_iter(stream.buffer().begin()) {}
 
 void ByteStreamReader::skip(const std::size_t size) {
-    std::size_t skip = std::min(
+    const std::size_t skip = std::min(
         size, std::size_t(std::distance<std::vector<std::uint8_t>::const_iterator>(m_iter, m_stream.buffer().end())));
     std::advance(m_iter, skip);
 }

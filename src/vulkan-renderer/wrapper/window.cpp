@@ -69,9 +69,11 @@ void Window::hide() {
     glfwHideWindow(m_window);
 }
 
-void Window::cursor_pos(double &pos_x, double &pos_y) {
+std::array<double, 2> Window::cursor_pos() {
     assert(m_window);
-    glfwGetCursorPos(m_window, &pos_x, &pos_y);
+    std::array<double, 2> cursor_position{0.0, 0.0};
+    glfwGetCursorPos(m_window, &cursor_position[0], &cursor_position[1]);
+    return cursor_position;
 }
 
 bool Window::is_button_pressed(int button) {

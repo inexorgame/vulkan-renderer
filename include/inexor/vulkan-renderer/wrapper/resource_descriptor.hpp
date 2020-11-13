@@ -11,7 +11,7 @@ class Device;
 
 /// @brief RAII wrapper class for resource descriptors.
 class ResourceDescriptor {
-    const std::string m_name;
+    std::string m_name;
     const Device &m_device;
     VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
@@ -38,7 +38,7 @@ public:
     ~ResourceDescriptor();
 
     ResourceDescriptor &operator=(const ResourceDescriptor &) = delete;
-    ResourceDescriptor &operator=(ResourceDescriptor &&) noexcept = default;
+    ResourceDescriptor &operator=(ResourceDescriptor &&) = delete;
 
     [[nodiscard]] const auto &descriptor_sets() const {
         return m_descriptor_sets;

@@ -37,7 +37,7 @@ class GpuTexture {
     /// @brief Create the texture.
     /// @param texture_data A pointer to the texture data.
     /// @param texture_size The size of the texture.
-    void create_texture(void *texture_data, const std::size_t texture_size);
+    void create_texture(void *texture_data, std::size_t texture_size);
 
     /// @brief Transform the image layout.
     /// @param image The image.
@@ -64,8 +64,8 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
-               const int texture_height, const int texture_channels, const int mip_levels, std::string name);
+    GpuTexture(const wrapper::Device &device, void *data, std::size_t data_size, int texture_width, int texture_height,
+               int texture_channels, int mip_levels, std::string name);
 
     GpuTexture(const GpuTexture &) = delete;
     GpuTexture(GpuTexture &&) noexcept;
@@ -73,7 +73,7 @@ public:
     ~GpuTexture();
 
     GpuTexture &operator=(const GpuTexture &) = delete;
-    GpuTexture &operator=(GpuTexture &&) = default;
+    GpuTexture &operator=(GpuTexture &&) = delete;
 
     [[nodiscard]] std::string name() const {
         return m_name;

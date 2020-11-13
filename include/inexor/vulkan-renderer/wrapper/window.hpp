@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include <array>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -10,8 +11,8 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @brief RAII wrapper class for GLFW windows.
 class Window {
     GLFWwindow *m_window;
-    std::uint32_t m_width;
-    std::uint32_t m_height;
+    std::uint32_t m_width{0};
+    std::uint32_t m_height{0};
 
 public:
     /// @brief Default constructor.
@@ -20,8 +21,7 @@ public:
     /// @param height The height of the window.
     /// @param visible True if the window is visible after creation, false otherwise.
     /// @param resizable True if the window should be resizable, false otherwise.
-    Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
-           const bool resizable);
+    Window(const std::string &title, std::uint32_t width, std::uint32_t height, bool visible, bool resizable);
 
     Window(const Window &) = delete;
     Window(Window &&) noexcept;
@@ -53,10 +53,8 @@ public:
     /// @brief Call glfwHideWindow.
     void hide();
 
-    /// @brief Set the cursor position.
-    /// @param pos_x The x cursor position.
-    /// @param pos_y The y cursor position.
-    void cursor_pos(double &pos_x, double &pos_y);
+    /// @brief Returns the cursor position.
+    std::array<double, 2> cursor_pos();
 
     /// @brief Check if a specifiy button is pressed.
     /// @param button The button to check.

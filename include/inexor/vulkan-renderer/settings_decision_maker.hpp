@@ -8,6 +8,12 @@
 
 namespace inexor::vulkan_renderer {
 
+/// @brief A wrapper class for swapchain settings.
+struct SwapchainSettings {
+    VkExtent2D window_size;
+    VkExtent2D swapchain_size;
+};
+
 /// @brief This class makes automatic decisions about setting up Vulkan.
 /// Examples:
 /// - Which graphics card will be used if more than one is available?
@@ -72,11 +78,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param surface The selected (window) surface.
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
-    /// @param swapchain_extent [out] The extent of the swapchain.
-    /// @todo Make this function return a std::optional<VkExtend2D> instead of using call by reference!
-    void decide_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                 std::uint32_t &window_width, std::uint32_t &window_height,
-                                 VkExtent2D &swapchain_extent);
+    SwapchainSettings decide_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
+                                              std::uint32_t window_width, std::uint32_t window_height);
 
     /// @brief Automatically find the image transform, relative to the presentation engine's natural orientation,
     /// applied to the image content prior to presentation.
@@ -90,8 +93,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The composite alpha flag bits.
-    [[nodiscard]] VkCompositeAlphaFlagBitsKHR find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
-                                                                          const VkSurfaceKHR surface);
+    [[nodiscard]] std::optional<VkCompositeAlphaFlagBitsKHR>
+    find_composite_alpha_format(VkPhysicalDevice selected_graphics_card, VkSurfaceKHR surface);
 
     /// @brief Automatically decide which presentation mode the presentation engine will be using.
     /// @note We can only use presentation modes that are available in the current system. The preferred presentation
@@ -162,8 +165,8 @@ struct VulkanSettingsDecisionMaker {
     /// @return A VkFormat value if a suitable depth buffer format could be found, std::nullopt otherwise.
     [[nodiscard]] std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice &graphics_card,
                                                                    const std::vector<VkFormat> &formats,
-                                                                   const VkImageTiling tiling,
-                                                                   const VkFormatFeatureFlags feature_flags);
+                                                                   VkImageTiling tiling,
+                                                                   VkFormatFeatureFlags feature_flags);
 };
 
 } // namespace inexor::vulkan_renderer

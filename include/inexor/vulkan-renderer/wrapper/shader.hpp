@@ -12,8 +12,8 @@ class Device;
 /// @brief RAII wrapper class for VkShaderModules.
 class Shader {
     const Device &m_device;
-    const std::string m_name;
-    const std::string m_entry_point;
+    std::string m_name;
+    std::string m_entry_point;
     VkShaderStageFlagBits m_type;
     VkShaderModule m_shader_module;
 
@@ -43,7 +43,7 @@ public:
     ~Shader();
 
     Shader &operator=(const Shader &) = delete;
-    Shader &operator=(Shader &&) = default;
+    Shader &operator=(Shader &&) = delete;
 
     [[nodiscard]] const std::string &name() const {
         return m_name;

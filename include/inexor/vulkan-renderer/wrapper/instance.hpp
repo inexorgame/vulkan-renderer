@@ -27,10 +27,9 @@ public:
     /// @param enable_renderdoc_layer True if renderdoc layer should be enabled, false otherwise.
     /// @param requested_instance_extensions The instance extensions which are requested.
     /// @param requested_instance_layers The instance layers which are requested.
-    Instance(const std::string &application_name, const std::string &engine_name,
-             const std::uint32_t application_version, const std::uint32_t engine_version,
-             const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer,
-             std::vector<std::string> requested_instance_extensions,
+    Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
+             std::uint32_t engine_version, std::uint32_t vulkan_api_version, bool enable_validation_layers,
+             bool enable_renderdoc_layer, std::vector<std::string> requested_instance_extensions,
              std::vector<std::string> requested_instance_layers);
 
     /// @brief Construct the Vulkan instance without the requested instance layers and instance extensions.
@@ -42,9 +41,9 @@ public:
     /// If the requested version of Vulkan API is not available, the creation of the instance will fail!
     /// @param enable_validation_layers True if validation layers should be enabled, false otherwise.
     /// @param enable_renderdoc_layer True if renderdoc layer should be enabled, false otherwise.
-    Instance(const std::string &application_name, const std::string &engine_name,
-             const std::uint32_t application_version, const std::uint32_t engine_version,
-             const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer);
+    Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
+             std::uint32_t engine_version, std::uint32_t vulkan_api_version, bool enable_validation_layers,
+             bool enable_renderdoc_layer);
 
     Instance(const Instance &) = delete;
     Instance(Instance &&) noexcept;
@@ -54,7 +53,7 @@ public:
     Instance &operator=(const Instance &) = delete;
     Instance &operator=(Instance &&) = default;
 
-    [[nodiscard]] const VkInstance instance() const {
+    [[nodiscard]] VkInstance instance() const {
         return m_instance;
     }
 };

@@ -14,12 +14,12 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device {
     VkDevice m_device;
     VkPhysicalDevice m_graphics_card;
-    VmaAllocator m_allocator;
-    std::string m_gpu_name;
+    VmaAllocator m_allocator{VK_NULL_HANDLE};
+    std::string m_gpu_name{""};
 
-    VkQueue m_graphics_queue;
-    VkQueue m_present_queue;
-    VkQueue m_transfer_queue;
+    VkQueue m_graphics_queue{nullptr};
+    VkQueue m_present_queue{nullptr};
+    VkQueue m_transfer_queue{nullptr};
     VkSurfaceKHR m_surface;
 
     std::uint32_t m_present_queue_family_index;
@@ -49,9 +49,9 @@ public:
     /// application's purpose, another graphics card will be selected automatically. See the details of the device
     /// selection mechanism!
     /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
-    Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+    Device(VkInstance instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
-           const std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
+           std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
@@ -59,13 +59,13 @@ public:
     ~Device();
 
     Device &operator=(const Device &) = delete;
-    Device &operator=(Device &&) = default;
+    Device &operator=(Device &&) = delete;
 
-    [[nodiscard]] const VkDevice device() const {
+    [[nodiscard]] VkDevice device() const {
         return m_device;
     }
 
-    [[nodiscard]] const VkPhysicalDevice physical_device() const {
+    [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_graphics_card;
     }
 
@@ -77,17 +77,17 @@ public:
         return m_gpu_name;
     }
 
-    [[nodiscard]] const VkQueue graphics_queue() const {
+    [[nodiscard]] VkQueue graphics_queue() const {
         return m_graphics_queue;
     }
 
-    [[nodiscard]] const VkQueue present_queue() const {
+    [[nodiscard]] VkQueue present_queue() const {
         return m_present_queue;
     }
 
     /// @note Transfer queues are the fastest way to copy data across the PCIe bus. They are heavily underutilized even
     /// in modern games. Transfer queues can be used asynchronously to graphics queuey.
-    [[nodiscard]] const VkQueue transfer_queue() const {
+    [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
     }
 
@@ -119,28 +119,26 @@ public:
     /// @param name The name of the memory block which will be connected to this object.
     /// @param memory_size The size of the memory block in bytes.
     /// @param memory_address The memory address to read from.
-    void set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
-                                     const std::size_t memory_size, const void *memory_block) const;
+    void set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, std::uint64_t name,
+                                     std::size_t memory_size, const void *memory_block) const;
 
     /// @param color [in] The rgba color of the rendering region.
     /// @param name [in] The name of the rendering region.
     /// @param command_buffer [in] The associated command buffer.
     /// The rendering region will be visible in external debuggers like RenderDoc.
     /// @brief Vulkan debug markers: Annotation of a rendering region.
-    void bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
-                           const std::array<float, 4> color) const;
+    void bind_debug_region(VkCommandBuffer command_buffer, const std::string &name, std::array<float, 4> color) const;
 
     /// @brief Insert a debug markers into the current renderpass using vkCmdDebugMarkerInsertEXT. This debug markers
     /// can be seen in external debuggers like RenderDoc.
     /// @param command_buffer The command buffer which is associated to the debug marker.
     /// @param name The name of the debug marker.
     /// @param color An array of red, green, blue and alpha values for the debug region's color.
-    void insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
-                             const std::array<float, 4> color) const;
+    void insert_debug_marker(VkCommandBuffer command_buffer, const std::string &name, std::array<float, 4> color) const;
 
     /// @brief End the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
     /// @param command_buffer The command buffer which is associated to the debug marker.
-    void end_debug_region(const VkCommandBuffer command_buffer) const;
+    void end_debug_region(VkCommandBuffer command_buffer) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

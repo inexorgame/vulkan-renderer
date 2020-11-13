@@ -106,7 +106,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         constexpr int FONT_TEXTURE_CHANNELS{4};
         constexpr int FONT_MIP_LEVELS{1};
 
-        VkDeviceSize upload_size = font_texture_width * font_texture_height * FONT_TEXTURE_CHANNELS;
+        VkDeviceSize upload_size = static_cast<VkDeviceSize>(font_texture_width) *
+                                   static_cast<VkDeviceSize>(font_texture_height) *
+                                   static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
 
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
             m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
@@ -238,8 +240,8 @@ void ImGUIOverlay::update() {
         return;
     }
 
-    VkDeviceSize vertex_buffer_size = imgui_draw_data->TotalVtxCount * sizeof(ImDrawVert);
-    VkDeviceSize index_buffer_size = imgui_draw_data->TotalIdxCount * sizeof(ImDrawIdx);
+    const VkDeviceSize vertex_buffer_size = imgui_draw_data->TotalVtxCount * sizeof(ImDrawVert);
+    const VkDeviceSize index_buffer_size = imgui_draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 
     if ((vertex_buffer_size == 0) || (index_buffer_size == 0)) {
         return;
@@ -294,7 +296,7 @@ void ImGUIOverlay::update() {
             index_buffer_address += cmd_list->IdxBuffer.Size;
         }
 
-        ImGuiIO &io = ImGui::GetIO();
+        const ImGuiIO &io = ImGui::GetIO();
 
         spdlog::debug("Creating frame buffers for ImGUI");
 

@@ -78,7 +78,7 @@ MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDe
     : m_vertex_buffer(device, name, size_of_vertex_structure * number_of_vertices,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
       m_index_buffer(std::nullopt), m_number_of_vertices(static_cast<std::uint32_t>(number_of_vertices)),
-      m_number_of_indices(static_cast<std::uint32_t>(m_number_of_indices)), m_device(device) {
+      m_number_of_indices(0), m_device(device) {
     assert(device.device());
     assert(device.allocator());
     assert(!name.empty());
@@ -104,7 +104,6 @@ MeshBuffer::MeshBuffer(const Device &device, const std::string &name, const VkDe
 
     : m_vertex_buffer(device, name, size_of_vertex_structure * number_of_vertices,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-      m_index_buffer(std::nullopt), m_number_of_indices(static_cast<std::uint32_t>(m_number_of_indices)),
-      m_device(device) {}
+      m_index_buffer(std::nullopt), m_number_of_indices(0), m_device(device) {}
 
 } // namespace inexor::vulkan_renderer::wrapper

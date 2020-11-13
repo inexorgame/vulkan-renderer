@@ -21,7 +21,7 @@ class OnceCommandBuffer {
     const Device &m_device;
     // We must store the VkQueue separately since we don't know from
     // the context of the use of this OnceCommandBuffer which queue to use!
-    const VkQueue m_queue;
+    VkQueue m_queue;
     CommandPool m_command_pool;
     std::unique_ptr<CommandBuffer> m_command_buffer;
 
@@ -36,7 +36,7 @@ public:
     /// @warn We can't determine the queue and queue family index to use automatically using the device wrapper
     /// reference because we might choose a queue which is unsuitable for the requested purpose!
     /// This is the reason we must specify the queue and queue family index in the constructor.
-    OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index);
+    OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index);
 
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;
@@ -44,7 +44,7 @@ public:
     ~OnceCommandBuffer();
 
     OnceCommandBuffer &operator=(const OnceCommandBuffer &) = delete;
-    OnceCommandBuffer &operator=(OnceCommandBuffer &&) = default;
+    OnceCommandBuffer &operator=(OnceCommandBuffer &&) = delete;
 
     /// @brief Create the command buffer.
     /// @note We are not merging this into the constructor because we need to be able to call this function separately.

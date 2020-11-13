@@ -9,7 +9,7 @@ TimeStep::TimeStep() {
 }
 
 float TimeStep::time_step() {
-    auto current_time = std::chrono::high_resolution_clock::now();
+    const auto current_time = std::chrono::high_resolution_clock::now();
 
     auto time_duration = std::chrono::duration<float, std::chrono::seconds::period>(current_time - m_last_time).count();
 

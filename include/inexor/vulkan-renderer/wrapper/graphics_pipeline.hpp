@@ -27,11 +27,11 @@ public:
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
     /// @param name The internal debug marker name of the graphics pipeline.
-    GraphicsPipeline(const Device &device, const VkPipelineLayout pipeline_layout, const VkRenderPass render_pass,
+    GraphicsPipeline(const Device &device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass,
                      const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages,
                      const std::vector<VkVertexInputBindingDescription> &vertex_binding,
                      const std::vector<VkVertexInputAttributeDescription> &attribute_binding,
-                     const std::uint32_t window_width, const std::uint32_t window_height, const std::string &name);
+                     std::uint32_t window_width, std::uint32_t window_height, const std::string &name);
 
     GraphicsPipeline(const GraphicsPipeline &) = delete;
     GraphicsPipeline(GraphicsPipeline &&other) noexcept;
@@ -39,7 +39,7 @@ public:
     ~GraphicsPipeline();
 
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
-    GraphicsPipeline &operator=(GraphicsPipeline &&) noexcept = default;
+    GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
 
     [[nodiscard]] VkPipeline get() const {
         return graphics_pipeline;
