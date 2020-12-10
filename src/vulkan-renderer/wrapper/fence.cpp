@@ -40,14 +40,10 @@ Fence::~Fence() {
 }
 
 void Fence::block(std::uint64_t timeout_limit) const {
-    assert(m_device.device());
-    assert(m_fence);
     vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
 }
 
 void Fence::reset() const {
-    assert(m_device.device());
-    assert(m_fence);
     vkResetFences(m_device.device(), 1, &m_fence);
 }
 

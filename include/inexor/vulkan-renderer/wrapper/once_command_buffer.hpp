@@ -25,7 +25,6 @@ class OnceCommandBuffer {
     CommandPool m_command_pool;
     std::unique_ptr<CommandBuffer> m_command_buffer;
 
-    bool m_command_buffer_created;
     bool m_recording_started;
 
 public:

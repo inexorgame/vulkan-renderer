@@ -15,7 +15,6 @@ UniformBuffer::UniformBuffer(UniformBuffer &&other) noexcept
       m_descriptor_set(std::move(other.m_descriptor_set)) {}
 
 void UniformBuffer::update(void *data, const std::size_t size) {
-    assert(m_allocation_info.pMappedData);
     std::memcpy(m_allocation_info.pMappedData, data, size);
 }
 
