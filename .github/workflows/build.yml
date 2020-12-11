@@ -152,7 +152,7 @@ jobs:
         shell: pwsh
         run: |
           curl -LS -o vulkansdk.exe `
-            https://vulkan.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/windows/VulkanSDK-${{ env.inexor_vulkan_version }}-Installer.exe?Human=true
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/windows/VulkanSDK-${{ env.inexor_vulkan_version }}-Installer.exe?Human=true
 
           7z x vulkansdk.exe -o"${{ env.inexor_vulkan_sdk }}"
 
