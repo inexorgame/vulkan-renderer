@@ -84,7 +84,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     // Load font texture
 
     // TODO: Move this data into a container class; have container class also support bold and italic.
-    constexpr char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
+    constexpr const char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
     constexpr float FONT_SIZE = 18.0f;
 
     spdlog::debug("Loading front '{}'", FONT_FILE_PATH);
