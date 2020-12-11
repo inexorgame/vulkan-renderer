@@ -2,6 +2,7 @@
 Checks: >
   *,
   -fuchsia*,
+  -llvmlibc*,
   -zircon*,
 
   -bugprone-narrowing-conversions,
