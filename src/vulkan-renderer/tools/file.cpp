@@ -16,7 +16,7 @@ const std::vector<char> &File::file_data() const {
 }
 
 bool File::load_file(const std::string &file_name) {
-    assert(file_name.size() > 0);
+    assert(!file_name.empty());
 
     // Open stream at the end of the file to read it's size.
     std::ifstream file_to_load(file_name.c_str(), std::ios::in | std::ios::binary | std::ios::ate);

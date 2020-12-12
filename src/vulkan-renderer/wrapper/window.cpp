@@ -27,8 +27,6 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
 Window::Window(Window &&other) noexcept : m_window(std::exchange(other.m_window, nullptr)) {}
 
 void Window::wait_for_focus() {
-    assert(m_window);
-
     int current_width = 0;
     int current_height = 0;
 
@@ -42,52 +40,43 @@ void Window::wait_for_focus() {
 }
 
 void Window::set_title(const std::string &title) {
-    assert(m_window);
     assert(!title.empty());
     glfwSetWindowTitle(m_window, title.c_str());
 }
 
 void Window::set_user_ptr(void *user_ptr) {
-    assert(m_window);
     assert(user_ptr);
     glfwSetWindowUserPointer(m_window, user_ptr);
 }
 
 void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback) {
-    assert(m_window);
     assert(frame_buffer_resize_callback);
     glfwSetFramebufferSizeCallback(m_window, frame_buffer_resize_callback);
 }
 
 void Window::show() {
-    assert(m_window);
     glfwShowWindow(m_window);
 }
 
 void Window::hide() {
-    assert(m_window);
     glfwHideWindow(m_window);
 }
 
 std::array<double, 2> Window::cursor_pos() {
-    assert(m_window);
     std::array<double, 2> cursor_position{0.0, 0.0};
     glfwGetCursorPos(m_window, &cursor_position[0], &cursor_position[1]);
     return cursor_position;
 }
 
 bool Window::is_button_pressed(int button) {
-    assert(m_window);
     return glfwGetMouseButton(m_window, button);
 }
 
 void Window::poll() {
-    assert(m_window);
     glfwPollEvents();
 }
 
 bool Window::should_close() {
-    assert(m_window);
     return glfwWindowShouldClose(m_window);
 }
 
