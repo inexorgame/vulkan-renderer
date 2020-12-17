@@ -4,7 +4,6 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
-#include <imgui.h>
 #include <stdexcept>
 
 namespace inexor::vulkan_renderer {
@@ -249,19 +248,16 @@ void ImGUIOverlay::update() {
 
     // TODO() Do not allocate memory at runtime!
     if (!m_imgui_mesh) {
-        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(m_device, "imgui_mesh_buffer", sizeof(ImDrawVert),
-                                                             imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
-                                                             imgui_draw_data->TotalIdxCount);
+        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer<ImDrawVert, ImDrawIdx>>(
+            m_device, "imgui_mesh_buffer", imgui_draw_data->TotalVtxCount, imgui_draw_data->TotalIdxCount);
     }
 
     if ((m_imgui_mesh->get_vertex_buffer() == VK_NULL_HANDLE) || (m_vertex_count != imgui_draw_data->TotalVtxCount)) {
-        m_imgui_mesh.reset();
-
         spdlog::debug("Creating ImGUI vertex buffer");
 
-        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(m_device, "imgui_mesh_buffer", sizeof(ImDrawVert),
-                                                             imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
-                                                             imgui_draw_data->TotalIdxCount);
+        m_imgui_mesh.reset();
+        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer<ImDrawVert, ImDrawIdx>>(
+            m_device, "imgui_mesh_buffer", imgui_draw_data->TotalVtxCount, imgui_draw_data->TotalIdxCount);
 
         m_vertex_count = imgui_draw_data->TotalVtxCount;
 
@@ -270,13 +266,12 @@ void ImGUIOverlay::update() {
 
     if ((m_imgui_mesh->get_index_buffer() == VK_NULL_HANDLE) ||
         (m_index_count < static_cast<std::uint32_t>(imgui_draw_data->TotalIdxCount))) {
-        m_imgui_mesh.reset();
 
         spdlog::debug("Creating ImGUI index buffer");
 
-        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer>(m_device, "imgui_mesh_buffer", sizeof(ImDrawVert),
-                                                             imgui_draw_data->TotalVtxCount, sizeof(ImDrawIdx),
-                                                             imgui_draw_data->TotalIdxCount);
+        m_imgui_mesh.reset();
+        m_imgui_mesh = std::make_unique<wrapper::MeshBuffer<ImDrawVert, ImDrawIdx>>(
+            m_device, "imgui_mesh_buffer", imgui_draw_data->TotalVtxCount, imgui_draw_data->TotalIdxCount);
 
         m_index_count = imgui_draw_data->TotalIdxCount;
 
@@ -284,7 +279,7 @@ void ImGUIOverlay::update() {
     }
 
     if (update_command_buffers) {
-        // TODO: Implement an update method for MeshBuffer !
+
         auto *vertex_buffer_address = static_cast<ImDrawVert *>(m_imgui_mesh->get_vertex_buffer_address());
         auto *index_buffer_address = static_cast<ImDrawIdx *>(m_imgui_mesh->get_index_buffer_address());
 
