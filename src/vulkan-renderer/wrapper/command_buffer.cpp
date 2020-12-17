@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
 
 #include <array>
 #include <cassert>
