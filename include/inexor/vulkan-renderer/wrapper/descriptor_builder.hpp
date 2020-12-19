@@ -17,7 +17,6 @@ class DescriptorBuilder {
 
     std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings{};
     std::vector<VkWriteDescriptorSet> m_write_sets{};
-    std::vector<VkDescriptorType> m_descriptor_types{};
     std::vector<VkDescriptorBufferInfo> m_descriptor_buffer_infos{};
 
 public:
@@ -56,8 +55,6 @@ public:
         layout_binding.pImmutableSamplers = nullptr;
 
         m_layout_bindings.push_back(layout_binding);
-
-        m_descriptor_types.emplace_back(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
         VkDescriptorBufferInfo uniform_buffer_info{};
         uniform_buffer_info.buffer = uniform_buffer;

@@ -136,10 +136,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     desc_writes[0].descriptorCount = 1;
     desc_writes[0].pImageInfo = &font_desc;
 
-    std::initializer_list<VkDescriptorType> pool_types = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER};
-
-    m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(m_device, swapchain.image_count(), pool_types,
-                                                                 layout_bindings, desc_writes, "ImGUI");
+    m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(m_device, swapchain.image_count(), layout_bindings,
+                                                                 desc_writes, "ImGUI");
 
     // TODO() Use pipeline cache!
     std::vector<VkAttachmentDescription> attachments(1);

@@ -18,7 +18,6 @@ ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
       m_descriptor_sets(std::move(other.m_descriptor_sets)), m_swapchain_image_count(other.m_swapchain_image_count) {}
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                                       const std::vector<VkDescriptorType> &pool_types,
                                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                                        const std::vector<VkWriteDescriptorSet> &descriptor_writes,
                                        const std::string &name)
@@ -34,8 +33,8 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
 
-    for (const auto &descriptor_pool_type : pool_types) {
-        pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type, swapchain_image_count});
+    for (const auto &descriptor_pool_type : layout_bindings) {
+        pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, swapchain_image_count});
     }
 
     spdlog::debug("Creating new descriptor pool.");

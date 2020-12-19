@@ -20,10 +20,9 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     assert(m_write_sets.size() == m_layout_bindings.size());
 
     // Generate a new resource descriptor.
-    ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, m_descriptor_types, m_layout_bindings,
-                                            m_write_sets, std::move(name));
+    ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, m_layout_bindings, m_write_sets,
+                                            std::move(name));
 
-    m_descriptor_types.clear();
     m_layout_bindings.clear();
     m_write_sets.clear();
 

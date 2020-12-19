@@ -24,12 +24,10 @@ public:
     /// @brief Default constructor.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param swapchain_image_count The number of images in swapchain.
-    /// @param pool_types The descriptor pool types.
     /// @param layout_bindings The descriptor layout bindings.
     /// @param descriptor_writes The write descriptor sets.
     /// @param name The internal debug marker name of the resource descriptor.
     ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                       const std::vector<VkDescriptorType> &pool_types,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                        const std::vector<VkWriteDescriptorSet> &descriptor_writes, const std::string &name);
 
