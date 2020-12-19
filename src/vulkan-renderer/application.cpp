@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -384,37 +385,14 @@ Application::Application(int argc, char **argv) {
 
     m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
 
-    std::vector<VkDescriptorSetLayoutBinding> layout_bindings(1);
+    // Create an instance of the resource descriptor builder.
+    // This allows us to make resource descriptors with the help of a builder pattern.
+    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
 
-    layout_bindings[0].binding = 0;
-    layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    layout_bindings[0].descriptorCount = 1;
-    layout_bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    layout_bindings[0].pImmutableSamplers = nullptr;
-
-    std::vector<VkWriteDescriptorSet> descriptor_writes(1);
-
-    // Link the matrices uniform buffer to the descriptor set so the shader can access it.
-
-    // We can do better than this, but therefore RAII refactoring needs to be done..
-    m_uniform_buffer_info.buffer = m_uniform_buffers[0].buffer();
-    m_uniform_buffer_info.offset = 0;
-    m_uniform_buffer_info.range = sizeof(UniformBufferObject);
-
-    descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_writes[0].dstSet = nullptr;
-    descriptor_writes[0].dstBinding = 0;
-    descriptor_writes[0].dstArrayElement = 0;
-    descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor_writes[0].descriptorCount = 1;
-    descriptor_writes[0].pBufferInfo = &m_uniform_buffer_info;
-
-    m_descriptors.emplace_back(wrapper::ResourceDescriptor{*m_device,
-                                                           m_swapchain->image_count(),
-                                                           {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
-                                                           layout_bindings,
-                                                           descriptor_writes,
-                                                           "Default descriptor"});
+    // Make use of the builder to create a resource descriptor for the uniform buffer.
+    m_descriptors.emplace_back(
+        descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
+            .build("Default uniform buffer"));
 
     load_octree_geometry();
     generate_octree_indices();

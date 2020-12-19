@@ -29,7 +29,7 @@ public:
     /// @param descriptor_writes The write descriptor sets.
     /// @param name The internal debug marker name of the resource descriptor.
     ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                       std::initializer_list<VkDescriptorType> pool_types,
+                       const std::vector<VkDescriptorType> &pool_types,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                        const std::vector<VkWriteDescriptorSet> &descriptor_writes, const std::string &name);
 
