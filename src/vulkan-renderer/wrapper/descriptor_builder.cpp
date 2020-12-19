@@ -25,6 +25,8 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
 
     m_layout_bindings.clear();
     m_write_sets.clear();
+    m_descriptor_buffer_infos.clear();
+    m_descriptor_image_infos.clear();
 
     return generated_descriptor;
 };

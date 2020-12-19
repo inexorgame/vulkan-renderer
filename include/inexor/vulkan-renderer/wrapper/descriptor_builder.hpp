@@ -17,7 +17,9 @@ class DescriptorBuilder {
 
     std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings{};
     std::vector<VkWriteDescriptorSet> m_write_sets{};
+
     std::vector<VkDescriptorBufferInfo> m_descriptor_buffer_infos{};
+    std::vector<VkDescriptorImageInfo> m_descriptor_image_infos{};
 
 public:
     /// @brief
@@ -35,6 +37,7 @@ public:
     // TODO: Implement more descriptor types than just uniform buffers here!
     // TODO: Support more than 1 descriptor per descriptor set.
     // TODO: Support uniform buffer offset in VkDescriptorBufferInfo.
+    // TODO: Offer overloaded methods.
 
     /// @brief Adds a uniform buffer to the descriptor container.
     /// @tparam T The type of the uniform buffer.
@@ -77,9 +80,50 @@ public:
         return *this;
     }
 
-    /// @brief
-    /// @param name
-    /// @return
+    /// @brief Adds a combined image sampler to the descriptor container.
+    /// @param image_sampler The pointer to the combined image sampler.
+    /// @param image_view The pointer to the image view.
+    /// @param binding The binding index which will be used in the SPIR-V shader.
+    /// @param shader_stage The shader stage the uniform buffer will be used in, most likely the fragment shader.
+    /// @return A const reference to this DescriptorBuilder instance.
+    DescriptorBuilder &
+    add_combined_image_sampler(const VkSampler image_sampler, const VkImageView image_view, const std::uint32_t binding,
+                               const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT) {
+        assert(image_sampler);
+        assert(image_view);
+
+        VkDescriptorSetLayoutBinding layout_binding{};
+        layout_binding.binding = 0;
+        layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        layout_binding.descriptorCount = 1;
+        layout_binding.stageFlags = shader_stage;
+
+        m_layout_bindings.push_back(layout_binding);
+
+        VkDescriptorImageInfo image_info{};
+        image_info.sampler = image_sampler;
+        image_info.imageView = image_view;
+        image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        m_descriptor_image_infos.push_back(image_info);
+
+        VkWriteDescriptorSet descriptor_write{};
+        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_write.dstSet = nullptr;
+        descriptor_write.dstBinding = 0;
+        descriptor_write.dstArrayElement = 0;
+        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor_write.descriptorCount = 1;
+        descriptor_write.pImageInfo = &m_descriptor_image_infos.back();
+
+        m_write_sets.push_back(descriptor_write);
+
+        return *this;
+    }
+
+    /// @brief Builds the resource descriptor.
+    /// @param name The internal name of the resource descriptor.
+    /// @return The resource descriptor which was created by the builder.
     ResourceDescriptor build(std::string name);
 };
 
