@@ -22,9 +22,9 @@ class DescriptorBuilder {
     std::vector<VkDescriptorImageInfo> m_descriptor_image_infos{};
 
 public:
-    /// @brief
-    /// @param device
-    /// @param swapchain_image_count
+    /// @brief Constructs the descriptor builder.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param swapchain_image_count The number of images in swapchain.
     DescriptorBuilder(const Device &device, const std::uint32_t swapchain_image_count);
 
     DescriptorBuilder(const DescriptorBuilder &) = delete;
@@ -34,10 +34,9 @@ public:
     DescriptorBuilder &operator=(const DescriptorBuilder &) = delete;
     DescriptorBuilder &operator=(DescriptorBuilder &&) = delete;
 
-    // TODO: Implement more descriptor types than just uniform buffers here!
-    // TODO: Support more than 1 descriptor per descriptor set.
+    // TODO: Implement more descriptor types than just uniform buffers and combined image samplers.
     // TODO: Support uniform buffer offset in VkDescriptorBufferInfo.
-    // TODO: Offer overloaded methods.
+    // TODO: Offer overloaded methods which expose more fields of the structures.
 
     /// @brief Adds a uniform buffer to the descriptor container.
     /// @tparam T The type of the uniform buffer.

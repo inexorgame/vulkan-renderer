@@ -29,7 +29,12 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     assert(!m_write_descriptor_sets.empty());
     assert(layout_bindings.size() == m_write_descriptor_sets.size());
 
-    // TODO() Check if descriptor writes match descriptor set layout!
+    for (std::size_t i = 0; i < layout_bindings.size(); i++) {
+        if (layout_bindings[i].descriptorType != descriptor_writes[i].descriptorType) {
+            throw std::runtime_error(
+                std::string("VkDescriptorType mismatch in descriptor set layout binding and write descriptor set!"));
+        }
+    }
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
 
