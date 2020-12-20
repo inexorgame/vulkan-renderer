@@ -54,22 +54,27 @@ void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_call
     glfwSetFramebufferSizeCallback(m_window, frame_buffer_resize_callback);
 }
 
+void Window::set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback) {
+    assert(keyboard_button_callback);
+    glfwSetKeyCallback(m_window, keyboard_button_callback);
+}
+
+void Window::set_cursor_position_callback(GLFWcursorposfun cursor_pos_callback) {
+    assert(cursor_pos_callback);
+    glfwSetCursorPosCallback(m_window, cursor_pos_callback);
+}
+
+void Window::set_mouse_button_callback(GLFWmousebuttonfun mouse_button_callback) {
+    assert(mouse_button_callback);
+    glfwSetMouseButtonCallback(m_window, mouse_button_callback);
+}
+
 void Window::show() {
     glfwShowWindow(m_window);
 }
 
 void Window::hide() {
     glfwHideWindow(m_window);
-}
-
-std::array<double, 2> Window::cursor_pos() {
-    std::array<double, 2> cursor_position{0.0, 0.0};
-    glfwGetCursorPos(m_window, &cursor_position[0], &cursor_position[1]);
-    return cursor_position;
-}
-
-bool Window::is_button_pressed(int button) {
-    return glfwGetMouseButton(m_window, button);
 }
 
 void Window::poll() {

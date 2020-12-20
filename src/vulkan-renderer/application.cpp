@@ -18,18 +18,34 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @brief Static callback for window resize events.
-/// @note Because GLFW is a C-style API, we can't pass a poiner to a class method, so we have to do it this way!
-/// @param window The GLFW window.
-/// @param height The width of the window.
-/// @param height The height of the window.
-/// @TODO Avoid static methods! Poll the events manually in the render loop!
-static void frame_buffer_resize_callback(GLFWwindow *window, int width, int height) {
+void Application::frame_buffer_resize_callback(GLFWwindow *window, int width, int height) {
     spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
+}
 
-    // This is actually the way it is handled by the official Vulkan samples.
-    auto *app = reinterpret_cast<VulkanRenderer *>(glfwGetWindowUserPointer(window));
-    app->m_window_resized = true;
+void Application::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    switch (action) {
+    case GLFW_PRESS:
+        m_input_data->press_key(key);
+        break;
+    case GLFW_RELEASE:
+        m_input_data->release_key(key);
+        break;
+    }
+}
+
+void Application::cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
+    m_input_data->set_cursor_pos(xpos, ypos);
+}
+
+void Application::mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+    switch (action) {
+    case GLFW_PRESS:
+        m_input_data->press_mouse_button(button);
+        break;
+    case GLFW_RELEASE:
+        m_input_data->release_mouse_button(button);
+        break;
+    }
 }
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
@@ -213,6 +229,49 @@ void Application::check_application_specific_features() {
     // TODO: Add more checks if necessary.
 }
 
+void Application::setup_window_and_input_callbacks() {
+    spdlog::debug("Storing GLFW window user pointer.");
+
+    m_window->set_user_ptr(this);
+
+    spdlog::debug("Setting up framebuffer resize callback.");
+
+    auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
+        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->frame_buffer_resize_callback(window, width, height);
+        app->m_window_resized = true;
+    };
+
+    m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
+
+    spdlog::debug("Setting up keyboard button callback.");
+
+    auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
+        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->key_callback(window, key, scancode, action, mods);
+    };
+
+    m_window->set_keyboard_button_callback(lambda_key_callback);
+
+    spdlog::debug("Setting up cursor position callback.");
+
+    auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
+        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->cursor_position_callback(window, xpos, ypos);
+    };
+
+    m_window->set_cursor_position_callback(lambda_cursor_position_callback);
+
+    spdlog::debug("Setting up mouse button callback.");
+
+    auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
+        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->mouse_button_callback(window, button, action, mods);
+    };
+
+    m_window->set_mouse_button_callback(lambda_mouse_button_callback);
+}
+
 Application::Application(int argc, char **argv) {
     spdlog::debug("Initialising vulkan-renderer.");
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
@@ -258,15 +317,11 @@ Application::Application(int argc, char **argv) {
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
 
+    m_input_data = std::make_unique<input::KeyboardMouseInputData>();
+
     m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
 
-    spdlog::debug("Storing GLFW window user pointer.");
-
-    m_window->set_user_ptr(this);
-
-    spdlog::debug("Setting up framebuffer resize callback.");
-
-    m_window->set_resize_callback(frame_buffer_resize_callback);
+    setup_window_and_input_callbacks();
 
 #ifndef NDEBUG
     // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
@@ -420,40 +475,14 @@ void Application::update_uniform_buffers() {
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
 }
 
-void Application::update_mouse_input() {
-    const auto cursor_position = m_window->cursor_pos();
-
-    const double cursor_delta_x = cursor_position[0] - m_cursor_x;
-    const double cursor_delta_y = cursor_position[1] - m_cursor_y;
-
-    const int state = m_window->is_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
-
-    if (state == GLFW_PRESS) {
-        m_game_camera.rotate(glm::vec3(cursor_delta_y * m_game_camera.get_rotation_speed(),
-                                       -cursor_delta_x * m_game_camera.get_rotation_speed(), 0.0f));
-    }
-
-    m_window->is_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
-
-    m_cursor_x = cursor_position[0];
-    m_cursor_y = cursor_position[1];
-}
-
 void Application::update_imgui_overlay() {
-    double current_cursor_x{0.0};
-    double current_cursor_y{0.0};
-
-    glfwGetCursorPos(m_window->get(), &current_cursor_x, &current_cursor_y);
+    auto cursor_pos = m_input_data->get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
-
-    // TODO: Does that work? We can't just pass time_passed since it's 0 in the beginning and imgui doesn't accept that.
     io.DeltaTime = std::clamp(m_time_passed, 0.001f, 100.0f);
-    // TODO() move to update() method: mouse buttons left+right and cursor position
-    // TODO: Use a keyboard/mouse input callback!
-    io.MousePos = ImVec2(static_cast<float>(current_cursor_x), static_cast<float>(current_cursor_y));
-    io.MouseDown[0] = (glfwGetMouseButton(m_window->get(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
-    io.MouseDown[1] = (glfwGetMouseButton(m_window->get(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+    io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
+    io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
+    io.MouseDown[1] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
     io.DisplaySize =
         ImVec2(static_cast<float>(m_swapchain->extent().width), static_cast<float>(m_swapchain->extent().height));
 
@@ -475,6 +504,15 @@ void Application::update_imgui_overlay() {
     m_imgui_overlay->update();
 }
 
+void Application::process_mouse_input() {
+    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
+
+    if (m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+        m_game_camera.rotate(glm::vec3(cursor_pos_delta[1] * m_game_camera.get_rotation_speed(),
+                                       -cursor_pos_delta[0] * m_game_camera.get_rotation_speed(), 0.0f));
+    }
+}
+
 void Application::run() {
     spdlog::debug("Running Application.");
 
@@ -483,12 +521,8 @@ void Application::run() {
         update_uniform_buffers();
         update_imgui_overlay();
         render_frame();
-
-        // TODO: Run this in a separated thread?
-        // TODO: Merge into one update_game_data() method?
-        update_mouse_input();
+        process_mouse_input();
         m_game_camera.update(m_time_passed);
-
         m_time_passed = m_stopwatch.time_step();
     }
 }

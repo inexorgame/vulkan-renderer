@@ -11,8 +11,8 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @brief RAII wrapper class for GLFW windows.
 class Window {
     GLFWwindow *m_window;
-    std::uint32_t m_width{0};
-    std::uint32_t m_height{0};
+    std::uint32_t m_width;
+    std::uint32_t m_height;
 
 public:
     /// @brief Default constructor.
@@ -22,10 +22,8 @@ public:
     /// @param visible True if the window is visible after creation, false otherwise.
     /// @param resizable True if the window should be resizable, false otherwise.
     Window(const std::string &title, std::uint32_t width, std::uint32_t height, bool visible, bool resizable);
-
     Window(const Window &) = delete;
     Window(Window &&) noexcept;
-
     ~Window();
 
     Window &operator=(const Window &) = delete;
@@ -47,20 +45,23 @@ public:
     /// @param frame_buffer_resize_callback The window resize callback.
     void set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback);
 
+    /// @brief Call glfwSetKeyCallback.
+    /// @param key_input_callback The keyboard input callback.
+    void set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback);
+
+    /// @brief Call glfwSetCursorPosCallback.
+    /// @param cursor_pos_callback They cursor position callback.
+    void set_cursor_position_callback(GLFWcursorposfun cursor_pos_callback);
+
+    /// @brief Call glfwSetMouseButtonCallback.
+    /// @param mouse_button_callback The mouse button callback.
+    void set_mouse_button_callback(GLFWmousebuttonfun mouse_button_callback);
+
     /// @brief Call glfwShowWindow.
     void show();
 
     /// @brief Call glfwHideWindow.
     void hide();
-
-    /// @brief Returns the cursor position.
-    std::array<double, 2> cursor_pos();
-
-    /// @brief Check if a specifiy button is pressed.
-    /// @param button The button to check.
-    /// @return ``true`` if the button is pressed.
-    /// @todo: Use a callback instead!
-    bool is_button_pressed(int button);
 
     /// @brief Call glfwPollEvents.
     void poll();
