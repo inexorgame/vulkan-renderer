@@ -31,7 +31,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     for (std::size_t i = 0; i < layout_bindings.size(); i++) {
         if (layout_bindings[i].descriptorType != descriptor_writes[i].descriptorType) {
             throw std::runtime_error(
-                std::string("VkDescriptorType mismatch in descriptor set layout binding and write descriptor set!"));
+                "VkDescriptorType mismatch in descriptor set layout binding and write descriptor set!");
         }
     }
 

@@ -8,6 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// forward declarations
 class Device;
 class ResourceDescriptor;
 
@@ -45,38 +46,7 @@ public:
     /// @return A const reference to this DescriptorBuilder instance.
     template <typename T>
     DescriptorBuilder &add_uniform_buffer(const VkBuffer uniform_buffer, const std::uint32_t binding,
-                                          const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT) {
-        assert(uniform_buffer);
-
-        VkDescriptorSetLayoutBinding layout_binding{};
-        layout_binding.binding = binding;
-        layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        layout_binding.descriptorCount = 1;
-        layout_binding.stageFlags = shader_stage;
-        layout_binding.pImmutableSamplers = nullptr;
-
-        m_layout_bindings.push_back(layout_binding);
-
-        VkDescriptorBufferInfo uniform_buffer_info{};
-        uniform_buffer_info.buffer = uniform_buffer;
-        uniform_buffer_info.offset = 0;
-        uniform_buffer_info.range = sizeof(T);
-
-        m_descriptor_buffer_infos.push_back(uniform_buffer_info);
-
-        VkWriteDescriptorSet descriptor_write{};
-        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_write.dstSet = nullptr;
-        descriptor_write.dstBinding = binding;
-        descriptor_write.dstArrayElement = 0;
-        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_write.descriptorCount = 1;
-        descriptor_write.pBufferInfo = &m_descriptor_buffer_infos.back();
-
-        m_write_sets.push_back(descriptor_write);
-
-        return *this;
-    }
+                                          const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT);
 
     /// @brief Adds a combined image sampler to the descriptor container.
     /// @param image_sampler The pointer to the combined image sampler.
@@ -86,43 +56,47 @@ public:
     /// @return A const reference to this DescriptorBuilder instance.
     DescriptorBuilder &
     add_combined_image_sampler(const VkSampler image_sampler, const VkImageView image_view, const std::uint32_t binding,
-                               const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT) {
-        assert(image_sampler);
-        assert(image_view);
-
-        VkDescriptorSetLayoutBinding layout_binding{};
-        layout_binding.binding = 0;
-        layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        layout_binding.descriptorCount = 1;
-        layout_binding.stageFlags = shader_stage;
-
-        m_layout_bindings.push_back(layout_binding);
-
-        VkDescriptorImageInfo image_info{};
-        image_info.sampler = image_sampler;
-        image_info.imageView = image_view;
-        image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        m_descriptor_image_infos.push_back(image_info);
-
-        VkWriteDescriptorSet descriptor_write{};
-        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_write.dstSet = nullptr;
-        descriptor_write.dstBinding = 0;
-        descriptor_write.dstArrayElement = 0;
-        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptor_write.descriptorCount = 1;
-        descriptor_write.pImageInfo = &m_descriptor_image_infos.back();
-
-        m_write_sets.push_back(descriptor_write);
-
-        return *this;
-    }
+                               const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT);
 
     /// @brief Builds the resource descriptor.
     /// @param name The internal name of the resource descriptor.
     /// @return The resource descriptor which was created by the builder.
-    ResourceDescriptor build(std::string name);
+    [[nodiscard]] ResourceDescriptor build(std::string name);
 };
+
+template <typename T>
+DescriptorBuilder &DescriptorBuilder::add_uniform_buffer(const VkBuffer uniform_buffer, const std::uint32_t binding,
+                                                         const VkShaderStageFlagBits shader_stage) {
+    assert(uniform_buffer);
+
+    VkDescriptorSetLayoutBinding layout_binding{};
+    layout_binding.binding = binding;
+    layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layout_binding.descriptorCount = 1;
+    layout_binding.stageFlags = shader_stage;
+    layout_binding.pImmutableSamplers = nullptr;
+
+    m_layout_bindings.push_back(layout_binding);
+
+    VkDescriptorBufferInfo uniform_buffer_info{};
+    uniform_buffer_info.buffer = uniform_buffer;
+    uniform_buffer_info.offset = 0;
+    uniform_buffer_info.range = sizeof(T);
+
+    m_descriptor_buffer_infos.push_back(uniform_buffer_info);
+
+    VkWriteDescriptorSet descriptor_write{};
+    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_write.dstSet = nullptr;
+    descriptor_write.dstBinding = binding;
+    descriptor_write.dstArrayElement = 0;
+    descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptor_write.descriptorCount = 1;
+    descriptor_write.pBufferInfo = &m_descriptor_buffer_infos.back();
+
+    m_write_sets.push_back(descriptor_write);
+
+    return *this;
+}
 
 } // namespace inexor::vulkan_renderer::wrapper
