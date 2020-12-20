@@ -20,15 +20,13 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     assert(m_write_sets.size() == m_layout_bindings.size());
 
     // Generate a new resource descriptor.
-    ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, m_layout_bindings, m_write_sets,
-                                            std::move(name));
+    ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, std::move(m_layout_bindings),
+                                            std::move(m_write_sets), std::move(name));
 
-    m_layout_bindings.clear();
-    m_write_sets.clear();
     m_descriptor_buffer_infos.clear();
     m_descriptor_image_infos.clear();
 
-    return generated_descriptor;
-};
+    return std::move(generated_descriptor);
+}
 
-}; // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper

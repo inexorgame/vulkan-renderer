@@ -18,9 +18,8 @@ ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
       m_descriptor_sets(std::move(other.m_descriptor_sets)), m_swapchain_image_count(other.m_swapchain_image_count) {}
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                                       const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
-                                       const std::vector<VkWriteDescriptorSet> &descriptor_writes,
-                                       const std::string &name)
+                                       std::vector<VkDescriptorSetLayoutBinding> &&layout_bindings,
+                                       std::vector<VkWriteDescriptorSet> &&descriptor_writes, std::string &&name)
     : m_device(device), m_name(name), m_write_descriptor_sets(descriptor_writes),
       m_descriptor_set_layout_bindings(layout_bindings), m_swapchain_image_count(swapchain_image_count) {
     assert(device.device());

@@ -13,22 +13,21 @@ class ResourceDescriptor;
 
 class DescriptorBuilder {
     const Device &m_device;
-    const std::uint32_t m_swapchain_image_count{};
+    const std::uint32_t m_swapchain_image_count;
 
-    std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings{};
-    std::vector<VkWriteDescriptorSet> m_write_sets{};
-
-    std::vector<VkDescriptorBufferInfo> m_descriptor_buffer_infos{};
-    std::vector<VkDescriptorImageInfo> m_descriptor_image_infos{};
+    std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings;
+    std::vector<VkWriteDescriptorSet> m_write_sets;
+    std::vector<VkDescriptorBufferInfo> m_descriptor_buffer_infos;
+    std::vector<VkDescriptorImageInfo> m_descriptor_image_infos;
 
 public:
     /// @brief Constructs the descriptor builder.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param swapchain_image_count The number of images in swapchain.
-    DescriptorBuilder(const Device &device, const std::uint32_t swapchain_image_count);
+    DescriptorBuilder(const Device &device, std::uint32_t swapchain_image_count);
 
     DescriptorBuilder(const DescriptorBuilder &) = delete;
-    DescriptorBuilder(DescriptorBuilder &&) noexcept;
+    DescriptorBuilder(DescriptorBuilder &&) = delete;
     ~DescriptorBuilder() = default;
 
     DescriptorBuilder &operator=(const DescriptorBuilder &) = delete;
@@ -126,4 +125,4 @@ public:
     ResourceDescriptor build(std::string name);
 };
 
-}; // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper
