@@ -67,13 +67,6 @@ Why use Vulkan?
 - Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies. It is not being developed by one company only (like DirectX by Microsoft). As Vulkan's motto states, it really is `industry-forged`.
 - The `ending of the OpenGL era <https://www.reddit.com/r/opengl/comments/b44tyu/apple_is_deprecating_opengl/>`__ has begun.
 
-Releases
-########
-
-`Initialisation and glTF2 demo (v0.1-alpha.1), April 12th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.1>`__
-
-`Octree demo (v0.1-alpha.2), April 26th, 2020 <https://github.com/inexorgame/vulkan-renderer/releases/tag/v0.1-alpha.2>`__
-
 How to build
 ############
 
