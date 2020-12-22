@@ -32,8 +32,7 @@ What is Vulkan?
 
 .. image:: https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/300px-Vulkan.svg.png
 
-The Inexor project is using Vulkan API for the main rendering engine. `Vulkan <https://www.khronos.org/vulkan/>`__ is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ (higher FPS) due to reduction of overhead and driver guesswork during runtime. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__.
-
+The Inexor project is using Vulkan API for the main rendering engine. `Vulkan <https://www.khronos.org/vulkan/>`__ is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ (higher FPS) due to reduction of overhead and driver guesswork during runtime. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software any many more). 
 
 Why use Vulkan?
 ###############
@@ -73,20 +72,6 @@ You really should watch these expert talks on YouTube:
 `Vulkan: State of the Union 2019 <https://www.youtube.com/watch?v=KLZsAJQBR5o>`__
     Developers from ARM, LunarG, NVidia.
 
-Who supports Vulkan?
-####################
-- Google
-- Intel
-- Apple
-- AMD
-- NVidia
-- Sony
-- Samsung
-- Huawei
-- Qualcomm
-- Valve Software
-
-For a full list of contributors, see `this link <https://www.khronos.org/members/list>`__.
 
 Which engines support Vulkan already?
 #####################################
