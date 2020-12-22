@@ -7,7 +7,10 @@ Development
 
     preparation
     building
-    ci
     cla
+    ci
+    dependencies
+    regressions
+    platforms
     design/main
     reference/main
