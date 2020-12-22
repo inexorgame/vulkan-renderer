@@ -7,20 +7,44 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
 
-0.2.0 (development)
+v0.1-alpha.3
+===================
+
+Changed
+-------
+
+- RAII in shader code
+- RAII in shaders, gpu memory buffers, staging buffers, mesh buffers and textures
+- RAII in descriptors
+- RAII VkInstance
+- RAII Swapchain
+
+
+v0.1-alpha.2
 ===================
 
 Added
 -----
 
 - Create a threadpool using C++17.
+- Added a simple C++17 implementation of an octree.
+- Added event system using boost::signals2.
+- Use boost::bitstream for data processing.
+- Convert octree data structure to vertex geometry (a mesh buffer).
+- Support arbitrary indentations of octree geometry.
+- Added a descriptor set layout for simple octree geometry.
+- Ported Vulkan Memory Allocator library (VMA) to Linux.
+- Added a simple camera movement class.
+- Write spdlog console output to a logfile.
 
 Changed
 -------
 
+- Fixed a bug that would render every model twice.
+- Improvements considering C++ code quality standards.
 - Logging format and logger usage.
 
-0.1.0
+v0.1-alpha.1
 =====
 
 Added
