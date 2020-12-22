@@ -18,7 +18,7 @@ What is Inexor?
 ----
 Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.com/invite/acUW8k7>`__ server.
 
-Inexor is an open-source project which combines `modern C++ <https://awesomecpp.com/>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__. Inexor's current main objective is the development of a new game engine based on `C++17 <https://en.cppreference.com/w/cpp/17>`__ and `Vulkan API 1.1 <https://www.khronos.org/vulkan/>`__. We are using good software engineering practises like `applying software design patterns <https://refactoring.guru/>`__, use of the `C++ standard library <https://en.cppreference.com/w/cpp/header>`__, `continuous integration <https://en.wikipedia.org/wiki/Continuous_integration>`__ using `GitHub actions <https://github.com/features/actions>`__, Resource Acquisition Is Initialization (`RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__), code documentation using `Doxygen <https://www.doxygen.nl/index.html>`__, automatic `unit testing <https://github.com/google/googletest>`__ and `benchmarking <https://github.com/google/benchmark>`__, `static code analysis <https://clang.llvm.org/extra/clang-tidy/>`__, `automatic code formatting <https://clang.llvm.org/docs/ClangFormat.html>`__, and `CMake <https://cmake.org/>`__ project setup with `conan package manager <https://conan.io/center/>`__ integration.
+Inexor is an open-source project which combines `modern C++ <https://awesomecpp.com/>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__. Inexor's current main objective is the development of a new game engine based on `C++17 <https://en.cppreference.com/w/cpp/17>`__ and `Vulkan API 1.1 <https://www.khronos.org/vulkan/>`__. We are using good software engineering practises like `applying software design patterns <https://refactoring.guru/>`__, use of the `C++ standard library <https://en.cppreference.com/w/cpp/header>`__, `continuous integration <https://en.wikipedia.org/wiki/Continuous_integration>`__ using `GitHub actions <https://github.com/features/actions>`__, Resource Acquisition Is Initialization (`RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__), code documentation using `Doxygen <https://www.doxygen.nl/index.html>`__, automatic `unit testing <https://github.com/google/googletest>`__ and `benchmarking <https://github.com/google/benchmark>`__, `static code analysis <https://clang.llvm.org/extra/clang-tidy/>`__, `automatic code formatting <https://clang.llvm.org/docs/ClangFormat.html>`__, and `CMake <https://cmake.org/>`__ project setup with `conan package manager <https://conan.io/center/>`__ integration. The master branch must be stable at all cost.
 
 Inexor's code design is founded on the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`__ and on `Scott Meyers books <https://www.oreilly.com/library/view/effective-modern-c/9781491908419/>`__.
 
@@ -28,8 +28,23 @@ Inexor has three main goals in terms of engine development:
 * `Generic rendering architecture <https://youtu.be/6NWfznwFnMs?t=1845>`_ using a `framegraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`_.
 * Combine modern C++ with Vulkan API.
 
+For memory management, we use `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`_.
+
 Inexor has no central authority. It's a headless collective which makes collective decisions though discussions and it's welcoming new contributors.
 Currently, we support Linux and Windows. We are not planing to support any other platform at the moment.
+
+What is the current status of the project?
+############
+
+**We are still in very early development.** However, this project can already offer:
+
+* A modern C++17 codebase with CMake and conan setup.
+* A rendergraph in early development.
+* `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`_ wrappers for various Vulkan resources.
+* Extensive logging with `spdlog <https://github.com/gabime/spdlog>`_.
+* `Vulkan Memory Allocator <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`_ for graphics memory management.
+* VMA memory replays for debugging are already working.
+* Full `RenderDoc <https://renderdoc.org/>`_ integration with internal resource naming.
 
 How to build
 ############
@@ -38,14 +53,14 @@ Feel free to open a ticket if you have problems generating project map files or 
 
 `How to build vulkan-renderer <https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html>`__
 
-What is Vulkan?
+What is Vulkan API?
 ###############
 
 .. image:: https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Vulkan.svg/300px-Vulkan.svg.png
 
 Inexor engine is using Vulkan API as rendering backend. `Vulkan <https://www.khronos.org/vulkan/>`__ is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ due to reduction of overhead and driver guesswork during runtime. This results in higher frame rate, predictable CPU workload and a lower memory usage. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software any many more). Vulkan is the only multi platform low level graphics API.
 
-Why use Vulkan?
+Why use Vulkan API?
 ###############
 
 - Unlike OpenGL, Vulkan fits the design of modern GPUs as it is not just one single `state machine <https://stackoverflow.com/questions/31282678/what-is-the-opengl-state-machine>`__.
