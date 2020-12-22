@@ -22,16 +22,24 @@ Inexor is an open-source project which combines `modern C++ <https://awesomecpp.
 
 Inexor's code design is founded on the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`__ and on `Scott Meyers books <https://www.oreilly.com/library/view/effective-modern-c/9781491908419/>`__.
 
-Inexor has three main goals in terms of engine development:
+Inexor engine has three main goals:
 
-* `Task-based parallelization <https://youtu.be/JpmK0zu4Mts?t=500>`_ using a `threadpool <https://community.khronos.org/t/opinions-on-using-threadpools-for-designing-a-vulkan-game-engine/105519>`_ and a `work stealing queue <https://stackoverflow.com/questions/2101789/implementation-of-a-work-stealing-queue-in-c-c>`_.
-* `Generic rendering architecture <https://youtu.be/6NWfznwFnMs?t=1845>`_ using a `framegraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`_.
+* `Task-based parallelization <https://youtu.be/JpmK0zu4Mts?t=500>`__ using a `threadpool <https://community.khronos.org/t/opinions-on-using-threadpools-for-designing-a-vulkan-game-engine/105519>`__ and a `work stealing queue <https://stackoverflow.com/questions/2101789/implementation-of-a-work-stealing-queue-in-c-c>`__.
+* `Generic rendering architecture <https://youtu.be/6NWfznwFnMs?t=1845>`__ using a `framegraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`__.
 * Combine modern C++ with Vulkan API.
+* Offer a codebase which can be used in production.
 
-For memory management, we use `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`_.
+For memory management, we use `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__. 
+
+You can find Vulkan example code online which follows the mantra "don't use this in production - it's tutorial code" or "You wouldn't do it that way in production code". Inexor disagrees with this as we believe that defeats its own purpose. If example code is not meant to be used somewhere then there's something wrong with that example code. A classic example of this is the fact many example projects don't use a proper memory management library like `VMA <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ or they do not abstract their code using `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__ which leads to a lot of code duplication. Inexor is designed to be used in production. Bare in mind however that Inexor is also far from being a finished game engine.
 
 Inexor has no central authority. It's a headless collective which makes collective decisions though discussions and it's welcoming new contributors.
 Currently, we support Linux and Windows. We are not planing to support any other platform at the moment.
+
+Documentation
+############
+
+`Click here <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__ to read our documentation.
 
 What is the current status of the project?
 ############
@@ -40,11 +48,12 @@ What is the current status of the project?
 
 * A modern C++17 codebase with CMake and conan setup.
 * A rendergraph in early development.
-* `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`_ wrappers for various Vulkan resources.
+* `ImGui <https://github.com/ocornut/imgui>`__ integration with separate renderpasses in Vulkan.
+* `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__ wrappers for various Vulkan resources.
 * Extensive logging with `spdlog <https://github.com/gabime/spdlog>`_.
-* `Vulkan Memory Allocator <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`_ for graphics memory management.
+* `Vulkan Memory Allocator <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ for graphics memory management.
 * VMA memory replays for debugging are already working.
-* Full `RenderDoc <https://renderdoc.org/>`_ integration with internal resource naming.
+* Full `RenderDoc <https://renderdoc.org/>`__ integration with internal resource naming.
 
 How to build
 ############
