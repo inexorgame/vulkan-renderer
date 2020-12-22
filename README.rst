@@ -134,11 +134,6 @@ Multithreading in Vulkan
 
 - https://www.reddit.com/r/vulkan/comments/52aodq/multithreading_in_vulkan_where_should_i_start/
 
-OpenGL
-------
-
-- https://www.opengl.org/
-
 MoltenVK
 --------
 - https://moltengl.com/moltenvk/
