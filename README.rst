@@ -73,11 +73,6 @@ You really should watch these expert talks on YouTube:
 `Vulkan: State of the Union 2019 <https://www.youtube.com/watch?v=KLZsAJQBR5o>`__
     Developers from ARM, LunarG, NVidia.
 
-Who develops Vulkan?
-####################
-
-The `Khronos Group <https://www.khronos.org/>`__, which also made `OpenGL <https://www.opengl.org/>`__.
-
 Who supports Vulkan?
 ####################
 - Google
