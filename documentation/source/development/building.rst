@@ -164,9 +164,9 @@ Build and run:
 Mac
 ^^^
 
-Currently, we do not support Mac because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS.
+Currently, we do not support macOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS.
 
 Android
 ^^^^^^^
 
-We might support Android in the future.
+Currently we do not support Android.
