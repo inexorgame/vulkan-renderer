@@ -23,7 +23,7 @@ Command Line Arguments
 
 .. option:: --renderdoc
 
-    Enables the RenderDoc debug layer.
+    Enables the `RenderDoc <https://renderdoc.org/>`__ debug layer.
 
 .. option:: --vsync
 
