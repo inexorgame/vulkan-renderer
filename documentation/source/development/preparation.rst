@@ -21,10 +21,10 @@ Optional Software
 -----------------
 
 `GitKraken Git GUI <https://www.gitkraken.com/git-client>`__.
-    An open source Github user interface which is easy to use.
+    A Git user interface with many features which is easy to use.
 
 `GitHub Desktop <https://desktop.github.com/>`__
-    An open source Github user interface which is easy to use.
+    An open source Git user interface which is easy to use.
 
 `Ninja Build System <https://ninja-build.org/>`__
     Improve your build times with ninja.
