@@ -72,19 +72,6 @@ You really should watch these expert talks on YouTube:
 `Vulkan: State of the Union 2019 <https://www.youtube.com/watch?v=KLZsAJQBR5o>`__
     Developers from ARM, LunarG, NVidia.
 
-
-Which engines support Vulkan already?
-#####################################
-- Unity engine
-- Unreal engine (EPIC games)
-- CryEngine (Crytek)
-- id-Tech 7 (id-Software)
-- Source engine (Valve)
-- AnvilNext (Ubisoft)
-- Godot 4
-
-and many more..
-
 Links
 #####
 
