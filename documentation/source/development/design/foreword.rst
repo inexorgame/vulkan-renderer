@@ -3,7 +3,7 @@ Foreword
 
 Inexor's vulkan-renderer is being developed with the following characteristics:
 
-- Try to keep master branch stable.
+- Keep master branch stable at all cost.
 - Make sure the code is as easy to debug as possible.
 - Always test your code, both with google tests and manually.
 - Always write code in a way so it can't be used incorrectly. Assume worst-case scenarios and provide extensive error handling in case something goes wrong.
