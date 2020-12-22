@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/resource_descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -18,10 +18,8 @@ ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
       m_descriptor_sets(std::move(other.m_descriptor_sets)), m_swapchain_image_count(other.m_swapchain_image_count) {}
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                                       std::initializer_list<VkDescriptorType> pool_types,
-                                       const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
-                                       const std::vector<VkWriteDescriptorSet> &descriptor_writes,
-                                       const std::string &name)
+                                       std::vector<VkDescriptorSetLayoutBinding> &&layout_bindings,
+                                       std::vector<VkWriteDescriptorSet> &&descriptor_writes, std::string &&name)
     : m_device(device), m_name(name), m_write_descriptor_sets(descriptor_writes),
       m_descriptor_set_layout_bindings(layout_bindings), m_swapchain_image_count(swapchain_image_count) {
     assert(device.device());
@@ -30,12 +28,17 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     assert(!m_write_descriptor_sets.empty());
     assert(layout_bindings.size() == m_write_descriptor_sets.size());
 
-    // TODO() Check if descriptor writes match descriptor set layout!
+    for (std::size_t i = 0; i < layout_bindings.size(); i++) {
+        if (layout_bindings[i].descriptorType != descriptor_writes[i].descriptorType) {
+            throw std::runtime_error(
+                "VkDescriptorType mismatch in descriptor set layout binding and write descriptor set!");
+        }
+    }
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
 
-    for (const auto &descriptor_pool_type : pool_types) {
-        pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type, swapchain_image_count});
+    for (const auto &descriptor_pool_type : layout_bindings) {
+        pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, swapchain_image_count});
     }
 
     spdlog::debug("Creating new descriptor pool.");

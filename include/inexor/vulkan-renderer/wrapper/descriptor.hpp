@@ -18,20 +18,18 @@ class ResourceDescriptor {
     std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings;
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
     std::vector<VkDescriptorSet> m_descriptor_sets;
-    std::uint32_t m_swapchain_image_count{};
+    std::uint32_t m_swapchain_image_count;
 
 public:
     /// @brief Default constructor.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param swapchain_image_count The number of images in swapchain.
-    /// @param pool_types The descriptor pool types.
     /// @param layout_bindings The descriptor layout bindings.
     /// @param descriptor_writes The write descriptor sets.
     /// @param name The internal debug marker name of the resource descriptor.
     ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                       std::initializer_list<VkDescriptorType> pool_types,
-                       const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
-                       const std::vector<VkWriteDescriptorSet> &descriptor_writes, const std::string &name);
+                       std::vector<VkDescriptorSetLayoutBinding> &&layout_bindings,
+                       std::vector<VkWriteDescriptorSet> &&descriptor_writes, std::string &&name);
 
     ResourceDescriptor(const ResourceDescriptor &) = delete;
     ResourceDescriptor(ResourceDescriptor &&) noexcept;

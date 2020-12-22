@@ -1,6 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/imgui.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
@@ -116,30 +117,14 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(m_device, m_device.graphics_queue_family_index());
 
-    VkDescriptorImageInfo font_desc{};
-    font_desc.sampler = m_imgui_texture->sampler();
-    font_desc.imageView = m_imgui_texture->image_view();
-    font_desc.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    // Create an instance of the resource descriptor builder.
+    // This allows us to make resource descriptors with the help of a builder pattern.
+    wrapper::DescriptorBuilder descriptor_builder(m_device, m_swapchain.image_count());
 
-    std::vector<VkDescriptorSetLayoutBinding> layout_bindings(1);
-    layout_bindings[0].binding = 0;
-    layout_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    layout_bindings[0].descriptorCount = 1;
-    layout_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    std::vector<VkWriteDescriptorSet> desc_writes(1);
-    desc_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    desc_writes[0].dstSet = nullptr;
-    desc_writes[0].dstBinding = 0;
-    desc_writes[0].dstArrayElement = 0;
-    desc_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    desc_writes[0].descriptorCount = 1;
-    desc_writes[0].pImageInfo = &font_desc;
-
-    std::initializer_list<VkDescriptorType> pool_types = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER};
-
-    m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(m_device, swapchain.image_count(), pool_types,
-                                                                 layout_bindings, desc_writes, "ImGUI");
+    // Make use of the builder to create a resource descriptor for the combined image sampler.
+    m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(
+        descriptor_builder.add_combined_image_sampler(m_imgui_texture->sampler(), m_imgui_texture->image_view(), 0)
+            .build("ImGUI"));
 
     // TODO() Use pipeline cache!
     std::vector<VkAttachmentDescription> attachments(1);

@@ -12,10 +12,6 @@ class Device;
 
 /// @brief RAII wrapper class for uniform buffers.
 class UniformBuffer : public GPUMemoryBuffer {
-protected:
-    VkDescriptorBufferInfo m_descriptor_buffer_info{};
-    VkDescriptorSet m_descriptor_set{};
-
 public:
     /// @brief Default constructor.
     /// @param device The const reference to a device RAII wrapper instance.

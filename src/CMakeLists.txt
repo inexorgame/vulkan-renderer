@@ -21,6 +21,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/cpu_texture.cpp
+    vulkan-renderer/wrapper/descriptor.cpp
+    vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
@@ -33,7 +35,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
     vulkan-renderer/wrapper/renderpass.cpp
-    vulkan-renderer/wrapper/resource_descriptor.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/staging_buffer.cpp
