@@ -10,15 +10,26 @@ vulkan-renderer
 
 ----
 
-A new octree-based game+engine using `Vulkan API <https://www.khronos.org/vulkan/>`__ and `C++17 <https://stackoverflow.com/questions/38060436/what-are-the-new-features-in-c17>`__.
-
-Our current octree demo ``v0.1-alpha.2`` can be downloaded `here <https://github.com/inexorgame/vulkan-renderer/releases>`__. Please send your logfiles to info@inexor.org.
-
-Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.gg/acUW8k7>`__ server.
-
-----
+What is Inexor?
+###############
 
 .. image:: https://raw.githubusercontent.com/inexorgame/artwork/2c479edcf7a1782d082a9d807b0f1e860ddd398c/vulkan/readme/front_banner_2.jpg
+
+----
+Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.com/invite/acUW8k7>`__ server.
+
+Inexor is an open-source project which combines `modern C++ <https://awesomecpp.com/>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__. Inexor's current main objective is the development of a new game engine based on `C++17 <https://en.cppreference.com/w/cpp/17>`__ and `Vulkan API 1.1 <https://www.khronos.org/vulkan/>`__. We are using good software engineering practises like `applying software design patterns <https://refactoring.guru/>`__, use of the `C++ standard library <https://en.cppreference.com/w/cpp/header>`__, `continuous integration <https://en.wikipedia.org/wiki/Continuous_integration>`__ using `GitHub actions <https://github.com/features/actions>`__, Resource Acquisition Is Initialization (`RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__), code documentation using `Doxygen <https://www.doxygen.nl/index.html>`__, automatic `unit testing <https://github.com/google/googletest>`__ and `benchmarking <https://github.com/google/benchmark>`__, `static code analysis <https://clang.llvm.org/extra/clang-tidy/>`__, `automatic code formatting <https://clang.llvm.org/docs/ClangFormat.html>`__, and `CMake <https://cmake.org/>`__ project setup with `conan package manager <https://conan.io/center/>`__ integration.
+
+Inexor's code design is founded on the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`__ and on `Scott Meyers books <https://www.oreilly.com/library/view/effective-modern-c/9781491908419/>`__.
+
+Inexor has three main goals in terms of engine development:
+
+* `Task-based parallelization <https://youtu.be/JpmK0zu4Mts?t=500>`_ using a `threadpool <https://community.khronos.org/t/opinions-on-using-threadpools-for-designing-a-vulkan-game-engine/105519>`_ and a `work stealing queue <https://stackoverflow.com/questions/2101789/implementation-of-a-work-stealing-queue-in-c-c>`_.
+* `Generic rendering architecture <https://youtu.be/6NWfznwFnMs?t=1845>`_ using a `framegraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`_.
+* Combine modern C++ with Vulkan API.
+
+Inexor has no central authority. It's a headless collective which makes collective decisions though discussions and it's welcoming new contributors.
+Currently, we support Linux and Windows. We are not planing to support any other platform at the moment.
 
 How to build
 ############
