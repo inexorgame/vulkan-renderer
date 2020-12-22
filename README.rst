@@ -20,6 +20,13 @@ Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://
 
 .. image:: https://raw.githubusercontent.com/inexorgame/artwork/2c479edcf7a1782d082a9d807b0f1e860ddd398c/vulkan/readme/front_banner_2.jpg
 
+How to build
+############
+
+Feel free to open a ticket if you have problems generating project map files or building code.
+
+`How to build vulkan-renderer <https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html>`__
+
 What is Vulkan?
 ###############
 
@@ -65,13 +72,6 @@ You really should watch these expert talks on YouTube:
     Steven Tovey, Developer technology engineer, AMD.
 `Vulkan: State of the Union 2019 <https://www.youtube.com/watch?v=KLZsAJQBR5o>`__
     Developers from ARM, LunarG, NVidia.
-
-How to build
-############
-
-Feel free to open a ticket if you have problems generating project map files or building code.
-
-`How to build vulkan-renderer <https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html>`__
 
 Who develops Vulkan?
 ####################
