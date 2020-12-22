@@ -15,6 +15,13 @@ Join our discord server: https://discord.gg/acUW8k7.
     - Overall code cleanup.
     - Read the docs support.
 
+`movabo <https://github.com/movabo>`__
+    - First generation of octree engine code.
+
+`authenticate <https://github.com/authenticate>`__
+    - Refactoring of texture loading code.
+    - Error texture generation.
+
 `Shikijo <https://github.com/Shikijo>`__
     - Pointed out broken glsl compiler batch script on Windows.
 
