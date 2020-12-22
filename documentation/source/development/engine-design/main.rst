@@ -1,13 +1,14 @@
-******
-Design
-******
+*************
+Engine design
+*************
 
 .. toctree::
     :maxdepth: 1
 
-    foreword
     folder-structure
+    dependencies
     coding-style
     code-design
-    illustrations
+    design-patterns
+    regressions
     labeling

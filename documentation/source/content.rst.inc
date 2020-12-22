@@ -8,8 +8,11 @@ Documentation
     :maxdepth: 2
     :hidden:
 
-    changelog/main
-    contributing/main
-    development/main
+    contact/main
+    faq/main
     code/main
+    development/main
+    contributing/main
+    changelog/main
+    links/main
     license/main

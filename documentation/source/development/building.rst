@@ -1,41 +1,63 @@
-Building
-========
+How to build vulkan-renderer
+============================
+
+If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
 CMake
 -----
 
-This project uses out of source builds. Except the documentation, which will create two folders in ``doc``, they are ignored by git.
-There are three CMake targets.
+This project uses out of source builds using either `gcc <https://gcc.gnu.org/>`__, `clang <https://clang.llvm.org/>`__ or `Microsoft Visual Studio <https://visualstudio.microsoft.com/en/downloads/>`__ compiler.
 
-- inexor-vulkan-renderer
-    The main program and executable.
-- inexor-vulkan-renderer-benchmark
-    Benchmark the renderer.
-- inexor-vulkan-renderer-tests
-    Tests the renderer.
-- inexor-vulkan-renderer-documentation
-    Builds the documentation with Sphinx. Enable target creation with ``-DINEXOR_BUILD_DOC=ON``.
+Generating the documentation will create two subfolders in ``doc`` which will be ignored by git.
 
-Available CMake options
+There are four CMake targets and options are available:
 
-- INEXOR_BUILD_BENCHMARKS
-    Builds inexor-renderer-benchmarks.
-    Default: ``OFF``
-- INEXOR_BUILD_DOC
-    To build the documentation enable it.
-    Default: ``OFF``
-- INEXOR_BUILD_EXAMPLE
-    Builds inexor-renderer-example.
-    Default: ``ON``
-- INEXOR_BUILD_TESTS
-    Builds inexor-renderer tests.
-    Default: ``OFF``
-- INEXOR_CONAN_PROFILE
-    To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``. The building type will be overriden by CMake.
-    Default: ``default``
-- INEXOR_USE_VMA_RECORDING
-    Enables or disables VulkanMemoryAllocator's recording feature.
-    Default: ``OFF``
+.. list-table:: List of CMake build targets.
+   :header-rows: 1
+
+   * - build target
+     - description
+     - comment
+   * - inexor-vulkan-renderer
+     - The main executable.
+     - 
+   * - inexor-vulkan-renderer-tests
+     - Tests the renderer using `Google Test <https://github.com/google/googletest>`__.
+     - There are no tests available yet.
+   * - inexor-vulkan-renderer-benchmark
+     - Benchmarking of the renderer using `Google Benchmark <https://github.com/google/benchmark>`__.
+     - There are no benchmarks available yet.
+   * - inexor-vulkan-renderer-documentation
+     - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__. Enable target creation with ``-DINEXOR_BUILD_DOC=ON``.
+     - 
+
+.. list-table:: List of CMake options.
+   :header-rows: 1
+
+   * - option
+     - description
+     - default value
+   * - INEXOR_BUILD_EXAMPLE
+     - Builds inexor-renderer-example.
+     - ``ON``
+   * - INEXOR_BUILD_TESTS
+     - Builds inexor-renderer-tests.
+     - ``OFF``
+   * - INEXOR_BUILD_BENCHMARKS
+     - Builds inexor-renderer-benchmarks.
+     - ``OFF``
+   * - INEXOR_CONAN_PROFILE
+     - To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``.
+     - ``default``
+   * - INEXOR_USE_VMA_RECORDING
+     - Enables or disables `Vulkan Memory Allocator's <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ recording feature.
+     - ``OFF``
+   * - INEXOR_BUILD_DOC
+     - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
+     - ``OFF``
+
+Windows
+^^^^^^^
 
 .. note::
     When building a VS solution add ``--config Debug/Release`` to define the build type.
@@ -52,24 +74,18 @@ Available CMake options
     # Build all targets
     cmake --build ./cmake-build-debug/
 
-Building vulkan-renderer
-------------------------
-
-Windows
-^^^^^^^
-
 .. note::
-    If you use the CMake GUI add `CMAKE_BUILD_TYPE` with value `Debug` or `Release`. `#228 <https://github.com/inexorgame/vulkan-renderer/issues/228>`__.
+    If you use CMake GUI add `CMAKE_BUILD_TYPE` with value `Debug` or `Release`. `#228 <https://github.com/inexorgame/vulkan-renderer/issues/228>`__.
 
 - Choose any IDE that CMake can generate a project map for. If in doubt use `Visual Studio 2019 <https://visualstudio.microsoft.com/>`__.
 - Clone the source code. Free and good tools are `GitHub Desktop <https://desktop.github.com/>`__ or `GitKraken Git GUI <https://www.gitkraken.com/git-client>`__.
 - Open CMake and select the root folder which contains ``CMakeLists.txt`` (not just ``src`` folder!).
 - You can choose any location for the ``build`` folder.
-- Click "Configure" and select ``Visual Studio 16 2019``. Click "Finish".
-- CMake will now set up dependencies automatically for you. This might take a while. If this fails, you really should open a ticket!
+- Click "Configure" and select your IDE (in doubt ``Visual Studio 16 2019``). Click "Finish".
+- CMake will now set up dependencies automatically for you using conan package manager. This might take a while. If this fails, you really should open a ticket!
 - Click "Generate". You can now open the Visual Studio project file in your ``build`` folder.
-- Please check that the root directory of the repository is set as working directory for debugging. Usually, CMake should take care of this already.
-- You are now ready to start debugging! We want master branch to stay stable at all time.
+- For debugging, please check that the root directory of the repository is set as working directory in Visual Studio. Usually, CMake should take care of this already.
+- You are now ready to start debugging! Our master branch must be stable at all cost.
 
 Linux
 ^^^^^
@@ -152,17 +168,9 @@ Configure cmake:
 
 Build and run:
 
+If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
+
 .. code-block:: bash
 
     cmake --build build --target inexor-vulkan-renderer-example
     ./build/bin/inexor-vulkan-renderer-example
-
-Mac
-^^^
-
-Currently, we do not support Mac because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS.
-
-Android
-^^^^^^^
-
-We might support Android in the future.
