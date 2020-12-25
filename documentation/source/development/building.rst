@@ -1,12 +1,16 @@
 How to build
-========
+============
+
+If you have any trouble building please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or `join our Discord <https://discord.com/invite/acUW8k7>`__.
+
 
 CMake
 -----
 
 This project uses out of source builds using either `gcc <https://gcc.gnu.org/>`__, `clang <https://clang.llvm.org/>`__ or `Microsoft Visual Studio <https://visualstudio.microsoft.com/en/downloads/>`__ compiler.
-The inexor team and our continuous integration ensure a stable build for these three compilers.
+
 Generating the documentation will create two subfolders in ``doc`` which will be ignored by git.
+
 There are four CMake targets:
 
 - inexor-vulkan-renderer
@@ -160,13 +164,3 @@ Build and run:
 
     cmake --build build --target inexor-vulkan-renderer-example
     ./build/bin/inexor-vulkan-renderer-example
-
-Mac
-^^^
-
-Currently, we do not support macOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS.
-
-Android
-^^^^^^^
-
-Currently we do not support Android.
