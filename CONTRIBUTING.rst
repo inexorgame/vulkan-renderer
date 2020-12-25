@@ -1,6 +1,6 @@
 We are always open for suggestions or pull requests. You can search after ``diff:first issue`` for good issues to get in touch with this project.
 
-Join our discord server: https://discord.gg/acUW8k7.
+Join our `Discord server <https://discord.gg/acUW8k7>`__.
 
 `Iceflower <https://github.com/IceflowRE>`__
     - Threadpool improvements.
@@ -44,5 +44,5 @@ Join our discord server: https://discord.gg/acUW8k7.
     - Overall CMake expertise.
     - Compiling SPIR-V shaders through CMake setup.
 
-`joetoth <https://github.com/joetoth>`__
+`joetoth <https://github.com/joetoth>`__, `Kamil Zelech (@azkoon) <https://github.com/azkoon>`__
     - Help with Discord server.
