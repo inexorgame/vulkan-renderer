@@ -7,7 +7,6 @@ Development
 
     platforms
     getting-started
-    dependencies
     building
     debugging/main
     engine-design/main

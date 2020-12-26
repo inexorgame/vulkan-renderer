@@ -1,5 +1,5 @@
-Dependencies
-============
+Dependency management
+=====================
 
 - In general we try to keep the number of dependencies at a minimum.
 - We avoid to add dependencies directly to the project repository because they increase the size of the repository and we have to update them manually.
