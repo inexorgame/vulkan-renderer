@@ -1,7 +1,7 @@
 Frequently asked questions
 ==========================
 
-Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.com/invite/acUW8k7>`__ server.
+Please visit `inexor.org <https://inexor.org>`__ and join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
 Also check out the `documentation <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__.
 
@@ -167,11 +167,8 @@ Does my graphics card support Vulkan API?
 - Every new graphics card which is coming out these days supports Vulkan API.
 - Vulkan is also supported on older graphics cards going back to `Radeon HD 7000 series <https://en.wikipedia.org/wiki/Radeon_HD_7000_series>`__ and `Nvidia Geforce 6 series <https://en.wikipedia.org/wiki/GeForce_6_series>`__.
 
-What has 6 characters and must stay stable at all time?
--------------------------------------------------------
-
-- `master <https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3ABuild>`__ (also the word **Inexor**)
-
 Will you support other rendering APIs? 
 --------------------------------------
-- `No <https://youtu.be/0R23npUCCnw?t=252>`__
+- No, because testing for Vulkan already takes a lot of time and there is no sense in supporting deprecated technology.
+- Some studios like id-software also `dropped OpenGL entirely <https://youtu.be/0R23npUCCnw?t=252>`__.
+- Vulkan API is the only low level multi platform graphics and compute API.
