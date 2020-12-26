@@ -5,10 +5,10 @@ Engine design
 .. toctree::
     :maxdepth: 1
 
-    foreword
-    regressions
     folder-structure
+    dependencies
     coding-style
     code-design
     design-patterns
+    regressions
     labeling
