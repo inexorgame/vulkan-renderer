@@ -1,6 +1,9 @@
-GPU selection
-=============
+GPU selection mechanism
+=======================
 
+- Every graphics card is a gpu, but not every GPU is a (discrete) graphics card.
+- For example, some GPUs are integrated into the main processor.
+- If a certain GPU is not visible for Vulkan (vkEnumeratePhysicalDevices `<https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkEnumeratePhysicalDevices.html>`__), it does not support Vulkan.
 - If multiple GPUs are available on the system, the user can either specify which one should be used or let the engine select an appropriate GPU automatically.
 - The user can specify which GPU to prefer by using ``--gpu <index>`` as command line argument.
 - The ``<index>`` is the array index, **starting from 0**.
@@ -15,7 +18,8 @@ Automatic GPU selection rules
 - The method which ultimately selects the gpu is ``decide_which_graphics_card_to_use`` in `settings_decision_maker.cpp <https://github.com/inexorgame/vulkan-renderer/blob/master/src/vulkan-renderer/settings_decision_maker.cpp>`__.
 - Note that we are using a C++17 feature which is called `std::optional <https://en.cppreference.com/w/cpp/utility/optional>`__.
 - This means if no gpu could be found after all, ``std::nullopt`` will be returned.
+- The automated GPU selection mechanism will prefer the discrete GPU over the integrated GPU when exactly 2 GPUs are available.
 
 .. image:: gpu_selection_mechanism.svg
-    :width: 500
+    :width: 1000
     :alt: GPU selection mechanism
