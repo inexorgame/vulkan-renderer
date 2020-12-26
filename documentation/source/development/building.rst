@@ -1,8 +1,7 @@
-How to build
-============
+How to build vulkan-renderer
+============================
 
-If you have any trouble building please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or `join our Discord <https://discord.com/invite/acUW8k7>`__.
-
+If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
 CMake
 -----
@@ -11,37 +10,54 @@ This project uses out of source builds using either `gcc <https://gcc.gnu.org/>`
 
 Generating the documentation will create two subfolders in ``doc`` which will be ignored by git.
 
-There are four CMake targets:
+There are four CMake targets and options are available:
 
-- inexor-vulkan-renderer
-    The main executable.
-- inexor-vulkan-renderer-benchmark
-    Benchmark the renderer.
-- inexor-vulkan-renderer-tests
-    Tests the renderer.
-- inexor-vulkan-renderer-documentation
-    Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__. Enable target creation with ``-DINEXOR_BUILD_DOC=ON``.
+.. list-table:: List of CMake build targets.
+   :header-rows: 1
 
-Available CMake options:
+   * - build target
+     - description
+     - comment
+   * - inexor-vulkan-renderer
+     - The main executable.
+     - 
+   * - inexor-vulkan-renderer-tests
+     - Tests the renderer using `Google Test <https://github.com/google/googletest>`__.
+     - There are no tests available yet.
+   * - inexor-vulkan-renderer-benchmark
+     - Benchmarking of the renderer using `Google Benchmark <https://github.com/google/benchmark>`__.
+     - There are no benchmarks available yet.
+   * - inexor-vulkan-renderer-documentation
+     - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__. Enable target creation with ``-DINEXOR_BUILD_DOC=ON``.
+     - 
 
-- INEXOR_BUILD_BENCHMARKS
-    Builds inexor-renderer-benchmarks.
-    Default: ``OFF``
-- INEXOR_BUILD_DOC
-    Builds the documentation enable it.
-    Default: ``OFF``
-- INEXOR_BUILD_EXAMPLE
-    Builds inexor-renderer-example.
-    Default: ``ON``
-- INEXOR_BUILD_TESTS
-    Builds inexor-renderer-tests.
-    Default: ``OFF``
-- INEXOR_CONAN_PROFILE
-    To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``. The building type will be overriden by CMake.
-    Default: ``default``
-- INEXOR_USE_VMA_RECORDING
-    Enables or disables `Vulkan Memory Allocator's <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ recording feature.
-    Default: ``OFF``
+.. list-table:: List of CMake options.
+   :header-rows: 1
+
+   * - option
+     - description
+     - default value
+   * - INEXOR_BUILD_EXAMPLE
+     - Builds inexor-renderer-example.
+     - ``ON``
+   * - INEXOR_BUILD_TESTS
+     - Builds inexor-renderer-tests.
+     - ``OFF``
+   * - INEXOR_BUILD_BENCHMARKS
+     - Builds inexor-renderer-benchmarks.
+     - ``OFF``
+   * - INEXOR_CONAN_PROFILE
+     - To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``.
+     - ``default``
+   * - INEXOR_USE_VMA_RECORDING
+     - Enables or disables `Vulkan Memory Allocator's <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ recording feature.
+     - ``OFF``
+   * - INEXOR_BUILD_DOC
+     - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
+     - ``OFF``
+
+Windows
+^^^^^^^
 
 .. note::
     When building a VS solution add ``--config Debug/Release`` to define the build type.
@@ -57,14 +73,6 @@ Available CMake options:
     cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug ./
     # Build all targets
     cmake --build ./cmake-build-debug/
-
-Building vulkan-renderer
-------------------------
-
-If you have any trouble building please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or `join our Discord <https://discord.com/invite/acUW8k7>`__.
-
-Windows
-^^^^^^^
 
 .. note::
     If you use CMake GUI add `CMAKE_BUILD_TYPE` with value `Debug` or `Release`. `#228 <https://github.com/inexorgame/vulkan-renderer/issues/228>`__.
@@ -159,6 +167,8 @@ Configure cmake:
      -GNinja
 
 Build and run:
+
+If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
 .. code-block:: bash
 
