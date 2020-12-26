@@ -1,7 +1,7 @@
 Supported platforms
 ===================
 
-- Vulkan API itself is completely platform-agnostic, which allows it to run on various operating systems.
+- Vulkan API is completely platform-agnostic, which allows it to run on various operating systems.
 - The required drivers for Vulkan are usually part of your graphic card's drivers.
 - Update your graphics drivers ase often as possible since new drivers with Vulkan updates are released frequently.
 - Driver updates contain new features, bug fixes, and performance improvements.
