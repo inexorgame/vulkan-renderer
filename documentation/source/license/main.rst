@@ -1,6 +1,5 @@
-***********
-MIT license
-***********
-
+*******
+License
+*******
 
 .. include:: ../../../LICENSE
