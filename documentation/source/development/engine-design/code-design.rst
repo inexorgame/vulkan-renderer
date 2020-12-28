@@ -10,6 +10,8 @@ The following books inspired Inexor's code design:
 - `Scott Meyers: Effective Modern C++ <https://www.oreilly.com/library/view/effective-modern-c/9781491908419/>`__
 - `Scott Meyers: Effective C++: 55 Specific Ways to Improve Your Programs and Designs, Third Edition <https://www.oreilly.com/library/view/effective-c-55/0321334876/>`__
 - `Scott Meyers: Effective STL <https://www.oreilly.com/library/view/effective-stl/9780321545183/>`__
+- `Nicolai M. Josuttis: C++ Move Semantics - The Complete Guide <https://leanpub.com/cppmove>`__
+- `Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides: Design Patterns: Elements of Reusable Object-Oriented Software <https://www.oreilly.com/library/view/design-patterns-elements/0201633612/>`__
 - `Robert C. Martin: Clean Code: A Handbook of Agile Software Craftsmanship <https://www.oreilly.com/library/view/clean-code-a/9780136083238/>`__
 - `Robert C. Martin: The Clean Coder: A Code of Conduct for Professional Programmers <https://www.oreilly.com/library/view/the-clean-coder/9780132542913/>`__
 - `Robert C. Martin: Clean Architecture: A Craftsman's Guide to Software Structure and Design, First Edition <https://www.oreilly.com/library/view/clean-architecture-a/9780134494272/>`__
