@@ -10,7 +10,7 @@ Supported platforms
 Microsoft Windows
 -----------------
 
-- We support x64 Microsoft Windows 7, 8, 8.1 and 10.
+- We support x64 Microsoft Windows 8, 8.1 and 10.
 
 Linux
 ------
