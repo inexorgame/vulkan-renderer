@@ -2,7 +2,7 @@ RenderDoc
 =========
 
 - `RenderDoc <https://renderdoc.org/>`__ is a free and open source graphics debugger for Vulkan API (and other APIs) developed by `Baldur Karlsson <https://github.com/baldurk>`__.
-- It is a very powerful graphics debugging and visualisation tool which makes debugging Vulkan application as easy as possible.
+- It is a very powerful graphics debugging and visualization tool which makes debugging Vulkan application as easy as possible.
 - Inexor has full RenderDoc integration. This includes `internal resource naming using Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__.
 - The following tutorial shows how to debug Inexor using RenderDoc.
 - You can read up more details in `RenderDoc's documentation <https://renderdoc.org/docs/getting_started/quick_start.html>`__.
@@ -10,7 +10,7 @@ RenderDoc
 RenderDoc Tutorial for Windows
 ------------------------------
 
-Step 1: Open Inexor in Visual Studio and add a breakpoint before Vulkan initializsation
+Step 1: Open Inexor in Visual Studio and add a breakpoint before Vulkan initialization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - The best spot would be right after ``main()``:

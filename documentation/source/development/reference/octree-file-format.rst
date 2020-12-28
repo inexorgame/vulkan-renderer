@@ -59,7 +59,7 @@ If blocks or corners are ordered, they use this order.
     10, "(4, 6)"
     11, "(2, 3)"
 
-**Indetation**
+**Indentation**
 
 Every cube can be indented at each corner to all axis by 8 steps. In total there are 9 position/level on each axis.
 The following diagram shows the indentation levels of Corner 1 on the x-axis.
@@ -67,9 +67,9 @@ The following diagram shows the indentation levels of Corner 1 on the x-axis.
 .. image:: octree_indentation.svg
     :alt: Octree indentation
 
-**Neighbours**
+**Neighbors**
 
-.. csv-table:: Neighbour Order
+.. csv-table:: Neighbor Order
     :header: ID, Relative Coordinates
 
     0, "(-1, -1, -1)"
@@ -205,7 +205,7 @@ The corner position at one axis is calculated relative from the corner starting 
 
 Inexor II
 ^^^^^^^^^
-File Extention: ``.nxoc`` - Inexor Octree
+File Extension: ``.nxoc`` - Inexor Octree
 
 .. code-block::
 
@@ -249,7 +249,7 @@ File Extention: ``.nxoc`` - Inexor Octree
 
 **Calculating edge indentation value**
 
-The indentation along the edge axis between two corners presented by a unqiue value. The indentation level starts with 0 at the starting corner and goes to 8 at the ending corner.
+The indentation along the edge axis between two corners presented by a unique value. The indentation level starts with 0 at the starting corner and goes to 8 at the ending corner.
 We are assuming that both ends of the edge are indented by at least one. (Start at 0, is actually already indented by one).
 
 Using :math:`i` as the indentation value, :math:`s` as the indentation start position and :math:`o` as the offset between the start and end position.
@@ -262,7 +262,7 @@ Inexor III
 The third format uses the advantage of the second format for the both sided indentations. But makes sure that it is easy to read and write and not many bitwise operations has to be done.
 Also the cube type is present by one byte, even if only the first two bits are used.
 
-File Extention: ``.nxoc`` - Inexor Octree
+File Extension: ``.nxoc`` - Inexor Octree
 
 .. code-block::
 
@@ -296,7 +296,7 @@ File Extention: ``.nxoc`` - Inexor Octree
 
 **Calculating edge indentation value**
 
-The indentation along the edge axis between two corners presented by a unqiue value. The indentation level starts with 0 at the starting corner and goes to 8 at the ending corner.
+The indentation along the edge axis between two corners presented by a unique value. The indentation level starts with 0 at the starting corner and goes to 8 at the ending corner.
 
 Using :math:`i` as the indentation value, :math:`s` as the indentation start position and :math:`o` as the offset between the start and end position.
 

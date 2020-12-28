@@ -32,7 +32,7 @@ Getting started with Vulkan
     NVidia, Imagination, Qualcomm, id-Software, EPIC-games and Google.
 `Vulkan Memory Management <https://www.youtube.com/watch?v=rXSdDE7NWmA>`__
     Jordan Logan, Developer technology engineer, AMD.
-`Vulkan Memory Managenent <https://www.youtube.com/watch?v=zSG6dPq57P8>`__
+`Vulkan Memory Management <https://www.youtube.com/watch?v=zSG6dPq57P8>`__
     Steven Tovey, Developer technology engineer, AMD.
 `Vulkan: State of the Union 2019 <https://www.youtube.com/watch?v=KLZsAJQBR5o>`__
     Developers from ARM, LunarG, NVidia.
