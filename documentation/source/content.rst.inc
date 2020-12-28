@@ -3,6 +3,8 @@ Documentation
 =============
 
 .. include:: ../../README.rst
+.. include:: ../../documentation/source/faq/main.rst
+.. include:: ../../documentation/source/links/main.rst
 
 .. toctree::
     :maxdepth: 2
