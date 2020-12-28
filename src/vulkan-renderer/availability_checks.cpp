@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/availability_checks.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -9,8 +11,9 @@ namespace inexor::vulkan_renderer {
 
 void AvailabilityChecksManager::create_instance_extensions_cache() {
     // First ask Vulkan how many instance extensions are available on the system.
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &m_available_instance_extensions, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateInstanceExtensionProperties failed!");
+    if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &m_available_instance_extensions, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
     }
 
     if (m_available_instance_extensions == 0) {
@@ -22,9 +25,10 @@ void AvailabilityChecksManager::create_instance_extensions_cache() {
         m_instance_extensions_cache.resize(m_available_instance_extensions);
 
         // Get the information about the available instance extensions.
-        if (vkEnumerateInstanceExtensionProperties(nullptr, &m_available_instance_extensions,
-                                                   m_instance_extensions_cache.data())) {
-            throw std::runtime_error("Error: vkEnumerateInstanceExtensionProperties failed!");
+        if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &m_available_instance_extensions,
+                                                                       m_instance_extensions_cache.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
         }
     }
 }
@@ -50,8 +54,9 @@ bool AvailabilityChecksManager::has_instance_extension(const std::string &instan
 
 void AvailabilityChecksManager::create_instance_layers_cache() {
     // First ask Vulkan how many instance layers are available on the system.
-    if (vkEnumerateInstanceLayerProperties(&m_available_instance_layers, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateInstanceLayerProperties failed!");
+    if (const auto result = vkEnumerateInstanceLayerProperties(&m_available_instance_layers, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
     }
 
     if (m_available_instance_layers == 0) {
@@ -62,9 +67,10 @@ void AvailabilityChecksManager::create_instance_layers_cache() {
     m_instance_layers_cache.resize(m_available_instance_layers);
 
     // Get the information about the available instance layers.
-    if (vkEnumerateInstanceLayerProperties(&m_available_instance_layers, m_instance_layers_cache.data()) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateInstanceLayerProperties failed!");
+    if (const auto result =
+            vkEnumerateInstanceLayerProperties(&m_available_instance_layers, m_instance_layers_cache.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
     }
 }
 
@@ -88,8 +94,9 @@ bool AvailabilityChecksManager::has_instance_layer(const std::string &instance_l
 
 void AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device layers are available on the system.
-    if (vkEnumerateDeviceLayerProperties(graphics_card, &m_available_device_layers, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateDeviceLayerProperties failed!");
+    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &m_available_device_layers, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
     }
 
     if (m_available_device_layers == 0) {
@@ -100,9 +107,10 @@ void AvailabilityChecksManager::create_device_layers_cache(const VkPhysicalDevic
     m_device_layer_properties_cache.resize(m_available_device_layers);
 
     // Get the information about the available device layers.
-    if (vkEnumerateDeviceLayerProperties(graphics_card, &m_available_device_layers,
-                                         m_device_layer_properties_cache.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateDeviceLayerProperties failed!");
+    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &m_available_device_layers,
+                                                             m_device_layer_properties_cache.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
     }
 }
 
@@ -127,9 +135,10 @@ bool AvailabilityChecksManager::has_device_layer(const VkPhysicalDevice &graphic
 
 void AvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalDevice &graphics_card) {
     // First ask Vulkan how many device extensions are available on the system.
-    if (vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &m_available_device_extensions, nullptr) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateDeviceExtensionProperties failed!");
+    if (const auto result =
+            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &m_available_device_extensions, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
 
     if (m_available_device_extensions == 0) {
@@ -140,9 +149,10 @@ void AvailabilityChecksManager::create_device_extensions_cache(const VkPhysicalD
         m_device_extensions_cache.resize(m_available_device_extensions);
 
         // Get the information about the available device extensions.
-        if (vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &m_available_device_extensions,
-                                                 m_device_extensions_cache.data())) {
-            throw std::runtime_error("Error: vkEnumerateDeviceExtensionProperties failed!");
+        if (const auto result = vkEnumerateDeviceExtensionProperties(
+                graphics_card, nullptr, &m_available_device_extensions, m_device_extensions_cache.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
         }
     }
 }
@@ -172,8 +182,9 @@ bool AvailabilityChecksManager::has_presentation(const VkPhysicalDevice &graphic
     VkBool32 presentation_available = false;
 
     // Query if presentation is supported.
-    if (vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
 
     return presentation_available;

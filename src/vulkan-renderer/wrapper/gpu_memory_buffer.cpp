@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -36,9 +37,10 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
     // TODO: Is it good to have memory mapped all the time?
     // TODO: When should memory be mapped / unmapped?
 
-    if (vmaCreateBuffer(m_device.allocator(), &buffer_ci, &m_allocation_ci, &m_buffer, &m_allocation,
-                        &m_allocation_info)) {
-        throw std::runtime_error("Error: GPU memory buffer allocation for " + name + " failed!");
+    if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &m_allocation_ci, &m_buffer,
+                                            &m_allocation, &m_allocation_info);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: GPU memory buffer allocation for " + name + " failed!", result);
     }
 
     // Assign an internal debug marker name to this buffer.

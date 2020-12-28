@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -54,8 +55,9 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
 
     spdlog::debug("Creating shader module {}.", name);
-    if (vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateShaderModule failed for shader " + name + "!");
+    if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateShaderModule failed for shader " + name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

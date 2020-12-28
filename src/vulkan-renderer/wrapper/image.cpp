@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -42,9 +43,10 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
-    if (vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
-                       &m_allocation_info) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vmaCreateImage failed for image " + m_name + "!");
+    if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
+                                           &m_allocation_info);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -60,8 +62,9 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device.device(), &image_view_ci, nullptr, &m_image_view) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateImageView failed for image view " + m_name + "!");
+    if (const auto result = vkCreateImageView(device.device(), &image_view_ci, nullptr, &m_image_view);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <spdlog/spdlog.h>
@@ -128,17 +129,19 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     VkPipelineCacheCreateInfo cache_ci = {};
     cache_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
-    if (vkCreatePipelineCache(m_device.device(), &cache_ci, nullptr, &pipeline_cache) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreatePipelineCache failed for " + name + " !");
+    if (const auto result = vkCreatePipelineCache(m_device.device(), &cache_ci, nullptr, &pipeline_cache);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreatePipelineCache failed for " + name + " !", result);
     }
 
     // TODO: Assign an internal name to this pipeline cache using Vulkan debug markers!
 
     spdlog::debug("Creating graphics pipeline.");
 
-    if (vkCreateGraphicsPipelines(m_device.device(), pipeline_cache, 1, &pipeline_ci, nullptr, &graphics_pipeline) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateGraphicsPipelines failed for " + name + " !");
+    if (const auto result =
+            vkCreateGraphicsPipelines(m_device.device(), pipeline_cache, 1, &pipeline_ci, nullptr, &graphics_pipeline);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateGraphicsPipelines failed for " + name + " !", result);
     }
 
     // TODO: Assign an internal name to this graphics pipeline using Vulkan debug markers!

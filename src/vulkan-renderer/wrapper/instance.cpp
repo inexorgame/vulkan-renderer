@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <GLFW/glfw3.h>
@@ -144,8 +145,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     instance_ci.ppEnabledLayerNames = enabled_instance_layers.data();
     instance_ci.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
 
-    if (vkCreateInstance(&instance_ci, nullptr, &m_instance) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateInstance failed!");
+    if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateInstance failed!", result);
     }
 
     spdlog::debug("Created Vulkan instance successfully.");
