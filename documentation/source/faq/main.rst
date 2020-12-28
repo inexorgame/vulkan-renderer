@@ -3,12 +3,28 @@ Frequently asked questions
 
 Please visit `inexor.org <https://inexor.org>`__ and join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
-Also check out the `documentation <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__.
+----
+
+- `What is Inexor?`_
+- `Which platforms are supported?`_
+- `What is the current state of the project?`_
+- `How is Inexor organized?`_
+- `How to contact us?`_
+- `How to build?`_
+- `Where to find Inexor's documentation?`_
+- `What is Vulkan API?`_
+- `Why is Vulkan API the future?`_
+- `Can you explain Vulkan API in simple terms?`_
+- `How difficult is development with Vulkan API?`_
+- `Does my graphics card support Vulkan API?`_
+- `Will you support other rendering APIs?`_
+
+----
 
 What is Inexor?
 ---------------
 
-.. image:: ../logos/InexorLogo.png
+.. image:: ./faq/InexorLogo.png
 
 Inexor is an open-source project which combines `modern C++ <https://awesomecpp.com/>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__.
 
@@ -35,31 +51,21 @@ Inexor's current main objective is the development of a new `octree <https://sta
 - `Automatic code formatting <https://clang.llvm.org/docs/ClangFormat.html>`__ using `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`__.
 - `CMake <https://cmake.org/>`__ project setup with `conan package manager <https://conan.io/center/>`__ integration. 
 
-For memory management, we use `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__. 
-
 You can find Vulkan example code online which follows the mantra "don't use this in production - it's tutorial code". Inexor disagrees with this as we believe that defeats its own purpose. If example code is not meant to be used in some other projects then there's something wrong with that example code. Many projects don't use a proper memory management library like `VMA <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ or they do not abstract their code using `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__, but use a lot of code duplication instead. Inexor is designed to be used in production. Bare in mind however that Inexor is also still far away from being a finished game engine.
 
-How is Inexor organised?
-------------------------
-
-- Inexor has no central authority.
-- It's a headless collective which makes collective decisions though discussions and it's welcoming new contributors.
-
-How to contact us?
-------------------
-
-Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.com/invite/acUW8k7>`__ server.
+----
 
 Which platforms are supported?
 ------------------------------
 
-- We support x64 Microsoft Windows 7, 8, 8.1 and 10.
+- We support x64 Microsoft Windows 8, 8.1 and 10.
 - We support every x64 Linux distribution for which Vulkan drivers exist.
 - We have specific build instructions for `Gentoo <https://www.gentoo.org/>`__ and `Ubuntu <https://ubuntu.com/download>`__.
 - If you have found a way to set it up for other Linux distributions, please `open a pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__ and let us know!
-- We do not support macOS or iOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS.
-- Additionally, this would require some changes in the engines as not all of Inexor's dependencies are available on macOS or iOS.
+- We do not support macOS or iOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS. Additionally, this would require some changes in the engines as not all of Inexor's dependencies are available on macOS or iOS.
 - We also do not support Android because this would require some changes in the engines as not all of Inexor's dependencies are available on Android.
+
+----
 
 What is the current state of the project?
 -----------------------------------------
@@ -76,6 +82,24 @@ We are still in very early development, but this project can already offer:
 - `VMA memory replays <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator#binaries>`__ for debugging are already working.
 - Full `RenderDoc <https://renderdoc.org/>`__ integration with `internal resource naming <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__.
 
+----
+
+How is Inexor organized?
+------------------------
+
+- Inexor has no central authority.
+- It's a headless collective which makes collective decisions through discussions.
+- It's welcoming new contributors.
+
+----
+
+How to contact us?
+------------------
+
+Please visit `inexor.org <https://inexor.org>`__ and join our `Discord <https://discord.com/invite/acUW8k7>`__ server.
+
+----
+
 How to build?
 -------------
 
@@ -83,39 +107,43 @@ If you have any trouble building please `open a ticket <https://github.com/inexo
 
 `How to build vulkan-renderer? <https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html>`__
 
-Where to find the documentation?
---------------------------------
+Where to find Inexor's documentation?
+-------------------------------------
 
 - Read our docs `here <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__.
+
+----
 
 What is Vulkan API?
 -------------------
 
-.. image:: ../logos/VulkanAPI.png
+.. image:: ../links/VulkanAPI.png
 
-Inexor engine uses `Vulkan API <https://www.khronos.org/vulkan/>`__ as rendering backend. Vulkan is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ due to reduction of overhead and driver guesswork during runtime. This results in higher frame rate, predictable CPU workload and a lower memory usage. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software any many more). Vulkan is the only multi platform low level graphics API.
+Inexor engine uses `Vulkan API <https://www.khronos.org/vulkan/>`__ as rendering backend. Vulkan is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ due to reduction of overhead and driver guesswork during runtime. This results in higher frame rate, more predictable CPU workload and a lower memory usage. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software and many more). Vulkan is the only multi platform low level graphics API.
+
+----
 
 Why is Vulkan API the future?
 -----------------------------
 
-Performance
-^^^^^^^^^^^
+**Performance**
+
 - Lower and more predictable CPU load which results in `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ and a reduction of driver guesswork.
-- Vulkan API asynchronous and encourages `multithreaded rendering <https://www.reddit.com/r/vulkan/comments/52aodq/multithreading_in_vulkan_where_should_i_start/>`__. This is a major advantage over OpenGL!
+- Vulkan API is asynchronous and encourages `multithreaded rendering <https://www.reddit.com/r/vulkan/comments/52aodq/multithreading_in_vulkan_where_should_i_start/>`__. This is not possible with OpenGL!
 - The low level API design of Vulkan allows for advanced optimizations such as `rendergraphs <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`__ for generic rendering architectures.
 - It also wants you to use the GPU asynchronously, sometimes referred to as GPU multithreading.
-- Vulkan allows the use of multiple GPUs, even if they are not physically linked to one unit.
+- Vulkan allows the use of multiple GPUs, even if they are not physically linked via crossfire bridge.
 - The reduction of CPU workload and it's improved predictability can enforce the GPU to be the limiting factor of performance, as it should be.
 
 **Memory efficiency**
 
-- Vulkan API enforces memory management to be done by the application rather than the driver.
-- Since the application knows best about the importance of every resource it uses, this allows for a better memory usage.
 - Vulkan gives much deeper control and better interfaces over graphics and system memory.
+- Vulkan API enforces memory management to be done by the application rather than the driver.
+- Since the application knows best about the importance of every resource it uses, Vulkan API allows for a better memory usage.
 
 **Architecture**
 
-- Unlike OpenGL, Vulkan fits the design of modern GPUs as it is not just one single `state machine <https://stackoverflow.com/questions/31282678/what-is-the-opengl-state-machine>`__.
+- Unlike OpenGL, Vulkan fits the design of modern GPUs as it is not just one single `state machine <https://stackoverflow.com/questions/31282678/what-is-the-opengl-state-machine>`__. This means Vulkan API was designed from the beginning to match the architecture of modern graphics cards. OpenGL however still matches the design of graphics cards from the time it was invented in the 1990s.
 - Vulkan is a fresh start, whereas OpenGL contains a myriad of hacks to support very rare use cases.
 - Vulkan has `layers <https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#extendingvulkan-layers>`__ and `extensions <https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#extendingvulkan-extensions>`__ as part of its design. You can check for supported GPU plugins on the target machine and enable them as needed.
 - Vulkan API itself is completely platform agnostic.
@@ -140,6 +168,8 @@ Performance
 
 - Vulkan API and most of the drivers are `open source <https://en.wikipedia.org/wiki/Open_source>`__.
 
+----
+
 Can you explain Vulkan API in simple terms?
 -------------------------------------------
 
@@ -149,6 +179,8 @@ Can you explain Vulkan API in simple terms?
 - It offers advanced optimization techniques which can result in a lower RAM and video memory usage.
 - Using Vulkan can yield in lower and more predictable CPU usage.
 - Vulkan allows programmers to make more effective use of multiple CPU cores.
+
+----
 
 How difficult is development with Vulkan API?
 ---------------------------------------------
@@ -160,6 +192,8 @@ How difficult is development with Vulkan API?
 - The challenges of Vulkan game/engine development boil down to basic programming challenges: abstraction, resource management and parallelization.
 - You may want to read `Vulkan in 30 minutes <https://renderdoc.org/vulkan-in-30-minutes.html>`__ by `Baldur Karlsson <https://github.com/baldurk/renderdoc>`__.
 
+----
+
 Does my graphics card support Vulkan API?
 -----------------------------------------
 
@@ -167,8 +201,12 @@ Does my graphics card support Vulkan API?
 - Every new graphics card which is coming out these days supports Vulkan API.
 - Vulkan is also supported on older graphics cards going back to `Radeon HD 7000 series <https://en.wikipedia.org/wiki/Radeon_HD_7000_series>`__ and `Nvidia Geforce 6 series <https://en.wikipedia.org/wiki/GeForce_6_series>`__.
 
-Will you support other rendering APIs? 
+----
+
+Will you support other rendering APIs?
 --------------------------------------
 - No, because testing for Vulkan already takes a lot of time and there is no sense in supporting deprecated technology.
 - Some studios like id-software also `dropped OpenGL entirely <https://youtu.be/0R23npUCCnw?t=252>`__.
 - Vulkan API is the only low level multi platform graphics and compute API.
+
+----

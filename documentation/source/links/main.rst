@@ -1,10 +1,10 @@
-Links
-#####
+Helpful Links
+=============
 
 Vulkan API
 ----------
 
-.. image:: ../logos/VulkanAPI.png
+.. image:: ./links/VulkanAPI.png
 
 - `Khronos' website about Vulkan API <https://www.khronos.org/vulkan/>`__
 - `Vulkan API 1.1 specification <https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html>`__
@@ -44,7 +44,7 @@ Beginner Vulkan API tutorials
 - `How to learn Vulkan? <https://www.jeremyong.com/c++/vulkan/graphics/rendering/2018/03/26/how-to-learn-vulkan/>`__
 - `The Vulkan tutorial <https://vulkan-tutorial.com/>`__
 - `The Vulkan guide <https://vkguide.dev/>`__
-- `Sascha Willem's Vulkan tutorials <https://github.com/SaschaWillems/Vulkan>`__
+- `Sascha Willems' Vulkan tutorials <https://github.com/SaschaWillems/Vulkan>`__
 - `Intel's Vulkan tutorial: API without secrets <https://software.intel.com/content/www/us/en/develop/articles/api-without-secrets-introduction-to-vulkan-preface.html>`__
 - `Qualcomm developer network's Vulkan tutorials <https://developer.qualcomm.com/software/adreno-gpu-sdk/tutorial-videos>`__
 - `Introduction To Vulkan <http://ogldev.atspace.co.uk/www/tutorial50/tutorial50.html>`__
@@ -52,7 +52,7 @@ Beginner Vulkan API tutorials
 - `Vulkan Tutorial - 101 <http://jhenriques.net/development.html>`__
 - `Mike Bailey's Vulkan Page <https://web.engr.oregonstate.edu/~mjb/vulkan/>`__
 - `Using the Vulkan Validation Layers <https://gpuopen.com/learn/using-the-vulkan-validation-layers/>`__
-- `Sascha Willem's tutorial about Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__
+- `Sascha Willems' tutorial about Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__
 - `Awesome Vulkan list <https://github.com/vinjn/awesome-vulkan>`__
 
 Migrating from OpenGL to Vulkan API
@@ -65,7 +65,7 @@ Migrating from OpenGL to Vulkan API
 Advanced Vulkan API tutorials and articles
 ------------------------------------------
 
-- `Sascha Willem's glTF2 + PBR (physically based rendering) demo <https://github.com/SaschaWillems/Vulkan-glTF-PBR>`__
+- `Sascha Willems' glTF2 + PBR (physically based rendering) demo <https://github.com/SaschaWillems/Vulkan-glTF-PBR>`__
 - `NVidia Developer Blog: Tips and Tricks: Vulkan Dos and Don’ts <https://developer.nvidia.com/blog/vulkan-dos-donts/>`__
 - `Vulkan in 30 minutes <https://renderdoc.org/vulkan-in-30-minutes.html>`__
 - `Writing an efficient Vulkan renderer <https://zeux.io/2020/02/27/writing-an-efficient-vulkan-renderer/>`__
@@ -84,7 +84,7 @@ Advanced Vulkan API tutorials and articles
 Vulkan API presentations
 ------------------------
 
-- `NVidia: GPU-DRIVEN RENDERING <http://on-demand.gputechconf.com/gtc/2016/presentation/s6138-christoph-kubisch-pierre-boudier-gpu-driven-rendering.pdf>`__
+- `NVidia: GPU-driven rendering <http://on-demand.gputechconf.com/gtc/2016/presentation/s6138-christoph-kubisch-pierre-boudier-gpu-driven-rendering.pdf>`__
 - `NVidia: Vulkan: the essentials <http://developer.download.nvidia.com/gameworks/events/GDC2016/Vulkan_Essentials_GDC16_tlorach.pdf>`__
 - `The most common Vulkan mistakes <http://32ipi028l5q82yhj72224m8j.wpengine.netdna-cdn.com/wp-content/uploads/2016/05/Most-common-mistakes-in-Vulkan-apps.pdf>`__
 - `High-performance, Low-Overhead Rendering with OpenGL and Vulkan <http://developer.download.nvidia.com/gameworks/events/GDC2016/mschott_lbishop_gl_vulkan.pdf>`__
@@ -96,8 +96,8 @@ Vulkan API example projects
 ----------------------------
 
 - `The official Khronos Vulkan samples <https://github.com/KhronosGroup/Vulkan-Samples>`__
-- `Sascha Willem's Vulkan tutorials <https://github.com/SaschaWillems/Vulkan>`__
-- `Sascha Willem's tutorial about Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__
+- `Sascha Willems' Vulkan tutorials <https://github.com/SaschaWillems/Vulkan>`__
+- `Sascha Willems' tutorial about Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__
 - `VFPR - a Vulkan Forward Plus Renderer <https://github.com/WindyDarian/Vulkan-Forward-Plus-Renderer>`__
 
 Drivers
