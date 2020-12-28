@@ -20,22 +20,6 @@ Required Software
 
     Make sure you add the ``glslangValidator`` in the Vulkan SDK's bin folder to your path variable.
 
-
-Does my graphics card support Vulkan?
--------------------------------------
-
-- You can look up your graphics card in `Sascha Willem's Vulkan hardware database <https://vulkan.gpuinfo.org/>`__.
-- Every new graphics card which is coming out these days supports Vulkan API.
-- Vulkan is also supported on older graphics cards going back to `Radeon HD 7000 series <https://en.wikipedia.org/wiki/Radeon_HD_7000_series>`__ and `Nvidia Geforce 6 series <https://en.wikipedia.org/wiki/GeForce_6_series>`__.
-
-
-Update your graphics drivers!
------------------------------
-
-- Update your graphics drivers as often as possible.
-- New drivers contain new features, bug fixes, and performance improvements.
-
-
 Optional Software
 -----------------
 
@@ -65,3 +49,18 @@ Optional Software
 
 `Visual Studio Code <https://code.visualstudio.com/>`__
     Free and open source text editor.
+
+
+Does my graphics card support Vulkan?
+-------------------------------------
+
+- You can look up your graphics card in `Sascha Willem's Vulkan hardware database <https://vulkan.gpuinfo.org/>`__.
+- Every new graphics card which is coming out these days supports Vulkan API.
+- Vulkan is also supported on older graphics cards going back to `Radeon HD 7000 series <https://en.wikipedia.org/wiki/Radeon_HD_7000_series>`__ and `Nvidia Geforce 6 series <https://en.wikipedia.org/wiki/GeForce_6_series>`__.
+
+
+Update your graphics drivers!
+-----------------------------
+
+- Update your graphics drivers as often as possible.
+- New drivers contain new features, bug fixes, and performance improvements.
