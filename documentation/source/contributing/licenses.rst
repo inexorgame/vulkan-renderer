@@ -64,15 +64,6 @@ List of accepted licenses
      -
      - ✓
      -
-   * - `GPLv2 <https://www.gnu.org/licenses/old-licenses/gpl-2.0-faq.en.html>`__ or any later version
-     -
-     - ✓
-     -
-     - ✓
-     - ✓
-     -
-     -
-     - ✓
 
 Why we don't recommend Public Domain
 ------------------------------------
