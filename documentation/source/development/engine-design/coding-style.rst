@@ -14,9 +14,9 @@ Other styles which cannot be applied automatically are listed below:
 - Use C++17 namespace style ``namespace inexor::vulkan-renderer``
 - No ``using <namespace>``
 - For default member initialization use equal instead of brace initialization
-- Prefer american english over british english
+- Prefer American English over British English
 - Use spaces to indent
-- Use linux line ends (ln) in your commits
+- Use Linux line ends (ln) in your commits
 - Multiline documentation should use /// in each line
 
 Naming Convention

@@ -38,7 +38,7 @@ Inexor's current main objective is the development of a new `octree <https://sta
 - Offer a Vulkan API codebase which can be used in production.
 - Use  `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ for Vulkan memory management. 
 
-**We are using good software engineering practises:**
+**We are using good software engineering practices:**
 
 - `Resource acquisition is initialization (RAII) <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__.
 - `Software design patterns <https://refactoring.guru/>`__.
@@ -152,10 +152,10 @@ Why is Vulkan API the future?
 - Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies. It is not being developed by one company only (like Microsoft's DirectX for example).
 - As Vulkan's motto states, it really is `industry-forged`.
 
-**Consistency and standardisation**
+**Consistency and standardization**
 
-- Vulkan precompiles shaders to a `standardised bytecode format <https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation>`__ called `SPIR-V <https://www.khronos.org/spir/>`__. This also reduces driver guesswork during runtime.
-- The explicit design of Vulkan gives much deeper control and avoids driver guesswork and undefined behaviour of graphics drivers.
+- Vulkan precompiles shaders to a `standardized bytecode format <https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation>`__ called `SPIR-V <https://www.khronos.org/spir/>`__. This also reduces driver guesswork during runtime.
+- The explicit design of Vulkan gives much deeper control and avoids driver guesswork and undefined behavior of graphics drivers.
 
 **Debugging tools**
 
@@ -185,7 +185,7 @@ Can you explain Vulkan API in simple terms?
 How difficult is development with Vulkan API?
 ---------------------------------------------
 
-- This API does a lot of initialisation during the loading phase of the application.
+- This API does a lot of initialization during the loading phase of the application.
 - The key to success is a good abstraction of Vulkan API based on the needs of the application/game.
 - Vulkan is a C-style API. In simplified terms you fill out structures which start with ``Vk..`` and submit them together with other parameters to ``vk...`` functions. That's it. No complex interfaces.
 - Vulkan API has a `very good documentation <https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html>`__.

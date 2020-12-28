@@ -77,7 +77,7 @@ Added
 - Associate internal resource names with memory regions to improve debugging.
 - Use separate data transfer queue for cpu to gpu memory copies if available.
 - Availability checks for Vulkan features.
-- Settings decision maker for Vulkan initialisation.
+- Settings decision maker for Vulkan initialization.
 - Simple command line argument parser.
 - Automatic GPU selection mechanism and -gpu <N> command line argument for preferential GPU.
 - Create windows using `glfw3 <https://www.glfw.org/>`__.

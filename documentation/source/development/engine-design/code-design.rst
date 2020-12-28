@@ -21,7 +21,7 @@ The following books inspired Inexor's code design:
 General considerations
 ----------------------
 
-- Organise the code in components.
+- Organize the code in components.
 - Split declarations and definitions, if possible.
 - Make appropriate use of the standard library.
 - Avoid data redundancy in the engine. Do not keep memory copied unnecessarily.
