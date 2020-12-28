@@ -24,6 +24,12 @@ Naming Convention
 
 In the ``.clang-tidy`` file and search for ``readability-identifier-naming`` to get the naming convention used by this project.
 
+Error handling
+---------------
+
+- Use exceptions for error handling, as proposed by the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-errors>`__.
+- More information about why to use exceptions can be found `here <https://isocpp.org/wiki/faq/exceptions>`__.
+
 Removed Clang Tidy Checks
 -------------------------
 

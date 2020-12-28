@@ -3,9 +3,6 @@ How to build vulkan-renderer
 
 If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
-CMake
------
-
 This project uses out of source builds using either `gcc <https://gcc.gnu.org/>`__, `clang <https://clang.llvm.org/>`__ or `Microsoft Visual Studio <https://visualstudio.microsoft.com/en/downloads/>`__ compiler.
 
 Generating the documentation will create two subfolders in ``doc`` which will be ignored by git.

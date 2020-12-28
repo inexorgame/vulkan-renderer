@@ -76,7 +76,7 @@ Step 5: Continue debugging in Visual Studio
 Step 6: Debug inexor-vulkan-renderer.exe as usual and press F12 to take RenderDoc snapshots
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- You can take multiple snapshots with either ```PRINT`` or ``F12`` key.
+- You can take multiple snapshots with either ``PRINT`` or ``F12`` key.
 
 .. image:: images/renderdoc/RenderDoc_step_7.jpg
     :width: 800
