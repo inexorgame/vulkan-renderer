@@ -28,6 +28,9 @@ Join our `Discord server <https://discord.gg/acUW8k7>`__.
 `Croydon <https://github.com/Croydon>`__
     - Advice on `conan package manager <https://conan.io/>`__.
 
+`westernheld <https://github.com/westernheld>`__
+    - Testing and debugging.
+
 `uilianries <https://github.com/uilianries>`__
     - `Travis CI setup <https://stackoverflow.com/questions/61209668/travis-ci-reports-linker-errors-for-gcc-7-for-a-vulkan-project>`__
 
