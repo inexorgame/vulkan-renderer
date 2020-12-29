@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <unordered_map>
 
 namespace inexor::vulkan_renderer::input {
