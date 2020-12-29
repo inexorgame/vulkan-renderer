@@ -94,7 +94,6 @@ public:
         assert(device.device());
         assert(device.allocator());
         assert(!name.empty());
-        assert(!vertices.empty());
 
         std::size_t vertex_buffer_size = sizeof(VertexType) * vertex_count;
 
