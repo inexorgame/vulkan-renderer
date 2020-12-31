@@ -47,5 +47,9 @@ Join our `Discord server <https://discord.gg/acUW8k7>`__.
     - Overall CMake expertise.
     - Compiling SPIR-V shaders through CMake setup.
 
-`joetoth <https://github.com/joetoth>`__, `Kamil Zelech (@azkoon) <https://github.com/azkoon>`__
+`azkoon <https://github.com/azkoon>`__
+    - Help with Discord server.
+    - Help with wiki.
+
+`joetoth <https://github.com/joetoth>`__
     - Help with Discord server.
