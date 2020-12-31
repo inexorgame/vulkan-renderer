@@ -3,8 +3,8 @@ We are always open for suggestions or pull requests. You can search after ``diff
 Join our `Discord server <https://discord.gg/acUW8k7>`__.
 
 `IAmNotHanni <https://github.com/IAmNotHanni>`__
-    - Project and community management
-    - Large portion of Vulkan renderer
+    - Project and community management.
+    - Large portion of Vulkan renderer.
 
 `Iceflower <https://github.com/IceflowRE>`__
     - Threadpool improvements.
