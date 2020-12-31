@@ -105,7 +105,7 @@ You cannot compare a list to a number. You have to reinterpret it beforehand or 
     }
 
 A short version for ``else if`` chaining is ``switch``, ``case``. ``default`` will be used if no other case matches.
-There is not default fallthrough, to get this behaviour use ``fallthrough``. A ``break`` inside a switch case will break out of it.
+There is no default fallthrough, to get this behaviour use ``fallthrough``. A ``break`` inside a switch case will break out of it.
 
 .. code-block::
 
