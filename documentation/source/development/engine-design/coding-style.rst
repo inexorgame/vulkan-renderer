@@ -44,7 +44,7 @@ cppcoreguidelines-non-private-member-variables-in-classes
 cppcoreguidelines-pro-bounds-array-to-pointer-decay
     Not suitable for this project.
 google-readability-todo
-    We do not care about an TODO assignment or connected issue.
+    We do not care about any TODO assignments or related issues.
 hicpp-explicit-conversions
     Alias of ``google-explicit-constructor``
 hicpp-move-const-arg

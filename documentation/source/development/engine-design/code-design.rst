@@ -42,7 +42,7 @@ C++ core guidelines
 -------------------
 
 - The `C++ code guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`__ are a set of rules to use for modern C++ projects created by the C++ community.
-- In the following section, we will list up he entries which are of considerable interest for the Inexor project.
+- In the following section, we will list up the entries which are of considerable interest for the Inexor project.
 - There will be some gaps in the number as we skipped some of the less importer ones.
 - Also the code guidelines have gaps by default (blank space for new rules).
 

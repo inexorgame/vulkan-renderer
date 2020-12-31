@@ -2,6 +2,10 @@ We are always open for suggestions or pull requests. You can search after ``diff
 
 Join our `Discord server <https://discord.gg/acUW8k7>`__.
 
+`IAmNotHanni <https://github.com/IAmNotHanni>`__
+    - Project and community management.
+    - Large portion of Vulkan renderer.
+
 `Iceflower <https://github.com/IceflowRE>`__
     - Threadpool improvements.
     - Advice on thread safety and code design.
@@ -47,5 +51,9 @@ Join our `Discord server <https://discord.gg/acUW8k7>`__.
     - Overall CMake expertise.
     - Compiling SPIR-V shaders through CMake setup.
 
-`joetoth <https://github.com/joetoth>`__, `Kamil Zelech (@azkoon) <https://github.com/azkoon>`__
+`azkoon <https://github.com/azkoon>`__
+    - Help with Discord server.
+    - Help with wiki.
+
+`joetoth <https://github.com/joetoth>`__
     - Help with Discord server.

@@ -105,7 +105,7 @@ You cannot compare a list to a number. You have to reinterpret it beforehand or 
     }
 
 A short version for ``else if`` chaining is ``switch``, ``case``. ``default`` will be used if no other case matches.
-There is not default fallthrough, to get this behaviour use ``fallthrough``. A ``break`` inside a switch case will break out of it.
+There is no default fallthrough, to get this behaviour use ``fallthrough``. A ``break`` inside a switch case will break out of it.
 
 .. code-block::
 
@@ -125,7 +125,7 @@ There is not default fallthrough, to get this behaviour use ``fallthrough``. A `
 Loops
 -----
 
-There are three types of loops, a ``for``, ``for`` ranged based and a ``while`` loop.
+There are three types of loops: ``for``, range-based ``for`` and a ``while`` loop.
 Brackets are not required around the condition, but can improve the readability. You can break out of a loop with the ``break`` keyword.
 
 .. code-block::
