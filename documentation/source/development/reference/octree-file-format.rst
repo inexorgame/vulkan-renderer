@@ -259,8 +259,8 @@ Resulting into values from 0 to 27.
 
 Inexor III
 ^^^^^^^^^^
-The third format uses the advantage of the second format for the both sided indentations. But makes sure that it is easy to read and write and not many bitwise operations has to be done.
-Also the cube type is present by one byte, even if only the first two bits are used.
+The third format takes advantage of the second format for the double-sided indentations, but makes sure that it is easy to read and write and not many bitwise operations have to be done.
+Also the cube type is presented by one byte, even if only the first two bits are used.
 
 File Extension: ``.nxoc`` - Inexor Octree
 
