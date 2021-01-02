@@ -1,6 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/debug_callback.hpp"
 #include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -325,6 +324,12 @@ Application::Application(int argc, char **argv) {
     setup_window_and_input_callbacks();
 
 #ifndef NDEBUG
+    if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
+        spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
+                     "validation layer message.");
+        m_stop_on_validation_message = true;
+    }
+
     // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
     if (enable_khronos_validation_instance_layer) {
         spdlog::debug("Khronos validation layer is enabled.");
@@ -333,7 +338,40 @@ Application::Application(int argc, char **argv) {
             auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
             debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
                                     VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
-            debug_report_ci.pfnCallback = (PFN_vkDebugReportCallbackEXT)&vulkan_debug_message_callback;
+
+            // We use this user data pointer to signal the callback if "" is specified.
+            // All other solutions to this problem either involve duplicated versions of the lambda
+            // or global variables.
+            debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message);
+
+            debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>(
+                +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, std::uint64_t object,
+                    std::size_t location, std::int32_t message_code, const char *layer_prefix, const char *message,
+                    void *user_data) {
+                    if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
+                        spdlog::info(message);
+                    } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
+                        spdlog::debug(message);
+                    } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+                        spdlog::error(message);
+                    } else {
+                        // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
+                        spdlog::warn(message);
+                    }
+
+                    // Check if --stop-on-validation-message is enabled.
+                    if (static_cast<bool>(user_data)) {
+                        // This feature stops command lines from overflooding with messages in case many validation
+                        // layer messages are reported in a short amount of time.
+                        spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
+                        spdlog::critical("Application will cause a break point now!");
+
+                        // Wait for spdlog to shut down before aborting.
+                        spdlog::shutdown();
+                        std::abort();
+                    }
+                    return VK_FALSE;
+                });
 
             // We have to explicitly load this function.
             PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
