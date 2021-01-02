@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -23,8 +24,9 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
     framebuffer_ci.layers = 1;
     framebuffer_ci.renderPass = render_pass;
 
-    if (vkCreateFramebuffer(m_device.device(), &framebuffer_ci, nullptr, &m_framebuffer) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create framebuffer " + m_name + "!");
+    if (const auto result = vkCreateFramebuffer(m_device.device(), &framebuffer_ci, nullptr, &m_framebuffer);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Failed to create framebuffer " + m_name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

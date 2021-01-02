@@ -1,5 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
@@ -188,8 +189,9 @@ void GpuTexture::create_texture_sampler() {
 
     spdlog::debug("Creating image sampler for texture {}.", m_name);
 
-    if (vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateSampler failed for texture " + m_name + " !");
+    if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateSampler failed for texture " + m_name + " !", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

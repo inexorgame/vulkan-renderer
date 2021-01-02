@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <spdlog/spdlog.h>
@@ -25,8 +26,9 @@ RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescr
 
     spdlog::debug("Creating renderpass {}.", name);
 
-    if (vkCreateRenderPass(m_device.device(), &renderpass_ci, nullptr, &renderpass) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateRenderPass failed for " + name + " !");
+    if (const auto result = vkCreateRenderPass(m_device.device(), &renderpass_ci, nullptr, &renderpass);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateRenderPass failed for " + name + " !", result);
     }
 
     spdlog::debug("Created renderpass successfully.");

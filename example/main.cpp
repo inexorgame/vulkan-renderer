@@ -1,5 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -22,8 +24,16 @@ int main(int argc, char *argv[]) {
     spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
     spdlog::debug("Parsing command line arguments.");
 
-    inexor::vulkan_renderer::Application renderer(argc, argv);
-    renderer.run();
-    renderer.calculate_memory_budget();
+    std::unique_ptr<inexor::vulkan_renderer::Application> renderer;
+
+    try {
+        renderer = std::make_unique<inexor::vulkan_renderer::Application>(argc, argv);
+    } catch (inexor::vulkan_renderer::exceptions::VulkanException &exception) {
+        spdlog::critical(exception.what());
+        std::abort();
+    }
+
+    renderer->run();
+    renderer->calculate_memory_budget();
     spdlog::debug("Window closed");
 }

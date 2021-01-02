@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -48,8 +49,10 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     descriptor_pool_ci.pPoolSizes = pool_sizes.data();
     descriptor_pool_ci.maxSets = static_cast<std::uint32_t>(swapchain_image_count);
 
-    if (vkCreateDescriptorPool(device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateDescriptorPool failed for descriptor " + m_name + " !");
+    if (const auto result = vkCreateDescriptorPool(device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateDescriptorPool failed for descriptor " + m_name + " !",
+                                          result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -63,9 +66,11 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size());
     descriptor_set_layout_ci.pBindings = m_descriptor_set_layout_bindings.data();
 
-    if (vkCreateDescriptorSetLayout(device.device(), &descriptor_set_layout_ci, nullptr, &m_descriptor_set_layout) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateDescriptorSetLayout failed for descriptor " + m_name + " !");
+    if (const auto result =
+            vkCreateDescriptorSetLayout(device.device(), &descriptor_set_layout_ci, nullptr, &m_descriptor_set_layout);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + m_name + " !",
+                                          result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -85,8 +90,10 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 
     m_descriptor_sets.resize(swapchain_image_count);
 
-    if (vkAllocateDescriptorSets(device.device(), &descriptor_set_ai, m_descriptor_sets.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkAllocateDescriptorSets failed for descriptor " + m_name + " !");
+    if (const auto result = vkAllocateDescriptorSets(device.device(), &descriptor_set_ai, m_descriptor_sets.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkAllocateDescriptorSets failed for descriptor " + m_name + " !",
+                                          result);
     }
 
     for (const auto &descriptor_set : m_descriptor_sets) {

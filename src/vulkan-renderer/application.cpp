@@ -1,6 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/debug_callback.hpp"
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
@@ -53,7 +54,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
-        throw std::runtime_error(std::string("Could not open configuration file: " + file_name + "!"));
+        throw std::runtime_error("Could not open configuration file: " + file_name + "!");
     }
 
     toml_file.close();
@@ -340,9 +341,10 @@ Application::Application(int argc, char **argv) {
                     vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
 
             if (vkCreateDebugReportCallbackEXT) {
-                if (vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci, nullptr,
-                                                   &m_debug_report_callback) != VK_SUCCESS) {
-                    throw std::runtime_error("Error: vkCreateDebugReportCallbackEXT failed!");
+                if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,
+                                                                       nullptr, &m_debug_report_callback);
+                    result != VK_SUCCESS) {
+                    throw exceptions::VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
                 }
                 spdlog::debug("Creating Vulkan debug callback.");
                 m_debug_report_callback_initialised = true;

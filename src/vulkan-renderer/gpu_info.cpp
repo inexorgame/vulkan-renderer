@@ -1,4 +1,6 @@
 #include "inexor/vulkan-renderer/gpu_info.hpp"
+
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/surface_formats.hpp"
 
 #include <spdlog/spdlog.h>
@@ -19,8 +21,8 @@ void VulkanGraphicsCardInfoViewer::print_driver_vulkan_version() {
     // version of the specification. The minor version indicates the incorporation of new functionality into the core
     // specification. The patch version indicates bug fixes, clarifications, and language improvements have been
     // incorporated into the specification.
-    if (vkEnumerateInstanceVersion(&api_version) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateInstanceVersion failed!");
+    if (const auto result = vkEnumerateInstanceVersion(&api_version); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceVersion failed!", result);
     }
 
     // Extract major, minor and patch version of the Vulkan API available.
@@ -96,8 +98,9 @@ void VulkanGraphicsCardInfoViewer::print_instance_layers() {
     std::uint32_t number_of_instance_layers = 0;
 
     // First check how many instance layers are available.
-    if (vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateInstanceLayerProperties failed!");
+    if (const auto result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
     }
 
     spdlog::debug(
@@ -113,8 +116,9 @@ void VulkanGraphicsCardInfoViewer::print_instance_layers() {
         std::vector<VkLayerProperties> instance_layers(number_of_instance_layers);
 
         // Get information about the available instance layers.
-        if (vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data()) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkEnumerateInstanceLayerProperties failed!");
+        if (const auto result = vkEnumerateInstanceLayerProperties(&number_of_instance_layers, instance_layers.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
         }
 
         // Loop through all available instance layers and print information about them.
@@ -135,8 +139,9 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
     std::uint32_t number_of_instance_extensions = 0;
 
     // First check how many instance extensions are available.
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateInstanceExtensionProperties failed!");
+    if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
     }
 
     spdlog::debug(
@@ -152,9 +157,10 @@ void VulkanGraphicsCardInfoViewer::print_instance_extensions() {
         std::vector<VkExtensionProperties> extensions(number_of_instance_extensions);
 
         // Get information about the available instance extensions.
-        if (vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, extensions.data()) !=
-            VK_SUCCESS) {
-            throw std::runtime_error("Error: vkEnumerateInstanceExtensionProperties failed!");
+        if (const auto result =
+                vkEnumerateInstanceExtensionProperties(nullptr, &number_of_instance_extensions, extensions.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
         }
 
         // Loop through all available instance extensions and print information about them.
@@ -175,8 +181,9 @@ void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &g
     std::uint32_t number_of_device_layers = 0;
 
     // First check how many device layers are available.
-    if (vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateDeviceLayerProperties failed!");
+    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
     }
 
     spdlog::debug(
@@ -192,9 +199,10 @@ void VulkanGraphicsCardInfoViewer::print_device_layers(const VkPhysicalDevice &g
         std::vector<VkLayerProperties> device_layers(number_of_device_layers);
 
         // Get information about the available device layers.
-        if (vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data()) !=
-            VK_SUCCESS) {
-            throw std::runtime_error("Error: vkEnumerateDeviceLayerProperties failed!");
+        if (const auto result =
+                vkEnumerateDeviceLayerProperties(graphics_card, &number_of_device_layers, device_layers.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
         }
 
         // Loop through all available device layers and print information about them.
@@ -217,9 +225,10 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
     std::uint32_t number_of_device_extensions = 0;
 
     // First check how many device extensions are available.
-    if (vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumerateDeviceExtensionProperties failed!");
+    if (const auto result =
+            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
 
     spdlog::debug(
@@ -235,9 +244,10 @@ void VulkanGraphicsCardInfoViewer::print_device_extensions(const VkPhysicalDevic
         std::vector<VkExtensionProperties> device_extensions(number_of_device_extensions);
 
         // Get information about the available device extensions.
-        if (vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_device_extensions,
-                                                 device_extensions.data()) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkEnumerateDeviceExtensionProperties failed!");
+        if (const auto result = vkEnumerateDeviceExtensionProperties(
+                graphics_card, nullptr, &number_of_device_extensions, device_extensions.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
         }
 
         // Loop through all available device extensions and print information about them.
@@ -261,8 +271,10 @@ void VulkanGraphicsCardInfoViewer::print_surface_capabilities(const VkPhysicalDe
 
     VkSurfaceCapabilitiesKHR surface_capabilities;
 
-    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
     spdlog::debug("minImageCount: {}", surface_capabilities.minImageCount);
@@ -288,9 +300,10 @@ void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysi
     std::uint32_t number_of_supported_formats = 0;
 
     // First check how many formats are supported.
-    if (vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!");
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!", result);
     }
 
     spdlog::debug(
@@ -304,9 +317,10 @@ void VulkanGraphicsCardInfoViewer::print_supported_surface_formats(const VkPhysi
     } else {
         std::vector<VkSurfaceFormatKHR> surface_formats(number_of_supported_formats);
 
-        if (vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &number_of_supported_formats,
-                                                 surface_formats.data()) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!");
+        if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(
+                graphics_card, vulkan_surface, &number_of_supported_formats, surface_formats.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!", result);
         }
 
         for (std::size_t i = 0; i < number_of_supported_formats; i++) {
@@ -331,9 +345,10 @@ void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevi
     std::uint32_t number_of_present_modes = 0;
 
     // First check how many presentation modes are available.
-    if (vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!");
+    if (const auto result =
+            vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!", result);
     }
 
     spdlog::debug(
@@ -348,11 +363,13 @@ void VulkanGraphicsCardInfoViewer::print_presentation_modes(const VkPhysicalDevi
         // Preallocate memory for the presentation modes.
         std::vector<VkPresentModeKHR> present_modes(number_of_present_modes);
 
-        if (vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &number_of_present_modes,
-                                                      present_modes.data()) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!");
+        if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+                graphics_card, vulkan_surface, &number_of_present_modes, present_modes.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!", result);
         }
 
+        // TODO: Refactor into a lambda.
         const std::unordered_map<int, std::string> present_mode_names = {
             {0, "VK_PRESENT_MODE_IMMEDIATE_KHR"},
             {1, "VK_PRESENT_MODE_MAILBOX_KHR"},
@@ -724,8 +741,9 @@ void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &
 
     std::uint32_t number_of_graphics_cards = 0;
 
-    if (vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumeratePhysicalDevices failed!");
+    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
     }
 
     if (number_of_graphics_cards <= 0) {
@@ -741,9 +759,10 @@ void VulkanGraphicsCardInfoViewer::print_all_physical_devices(const VkInstance &
         std::vector<VkPhysicalDevice> available_graphics_cards(number_of_graphics_cards);
 
         // Query information about all the graphics cards available on the system.
-        if (vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data()) !=
-            VK_SUCCESS) {
-            throw std::runtime_error("Error: vkEnumeratePhysicalDevices failed!");
+        if (const auto result =
+                vkEnumeratePhysicalDevices(vulkan_instance, &number_of_graphics_cards, available_graphics_cards.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
         }
 
         // Loop through all graphics cards and print information about them.

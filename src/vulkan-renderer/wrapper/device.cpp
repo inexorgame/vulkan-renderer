@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include "inexor/vulkan-renderer/availability_checks.hpp"
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -209,8 +210,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     spdlog::debug("Creating physical device (graphics card interface).");
 
-    if (vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkCreateDevice failed!");
+    if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkCreateDevice failed!", result);
     }
 
 #ifndef NDEBUG
@@ -302,8 +303,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     spdlog::debug("Creating Vulkan memory allocator instance.");
 
-    if (vmaCreateAllocator(&vma_allocator_ci, &m_allocator) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vmaCreateAllocator failed!");
+    if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vmaCreateAllocator failed!", result);
     }
 
     spdlog::debug("Created device successfully.");
@@ -340,8 +341,8 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
     name_info.object = reinterpret_cast<std::uint64_t>(object);
     name_info.pObjectName = name.c_str();
 
-    if (m_vk_debug_marker_set_object_name(m_device, &name_info) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to assign Vulkan debug marker name " + name + "!");
+    if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
     }
 #endif
 }
@@ -365,8 +366,8 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
     tag_info.tagSize = memory_size;
     tag_info.pTag = memory_block;
 
-    if (m_vk_debug_marker_set_object_tag(m_device, &tag_info) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to assign Vulkan debug marker memory block!");
+    if (const auto result = m_vk_debug_marker_set_object_tag(m_device, &tag_info); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Failed to assign Vulkan debug marker memory block!", result);
     }
 #endif
 }

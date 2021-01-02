@@ -1,5 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -19,8 +21,9 @@ VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(const Vk
 
     VkSurfaceCapabilitiesKHR surface_capabilities{};
 
-    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
     // TODO: Refactor! How many images do we actually need? Is triple buffering the best option?
@@ -47,9 +50,10 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
     std::uint32_t number_of_available_surface_formats = 0;
 
     // First check how many surface formats are available.
-    if (vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!");
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!", result);
     }
 
     if (number_of_available_surface_formats == 0) {
@@ -60,9 +64,10 @@ std::optional<VkSurfaceFormatKHR> VulkanSettingsDecisionMaker::decide_which_surf
     std::vector<VkSurfaceFormatKHR> available_surface_formats(number_of_available_surface_formats);
 
     // Get information about all surface formats available.
-    if (vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, surface, &number_of_available_surface_formats,
-                                             available_surface_formats.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(
+            graphics_card, surface, &number_of_available_surface_formats, available_surface_formats.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!", result);
     }
 
     VkSurfaceFormatKHR accepted_color_format{};
@@ -138,8 +143,10 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
 
     std::uint32_t number_of_available_device_extensions = 0;
 
-    if (vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions, nullptr)) {
-        throw std::runtime_error("Error: vkEnumerateDeviceExtensionProperties failed!");
+    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr,
+                                                                 &number_of_available_device_extensions, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
 
     if (number_of_available_device_extensions == 0) {
@@ -151,9 +158,10 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
         // Preallocate memory for device extensions.
         std::vector<VkExtensionProperties> device_extensions(number_of_available_device_extensions);
 
-        if (vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &number_of_available_device_extensions,
-                                                 device_extensions.data()) != VK_SUCCESS) {
-            throw std::runtime_error("Error: vkEnumerateDeviceExtensionProperties failed!");
+        if (const auto result = vkEnumerateDeviceExtensionProperties(
+                graphics_card, nullptr, &number_of_available_device_extensions, device_extensions.data());
+            result != VK_SUCCESS) {
+            throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
         }
 
         // Loop through all available device extensions and search for the requested one.
@@ -175,8 +183,9 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     VkBool32 presentation_available = 0;
 
     // Query if presentation is supported.
-    if (vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
 
     if (presentation_available == 0) {
@@ -242,8 +251,9 @@ std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphi
     std::uint32_t number_of_available_graphics_cards = 0;
 
     // First check how many graphics cards are available.
-    if (vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards, nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumeratePhysicalDevices failed!");
+    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
     }
 
     if (number_of_available_graphics_cards == 0) {
@@ -256,9 +266,10 @@ std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphi
     std::vector<VkPhysicalDevice> available_graphics_cards(number_of_available_graphics_cards);
 
     // Get information about the available graphics cards.
-    if (vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards,
-                                   available_graphics_cards.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkEnumeratePhysicalDevices failed!");
+    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &number_of_available_graphics_cards,
+                                                       available_graphics_cards.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
     }
 
     /// ATTEMPT 1
@@ -498,8 +509,9 @@ VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPh
 
     VkSurfaceCapabilitiesKHR surface_capabilities{};
 
-    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
     if (surface_capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
@@ -524,9 +536,10 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice 
 
     VkSurfaceCapabilitiesKHR surface_capabilities{};
 
-    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(selected_graphics_card, surface, &surface_capabilities) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(selected_graphics_card, surface, &surface_capabilities);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
     for (auto &composite_alpha_flag : composite_alpha_flags) {
@@ -558,9 +571,10 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysi
 
     // First check how many present modes are available for the selected combination of graphics card and window
     // surface.
-    if (vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes,
-                                                  nullptr) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface,
+                                                                      &number_of_available_present_modes, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!", result);
     }
 
     if (number_of_available_present_modes == 0) {
@@ -573,9 +587,10 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(const VkPhysi
     std::vector<VkPresentModeKHR> available_present_modes(number_of_available_present_modes);
 
     // Get information about the available present modes.
-    if (vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, surface, &number_of_available_present_modes,
-                                                  available_present_modes.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+            graphics_card, surface, &number_of_available_present_modes, available_present_modes.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!", result);
     }
 
     for (auto present_mode : available_present_modes) {
@@ -647,8 +662,9 @@ SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(const VkP
     VkSurfaceCapabilitiesKHR surface_capabilities{};
     SwapchainSettings updated_swapchain_settings{};
 
-    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities) != VK_SUCCESS) {
-        throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!");
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, surface, &surface_capabilities);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
     if (surface_capabilities.currentExtent.width == std::numeric_limits<std::uint32_t>::max() &&
@@ -726,9 +742,10 @@ VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevi
             VkBool32 presentation_available = 0;
 
             // Query if presentation is supported.
-            if (vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface,
-                                                     &presentation_available) != VK_SUCCESS) {
-                throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!");
+            if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index,
+                                                                         surface, &presentation_available);
+                result != VK_SUCCESS) {
+                throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
             }
 
             if (presentation_available != 0) {
@@ -843,9 +860,10 @@ VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentatio
                 auto this_queue_family_index = static_cast<std::uint32_t>(i);
 
                 // Query if presentation is supported.
-                if (vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index, surface,
-                                                         &presentation_available) != VK_SUCCESS) {
-                    throw std::runtime_error("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!");
+                if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, this_queue_family_index,
+                                                                             surface, &presentation_available);
+                    result != VK_SUCCESS) {
+                    throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
                 }
 
                 // Check if we can use this queue family for presentation as well.

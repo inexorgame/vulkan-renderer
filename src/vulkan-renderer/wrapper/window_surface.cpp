@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
+#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -10,8 +12,8 @@ WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_
 
     spdlog::debug("Creating window surface.");
 
-    if (glfwCreateWindowSurface(instance, window, nullptr, &m_surface) != VK_SUCCESS) {
-        throw std::runtime_error("Error: glfwCreateWindowSurface failed!");
+    if (const auto result = glfwCreateWindowSurface(instance, window, nullptr, &m_surface); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: glfwCreateWindowSurface failed!", result);
     }
 
     spdlog::debug("Created window surface successfully");
