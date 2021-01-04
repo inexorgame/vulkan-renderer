@@ -24,7 +24,7 @@ The following licenses either have a non-derivative or non-commercial section:
 * No license at all
 
 Special notes
--------------------------------------------
+-------------
 
 We reject content which is licensed under the terms of a license which aims at one special jurisdiction. We consider ourselves as an international community and we define freedom as the freedom for everyone, everywhere. Please, don't use licenses which could cause trouble, e.g. all Creative Commons licenses before the 4.0 versions have `local derivations <https://en.wikipedia.org/wiki/Creative_Commons_jurisdiction_ports>`__ for a lot of countries (e.g. `CC BY 3.0 DE <https://creativecommons.org/licenses/by/3.0/de/deed.en>`__). Starting with CC v4.0 there is only one international license to address this issue.
 
