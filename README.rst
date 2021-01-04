@@ -10,7 +10,7 @@ vulkan-renderer
 
 ----
 
-.. image:: https://raw.githubusercontent.com/inexorgame/artwork/2c479edcf7a1782d082a9d807b0f1e860ddd398c/vulkan/readme/front_banner_2.jpg
+.. image:: banner/main_banner.jpg
 
 ----
 
