@@ -7,6 +7,7 @@ Octree
 ------
 
 .. image:: octree.svg
+    :width: 500
     :alt: Octree Coordinates
 
 The orange are coordinates of the corner, the pink of the block.
@@ -18,6 +19,7 @@ The position of a block is always the ``(0, 0, 0)`` corner coordinates.
 If blocks or corners are ordered, they use this order.
 
 .. image:: octree_corner.svg
+    :width: 500
     :alt: Corner IDs
 
 .. csv-table:: Corner and Block Order
@@ -41,6 +43,7 @@ If blocks or corners are ordered, they use this order.
 - A negative ID indicates the reverse direction (-axis).
 
 .. image:: octree_edge.svg
+    :width: 500
     :alt: Edge IDs
 
 .. csv-table:: Edge Order
@@ -65,6 +68,7 @@ Every cube can be indented at each corner to all axis by 8 steps. In total there
 The following diagram shows the indentation levels of Corner 1 on the x-axis.
 
 .. image:: octree_indentation.svg
+    :width: 500
     :alt: Octree indentation
 
 **Neighbors**
