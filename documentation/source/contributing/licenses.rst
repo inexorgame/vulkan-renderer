@@ -6,64 +6,11 @@ In general we accept every wide acknowledged license, which allows to share, mod
 List of accepted licenses
 -------------------------
 
-.. list-table::
-   :widths: 20 20 20 20 20 20 20 20 20 
-   :header-rows: 1
-
-   * - license name
-     - our recommendation
-     - `FSF <https://www.gnu.org/licenses/license-list.en.html>`__
-     - `OD <https://opendefinition.org/licenses/>`__
-     - `Fedora <https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Content_Licenses>`__
-     - `Debian <https://wiki.debian.org/DFSGLicenses>`__
-     - public domain alike
-     - permissive
-     - copyleft
-   * - `CC0 1.0 <https://creativecommons.org/publicdomain/zero/1.0/>`__ or any later version
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     -
-     -
-   * - `CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`__ or any later version
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     -
-     - ✓
-     -
-   * - `CC BY-SA 3.0 <https://creativecommons.org/licenses/by-sa/3.0/>`__ or any later version
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     - ✓
-     -
-     -
-     - ✓
-   * - `ZLIB <https://zlib.net/zlib_license.html>`__
-     - ✓
-     - ✓
-     -
-     - ✓
-     - ✓
-     -
-     - ✓
-     -
-   * - `MIT <https://opensource.org/licenses/MIT>`__
-     -
-     - ✓
-     -
-     - ✓
-     - ✓
-     -
-     - ✓
-     -
+* `CC0 1.0 <https://creativecommons.org/publicdomain/zero/1.0/>`__ or any later version
+* `CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`__ or any later version
+* `CC BY-SA 3.0 <https://creativecommons.org/licenses/by-sa/3.0/>`__ or any later version
+* `ZLIB <https://zlib.net/zlib_license.html>`__
+* `MIT <https://opensource.org/licenses/MIT>`__
 
 Why we don't recommend Public Domain
 ------------------------------------
