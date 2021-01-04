@@ -426,9 +426,9 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    m_device =
-        std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
-                                          enable_debug_marker_device_extension, use_distinct_data_transfer_queue);
+    m_device = std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
+                                                 enable_debug_marker_device_extension, use_distinct_data_transfer_queue,
+                                                 prefered_graphics_card);
 
     check_application_specific_features();
 
