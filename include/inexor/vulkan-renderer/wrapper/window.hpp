@@ -57,6 +57,10 @@ public:
     /// @param mouse_button_callback The mouse button callback.
     void set_mouse_button_callback(GLFWmousebuttonfun mouse_button_callback);
 
+    /// @brief Call glfwSetScrollCallback.
+    /// @param mouse_scroll_callback The mouse scroll callback.
+    void set_mouse_scroll_callback(GLFWscrollfun mouse_scroll_callback);
+
     /// @brief Call glfwShowWindow.
     void show();
 

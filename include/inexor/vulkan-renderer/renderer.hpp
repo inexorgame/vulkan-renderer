@@ -59,7 +59,7 @@ protected:
 
     bool m_vsync_enabled{false};
 
-    Camera m_game_camera;
+    std::unique_ptr<Camera> m_camera;
 
     std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
     std::unique_ptr<wrapper::Window> m_window;

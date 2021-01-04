@@ -84,10 +84,8 @@ void VulkanRenderer::recreate_swapchain() {
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
     m_rendering_finished_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Rendering finished semaphore");
 
-    Camera new_camera(CameraType::LOOKAT, {0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, 0.1f, 0.25f, 45.0f, 0.1f, 256.0f,
-                      m_window->width(), m_window->height());
-
-    m_game_camera = new_camera;
+    m_camera = std::make_unique<Camera>(glm::vec3(3.0f, 2.0f, 1.0f), 230.0f, -20.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
     m_imgui_overlay.reset();
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain);

@@ -49,6 +49,10 @@ void Application::mouse_button_callback(GLFWwindow *window, int button, int acti
     }
 }
 
+void Application::mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+    m_camera->change_zoom(static_cast<float>(yoffset));
+}
+
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Loading TOML configuration file: '{}'", file_name);
 
@@ -192,22 +196,20 @@ void Application::load_octree_geometry() {
 
     std::shared_ptr<world::Cube> cube =
         std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2.0f, glm::vec3{0, -1, -1});
-    for (const auto &child : cube->childs()) {
-        child->set_type(world::Cube::Type::NORMAL);
-        child->indent(8, true, 3);
-        child->indent(11, true, 5);
-        child->indent(1, false, 2);
-    }
-    cube->childs()[0]->rotate(world::Cube::RotationAxis::Z, 2);
+
+    cube->childs()[3]->set_type(world::Cube::Type::EMPTY);
+    cube->childs()[5]->set_type(world::Cube::Type::EMPTY);
+    cube->childs()[6]->set_type(world::Cube::Type::EMPTY);
+    cube->childs()[7]->set_type(world::Cube::Type::EMPTY);
 
     for (const auto &polygons : cube->polygons(true)) {
-        glm::vec3 color = {
-            static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-            static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-            static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-        };
         for (const auto &triangle : *polygons) {
             for (const auto &vertex : triangle) {
+                glm::vec3 color = {
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                };
                 m_octree_vertices.emplace_back(vertex, color);
             }
         }
@@ -239,7 +241,7 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::debug("Setting up framebuffer resize callback.");
 
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
-        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         app->frame_buffer_resize_callback(window, width, height);
         app->m_window_resized = true;
     };
@@ -249,7 +251,7 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::debug("Setting up keyboard button callback.");
 
     auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
-        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         app->key_callback(window, key, scancode, action, mods);
     };
 
@@ -258,7 +260,7 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::debug("Setting up cursor position callback.");
 
     auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
-        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         app->cursor_position_callback(window, xpos, ypos);
     };
 
@@ -267,11 +269,20 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::debug("Setting up mouse button callback.");
 
     auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
-        const auto app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         app->mouse_button_callback(window, button, action, mods);
     };
 
     m_window->set_mouse_button_callback(lambda_mouse_button_callback);
+
+    spdlog::debug("Setting up mouse wheel scroll callback.");
+
+    auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->mouse_scroll_callback(window, xoffset, yoffset);
+    };
+
+    m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
 Application::Application(int argc, char **argv) {
@@ -494,18 +505,14 @@ Application::Application(int argc, char **argv) {
 }
 
 void Application::update_uniform_buffers() {
-    const float time = m_time_step.time_step_since_initialisation();
-
     UniformBufferObject ubo{};
 
-    // Rotate the model as a function of time.
-    ubo.model = glm::rotate(glm::mat4(1.0f), /*time */ glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    ubo.view = m_game_camera.get_view();
-    ubo.proj = m_game_camera.get_perspective();
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = m_camera->view_matrix();
+    ubo.proj = m_camera->perspective_matrix();
     ubo.proj[1][1] *= -1;
 
-    // TODO: Don't use vector of uniform buffers.
+    // TODO: Refactoring: Embedd this into frame graph.
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
 }
 
@@ -523,12 +530,25 @@ void Application::update_imgui_overlay() {
     ImGui::NewFrame();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
     ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(200, 0));
+    ImGui::SetNextWindowSize(ImVec2(330, 0));
     ImGui::Begin("Inexor Vulkan-renderer", nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d", VK_VERSION_MAJOR(m_engine_version), VK_VERSION_MINOR(m_engine_version),
                 VK_VERSION_PATCH(m_engine_version));
+    const auto cam_pos = m_camera->position();
+    ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
+    const auto cam_rot = m_camera->rotation();
+    ImGui::Text("Camera rotation: (%.2f, %.2f, %.2f)", cam_rot.x, cam_rot.y, cam_rot.z);
+    const auto cam_front = m_camera->front();
+    ImGui::Text("Camera vector front: (%.2f, %.2f, %.2f)", cam_front.x, cam_front.y, cam_front.z);
+    const auto cam_right = m_camera->right();
+    ImGui::Text("Camera vector right: (%.2f, %.2f, %.2f)", cam_right.x, cam_right.y, cam_right.z);
+    const auto cam_up = m_camera->up();
+    ImGui::Text("Camera vector up (%.2f, %.2f, %.2f)", cam_up.x, cam_up.y, cam_up.z);
+    ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
+    const auto cam_fov = m_camera->fov();
+    ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
     ImGui::PushItemWidth(150.0f * m_imgui_overlay->get_scale());
     ImGui::PopItemWidth();
     ImGui::End();
@@ -541,10 +561,15 @@ void Application::update_imgui_overlay() {
 void Application::process_mouse_input() {
     const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
 
-    if (m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
-        m_game_camera.rotate(glm::vec3(cursor_pos_delta[1] * m_game_camera.get_rotation_speed(),
-                                       -cursor_pos_delta[0] * m_game_camera.get_rotation_speed(), 0.0f));
+    if (m_camera->type() == CameraType::CAMERA_TYPE_LOOKAT &&
+        m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+        m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
+
+    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
+    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
+    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
+    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
 }
 
 void Application::run() {
@@ -556,7 +581,7 @@ void Application::run() {
         update_imgui_overlay();
         render_frame();
         process_mouse_input();
-        m_game_camera.update(m_time_passed);
+        m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
     }
 }

@@ -81,6 +81,12 @@ public:
     /// @param mods Bit field describing which modifier keys were held down.
     void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 
+    /// @brief Call camera's process_mouse_scroll method.
+    /// @param window The window that received the event.
+    /// @param xoffset The change of x-offset of the mouse wheel.
+    /// @param yoffset The change of y-offset of the mouse wheel.
+    void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+
     void run();
 };
 
