@@ -22,66 +22,13 @@ Instead of Public Domain we recommend using `CC0 (Creative Commons Zero) <https:
 List of licenses we don't accept:
 ---------------------------------
 
-.. list-table::
-   :widths: 20 20 20 20 20 20 20 20 
-   :header-rows: 1
+The following licenses either have a non-derivative or non-commercial section:
 
-   * - license name
-     - share
-     - modify
-     - commercial
-     - `FSF <https://www.gnu.org/licenses/license-list.en.html>`__
-     - `OD <https://opendefinition.org/licenses/>`__
-     - `Fedora <https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Content_Licenses>`__
-     - `Debian <https://wiki.debian.org/DFSGLicenses>`__
-   * - `CC BY <https://creativecommons.org/licenses/by/2.0/>`__ / `CC BY-SA <https://creativecommons.org/licenses/by-sa/3.0/>`__ below v3.0
-     -
-     -
-     -
-     - ?
-     -
-     -
-     - x
-   * - `CC BY-ND <https://creativecommons.org/licenses/by-nd/2.0/>`__ any version
-     -
-     - x
-     -
-     - x
-     - x
-     - x
-     - x
-   * - `CC BY-NC <https://creativecommons.org/licenses/by-nc/3.0/>`__ any version
-     - 
-     - 
-     - x
-     - x
-     - x
-     - x
-     - x
-   * - `CC BY-NC-SA <https://creativecommons.org/licenses/by-nc-sa/3.0/>`__ any version
-     - 
-     - 
-     - x
-     - x
-     - x
-     - x
-     - x
-   * - `CC BY-NC-ND <https://creativecommons.org/licenses/by-nc-nd/3.0/>`__ any version
-     - 
-     - x
-     - x
-     - x
-     - x
-     - x
-     - x
-   * - no license at all
-     - x
-     - x
-     - x
-     - x
-     - x
-     - x
-     - x
+* `CC BY-ND <https://creativecommons.org/licenses/by-nd/2.0/>`__ any version
+* `CC BY-NC <https://creativecommons.org/licenses/by-nc/3.0/>`__ any version
+* `CC BY-NC-ND <https://creativecommons.org/licenses/by-nc-nd/3.0/>`__ any version
+* `CC BY-NC-SA <https://creativecommons.org/licenses/by-nc-sa/3.0/>`__ any version
+* No license at all
 
 Licenses aiming at one special jurisdiction
 -------------------------------------------
