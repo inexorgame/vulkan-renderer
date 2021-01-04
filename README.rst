@@ -25,7 +25,7 @@ Documentation
    :target: https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3A%22Build%22
 
 .. |license| image:: https://img.shields.io/badge/License-MIT-brightgreen.svg
-   :target: https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE.rst
+   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
 
 .. |programming language| image:: https://img.shields.io/badge/Language-C++17-orange.svg
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/design/coding-style.html
