@@ -31,7 +31,7 @@ Documentation
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/design/coding-style.html
 
 .. |contributors| image:: https://img.shields.io/github/contributors/inexorgame/vulkan-renderer
-   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributors/main.html
+   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributing/contributors.html
 
 .. |downloads| image:: https://img.shields.io/github/downloads/inexorgame/vulkan-renderer/total
 
