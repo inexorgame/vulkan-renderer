@@ -19,11 +19,6 @@ The problem with Public Domain is that the definition is different from jurisdic
 
 Instead of Public Domain we recommend using `CC0 (Creative Commons Zero) <https://creativecommons.org/about/cc0>`__. CC0 is basically a license which gives the creator a way to waive all their copyright and related rights in their works to the fullest extent allowed by law + a Public Domain fallback if the waiving of the rights isn't possible under special circumstances.
 
-The "or any later version" phrase
----------------------------------
-
-While some licenses, which have different versions, apply such an "or any later version" phrase via default, some of the licenses requires you explicit to mention "or any later version". E.g. the Creative Commons >= 2.0 licenses have this phrase, so everybody is free to license derivations of "CC BY-SA 2.0 Generic" content under the terms of "CC BY-SA 4.0 International". Other licenses like the GNU GPL license requires you explicit to write "GPLv2 or any later version." We recommend for every license, which has or may has in the future more than one version, and which doesn't have via default such a phrase, do write it down on your own. This helps that content doesn't stuck with one ancient license forever, which could be incompatible with future law.
-
 List of licenses we don't accept:
 ---------------------------------
 
