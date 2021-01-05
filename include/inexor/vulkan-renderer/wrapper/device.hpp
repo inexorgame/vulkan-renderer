@@ -15,7 +15,7 @@ class Device {
     VkDevice m_device;
     VkPhysicalDevice m_graphics_card;
     VmaAllocator m_allocator{VK_NULL_HANDLE};
-    std::string m_gpu_name{""};
+    std::string m_gpu_name;
 
     VkQueue m_graphics_queue{nullptr};
     VkQueue m_present_queue{nullptr};
@@ -38,6 +38,30 @@ class Device {
     const bool m_enable_vulkan_debug_markers;
 
 public:
+    /// @brief Check if a certain device extension is available for a specific graphics card.
+    /// @param graphics_card The graphics card.
+    /// @param extension The name of the device extension.
+    /// @return ``true`` if the requested device extension is available.
+    [[nodiscard]] static bool is_extension_supported(VkPhysicalDevice graphics_card, const std::string &extension);
+
+    /// @brief Check if a certain device layer is available for a specific graphics card.
+    /// @note Vulkan device layers were deprecated, essentially making all layers instance layers.
+    /// @param graphics_card The graphics card.
+    /// @param extension The name of the device layer.
+    /// @return ``true`` if the requested device layer is available.
+    [[nodiscard]] static bool is_layer_supported(VkPhysicalDevice graphics_card, const std::string &extension);
+
+    /// @brief Check if a swapchain is available for a specific graphics card.
+    /// @param graphics_card The graphics card.
+    /// @return ``true`` if swapchain is supported.
+    [[nodiscard]] static bool is_swapchain_supported(VkPhysicalDevice graphics_card);
+
+    /// @brief Check if presentation is available for a specific combination of graphics card and surface.
+    /// @param graphics_card The graphics card.
+    /// @param surface The (window) surface.
+    /// @return ``true`` if presentation is supported.
+    [[nodiscard]] static bool is_presentation_supported(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
+
     /// @brief Default constructor.
     /// @param instance The Vulkan instance from which the device will be created.
     /// @param surface The surface which will be associated with the device.
@@ -48,7 +72,8 @@ public:
     /// starting from 0. If the graphics card index is invalid or if the graphics card is unsuitable for the
     /// application's purpose, another graphics card will be selected automatically. See the details of the device
     /// selection mechanism!
-    /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the future!
+    /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the
+    /// future!
     Device(VkInstance instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
@@ -85,8 +110,8 @@ public:
         return m_present_queue;
     }
 
-    /// @note Transfer queues are the fastest way to copy data across the PCIe bus. They are heavily underutilized even
-    /// in modern games. Transfer queues can be used asynchronously to graphics queuey.
+    /// @note Transfer queues are the fastest way to copy data across the PCIe bus. They are heavily underutilized
+    /// even in modern games. Transfer queues can be used asynchronously to graphics queuey.
     [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
     }
@@ -129,8 +154,8 @@ public:
     /// @brief Vulkan debug markers: Annotation of a rendering region.
     void bind_debug_region(VkCommandBuffer command_buffer, const std::string &name, std::array<float, 4> color) const;
 
-    /// @brief Insert a debug markers into the current renderpass using vkCmdDebugMarkerInsertEXT. This debug markers
-    /// can be seen in external debuggers like RenderDoc.
+    /// @brief Insert a debug markers into the current renderpass using vkCmdDebugMarkerInsertEXT. This debug
+    /// markers can be seen in external debuggers like RenderDoc.
     /// @param command_buffer The command buffer which is associated to the debug marker.
     /// @param name The name of the debug marker.
     /// @param color An array of red, green, blue and alpha values for the debug region's color.

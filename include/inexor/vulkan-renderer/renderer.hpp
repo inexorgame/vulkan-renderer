@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/frame_graph.hpp"
@@ -39,7 +38,6 @@ namespace inexor::vulkan_renderer {
 class VulkanRenderer {
 protected:
     std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager{new VulkanGraphicsCardInfoViewer};
-    std::shared_ptr<AvailabilityChecksManager> m_availability_checks_manager{new AvailabilityChecksManager};
     std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;

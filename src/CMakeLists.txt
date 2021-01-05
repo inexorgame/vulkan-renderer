@@ -1,6 +1,5 @@
 set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
-    vulkan-renderer/availability_checks.cpp
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
     vulkan-renderer/fps_counter.cpp
