@@ -67,7 +67,9 @@ class CommandLineArgumentParser {
         {"--renderdoc", false},
 
         // Enables vertical synchronisation (limits FPS to monitor refresh rate).
-        {"--vsync", false}};
+        {"--vsync", false},
+
+        {"--stop-on-validation-message", false}};
 
     std::unordered_map<std::string, CommandLineArgumentValue> m_parsed_arguments;
 
