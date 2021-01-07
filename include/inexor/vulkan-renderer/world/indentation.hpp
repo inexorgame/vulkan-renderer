@@ -39,6 +39,8 @@ public:
     void indent_start(std::int8_t steps) noexcept;
     /// Positive steps into the direction of start.
     void indent_end(std::int8_t steps) noexcept;
+    /// Mirror the indentation, such that the distance from 0 to start and distance from end to max switches
+    void mirror() noexcept;
 
     [[nodiscard]] std::uint8_t uid() const;
 };
