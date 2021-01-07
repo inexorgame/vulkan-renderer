@@ -68,6 +68,12 @@ void Indentation::indent_end(std::int8_t steps) noexcept {
     this->set_end(this->m_end - steps);
 }
 
+void Indentation::mirror() noexcept {
+    std::uint8_t new_start = end();
+    m_end = Indentation::MAX - m_start;
+    m_start = new_start;
+}
+
 std::uint8_t Indentation::uid() const {
     return static_cast<std::uint8_t>(10 * m_start + offset() - (std::pow(m_start, 2) + m_start) / 2);
 }

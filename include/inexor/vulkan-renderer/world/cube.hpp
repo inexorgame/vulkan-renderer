@@ -44,6 +44,20 @@ public:
     /// Cube Type.
     enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
 
+    /// IDs of the children and edges which will be swapped to receive the rotation.
+    /// To achieve a 90 degree rotation the 0th index have to be swapped with the 1st and the 1st with the 2nd, etc.
+    struct RotationAxis {
+        using ChildType = std::array<std::array<std::size_t, 4>, 2>;
+        using EdgeType = std::array<std::array<std::size_t, 4>, 3>;
+        using Type = std::pair<ChildType, EdgeType>;
+        /// IDs of the children / edges which will be swapped to receive the rotation around X axis.
+        static constexpr Type X{{{{0, 1, 3, 2}, {4, 5, 7, 6}}}, {{{2, 4, 11, 1}, {5, 7, 8, 10}, {0, 9, 6, 3}}}};
+        /// IDs of the children / edges which will be swapped to receive the rotation around Y axis.
+        static constexpr Type Y{{{{0, 4, 5, 1}, {2, 6, 7, 3}}}, {{{0, 5, 9, 2}, {3, 8, 6, 11}, {1, 10, 7, 4}}}};
+        /// IDs of the children / edges which will be swapped to receive the rotation around Z axis.
+        static constexpr Type Z{{{{0, 2, 6, 4}, {1, 3, 7, 5}}}, {{{1, 3, 10, 0}, {4, 6, 7, 9}, {2, 11, 8, 5}}}};
+    };
+
 private:
     Type m_type{Type::SOLID};
     float m_size{32};
@@ -67,6 +81,10 @@ private:
     [[nodiscard]] std::weak_ptr<Cube> root() const noexcept;
     /// Get the vertices of this cube. Use only on geometry cubes.
     [[nodiscard]] std::array<glm::vec3, 8> vertices() const noexcept;
+
+    /// Optimized implementations of 90°, 180° and 270° rotations.
+    template <int Rotations>
+    void rotate(const RotationAxis::Type &axis);
 
 public:
     Cube() = default;
@@ -105,6 +123,11 @@ public:
     /// Indent a specific edge by steps.
     /// @param positive_direction Indent in  positive axis direction.
     void indent(std::uint8_t edge_id, bool positive_direction, std::uint8_t steps);
+
+    /// Rotate the cube 90° clockwise around the given axis. Repeats with the given rotations.
+    /// @param axis Only one index should be one.
+    /// @param rotations Value does not need to be adjusted beforehand. (e.g. mod 4)
+    void rotate(const RotationAxis::Type &axis, int rotations);
 
     /// TODO: in special cases some polygons have no surface, if completely surrounded by others
     /// \warning Will update the cache even if it is considered as valid.

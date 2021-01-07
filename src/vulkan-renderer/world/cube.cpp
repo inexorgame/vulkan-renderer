@@ -67,6 +67,101 @@ std::array<glm::vec3, 8> Cube::vertices() const noexcept {
     return {};
 }
 
+/// 90 degree rotation.
+template <>
+void Cube::rotate<1>(const RotationAxis::Type &axis) {
+    // the reorder function can be replaced by a lambda and used both cases.
+    // requires: constexpr vector
+    if (m_type == Type::NORMAL) {
+        const RotationAxis::EdgeType &edge_rotation = std::get<1>(axis);
+        for (const auto &order : edge_rotation) {
+            std::swap(m_indentations[order[0]], m_indentations[order[1]]);
+            std::swap(m_indentations[order[1]], m_indentations[order[2]]);
+            std::swap(m_indentations[order[2]], m_indentations[order[3]]);
+        }
+        // Some indentations need to be mirrored, as the direction has changed.
+        // not the last array, as it contains the edges parallel to the axis around which we rotate
+        for (int idx = 0; idx < edge_rotation.size() - 1; idx++) {
+            m_indentations[edge_rotation[idx][0]].mirror();
+            m_indentations[edge_rotation[idx][2]].mirror();
+        }
+        return;
+    }
+    if (m_type == Type::OCTANT) {
+        const RotationAxis::ChildType &child_rotation = std::get<0>(axis);
+        for (const auto &order : child_rotation) {
+            std::swap(m_childs[order[0]], m_childs[order[1]]);
+            std::swap(m_childs[order[1]], m_childs[order[2]]);
+            std::swap(m_childs[order[2]], m_childs[order[3]]);
+        }
+        for (auto &child : m_childs) {
+            child->rotate<1>(axis);
+        }
+    }
+}
+
+/// 180 degree rotation.
+template <>
+void Cube::rotate<2>(const RotationAxis::Type &axis) {
+    if (m_type == Type::NORMAL) {
+        const RotationAxis::EdgeType &edge_rotation = std::get<1>(axis);
+        for (const auto &order : edge_rotation) {
+            std::swap(m_indentations[order[0]], m_indentations[order[2]]);
+            std::swap(m_indentations[order[1]], m_indentations[order[3]]);
+        }
+        // Some indentations need to be mirrored, as the direction has changed.
+        // not the last array, as it contains the edges parallel to the axis around which we rotate
+        for (int idx = 0; idx < edge_rotation.size() - 1; idx++) {
+            m_indentations[edge_rotation[idx][0]].mirror();
+            m_indentations[edge_rotation[idx][1]].mirror();
+            m_indentations[edge_rotation[idx][2]].mirror();
+            m_indentations[edge_rotation[idx][3]].mirror();
+        }
+        return;
+    }
+    if (m_type == Type::OCTANT) {
+        const RotationAxis::ChildType &child_rotation = std::get<0>(axis);
+        for (const auto &order : child_rotation) {
+            std::swap(m_childs[order[0]], m_childs[order[2]]);
+            std::swap(m_childs[order[1]], m_childs[order[3]]);
+        }
+        for (auto &child : m_childs) {
+            child->rotate<2>(axis);
+        }
+    }
+}
+
+/// 270 degree rotation.
+template <>
+void Cube::rotate<3>(const RotationAxis::Type &axis) {
+    if (m_type == Type::NORMAL) {
+        const RotationAxis::EdgeType &edge_rotation = std::get<1>(axis);
+        for (const auto &order : edge_rotation) {
+            std::swap(m_indentations[order[0]], m_indentations[order[3]]);
+            std::swap(m_indentations[order[3]], m_indentations[order[2]]);
+            std::swap(m_indentations[order[2]], m_indentations[order[1]]);
+        }
+        // Some indentations need to be mirrored, as the direction has changed.
+        // not the last array, as it contains the edges parallel to the axis around which we rotate
+        m_indentations[edge_rotation[0][1]].mirror();
+        m_indentations[edge_rotation[0][3]].mirror();
+        m_indentations[edge_rotation[1][1]].mirror();
+        m_indentations[edge_rotation[1][3]].mirror();
+        return;
+    }
+    if (m_type == Type::OCTANT) {
+        const RotationAxis::ChildType &child_rotation = std::get<0>(axis);
+        for (const auto &order : child_rotation) {
+            std::swap(m_childs[order[0]], m_childs[order[3]]);
+            std::swap(m_childs[order[3]], m_childs[order[2]]);
+            std::swap(m_childs[order[2]], m_childs[order[1]]);
+        }
+        for (auto &child : m_childs) {
+            child->rotate<3>(axis);
+        }
+    }
+}
+
 Cube::Cube(const Type type) {
     set_type(type);
 }
@@ -213,6 +308,24 @@ void Cube::indent(const std::uint8_t edge_id, const bool positive_direction, con
     m_polygon_cache_valid = false;
 }
 
+void Cube::rotate(const RotationAxis::Type &axis, int rotations) {
+    rotations = ((rotations % 4) + 4) % 4;
+    if (rotations == 0 || m_type == Type::EMPTY || m_type == Type::SOLID) {
+        return;
+    }
+    switch (rotations) {
+    case 1:
+        rotate<1>(axis);
+        break;
+    case 2:
+        rotate<2>(axis);
+        break;
+    case 3:
+        rotate<3>(axis);
+        break;
+    }
+}
+
 void Cube::update_polygon_cache() const {
     if (m_type == Type::OCTANT || m_type == Type::EMPTY) {
         m_polygon_cache = nullptr;
@@ -278,11 +391,9 @@ void Cube::update_polygon_cache() const {
     // This point should not be reached.
     assert(false);
 }
-
 void Cube::invalidate_polygon_cache() const {
     m_polygon_cache_valid = false;
 }
-
 std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     std::vector<PolygonCache> polygons;
     polygons.reserve(count_geometry_cubes());

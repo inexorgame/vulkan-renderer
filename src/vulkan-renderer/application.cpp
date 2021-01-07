@@ -197,6 +197,7 @@ void Application::load_octree_geometry() {
         child->indent(11, true, 5);
         child->indent(1, false, 2);
     }
+    cube->childs()[0]->rotate(world::Cube::RotationAxis::Z, 2);
 
     for (const auto &polygons : cube->polygons(true)) {
         glm::vec3 color = {
