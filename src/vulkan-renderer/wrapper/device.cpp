@@ -1,6 +1,5 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
-#include "inexor/vulkan-renderer/availability_checks.hpp"
 #include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -23,7 +22,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <stdexcept>
 
 namespace {
 
@@ -33,6 +31,89 @@ constexpr float default_queue_priority = 1.0f;
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {
+
+bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
+    assert(graphics_card);
+    assert(!extension_name.empty());
+
+    std::uint32_t device_extension_count = 0;
+
+    // Query how many device extensions are available.
+    if (const auto result =
+            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+    }
+
+    if (device_extension_count == 0) {
+        throw std::runtime_error("Error: No Vulkan device extensions available!");
+    }
+
+    std::vector<VkExtensionProperties> device_extensions(device_extension_count);
+
+    // Store all available device extensions.
+    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
+                                                                 device_extensions.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+    }
+
+    // Search for the requested device extension.
+    return std::find_if(device_extensions.begin(), device_extensions.end(),
+                        [&](const VkExtensionProperties device_extension) {
+                            return device_extension.extensionName == extension_name;
+                        }) != device_extensions.end();
+}
+
+bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std::string &layer_name) {
+    assert(graphics_card);
+    assert(!layer_name.empty());
+
+    std::uint32_t device_layer_count = 0;
+
+    // Query how many device layers are available.
+    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
+    }
+
+    if (device_layer_count == 0) {
+        throw std::runtime_error("Error: No Vulkan device extensions available!");
+    }
+
+    std::vector<VkLayerProperties> device_layers(device_layer_count);
+
+    // Store all available device layers.
+    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, device_layers.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
+    }
+
+    // Search for the requested instance extensions.
+    return std::find_if(device_layers.begin(), device_layers.end(), [&](const VkLayerProperties device_extension) {
+               return device_extension.layerName == layer_name;
+           }) != device_layers.end();
+}
+
+bool Device::is_swapchain_supported(const VkPhysicalDevice graphics_card) {
+    assert(graphics_card);
+    return is_extension_supported(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+}
+
+bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface) {
+    assert(graphics_card);
+    assert(surface);
+
+    VkBool32 presentation_supported = false;
+
+    // Query if presentation is supported.
+    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_supported);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+    }
+
+    return presentation_supported;
+}
 
 Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
                bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
@@ -179,12 +260,10 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     }
 #endif
 
-    AvailabilityChecksManager availability_checks;
-
     std::vector<const char *> enabled_device_extensions;
 
     for (const auto &device_extension_name : device_extensions_wishlist) {
-        if (availability_checks.has_device_extension(m_graphics_card, device_extension_name)) {
+        if (is_extension_supported(m_graphics_card, device_extension_name)) {
             spdlog::debug("Device extension '{}' is available on this system.", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
         } else {

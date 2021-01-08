@@ -1,7 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/availability_checks.hpp"
-
 #include <vulkan/vulkan_core.h>
 
 #include <string>
@@ -11,11 +9,20 @@ namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief RAII wrapper class for VkInstances.
 class Instance {
-protected:
+private:
     VkInstance m_instance{VK_NULL_HANDLE};
-    AvailabilityChecksManager m_availability_checks;
 
 public:
+    /// @brief Check if a certain instance layer is available on the system.
+    /// @param layer_name The name of the instance layer.
+    /// @return ``true`` if the instance layer is supported.
+    [[nodiscard]] static bool is_layer_supported(const std::string &layer_name);
+
+    /// @brief Check if a certain instance extension is supported on the system.
+    /// @param extension_name The name of the instance extension.
+    /// @return ``true`` if the instance extension is supported.
+    [[nodiscard]] static bool is_extension_supported(const std::string &extension_name);
+
     /// @brief Construct the Vulkan instance and specify the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name.
     /// @param engine_name The Vulkan appliation's internal engine name.

@@ -11,6 +11,59 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+bool Instance::is_layer_supported(const std::string &layer_name) {
+    std::uint32_t instance_layer_count = 0;
+
+    if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+    }
+
+    if (instance_layer_count == 0) {
+        throw std::runtime_error("Error: No Vulkan instance layers available!");
+    }
+
+    std::vector<VkLayerProperties> instance_layers(instance_layer_count);
+
+    // Store all available instance layers.
+    if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+    }
+
+    // Search for the requested instance layer.
+    return std::find_if(instance_layers.begin(), instance_layers.end(), [&](const VkLayerProperties instance_layer) {
+               return instance_layer.layerName == layer_name;
+           }) != instance_layers.end();
+}
+
+bool Instance::is_extension_supported(const std::string &extension_name) {
+    std::uint32_t instance_extension_count = 0;
+
+    if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+    }
+
+    if (instance_extension_count == 0) {
+        throw std::runtime_error("Error: No Vulkan instance extensions available!");
+    }
+
+    std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
+
+    // Store all available instance extensions.
+    if (const auto result =
+            vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data());
+        result != VK_SUCCESS) {
+        throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+    }
+
+    // Search for the requested instance extension.
+    return std::find_if(instance_extensions.begin(), instance_extensions.end(),
+                        [&](const VkExtensionProperties instance_extension) {
+                            return instance_extension.extensionName == extension_name;
+                        }) != instance_extensions.end();
+}
+
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
                    const std::uint32_t vulkan_api_version, bool enable_validation_layers,
@@ -77,7 +130,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &instance_extension : instance_extension_wishlist) {
-        if (m_availability_checks.has_instance_extension(instance_extension)) {
+        if (is_extension_supported(instance_extension)) {
             spdlog::debug("Adding '{}' to list of enabled instance extensions.", instance_extension);
             enabled_instance_extensions.push_back(instance_extension);
         } else {
@@ -124,7 +177,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // We have to check which instance layers of our wishlist are available on the current system!
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &current_layer : instance_layers_wishlist) {
-        if (m_availability_checks.has_instance_layer(current_layer)) {
+        if (is_layer_supported(current_layer)) {
             spdlog::debug("Adding '{}' to list of enabled instance layers.", current_layer);
             enabled_instance_layers.push_back(current_layer);
         } else {
