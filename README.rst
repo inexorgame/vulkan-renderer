@@ -10,7 +10,7 @@ vulkan-renderer
 
 ----
 
-.. image:: banner/main_banner.jpg
+.. image:: images/banner.jpg
 
 ----
 

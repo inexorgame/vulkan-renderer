@@ -4,7 +4,7 @@ Helpful Links
 Vulkan API
 ----------
 
-.. image:: /links/VulkanAPI.png
+.. image:: /images/vulkan.png
 
 - `Khronos' website about Vulkan API <https://www.khronos.org/vulkan/>`__
 - `Vulkan API 1.1 specification <https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html>`__
