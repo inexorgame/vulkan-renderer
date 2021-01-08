@@ -24,7 +24,7 @@ Please visit `inexor.org <https://inexor.org>`__ and join our `Discord server <h
 What is Inexor?
 ---------------
 
-.. image:: ./faq/InexorLogo.png
+.. image:: /images/inexor2.png
 
 Inexor is an open-source project which combines `modern C++ <https://awesomecpp.com/>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__.
 
@@ -51,7 +51,7 @@ Inexor's current main objective is the development of a new `octree <https://sta
 - `Automatic code formatting <https://clang.llvm.org/docs/ClangFormat.html>`__ using `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`__.
 - `CMake <https://cmake.org/>`__ project setup with `conan package manager <https://conan.io/center/>`__ integration. 
 
-You can find Vulkan example code online which follows the mantra "don't use this in production - it's tutorial code". Inexor disagrees with this as we believe that defeats its own purpose. If example code is not meant to be used in some other projects then there's something wrong with that example code. Many projects don't use a proper memory management library like `VMA <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ or they do not abstract their code using `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__, but use a lot of code duplication instead. Inexor is designed to be used in production. Bare in mind however that Inexor is also still far away from being a finished game engine.
+You can find Vulkan example code online which follows the mantra "don't use this in production - it's tutorial code". Inexor disagrees with this as we believe that defeats its own purpose. If example code is not meant to be used in some other projects then there's something wrong with that example code. Many projects don't use a proper memory management library like `VMA <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ or they do not abstract their code using `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__, but use a lot of code duplication instead. Inexor is designed to be used in production. Bear in mind however that Inexor is also still far away from being a finished game engine.
 
 ----
 
@@ -117,7 +117,7 @@ Where to find Inexor's documentation?
 What is Vulkan API?
 -------------------
 
-.. image:: ../links/VulkanAPI.png
+.. image:: /images/vulkan.png
 
 Inexor engine uses `Vulkan API <https://www.khronos.org/vulkan/>`__ as rendering backend. Vulkan is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ due to reduction of overhead and driver guesswork during runtime. This results in higher frame rate, more predictable CPU workload and a lower memory usage. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software and many more). Vulkan is the only multi platform low level graphics API.
 

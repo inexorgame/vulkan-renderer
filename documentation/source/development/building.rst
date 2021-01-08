@@ -141,7 +141,7 @@ Install dependencies and tools:
 |        | distributions.`__                    |
 +--------+--------------------------------------+
 
-__ https://github.com/inexorgame/vulkan-renderer/edit/master/documentation/source/development/building.rst
+__ https://github.com/inexorgame/vulkan-renderer/pulls
 
 Clone the repository:
 

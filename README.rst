@@ -10,7 +10,7 @@ vulkan-renderer
 
 ----
 
-.. image:: https://raw.githubusercontent.com/inexorgame/artwork/2c479edcf7a1782d082a9d807b0f1e860ddd398c/vulkan/readme/front_banner_2.jpg
+.. image:: images/banner.jpg
 
 ----
 
@@ -25,13 +25,13 @@ Documentation
    :target: https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3A%22Build%22
 
 .. |license| image:: https://img.shields.io/badge/License-MIT-brightgreen.svg
-   :target: https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE.rst
+   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
 
 .. |programming language| image:: https://img.shields.io/badge/Language-C++17-orange.svg
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/design/coding-style.html
 
 .. |contributors| image:: https://img.shields.io/github/contributors/inexorgame/vulkan-renderer
-   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributors/main.html
+   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributing/contributors.html
 
 .. |downloads| image:: https://img.shields.io/github/downloads/inexorgame/vulkan-renderer/total
 

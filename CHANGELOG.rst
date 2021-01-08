@@ -8,8 +8,8 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 
 You can find all releases in our `GitHub repository <https://github.com/inexorgame>`__.
 
-v0.1-alpha.3
-============
+v0.1-alpha.3 (17 May 2020)
+==========================
 
 Changed
 -------
@@ -21,8 +21,8 @@ Changed
 - RAII Swapchain
 - Removed manager classes entirely.
 
-v0.1-alpha.2
-============
+v0.1-alpha.2 (26 Apr 2020)
+==========================
 
 Added
 -----
@@ -49,8 +49,8 @@ Fixed
 
 - Fixed a bug that would render every model twice.
 
-v0.1-alpha.1
-============
+v0.1-alpha.1 (12 Apr 2020)
+==========================
 
 Added
 -----

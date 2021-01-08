@@ -29,7 +29,7 @@ release = 'v0.1-alpha.3'
 language = 'english'
 pygments_style = 'sphinx'
 html_theme = 'sphinx_rtd_theme'
-html_logo = 'logos/InexorLogo2.png'
+html_logo = 'images/inexor.png'
 html_theme_options = {
     'logo_only': False,
     'display_version': True,
