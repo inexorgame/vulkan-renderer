@@ -10,7 +10,7 @@ vulkan-renderer
 
 ----
 
-.. image:: images/banner.jpg
+.. image:: documentation/source/images/banner.jpg
 
 ----
 
