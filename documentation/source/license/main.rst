@@ -2,5 +2,4 @@
 License
 *******
 
-
 .. include:: ../../../LICENSE

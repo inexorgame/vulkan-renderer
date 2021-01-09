@@ -1,6 +1,10 @@
 We are always open for suggestions or pull requests. You can search after ``diff:first issue`` for good issues to get in touch with this project.
 
-Join our discord server: https://discord.gg/acUW8k7.
+Join our `Discord server <https://discord.gg/acUW8k7>`__.
+
+`IAmNotHanni <https://github.com/IAmNotHanni>`__
+    - Project and community management.
+    - Large portion of Vulkan renderer.
 
 `Iceflower <https://github.com/IceflowRE>`__
     - Threadpool improvements.
@@ -15,11 +19,21 @@ Join our discord server: https://discord.gg/acUW8k7.
     - Overall code cleanup.
     - Read the docs support.
 
+`movabo <https://github.com/movabo>`__
+    - First generation of octree engine code.
+
+`authenticate <https://github.com/authenticate>`__
+    - Refactoring of texture loading code.
+    - Error texture generation.
+
 `Shikijo <https://github.com/Shikijo>`__
     - Pointed out broken glsl compiler batch script on Windows.
 
 `Croydon <https://github.com/Croydon>`__
     - Advice on `conan package manager <https://conan.io/>`__.
+
+`westernheld <https://github.com/westernheld>`__
+    - Testing and debugging.
 
 `uilianries <https://github.com/uilianries>`__
     - `Travis CI setup <https://stackoverflow.com/questions/61209668/travis-ci-reports-linker-errors-for-gcc-7-for-a-vulkan-project>`__
@@ -36,6 +50,10 @@ Join our discord server: https://discord.gg/acUW8k7.
     - Getting vulkan-renderer compile and run on Linux.
     - Overall CMake expertise.
     - Compiling SPIR-V shaders through CMake setup.
+
+`azkoon <https://github.com/azkoon>`__
+    - Help with Discord server.
+    - Help with wiki.
 
 `joetoth <https://github.com/joetoth>`__
     - Help with Discord server.

@@ -21,14 +21,19 @@ master_doc = 'index'
 
 project = 'Inexor Vulkan Renderer'
 author = 'Inexor Collective'
-copyright = 'CC BY 2020 ' + author
+copyright = 'CC BY 2020-present ' + author
 title = project + ' Documentation'
-version = '0.0.0'
-release = '0.0.0'
+version = 'v0.1-alpha.3'
+release = 'v0.1-alpha.3'
 
 language = 'english'
 pygments_style = 'sphinx'
 html_theme = 'sphinx_rtd_theme'
+html_logo = 'images/inexor.png'
+html_theme_options = {
+    'logo_only': False,
+    'display_version': True,
+}
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_static_path = ['_static']
 html_css_files = [

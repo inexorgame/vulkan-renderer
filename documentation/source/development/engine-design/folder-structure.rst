@@ -1,8 +1,10 @@
-Folder structures
-=================
+Folder structure
+================
 
-Source
-------
+- Use lowercase filenames, spaces should be written as underscore.
+
+Source code
+-----------
 
 .. code-block:: none
 

@@ -1,5 +1,5 @@
-Labeling
-========
+GitHub Issue Labeling
+=====================
 
 The labels are written in two parts, separated by a colon. The first part is the label category, the second the name.
 
