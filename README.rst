@@ -4,8 +4,6 @@ vulkan-renderer
 
 |language| |github actions| |readthedocs| |license| |discord|
 
-|programming language|
-
 |issues| |last commit| |code size| |contributors| |downloads|
 
 ----
@@ -30,9 +28,6 @@ Documentation
 
 .. |license| image:: https://img.shields.io/badge/License-MIT-brightgreen.svg
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
-
-.. |programming language| image:: https://img.shields.io/badge/Language-C++17-orange.svg
-   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/design/coding-style.html
 
 .. |contributors| image:: https://img.shields.io/github/contributors/inexorgame/vulkan-renderer
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributing/contributors.html
