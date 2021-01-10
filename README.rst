@@ -2,9 +2,9 @@
 vulkan-renderer
 ***************
 
-|language| |platforms| |github actions| |readthedocs| |license| |discord|
+|language| |platforms| |github actions| |readthedocs| |license|
 
-|issues| |last commit| |code size| |contributors| |downloads|
+|issues| |last commit| |code size| |contributors| |discord| |downloads|
 
 
 .. image:: documentation/source/images/banner.jpg
@@ -20,11 +20,13 @@ FAQ and documentation
 
 
 
-Inexor is an open-source project which combines modern C++ with Vulkan API. Inexor is licensed under the MIT license.
+Inexor is an open-source project which combines modern C++ with Vulkan API.
 
 Inexor’s current main objective is the development of a new octree game engine based on C++17 and Vulkan API 1.1.
 
 `Click here <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__ to read our faq and documentation.
+
+Inexor is licensed under the MIT license.
 
 .. Badges.
 
