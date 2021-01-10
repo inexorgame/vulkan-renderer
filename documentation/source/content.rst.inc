@@ -1,8 +1,3 @@
-=============
-Documentation
-=============
-
-.. include:: ../../README.rst
 .. include:: /faq/main.rst
 .. include:: /links/main.rst
 
