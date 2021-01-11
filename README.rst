@@ -26,7 +26,7 @@ Inexor’s current main objective is the development of a new octree game engine
 
 `Click here <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__ to read our faq and documentation.
 
-Inexor is licensed under the MIT license.
+Inexor is licensed under the `MIT license <https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE>`__.
 
 .. Badges.
 
