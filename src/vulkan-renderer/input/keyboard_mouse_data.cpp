@@ -29,15 +29,15 @@ std::array<std::int64_t, 2> KeyboardMouseInputData::get_cursor_pos() {
     return m_current_cursor_pos;
 }
 
-[[nodiscard]] bool KeyboardMouseInputData::is_mouse_button_pressed(std::int32_t mouse_button) {
+bool KeyboardMouseInputData::is_mouse_button_pressed(std::int32_t mouse_button) {
     return m_pressed_mouse_buttons[mouse_button];
 }
 
-[[nodiscard]] bool KeyboardMouseInputData::is_key_pressed(std::int32_t key) {
+bool KeyboardMouseInputData::is_key_pressed(std::int32_t key) {
     return m_pressed_keys[key];
 }
 
-[[nodiscard]] std::array<double, 2> KeyboardMouseInputData::calculate_cursor_position_delta() {
+std::array<double, 2> KeyboardMouseInputData::calculate_cursor_position_delta() {
     // Calculate the change in cursor position in x- and y-axis.
     const std::array<double, 2> m_cursor_pos_delta{
         static_cast<double>(m_current_cursor_pos[0]) - static_cast<double>(m_previous_cursor_pos[0]),

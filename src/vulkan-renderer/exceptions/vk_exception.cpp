@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer::exceptions {
 
-[[nodiscard]] std::string VulkanException::get_vkresult_string(const VkResult result) {
+std::string VulkanException::get_vkresult_string(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "VK_SUCCESS";
@@ -70,7 +70,7 @@ namespace inexor::vulkan_renderer::exceptions {
     return "Unknown";
 }
 
-[[nodiscard]] std::string VulkanException::get_vkresult_description(const VkResult result) {
+std::string VulkanException::get_vkresult_description(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "Command successfully completed";
