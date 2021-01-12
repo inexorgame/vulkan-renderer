@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/frame_graph.hpp"
-#include "inexor/vulkan-renderer/gpu_info.hpp"
+#include "inexor/vulkan-renderer/gpu_info/gpu_info.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -37,7 +37,6 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    std::shared_ptr<VulkanGraphicsCardInfoViewer> m_gpu_info_manager{new VulkanGraphicsCardInfoViewer};
     std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
