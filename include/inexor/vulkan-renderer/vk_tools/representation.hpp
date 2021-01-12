@@ -26,7 +26,7 @@ namespace inexor::vulkan_renderer::vk_tools {
 /// @param result The VkResult return value which will be turned into a string.
 [[nodiscard]] std::string result_to_string(VkResult result);
 
-///@brief Return a VkResult's description text.
+/// @brief Return a VkResult's description text.
 /// @note This function can be used for both VkResult error and success values.
 /// @param result The VkResult return value which will be turned into a string.
 [[nodiscard]] std::string result_to_description(VkResult result);
