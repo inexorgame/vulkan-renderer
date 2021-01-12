@@ -1,5 +1,5 @@
 ===============
-vulkan-renderer
+Vulkan-renderer
 ===============
 
 |language| |platforms| |github actions| |readthedocs| |license|
@@ -9,6 +9,21 @@ vulkan-renderer
 **Inexor is a MIT-licensed open-source project which develops a new 3D octree game engine by combining modern C++ with Vulkan API.**
 
 .. image:: /images/banner.jpg
+
+.. include:: /faq/main.rst
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    contact/main
+    faq/main
+    code/main
+    development/main
+    contributing/main
+    changelog/main
+    links/main
+    license/main
 
 
 .. Badges.
@@ -40,6 +55,3 @@ vulkan-renderer
    :target: https://github.com/inexorgame/vulkan-renderer/issues
 
 .. |code size| image:: https://img.shields.io/github/languages/code-size/inexorgame/vulkan-renderer
-
-
-.. include:: content.rst.inc

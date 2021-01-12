@@ -36,7 +36,6 @@ Inexor's current main objective is the development of a new `octree <https://sta
 - `Task-based parallelization <https://youtu.be/JpmK0zu4Mts?t=500>`__ using a `threadpool <https://community.khronos.org/t/opinions-on-using-threadpools-for-designing-a-vulkan-game-engine/105519>`__ and a `work stealing queue <https://stackoverflow.com/questions/2101789/implementation-of-a-work-stealing-queue-in-c-c>`__.
 - `Generic rendering architecture <https://youtu.be/6NWfznwFnMs?t=1845>`__ using a `rendergraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`__.
 - Offer a Vulkan API codebase which can be used in production.
-- Use  `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ for Vulkan memory management. 
 
 **We are using good software engineering practices:**
 
@@ -60,8 +59,7 @@ Which platforms are supported?
 
 - We support x64 Microsoft Windows 8, 8.1 and 10.
 - We support every x64 Linux distribution for which Vulkan drivers exist.
-- We have specific build instructions for `Gentoo <https://www.gentoo.org/>`__ and `Ubuntu <https://ubuntu.com/download>`__.
-- If you have found a way to set it up for other Linux distributions, please `open a pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__ and let us know!
+- We have specific build instructions for `Gentoo <https://www.gentoo.org/>`__ and `Ubuntu <https://ubuntu.com/download>`__. If you have found a way to set it up for other Linux distributions, please `open a pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__ and let us know!
 - We do not support macOS or iOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS. Additionally, this would require some changes in the engines as not all of Inexor's dependencies are available on macOS or iOS.
 - We also do not support Android because this would require some changes in the engines as not all of Inexor's dependencies are available on Android.
 
@@ -88,8 +86,8 @@ How is Inexor organized?
 ------------------------
 
 - Inexor has no central authority.
-- It's a headless collective which makes collective decisions through discussions.
-- It's welcoming new contributors.
+- It's a headless collective which makes decisions through creative discussions.
+- We are welcoming new contributors to our team.
 
 ----
 
@@ -119,7 +117,7 @@ What is Vulkan API?
 
 .. image:: /images/vulkan.png
 
-Inexor engine uses `Vulkan API <https://www.khronos.org/vulkan/>`__ as rendering backend. Vulkan is a new, low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ due to reduction of overhead and driver guesswork during runtime. This results in higher frame rate, more predictable CPU workload and a lower memory usage. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software and many more). Vulkan is the only multi platform low level graphics API.
+Inexor uses `Vulkan API <https://www.khronos.org/vulkan/>`__ as rendering backend. Vulkan is a new, multi platform low level API (`application programming interface <https://en.wikipedia.org/wiki/Application_programming_interface>`__) for high-performance graphics programming and computing. It is the successor to `OpenGL <https://en.wikipedia.org/wiki/OpenGL>`__, and it is important to state that is is very different from it. Vulkan is not just a new version of OpenGL or an extension of it. Instead, Vulkan is a very low level API which allows for much deeper control over the graphics card and the driver, like `DirectX 12 <https://en.wikipedia.org/wiki/DirectX>`__ or Apple's `Metal <https://en.wikipedia.org/wiki/Metal_(API)>`__. Unlike OpenGL, Vulkan API is build in a way it fits the architecture of modern graphics cards. This offers `better performance <https://stackoverflow.com/questions/56766983/what-can-vulkan-do-specifically-that-opengl-4-6-cannot>`__ due to reduction of overhead and driver guesswork during runtime. This results in higher frame rate, more predictable CPU workload and a lower memory usage. The most important benefit of Vulkan is the fact that it allows for `multithreaded rendering <https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl>`__, which is not possible in OpenGL at all. In general, Vulkan does a lot of work during the initialization of the application but therefore reduces work during rendering. Since Vulkan is much more explicit in terms of code, it foces you to think about the structure and architecture of your code. Both Vulkan and OpenGL are being developed by the `Khronos Group <https://www.khronos.org/>`__. Vulkan is being developed through an `unprecedented collaboration <https://www.khronos.org/members/list>`__ of major industry-leading companies (Google, Intel, AMD, NVidia, Sony, Samsung, Huawei, Qualcomm, Valve Software and many more). Vulkan is the only multi platform low level graphics API.
 
 ----
 
@@ -166,7 +164,7 @@ Why is Vulkan API the future?
 
 **Open Source**
 
-- Vulkan API and most of the drivers are `open source <https://en.wikipedia.org/wiki/Open_source>`__.
+- Vulkan API and some Vulkan graphics card drivers are `open source <https://en.wikipedia.org/wiki/Open_source>`__.
 
 ----
 
