@@ -429,15 +429,7 @@ Application::Application(int argc, char **argv) {
     }
 
     if (display_graphics_card_info) {
-        spdlog::debug("Displaying extended information about graphics cards.");
-
-        // Print general information about Vulkan.
-        m_gpu_info_manager->print_driver_vulkan_version();
-        m_gpu_info_manager->print_instance_layers();
-        m_gpu_info_manager->print_instance_extensions();
-
-        // Print all information that we can find about all graphics card available.
-        // gpu_info_manager->print_all_physical_devices(vkinstance->instance(), surface);
+        gpu_info::print_all_physical_devices(m_instance->instance(), m_surface->get());
     }
 
     bool use_distinct_data_transfer_queue = true;
