@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer::exceptions {
 
-[[nodiscard]] std::string VulkanException::get_vkresult_string(const VkResult result) {
+std::string VulkanException::get_vkresult_string(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "VK_SUCCESS";
@@ -70,7 +70,7 @@ namespace inexor::vulkan_renderer::exceptions {
     return "Unknown";
 }
 
-[[nodiscard]] std::string VulkanException::get_vkresult_description(const VkResult result) {
+std::string VulkanException::get_vkresult_description(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "Command successfully completed";
@@ -111,7 +111,7 @@ namespace inexor::vulkan_renderer::exceptions {
     case VK_ERROR_FORMAT_NOT_SUPPORTED:
         return "A requested format is not supported on this device.";
     case VK_ERROR_FRAGMENTED_POOL:
-        return "A pool allocation has failed due to fragmentation of the pool’s memory. This must only be returned if "
+        return "A pool allocation has failed due to fragmentation of the pool's memory. This must only be returned if "
                "no attempt to allocate host or device memory was made to accommodate the new allocation. This should "
                "be returned in preference to VK_ERROR_OUT_OF_POOL_MEMORY, but only if the implementation is certain "
                "that the pool allocation failure was due to fragmentation.";
@@ -143,7 +143,7 @@ namespace inexor::vulkan_renderer::exceptions {
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
         return "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT "
                "failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent "
-               "reasons, outside of  the application’s control.";
+               "reasons, outside of  the application's control.";
     case VK_ERROR_UNKNOWN:
         return "An unknown error has occurred; either the application has provided invalid input, or an implementation "
                "failure has occurred.";

@@ -16,7 +16,7 @@ ByteStream::ByteStream(const std::filesystem::path &path) : ByteStream(read_file
 std::size_t ByteStream::size() const {
     return m_buffer.size();
 }
-[[nodiscard]] const std::vector<std::uint8_t> &ByteStream::buffer() const {
+const std::vector<std::uint8_t> &ByteStream::buffer() const {
     return m_buffer;
 }
 

@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     try {
         renderer = std::make_unique<inexor::vulkan_renderer::Application>(argc, argv);
-    } catch (inexor::vulkan_renderer::exceptions::VulkanException &exception) {
+    } catch (const inexor::vulkan_renderer::exceptions::VulkanException &exception) {
         spdlog::critical(exception.what());
         std::abort();
     }
