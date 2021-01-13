@@ -1,9 +1,6 @@
 Helpful Links
 =============
 
-Vulkan API
-----------
-
 .. image:: /images/vulkan.png
 
 - `Khronos' website about Vulkan API <https://www.khronos.org/vulkan/>`__

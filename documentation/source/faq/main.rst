@@ -26,16 +26,15 @@ What is Inexor?
 
 .. image:: /images/inexor2.png
 
-Inexor is an open-source project which combines `modern C++ <https://awesomecpp.com/>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__.
 
-Inexor's current main objective is the development of a new `octree <https://stackoverflow.com/questions/tagged/octree>`__ game engine based on `C++17 <https://en.cppreference.com/w/cpp/17>`__ and `Vulkan API 1.1 <https://www.khronos.org/vulkan/>`__.
+Inexor is a MIT-licensed open-source project which develops a new 3D octree game engine by combining `modern C++ <https://awesomecpp.com/>`__ with Vulkan `Vulkan API <https://www.khronos.org/vulkan/>`__.
 
 **We have the following goals for the Inexor engine:**
 
 - Combine `modern C++ <https://www.youtube.com/watch?v=TC9zhufV_Z8>`__ with `Vulkan API <https://www.khronos.org/vulkan/>`__.
 - `Task-based parallelization <https://youtu.be/JpmK0zu4Mts?t=500>`__ using a `threadpool <https://community.khronos.org/t/opinions-on-using-threadpools-for-designing-a-vulkan-game-engine/105519>`__ and a `work stealing queue <https://stackoverflow.com/questions/2101789/implementation-of-a-work-stealing-queue-in-c-c>`__.
 - `Generic rendering architecture <https://youtu.be/6NWfznwFnMs?t=1845>`__ using a `rendergraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`__.
-- Offer a Vulkan API codebase which can be used in production.
+- Create a Vulkan API codebase which can be used in production.
 
 **We are using good software engineering practices:**
 
@@ -57,7 +56,7 @@ You can find Vulkan example code online which follows the mantra "don't use this
 Which platforms are supported?
 ------------------------------
 
-- We support x64 Microsoft Windows 8, 8.1 and 10.
+- We support x64 Microsoft Windows 8, 8.1, and 10.
 - We support every x64 Linux distribution for which Vulkan drivers exist.
 - We have specific build instructions for `Gentoo <https://www.gentoo.org/>`__ and `Ubuntu <https://ubuntu.com/download>`__. If you have found a way to set it up for other Linux distributions, please `open a pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__ and let us know!
 - We do not support macOS or iOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS. Additionally, this would require some changes in the engines as not all of Inexor's dependencies are available on macOS or iOS.
