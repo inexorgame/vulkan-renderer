@@ -13,7 +13,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
-    vulkan-renderer/io/octree_parser.cpp
+    vulkan-renderer/io/nxoc_parser.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp

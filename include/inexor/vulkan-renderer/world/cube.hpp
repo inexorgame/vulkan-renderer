@@ -17,9 +17,7 @@ class Cube;
 // forward declaration
 namespace inexor::vulkan_renderer::io {
 class ByteStream;
-template <std::size_t version>
-[[nodiscard]] std::shared_ptr<world::Cube> deserialize_octree_impl(const ByteStream &stream);
-
+class NXOCParser;
 } // namespace inexor::vulkan_renderer::io
 
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept;
@@ -33,8 +31,7 @@ using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 
 class Cube : public std::enable_shared_from_this<Cube> {
     friend void ::swap(Cube &lhs, Cube &rhs) noexcept;
-    template <std::size_t version>
-    friend std::shared_ptr<world::Cube> io::deserialize_octree_impl(const io::ByteStream &stream);
+    friend class io::NXOCParser;
 
 public:
     /// Maximum of sub cubes (childs)
