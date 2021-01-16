@@ -440,7 +440,7 @@ Application::Application(int argc, char **argv) {
     }
 
     if (display_graphics_card_info) {
-        gpu_info::print_all_physical_devices(m_instance->instance(), m_surface->get());
+        vk_tools::print_all_physical_devices(m_instance->instance(), m_surface->get());
     }
 
     bool use_distinct_data_transfer_queue = true;

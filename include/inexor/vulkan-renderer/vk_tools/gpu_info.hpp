@@ -4,22 +4,7 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::gpu_info {
-
-/// @brief Convert a VkPresentModeKHR value into the corresponding std::string value.
-/// @param present_mode The present mode.
-/// @return A std::string which contains the presentation mode.
-[[nodiscard]] std::string get_present_mode_name(VkPresentModeKHR present_mode);
-
-/// @brief Convert a VkPhysicalDeviceType value into the corresponding std::string value.
-/// @param gpu_type The type of the physical device.
-/// @return A std::string which contains the physical device type.
-[[nodiscard]] std::string get_graphics_card_type(VkPhysicalDeviceType gpu_type);
-
-/// @brief Convert a VkFormat value into the corresponding value as std::string.
-/// @param format The VkFormat to convert.
-/// @return A std::string which contains the VkFormat.
-[[nodiscard]] std::string get_vkformat_name(const VkFormat format);
+namespace inexor::vulkan_renderer::vk_tools {
 
 /// @brief Query which version of the Vulkan API is supported on this system.
 /// @note Inexor engine does not use a Vulkan meta loader like volk.
@@ -83,4 +68,4 @@ void print_physical_device_memory_properties(VkPhysicalDevice graphics_card);
 /// @param vulkan_surface The regarded Vulkan (window) surface.
 void print_all_physical_devices(VkInstance vulkan_instance, VkSurfaceKHR vulkan_surface);
 
-} // namespace inexor::vulkan_renderer::gpu_info
+} // namespace inexor::vulkan_renderer::vk_tools

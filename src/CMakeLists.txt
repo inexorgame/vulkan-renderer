@@ -11,8 +11,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/exceptions/vk_exception.cpp
 
-    vulkan-renderer/gpu_info/gpu_info.cpp
-
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
@@ -20,6 +18,9 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
+
+    vulkan-renderer/vk_tools/gpu_info.cpp
+    vulkan-renderer/vk_tools/representation.cpp
 
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
