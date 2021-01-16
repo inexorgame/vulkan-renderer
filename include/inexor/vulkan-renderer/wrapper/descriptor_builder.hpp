@@ -14,7 +14,7 @@ class ResourceDescriptor;
 
 class DescriptorBuilder {
     const Device &m_device;
-    const std::uint32_t m_swapchain_image_count;
+    const std::uint32_t m_swapchain_image_count{0};
 
     std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings;
     std::vector<VkWriteDescriptorSet> m_write_sets;

@@ -22,8 +22,8 @@ class Application : public VulkanRenderer {
     std::string m_application_name;
     std::string m_engine_name;
 
-    std::uint32_t m_application_version;
-    std::uint32_t m_engine_version;
+    std::uint32_t m_application_version{0};
+    std::uint32_t m_engine_version{0};
 
     std::vector<std::string> m_vertex_shader_files;
     std::vector<std::string> m_fragment_shader_files;
@@ -31,11 +31,11 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_shader_files;
     std::vector<std::string> m_gltf_model_files;
 
-    std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
+    std::unique_ptr<input::KeyboardMouseInputData> m_input_data{nullptr};
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call std::abort();
     // after reporting a validation layer (error) message.
-    bool m_stop_on_validation_message = false;
+    bool m_stop_on_validation_message{false};
 
     /// @brief Load the configuration of the renderer from a TOML configuration file.
     /// @brief file_name The TOML configuration file.

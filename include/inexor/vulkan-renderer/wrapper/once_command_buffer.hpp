@@ -21,11 +21,11 @@ class OnceCommandBuffer {
     const Device &m_device;
     // We must store the VkQueue separately since we don't know from
     // the context of the use of this OnceCommandBuffer which queue to use!
-    VkQueue m_queue;
+    VkQueue m_queue{VK_NULL_HANDLE};
     CommandPool m_command_pool;
-    std::unique_ptr<CommandBuffer> m_command_buffer;
+    std::unique_ptr<CommandBuffer> m_command_buffer{nullptr};
 
-    bool m_recording_started;
+    bool m_recording_started{false};
 
 public:
     /// @brief Default constructor.

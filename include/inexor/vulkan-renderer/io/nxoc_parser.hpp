@@ -19,7 +19,7 @@ namespace inexor::vulkan_renderer::io {
 
 class NXOCParser : public OctreeParser {
 private:
-    static constexpr std::uint32_t LATEST_VERSION = 0;
+    static constexpr std::uint32_t LATEST_VERSION{0};
 
     /// Specific version serialization.
     template <std::size_t version>

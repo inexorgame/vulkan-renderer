@@ -14,7 +14,7 @@ private:
     std::vector<char> m_file_data;
 
     /// The size of the file.
-    std::size_t m_file_size;
+    std::size_t m_file_size{0};
 
 public:
     File() = default;

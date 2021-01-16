@@ -13,7 +13,7 @@ Other styles which cannot be applied automatically are listed below:
     - System Libraries
 - Use C++17 namespace style ``namespace inexor::vulkan-renderer``
 - No ``using <namespace>``
-- For default member initialization use equal instead of brace initialization
+- For default member initialization use brace instead of equal initialization
 - Prefer American English over British English
 - Use spaces to indent
 - Use Linux line ends (ln) in your commits

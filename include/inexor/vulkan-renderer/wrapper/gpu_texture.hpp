@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -21,9 +21,9 @@ class OnceCommandBuffer;
 /// @brief RAII wrapper class for textures which are stored in GPU memory.
 /// @todo Support 3D textures and cube maps (implement new and separate wrappers though).
 class GpuTexture {
-    std::unique_ptr<wrapper::Image> m_texture_image;
+    std::unique_ptr<wrapper::Image> m_texture_image{nullptr};
     OnceCommandBuffer m_copy_command_buffer;
-    VkSampler m_sampler;
+    VkSampler m_sampler{VK_NULL_HANDLE};
 
     int m_texture_width{0};
     int m_texture_height{0};

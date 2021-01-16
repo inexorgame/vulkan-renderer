@@ -12,19 +12,19 @@ namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
 class Device {
-    VkDevice m_device;
-    VkPhysicalDevice m_graphics_card;
+    VkDevice m_device{VK_NULL_HANDLE};
+    VkPhysicalDevice m_graphics_card{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
 
     VkQueue m_graphics_queue{nullptr};
     VkQueue m_present_queue{nullptr};
     VkQueue m_transfer_queue{nullptr};
-    VkSurfaceKHR m_surface;
+    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
-    std::uint32_t m_present_queue_family_index;
-    std::uint32_t m_graphics_queue_family_index;
-    std::uint32_t m_transfer_queue_family_index;
+    std::uint32_t m_present_queue_family_index{0};
+    std::uint32_t m_graphics_queue_family_index{0};
+    std::uint32_t m_transfer_queue_family_index{0};
 
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
@@ -35,7 +35,7 @@ class Device {
     PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert;
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name;
 
-    const bool m_enable_vulkan_debug_markers;
+    const bool m_enable_vulkan_debug_markers{false};
 
 public:
     /// @brief Check if a certain device extension is available for a specific graphics card.

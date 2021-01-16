@@ -13,8 +13,8 @@ class KeyboardMouseInputData {
     std::array<std::int64_t, 2> m_current_cursor_pos{0, 0};
     std::unordered_map<std::int32_t, bool> m_pressed_keys;
     std::unordered_map<std::int32_t, bool> m_pressed_mouse_buttons;
-    bool keyboard_updated = false;
-    bool mouse_buttons_updated = false;
+    bool keyboard_updated{false};
+    bool mouse_buttons_updated{false};
 
 public:
     KeyboardMouseInputData();

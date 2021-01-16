@@ -10,8 +10,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief RAII wrapper class for VkSurfaceKHR.
 class WindowSurface {
-    VkInstance m_instance;
-    VkSurfaceKHR m_surface;
+    VkInstance m_instance{VK_NULL_HANDLE};
+    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
 public:
     /// @brief Default constructor.

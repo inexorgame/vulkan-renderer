@@ -12,7 +12,7 @@ class Device;
 /// @brief RAII wrapper class for VkCommandPool.
 class CommandPool {
     const Device &m_device;
-    VkCommandPool m_command_pool;
+    VkCommandPool m_command_pool{VK_NULL_HANDLE};
 
 public:
     /// @brief Default constructor.

@@ -10,9 +10,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief RAII wrapper class for GLFW windows.
 class Window {
-    GLFWwindow *m_window;
-    std::uint32_t m_width;
-    std::uint32_t m_height;
+    GLFWwindow *m_window{nullptr};
+    std::uint32_t m_width{0};
+    std::uint32_t m_height{0};
 
 public:
     /// @brief Default constructor.

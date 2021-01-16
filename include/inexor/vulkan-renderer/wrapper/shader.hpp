@@ -15,7 +15,7 @@ class Shader {
     std::string m_name;
     std::string m_entry_point;
     VkShaderStageFlagBits m_type;
-    VkShaderModule m_shader_module;
+    VkShaderModule m_shader_module{VK_NULL_HANDLE};
 
 public:
     /// @brief Construct a shader module from a block of SPIR-V memory.

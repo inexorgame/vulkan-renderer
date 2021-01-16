@@ -12,11 +12,11 @@ class Device;
 /// @brief RAII wrapper class for VkImage.
 class Image {
     const wrapper::Device &m_device;
-    VmaAllocation m_allocation;
+    VmaAllocation m_allocation{VK_NULL_HANDLE};
     VmaAllocationInfo m_allocation_info;
-    VkImage m_image;
-    VkFormat m_format;
-    VkImageView m_image_view;
+    VkImage m_image{VK_NULL_HANDLE};
+    VkFormat m_format{VK_FORMAT_UNDEFINED};
+    VkImageView m_image_view{VK_NULL_HANDLE};
     std::string m_name;
 
 public:

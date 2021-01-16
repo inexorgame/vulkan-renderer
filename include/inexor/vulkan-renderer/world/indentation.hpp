@@ -6,7 +6,7 @@ namespace inexor::vulkan_renderer::world {
 
 class Indentation {
 public:
-    static constexpr std::uint8_t MAX = 8;
+    static constexpr std::uint8_t MAX{8};
 
 private:
     std::uint8_t m_start{0};

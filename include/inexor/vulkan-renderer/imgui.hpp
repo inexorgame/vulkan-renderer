@@ -30,15 +30,15 @@ class ImGUIOverlay {
 
     float m_scale{1.0f};
 
-    std::unique_ptr<wrapper::MeshBuffer<ImDrawVert, ImDrawIdx>> m_imgui_mesh;
-    std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
-    std::unique_ptr<wrapper::RenderPass> m_renderpass;
-    std::unique_ptr<wrapper::Shader> m_vert_shader;
-    std::unique_ptr<wrapper::Shader> m_frag_shader;
-    std::unique_ptr<wrapper::CommandPool> m_command_pool;
-    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-    std::unique_ptr<wrapper::GraphicsPipeline> m_pipeline;
-    std::unique_ptr<wrapper::Fence> m_ui_rendering_finished;
+    std::unique_ptr<wrapper::MeshBuffer<ImDrawVert, ImDrawIdx>> m_imgui_mesh{nullptr};
+    std::unique_ptr<wrapper::GpuTexture> m_imgui_texture{nullptr};
+    std::unique_ptr<wrapper::RenderPass> m_renderpass{nullptr};
+    std::unique_ptr<wrapper::Shader> m_vert_shader{nullptr};
+    std::unique_ptr<wrapper::Shader> m_frag_shader{nullptr};
+    std::unique_ptr<wrapper::CommandPool> m_command_pool{nullptr};
+    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor{nullptr};
+    std::unique_ptr<wrapper::GraphicsPipeline> m_pipeline{nullptr};
+    std::unique_ptr<wrapper::Fence> m_ui_rendering_finished{nullptr};
 
     std::uint32_t m_subpass{0};
     std::uint32_t m_vertex_count{0};

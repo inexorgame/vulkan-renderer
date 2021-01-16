@@ -37,11 +37,11 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
+    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{std::make_shared<VulkanSettingsDecisionMaker>()};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
-    VkDebugReportCallbackEXT m_debug_report_callback{};
+    VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
 
     bool m_debug_report_callback_initialised{false};
 
@@ -55,23 +55,23 @@ protected:
     FPSCounter m_fps_counter;
 
     // TODO: Refactor this!
-    VkDescriptorBufferInfo m_uniform_buffer_info{};
+    VkDescriptorBufferInfo m_uniform_buffer_info;
 
     bool m_vsync_enabled{false};
 
-    std::unique_ptr<Camera> m_camera;
+    std::unique_ptr<Camera> m_camera{nullptr};
 
-    std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
-    std::unique_ptr<wrapper::Window> m_window;
-    std::unique_ptr<wrapper::Instance> m_instance;
-    std::unique_ptr<wrapper::Device> m_device;
-    std::unique_ptr<wrapper::WindowSurface> m_surface;
-    std::unique_ptr<wrapper::Swapchain> m_swapchain;
-    std::unique_ptr<wrapper::CommandPool> m_command_pool;
-    std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
-    std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
-    std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
-    std::unique_ptr<FrameGraph> m_frame_graph;
+    std::unique_ptr<wrapper::GLFWContext> m_glfw_context{nullptr};
+    std::unique_ptr<wrapper::Window> m_window{nullptr};
+    std::unique_ptr<wrapper::Instance> m_instance{nullptr};
+    std::unique_ptr<wrapper::Device> m_device{nullptr};
+    std::unique_ptr<wrapper::WindowSurface> m_surface{nullptr};
+    std::unique_ptr<wrapper::Swapchain> m_swapchain{nullptr};
+    std::unique_ptr<wrapper::CommandPool> m_command_pool{nullptr};
+    std::unique_ptr<ImGUIOverlay> m_imgui_overlay{nullptr};
+    std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore{nullptr};
+    std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore{nullptr};
+    std::unique_ptr<FrameGraph> m_frame_graph{nullptr};
 
     std::vector<wrapper::Shader> m_shaders;
     std::vector<wrapper::GpuTexture> m_textures;

@@ -242,8 +242,8 @@ class PhysicalResource : public FrameGraphObject {
 
 protected:
     // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
-    VmaAllocator m_allocator;
-    VkDevice m_device;
+    VmaAllocator m_allocator{VK_NULL_HANDLE};
+    VkDevice m_device{VK_NULL_HANDLE};
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
     PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}
@@ -357,9 +357,9 @@ public:
 class FrameGraph {
 private:
     const wrapper::Device &m_device;
-    VkCommandPool m_command_pool;
+    VkCommandPool m_command_pool{VK_NULL_HANDLE};
     const wrapper::Swapchain &m_swapchain;
-    std::shared_ptr<spdlog::logger> m_log = spdlog::default_logger()->clone("frame-graph");
+    std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("frame-graph")};
 
     // Vectors of render resources and stages. These own the memory. Note that unique_ptr must be used as Render* is
     // just an inheritable base class.
