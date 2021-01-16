@@ -50,23 +50,23 @@ void Window::set_user_ptr(void *user_ptr) {
 }
 
 void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback) {
-    assert(frame_buffer_resize_callback);
     glfwSetFramebufferSizeCallback(m_window, frame_buffer_resize_callback);
 }
 
 void Window::set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback) {
-    assert(keyboard_button_callback);
     glfwSetKeyCallback(m_window, keyboard_button_callback);
 }
 
 void Window::set_cursor_position_callback(GLFWcursorposfun cursor_pos_callback) {
-    assert(cursor_pos_callback);
     glfwSetCursorPosCallback(m_window, cursor_pos_callback);
 }
 
 void Window::set_mouse_button_callback(GLFWmousebuttonfun mouse_button_callback) {
-    assert(mouse_button_callback);
     glfwSetMouseButtonCallback(m_window, mouse_button_callback);
+}
+
+void Window::set_mouse_scroll_callback(GLFWscrollfun mouse_scroll_callback) {
+    glfwSetScrollCallback(m_window, mouse_scroll_callback);
 }
 
 void Window::show() {

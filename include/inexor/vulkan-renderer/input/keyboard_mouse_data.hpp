@@ -13,6 +13,8 @@ class KeyboardMouseInputData {
     std::array<std::int64_t, 2> m_current_cursor_pos{0, 0};
     std::unordered_map<std::int32_t, bool> m_pressed_keys;
     std::unordered_map<std::int32_t, bool> m_pressed_mouse_buttons;
+    bool keyboard_updated = false;
+    bool mouse_buttons_updated = false;
 
 public:
     KeyboardMouseInputData();
@@ -46,7 +48,7 @@ public:
     void set_cursor_pos(double cursor_pos_x, double coursor_pos_y);
 
     /// @return Return a std::array of size 2 which contains the x-position in index 0 and y-position in index 1.
-    [[nodiscard]] std::array<std::int64_t, 2> get_cursor_pos();
+    [[nodiscard]] std::array<std::int64_t, 2> get_cursor_pos() const;
 
     /// @brief Check if the given mouse button is currently pressed.
     /// @param mouse_button The mouse button index.
@@ -62,6 +64,18 @@ public:
     /// @return A std::array of size 2 which contains the change in x-position in index 0
     /// and the change in y-position in index 1.
     [[nodiscard]] std::array<double, 2> calculate_cursor_position_delta();
+
+    /// @brief Checks if a key was pressed once.
+    /// @note This method will set the state of the key to false upon call.
+    /// @param key The key index.
+    /// @retur True if the key was pressed, false otherwise.
+    [[nodiscard]] bool was_key_pressed_once(std::int32_t key);
+
+    /// @brief Checks if a mouse button was pressed once.
+    /// @note This method will set the state of the mouse button to false upon call.
+    /// @param mouse_button The mouse button index.
+    /// @returm True if the mouse button was pressed, false otherwise.
+    [[nodiscard]] bool was_mouse_button_pressed_once(std::int32_t mouse_button);
 };
 
 } // namespace inexor::vulkan_renderer::input
