@@ -1,6 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
@@ -395,7 +395,7 @@ Application::Application(int argc, char **argv) {
                 if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,
                                                                        nullptr, &m_debug_report_callback);
                     result != VK_SUCCESS) {
-                    throw exceptions::VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
+                    throw VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
                 }
                 spdlog::debug("Creating Vulkan debug callback.");
                 m_debug_report_callback_initialised = true;

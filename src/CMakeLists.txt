@@ -2,14 +2,13 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
+    vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/frame_graph.cpp
     vulkan-renderer/imgui.cpp
     vulkan-renderer/renderer.cpp
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/time_step.cpp
-
-    vulkan-renderer/exceptions/vk_exception.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 

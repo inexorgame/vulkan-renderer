@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/frame_graph.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
@@ -87,7 +87,7 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
     if (const auto result =
             vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &phys->m_image, &phys->m_allocation, &alloc_info);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to create image!", result);
+        throw VulkanException("Failed to create image!", result);
     }
 }
 
@@ -104,7 +104,7 @@ void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage
 
     if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &phys->m_image_view);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to create image view!", result);
+        throw VulkanException("Failed to create image view!", result);
     }
 }
 
@@ -122,7 +122,7 @@ void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to create pipeline layout!", result);
+        throw VulkanException("Failed to create pipeline layout!", result);
     }
 
     m_device.set_debug_marker_name(phys->m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
@@ -251,7 +251,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     render_pass_ci.pSubpasses = &subpass_description;
     if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &phys->m_render_pass);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to create render pass!", result);
+        throw VulkanException("Failed to create render pass!", result);
     }
 }
 
@@ -356,7 +356,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     if (const auto result =
             vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to create pipeline!", result);
+        throw VulkanException("Failed to create pipeline!", result);
     }
 }
 
@@ -434,7 +434,7 @@ void FrameGraph::compile(const RenderResource &target) {
             if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &phys->m_buffer,
                                                     &phys->m_allocation, &alloc_info);
                 result != VK_SUCCESS) {
-                throw exceptions::VulkanException("Failed to create buffer!", result);
+                throw VulkanException("Failed to create buffer!", result);
             }
 
             if (is_uploading_data) {

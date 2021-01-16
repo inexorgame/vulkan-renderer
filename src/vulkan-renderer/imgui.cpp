@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -173,7 +173,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     if (const auto result = vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to create pipeline layout for ImGUI!", result);
+        throw VulkanException("Failed to create pipeline layout for ImGUI!", result);
     }
 
     VkVertexInputBindingDescription vertex_input_bind_desc{};

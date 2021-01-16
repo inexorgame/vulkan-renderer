@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -42,7 +42,7 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
     if (const auto result =
             vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
 
     if (device_extension_count == 0) {
@@ -55,7 +55,7 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
     if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
                                                                  device_extensions.data());
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
 
     // Search for the requested device extension.
@@ -74,7 +74,7 @@ bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std:
     // Query how many device layers are available.
     if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, nullptr);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
     }
 
     if (device_layer_count == 0) {
@@ -86,7 +86,7 @@ bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std:
     // Store all available device layers.
     if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, device_layers.data());
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
     }
 
     // Search for the requested instance extensions.
@@ -109,7 +109,7 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
     // Query if presentation is supported.
     if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_supported);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
 
     return presentation_supported;
@@ -290,7 +290,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     spdlog::debug("Creating physical device (graphics card interface).");
 
     if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateDevice failed!", result);
+        throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
 #ifndef NDEBUG
@@ -383,7 +383,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     spdlog::debug("Creating Vulkan memory allocator instance.");
 
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vmaCreateAllocator failed!", result);
+        throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
 
     spdlog::debug("Created device successfully.");
@@ -421,7 +421,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
     name_info.pObjectName = name.c_str();
 
     if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
+        throw VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
     }
 #endif
 }
@@ -446,7 +446,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
     tag_info.pTag = memory_block;
 
     if (const auto result = m_vk_debug_marker_set_object_tag(m_device, &tag_info); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to assign Vulkan debug marker memory block!", result);
+        throw VulkanException("Failed to assign Vulkan debug marker memory block!", result);
     }
 #endif
 }

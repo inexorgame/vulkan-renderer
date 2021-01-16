@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -15,7 +15,7 @@ CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &command_pool_ci, nullptr, &m_command_pool);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateCommandPool failed!", result);
+        throw VulkanException("Error: vkCreateCommandPool failed!", result);
     }
 
     // TODO: Assign an internal name to this command pool using Vulkan debug markers.

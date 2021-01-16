@@ -1,6 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     try {
         renderer = std::make_unique<inexor::vulkan_renderer::Application>(argc, argv);
-    } catch (const inexor::vulkan_renderer::exceptions::VulkanException &exception) {
+    } catch (const inexor::vulkan_renderer::VulkanException &exception) {
         spdlog::critical(exception.what());
         std::abort();
     }
