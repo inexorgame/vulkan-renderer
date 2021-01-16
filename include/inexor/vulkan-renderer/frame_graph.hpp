@@ -242,8 +242,8 @@ class PhysicalResource : public FrameGraphObject {
 
 protected:
     // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
-    VmaAllocator m_allocator{VK_NULL_HANDLE};
-    VkDevice m_device{VK_NULL_HANDLE};
+    const VmaAllocator m_allocator;
+    const VkDevice m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
     PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}

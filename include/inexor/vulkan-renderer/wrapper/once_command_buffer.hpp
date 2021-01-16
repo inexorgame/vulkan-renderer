@@ -23,7 +23,7 @@ class OnceCommandBuffer {
     // the context of the use of this OnceCommandBuffer which queue to use!
     VkQueue m_queue{VK_NULL_HANDLE};
     CommandPool m_command_pool;
-    std::unique_ptr<CommandBuffer> m_command_buffer{nullptr};
+    std::unique_ptr<CommandBuffer> m_command_buffer;
 
     bool m_recording_started{false};
 

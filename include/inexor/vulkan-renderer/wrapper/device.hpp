@@ -17,9 +17,9 @@ class Device {
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
 
-    VkQueue m_graphics_queue{nullptr};
-    VkQueue m_present_queue{nullptr};
-    VkQueue m_transfer_queue{nullptr};
+    VkQueue m_graphics_queue{VK_NULL_HANDLE};
+    VkQueue m_present_queue{VK_NULL_HANDLE};
+    VkQueue m_transfer_queue{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
     std::uint32_t m_present_queue_family_index{0};

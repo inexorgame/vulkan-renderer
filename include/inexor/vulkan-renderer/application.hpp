@@ -31,7 +31,7 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_shader_files;
     std::vector<std::string> m_gltf_model_files;
 
-    std::unique_ptr<input::KeyboardMouseInputData> m_input_data{nullptr};
+    std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call std::abort();
     // after reporting a validation layer (error) message.

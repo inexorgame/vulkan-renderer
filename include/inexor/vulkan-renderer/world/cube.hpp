@@ -68,7 +68,7 @@ private:
     std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs;
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
-    mutable PolygonCache m_polygon_cache{nullptr};
+    mutable PolygonCache m_polygon_cache;
     mutable bool m_polygon_cache_valid{false};
 
     /// Removes all childs recursive.
