@@ -37,7 +37,8 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{std::make_shared<VulkanSettingsDecisionMaker>()};
+    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{
+        std::make_shared<VulkanSettingsDecisionMaker>()};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 

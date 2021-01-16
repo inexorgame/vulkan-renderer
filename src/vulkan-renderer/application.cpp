@@ -561,8 +561,7 @@ void Application::update_imgui_overlay() {
 void Application::process_mouse_input() {
     const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
 
-    if (m_camera->type() == CameraType::LOOK_AT &&
-        m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+    if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
         m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
 
