@@ -11,7 +11,7 @@ Camera::Camera(const glm::vec3 &position, const float yaw, const float pitch, co
 }
 
 void Camera::update_vectors() {
-    if (m_type == CameraType::CAMERA_TYPE_LOOKAT) {
+    if (m_type == CameraType::LOOK_AT) {
         glm::vec3 front;
         front.y = glm::cos(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
         front.z = glm::sin(glm::radians(m_pitch));
@@ -27,7 +27,7 @@ void Camera::update_vectors() {
 }
 
 void Camera::update_matrices() {
-    if (m_type == CameraType::CAMERA_TYPE_LOOKAT) {
+    if (m_type == CameraType::LOOK_AT) {
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, m_up);
         m_perspective_matrix = glm::perspective(glm::radians(m_fov), m_aspect_ratio, m_near_plane, m_far_plane);
         m_update_needed = false;
@@ -108,7 +108,7 @@ void Camera::change_zoom(const float offset) {
 void Camera::update(const float delta_time) {
     m_update_needed = true;
 
-    if (m_type == CameraType::CAMERA_TYPE_LOOKAT && is_moving()) {
+    if (m_type == CameraType::LOOK_AT && is_moving()) {
         const float move_speed = delta_time * m_movement_speed;
 
         if (m_keys[0] && !m_keys[2]) {
