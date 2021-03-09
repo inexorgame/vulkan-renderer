@@ -1,4 +1,4 @@
-Continuous Integration
+Continuous integration
 ======================
 
 - The master branch and the build system must stay stable at all time.
@@ -17,5 +17,5 @@ Continuous Integration
 
 .. Badges.
 
-.. |github actions| image:: https://github.com/inexorgame/vulkan-renderer/workflows/Build/badge.svg
+.. |github actions| image:: https://img.shields.io/github/workflow/status/inexorgame/vulkan-renderer/Build
    :target: https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3A%22Build%22
