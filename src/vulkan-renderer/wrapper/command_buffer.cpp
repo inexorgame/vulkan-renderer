@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -21,7 +21,7 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool comman
 
     if (const auto result = vkAllocateCommandBuffers(device.device(), &alloc_info, &m_command_buffer);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Failed to allocate command buffer!", result);
+        throw VulkanException("Failed to allocate command buffer!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

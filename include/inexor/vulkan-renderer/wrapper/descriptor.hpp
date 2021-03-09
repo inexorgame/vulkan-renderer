@@ -18,7 +18,7 @@ class ResourceDescriptor {
     std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings;
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
     std::vector<VkDescriptorSet> m_descriptor_sets;
-    std::uint32_t m_swapchain_image_count;
+    std::uint32_t m_swapchain_image_count{0};
 
 public:
     /// @brief Default constructor.

@@ -42,7 +42,7 @@ class MeshBuffer {
 
     GPUMemoryBuffer m_vertex_buffer;
 
-    std::optional<GPUMemoryBuffer> m_index_buffer;
+    std::optional<GPUMemoryBuffer> m_index_buffer{std::nullopt};
 
     std::uint32_t m_number_of_vertices{0};
     std::uint32_t m_number_of_indices{0};

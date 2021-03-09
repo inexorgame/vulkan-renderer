@@ -12,7 +12,7 @@ namespace inexor::vulkan_renderer::tools {
 /// @brief Template class for creating arguments.
 class CommandLineArgumentTemplate {
     const std::string m_argument;
-    const bool m_takes_values;
+    const bool m_takes_values{false};
 
 public:
     /// @param argument The argument to be passed on the command line (e.g. --vsync).
@@ -47,7 +47,7 @@ public:
 /// @todo Support short arguments, including stacking (e.g. -abc).
 class CommandLineArgumentParser {
     // TODO: Allow runtime addition of argument templates.
-    const std::vector<CommandLineArgumentTemplate> m_accepted_args = {
+    const std::vector<CommandLineArgumentTemplate> m_accepted_args{
         // Specifies which GPU to use (by array index).
         {"--gpu", true},
 

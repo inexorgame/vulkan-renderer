@@ -12,8 +12,8 @@ class Device;
 /// @brief RAII wrapper class for VkPipeline.
 class GraphicsPipeline {
     const Device &m_device;
-    VkPipeline graphics_pipeline;
-    VkPipelineCache pipeline_cache;
+    VkPipeline graphics_pipeline{VK_NULL_HANDLE};
+    VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
     std::string name;
 
 public:

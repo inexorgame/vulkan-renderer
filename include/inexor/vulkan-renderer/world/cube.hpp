@@ -17,9 +17,7 @@ class Cube;
 // forward declaration
 namespace inexor::vulkan_renderer::io {
 class ByteStream;
-template <std::size_t version>
-[[nodiscard]] std::shared_ptr<world::Cube> deserialize_octree_impl(const ByteStream &stream);
-
+class NXOCParser;
 } // namespace inexor::vulkan_renderer::io
 
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept;
@@ -33,14 +31,13 @@ using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 
 class Cube : public std::enable_shared_from_this<Cube> {
     friend void ::swap(Cube &lhs, Cube &rhs) noexcept;
-    template <std::size_t version>
-    friend std::shared_ptr<world::Cube> io::deserialize_octree_impl(const io::ByteStream &stream);
+    friend class io::NXOCParser;
 
 public:
     /// Maximum of sub cubes (childs)
-    static constexpr std::size_t SUB_CUBES = 8;
+    static constexpr std::size_t SUB_CUBES{8};
     /// Cube edges.
-    static constexpr std::size_t EDGES = 12;
+    static constexpr std::size_t EDGES{12};
     /// Cube Type.
     enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
 
@@ -67,11 +64,11 @@ private:
     std::weak_ptr<Cube> m_parent{weak_from_this()};
 
     /// Indentations, should only be used if it is a geometry cube.
-    std::array<Indentation, Cube::EDGES> m_indentations{};
-    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs{};
+    std::array<Indentation, Cube::EDGES> m_indentations;
+    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs;
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
-    mutable PolygonCache m_polygon_cache{nullptr};
+    mutable PolygonCache m_polygon_cache;
     mutable bool m_polygon_cache_valid{false};
 
     /// Removes all childs recursive.

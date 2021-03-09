@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -21,7 +21,7 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
     spdlog::debug("Creating Vulkan synchronisation fence {}.", m_name);
 
     if (const auto result = vkCreateFence(device.device(), &fence_ci, nullptr, &m_fence); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateFence failed!", result);
+        throw VulkanException("Error: vkCreateFence failed!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

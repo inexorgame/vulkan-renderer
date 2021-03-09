@@ -35,6 +35,7 @@ public:
     explicit ByteStreamReader(const ByteStream &stream);
 
     [[nodiscard]] std::size_t remaining() const;
+    /// Skip 'size' bytes (std::uint8_t).
     void skip(std::size_t size);
 
     /// Generic read method.

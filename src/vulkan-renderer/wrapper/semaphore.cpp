@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -19,7 +19,7 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
     auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
     if (const auto result = vkCreateSemaphore(device.device(), &semaphore_ci, nullptr, &m_semaphore);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateSemaphore failed for " + name + " !", result);
+        throw VulkanException("Error: vkCreateSemaphore failed for " + name + " !", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

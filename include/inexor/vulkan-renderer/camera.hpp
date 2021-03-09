@@ -21,13 +21,13 @@ constexpr glm::vec3 DEFAULT_UP{0.0f, 0.0f, 1.0f};
 enum class CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
 
 // TODO: Implement more camera types.
-enum class CameraType { CAMERA_TYPE_LOOKAT };
+enum class CameraType { LOOK_AT };
 
 /// @warning Not thread safe!
 class Camera {
 private:
     /// The type of the camera. Currently only one type is implemented.
-    CameraType m_type{CameraType::CAMERA_TYPE_LOOKAT};
+    CameraType m_type{CameraType::LOOK_AT};
     /// The start position of the camera.
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
     /// The vector of direction in which the camera is looking.
@@ -38,8 +38,8 @@ private:
     glm::vec3 m_up{directions::DEFAULT_UP};
     /// The world vector which indicates "upwards".
     glm::vec3 m_world_up{directions::DEFAULT_UP};
-    glm::mat4 m_view_matrix{};
-    glm::mat4 m_perspective_matrix{};
+    glm::mat4 m_view_matrix;
+    glm::mat4 m_perspective_matrix;
 
     /// The camera's yaw angle.
     float m_yaw{0.0f};

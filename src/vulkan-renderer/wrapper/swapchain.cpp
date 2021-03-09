@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -106,12 +106,12 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     if (const auto result = vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateSwapchainKHR failed!", result);
+        throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
     }
 
     if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count, nullptr);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
+        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
 
     m_swapchain_images.resize(m_swapchain_image_count);
@@ -119,7 +119,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count,
                                                     m_swapchain_images.data());
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
+        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -150,7 +150,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         if (const auto result =
                 vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &m_swapchain_image_views[i]);
             result != VK_SUCCESS) {
-            throw exceptions::VulkanException("Error: vkCreateImageView failed!", result);
+            throw VulkanException("Error: vkCreateImageView failed!", result);
         }
 
         // Assign an internal name using Vulkan debug markers.

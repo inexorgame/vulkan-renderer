@@ -37,11 +37,12 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{new VulkanSettingsDecisionMaker};
+    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{
+        std::make_shared<VulkanSettingsDecisionMaker>()};
 
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
-    VkDebugReportCallbackEXT m_debug_report_callback{};
+    VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
 
     bool m_debug_report_callback_initialised{false};
 
@@ -55,7 +56,7 @@ protected:
     FPSCounter m_fps_counter;
 
     // TODO: Refactor this!
-    VkDescriptorBufferInfo m_uniform_buffer_info{};
+    VkDescriptorBufferInfo m_uniform_buffer_info;
 
     bool m_vsync_enabled{false};
 

@@ -14,16 +14,16 @@ class Semaphore;
 /// @brief RAII wrapper class for VkSwapchainKHR.
 class Swapchain {
     const wrapper::Device &m_device;
-    VkSurfaceKHR m_surface;
-    VkSwapchainKHR m_swapchain;
+    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
+    VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceFormatKHR m_surface_format;
     VkExtent2D m_extent;
 
     std::vector<VkImage> m_swapchain_images;
     std::vector<VkImageView> m_swapchain_image_views;
-    std::uint32_t m_swapchain_image_count;
+    std::uint32_t m_swapchain_image_count{0};
     std::string m_name;
-    bool m_vsync_enabled;
+    bool m_vsync_enabled{false};
 
     /// @brief Set up the swapchain.
     /// @param old_swapchain The old swapchain.

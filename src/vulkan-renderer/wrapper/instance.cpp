@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <GLFW/glfw3.h>
@@ -15,7 +15,7 @@ bool Instance::is_layer_supported(const std::string &layer_name) {
     std::uint32_t instance_layer_count = 0;
 
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
     }
 
     if (instance_layer_count == 0) {
@@ -27,7 +27,7 @@ bool Instance::is_layer_supported(const std::string &layer_name) {
     // Store all available instance layers.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
     }
 
     // Search for the requested instance layer.
@@ -41,7 +41,7 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 
     if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
     }
 
     if (instance_extension_count == 0) {
@@ -54,7 +54,7 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
     if (const auto result =
             vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data());
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
     }
 
     // Search for the requested instance extension.
@@ -199,7 +199,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     instance_ci.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
 
     if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateInstance failed!", result);
+        throw VulkanException("Error: vkCreateInstance failed!", result);
     }
 
     spdlog::debug("Created Vulkan instance successfully.");

@@ -14,7 +14,7 @@ class Device;
 class Fence {
     const wrapper::Device &m_device;
     std::string m_name;
-    VkFence m_fence;
+    VkFence m_fence{VK_NULL_HANDLE};
 
 public:
     /// @brief Default constructor.

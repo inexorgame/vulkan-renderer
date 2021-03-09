@@ -13,7 +13,7 @@ class Device;
 /// @brief RAII wrapper class for VkRenderPass.
 class RenderPass {
     const Device &m_device;
-    VkRenderPass renderpass;
+    VkRenderPass renderpass{VK_NULL_HANDLE};
     std::string name;
 
 public:

@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -50,7 +50,7 @@ void OnceCommandBuffer::start_recording() {
     command_buffer_bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
     if (const auto result = vkBeginCommandBuffer(m_command_buffer->get(), &command_buffer_bi); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkBeginCommandBuffer failed for once command buffer!", result);
+        throw VulkanException("Error: vkBeginCommandBuffer failed for once command buffer!", result);
     }
 
     m_recording_started = true;
@@ -76,12 +76,12 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     submit_info.pCommandBuffers = m_command_buffer->ptr();
 
     if (const auto result = vkQueueSubmit(m_queue, 1, &submit_info, VK_NULL_HANDLE); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkQueueSubmit failed for once command buffer!", result);
+        throw VulkanException("Error: vkQueueSubmit failed for once command buffer!", result);
     }
 
     // TODO: Refactor! Introduce proper synchronisation using VkFence!
     if (const auto result = vkQueueWaitIdle(m_queue); result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkQueueWaitIdle failed for once command buffer!", result);
+        throw VulkanException("Error: vkQueueWaitIdle failed for once command buffer!", result);
     }
 
     spdlog::debug("Destroying once command buffer.");

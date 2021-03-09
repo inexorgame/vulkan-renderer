@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -51,8 +51,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 
     if (const auto result = vkCreateDescriptorPool(device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateDescriptorPool failed for descriptor " + m_name + " !",
-                                          result);
+        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor " + m_name + " !", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -69,8 +68,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     if (const auto result =
             vkCreateDescriptorSetLayout(device.device(), &descriptor_set_layout_ci, nullptr, &m_descriptor_set_layout);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + m_name + " !",
-                                          result);
+        throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + m_name + " !", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -92,8 +90,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 
     if (const auto result = vkAllocateDescriptorSets(device.device(), &descriptor_set_ai, m_descriptor_sets.data());
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkAllocateDescriptorSets failed for descriptor " + m_name + " !",
-                                          result);
+        throw VulkanException("Error: vkAllocateDescriptorSets failed for descriptor " + m_name + " !", result);
     }
 
     for (const auto &descriptor_set : m_descriptor_sets) {

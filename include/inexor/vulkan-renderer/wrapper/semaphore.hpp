@@ -11,7 +11,7 @@ class Device;
 /// @brief RAII wrapper class for VkSemaphore.
 class Semaphore {
     const Device &m_device;
-    VkSemaphore m_semaphore;
+    VkSemaphore m_semaphore{VK_NULL_HANDLE};
     std::string m_name;
 
 public:

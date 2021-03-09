@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -46,7 +46,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
                                            &m_allocation_info);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
+        throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
@@ -64,7 +64,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
 
     if (const auto result = vkCreateImageView(device.device(), &image_view_ci, nullptr, &m_image_view);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
+        throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.

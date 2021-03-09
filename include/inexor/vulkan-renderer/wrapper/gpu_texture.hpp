@@ -23,7 +23,7 @@ class OnceCommandBuffer;
 class GpuTexture {
     std::unique_ptr<wrapper::Image> m_texture_image;
     OnceCommandBuffer m_copy_command_buffer;
-    VkSampler m_sampler;
+    VkSampler m_sampler{VK_NULL_HANDLE};
 
     int m_texture_width{0};
     int m_texture_height{0};

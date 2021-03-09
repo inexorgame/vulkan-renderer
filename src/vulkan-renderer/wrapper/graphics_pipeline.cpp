@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 
-#include "inexor/vulkan-renderer/exceptions/vk_exception.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <spdlog/spdlog.h>
@@ -131,7 +131,7 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
 
     if (const auto result = vkCreatePipelineCache(m_device.device(), &cache_ci, nullptr, &pipeline_cache);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreatePipelineCache failed for " + name + " !", result);
+        throw VulkanException("Error: vkCreatePipelineCache failed for " + name + " !", result);
     }
 
     // TODO: Assign an internal name to this pipeline cache using Vulkan debug markers!
@@ -141,7 +141,7 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout 
     if (const auto result =
             vkCreateGraphicsPipelines(m_device.device(), pipeline_cache, 1, &pipeline_ci, nullptr, &graphics_pipeline);
         result != VK_SUCCESS) {
-        throw exceptions::VulkanException("Error: vkCreateGraphicsPipelines failed for " + name + " !", result);
+        throw VulkanException("Error: vkCreateGraphicsPipelines failed for " + name + " !", result);
     }
 
     // TODO: Assign an internal name to this graphics pipeline using Vulkan debug markers!
