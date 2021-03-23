@@ -1,0 +1,45 @@
+name: Commit Naming
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  naming:
+    name: Commit Naming
+    runs-on: ubuntu-latest
+    container: python:alpine
+    steps:
+      - name: Update environment
+        run: |
+          apk update
+          apk add --no-cache git less openssh
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Shallow fetch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          git fetch --progress --shallow-exclude ${{ github.base_ref }} origin +${{ github.sha }}:refs/remotes/origin/${{ github.head_ref }}
+          git log --pretty=oneline
+
+      - name: Install gitcc
+        run: |
+          cd ./helper/gitcc
+          pip install .
+
+      - name: Check commits (Pull Request)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          gitcc history --verbose ./
+
+      - name: Check commit (Push)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gitcc commit ./
