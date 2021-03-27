@@ -9,7 +9,7 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
 #include <functional>

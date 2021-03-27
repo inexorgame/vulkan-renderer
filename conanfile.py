@@ -18,6 +18,8 @@ class InexorConan(ConanFile):
         "stb/20200203",
         "tinygltf/2.2.0",
         "toml11/3.4.0",
+        "vulkan-headers/1.2.172",
+        "vulkan-memory-allocator/2.3.0",
     )
 
     options = {

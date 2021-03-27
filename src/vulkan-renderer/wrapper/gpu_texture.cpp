@@ -6,7 +6,7 @@
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #include <spdlog/spdlog.h>
-#include <vma/vma_usage.h>
+#include <vk_mem_alloc.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 
