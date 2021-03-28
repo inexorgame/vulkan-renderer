@@ -18,7 +18,7 @@
 #define VMA_DEBUG_DETECT_CORRUPTION 1
 
 #include <spdlog/spdlog.h>
-#include <vma/vma_usage.h>
+#include <vk_mem_alloc.h>
 
 #include <algorithm>
 #include <fstream>
