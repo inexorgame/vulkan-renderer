@@ -19,8 +19,8 @@ protected:
     VkBuffer m_buffer{VK_NULL_HANDLE};
     VkDeviceSize m_buffer_size{0};
     VmaAllocation m_allocation{VK_NULL_HANDLE};
-    VmaAllocationInfo m_allocation_info;
-    VmaAllocationCreateInfo m_allocation_ci;
+    VmaAllocationInfo m_allocation_info{};
+    VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
     /// @brief Construct the GPU memory buffer without specifying the actual data to fill in, only the memory size.
