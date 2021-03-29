@@ -22,8 +22,8 @@ class Application : public VulkanRenderer {
     std::string m_application_name;
     std::string m_engine_name;
 
-    std::uint32_t m_application_version{0};
-    std::uint32_t m_engine_version{0};
+    static constexpr std::uint32_t m_application_version{VK_MAKE_VERSION(1, 0, 0)};
+    static constexpr std::uint32_t m_engine_version{VK_MAKE_VERSION(1, 0, 0)};
 
     std::vector<std::string> m_vertex_shader_files;
     std::vector<std::string> m_fragment_shader_files;

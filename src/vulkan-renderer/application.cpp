@@ -80,27 +80,6 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Application name: '{}'", m_application_name);
     spdlog::debug("Engine name: '{}'", m_engine_name);
 
-    const int application_version_major = toml::find<int>(renderer_configuration, "application", "version", "major");
-    const int application_version_minor = toml::find<int>(renderer_configuration, "application", "version", "minor");
-    const int application_version_patch = toml::find<int>(renderer_configuration, "application", "version", "patch");
-    spdlog::debug("Application version {}.{}.{}", application_version_major, application_version_minor,
-                  application_version_patch);
-
-    // Generate an std::uint32_t value from the major, minor and patch version info.
-    m_application_version =
-        VK_MAKE_VERSION(application_version_major, application_version_minor, application_version_patch);
-
-    const int engine_version_major =
-        toml::find<int>(renderer_configuration, "application", "engine", "version", "major");
-    const int engine_version_minor =
-        toml::find<int>(renderer_configuration, "application", "engine", "version", "minor");
-    const int engine_version_patch =
-        toml::find<int>(renderer_configuration, "application", "engine", "version", "patch");
-    spdlog::debug("Engine version {}.{}.{}", engine_version_major, engine_version_minor, engine_version_patch);
-
-    // Generate an std::uint32_t value from the major, minor and patch version info.
-    m_engine_version = VK_MAKE_VERSION(engine_version_major, engine_version_minor, engine_version_patch);
-
     m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
 
     spdlog::debug("Textures:");

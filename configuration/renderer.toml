@@ -8,18 +8,8 @@ title = "vulkan-renderer-configuration"
 [application]
 name = "Inexor-Application"
 
-[application.version]
-major = 1
-minor = 0
-patch = 0
-
 [application.engine]
 name = "Inexor-Engine"
-
-[application.engine.version]
-major = 1
-minor = 0
-patch = 0
 
 [application.window]
 width = 800
