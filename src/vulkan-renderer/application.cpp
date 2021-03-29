@@ -75,11 +75,6 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
     spdlog::debug("Window: '{}', {} x {}", m_window_title, m_window_width, m_window_height);
 
-    m_application_name = toml::find<std::string>(renderer_configuration, "application", "name");
-    m_engine_name = toml::find<std::string>(renderer_configuration, "application", "engine", "name");
-    spdlog::debug("Application name: '{}'", m_application_name);
-    spdlog::debug("Engine name: '{}'", m_engine_name);
-
     m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
 
     spdlog::debug("Textures:");
@@ -271,6 +266,10 @@ Application::Application(int argc, char **argv) {
     tools::CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);
 
+    spdlog::debug("application version: {}.{}.{}", m_application_version[0], m_application_version[1],
+                  m_application_version[2]);
+    spdlog::debug("engine version: {}.{}.{}", m_engine_version[0], m_engine_version[1], m_engine_version[2]);
+
     // Load the configuration from the TOML file.
     load_toml_configuration_file("configuration/renderer.toml");
 
@@ -304,7 +303,9 @@ Application::Application(int argc, char **argv) {
     m_glfw_context = std::make_unique<wrapper::GLFWContext>();
 
     m_instance = std::make_unique<wrapper::Instance>(
-        m_application_name, m_engine_name, m_application_version, m_engine_version, VK_API_VERSION_1_1,
+        m_application_name, m_engine_name,
+        VK_MAKE_VERSION(m_application_version[0], m_application_version[1], m_application_version[2]),
+        VK_MAKE_VERSION(m_engine_version[0], m_engine_version[1], m_engine_version[2]), VK_API_VERSION_1_1,
         enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
@@ -513,8 +514,7 @@ void Application::update_imgui_overlay() {
     ImGui::Begin("Inexor Vulkan-renderer", nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
-    ImGui::Text("Engine version %d.%d.%d", VK_VERSION_MAJOR(m_engine_version), VK_VERSION_MINOR(m_engine_version),
-                VK_VERSION_PATCH(m_engine_version));
+    ImGui::Text("Engine version %d.%d.%d (Git sha %s)", m_engine_version[0], m_engine_version[1], m_engine_version[2], m_build_git);
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
