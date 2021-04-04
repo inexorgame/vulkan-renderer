@@ -15,26 +15,26 @@
 
 namespace inexor::vulkan_renderer {
 
-void VulkanRenderer::setup_frame_graph() {
-    auto &back_buffer = m_frame_graph->add<TextureResource>("back buffer");
+void VulkanRenderer::setup_render_graph() {
+    auto &back_buffer = m_render_graph->add<TextureResource>("back buffer");
     back_buffer.set_format(m_swapchain->image_format());
     back_buffer.set_usage(TextureUsage::BACK_BUFFER);
 
-    auto &depth_buffer = m_frame_graph->add<TextureResource>("depth buffer");
+    auto &depth_buffer = m_render_graph->add<TextureResource>("depth buffer");
     depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
     depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
 
-    auto &index_buffer = m_frame_graph->add<BufferResource>("index buffer");
+    auto &index_buffer = m_render_graph->add<BufferResource>("index buffer");
     index_buffer.set_usage(BufferUsage::INDEX_BUFFER);
     index_buffer.upload_data(m_octree_indices);
 
-    auto &vertex_buffer = m_frame_graph->add<BufferResource>("vertex buffer");
+    auto &vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer");
     vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
     vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position));
     vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));
     vertex_buffer.upload_data(m_octree_vertices);
 
-    auto &main_stage = m_frame_graph->add<GraphicsStage>("main stage");
+    auto &main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
     main_stage.reads_from(index_buffer);
@@ -51,7 +51,7 @@ void VulkanRenderer::setup_frame_graph() {
     }
 
     main_stage.add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
-    m_frame_graph->compile(back_buffer);
+    m_render_graph->compile(back_buffer);
 }
 
 void VulkanRenderer::generate_octree_indices() {
@@ -73,11 +73,11 @@ void VulkanRenderer::recreate_swapchain() {
     m_window->wait_for_focus();
     vkDeviceWaitIdle(m_device->device());
 
-    // TODO(): This is quite naive, we don't need to recompile the whole frame graph on swapchain invalidation
-    m_frame_graph.reset();
+    // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
+    m_render_graph.reset();
     m_swapchain->recreate(m_window->width(), m_window->height());
-    m_frame_graph = std::make_unique<FrameGraph>(*m_device, m_command_pool->get(), *m_swapchain);
-    setup_frame_graph();
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
+    setup_render_graph();
 
     m_image_available_semaphore.reset();
     m_rendering_finished_semaphore.reset();
@@ -99,8 +99,8 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_frame_graph->render(image_index, m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
-                          m_device->graphics_queue());
+    m_render_graph->render(image_index, m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
+                           m_device->graphics_queue());
 
     m_imgui_overlay->render(image_index);
 

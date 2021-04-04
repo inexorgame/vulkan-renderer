@@ -2,10 +2,10 @@
 
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
-#include "inexor/vulkan-renderer/frame_graph.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
+#include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
@@ -72,7 +72,7 @@ protected:
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
-    std::unique_ptr<FrameGraph> m_frame_graph;
+    std::unique_ptr<RenderGraph> m_render_graph;
 
     std::vector<wrapper::Shader> m_shaders;
     std::vector<wrapper::GpuTexture> m_textures;
@@ -81,7 +81,7 @@ protected:
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint16_t> m_octree_indices;
 
-    void setup_frame_graph();
+    void setup_render_graph();
     void generate_octree_indices();
     void recreate_swapchain();
     void render_frame();

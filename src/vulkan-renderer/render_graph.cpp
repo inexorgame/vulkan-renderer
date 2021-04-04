@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/frame_graph.hpp"
+#include "inexor/vulkan-renderer/render_graph.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -62,8 +62,8 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(device(), m_render_pass, nullptr);
 }
 
-void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phys,
-                             VmaAllocationCreateInfo *alloc_ci) const {
+void RenderGraph::build_image(const TextureResource *resource, PhysicalImage *phys,
+                              VmaAllocationCreateInfo *alloc_ci) const {
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
 
@@ -91,7 +91,7 @@ void FrameGraph::build_image(const TextureResource *resource, PhysicalImage *phy
     }
 }
 
-void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage *phys) const {
+void RenderGraph::build_image_view(const TextureResource *resource, PhysicalImage *phys) const {
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
     image_view_ci.format = resource->m_format;
     image_view_ci.image = phys->m_image;
@@ -108,14 +108,14 @@ void FrameGraph::build_image_view(const TextureResource *resource, PhysicalImage
     }
 }
 
-void FrameGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
+void RenderGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
     m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
     for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
         phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
     }
 }
 
-void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) const {
+void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) const {
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
@@ -129,7 +129,7 @@ void FrameGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *
                                    stage->m_name + " pipeline layout");
 }
 
-void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
+void RenderGraph::record_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
     for (std::size_t i = 0; i < phys->m_command_buffers.size(); i++) {
         // TODO: Remove simultaneous usage once we have proper max frames in flight control.
         auto &cmd_buf = phys->m_command_buffers[i];
@@ -186,7 +186,7 @@ void FrameGraph::record_command_buffers(const RenderStage *stage, PhysicalStage 
     }
 }
 
-void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
+void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
     std::vector<VkAttachmentDescription> attachments;
     std::vector<VkAttachmentReference> colour_refs;
     std::vector<VkAttachmentReference> depth_refs;
@@ -255,7 +255,7 @@ void FrameGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsS
     }
 }
 
-void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
+void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
     // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;
@@ -352,7 +352,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     pipeline_ci.stageCount = static_cast<std::uint32_t>(stage->m_shaders.size());
     pipeline_ci.pStages = stage->m_shaders.data();
 
-    // TODO: Pipeline caching (basically load the frame graph from a file)
+    // TODO: Pipeline caching (basically load the render graph from a file)
     if (const auto result =
             vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline);
         result != VK_SUCCESS) {
@@ -360,7 +360,7 @@ void FrameGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGra
     }
 }
 
-void FrameGraph::compile(const RenderResource &target) {
+void RenderGraph::compile(const RenderResource &target) {
     // TODO(GH-204): Better logging and input validation.
     // TODO: Many opportunities for optimisation.
 
@@ -508,8 +508,8 @@ void FrameGraph::compile(const RenderResource &target) {
     }
 }
 
-void FrameGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
-                        VkQueue graphics_queue) const {
+void RenderGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
+                         VkQueue graphics_queue) const {
     auto submit_info = wrapper::make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
     submit_info.signalSemaphoreCount = 1;
