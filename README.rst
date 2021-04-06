@@ -14,7 +14,12 @@ vulkan-renderer
 FAQ and documentation
 #####################
 
+Quickstart: `Building Instructions`_ (`Windows`_/`Linux`_) & `Getting started`_
 
+.. _Building Instructions: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html
+.. _Windows: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html#building-windows
+.. _Linux: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html#building-linux
+.. _Getting started: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/getting-started.html
 
 .. image:: documentation/source/images/inexor2.png
 
