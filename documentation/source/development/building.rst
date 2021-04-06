@@ -108,42 +108,42 @@ Install dependencies and tools:
 |        |                                      |
 |        | .. code-block:: bash                 |
 |        |                                      |
-|        |     sudo apt install -y \            |
-|        |       pkg-config \                   |
-|        |       libglm-dev \                   |
-|        |       libxcb-dri3-0 \                |
-|        |       libxcb-present0 \              |
-|        |       libpciaccess0 \                |
-|        |       libpng-dev \                   |
-|        |       libxcb-keysyms1-dev \          |
-|        |       libxcb-dri3-dev \              |
-|        |       libx11-dev  \                  |
-|        |       libmirclient-dev \             |
-|        |       libwayland-dev \               |
-|        |       libxrandr-dev \                |
-|        |       libxcb-ewmh-dev                |
-|        |     sudo apt install -y \            |
-|        |       cmake \                        |
-|        |       ninja-build \                  |
-|        |       clang-tidy \                   |
-|        |       vulkan-sdk \                   |
-|        |       python3 \                      |
-|        |       python3-pip                    |
-|        |     pip3 install \                   |
-|        |       wheel \                        |
-|        |       setuptools \                   |
-|        |       conan                          |
+|        |     # apt install -y \               |
+|        |         pkg-config \                 |
+|        |         libglm-dev \                 |
+|        |         libxcb-dri3-0 \              |
+|        |         libxcb-present0 \            |
+|        |         libpciaccess0 \              |
+|        |         libpng-dev \                 |
+|        |         libxcb-keysyms1-dev \        |
+|        |         libxcb-dri3-dev \            |
+|        |         libx11-dev  \                |
+|        |         libmirclient-dev \           |
+|        |         libwayland-dev \             |
+|        |         libxrandr-dev \              |
+|        |         libxcb-ewmh-dev              |
+|        |     # apt install -y \               |
+|        |         cmake \                      |
+|        |         ninja-build \                |
+|        |         clang-tidy \                 |
+|        |         vulkan-sdk \                 |
+|        |         python3 \                    |
+|        |         python3-pip                  |
+|        |     $ pip3 install \                 |
+|        |         wheel \                      |
+|        |         setuptools \                 |
+|        |         conan                        |
 +--------+--------------------------------------+
 | Gentoo | .. code-block:: bash                 |
 |        |                                      |
-|        |     emerge \                         |
-|        |      dev-util/cmake \                |
-|        |      dev-util/conan \                |
-|        |      dev-util/vulkan-headers \       |
-|        |      dev-util/vulkan-tools \         |
-|        |      dev-vcs/git \                   |
-|        |      media-libs/vulkan-layers \      |
-|        |      media-libs/vulkan-loader        |
+|        |     # emerge \                       |
+|        |        dev-util/cmake \              |
+|        |        dev-util/conan \              |
+|        |        dev-util/vulkan-headers \     |
+|        |        dev-util/vulkan-tools \       |
+|        |        dev-vcs/git \                 |
+|        |        media-libs/vulkan-layers \    |
+|        |        media-libs/vulkan-loader      |
 |        |                                      |
 |        |                                      |
 |        | Install ninja build tool (optional): |
@@ -151,8 +151,7 @@ Install dependencies and tools:
 |        |                                      |
 |        | .. code-block:: bash                 |
 |        |                                      |
-|        |                                      |
-|        |     emerge dev-util/ninja            |
+|        |     # emerge dev-util/ninja          |
 +--------+--------------------------------------+
 | Other  | Planned. `We would love to see a     |
 |        | pull request on this file if you get |
@@ -168,8 +167,8 @@ Clone the repository:
 
 .. code-block:: bash
 
-    git clone https://github.com/inexorgame/vulkan-renderer
-    cd vulkan-renderer
+    $ git clone https://github.com/inexorgame/vulkan-renderer
+    $ cd vulkan-renderer
 
 Configure cmake:
 
@@ -179,10 +178,10 @@ Configure cmake:
 
 .. code-block:: bash
 
-    cmake .. \
-     -Bbuild \
-     -DCMAKE_BUILD_TYPE=Debug \
-     -GNinja
+    $ cmake . \
+       -Bbuild \
+       -DCMAKE_BUILD_TYPE=Debug \
+       -GNinja
 
 Build and run:
 
@@ -190,5 +189,5 @@ If you have any trouble please `open a ticket <https://github.com/inexorgame/vul
 
 .. code-block:: bash
 
-    cmake --build build --target inexor-vulkan-renderer-example
-    ./build/bin/inexor-vulkan-renderer-example
+    $ cmake --build build --target inexor-vulkan-renderer-example
+    $ ./build/bin/inexor-vulkan-renderer-example
