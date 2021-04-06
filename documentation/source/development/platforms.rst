@@ -11,12 +11,13 @@ Microsoft Windows
 -----------------
 
 - We support x64 Microsoft Windows 8, 8.1 and 10.
+- We have :ref:`build instructions for Windows<BUILDING windows>`.
 
 Linux
 ------
 
 - We support every x64 Linux distribution for which Vulkan drivers exist.
-- We have specific build instructions for `Gentoo <https://www.gentoo.org/>`__ and `Ubuntu <https://ubuntu.com/download>`__.
+- We have specific :ref:`build instructions for Gentoo and Ubuntu <BUILDING linux>`.
 - If you have found a way to set it up for other Linux distributions, please `open a pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__ and let us know!
 
 macOS and iOS
