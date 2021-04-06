@@ -1,5 +1,5 @@
 ===============
-Vulkan-renderer
+Vulkan-Renderer
 ===============
 
 |language| |platforms| |github actions| |readthedocs| |license|
@@ -10,11 +10,13 @@ Vulkan-renderer
 
 .. image:: /images/banner.jpg
 
-.. include:: /faq/main.rst
+Documentation
+#############
+
+Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref:`BUILDING Linux`) & :ref:`Getting started<GETTING_STARTED>`
 
 .. toctree::
     :maxdepth: 2
-    :hidden:
 
     contact/main
     faq/main
@@ -25,6 +27,7 @@ Vulkan-renderer
     links/main
     license/main
 
+.. include:: /faq/main.rst
 
 .. Badges.
 
@@ -37,7 +40,7 @@ Vulkan-renderer
 
 .. |discord| image:: https://img.shields.io/discord/698219248954376256?logo=discord
    :target: https://discord.com/invite/acUW8k7
-   
+
 .. |license| image:: https://img.shields.io/github/license/inexorgame/vulkan-renderer?color=brightgreen
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
 
