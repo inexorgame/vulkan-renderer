@@ -512,7 +512,7 @@ void Application::update_uniform_buffers() {
     ubo.proj = m_camera->perspective_matrix();
     ubo.proj[1][1] *= -1;
 
-    // TODO: Refactoring: Embedd this into frame graph.
+    // TODO: Embed this into the render graph.
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
 }
 

@@ -80,7 +80,7 @@ Some labels are mutual to each other like ``org:in progress`` and ``org:on hold`
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |feat:concurrency|  | feat     | concurrency   | multithreading, asynchronous events, concurrency                                   | #D4C5F9 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
-| |feat:frame graph|  | feat     | frame graph   | frame graph                                                                        | #D4C5F9 |
+| |feat:render graph| | feat     | render graph  | render graph                                                                       | #D4C5F9 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
 | |feat:gui|          | feat     | gui           | graphical user interface                                                           | #D4C5F9 |
 +---------------------+----------+---------------+------------------------------------------------------------------------------------+---------+
@@ -144,7 +144,7 @@ Some labels are mutual to each other like ``org:in progress`` and ``org:on hold`
 .. |org:wontfix| image:: https://img.shields.io/badge/-org:wontfix-DDDDDD
 .. |feat:ci| image:: https://img.shields.io/badge/-feat:ci-D4C5F9
 .. |feat:concurrency| image:: https://img.shields.io/badge/-feat:concurrency-D4C5F9
-.. |feat:frame graph| image:: https://img.shields.io/badge/-feat:frame_graph-D4C5F9
+.. |feat:render graph| image:: https://img.shields.io/badge/-feat:render_graph-D4C5F9
 .. |feat:gui| image:: https://img.shields.io/badge/-feat:gui-D4C5F9
 .. |feat:input| image:: https://img.shields.io/badge/-feat:input-D4C5F9
 .. |feat:lightning| image:: https://img.shields.io/badge/-feat:lightning-D4C5F9

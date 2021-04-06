@@ -25,18 +25,18 @@
 
 namespace inexor::vulkan_renderer {
 
-class FrameGraph;
+class RenderGraph;
 
-/// @brief Base class of all frame graph objects (resources and stages)
+/// @brief Base class of all render graph objects (resources and stages)
 /// @note This is just for internal use
-struct FrameGraphObject {
-    FrameGraphObject() = default;
-    FrameGraphObject(const FrameGraphObject &) = delete;
-    FrameGraphObject(FrameGraphObject &&) = delete;
-    virtual ~FrameGraphObject() = default;
+struct RenderGraphObject {
+    RenderGraphObject() = default;
+    RenderGraphObject(const RenderGraphObject &) = delete;
+    RenderGraphObject(RenderGraphObject &&) = delete;
+    virtual ~RenderGraphObject() = default;
 
-    FrameGraphObject &operator=(const FrameGraphObject &) = delete;
-    FrameGraphObject &operator=(FrameGraphObject &&) = delete;
+    RenderGraphObject &operator=(const RenderGraphObject &) = delete;
+    RenderGraphObject &operator=(RenderGraphObject &&) = delete;
 
     /// @brief Casts this object to type `T`
     /// @return The object as type `T` or `nullptr` if the cast failed
@@ -48,10 +48,10 @@ struct FrameGraphObject {
     const T *as() const;
 };
 
-/// @brief A single resource in the frame graph
-/// @note May become multiple physical (vulkan) resources during frame graph compilation
-class RenderResource : public FrameGraphObject {
-    friend FrameGraph;
+/// @brief A single resource in the render graph
+/// @note May become multiple physical (vulkan) resources during render graph compilation
+class RenderResource : public RenderGraphObject {
+    friend RenderGraph;
 
 private:
     const std::string m_name;
@@ -70,7 +70,7 @@ public:
 
 enum class BufferUsage {
     /// @brief Invalid buffer usage
-    /// @note Leaving a buffer as this usage will cause frame graph compilation to fail!
+    /// @note Leaving a buffer as this usage will cause render graph compilation to fail!
     INVALID,
 
     /// @brief Specifies that the buffer will be used to input index data
@@ -81,13 +81,13 @@ enum class BufferUsage {
 };
 
 class BufferResource : public RenderResource {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     BufferUsage m_usage{BufferUsage::INVALID};
     std::vector<VkVertexInputAttributeDescription> m_vertex_attributes;
 
-    // Data to upload during frame graph compilation.
+    // Data to upload during render graph compilation.
     const void *m_data{nullptr};
     std::size_t m_data_size{0};
     std::size_t m_element_size{0};
@@ -106,7 +106,7 @@ public:
     /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER!
     void add_vertex_attribute(VkFormat format, std::uint32_t offset);
 
-    /// @brief Specifies that data should be uploaded to this buffer during frame graph compilation
+    /// @brief Specifies that data should be uploaded to this buffer during render graph compilation
     /// @param count The number of elements (not bytes) to upload from CPU memory to GPU memory
     /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
     // TODO: Use std::span when we switch to C++ 20.
@@ -122,10 +122,10 @@ public:
 
 enum class TextureUsage {
     /// @brief Invalid texture usage
-    /// @note Leaving a texture as this usage will cause frame graph compilation to fail!
+    /// @note Leaving a texture as this usage will cause render graph compilation to fail!
     INVALID,
 
-    /// @brief Specifies that this texture is the result of the frame graph
+    /// @brief Specifies that this texture is the result of the render graph
     // TODO: Refactor back buffer system more (remove need for BACK_BUFFER texture usage)
     BACK_BUFFER,
 
@@ -138,7 +138,7 @@ enum class TextureUsage {
 };
 
 class TextureResource : public RenderResource {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     VkFormat m_format{VK_FORMAT_UNDEFINED};
@@ -161,10 +161,10 @@ public:
     }
 };
 
-/// @brief A single render stage in the frame graph
+/// @brief A single render stage in the render graph
 /// @note Not to be confused with a vulkan render pass!
-class RenderStage : public FrameGraphObject {
-    friend FrameGraph;
+class RenderStage : public RenderGraphObject {
+    friend RenderGraph;
 
 private:
     const std::string m_name;
@@ -193,7 +193,7 @@ public:
 
     /// @brief Binds a descriptor set layout to this render stage
     /// @note This function will soon be removed
-    // TODO: Refactor descriptor management in the frame graph
+    // TODO: Refactor descriptor management in the render graph
     void add_descriptor_layout(VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
     }
@@ -207,7 +207,7 @@ public:
 };
 
 class GraphicsStage : public RenderStage {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     bool m_clears_screen{false};
@@ -237,8 +237,8 @@ public:
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.
-class PhysicalResource : public FrameGraphObject {
-    friend FrameGraph;
+class PhysicalResource : public RenderGraphObject {
+    friend RenderGraph;
 
 protected:
     // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
@@ -258,7 +258,7 @@ public:
 };
 
 class PhysicalBuffer : public PhysicalResource {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
@@ -274,7 +274,7 @@ public:
 };
 
 class PhysicalImage : public PhysicalResource {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     VkImage m_image{VK_NULL_HANDLE};
@@ -291,7 +291,7 @@ public:
 };
 
 class PhysicalBackBuffer : public PhysicalResource {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     const wrapper::Swapchain &m_swapchain;
@@ -307,8 +307,8 @@ public:
     PhysicalBackBuffer &operator=(PhysicalBackBuffer &&) = delete;
 };
 
-class PhysicalStage : public FrameGraphObject {
-    friend FrameGraph;
+class PhysicalStage : public RenderGraphObject {
+    friend RenderGraph;
 
 private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
@@ -331,14 +331,14 @@ public:
     PhysicalStage &operator=(PhysicalStage &&) = delete;
 
     /// @brief Retrieve the pipeline layout of this physical stage
-    // TODO: This can be removed once descriptors are properly implemented in the frame graph.
+    // TODO: This can be removed once descriptors are properly implemented in the render graph.
     [[nodiscard]] VkPipelineLayout pipeline_layout() const {
         return m_pipeline_layout;
     }
 };
 
 class PhysicalGraphicsStage : public PhysicalStage {
-    friend FrameGraph;
+    friend RenderGraph;
 
 private:
     VkRenderPass m_render_pass{VK_NULL_HANDLE};
@@ -354,12 +354,12 @@ public:
     PhysicalGraphicsStage &operator=(PhysicalGraphicsStage &&) = delete;
 };
 
-class FrameGraph {
+class RenderGraph {
 private:
     const wrapper::Device &m_device;
     VkCommandPool m_command_pool{VK_NULL_HANDLE};
     const wrapper::Swapchain &m_swapchain;
-    std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("frame-graph")};
+    std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
     // Vectors of render resources and stages. These own the memory. Note that unique_ptr must be used as Render* is
     // just an inheritable base class.
@@ -376,7 +376,7 @@ private:
     // Stage to physical stage map.
     std::unordered_map<const RenderStage *, std::unique_ptr<PhysicalStage>> m_stage_map;
 
-    // Helper function used to create a physical resource during frame graph compilation.
+    // Helper function used to create a physical resource during render graph compilation.
     // TODO: Use concepts when we switch to C++ 20.
     template <typename T, typename... Args, std::enable_if_t<std::is_base_of_v<PhysicalResource, T>, int> = 0>
     T *create(const RenderResource *resource, Args &&... args) {
@@ -386,7 +386,7 @@ private:
         return ret;
     }
 
-    // Helper function used to create a physical stage during frame graph compilation.
+    // Helper function used to create a physical stage during render graph compilation.
     // TODO: Use concepts when we switch to C++ 20.
     template <typename T, typename... Args, std::enable_if_t<std::is_base_of_v<PhysicalStage, T>, int> = 0>
     T *create(const RenderStage *stage, Args &&... args) {
@@ -411,10 +411,10 @@ private:
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *) const;
 
 public:
-    FrameGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
+    RenderGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
         : m_device(device), m_command_pool(command_pool), m_swapchain(swapchain) {}
 
-    /// @brief Adds either a render resource or render stage to the frame graph
+    /// @brief Adds either a render resource or render stage to the render graph
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
     T &add(Args &&... args) {
@@ -430,7 +430,7 @@ public:
         return ret;
     }
 
-    /// @brief Compiles the frame graph resources/stages into physical vulkan objects
+    /// @brief Compiles the render graph resources/stages into physical vulkan objects
     /// @param target The resource to start the depth first search from
     void compile(const RenderResource &target);
 
@@ -441,12 +441,12 @@ public:
 };
 
 template <typename T>
-T *FrameGraphObject::as() {
+T *RenderGraphObject::as() {
     return dynamic_cast<T *>(this);
 }
 
 template <typename T>
-const T *FrameGraphObject::as() const {
+const T *RenderGraphObject::as() const {
     return dynamic_cast<const T *>(this);
 }
 
