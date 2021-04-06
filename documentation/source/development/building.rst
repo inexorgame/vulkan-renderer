@@ -109,6 +109,7 @@ Install dependencies and tools:
 |        | .. code-block:: bash                 |
 |        |                                      |
 |        |     sudo apt install -y \            |
+|        |       pkg-config \                   |
 |        |       libglm-dev \                   |
 |        |       libxcb-dri3-0 \                |
 |        |       libxcb-present0 \              |
@@ -125,7 +126,9 @@ Install dependencies and tools:
 |        |       cmake \                        |
 |        |       ninja-build \                  |
 |        |       clang-tidy \                   |
-|        |       vulkan-sdk                     |
+|        |       vulkan-sdk \                   |
+|        |       python3 \                      |
+|        |       python3-pip                    |
 |        |     pip3 install \                   |
 |        |       wheel \                        |
 |        |       setuptools \                   |
