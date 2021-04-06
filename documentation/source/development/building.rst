@@ -3,6 +3,11 @@
 How to build vulkan-renderer
 ============================
 
+ * :ref:`BUILDING Windows`
+ * :ref:`BUILDING Linux`
+
+Also see :ref:`GETTING_STARTED`.
+
 If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
 This project uses out of source builds using either `gcc <https://gcc.gnu.org/>`__, `clang <https://clang.llvm.org/>`__ or `Microsoft Visual Studio <https://visualstudio.microsoft.com/en/downloads/>`__ compiler.

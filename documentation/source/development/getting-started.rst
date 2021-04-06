@@ -3,6 +3,8 @@
 Getting started
 ===============
 
+Also see the :ref:`building instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref:`BUILDING Linux`).
+
 Required Software
 -----------------
 
