@@ -21,7 +21,8 @@ master_doc = 'index'
 
 project = 'Inexor Vulkan Renderer'
 author = 'Inexor Collective'
-copyright = 'CC BY 2020-present ' + author
+copyright = '2020-present ' + author + '. The page content is licensed under CC ' \
+ + 'BY 4.0 unless otherwise noted'
 title = project + ' Documentation'
 version = 'v0.1-alpha.3'
 release = 'v0.1-alpha.3'
