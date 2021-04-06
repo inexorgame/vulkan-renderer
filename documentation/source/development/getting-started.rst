@@ -1,3 +1,5 @@
+.. _GETTING_STARTED:
+
 Getting started
 ===============
 

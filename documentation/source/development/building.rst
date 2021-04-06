@@ -1,3 +1,5 @@
+.. _BUILDING:
+
 How to build vulkan-renderer
 ============================
 
@@ -17,7 +19,7 @@ There are four CMake targets and options are available:
      - comment
    * - inexor-vulkan-renderer
      - The main executable.
-     - 
+     -
    * - inexor-vulkan-renderer-tests
      - Tests the renderer using `Google Test <https://github.com/google/googletest>`__.
      - There are no tests available yet.
@@ -26,7 +28,7 @@ There are four CMake targets and options are available:
      - There are no benchmarks available yet.
    * - inexor-vulkan-renderer-documentation
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__. Enable target creation with ``-DINEXOR_BUILD_DOC=ON``.
-     - 
+     -
 
 .. list-table:: List of CMake options.
    :header-rows: 1
@@ -52,6 +54,8 @@ There are four CMake targets and options are available:
    * - INEXOR_BUILD_DOC
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
      - ``OFF``
+
+.. _BUILDING windows:
 
 Windows
 ^^^^^^^
@@ -83,6 +87,8 @@ Windows
 - Click "Generate". You can now open the Visual Studio project file in your ``build`` folder.
 - For debugging, please check that the root directory of the repository is set as working directory in Visual Studio. Usually, CMake should take care of this already.
 - You are now ready to start debugging! Our master branch must be stable at all cost.
+
+.. _BUILDING linux:
 
 Linux
 ^^^^^
