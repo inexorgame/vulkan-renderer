@@ -101,7 +101,12 @@ Linux
 Install dependencies and tools:
 
 +--------+--------------------------------------+
-| Ubuntu | .. code-block:: bash                 |
+| Ubuntu | Follow the                           |
+|        | `Install the SDK`_-instructions on   |
+|        | the vulkan-sdk page.                 |
+|        |                                      |
+|        |                                      |
+|        | .. code-block:: bash                 |
 |        |                                      |
 |        |     sudo apt install -y \            |
 |        |       libglm-dev \                   |
@@ -153,6 +158,8 @@ Install dependencies and tools:
 +--------+--------------------------------------+
 
 __ https://github.com/inexorgame/vulkan-renderer/pulls
+
+.. _Install the SDK: https://vulkan.lunarg.com/doc/sdk/latest/linux/getting_started_ubuntu.html#user-content-install-the-sdk
 
 Clone the repository:
 
