@@ -20,6 +20,9 @@ if(INEXOR_BUILD_TESTS)
 else()
     set(tests_option False)
 endif()
+if(UNIX)
+    set(compiler_libcxx SETTINGS compiler.libcxx=libstdc++11)
+endif()
 conan_cmake_run(
     CONANFILE conanfile.py
     BASIC_SETUP
@@ -30,5 +33,6 @@ conan_cmake_run(
     OPTIONS build_benchmarks=${benchmark_option}
             build_tests=${tests_option}
     SETTINGS compiler.cppstd=17
+    ${compiler_libcxx}
 )
 conan_check_compiler()
