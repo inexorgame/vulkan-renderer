@@ -33,6 +33,12 @@ class InexorConan(ConanFile):
 
     generators = "cmake"
 
+    def configure(self):
+        if self.settings.os == "Linux" and self.settings.compiler.libcxx == "libstdc++":
+            raise Exception("Inexor is not compatible with libstdc++. " \
+                            + "Please change the 'compiler.libcxx'-setting " \
+                            + "(e.g. to libstdc++11).")
+
     def requirements(self):
         if self.options.build_benchmarks:
             self.requires("benchmark/1.5.0")
