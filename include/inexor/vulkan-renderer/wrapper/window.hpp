@@ -78,11 +78,11 @@ public:
         return m_window;
     }
 
-    [[nodiscard]] int width() const {
+    [[nodiscard]] std::uint32_t width() const {
         return m_width;
     }
 
-    [[nodiscard]] int height() const {
+    [[nodiscard]] std::uint32_t height() const {
         return m_height;
     }
 };
