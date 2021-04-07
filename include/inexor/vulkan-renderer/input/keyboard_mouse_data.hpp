@@ -17,10 +17,9 @@ class KeyboardMouseInputData {
     bool mouse_buttons_updated{false};
 
 public:
-    KeyboardMouseInputData();
+    KeyboardMouseInputData() = default;
     KeyboardMouseInputData(const KeyboardMouseInputData &) = delete;
     KeyboardMouseInputData(KeyboardMouseInputData &&) = delete;
-
     ~KeyboardMouseInputData() = default;
 
     KeyboardMouseInputData &operator=(const KeyboardMouseInputData &) = delete;
