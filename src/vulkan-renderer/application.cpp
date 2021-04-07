@@ -18,7 +18,7 @@
 
 namespace inexor::vulkan_renderer {
 
-void Application::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+void Application::key_callback(GLFWwindow *, int key, int, int action, int) {
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_key(key);
@@ -31,11 +31,11 @@ void Application::key_callback(GLFWwindow *window, int key, int scancode, int ac
     }
 }
 
-void Application::cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
+void Application::cursor_position_callback(GLFWwindow *, double xpos, double ypos) {
     m_input_data->set_cursor_pos(xpos, ypos);
 }
 
-void Application::mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+void Application::mouse_button_callback(GLFWwindow *, int button, int action, int) {
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_mouse_button(button);
@@ -48,7 +48,7 @@ void Application::mouse_button_callback(GLFWwindow *window, int button, int acti
     }
 }
 
-void Application::mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+void Application::mouse_scroll_callback(GLFWwindow *, double, double yoffset) {
     m_camera->change_zoom(static_cast<float>(yoffset));
 }
 
