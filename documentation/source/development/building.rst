@@ -159,7 +159,7 @@ Install dependencies and tools:
 |        | distributions.`__                    |
 +--------+--------------------------------------+
 
-__ https://github.com/inexorgame/vulkan-renderer/pulls
+__ https://github.com/inexorgame/vulkan-renderer/blob/master/documentation/source/development/building.rst
 
 .. _Install the SDK: https://vulkan.lunarg.com/doc/sdk/latest/linux/getting_started_ubuntu.html#user-content-install-the-sdk
 
