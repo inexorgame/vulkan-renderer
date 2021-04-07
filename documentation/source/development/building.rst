@@ -1,7 +1,7 @@
 .. _BUILDING:
 
-How to build vulkan-renderer
-============================
+Building vulkan-renderer
+========================
 
  * :ref:`BUILDING Windows`
  * :ref:`BUILDING Linux`
