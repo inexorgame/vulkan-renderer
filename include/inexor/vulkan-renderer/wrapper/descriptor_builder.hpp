@@ -45,8 +45,8 @@ public:
     /// @param shader_stage The shader stage the uniform buffer will be used in, most likely the vertex shader.
     /// @return A const reference to this DescriptorBuilder instance.
     template <typename T>
-    DescriptorBuilder &add_uniform_buffer(const VkBuffer uniform_buffer, const std::uint32_t binding,
-                                          const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT);
+    DescriptorBuilder &add_uniform_buffer(VkBuffer uniform_buffer, std::uint32_t binding,
+                                          VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT);
 
     /// @brief Adds a combined image sampler to the descriptor container.
     /// @param image_sampler The pointer to the combined image sampler.
@@ -54,9 +54,9 @@ public:
     /// @param binding The binding index which will be used in the SPIR-V shader.
     /// @param shader_stage The shader stage the uniform buffer will be used in, most likely the fragment shader.
     /// @return A const reference to this DescriptorBuilder instance.
-    DescriptorBuilder &
-    add_combined_image_sampler(const VkSampler image_sampler, const VkImageView image_view, const std::uint32_t binding,
-                               const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT);
+    DescriptorBuilder &add_combined_image_sampler(VkSampler image_sampler, VkImageView image_view,
+                                                  std::uint32_t binding,
+                                                  VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT);
 
     /// @brief Builds the resource descriptor.
     /// @param name The internal name of the resource descriptor.
