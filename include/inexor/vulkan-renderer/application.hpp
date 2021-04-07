@@ -14,7 +14,7 @@
 // forward declarations
 namespace inexor::vulkan_renderer::input {
 class KeyboardMouseInputData;
-}
+} // namespace inexor::vulkan_renderer::input
 
 namespace inexor::vulkan_renderer {
 
