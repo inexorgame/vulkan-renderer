@@ -105,6 +105,7 @@ Install dependencies and tools:
 |        | `Install the SDK`_-instructions on   |
 |        | the vulkan-sdk page.                 |
 |        |                                      |
+|        | Install the required packages:[#f1]_ |
 |        |                                      |
 |        | .. code-block:: shell-session        |
 |        |                                      |
@@ -133,6 +134,7 @@ Install dependencies and tools:
 |        |         wheel \                      |
 |        |         setuptools \                 |
 |        |         conan                        |
+|        |                                      |
 +--------+--------------------------------------+
 | Gentoo | .. code-block:: shell-session        |
 |        |                                      |
@@ -163,6 +165,7 @@ __ https://github.com/inexorgame/vulkan-renderer/blob/master/documentation/sourc
 
 .. _Install the SDK: https://vulkan.lunarg.com/doc/sdk/latest/linux/getting_started_ubuntu.html#user-content-install-the-sdk
 
+
 Clone the repository:
 
 .. code-block:: shell-session
@@ -191,3 +194,7 @@ If you have any trouble please `open a ticket <https://github.com/inexorgame/vul
 
     $ cmake --build build --target inexor-vulkan-renderer-example
     $ ./build/bin/inexor-vulkan-renderer-example
+
+.. rubric:: Footnotes
+
+.. [#f1] Make sure that ``$PATH`` includes the directory which contains ``conan`` (normally ``$HOME/.local/bin``). Bash includes this directory by default, zsh does **not**.
