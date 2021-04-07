@@ -12,14 +12,14 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     assert(!title.empty());
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_VISIBLE, visible);
-    glfwWindowHint(GLFW_RESIZABLE, resizable);
+    glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
 
     spdlog::debug("Creating window.");
 
-    m_window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    m_window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), title.c_str(), nullptr, nullptr);
 
-    if (!m_window) {
+    if (m_window == nullptr) {
         throw std::runtime_error("Error: glfwCreateWindow failed for window " + title + " !");
     }
 }
@@ -78,7 +78,7 @@ void Window::poll() {
 }
 
 bool Window::should_close() {
-    return glfwWindowShouldClose(m_window);
+    return glfwWindowShouldClose(m_window) == GLFW_TRUE;
 }
 
 Window::~Window() {
