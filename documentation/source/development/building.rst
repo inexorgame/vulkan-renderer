@@ -68,17 +68,17 @@ Windows
 .. note::
     When building a VS solution add ``--config Debug/Release`` to define the build type.
 
-.. code-block:: shell
+.. code-block:: doscon
 
     # executing from project root assumed
     # Ninja generator and Debug type
-    cmake -DINEXOR_CONAN_PROFILE=default -G Ninja -B./cmake-build-debug/ -DCMAKE_BUILD_TYPE=Debug ./
+    \> cmake -DINEXOR_CONAN_PROFILE=default -G Ninja -B./cmake-build-debug/ -DCMAKE_BUILD_TYPE=Debug ./
     # Ninja generator and Release type
-    cmake -G Ninja -B./cmake-build-release/ -DCMAKE_BUILD_TYPE=Release ./
+    \> cmake -G Ninja -B./cmake-build-release/ -DCMAKE_BUILD_TYPE=Release ./
     # Create Visual Studio Solution
-    cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug ./
+    \> cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug ./
     # Build all targets
-    cmake --build ./cmake-build-debug/
+    \> cmake --build ./cmake-build-debug/
 
 .. note::
     If you use CMake GUI add `CMAKE_BUILD_TYPE` with value `Debug` or `Release`. `#228 <https://github.com/inexorgame/vulkan-renderer/issues/228>`__.
@@ -106,7 +106,7 @@ Install dependencies and tools:
 |        | the vulkan-sdk page.                 |
 |        |                                      |
 |        |                                      |
-|        | .. code-block:: bash                 |
+|        | .. code-block:: shell-session        |
 |        |                                      |
 |        |     # apt install -y \               |
 |        |         pkg-config \                 |
@@ -134,7 +134,7 @@ Install dependencies and tools:
 |        |         setuptools \                 |
 |        |         conan                        |
 +--------+--------------------------------------+
-| Gentoo | .. code-block:: bash                 |
+| Gentoo | .. code-block:: shell-session        |
 |        |                                      |
 |        |     # emerge \                       |
 |        |        dev-util/cmake \              |
@@ -149,7 +149,7 @@ Install dependencies and tools:
 |        | Install ninja build tool (optional): |
 |        |                                      |
 |        |                                      |
-|        | .. code-block:: bash                 |
+|        | .. code-block:: shell-session        |
 |        |                                      |
 |        |     # emerge dev-util/ninja          |
 +--------+--------------------------------------+
@@ -165,7 +165,7 @@ __ https://github.com/inexorgame/vulkan-renderer/pulls
 
 Clone the repository:
 
-.. code-block:: bash
+.. code-block:: shell-session
 
     $ git clone https://github.com/inexorgame/vulkan-renderer
     $ cd vulkan-renderer
@@ -176,7 +176,7 @@ Configure cmake:
 
     - Only pass ``-GNinja`` if the ninja build tool is installed.
 
-.. code-block:: bash
+.. code-block:: shell-session
 
     $ cmake . \
        -Bbuild \
@@ -187,7 +187,7 @@ Build and run:
 
 If you have any trouble please `open a ticket <https://github.com/inexorgame/vulkan-renderer/issues>`__ or join our `Discord server <https://discord.com/invite/acUW8k7>`__.
 
-.. code-block:: bash
+.. code-block:: shell-session
 
     $ cmake --build build --target inexor-vulkan-renderer-example
     $ ./build/bin/inexor-vulkan-renderer-example
