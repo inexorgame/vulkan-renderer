@@ -334,6 +334,7 @@ Checks: >
   readability-static-definition-in-anonymous-namespace,
   readability-string-compare,
   readability-uniqueptr-delete-release,
+  readability-uppercase-literal-suffix,
   readability-use-anyofallof,
 FormatStyle:     file
 HeaderFilterRegex: 'inexor/*'
@@ -643,5 +644,5 @@ CheckOptions:
   - key:             readability-uppercase-literal-suffix.IgnoreMacros
     value:           '1'
   - key:             readability-uppercase-literal-suffix.NewSuffixes
-    value:           ''
+    value:           'f;u;l;ul;ull'
 ...
