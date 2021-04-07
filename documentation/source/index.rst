@@ -18,14 +18,14 @@ Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref
 .. toctree::
     :maxdepth: 2
 
-    contact/main
-    faq/main
-    code/main
     development/main
+    code/main
     contributing/main
+    faq/main
     changelog/main
     links/main
     license/main
+    contact/main
 
 .. include:: /faq/main.rst
 
