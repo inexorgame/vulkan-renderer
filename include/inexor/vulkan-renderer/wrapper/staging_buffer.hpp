@@ -12,7 +12,7 @@ class Device;
 /// @brief RAII wrapper class for staging buffers.
 /// A staging buffer is a buffer which is used for copying data.
 /// Using a staging buffer is the most efficient way to copy memory from RAM to GPU.
-class StagingBuffer : public GPUMemoryBuffer {
+class StagingBuffer final : public GPUMemoryBuffer {
     const Device &m_device;
     OnceCommandBuffer m_command_buffer_for_copying;
 
@@ -25,11 +25,9 @@ public:
     /// @param data_size The size of the memory buffer to copy.
     StagingBuffer(const Device &device, const std::string &name, VkDeviceSize buffer_size, void *data,
                   std::size_t data_size);
-
     StagingBuffer(const StagingBuffer &) = delete;
     StagingBuffer(StagingBuffer &&) noexcept;
-
-    ~StagingBuffer() = default;
+    ~StagingBuffer() override = default;
 
     StagingBuffer &operator=(const StagingBuffer &) = delete;
     StagingBuffer &operator=(StagingBuffer &&) = delete;
