@@ -1,5 +1,7 @@
-*******
-License
-*******
+*******************
+Source Code License
+*******************
+
+
 
 .. include:: ../../../LICENSE
