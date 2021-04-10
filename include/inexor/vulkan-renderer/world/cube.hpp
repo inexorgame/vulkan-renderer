@@ -5,11 +5,15 @@
 #include <glm/geometric.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/vec3.hpp>
+#include <spdlog/spdlog.h>
 
 #include <array>
+#include <functional>
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <stack>
+#include <utility>
 #include <vector>
 
 // forward declaration
@@ -43,6 +47,8 @@ public:
     static constexpr std::size_t EDGES{12};
     /// Cube Type.
     enum class Type { EMPTY = 0b00u, SOLID = 0b01u, NORMAL = 0b10u, OCTANT = 0b11u };
+    enum class NeighborAxis { X = 2, Y = 1, Z = 0 };
+    enum class NeighborDirection { POSITIVE, NEGATIVE };
 
     /// IDs of the children and edges which will be swapped to receive the rotation.
     /// To achieve a 90 degree rotation the 0th index have to be swapped with the 1st and the 1st with the 2nd, etc.
@@ -59,14 +65,15 @@ public:
     };
 
 private:
-    Type m_type{Type::SOLID};
+    static constexpr Type DEFAULT_TYPE = Type::EMPTY;
+    Type m_type{DEFAULT_TYPE};
     float m_size{32};
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
 
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
 
-    /// Index of this in m_parent.m_childs; nullopt if root.
+    /// Index of this in m_parent.m_children; nullopt if root.
     std::optional<uint8_t> m_index{std::nullopt};
 
     /// Indentations, should only be used if it is a geometry cube.
@@ -165,6 +172,8 @@ public:
     /// Recursive way to collect all the caches.
     /// @param update_invalid If true it will update invalid polygon caches.
     [[nodiscard]] std::vector<PolygonCache> polygons(bool update_invalid = false) const;
+
+    [[nodiscard]] std::weak_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
 };
 
 } // namespace inexor::vulkan_renderer::world
