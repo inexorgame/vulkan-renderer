@@ -28,7 +28,6 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_vertex_shader_files;
     std::vector<std::string> m_fragment_shader_files;
     std::vector<std::string> m_texture_files;
-    std::vector<std::string> m_shader_files;
     std::vector<std::string> m_gltf_model_files;
 
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;

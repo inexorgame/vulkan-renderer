@@ -141,9 +141,6 @@ void Application::load_textures() {
     assert(m_device->physical_device());
     assert(m_device->allocator());
 
-    // TODO: Refactor! use key from TOML file as name!
-    const std::size_t texture_number = 1;
-
     // Insert the new texture into the list of textures.
     std::string texture_name = "unnamed texture";
 
@@ -161,8 +158,6 @@ void Application::load_shaders() {
     if (m_vertex_shader_files.empty()) {
         spdlog::error("No vertex shaders to load!");
     }
-
-    const auto total_number_of_shaders = m_vertex_shader_files.size() + m_fragment_shader_files.size();
 
     // Loop through the list of vertex shaders and initialise all of them.
     for (const auto &vertex_shader_file : m_vertex_shader_files) {
