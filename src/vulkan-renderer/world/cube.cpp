@@ -12,6 +12,7 @@ void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::wo
     std::swap(lhs.m_size, rhs.m_size);
     std::swap(lhs.m_position, rhs.m_position);
     std::swap(lhs.m_parent, rhs.m_parent);
+    std::swap(lhs.m_index, rhs.m_index);
     std::swap(lhs.m_indentations, rhs.m_indentations);
     std::swap(lhs.m_children, rhs.m_children);
     std::swap(lhs.m_polygon_cache, rhs.m_polygon_cache);
@@ -176,8 +177,9 @@ void Cube::rotate<3>(const RotationAxis::Type &axis) {
 
 Cube::Cube(const float size, const glm::vec3 &position) : m_size(size), m_position(position) {}
 
-Cube::Cube(std::weak_ptr<Cube> parent, const float size, const glm::vec3 &position) : Cube(size, position) {
+Cube::Cube(std::weak_ptr<Cube> parent, uint8_t index, const float size, const glm::vec3 &position) : Cube(size, position) {
     m_parent = std::move(parent);
+    m_index = index;
 }
 
 Cube::Cube(Cube &&rhs) noexcept : Cube() {
@@ -259,8 +261,9 @@ void Cube::set_type(const Type new_type) {
         break;
     case Type::OCTANT:
         const float half_size = m_size / 2;
+        uint8_t index = 0;
         auto create_cube = [&](const glm::vec3 &offset) {
-            return std::make_shared<Cube>(weak_from_this(), half_size, m_position + offset);
+            return std::make_shared<Cube>(weak_from_this(), index++, half_size, m_position + offset);
         };
         // Look into octree documentation to find information about the order of subcubes in space.
         // We can't use initializer list here because clang-tidy complains about it.

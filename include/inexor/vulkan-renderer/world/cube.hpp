@@ -9,6 +9,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 // forward declaration
@@ -65,6 +66,9 @@ private:
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
 
+    /// Index of this in m_parent.m_childs; nullopt if root.
+    std::optional<uint8_t> m_index{std::nullopt};
+
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations;
     std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_children;
@@ -91,7 +95,7 @@ public:
     /// Create a solid cube.
     Cube(float size, const glm::vec3 &position);
     /// Create a solid cube.
-    Cube(std::weak_ptr<Cube> parent, float size, const glm::vec3 &position);
+    Cube(std::weak_ptr<Cube> parent, uint8_t index, float size, const glm::vec3 &position);
     /// Use clone() to create an independent copy of a cube.
     Cube(const Cube &rhs) = delete;
     Cube(Cube &&rhs) noexcept;
