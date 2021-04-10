@@ -5,10 +5,14 @@
 #include <glm/geometric.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/vec3.hpp>
+#include <spdlog/spdlog.h>
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <utility>
 #include <vector>
 
 // forward declaration
@@ -42,6 +46,8 @@ public:
     static constexpr std::size_t EDGES{12};
     /// Cube Type.
     enum class Type { EMPTY = 0b00u, SOLID = 0b01u, NORMAL = 0b10u, OCTANT = 0b11u };
+    enum class NeighborAxis { X = 2, Y = 1, Z = 0 };
+    enum class NeighborDirection { POSITIVE, NEGATIVE };
 
     /// IDs of the children and edges which will be swapped to receive the rotation.
     /// To achieve a 90 degree rotation the 0th index have to be swapped with the 1st and the 1st with the 2nd, etc.
@@ -58,12 +64,15 @@ public:
     };
 
 private:
-    Type m_type{Type::SOLID};
+    Type m_type{Type::EMPTY};
     float m_size{32};
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
 
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
+
+    /// Index of this in m_parent.m_children; undefined behavior if root.
+    std::uint8_t m_index_in_parent{};
 
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations;
@@ -86,12 +95,12 @@ private:
     void rotate(const RotationAxis::Type &axis);
 
 public:
-    /// Create a solid cube.
+    /// Create an empty cube.
     Cube() = default;
-    /// Create a solid cube.
+    /// Create an empty cube.
     Cube(float size, const glm::vec3 &position);
-    /// Create a solid cube.
-    Cube(std::weak_ptr<Cube> parent, float size, const glm::vec3 &position);
+    /// Create an empty cube.
+    Cube(std::weak_ptr<Cube> parent, std::uint8_t index, float size, const glm::vec3 &position);
     /// Use clone() to create an independent copy of a cube.
     Cube(const Cube &rhs) = delete;
     Cube(Cube &&rhs) noexcept;
@@ -161,6 +170,17 @@ public:
     /// Recursive way to collect all the caches.
     /// @param update_invalid If true it will update invalid polygon caches.
     [[nodiscard]] std::vector<PolygonCache> polygons(bool update_invalid = false) const;
+
+    /// Get the (face) neighbor of this cube by using a similar implementation to Samets "OT_GTEQ_FACE_NEIGHBOR(P,I)".
+    /// @brief Get the (face) neighbor of this cube.
+    /// @param axis The axis on which to get the neighboring cube
+    /// @param direction Whether to get the cube which is above or below this cube on the selected axis
+    /// @returns Same-sized neighbor if existent, else larger neighbor if exists, otherwise (i.e. when no neighbor
+    /// exists) nullptr.
+    /// @see Samet, H. (1989) [Neighbor finding in Images Represented by Octrees.]
+    /// (https://web.archive.org/web/20190712063957/http://www.cs.umd.edu/~hjs/pubs/SameCVGIP89.pdf)
+    /// Computer Vision, Graphics, and Image Processing. 46 (3), 367-386.
+    [[nodiscard]] std::shared_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
 };
 
 } // namespace inexor::vulkan_renderer::world
