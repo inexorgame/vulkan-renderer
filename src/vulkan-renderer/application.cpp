@@ -355,9 +355,9 @@ Application::Application(int argc, char **argv) {
             // We use this user data pointer to signal the callback if "" is specified.
             // All other solutions to this problem either involve duplicated versions of the lambda
             // or global variables.
-            debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message);
+            debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message); // NOLINT
 
-            debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>(
+            debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>( // NOLINT
                 +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, std::uint64_t object,
                     std::size_t location, std::int32_t message_code, const char *layer_prefix, const char *message,
                     void *user_data) {
@@ -387,9 +387,8 @@ Application::Application(int argc, char **argv) {
                 });
 
             // We have to explicitly load this function.
-            PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-                reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-                    vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
+            auto vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>( // NOLINT
+                vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
 
             if (vkCreateDebugReportCallbackEXT) {
                 if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,

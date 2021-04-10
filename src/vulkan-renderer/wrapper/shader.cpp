@@ -52,7 +52,7 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
     // requirements of std::uint32_t. Lucky for us, the data is stored in an std::vector where the default
     // allocator already ensures that the data satisfies the worst case alignment requirements.
-    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
+    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data()); // NOLINT
 
     spdlog::debug("Creating shader module {}.", name);
     if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module);

@@ -298,27 +298,27 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         spdlog::debug("Initializing Vulkan debug markers.");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
-        m_vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>(
+        m_vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>( // NOLINT
             vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectTagEXT"));
         assert(m_vk_debug_marker_set_object_tag);
 
-        m_vk_debug_marker_set_object_name = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
+        m_vk_debug_marker_set_object_name = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>( // NOLINT
             vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectNameEXT"));
         assert(m_vk_debug_marker_set_object_name);
 
-        m_vk_cmd_debug_marker_begin =
-            reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerBeginEXT"));
+        m_vk_cmd_debug_marker_begin = reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>( // NOLINT
+            vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerBeginEXT"));
         assert(m_vk_cmd_debug_marker_begin);
 
-        m_vk_cmd_debug_marker_end =
-            reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerEndEXT"));
+        m_vk_cmd_debug_marker_end = reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>( // NOLINT
+            vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerEndEXT"));
         assert(m_vk_cmd_debug_marker_end);
 
-        m_vk_cmd_debug_marker_insert =
-            reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerInsertEXT"));
+        m_vk_cmd_debug_marker_insert = reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>( // NOLINT
+            vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerInsertEXT"));
         assert(m_vk_cmd_debug_marker_insert);
 
-        m_vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+        m_vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>( // NOLINT
             vkGetDeviceProcAddr(m_device, "vkSetDebugUtilsObjectNameEXT"));
         assert(m_vk_set_debug_utils_object_name);
     } else {
@@ -411,7 +411,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
 
     auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
     name_info.objectType = object_type;
-    name_info.object = reinterpret_cast<std::uint64_t>(object);
+    name_info.object = reinterpret_cast<std::uint64_t>(object); // NOLINT
     name_info.pObjectName = name.c_str();
 
     if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
@@ -433,7 +433,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
     assert(m_vk_debug_marker_set_object_tag);
 
     auto tag_info = make_info<VkDebugMarkerObjectTagInfoEXT>();
-    tag_info.object = reinterpret_cast<std::uint64_t>(object);
+    tag_info.object = reinterpret_cast<std::uint64_t>(object); // NOLINT
     tag_info.objectType = object_type;
     tag_info.tagName = name;
     tag_info.tagSize = memory_size;
