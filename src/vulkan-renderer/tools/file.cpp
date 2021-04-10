@@ -42,12 +42,10 @@ bool File::load_file(const std::string &file_name) {
         spdlog::debug("File {} has been closed.", file_name.c_str());
 
         return true;
-    } else {
-        spdlog::error("Could not open shader!");
-        return false;
     }
 
-    return true;
+    spdlog::error("Could not open shader!");
+    return false;
 }
 
 } // namespace inexor::vulkan_renderer::tools
