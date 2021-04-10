@@ -99,8 +99,8 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_render_graph->render(image_index, m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
-                           m_device->graphics_queue());
+    m_render_graph->render(static_cast<int>(image_index), m_rendering_finished_semaphore->get(),
+                           m_image_available_semaphore->get(), m_device->graphics_queue());
 
     m_imgui_overlay->render(image_index);
 

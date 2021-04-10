@@ -49,7 +49,7 @@ void print_physical_device_queue_families(const VkPhysicalDevice gpu) {
         spdlog::debug("Timestamp valid bits: {}", queue_family_properties[i].timestampValidBits);
 
         for (const auto &queue_bit : queue_bits) {
-            if (queue_family_properties[i].queueFlags & queue_bit) {
+            if ((queue_family_properties[i].queueFlags & queue_bit) != 0) {
                 spdlog::debug("{}", queue_flag_bit_to_string(queue_bit));
             }
         }
@@ -339,7 +339,7 @@ void print_physical_device_memory_properties(const VkPhysicalDevice gpu) {
         spdlog::debug("[{}] Heap index: {}", i, gpu_mem_properties.memoryTypes[i].heapIndex);
 
         for (const auto &mem_prop_flag : mem_prop_flags) {
-            if (gpu_mem_properties.memoryTypes[i].propertyFlags & mem_prop_flag) {
+            if ((gpu_mem_properties.memoryTypes[i].propertyFlags & mem_prop_flag) != 0) {
                 spdlog::debug("{}", memory_property_flag_to_string(mem_prop_flag));
             }
         }
@@ -352,7 +352,7 @@ void print_physical_device_memory_properties(const VkPhysicalDevice gpu) {
         spdlog::debug("Heap [{}], memory size: {}", i, gpu_mem_properties.memoryHeaps[i].size / (1000 * 1000));
 
         for (const auto &mem_heap_prop_flag : mem_heap_prop_flags) {
-            if (gpu_mem_properties.memoryHeaps[i].flags & mem_heap_prop_flag) {
+            if ((gpu_mem_properties.memoryHeaps[i].flags & mem_heap_prop_flag) != 0) {
                 spdlog::debug("{}", memory_heap_flag_to_string(mem_heap_prop_flag));
             }
         }

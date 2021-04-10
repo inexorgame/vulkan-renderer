@@ -68,7 +68,8 @@ void CpuTexture::generate_error_texture_data() {
     constexpr std::array<std::array<unsigned char, 4>, 2> COLORS{{{0xFF, 0x69, 0xB4, 0xFF}, {0x94, 0x00, 0xD3, 0xFF}}};
 
     const auto get_color = [](int x, int y, int square_dimension, std::size_t colors) -> int {
-        return (std::size_t(x / square_dimension) + std::size_t(y / square_dimension)) % colors;
+        return static_cast<int>(
+            (static_cast<std::size_t>(x / square_dimension) + static_cast<std::size_t>(y / square_dimension)) % colors);
     };
 
     // Note: Using the stb library function since we are freeing with stbi_image_free.

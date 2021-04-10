@@ -59,14 +59,22 @@ std::array<glm::vec3, 8> Cube::vertices() const noexcept {
         const float step = m_size / Indentation::MAX;
         const std::array<Indentation, Cube::EDGES> &ind = m_indentations;
 
-        return {{{pos.x + ind[0].start() * step, pos.y + ind[1].start() * step, pos.z + ind[2].start() * step},
-                 {pos.x + ind[9].start() * step, pos.y + ind[4].start() * step, max.z - ind[2].end() * step},
-                 {pos.x + ind[3].start() * step, max.y - ind[1].end() * step, pos.z + ind[11].start() * step},
-                 {pos.x + ind[6].start() * step, max.y - ind[4].end() * step, max.z - ind[11].end() * step},
-                 {max.x - ind[0].end() * step, pos.y + ind[10].start() * step, pos.z + ind[5].start() * step},
-                 {max.x - ind[9].end() * step, pos.y + ind[7].start() * step, max.z - ind[5].end() * step},
-                 {max.x - ind[3].end() * step, max.y - ind[10].end() * step, pos.z + ind[8].start() * step},
-                 {max.x - ind[6].end() * step, max.y - ind[7].end() * step, max.z - ind[8].end() * step}}};
+        return {{{pos.x + static_cast<float>(ind[0].start()) * step, pos.y + static_cast<float>(ind[1].start()) * step,
+                  pos.z + static_cast<float>(ind[2].start()) * step},
+                 {pos.x + static_cast<float>(ind[9].start()) * step, pos.y + static_cast<float>(ind[4].start()) * step,
+                  max.z - static_cast<float>(ind[2].end()) * step},
+                 {pos.x + static_cast<float>(ind[3].start()) * step, max.y - static_cast<float>(ind[1].end()) * step,
+                  pos.z + static_cast<float>(ind[11].start()) * step},
+                 {pos.x + static_cast<float>(ind[6].start()) * step, max.y - static_cast<float>(ind[4].end()) * step,
+                  max.z - static_cast<float>(ind[11].end()) * step},
+                 {max.x - static_cast<float>(ind[0].end()) * step, pos.y + static_cast<float>(ind[10].start()) * step,
+                  pos.z + static_cast<float>(ind[5].start()) * step},
+                 {max.x - static_cast<float>(ind[9].end()) * step, pos.y + static_cast<float>(ind[7].start()) * step,
+                  max.z - static_cast<float>(ind[5].end()) * step},
+                 {max.x - static_cast<float>(ind[3].end()) * step, max.y - static_cast<float>(ind[10].end()) * step,
+                  pos.z + static_cast<float>(ind[8].start()) * step},
+                 {max.x - static_cast<float>(ind[6].end()) * step, max.y - static_cast<float>(ind[7].end()) * step,
+                  max.z - static_cast<float>(ind[8].end()) * step}}};
     }
     return {};
 }

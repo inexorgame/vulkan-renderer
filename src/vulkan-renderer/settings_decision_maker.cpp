@@ -229,7 +229,7 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevi
     for (std::size_t i = 0; i < graphics_card_memory_properties.memoryHeapCount; i++) {
         const auto &propertyFlag = graphics_card_memory_properties.memoryHeaps[i].flags;
 
-        if (propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
+        if ((propertyFlag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
             // Use real GPU memory as score.
             graphics_card_score += graphics_card_memory_properties.memoryHeaps[i].size / (1000 * 1000);
         }
@@ -411,7 +411,7 @@ std::optional<VkPhysicalDevice> VulkanSettingsDecisionMaker::decide_which_graphi
             // Neither the integrated GPU nor the discrete GPU are suitable!
             return std::nullopt;
         }
-        
+
         spdlog::debug("Only discrete GPUs available, no integrated graphics.");
     }
 
@@ -514,7 +514,7 @@ VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(const VkPh
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
-    if (surface_capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+    if ((surface_capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) != 0) {
         // We prefer a non-rotated transform.
         pre_transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
     } else {
@@ -543,7 +543,7 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice 
     }
 
     for (auto &composite_alpha_flag : composite_alpha_flags) {
-        if (surface_capabilities.supportedCompositeAlpha & composite_alpha_flag) {
+        if ((surface_capabilities.supportedCompositeAlpha & composite_alpha_flag) != 0) {
             return composite_alpha_flag;
             break;
         };
@@ -703,7 +703,7 @@ VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice &
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
         if (available_queue_families[i].queueCount > 0) {
             // Check if this queue family supports graphics.
-            if (available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            if ((available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
                 // Ok this queue family supports graphics!
                 return static_cast<std::uint32_t>(i);
             }
@@ -780,8 +780,8 @@ VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPh
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
         if (available_queue_families[i].queueCount > 0) {
             // A distinct transfer queue has a transfer bit set but no graphics bit.
-            if (!(available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
-                if (available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
+            if ((available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) {
+                if ((available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) {
                     auto this_queue_family_index = static_cast<std::uint32_t>(i);
                     return this_queue_family_index;
                 }
@@ -816,7 +816,7 @@ VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysica
         if (available_queue_families[i].queueCount > 0) {
             // All we care about is VK_QUEUE_TRANSFER_BIT.
             // It is very likely that this queue family has VK_QUEUE_GRAPHICS_BIT as well!
-            if (available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
+            if ((available_queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) {
                 auto this_queue_family_index = static_cast<std::uint32_t>(i);
                 return this_queue_family_index;
             }
@@ -852,7 +852,7 @@ VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentatio
     for (std::size_t i = 0; i < available_queue_families.size(); i++) {
         if (available_queue_families[i].queueCount > 0) {
             // Check if this queue family supports graphics.
-            if (available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            if ((available_queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
                 // Ok this queue family supports graphics!
                 // Now let's check if it supports presentation.
                 VkBool32 presentation_available = 0;

@@ -100,8 +100,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     vkGetPhysicalDeviceFormatProperties(m_device.physical_device(), m_surface_format.format, &formatProps);
 
-    if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) ||
-        (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
+    if ((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) != 0 ||
+        (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) != 0) {
         swapchain_ci.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 

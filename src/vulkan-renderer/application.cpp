@@ -227,7 +227,7 @@ void Application::check_application_specific_features() {
     vkGetPhysicalDeviceFeatures(m_device->physical_device(), &graphics_card_features);
 
     // Check if anisotropic filtering is available!
-    if (!graphics_card_features.samplerAnisotropy) {
+    if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
         spdlog::warn("The selected graphics card does not support anisotropic filtering!");
     } else {
         spdlog::debug("The selected graphics card does support anisotropic filtering.");
@@ -364,11 +364,11 @@ Application::Application(int argc, char **argv) {
                 +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, std::uint64_t object,
                     std::size_t location, std::int32_t message_code, const char *layer_prefix, const char *message,
                     void *user_data) {
-                    if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
+                    if ((flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0) {
                         spdlog::info(message);
-                    } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
+                    } else if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0) {
                         spdlog::debug(message);
-                    } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+                    } else if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0) {
                         spdlog::error(message);
                     } else {
                         // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
@@ -376,7 +376,7 @@ Application::Application(int argc, char **argv) {
                     }
 
                     // Check if --stop-on-validation-message is enabled.
-                    if (static_cast<bool>(user_data)) {
+                    if (user_data != nullptr) {
                         // This feature stops command lines from overflooding with messages in case many validation
                         // layer messages are reported in a short amount of time.
                         spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
@@ -393,7 +393,7 @@ Application::Application(int argc, char **argv) {
             auto vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>( // NOLINT
                 vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
 
-            if (vkCreateDebugReportCallbackEXT) {
+            if (vkCreateDebugReportCallbackEXT != nullptr) {
                 if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,
                                                                        nullptr, &m_debug_report_callback);
                     result != VK_SUCCESS) {

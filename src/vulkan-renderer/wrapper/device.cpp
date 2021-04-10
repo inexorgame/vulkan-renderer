@@ -104,7 +104,7 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
     assert(graphics_card);
     assert(surface);
 
-    VkBool32 presentation_supported = false;
+    VkBool32 presentation_supported = VK_FALSE;
 
     // Query if presentation is supported.
     if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_supported);
@@ -112,7 +112,7 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
 
-    return presentation_supported;
+    return presentation_supported == VK_TRUE;
 }
 
 Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
