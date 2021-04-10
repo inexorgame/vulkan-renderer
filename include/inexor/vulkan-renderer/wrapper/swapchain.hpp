@@ -41,7 +41,7 @@ public:
     /// @param enable_vsync True if vertical synchronization is requested, false otherwise.
     /// @param name The internal debug marker name of the VkSwapchainKHR.
     Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
-              bool enable_vsync, const std::string &name);
+              bool enable_vsync, std::string name);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;

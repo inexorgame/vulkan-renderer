@@ -11,8 +11,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, const std::string &name)
-    : m_device(device), m_name(name) {
+CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
     alloc_info.commandBufferCount = 1;
     alloc_info.commandPool = command_pool;

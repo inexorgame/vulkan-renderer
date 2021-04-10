@@ -15,8 +15,8 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint32_t window_width,
-                     std::uint32_t window_height, const bool enable_vsync, const std::string &name)
-    : m_device(device), m_surface(surface), m_vsync_enabled(enable_vsync), m_name(name) {
+                     std::uint32_t window_height, const bool enable_vsync, std::string name)
+    : m_device(device), m_surface(surface), m_vsync_enabled(enable_vsync), m_name(std::move(name)) {
     assert(device.device());
     assert(surface);
 

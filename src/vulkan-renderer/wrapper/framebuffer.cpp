@@ -13,8 +13,8 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                         const wrapper::Swapchain &swapchain, const std::string &name)
-    : m_device(device), m_name(name) {
+                         const wrapper::Swapchain &swapchain, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     spdlog::trace("Creating framebuffer {}.", m_name);
 
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
