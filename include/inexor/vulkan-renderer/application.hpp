@@ -33,6 +33,8 @@ class Application : public VulkanRenderer {
 
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 
+    bool m_enable_validation_layers = true;
+
     // If the user specified command line argument "--stop-on-validation-message", the program will call std::abort();
     // after reporting a validation layer (error) message.
     bool m_stop_on_validation_message{false};
@@ -44,12 +46,12 @@ class Application : public VulkanRenderer {
     void load_textures();
     void load_shaders();
     void load_octree_geometry();
+    void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
     void check_application_specific_features();
     void update_uniform_buffers();
     void process_mouse_input();
-    // TODO: Implement a method for processing keyboard input.
 
 public:
     Application(int argc, char **argv);

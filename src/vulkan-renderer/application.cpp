@@ -284,72 +284,16 @@ void Application::setup_window_and_input_callbacks() {
     m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
-Application::Application(int argc, char **argv) {
-    spdlog::debug("Initialising vulkan-renderer.");
-    spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
-
-    tools::CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
-
-    // Load the configuration from the TOML file.
-    load_toml_configuration_file("configuration/renderer.toml");
-
-    bool enable_renderdoc_instance_layer = false;
-
-    auto enable_renderdoc = cla_parser.arg<bool>("--renderdoc");
-    if (enable_renderdoc) {
-#ifdef NDEBUG
-        spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code "
-                     "and compile it yourself in debug mode.");
-#else
-        if (*enable_renderdoc) {
-            spdlog::debug("--renderdoc specified, enabling renderdoc instance layer.");
-            enable_renderdoc_instance_layer = true;
-        }
-#endif
-    }
-
-    bool enable_khronos_validation_instance_layer = true;
-
-    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
-    // disabled. For debug builds, this is not advisable! Always use validation layers during development!
-    const auto disable_validation = cla_parser.arg<bool>("--no-validation");
-    if (disable_validation.value_or(false)) {
-        spdlog::warn("--no-validation specified, disabling validation layers.");
-        enable_khronos_validation_instance_layer = false;
-    }
-
-    spdlog::debug("Creating Vulkan instance.");
-
-    m_glfw_context = std::make_unique<wrapper::GLFWContext>();
-
-    m_instance = std::make_unique<wrapper::Instance>(
-        m_application_name, m_engine_name, m_application_version, m_engine_version, VK_API_VERSION_1_1,
-        enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
-
-    m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
-
-    m_input_data = std::make_unique<input::KeyboardMouseInputData>();
-
-    m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
-
-    setup_window_and_input_callbacks();
-
-#ifndef NDEBUG
-    if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
-        spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
-                     "validation layer message.");
-        m_stop_on_validation_message = true;
-    }
-
+void Application::setup_vulkan_debug_callback() {
     // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
-    if (enable_khronos_validation_instance_layer) {
+    if (m_enable_validation_layers) {
         spdlog::debug("Khronos validation layer is enabled.");
 
         if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
             auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
-            debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
-                                    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
+            debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | // NOLINT
+                                    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |                     // NOLINT
+                                    VK_DEBUG_REPORT_ERROR_BIT_EXT;                                    // NOLINT
 
             // We use this user data pointer to signal the callback if "" is specified.
             // All other solutions to this problem either involve duplicated versions of the lambda
@@ -357,9 +301,8 @@ Application::Application(int argc, char **argv) {
             debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message); // NOLINT
 
             debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>( // NOLINT
-                +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, std::uint64_t object,
-                    std::size_t location, std::int32_t message_code, const char *layer_prefix, const char *message,
-                    void *user_data) {
+                +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT, std::uint64_t, std::size_t, std::int32_t,
+                    const char *, const char *message, void *user_data) {
                     if ((flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0) {
                         spdlog::info(message);
                     } else if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0) {
@@ -406,6 +349,65 @@ Application::Application(int argc, char **argv) {
     } else {
         spdlog::warn("Khronos validation layer is DISABLED.");
     }
+}
+
+Application::Application(int argc, char **argv) {
+    spdlog::debug("Initialising vulkan-renderer.");
+    spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
+
+    tools::CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+
+    // Load the configuration from the TOML file.
+    load_toml_configuration_file("configuration/renderer.toml");
+
+    bool enable_renderdoc_instance_layer = false;
+
+    auto enable_renderdoc = cla_parser.arg<bool>("--renderdoc");
+    if (enable_renderdoc) {
+#ifdef NDEBUG
+        spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code "
+                     "and compile it yourself in debug mode.");
+#else
+        if (*enable_renderdoc) {
+            spdlog::debug("--renderdoc specified, enabling renderdoc instance layer.");
+            enable_renderdoc_instance_layer = true;
+        }
+#endif
+    }
+
+    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
+    // disabled. For debug builds, this is not advisable! Always use validation layers during development!
+    const auto disable_validation = cla_parser.arg<bool>("--no-validation");
+    if (disable_validation.value_or(false)) {
+        spdlog::warn("--no-validation specified, disabling validation layers.");
+        m_enable_validation_layers = false;
+    }
+
+    spdlog::debug("Creating Vulkan instance.");
+
+    m_glfw_context = std::make_unique<wrapper::GLFWContext>();
+
+    m_instance = std::make_unique<wrapper::Instance>(m_application_name, m_engine_name, m_application_version,
+                                                     m_engine_version, VK_API_VERSION_1_1, m_enable_validation_layers,
+                                                     enable_renderdoc_instance_layer);
+
+    m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
+
+    m_input_data = std::make_unique<input::KeyboardMouseInputData>();
+
+    m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
+
+    setup_window_and_input_callbacks();
+
+#ifndef NDEBUG
+    if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
+        spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
+                     "validation layer message.");
+        m_stop_on_validation_message = true;
+    }
+
+    setup_vulkan_debug_callback();
 #endif
 
     spdlog::debug("Creating window surface.");
