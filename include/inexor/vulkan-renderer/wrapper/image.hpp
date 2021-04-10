@@ -13,7 +13,7 @@ class Device;
 class Image {
     const wrapper::Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
-    VmaAllocationInfo m_allocation_info;
+    VmaAllocationInfo m_allocation_info{};
     VkImage m_image{VK_NULL_HANDLE};
     VkFormat m_format{VK_FORMAT_UNDEFINED};
     VkImageView m_image_view{VK_NULL_HANDLE};

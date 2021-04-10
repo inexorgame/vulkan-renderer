@@ -28,12 +28,12 @@ class Device {
 
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
-    PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag;
-    PFN_vkDebugMarkerSetObjectNameEXT m_vk_debug_marker_set_object_name;
-    PFN_vkCmdDebugMarkerBeginEXT m_vk_cmd_debug_marker_begin;
-    PFN_vkCmdDebugMarkerEndEXT m_vk_cmd_debug_marker_end;
-    PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert;
-    PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name;
+    PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag{nullptr};
+    PFN_vkDebugMarkerSetObjectNameEXT m_vk_debug_marker_set_object_name{nullptr};
+    PFN_vkCmdDebugMarkerBeginEXT m_vk_cmd_debug_marker_begin{nullptr};
+    PFN_vkCmdDebugMarkerEndEXT m_vk_cmd_debug_marker_end{nullptr};
+    PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert{nullptr};
+    PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
 
     const bool m_enable_vulkan_debug_markers{false};
 

@@ -38,8 +38,8 @@ private:
     glm::vec3 m_up{directions::DEFAULT_UP};
     /// The world vector which indicates "upwards".
     glm::vec3 m_world_up{directions::DEFAULT_UP};
-    glm::mat4 m_view_matrix;
-    glm::mat4 m_perspective_matrix;
+    glm::mat4 m_view_matrix{};
+    glm::mat4 m_perspective_matrix{};
 
     /// The camera's yaw angle.
     float m_yaw{0.0f};
