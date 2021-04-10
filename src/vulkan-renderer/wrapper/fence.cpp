@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <stdexcept>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 

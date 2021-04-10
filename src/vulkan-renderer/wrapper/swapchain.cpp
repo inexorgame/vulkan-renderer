@@ -10,6 +10,7 @@
 
 #include <limits>
 #include <optional>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 

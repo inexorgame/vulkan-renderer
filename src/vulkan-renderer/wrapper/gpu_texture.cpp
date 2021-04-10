@@ -8,6 +8,8 @@
 #include <spdlog/spdlog.h>
 #include <vk_mem_alloc.h>
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)

@@ -5,6 +5,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 RenderPass::RenderPass(RenderPass &&other) noexcept

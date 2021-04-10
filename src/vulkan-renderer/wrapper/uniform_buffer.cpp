@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 

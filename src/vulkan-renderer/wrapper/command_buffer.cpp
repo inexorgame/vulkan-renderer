@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <array>
 #include <cassert>
 #include <stdexcept>
 #include <utility>

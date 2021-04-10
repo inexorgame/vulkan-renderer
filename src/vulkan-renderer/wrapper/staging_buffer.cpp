@@ -4,6 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 StagingBuffer::StagingBuffer(const Device &device, const std::string &name, const VkDeviceSize buffer_size, void *data,

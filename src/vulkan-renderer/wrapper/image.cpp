@@ -6,6 +6,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,

@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include <array>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 

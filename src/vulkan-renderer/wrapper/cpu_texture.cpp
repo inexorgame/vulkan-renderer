@@ -5,6 +5,7 @@
 #include <stb_image.h>
 
 #include <array>
+#include <utility>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
