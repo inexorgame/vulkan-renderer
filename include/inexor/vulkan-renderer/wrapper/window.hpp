@@ -68,7 +68,7 @@ public:
     void hide();
 
     /// @brief Call glfwPollEvents.
-    void poll();
+    static void poll();
 
     /// @brief Check if the window is about to close.
     /// @return ``true`` if the window will be closed.
