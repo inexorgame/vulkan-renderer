@@ -2,6 +2,7 @@ set(INEXOR_UNIT_TEST_SOURCE_FILES
     unit_tests_main.cpp
 
     world/cube_collision.cpp
+    world/cube.cpp
 )
 
 add_executable(inexor-vulkan-renderer-tests ${INEXOR_UNIT_TEST_SOURCE_FILES})
