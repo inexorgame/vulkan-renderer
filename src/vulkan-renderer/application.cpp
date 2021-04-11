@@ -30,6 +30,8 @@ void Application::key_callback(GLFWwindow *window, int key, int scancode, int ac
     case GLFW_RELEASE:
         m_input_data->release_key(key);
         break;
+    default:
+        break;
     }
 }
 
@@ -44,6 +46,8 @@ void Application::mouse_button_callback(GLFWwindow *window, int button, int acti
         break;
     case GLFW_RELEASE:
         m_input_data->release_mouse_button(button);
+        break;
+    default:
         break;
     }
 }
