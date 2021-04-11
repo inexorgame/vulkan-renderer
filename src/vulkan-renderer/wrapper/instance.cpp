@@ -116,8 +116,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     // Add all instance extensions which are required by GLFW to our wishlist.
     for (std::size_t i = 0; i < glfw_extension_count; i++) {
-        spdlog::debug(glfw_extensions[i]);
-        instance_extension_wishlist.push_back(glfw_extensions[i]);
+        spdlog::debug(glfw_extensions[i]);                         // NOLINT
+        instance_extension_wishlist.push_back(glfw_extensions[i]); // NOLINT
     }
 
     // We have to check which instance extensions of our wishlist are available on the current system!
