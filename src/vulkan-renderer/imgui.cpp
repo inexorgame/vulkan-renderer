@@ -266,15 +266,16 @@ void ImGUIOverlay::update() {
 
     if (update_command_buffers) {
 
+        // TOOD: Implement update_vertex_buffer() and update_index_buffer().
         auto *vertex_buffer_address = static_cast<ImDrawVert *>(m_imgui_mesh->get_vertex_buffer_address());
         auto *index_buffer_address = static_cast<ImDrawIdx *>(m_imgui_mesh->get_index_buffer_address());
 
         for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
+            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
             std::memcpy(vertex_buffer_address, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
             std::memcpy(index_buffer_address, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-            vertex_buffer_address += cmd_list->VtxBuffer.Size;
-            index_buffer_address += cmd_list->IdxBuffer.Size;
+            vertex_buffer_address += cmd_list->VtxBuffer.Size; // NOLINT
+            index_buffer_address += cmd_list->IdxBuffer.Size;  // NOLINT
         }
 
         const ImGuiIO &io = ImGui::GetIO();
@@ -341,7 +342,7 @@ void ImGUIOverlay::update() {
             std::int32_t index_offset{0};
 
             for (int32_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
+                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
                 for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                     const ImDrawCmd *imgui_draw_command = &cmd_list->CmdBuffer[j];
                     vkCmdDrawIndexed(m_command_buffers[k]->get(), imgui_draw_command->ElemCount, 1, index_offset,
