@@ -64,9 +64,6 @@ public:
     /// @brief Call glfwShowWindow.
     void show();
 
-    /// @brief Call glfwHideWindow.
-    void hide();
-
     /// @brief Call glfwPollEvents.
     static void poll();
 

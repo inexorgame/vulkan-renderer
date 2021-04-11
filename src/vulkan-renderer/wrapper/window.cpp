@@ -73,10 +73,6 @@ void Window::show() {
     glfwShowWindow(m_window);
 }
 
-void Window::hide() {
-    glfwHideWindow(m_window);
-}
-
 void Window::poll() {
     glfwPollEvents();
 }
