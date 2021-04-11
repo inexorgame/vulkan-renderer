@@ -1,11 +1,9 @@
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 
 #include <spdlog/spdlog.h>
 
-#include <array>
 #include <cassert>
 #include <cstdint>
 
@@ -15,7 +13,8 @@ void print_driver_vulkan_version() {
     std::uint32_t api_version = 0;
 
     if (const auto result = vkEnumerateInstanceVersion(&api_version); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceVersion failed!", result);
+        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("Supported Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(api_version),
@@ -33,6 +32,7 @@ void print_physical_device_queue_families(const VkPhysicalDevice graphics_card) 
 
     if (queue_family_count == 0) {
         spdlog::error("Error: Could not find any queue families!");
+        return;
     }
 
     std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
@@ -72,13 +72,15 @@ void print_instance_layers() {
 
     // Query how many instance layers are available.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+        spdlog::error("Error: vkEnumerateInstanceLayerProperties returned {}!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("Number of instance layers: {}", instance_layer_count);
 
     if (instance_layer_count == 0) {
-        throw std::runtime_error("Error: Could not find any instance layers!");
+        spdlog::error("Error: Could not find any instance layers!");
+        return;
     }
 
     std::vector<VkLayerProperties> instance_layers(instance_layer_count);
@@ -86,7 +88,8 @@ void print_instance_layers() {
     // Store all available instance layers.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+        spdlog::error("Error: vkEnumerateInstanceLayerProperties returned {}!", result_to_string(result));
+        return;
     }
 
     for (const auto &instance_layer : instance_layers) {
@@ -104,13 +107,15 @@ void print_instance_extensions() {
     // Query how many instance extensions are available.
     if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+        spdlog::error("Error: vkEnumerateInstanceExtensionProperties returned {}!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("Number of instance extensions: {} ", instance_extension_count);
 
     if (instance_extension_count == 0) {
-        throw std::runtime_error("Error: Could not find any instance extensions!");
+        spdlog::error("Error: Could not find any instance extensions!");
+        return;
     }
 
     std::vector<VkExtensionProperties> extensions(instance_extension_count);
@@ -119,7 +124,8 @@ void print_instance_extensions() {
     if (const auto result =
             vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, extensions.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+        spdlog::error("Error: vkEnumerateInstanceExtensionProperties returned {}!", result_to_string(result));
+        return;
     }
 
     for (const auto &extension : extensions) {
@@ -137,13 +143,15 @@ void print_device_layers(const VkPhysicalDevice graphics_card) {
     // Query how many device layers are available.
     if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, nullptr);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
+        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("Number of device layers: {}", device_layer_count);
 
     if (device_layer_count == 0) {
-        throw std::runtime_error("Error: Could not find any device layers!");
+        spdlog::error("Error: Could not find any device layers!");
+        return;
     }
 
     std::vector<VkLayerProperties> device_layers(device_layer_count);
@@ -151,7 +159,8 @@ void print_device_layers(const VkPhysicalDevice graphics_card) {
     // Store all available device layers.
     if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, device_layers.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
+        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", result_to_string(result));
+        return;
     }
 
     for (const auto &device_layer : device_layers) {
@@ -172,13 +181,15 @@ void print_device_extensions(const VkPhysicalDevice graphics_card) {
     if (const auto result =
             vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+        spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("Number of device extensions: {}", device_extension_count);
 
     if (device_extension_count == 0) {
-        throw std::runtime_error("Error: Could not find any device extensions!");
+        spdlog::error("Error: Could not find any device extensions!");
+        return;
     }
 
     std::vector<VkExtensionProperties> device_extensions(device_extension_count);
@@ -187,7 +198,8 @@ void print_device_extensions(const VkPhysicalDevice graphics_card) {
     if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
                                                                  device_extensions.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+        spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!", result_to_string(result));
+        return;
     }
 
     for (const auto &device_extension : device_extensions) {
@@ -208,7 +220,8 @@ void print_surface_capabilities(const VkPhysicalDevice graphics_card, const VkSu
     if (const auto result =
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
+        spdlog::error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("minImageCount: {}", surface_capabilities.minImageCount);
@@ -235,13 +248,15 @@ void print_supported_surface_formats(const VkPhysicalDevice graphics_card, const
     // Query how many formats are supported.
     if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &format_count, nullptr);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!", result);
+        spdlog::error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR returned {}!", result);
+        return;
     }
 
     spdlog::debug("Supported surface formats: {}", format_count);
 
     if (format_count == 0) {
-        spdlog::critical("Error: Could not find any supported formats!");
+        spdlog::error("Error: Could not find any supported formats!");
+        return;
     }
 
     std::vector<VkSurfaceFormatKHR> surface_formats(format_count);
@@ -249,7 +264,8 @@ void print_supported_surface_formats(const VkPhysicalDevice graphics_card, const
     if (const auto result =
             vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &format_count, surface_formats.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceFormatsKHR failed!", result);
+        spdlog::error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR returned {}!", result_to_string(result));
+        return;
     }
 
     for (const auto format : surface_formats) {
@@ -267,13 +283,15 @@ void print_presentation_modes(const VkPhysicalDevice graphics_card, const VkSurf
     if (const auto result =
             vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &present_mode_count, nullptr);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!", result);
+        spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!", result_to_string(result));
+        return;
     }
 
     spdlog::debug("Available present modes: ", present_mode_count);
 
     if (present_mode_count == 0) {
-        throw std::runtime_error("Error: Could not find any presentation modes!");
+        spdlog::error("Error: Could not find any presentation modes!");
+        return;
     }
 
     std::vector<VkPresentModeKHR> present_modes(present_mode_count);
@@ -281,7 +299,8 @@ void print_presentation_modes(const VkPhysicalDevice graphics_card, const VkSurf
     if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface,
                                                                       &present_mode_count, present_modes.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfacePresentModesKHR failed!", result);
+        spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!", result_to_string(result));
+        return;
     }
 
     for (const auto mode : present_modes) {
@@ -301,7 +320,7 @@ void print_physical_device_info(const VkPhysicalDevice graphics_card) {
     spdlog::debug("Vulkan API supported version: {}.{}.{}", VK_VERSION_MAJOR(gpu_properties.apiVersion),
                   VK_VERSION_MINOR(gpu_properties.apiVersion), VK_VERSION_PATCH(gpu_properties.apiVersion));
 
-    // The driver version format is nost standardised!
+    // The driver version format is not standardised. It's not even always the same for one vendor!
     spdlog::debug("Vulkan API supported version: {}.{}.{}", VK_VERSION_MAJOR(gpu_properties.driverVersion),
                   VK_VERSION_MINOR(gpu_properties.driverVersion), VK_VERSION_PATCH(gpu_properties.driverVersion));
     spdlog::debug("Vendor ID: {}", gpu_properties.vendorID);
@@ -588,11 +607,13 @@ void print_all_physical_devices(const VkInstance vulkan_instance, const VkSurfac
 
     // Query how many graphics cards are available.
     if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &gpu_count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+        spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", result_to_string(result));
+        return;
     }
 
     if (gpu_count == 0) {
-        throw std::runtime_error("Error: Could not find any GPU's!");
+        spdlog::error("Error: Could not find any GPU's!");
+        return;
     }
 
     spdlog::debug("Number of available graphics cards: {}", gpu_count);
@@ -602,7 +623,8 @@ void print_all_physical_devices(const VkInstance vulkan_instance, const VkSurfac
     // Store all available graphics cards.
     if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &gpu_count, available_graphics_cards.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+        spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", result_to_string(result));
+        return;
     }
 
     for (auto *graphics_card : available_graphics_cards) {
