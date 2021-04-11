@@ -125,7 +125,7 @@ public:
 
         staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
 
-        if (indices.size() > 0) {
+        if (!indices.empty()) {
             VkDeviceSize indices_memory_size = sizeof(IndexType) * indices.size();
 
             StagingBuffer staging_buffer_for_indices(m_device, name, index_buffer_size,
