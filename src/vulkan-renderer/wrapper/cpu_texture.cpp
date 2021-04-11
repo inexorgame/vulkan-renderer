@@ -81,10 +81,7 @@ void CpuTexture::generate_error_texture_data() {
             const int index = (x + (y * m_texture_width)) * m_texture_channels;
             const int color_id = get_color(x, y, SQUARE_DIMENSION, COLORS.size());
 
-            m_texture_data[index + 0] = COLORS[color_id][0];
-            m_texture_data[index + 1] = COLORS[color_id][1];
-            m_texture_data[index + 2] = COLORS[color_id][2];
-            m_texture_data[index + 3] = COLORS[color_id][3];
+            std::memcpy(m_texture_data, &COLORS[color_id][0], 4 * sizeof(COLORS[color_id][0]));
         }
     }
 }
