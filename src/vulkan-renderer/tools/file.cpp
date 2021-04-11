@@ -25,7 +25,7 @@ bool File::load_file(const std::string &file_name) {
         spdlog::debug("File {} has been opened.", file_name);
 
         // Read the size of the file.
-        m_file_size = file_to_load.tellg();
+        const auto file_size = file_to_load.tellg();
 
         // Preallocate memory for the file buffer.
         m_file_data.resize(m_file_size);
@@ -34,7 +34,9 @@ bool File::load_file(const std::string &file_name) {
         file_to_load.seekg(0, std::ios::beg);
 
         // Read the file data.
-        file_to_load.read(m_file_data.data(), m_file_size);
+        file_to_load.read(m_file_data.data(), file_size);
+
+        m_file_size = static_cast<std::size_t>(file_size);
 
         // Close the file stream.
         file_to_load.close();
