@@ -39,6 +39,8 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
 
+    pool_sizes.reserve(layout_bindings.size());
+
     for (const auto &descriptor_pool_type : layout_bindings) {
         pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, swapchain_image_count});
     }
