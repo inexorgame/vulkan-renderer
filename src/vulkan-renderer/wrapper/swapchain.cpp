@@ -159,7 +159,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 }
 
 std::uint32_t Swapchain::acquire_next_image(const Semaphore &semaphore) {
-    std::uint32_t image_index;
+    std::uint32_t image_index = 0;
     vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore.get(),
                           VK_NULL_HANDLE, &image_index);
     return image_index;
