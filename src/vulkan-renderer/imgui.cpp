@@ -339,7 +339,7 @@ void ImGUIOverlay::update() {
                                  VK_INDEX_TYPE_UINT16);
 
             std::int32_t vertex_offset{0};
-            std::int32_t index_offset{0};
+            std::uint32_t index_offset{0};
 
             for (int32_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
                 const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
