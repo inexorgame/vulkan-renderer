@@ -10,7 +10,7 @@
 
 namespace inexor::vulkan_renderer::io {
 template <>
-ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube> cube) {
+ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube> cube) { // NOLINT
     ByteStreamWriter writer;
     writer.write<std::string>("Inexor Octree");
     writer.write<std::uint32_t>(0);
@@ -66,7 +66,7 @@ ByteStream NXOCParser::serialize(const std::shared_ptr<const world::Cube> cube, 
     if (cube == nullptr) {
         throw std::invalid_argument("cube cannot be a nullptr.");
     }
-    switch (version) {
+    switch (version) { // NOLINT
     case 0:
         return serialize_impl<0>(cube);
     default:
@@ -80,7 +80,7 @@ std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
         throw IoException("Wrong identifier.");
     }
     const auto version = reader.read<std::uint32_t>();
-    switch (version) {
+    switch (version) { // NOLINT
     case 0:
         return deserialize_impl<0>(stream);
     default:
