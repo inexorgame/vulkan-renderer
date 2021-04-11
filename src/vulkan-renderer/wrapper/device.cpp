@@ -119,16 +119,14 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
                bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
-    VulkanSettingsDecisionMaker settings_decision_maker;
+    const auto selected_gpu = VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(
+        instance, surface, preferred_physical_device_index);
 
-    std::optional<VkPhysicalDevice> selected_graphics_card =
-        settings_decision_maker.decide_which_graphics_card_to_use(instance, surface, preferred_physical_device_index);
-
-    if (!selected_graphics_card) {
+    if (!selected_gpu) {
         throw std::runtime_error("Error: Could not find suitable graphics card!");
     }
 
-    m_graphics_card = *selected_graphics_card;
+    m_graphics_card = *selected_gpu;
 
     VkPhysicalDeviceProperties graphics_card_properties;
 
@@ -151,7 +149,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     // Check if there is one queue family which can be used for both graphics and presentation.
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
-        settings_decision_maker.find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
+        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation) {
         spdlog::debug("One queue for both graphics and presentation will be used.");
@@ -174,8 +172,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         // One for graphics and another one for presentation.
 
         // Check which queue family index can be used for graphics.
-        std::optional<std::uint32_t> queue_candidate =
-            settings_decision_maker.find_graphics_queue_family(m_graphics_card);
+        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_graphics_card);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
@@ -184,7 +181,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         m_graphics_queue_family_index = *queue_candidate;
 
         // Check which queue family index can be used for presentation.
-        queue_candidate = settings_decision_maker.find_presentation_queue_family(m_graphics_card, surface);
+        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_graphics_card, surface);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
@@ -213,8 +210,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     }
 
     // Add another device queue just for data transfer.
-    std::optional<std::uint32_t> queue_candidate =
-        settings_decision_maker.find_distinct_data_transfer_queue_family(m_graphics_card);
+    const auto queue_candidate = VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_graphics_card);
 
     bool use_distinct_data_transfer_queue = false;
 
