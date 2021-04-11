@@ -145,7 +145,7 @@ void VulkanRenderer::calculate_memory_budget() {
 
     std::string memory_dump_file_name = "vma-dumps/dump.json";
     std::ofstream vma_memory_dump(memory_dump_file_name, std::ios::out);
-    vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string));
+    vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string)); // NOLINT
     vma_memory_dump.close();
 
     vmaFreeStatsString(m_device->allocator(), vma_stats_string);
