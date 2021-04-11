@@ -173,6 +173,8 @@ public:
           m_number_of_vertices(other.m_number_of_vertices), m_number_of_indices(other.m_number_of_indices),
           m_device(other.m_device) {}
 
+    ~MeshBuffer() = default;
+
     MeshBuffer &operator=(const MeshBuffer &) = delete;
     MeshBuffer &operator=(MeshBuffer &&) = delete;
 
