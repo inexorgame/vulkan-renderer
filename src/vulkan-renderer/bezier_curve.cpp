@@ -4,8 +4,9 @@ namespace inexor::vulkan_renderer {
 
 std::uint32_t BezierCurve::binomial_coefficient(std::uint32_t n, const std::uint32_t k) {
     std::uint32_t r = 1;
-    if (k > n)
+    if (k > n) {
         return 0;
+    }
 
     for (std::uint32_t d = 1; d <= k; d++) {
         r *= n--;
@@ -17,16 +18,16 @@ std::uint32_t BezierCurve::binomial_coefficient(std::uint32_t n, const std::uint
 
 float BezierCurve::bernstein_polynomial(std::uint32_t n, std::uint32_t k, const float curve_precision,
                                         const float coordinate_value) {
-    return binomial_coefficient(n, k) * static_cast<float>(pow(curve_precision, k)) *
+    return static_cast<float>(binomial_coefficient(n, k)) * static_cast<float>(pow(curve_precision, k)) *
            static_cast<float>(pow(1 - curve_precision, n - k)) * coordinate_value;
 }
 
 void BezierCurve::clear_output() {
-    std::vector<BezierOutputPoint> output_points;
+    m_output_points.clear();
 }
 
 void BezierCurve::clear_input() {
-    std::vector<BezierInputPoint> input_points;
+    m_input_points.clear();
 }
 
 void BezierCurve::clear() {
@@ -34,13 +35,9 @@ void BezierCurve::clear() {
     clear_output();
 }
 
-bool BezierCurve::is_curve_generated() {
-    return m_curve_generated;
-}
-
 std::vector<BezierOutputPoint> BezierCurve::output_points() {
     assert(m_curve_generated);
-    assert(m_output_points.size() > 0);
+    assert(!m_output_points.empty());
     return m_output_points;
 }
 
@@ -63,13 +60,13 @@ void BezierCurve::add_input_point(const glm::vec3 &position, const float weight)
 BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precision) {
     BezierOutputPoint temp_output;
 
-    const std::uint32_t n = static_cast<std::uint32_t>(m_input_points.size() - 1);
+    const auto n = static_cast<std::uint32_t>(m_input_points.size() - 1);
 
     // Calculate the coordinates of the output points of the bezier curve.
     for (std::size_t i = 0; i < m_input_points.size(); i++) {
         auto current_point = m_input_points[i];
 
-        const std::uint32_t index = static_cast<std::uint32_t>(i);
+        const auto index = static_cast<std::uint32_t>(i);
 
         // Compute bezier curve coordinates using bernstein polynomials.
         temp_output.pos.x += bernstein_polynomial(n, index, curve_precision, current_point.pos.x);
@@ -88,7 +85,7 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
         auto current_point = m_input_points[i];
         auto next_point = m_input_points[i + 1];
 
-        const std::uint32_t index = static_cast<std::uint32_t>(i);
+        const auto index = static_cast<std::uint32_t>(i);
 
         // Compute bezier curve point's first derivative.
         temp_output.tangent.x += bernstein_polynomial(n - 1, index, curve_precision, current_point.pos.x);
@@ -116,7 +113,7 @@ BezierOutputPoint BezierCurve::calculate_point_on_curve(const float curve_precis
     return temp_output;
 }
 
-void BezierCurve::calculate_bezier_curve(const float curve_precision) {
+void BezierCurve::calculate_bezier_curve(const uint32_t curve_segments) {
     // We need at least 2 input points!
     assert(m_input_points.size() > 2);
 
@@ -125,11 +122,8 @@ void BezierCurve::calculate_bezier_curve(const float curve_precision) {
         m_curve_generated = false;
     }
 
-    const float curve_precision_interval = 1.0f / curve_precision;
-
-    for (float position_on_curve = 0.0f; position_on_curve <= 1.0f; position_on_curve += curve_precision_interval) {
-        const BezierOutputPoint temp_output = calculate_point_on_curve(position_on_curve);
-        m_output_points.push_back(temp_output);
+    for (std::uint32_t i = 0; i < curve_segments; i += curve_segments / static_cast<std::uint32_t>(1000)) {
+        m_output_points.push_back(calculate_point_on_curve(static_cast<float>(i) / static_cast<float>(curve_segments)));
     }
 
     m_curve_generated = true;
