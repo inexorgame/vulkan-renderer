@@ -60,11 +60,11 @@ std::uint8_t Indentation::offset() const noexcept {
     return this->m_end - this->m_start;
 }
 
-void Indentation::indent_start(std::int8_t steps) noexcept {
+void Indentation::indent_start(std::uint8_t steps) noexcept {
     this->set_start(this->m_start + steps);
 }
 
-void Indentation::indent_end(std::int8_t steps) noexcept {
+void Indentation::indent_end(std::uint8_t steps) noexcept {
     this->set_end(this->m_end - steps);
 }
 
