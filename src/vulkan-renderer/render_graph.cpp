@@ -145,7 +145,7 @@ void RenderGraph::record_command_buffers(const RenderStage *stage, PhysicalStage
             std::array<VkClearValue, 2> clear_values{};
             if (graphics_stage->m_clears_screen) {
                 clear_values[0].color = {0, 0, 0, 0};
-                clear_values[1].depthStencil = {1.0F, 0};
+                clear_values[1].depthStencil = {1.0f, 0};
                 render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
                 render_pass_bi.pClearValues = clear_values.data();
             }
@@ -308,12 +308,12 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
     rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterization_state.lineWidth = 1.0F;
+    rasterization_state.lineWidth = 1.0f;
     rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
 
     // TODO(GH-203): Support multisampling again.
     auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
-    multisample_state.minSampleShading = 1.0F;
+    multisample_state.minSampleShading = 1.0f;
     multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     VkPipelineColorBlendAttachmentState blend_attachment{};
@@ -330,7 +330,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     VkViewport viewport{};
     viewport.width = static_cast<float>(m_swapchain.extent().width);
     viewport.height = static_cast<float>(m_swapchain.extent().height);
-    viewport.maxDepth = 1.0F;
+    viewport.maxDepth = 1.0f;
 
     // TODO: Custom scissors?
     auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
@@ -413,7 +413,7 @@ void RenderGraph::compile(const RenderResource &target) {
             auto *phys = create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
 
             const bool is_uploading_data = buffer_resource->m_data != nullptr;
-            alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0U;
+            alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0u;
             alloc_ci.usage = is_uploading_data ? VMA_MEMORY_USAGE_CPU_TO_GPU : VMA_MEMORY_USAGE_GPU_ONLY;
 
             auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>();
