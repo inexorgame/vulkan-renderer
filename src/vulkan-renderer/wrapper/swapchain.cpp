@@ -34,7 +34,7 @@ Swapchain::Swapchain(Swapchain &&other) noexcept
 void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
                                 std::uint32_t window_height) {
     auto swapchain_settings = VulkanSettingsDecisionMaker::decide_swapchain_extent(
-        m_device.physical_device(), m_surface, m_extent.width, m_extent.height);
+        m_device.physical_device(), m_surface, window_width, window_height);
 
     window_width = swapchain_settings.window_size.width;
     window_height = swapchain_settings.window_size.height;
