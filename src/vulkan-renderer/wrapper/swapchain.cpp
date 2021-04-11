@@ -33,16 +33,14 @@ Swapchain::Swapchain(Swapchain &&other) noexcept
 
 void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
                                 std::uint32_t window_height) {
-    VulkanSettingsDecisionMaker settings_decision_maker;
-
-    auto swapchain_settings = settings_decision_maker.decide_swapchain_extent(m_device.physical_device(), m_surface,
-                                                                              m_extent.width, m_extent.height);
+    auto swapchain_settings = VulkanSettingsDecisionMaker::decide_swapchain_extent(
+        m_device.physical_device(), m_surface, m_extent.width, m_extent.height);
 
     window_width = swapchain_settings.window_size.width;
     window_height = swapchain_settings.window_size.height;
     m_extent = swapchain_settings.swapchain_size;
 
-    std::optional<VkPresentModeKHR> present_mode = settings_decision_maker.decide_which_presentation_mode_to_use(
+    std::optional<VkPresentModeKHR> present_mode = VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(
         m_device.physical_device(), m_surface, m_vsync_enabled);
 
     if (!present_mode) {
@@ -50,9 +48,9 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     }
 
     m_swapchain_image_count =
-        settings_decision_maker.decide_how_many_images_in_swapchain_to_use(m_device.physical_device(), m_surface);
+        VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(m_device.physical_device(), m_surface);
 
-    auto surface_format_candidate = settings_decision_maker.decide_which_surface_color_format_in_swapchain_to_use(
+    auto surface_format_candidate = VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(
         m_device.physical_device(), m_surface);
 
     if (!surface_format_candidate) {
@@ -69,9 +67,8 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.imageExtent.width = m_extent.width;
     swapchain_ci.imageExtent.height = m_extent.height;
     swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchain_ci.preTransform =
-        (VkSurfaceTransformFlagBitsKHR)settings_decision_maker.decide_which_image_transformation_to_use(
-            m_device.physical_device(), m_surface);
+    swapchain_ci.preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(
+        VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(m_device.physical_device(), m_surface));
     swapchain_ci.imageArrayLayers = 1;
     swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchain_ci.queueFamilyIndexCount = 0;
@@ -87,7 +84,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.clipped = VK_TRUE;
 
     const auto &composite_alpha =
-        settings_decision_maker.find_composite_alpha_format(m_device.physical_device(), m_surface);
+        VulkanSettingsDecisionMaker::find_composite_alpha_format(m_device.physical_device(), m_surface);
 
     if (!composite_alpha) {
         throw std::runtime_error("Error: Could not find composite alpha format while recreating swapchain!");
