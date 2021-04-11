@@ -73,7 +73,7 @@ void CpuTexture::generate_error_texture_data() {
     };
 
     // Note: Using the stb library function since we are freeing with stbi_image_free.
-    m_texture_data = static_cast<stbi_uc *>(STBI_MALLOC(data_size()));
+    m_texture_data = static_cast<stbi_uc *>(STBI_MALLOC(data_size())); // NOLINT
 
     // Performance could be improved by copying complete rows after one or two rows are created with the loops.
     for (int y = 0; y < m_texture_height; y++) {
