@@ -41,10 +41,9 @@ class GpuTexture {
 
     /// @brief Transform the image layout.
     /// @param image The image.
-    /// @param format The image format.
     /// @param old_layout The old image layout.
     /// @param new_layout The new image layout.
-    void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+    void transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 
     /// @brief Create the texture sampler.
     void create_texture_sampler();

@@ -55,8 +55,7 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
 
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
 
-    transition_image_layout(m_texture_image->get(), m_texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region{};
     buffer_image_region.bufferOffset = 0;
@@ -77,14 +76,13 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
 
     m_copy_command_buffer.end_recording_and_submit_command();
 
-    transition_image_layout(m_texture_image->get(), m_texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     create_texture_sampler();
 }
 
-void GpuTexture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
-                                         VkImageLayout new_layout) {
+void GpuTexture::transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout) {
 
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = old_layout;
