@@ -19,8 +19,6 @@ private:
 public:
     File() = default;
 
-    ~File() = default;
-
     [[nodiscard]] std::size_t file_size() const {
         return m_file_size;
     }
