@@ -89,7 +89,7 @@ public:
         : m_vertex_buffer(device, name, sizeof(VertexType) * vertex_count,
                           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                           VMA_MEMORY_USAGE_CPU_ONLY),
-          m_index_buffer(std::nullopt), m_number_of_vertices(vertex_count), m_number_of_indices(0), m_device(device) {
+          m_index_buffer(std::nullopt), m_number_of_vertices(vertex_count), m_device(device) {
 
         assert(device.device());
         assert(device.allocator());
