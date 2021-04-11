@@ -55,7 +55,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     VkWriteDescriptorSet descriptor_write{};
     descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptor_write.dstSet = nullptr;
-    descriptor_write.dstBinding = 0;
+    descriptor_write.dstBinding = binding;
     descriptor_write.dstArrayElement = 0;
     descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor_write.descriptorCount = 1;
