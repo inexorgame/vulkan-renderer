@@ -55,7 +55,9 @@ void VulkanRenderer::setup_render_graph() {
 }
 
 void VulkanRenderer::generate_octree_indices() {
+    const auto old_vertex_count = m_octree_vertices.size();
     auto old_vertices = std::move(m_octree_vertices);
+    m_octree_vertices.clear();
     std::unordered_map<OctreeGpuVertex, std::uint16_t> vertex_map;
     for (auto &vertex : old_vertices) {
         // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
@@ -66,7 +68,7 @@ void VulkanRenderer::generate_octree_indices() {
         }
         m_octree_indices.push_back(vertex_map.at(vertex));
     }
-    spdlog::trace("Reduced octree by {} vertices", old_vertices.size() - m_octree_vertices.size());
+    spdlog::trace("Reduced octree by {} vertices", old_vertices.size() - old_vertex_count);
 }
 
 void VulkanRenderer::recreate_swapchain() {
