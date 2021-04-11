@@ -67,8 +67,8 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
                    const std::uint32_t vulkan_api_version, bool enable_validation_layers,
-                   bool enable_renderdoc_instance_layer, std::vector<std::string> requested_instance_extensions,
-                   std::vector<std::string> requested_instance_layers) {
+                   bool enable_renderdoc_instance_layer, const std::vector<std::string> &requested_instance_extensions,
+                   const std::vector<std::string> &requested_instance_layers) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
