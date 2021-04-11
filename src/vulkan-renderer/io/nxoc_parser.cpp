@@ -32,7 +32,7 @@ ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube
 
     iter_func(cube);
     return writer;
-};
+}
 
 template <>
 std::shared_ptr<world::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &stream) {
@@ -71,7 +71,7 @@ ByteStream NXOCParser::serialize(const std::shared_ptr<const world::Cube> cube, 
         return serialize_impl<0>(cube);
     default:
         throw IoException("Unsupported octree version.");
-    };
+    }
 }
 
 std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
@@ -85,6 +85,6 @@ std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
         return deserialize_impl<0>(stream);
     default:
         throw IoException("Unsupported octree version.");
-    };
+    }
 }
 } // namespace inexor::vulkan_renderer::io
