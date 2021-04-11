@@ -16,8 +16,8 @@ class Swapchain {
     const wrapper::Device &m_device;
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
-    VkSurfaceFormatKHR m_surface_format;
-    VkExtent2D m_extent;
+    VkSurfaceFormatKHR m_surface_format{};
+    VkExtent2D m_extent{};
 
     std::vector<VkImage> m_swapchain_images;
     std::vector<VkImageView> m_swapchain_image_views;
