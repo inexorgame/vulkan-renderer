@@ -9,13 +9,13 @@
 // It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
 // Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
 // Memory is automatically mapped and unmapped if necessary.
-#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
+#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1 // NOLINT
 
 // Enforce specified number of bytes as a margin before and after every allocation.
-#define VMA_DEBUG_MARGIN 16
+#define VMA_DEBUG_MARGIN 16 // NOLINT
 
 // Enable validation of contents of the margins.
-#define VMA_DEBUG_DETECT_CORRUPTION 1
+#define VMA_DEBUG_DETECT_CORRUPTION 1 // NOLINT
 
 #include <spdlog/spdlog.h>
 #include <vk_mem_alloc.h>
