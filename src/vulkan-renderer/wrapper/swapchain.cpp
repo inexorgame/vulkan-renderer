@@ -36,8 +36,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     auto swapchain_settings = VulkanSettingsDecisionMaker::decide_swapchain_extent(
         m_device.physical_device(), m_surface, window_width, window_height);
 
-    window_width = swapchain_settings.window_size.width;
-    window_height = swapchain_settings.window_size.height;
     m_extent = swapchain_settings.swapchain_size;
 
     std::optional<VkPresentModeKHR> present_mode = VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(
