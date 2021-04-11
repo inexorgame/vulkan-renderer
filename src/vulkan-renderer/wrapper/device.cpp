@@ -26,7 +26,7 @@
 namespace {
 
 // TODO: Make proper use of queue priorities in the future.
-constexpr float default_queue_priority = 1.0f;
+constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 
 } // namespace
 
@@ -163,7 +163,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation;
         device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::default_queue_priority;
+        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
 
         queues_to_create.push_back(device_queue_ci);
     } else {
@@ -199,7 +199,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = m_graphics_queue_family_index;
         device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::default_queue_priority;
+        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
 
         queues_to_create.push_back(device_queue_ci);
 
@@ -207,7 +207,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = m_present_queue_family_index;
         device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::default_queue_priority;
+        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
 
         queues_to_create.push_back(device_queue_ci);
     }
@@ -230,7 +230,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
         device_queue_ci.queueFamilyIndex = m_transfer_queue_family_index;
         device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::default_queue_priority;
+        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
 
         queues_to_create.push_back(device_queue_ci);
     } else {
