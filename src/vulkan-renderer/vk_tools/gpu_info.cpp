@@ -31,7 +31,6 @@ void print_physical_device_queue_families(const VkPhysicalDevice graphics_card) 
     spdlog::debug("Number of queue families: {}", queue_family_count);
 
     if (queue_family_count == 0) {
-        spdlog::error("Error: Could not find any queue families!");
         return;
     }
 
@@ -79,7 +78,6 @@ void print_instance_layers() {
     spdlog::debug("Number of instance layers: {}", instance_layer_count);
 
     if (instance_layer_count == 0) {
-        spdlog::error("Error: Could not find any instance layers!");
         return;
     }
 
@@ -114,7 +112,6 @@ void print_instance_extensions() {
     spdlog::debug("Number of instance extensions: {} ", instance_extension_count);
 
     if (instance_extension_count == 0) {
-        spdlog::error("Error: Could not find any instance extensions!");
         return;
     }
 
@@ -150,7 +147,6 @@ void print_device_layers(const VkPhysicalDevice graphics_card) {
     spdlog::debug("Number of device layers: {}", device_layer_count);
 
     if (device_layer_count == 0) {
-        spdlog::error("Error: Could not find any device layers!");
         return;
     }
 
@@ -188,7 +184,6 @@ void print_device_extensions(const VkPhysicalDevice graphics_card) {
     spdlog::debug("Number of device extensions: {}", device_extension_count);
 
     if (device_extension_count == 0) {
-        spdlog::error("Error: Could not find any device extensions!");
         return;
     }
 
@@ -255,7 +250,6 @@ void print_supported_surface_formats(const VkPhysicalDevice graphics_card, const
     spdlog::debug("Supported surface formats: {}", format_count);
 
     if (format_count == 0) {
-        spdlog::error("Error: Could not find any supported formats!");
         return;
     }
 
@@ -290,7 +284,6 @@ void print_presentation_modes(const VkPhysicalDevice graphics_card, const VkSurf
     spdlog::debug("Available present modes: ", present_mode_count);
 
     if (present_mode_count == 0) {
-        spdlog::error("Error: Could not find any presentation modes!");
         return;
     }
 
@@ -612,7 +605,6 @@ void print_all_physical_devices(const VkInstance vulkan_instance, const VkSurfac
     }
 
     if (gpu_count == 0) {
-        spdlog::error("Error: Could not find any GPU's!");
         return;
     }
 
