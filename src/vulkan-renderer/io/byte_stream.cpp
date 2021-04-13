@@ -67,7 +67,7 @@ template <>
 std::array<world::Indentation, 12> ByteStreamReader::read() {
     check_end(9);
     std::array<world::Indentation, 12> indentations;
-    auto writer = indentations.begin();
+    auto writer = indentations.begin(); // NOLINT
     const auto end = m_iter + 9;
     while (m_iter != end) {
         *writer++ = world::Indentation(*m_iter >> 2u);
@@ -103,7 +103,7 @@ void ByteStreamWriter::write(const world::Cube::Type &value) {
 
 template <>
 void ByteStreamWriter::write(const std::array<world::Indentation, 12> &value) {
-    for (auto iter = value.begin(); iter != value.end(); iter++) {
+    for (auto iter = value.begin(); iter != value.end(); iter++) { // NOLINT
         write<std::uint8_t>((iter->uid() << 2u) | ((++iter)->uid() >> 4));
         write<std::uint8_t>((iter->uid() << 4u) | ((++iter)->uid() >> 2));
         write<std::uint8_t>((iter->uid() << 6u) | ((++iter)->uid()));
