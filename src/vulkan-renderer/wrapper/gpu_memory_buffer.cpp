@@ -68,9 +68,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
       m_allocation_ci(std::move(other.m_allocation_ci)) {}
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
-    if (m_buffer != nullptr) {
-        vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
-    }
+    vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
