@@ -19,20 +19,6 @@ class KeyboardMouseInputData;
 namespace inexor::vulkan_renderer {
 
 class Application : public VulkanRenderer {
-    /// The following data will be replaced by CMake setup.
-    static constexpr char m_application_name[] = "${APP_NAME}";
-    static constexpr std::array<std::uint32_t, 3> m_application_version{${APP_VERSION_MAJOR}, ${APP_VERSION_MINOR},
-                                                                       ${APP_VERSION_PATCH}};
-    static constexpr char m_application_version_str[] =
-        "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}";
-    static constexpr char m_engine_name[] = "${ENGINE_NAME}";
-    static constexpr std::array<std::uint32_t, 3> m_engine_version{${ENGINE_VERSION_MAJOR}, ${ENGINE_VERSION_MINOR},
-                                                                  ${ENGINE_VERSION_PATCH}};
-    static constexpr char m_engine_version_str[] =
-        "${ENGINE_VERSION_MAJOR}.${ENGINE_VERSION_MINOR}.${ENGINE_VERSION_PATCH}";
-    static constexpr char m_build_git[] = "${GIT_SHA}";
-    static constexpr char m_build_type[] = "${BUILD_TYPE}";
-
     std::vector<std::string> m_vertex_shader_files;
     std::vector<std::string> m_fragment_shader_files;
     std::vector<std::string> m_texture_files;

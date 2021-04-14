@@ -1,6 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
@@ -514,7 +515,8 @@ void Application::update_imgui_overlay() {
     ImGui::Begin("Inexor Vulkan-renderer", nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
-    ImGui::Text("Engine version %d.%d.%d (Git sha %s)", m_engine_version[0], m_engine_version[1], m_engine_version[2], m_build_git);
+    ImGui::Text("Engine version %d.%d.%d (Git sha %s)", m_engine_version[0], m_engine_version[1], m_engine_version[2],
+                m_build_git);
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
