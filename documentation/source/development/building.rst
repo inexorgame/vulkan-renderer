@@ -34,6 +34,9 @@ There are four CMake targets and options are available:
    * - inexor-vulkan-renderer-documentation
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__. Enable target creation with ``-DINEXOR_BUILD_DOC=ON``.
      -
+   * - inexor-vulkan-renderer-documentation-linkcheck
+     - Use sphinx's linkcheck feature to search for broken links.
+     -
 
 .. list-table:: List of CMake options.
    :header-rows: 1
@@ -59,6 +62,9 @@ There are four CMake targets and options are available:
    * - INEXOR_BUILD_DOC
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
      - ``OFF``
+   * - INEXOR_BUILD_DOCUMENTATION_USE_VENV
+     - Generate and use a Python virtual environment for the documentation dependencies.
+     - ``ON``
 
 .. _BUILDING windows:
 
@@ -163,7 +169,7 @@ Install dependencies and tools:
 
 __ https://github.com/inexorgame/vulkan-renderer/blob/master/documentation/source/development/building.rst
 
-.. _Install the SDK: https://vulkan.lunarg.com/doc/sdk/latest/linux/getting_started_ubuntu.html#user-content-install-the-sdk
+.. _Install the SDK: https://vulkan.lunarg.com/doc/view/latest/linux/getting_started_ubuntu.html#user-content-install-the-sdk
 
 
 Clone the repository:

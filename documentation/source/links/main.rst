@@ -76,7 +76,7 @@ Advanced Vulkan API tutorials and articles
 - `NVidia: Vulkan Memory Management <https://developer.nvidia.com/vulkan-memory-management>`__
 - `Using Vulkan Device Memory <https://gpuopen.com/learn/vulkan-device-memory/>`__
 - `Vulkan Barriers Explained <https://gpuopen.com/learn/vulkan-barriers-explained/>`__
-- `GPUOpen performance guide <https://gpuopen.com/performance/#barrier>`__
+- `GPUOpen performance guide <https://gpuopen.com/performance/#barriers>`__
 
 Vulkan API presentations
 ------------------------

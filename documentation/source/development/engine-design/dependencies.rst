@@ -16,7 +16,6 @@ Dependency folder
 -----------------
 
 - If we really need a dependency which is not yet available through conan center, we add it manually to the ``third_party`` folder.
-- An example for such a dependency is `AMD's Vulkan Memory Allocator library (VMA) <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__, which is an essential library for out project but it's not yet available in conan center.
 
 Criteria for library selection
 ------------------------------
@@ -24,7 +23,7 @@ Criteria for library selection
 If we really need a new library, it should be selected based on the following considerations:
 
 - Are you sure we need this library? Can't we solve the problem with C++ standard library somehow?
-- The library must have an open source license which is accepted by us (see `our list of accepted licenses <../../contributing/licenses.html>`_).
+- The library must have an open source license which is accepted by us (see :doc:`our list of accepted licenses </contributing/licenses>`_).
 - It must be in active development.
 - It must have a good documentation.
 - A sufficient number of participants must have contributed so we can be sure it is reviewed.

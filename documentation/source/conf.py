@@ -45,7 +45,12 @@ html_js_files = [
 ]
 html_favicon = "../../assets/textures/logo_rendered.png"
 
-mermaid_version = "8.7.0"
+linkcheck_ignore = [
+    r"https://github.com/.*#"  # do not check anchors from GitHub, JS magic
+]
+
+mermaid_version = "8.9.2"
+
 # Setup the breathe extension
 breathe_projects = {
     "vulkan-renderer": "../doxygen-output/xml"

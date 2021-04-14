@@ -128,7 +128,7 @@ Classes
 - `C.30: Define a destructor if a class needs an explicit action at object destruction <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c30-define-a-destructor-if-a-class-needs-an-explicit-action-at-object-destruction>`__
 - `C.31: All resources acquired by a class must be released by the class’s destructor <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c31-all-resources-acquired-by-a-class-must-be-released-by-the-classs-destructor>`__
 - `C.35: A base class destructor should be either public and virtual, or protected and non-virtual <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c35-a-base-class-destructor-should-be-either-public-and-virtual-or-protected-and-non-virtual>`__
-- `C.36: A destructor may not fail <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c36-a-destructor-may-not-fail>`__
+- `C.36: A destructor must not fail <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-dtor-fail>`__
 - `C.40: Define a constructor if a class has an invariant <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c40-define-a-constructor-if-a-class-has-an-invariant>`__
 - `C.41: A constructor should create a fully initialized object <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c41-a-constructor-should-create-a-fully-initialized-object>`__
 - `C.42: If a constructor cannot construct a valid object, throw an exception <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c42-if-a-constructor-cannot-construct-a-valid-object-throw-an-exception>`__

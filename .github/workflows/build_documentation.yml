@@ -1,0 +1,52 @@
+name: Build Documentation
+on: [push, pull_request]
+
+jobs:
+  build_documentation:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    container: ubuntu:rolling
+    steps:
+      - name: Update environment
+        run: |
+          # Update package lists
+          apt update -qq
+          # Install build tools
+          apt install -y doxygen git python3 python3-pip python3-venv wget
+
+      - name: Update CMake
+        run: |
+          apt update -qq
+          apt install -y software-properties-common
+          apt remove --purge --auto-remove cmake
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+          apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+          apt update -qq
+          apt install -y cmake
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure CMake
+        working-directory: ${{ github.workspace }}/documentation
+        shell: bash
+        run: |
+          cmake . -Bbuild
+
+      - name: Build
+        working-directory: ${{ github.workspace }}/documentation
+        shell: bash
+        run: |
+          cmake --build build
+          cmake --build build --target inexor-vulkan-renderer-documentation-linkcheck
+
+      - name: Prepare upload
+        working-directory: ${{ github.workspace }}/documentation
+        run: |
+          tar cfz documentation.tar.xz build/html/*
+
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          path: ${{ github.workspace }}/documentation/documentation.tar.xz
+          name: documentation.tar.xz

@@ -11,8 +11,11 @@ Required Software
 `Git <https://www.git-scm.com/>`__
     Git for cloning (downloading) the source code.
 
+`Python <https://www.python.org/>`__ with `pip <https://pypi.org/project/pip/>`__
+    Required for generating the documentation and the C++ package manager.
+
 `Conan <https://conan.io/>`__
-    C++ Package Manager to get the required libraries (dependencies).
+    C++ package manager to get the required libraries (dependencies).
 
 `CMake <https://cmake.org/>`__
     The build generator which generates project files for various IDEs.
@@ -40,9 +43,6 @@ Optional Software
     Powerful open source graphics debugger. Inexor has full RenderDoc integration.
 
 `Doxygen <http://www.doxygen.nl/download.html>`__
-    Required for generating the documentation.
-
-`Python <https://www.python.org/>`__ with `pip <https://pypi.org/project/pip/>`__
     Required for generating the documentation.
 
 `Notepad++ <https://notepad-plus-plus.org/downloads/>`__
