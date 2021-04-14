@@ -35,7 +35,6 @@ RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescr
 }
 
 RenderPass::~RenderPass() {
-    spdlog::trace("Destroying render pass {}.", name);
     vkDestroyRenderPass(m_device.device(), renderpass, nullptr);
 }
 

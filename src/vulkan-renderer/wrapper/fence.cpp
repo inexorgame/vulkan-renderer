@@ -35,7 +35,6 @@ Fence::Fence(Fence &&other) noexcept
 
 Fence::~Fence() {
     if (m_fence != nullptr) {
-        spdlog::trace("Destroying fence {}.", m_name);
         vkDestroyFence(m_device.device(), m_fence, nullptr);
     }
 }

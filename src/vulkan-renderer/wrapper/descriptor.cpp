@@ -115,12 +115,10 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 
 ResourceDescriptor::~ResourceDescriptor() {
     if (m_descriptor_set_layout != nullptr) {
-        spdlog::trace("Destroying resource descriptor set layout {}.", m_name);
         vkDestroyDescriptorSetLayout(m_device.device(), m_descriptor_set_layout, nullptr);
     }
 
     if (m_descriptor_pool != nullptr) {
-        spdlog::trace("Destroying resource descriptor pool {}.", m_name);
         vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
     }
 }

@@ -34,7 +34,6 @@ Semaphore::Semaphore(Semaphore &&other) noexcept
 
 Semaphore::~Semaphore() {
     if (m_semaphore != nullptr) {
-        spdlog::trace("Destroying semaphore {}.", m_name);
         vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);
     }
 }

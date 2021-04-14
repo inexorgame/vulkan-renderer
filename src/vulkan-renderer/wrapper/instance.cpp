@@ -218,7 +218,6 @@ Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m
 
 Instance::~Instance() {
     if (m_instance != nullptr) {
-        spdlog::trace("Destroying instance");
         vkDestroyInstance(m_instance, nullptr);
     }
 }

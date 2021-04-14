@@ -189,7 +189,6 @@ void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height
 
 Swapchain::~Swapchain() {
     if (m_swapchain != nullptr) {
-        spdlog::trace("Destroying swapchain {}.", m_name);
         vkDestroySwapchainKHR(m_device.device(), m_swapchain, nullptr);
     }
 

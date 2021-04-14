@@ -41,7 +41,6 @@ Framebuffer::Framebuffer(Framebuffer &&other) noexcept
 
 Framebuffer::~Framebuffer() {
     if (m_framebuffer != nullptr) {
-        spdlog::trace("Destroying framebuffer {}.", m_name);
         vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
     }
 }
