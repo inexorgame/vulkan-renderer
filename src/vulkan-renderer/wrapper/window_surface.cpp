@@ -24,7 +24,6 @@ WindowSurface::WindowSurface(WindowSurface &&other) noexcept
 
 WindowSurface::~WindowSurface() {
     if (m_surface != nullptr) {
-        spdlog::trace("Destroying window surface.");
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     }
 }

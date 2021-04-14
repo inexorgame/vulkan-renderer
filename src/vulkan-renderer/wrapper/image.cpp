@@ -78,12 +78,10 @@ Image::Image(Image &&other) noexcept
 
 Image::~Image() {
     if (m_image_view != nullptr) {
-        spdlog::trace("Destroying image view {}.", m_name);
         vkDestroyImageView(m_device.device(), m_image_view, nullptr);
     }
 
     if (m_image != nullptr) {
-        spdlog::trace("Destroying image {}.", m_name);
         vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
     }
 }

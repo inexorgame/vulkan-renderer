@@ -69,7 +69,6 @@ GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
     if (m_buffer != nullptr) {
-        spdlog::trace("Destroying GPU memory buffer.");
         vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
     }
 }

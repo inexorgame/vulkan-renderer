@@ -87,7 +87,6 @@ bool Window::should_close() {
 
 Window::~Window() {
     if (m_window != nullptr) {
-        spdlog::trace("Destroying window.");
         glfwDestroyWindow(m_window);
     }
 }

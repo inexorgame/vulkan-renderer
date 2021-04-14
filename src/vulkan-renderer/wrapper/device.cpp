@@ -399,7 +399,6 @@ Device::~Device() {
     }
 
     if (m_device != nullptr) {
-        spdlog::trace("Destroying device.");
         vkDestroyDevice(m_device, nullptr);
     }
 }

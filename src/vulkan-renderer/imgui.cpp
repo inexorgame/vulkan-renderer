@@ -213,7 +213,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 }
 
 ImGUIOverlay::~ImGUIOverlay() {
-    spdlog::trace("Destroying ImGUI overlay");
     ImGui::DestroyContext();
     vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }

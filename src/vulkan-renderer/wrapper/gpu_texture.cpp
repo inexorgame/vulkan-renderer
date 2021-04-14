@@ -34,7 +34,6 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
 
 GpuTexture::~GpuTexture() {
     if (m_sampler != nullptr) {
-        spdlog::trace("Destroying texture sampler {}.", m_name);
         vkDestroySampler(m_device.device(), m_sampler, nullptr);
     }
 }

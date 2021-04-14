@@ -20,7 +20,6 @@ GLFWContext::GLFWContext(GLFWContext &&other) noexcept : m_initialized(other.m_i
 
 GLFWContext::~GLFWContext() {
     if (m_initialized) {
-        spdlog::trace("Destroying glfw context.");
         glfwTerminate();
     }
 }

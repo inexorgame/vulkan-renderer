@@ -51,9 +51,6 @@ CpuTexture::CpuTexture(CpuTexture &&other) noexcept
 
 CpuTexture::~CpuTexture() {
     if (m_texture_data != nullptr) {
-        spdlog::trace("Destroying cpu texture data {}.", m_name);
-
-        // Discard the texture data.
         stbi_image_free(m_texture_data);
     }
 }

@@ -70,7 +70,6 @@ Shader::Shader(Shader &&other) noexcept
 
 Shader::~Shader() {
     if (m_shader_module != nullptr) {
-        spdlog::trace("Destroying shader module {}.", m_name);
         vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
     }
 }
