@@ -214,7 +214,9 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
 }
 
-Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m_instance, nullptr)) {}
+Instance::Instance(Instance &&other) noexcept {
+    m_instance = std::exchange(other.m_instance, nullptr);
+}
 
 Instance::~Instance() {
     vkDestroyInstance(m_instance, nullptr);

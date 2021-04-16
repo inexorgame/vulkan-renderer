@@ -23,13 +23,17 @@ Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, std::uint
     setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
 }
 
-Swapchain::Swapchain(Swapchain &&other) noexcept
-    : m_device(other.m_device), m_surface(std::exchange(other.m_surface, nullptr)),
-      m_swapchain(std::exchange(other.m_swapchain, nullptr)), m_surface_format(other.m_surface_format),
-      m_extent(other.m_extent), m_swapchain_images(std::move(other.m_swapchain_images)),
-      m_swapchain_image_views(std::move(other.m_swapchain_image_views)),
-      m_swapchain_image_count(other.m_swapchain_image_count), m_vsync_enabled(other.m_vsync_enabled),
-      m_name(std::move(other.m_name)) {}
+Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
+    m_surface = std::exchange(other.m_surface, nullptr);
+    m_swapchain = std::exchange(other.m_swapchain, nullptr);
+    m_surface_format = other.m_surface_format;
+    m_extent = other.m_extent;
+    m_swapchain_images = std::move(other.m_swapchain_images);
+    m_swapchain_image_views = std::move(other.m_swapchain_image_views);
+    m_swapchain_image_count = other.m_swapchain_image_count;
+    m_vsync_enabled = other.m_vsync_enabled;
+    m_name = std::move(other.m_name);
+}
 
 void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
                                 std::uint32_t window_height) {

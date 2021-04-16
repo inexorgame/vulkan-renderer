@@ -27,9 +27,10 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool comman
     m_device.set_debug_marker_name(m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
 }
 
-CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
-    : m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_device(other.m_device),
-      m_name(std::move(other.m_name)) {}
+CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
+    m_command_buffer = std::exchange(other.m_command_buffer, nullptr);
+    m_name = std::move(other.m_name);
+}
 
 void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();

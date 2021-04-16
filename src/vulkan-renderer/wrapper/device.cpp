@@ -385,9 +385,11 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     spdlog::debug("Created device successfully.");
 }
 
-Device::Device(Device &&other) noexcept
-    : m_device(std::exchange(other.m_device, nullptr)), m_graphics_card(std::exchange(other.m_graphics_card, nullptr)),
-      m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers), m_surface(other.m_surface) {}
+Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
+    m_device = std::exchange(other.m_device, nullptr);
+    m_graphics_card = std::exchange(other.m_graphics_card, nullptr);
+    m_surface = other.m_surface;
+}
 
 Device::~Device() {
     vmaDestroyAllocator(m_allocator);

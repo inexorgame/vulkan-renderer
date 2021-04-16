@@ -24,7 +24,9 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     }
 }
 
-Window::Window(Window &&other) noexcept : m_window(std::exchange(other.m_window, nullptr)) {}
+Window::Window(Window &&other) noexcept {
+    m_window = std::exchange(other.m_window, nullptr);
+}
 
 void Window::wait_for_focus() {
     int current_width = 0;

@@ -9,8 +9,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-RenderPass::RenderPass(RenderPass &&other) noexcept
-    : m_device(other.m_device), renderpass(std::exchange(other.renderpass, nullptr)), name(std::move(other.name)) {}
+RenderPass::RenderPass(RenderPass &&other) noexcept : m_device(other.m_device) {
+    renderpass = std::exchange(other.renderpass, nullptr);
+    name = std::move(other.name);
+}
 
 RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescription> &attachments,
                        const std::vector<VkSubpassDependency> &dependencies,

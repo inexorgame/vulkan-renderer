@@ -45,10 +45,14 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
     }
 }
 
-CpuTexture::CpuTexture(CpuTexture &&other) noexcept
-    : m_name(std::move(other.m_name)), m_texture_width(other.m_texture_width), m_texture_height(other.m_texture_height),
-      m_texture_channels(other.m_texture_channels), m_mip_levels(other.m_mip_levels),
-      m_texture_data(other.m_texture_data) {}
+CpuTexture::CpuTexture(CpuTexture &&other) noexcept {
+    m_name = std::move(other.m_name);
+    m_texture_width = other.m_texture_width;
+    m_texture_height = other.m_texture_height;
+    m_texture_channels = other.m_texture_channels;
+    m_mip_levels = other.m_mip_levels;
+    m_texture_data = other.m_texture_data;
+}
 
 CpuTexture::~CpuTexture() {
     stbi_image_free(m_texture_data);

@@ -36,9 +36,10 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
     spdlog::debug("Created framebuffer {} successfully.", m_name);
 }
 
-Framebuffer::Framebuffer(Framebuffer &&other) noexcept
-    : m_device(other.m_device), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)),
-      m_name(std::move(other.m_name)) {}
+Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {
+    m_framebuffer = std::exchange(other.m_framebuffer, nullptr);
+    m_name = std::move(other.m_name);
+}
 
 Framebuffer::~Framebuffer() {
     vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
