@@ -86,9 +86,7 @@ bool Window::should_close() {
 }
 
 Window::~Window() {
-    if (m_window != nullptr) {
-        glfwDestroyWindow(m_window);
-    }
+    glfwDestroyWindow(m_window);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
