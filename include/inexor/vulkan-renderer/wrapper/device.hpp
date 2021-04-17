@@ -47,9 +47,9 @@ public:
     /// @brief Check if a certain device layer is available for a specific graphics card.
     /// @note Vulkan device layers were deprecated, essentially making all layers instance layers.
     /// @param graphics_card The graphics card.
-    /// @param extension The name of the device layer.
+    /// @param layer_name The name of the device layer.
     /// @return ``true`` if the requested device layer is available.
-    [[nodiscard]] static bool is_layer_supported(VkPhysicalDevice graphics_card, const std::string &extension);
+    [[nodiscard]] static bool is_layer_supported(VkPhysicalDevice graphics_card, const std::string &layer_name);
 
     /// @brief Check if a swapchain is available for a specific graphics card.
     /// @param graphics_card The graphics card.

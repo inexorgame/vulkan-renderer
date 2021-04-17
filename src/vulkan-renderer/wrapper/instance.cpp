@@ -66,8 +66,8 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const std::uint32_t vulkan_api_version, bool enable_validation_layers,
-                   bool enable_renderdoc_instance_layer, const std::vector<std::string> &requested_instance_extensions,
+                   const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer,
+                   const std::vector<std::string> &requested_instance_extensions,
                    const std::vector<std::string> &requested_instance_layers) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
@@ -144,7 +144,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // RenderDoc is a very useful open source graphics debugger for Vulkan and other APIs.
     // Not using it all the time during development is fine, but as soon as something crashes
     // you should enable it, take a snapshot and look up what's wrong.
-    if (enable_renderdoc_instance_layer) {
+    if (enable_renderdoc_layer) {
         instance_layers_wishlist.push_back("VK_LAYER_RENDERDOC_Capture");
     }
 
