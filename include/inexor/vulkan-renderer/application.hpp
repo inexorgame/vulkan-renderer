@@ -54,12 +54,6 @@ class Application : public VulkanRenderer {
 public:
     Application(int argc, char **argv);
 
-    /// @brief Call glfwSetFramebufferSizeCallback.
-    /// @param window The window whose framebuffer was resized.
-    /// @param width The new width, in pixels, of the framebuffer.
-    /// @param height The new height, in pixels, of the framebuffer.
-    void frame_buffer_resize_callback(GLFWwindow *window, int width, int height);
-
     /// @brief Call glfwSetKeyCallback.
     /// @param window The window that received the event.
     /// @param key The keyboard key that was pressed or released.

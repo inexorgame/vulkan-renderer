@@ -18,10 +18,6 @@
 
 namespace inexor::vulkan_renderer {
 
-void Application::frame_buffer_resize_callback(GLFWwindow *window, int width, int height) {
-    spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
-}
-
 void Application::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     switch (action) {
     case GLFW_PRESS:
@@ -245,7 +241,7 @@ void Application::setup_window_and_input_callbacks() {
 
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->frame_buffer_resize_callback(window, width, height);
+        spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
         app->m_window_resized = true;
     };
 
