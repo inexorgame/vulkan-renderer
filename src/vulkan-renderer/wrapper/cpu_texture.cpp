@@ -82,9 +82,7 @@ void CpuTexture::generate_error_texture_data() {
     // Performance could be improved by copying complete rows after one or two rows are created with the loops.
     for (int y = 0; y < m_texture_height; y++) {
         for (int x = 0; x < m_texture_width; x++) {
-            const int index = (x + (y * m_texture_width)) * m_texture_channels;
             const int color_id = get_color(x, y, SQUARE_DIMENSION, COLORS.size());
-
             std::memcpy(m_texture_data, &COLORS[color_id][0], 4 * sizeof(COLORS[color_id][0]));
         }
     }
