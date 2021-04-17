@@ -7,12 +7,12 @@
 namespace inexor::vulkan_renderer::tools {
 
 template <>
-int CommandLineArgumentValue::as() const {
+[[nodiscard]] int CommandLineArgumentValue::as() const {
     return std::stoi(m_value);
 }
 
 template <>
-bool CommandLineArgumentValue::as() const {
+[[nodiscard]] bool CommandLineArgumentValue::as() const {
     if (m_value == "false") {
         return false;
     }
@@ -23,7 +23,7 @@ bool CommandLineArgumentValue::as() const {
 }
 
 template <>
-std::uint32_t CommandLineArgumentValue::as() const {
+[[nodiscard]] std::uint32_t CommandLineArgumentValue::as() const {
     return static_cast<std::uint32_t>(as<int>());
 }
 
