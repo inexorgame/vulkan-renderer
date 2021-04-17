@@ -189,19 +189,19 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     vertex_input_attrs[0].binding = 0;
     vertex_input_attrs[0].location = 0;
     vertex_input_attrs[0].format = VK_FORMAT_R32G32_SFLOAT;
-    vertex_input_attrs[0].offset = offsetof(ImDrawVert, pos);
+    vertex_input_attrs[0].offset = offsetof(ImDrawVert, pos); // NOLINT
 
     // Location 1: UV
     vertex_input_attrs[1].binding = 0;
     vertex_input_attrs[1].location = 1;
     vertex_input_attrs[1].format = VK_FORMAT_R32G32_SFLOAT;
-    vertex_input_attrs[1].offset = offsetof(ImDrawVert, uv);
+    vertex_input_attrs[1].offset = offsetof(ImDrawVert, uv); // NOLINT
 
     // Location 2: Color
     vertex_input_attrs[2].binding = 0;
     vertex_input_attrs[2].location = 2;
     vertex_input_attrs[2].format = VK_FORMAT_R8G8B8A8_UNORM;
-    vertex_input_attrs[2].offset = offsetof(ImDrawVert, col);
+    vertex_input_attrs[2].offset = offsetof(ImDrawVert, col); // NOLINT
 
     spdlog::debug("Creating ImGUI graphics pipeline");
 
