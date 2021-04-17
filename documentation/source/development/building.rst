@@ -71,8 +71,19 @@ The following CMake targets and options are available:
 Windows
 ^^^^^^^
 
-.. note::
-    When building a VS solution add ``--config Debug/Release`` to define the build type.
+Example: Create Visual Studio 2019 project map for Debug mode including docs, tests, and benchmarks:
+
+.. code-block:: shell
+
+    cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug -DINEXOR_BUILD_DOC=ON -DINEXOR_BUILD_TESTS=ON -DINEXOR_BUILD_BENCHMARKS=ON ./
+
+Example: Create Visual Studio 2019 project map for Release mode but without docs, tests, and benchmarks:
+
+.. code-block:: shell
+
+    cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-release-vs/ -DCMAKE_BUILD_TYPE=Release ./
+
+If you have `Ninja build system <https://ninja-build.org/>`__ installed, you can use it like this:
 
 .. code-block:: doscon
 
