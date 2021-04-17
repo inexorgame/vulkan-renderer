@@ -471,16 +471,12 @@ CheckOptions:
     value:           CamelCase
   - key:             modernize-make-shared.IgnoreMacros
     value:           '1'
-  - key:             modernize-make-shared.IncludeStyle
-    value:           '0'
   - key:             modernize-make-shared.MakeSmartPtrFunction
     value:           'std::make_shared'
   - key:             modernize-make-shared.MakeSmartPtrFunctionHeader
     value:           memory
   - key:             modernize-make-unique.IgnoreMacros
     value:           '1'
-  - key:             modernize-make-unique.IncludeStyle
-    value:           '0'
   - key:             modernize-make-unique.MakeSmartPtrFunction
     value:           'std::make_unique'
   - key:             modernize-make-unique.MakeSmartPtrFunctionHeader
