@@ -10,19 +10,6 @@
 
 namespace inexor::vulkan_renderer {
 
-ImGUIOverlay::ImGUIOverlay(ImGUIOverlay &&other) noexcept
-    : m_device(other.m_device), m_swapchain(other.m_swapchain), m_scale(other.m_scale),
-      m_imgui_mesh(std::exchange(other.m_imgui_mesh, nullptr)),
-      m_imgui_texture(std::exchange(other.m_imgui_texture, nullptr)),
-      m_renderpass(std::exchange(other.m_renderpass, nullptr)),
-      m_vert_shader(std::exchange(other.m_vert_shader, nullptr)),
-      m_frag_shader(std::exchange(other.m_frag_shader, nullptr)),
-      m_command_pool(std::exchange(other.m_command_pool, nullptr)),
-      m_descriptor(std::exchange(other.m_descriptor, nullptr)), m_pipeline(std::exchange(other.m_pipeline, nullptr)),
-      m_subpass(other.m_subpass), m_vertex_count(other.m_vertex_count), m_index_count(other.m_index_count),
-      m_shaders(other.m_shaders), m_command_buffers(std::move(other.m_command_buffers)),
-      m_framebuffers(std::move(other.m_framebuffers)), m_push_const_block(other.m_push_const_block) {}
-
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain) {
     assert(device.device());
