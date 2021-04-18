@@ -18,6 +18,12 @@ jobs:
           apk update
           apk add --no-cache git less openssh
 
+      - name: Info
+        run: |
+          echo ${{ github.base_ref }}
+          echo ${{ github.head_ref }}
+          echo ${{ github.sha }}
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
