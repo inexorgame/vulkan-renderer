@@ -34,6 +34,34 @@ If blocks or corners are ordered, they use this order.
     6, "(1, 1, 0)"
     7, "(1, 1, 1)"
 
+**Order of Faces**
+
+The following order of faces is used:
+
+.. csv-table:: Order of Face
+    :header: ID, Name, Normal vector
+
+    0, "left", "(-1, 0, 0)"
+    1, "right", "(1, 0, 0)"
+    2, "front", "(0, 1, 0)"
+    3, "back", "(0, -1, 0)"
+    4, "top", "(0, 0, 1)"
+    5, "bottom", "(0, 0, -1)"
+
+**Order of Indices on Face**
+
+The following corner indices are associated to the faces:
+
+.. csv-table:: Order of Indices on Face
+    :header: ID, Indices
+
+    0, "0, 1, 2, 3"
+    1, "4, 5, 6, 7"
+    2, "0, 1, 4, 5"
+    3, "2, 3, 6, 7"
+    4, "1, 3, 5, 7"
+    5, "0, 2, 4, 6"
+
 **Edge Order**
 
 - All edges are going into the positive direction of the axis.
