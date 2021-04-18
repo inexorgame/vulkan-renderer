@@ -18,16 +18,21 @@ jobs:
           apk update
           apk add --no-cache git less openssh
 
-      - name: Checkout
+      - name: Checkout (Pull Request)
+        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Shallow fetch
+      - name: Shallow fetch (Pull Request)
         if: ${{ github.event_name == 'pull_request' }}
         run: |
           git fetch --progress --shallow-exclude ${{ github.base_ref }} origin +${{ github.sha }}:refs/remotes/origin/${{ github.head_ref }}
           git log --pretty=oneline
+
+      - name: Checkout (Push)
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@v2
 
       - name: Install gitcc
         run: |
