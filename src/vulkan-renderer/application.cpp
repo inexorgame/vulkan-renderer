@@ -194,8 +194,8 @@ void Application::load_shaders() {
 void Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
-    std::shared_ptr<world::Cube> cube =
-        std::make_shared<world::Cube>(world::Cube::Type::OCTANT, 2.0f, glm::vec3{0, -1, -1});
+    std::shared_ptr<world::Cube> cube = std::make_shared<world::Cube>(2.0f, glm::vec3{0, -1, -1});
+    cube->set_type(world::Cube::Type::OCTANT);
 
     cube->childs()[3]->set_type(world::Cube::Type::EMPTY);
     cube->childs()[5]->set_type(world::Cube::Type::EMPTY);
