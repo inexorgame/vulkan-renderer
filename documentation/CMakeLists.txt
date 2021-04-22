@@ -24,7 +24,6 @@ if (INEXOR_BUILD_DOCUMENTATION_USE_VENV)
         COMMAND ${Python_EXECUTABLE} -m pip install --no-cache -r requirements.txt
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND_ERROR_IS_FATAL ANY
-        RESULT_VARIABLE proc_result
     )
 endif()
 
