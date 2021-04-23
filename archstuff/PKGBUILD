@@ -20,9 +20,7 @@ prepare() {
 
 build() {
 	cd ../../
-	cmake . \
-   -Bbuild \
-   -GNinja
+	cmake . -Bbuild -GNinja
    cd build
    ninja
 }
