@@ -40,7 +40,9 @@ Framebuffer::Framebuffer(Framebuffer &&other) noexcept
       m_name(std::move(other.m_name)) {}
 
 Framebuffer::~Framebuffer() {
-    vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
+    if (m_framebuffer != nullptr) {
+        vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

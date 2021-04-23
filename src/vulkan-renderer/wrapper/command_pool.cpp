@@ -27,7 +27,9 @@ CommandPool::CommandPool(CommandPool &&other) noexcept
     : m_device(other.m_device), m_command_pool(std::exchange(other.m_command_pool, nullptr)) {}
 
 CommandPool::~CommandPool() {
-    vkDestroyCommandPool(m_device.device(), m_command_pool, nullptr);
+    if (m_command_pool != nullptr) {
+        vkDestroyCommandPool(m_device.device(), m_command_pool, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

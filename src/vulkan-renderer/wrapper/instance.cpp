@@ -217,7 +217,9 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m_instance, nullptr)) {}
 
 Instance::~Instance() {
-    vkDestroyInstance(m_instance, nullptr);
+    if (m_instance != nullptr) {
+        vkDestroyInstance(m_instance, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

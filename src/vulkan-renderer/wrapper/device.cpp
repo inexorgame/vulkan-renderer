@@ -394,8 +394,13 @@ Device::Device(Device &&other) noexcept
       m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers), m_surface(other.m_surface) {}
 
 Device::~Device() {
-    vmaDestroyAllocator(m_allocator);
-    vkDestroyDevice(m_device, nullptr);
+    if (m_allocator != nullptr) {
+        vmaDestroyAllocator(m_allocator);
+    }
+
+    if (m_device != nullptr) {
+        vkDestroyDevice(m_device, nullptr);
+    }
 }
 
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,

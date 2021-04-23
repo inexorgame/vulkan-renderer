@@ -114,8 +114,13 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
 }
 
 ResourceDescriptor::~ResourceDescriptor() {
-    vkDestroyDescriptorSetLayout(m_device.device(), m_descriptor_set_layout, nullptr);
-    vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
+    if (m_descriptor_set_layout != nullptr) {
+        vkDestroyDescriptorSetLayout(m_device.device(), m_descriptor_set_layout, nullptr);
+    }
+
+    if (m_descriptor_pool != nullptr) {
+        vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
