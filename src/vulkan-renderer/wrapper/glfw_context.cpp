@@ -19,9 +19,7 @@ GLFWContext::GLFWContext() {
 GLFWContext::GLFWContext(GLFWContext &&other) noexcept : m_initialized(other.m_initialized) {}
 
 GLFWContext::~GLFWContext() {
-    if (m_initialized) {
-        glfwTerminate();
-    }
+    glfwTerminate();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

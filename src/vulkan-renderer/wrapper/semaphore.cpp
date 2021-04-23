@@ -33,9 +33,7 @@ Semaphore::Semaphore(Semaphore &&other) noexcept
       m_name(std::move(other.m_name)) {}
 
 Semaphore::~Semaphore() {
-    if (m_semaphore != nullptr) {
-        vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);
-    }
+    vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

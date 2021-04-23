@@ -50,9 +50,7 @@ CpuTexture::CpuTexture(CpuTexture &&other) noexcept
       m_texture_data(other.m_texture_data) {}
 
 CpuTexture::~CpuTexture() {
-    if (m_texture_data != nullptr) {
-        stbi_image_free(m_texture_data);
-    }
+    stbi_image_free(m_texture_data);
 }
 
 void CpuTexture::generate_error_texture_data() {
