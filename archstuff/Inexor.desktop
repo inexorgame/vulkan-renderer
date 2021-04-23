@@ -2,7 +2,7 @@
 Comment[en_US]=
 Exec=~/vulkan-renderer/build/bin/inexor-vulkan-renderer-example
 GenericName[en_US]=Game engine for Sauer successor
-GenericName=Game engine for Sauer successor
+GenericName=Game engine for the Inexor project
 Icon=/usr/share/vulkan-renderer/assets/inexor2.png
 Name[en_US]=Inexor
 Name=Inexor
