@@ -33,9 +33,7 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
       m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
 
 GpuTexture::~GpuTexture() {
-    if (m_sampler != nullptr) {
-        vkDestroySampler(m_device.device(), m_sampler, nullptr);
-    }
+    vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
 void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {

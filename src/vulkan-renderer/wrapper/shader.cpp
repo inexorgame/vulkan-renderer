@@ -69,9 +69,7 @@ Shader::Shader(Shader &&other) noexcept
       m_entry_point(std::move(other.m_entry_point)), m_shader_module(std::exchange(other.m_shader_module, nullptr)) {}
 
 Shader::~Shader() {
-    if (m_shader_module != nullptr) {
-        vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
-    }
+    vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
