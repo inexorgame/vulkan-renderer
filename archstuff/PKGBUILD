@@ -22,7 +22,6 @@ build() {
 	cd ../../
 	cmake . \
    -Bbuild \
-   -DCMAKE_BUILD_TYPE=Debug \
    -GNinja
    cd build
    ninja
@@ -31,9 +30,7 @@ build() {
 package(){
    cd ..
    sudo cp Inexor.desktop /usr/share/applications/Inexor.desktop
-   ls
    cd
-   ls
    sudo cp -r vulkan-renderer /usr/share/vulkan-renderer
 }
 
