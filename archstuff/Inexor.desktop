@@ -1,0 +1,14 @@
+[Desktop Entry]
+Comment[en_US]=
+Exec=~/vulkan-renderer/build/bin/inexor-vulkan-renderer-example
+GenericName[en_US]=Game engine for Sauer successor
+GenericName=Game engine for Sauer successor
+Icon=/usr/share/vulkan-renderer/assets/inexor2.png
+Name[en_US]=Inexor
+Name=Inexor
+Path=~/vulkan-renderer/
+StartupNotify=true
+Terminal=false
+Type=Application
+Version=0.15
+X-Desktop-File-Install-Version=0.15
