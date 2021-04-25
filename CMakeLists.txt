@@ -14,6 +14,12 @@ option(INEXOR_BUILD_TESTS "Build tests" OFF)
 set(INEXOR_CONAN_PROFILE "default" CACHE STRING "conan profile")
 option(INEXOR_USE_VMA_RECORDING "Use VulkanMemoryAllocator recording feature" OFF)
 
+# Fix CMake UI not passing libraries to inexor-vulkan-renderer-example
+# TODO: Refactor this!
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
 message(STATUS "INEXOR_BUILD_EXAMPLE = ${INEXOR_BUILD_EXAMPLE}")
