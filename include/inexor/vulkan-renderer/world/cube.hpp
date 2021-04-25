@@ -60,8 +60,8 @@ private:
     float m_size{32};
     glm::vec3 m_position{0.0F, 0.0F, 0.0F};
 
-    /// Root cube points to itself.
-    std::weak_ptr<Cube> m_parent{weak_from_this()};
+    /// Root cube is empty.
+    std::weak_ptr<Cube> m_parent{};
 
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations;
@@ -75,7 +75,7 @@ private:
     void remove_childs();
 
     /// Get the root to this cube.
-    [[nodiscard]] std::weak_ptr<Cube> root() const noexcept;
+    [[nodiscard]] std::shared_ptr<Cube> root() noexcept;
     /// Get the vertices of this cube. Use only on geometry cubes.
     [[nodiscard]] std::array<glm::vec3, 8> vertices() const noexcept;
 
@@ -84,11 +84,14 @@ private:
     void rotate(const RotationAxis::Type &axis);
 
 public:
+    /// Create a solid cube.
     Cube() = default;
-    explicit Cube(Type type);
-    Cube(Type type, float size, const glm::vec3 &position);
-    Cube(std::weak_ptr<Cube> parent, Type type, float size, const glm::vec3 &position);
-    Cube(const Cube &rhs);
+    /// Create a solid cube.
+    Cube(float size, const glm::vec3 &position);
+    /// Create a solid cube.
+    Cube(std::weak_ptr<Cube> parent, float size, const glm::vec3 &position);
+    /// Use clone() to create an independent copy of a cube.
+    Cube(const Cube &rhs) = delete;
     Cube(Cube &&rhs) noexcept;
     ~Cube() = default;
     Cube &operator=(Cube rhs);
@@ -96,6 +99,10 @@ public:
     std::shared_ptr<Cube> operator[](std::size_t idx);
     /// Get child.
     const std::shared_ptr<const Cube> operator[](std::size_t idx) const;
+
+    /// Clone a cube, which has no relations to the current one or its children.
+    /// It will be a root cube.
+    [[nodiscard]] std::shared_ptr<Cube> clone() const;
 
     /// Is the current cube root.
     [[nodiscard]] bool is_root() const noexcept;
