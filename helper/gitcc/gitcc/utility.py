@@ -1,37 +1,46 @@
 import re
-from dataclasses import dataclass
 
 from git import Repo, Commit
 
 
-@dataclass
-class Check:
-    rx: re.Pattern
-    error_msg: str
+class RxSummary:
+    rx_parser: re.Pattern = re.compile(r"\[(.*)] (.*)")
+    rx_category: re.Pattern = re.compile(r"\*|(?:[a-z0-9]{2,}[\s|-]?)+")
+    rx_description: re.Pattern = re.compile(r"[A-Z0-9].+[^.!?,\s]")
 
+    def __init__(self, summary: str):
+        self.category_tag: str = ""
+        self.description_text: str = ""
 
-SUMMARY = [
-    Check(re.compile(r"\["), "Category description has no opening bracket '['."),
-    Check(re.compile(r"[a-z0-9]"), "Category text should start with a lower case letter or number."),
-    Check(re.compile(r"[a-z0-9\s|-]*[a-z0-9]"),
-          "Category text has to be at least 2 characters long and can contain only the following characters:"
-          " 'a-z', '0-9', '|', '-' and spaces."),
-    Check(re.compile(r"]"),
-          "Category text does not end with a lower case letter or category description has no closing bracket."),
-    Check(re.compile(r"\s"), "No space after the category description."),
-    Check(re.compile(r"[A-Z0-9]"), "Summary should start with a capital letter or number."),
-    Check(re.compile(r".+?\s.+(?=.)"), "Summary is too short or not meaningful."),
-    Check(re.compile(r"[^.!?,]"), "Summary should not end with a punctuation."),
-]
+        match = self.rx_parser.fullmatch(summary)
+        if match is None:
+            return
+        self.category_tag = match.group(1)
+        self.description_text = match.group(2)
+
+    def valid_format(self) -> bool:
+        return self.category_tag != "" and self.description_text != ""
+
+    def valid_category_tag(self) -> bool:
+        return self.rx_category.fullmatch(self.category_tag)
+
+    def valid_description(self) -> bool:
+        return self.rx_description.fullmatch(self.description_text)
 
 
 def check_summary(summary: str) -> str:
-    start_pos = 0
-    for check in SUMMARY:
-        match = check.rx.match(summary, start_pos)
-        if match is None or match.start() != start_pos:
-            return check.error_msg
-        start_pos = match.end()
+    check = RxSummary(summary)
+    if not check.valid_format():
+        return "Invalid format. It should be '[<tag>] <Good Description>'"
+
+    if not check.valid_category_tag():
+        return "Invalid category tag. It should be either a single '*' or completely lowercase " \
+               "letters or numbers, at least 2 characters long, other allowed characters are: '|', '-' and spaces."
+
+    if not check.valid_description():
+        return "Invalid description. It should start with an uppercase letter or number, " \
+               "should be not to short and should not end with a punctuation."
+
     return ""
 
 
