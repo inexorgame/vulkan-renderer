@@ -183,7 +183,7 @@ Configure cmake:
 
 .. note::
 
-    - Only pass ``-GNinja`` if the ninja build tool is installed.
+    Only pass ``-GNinja`` if the ninja build tool is installed.
 
 .. code-block:: shell-session
 
