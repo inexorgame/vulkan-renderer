@@ -104,10 +104,31 @@ target_include_directories(
     ${PROJECT_SOURCE_DIR}/third_party
 )
 
-target_link_libraries(
-    inexor-vulkan-renderer
+if(CONAN_LIBS)
+    target_link_libraries(
+        inexor-vulkan-renderer
 
-    PUBLIC
-    ${CONAN_LIBS}
-    Vulkan::Vulkan
-)
+        PUBLIC
+        ${CONAN_LIBS}
+        Vulkan::Vulkan
+    )
+else()
+    foreach(_LIB ${CONAN_LIBS_RELEASE})
+        target_link_libraries(
+            inexor-vulkan-renderer
+            optimized
+
+            ${_LIB}
+            Vulkan::Vulkan
+        )
+    endforeach()
+    foreach(_LIB ${CONAN_LIBS_DEBUG})
+        target_link_libraries(
+            inexor-vulkan-renderer
+            debug
+
+            ${_LIB}
+            Vulkan::Vulkan
+        )
+    endforeach()
+endif()
