@@ -4,13 +4,14 @@
 
 #include <spdlog/spdlog.h>
 
+#include <array>
 #include <cassert>
 #include <cstdint>
 
 namespace inexor::vulkan_renderer::vk_tools {
 
 void print_driver_vulkan_version() {
-    std::uint32_t api_version = 0;
+    std::uint32_t api_version{0};
 
     if (const auto result = vkEnumerateInstanceVersion(&api_version); result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", result_to_string(result));
@@ -21,12 +22,12 @@ void print_driver_vulkan_version() {
                   VK_VERSION_MINOR(api_version), VK_VERSION_PATCH(api_version));
 }
 
-void print_physical_device_queue_families(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_physical_device_queue_families(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
-    std::uint32_t queue_family_count = 0;
+    std::uint32_t queue_family_count{0};
 
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &queue_family_count, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_family_count, nullptr);
 
     spdlog::debug("Number of queue families: {}", queue_family_count);
 
@@ -34,32 +35,26 @@ void print_physical_device_queue_families(const VkPhysicalDevice graphics_card) 
         return;
     }
 
-    std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
+    std::vector<VkQueueFamilyProperties> queue_family_properties;
+    queue_family_properties.reserve(queue_family_count);
 
-    vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &queue_family_count, queue_family_properties.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_family_count, queue_family_properties.data());
+
+    constexpr std::array queue_bits{VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT,
+                                    VK_QUEUE_SPARSE_BINDING_BIT, VK_QUEUE_PROTECTED_BIT};
 
     for (std::size_t i = 0; i < queue_family_count; i++) {
         spdlog::debug("Queue family: {}", i);
         spdlog::debug("Queue count: {}", queue_family_properties[i].queueCount);
         spdlog::debug("Timestamp valid bits: {}", queue_family_properties[i].timestampValidBits);
 
-        if (queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            spdlog::debug("VK_QUEUE_GRAPHICS_BIT");
-        }
-        if (queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
-            spdlog::debug("VK_QUEUE_COMPUTE_BIT");
-        }
-        if (queue_family_properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
-            spdlog::debug("VK_QUEUE_TRANSFER_BIT");
-        }
-        if (queue_family_properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) {
-            spdlog::debug("VK_QUEUE_SPARSE_BINDING_BIT");
-        }
-        if (queue_family_properties[i].queueFlags & VK_QUEUE_PROTECTED_BIT) {
-            spdlog::debug("VK_QUEUE_PROTECTED_BIT");
+        for (const auto &queue_bit : queue_bits) {
+            if (queue_family_properties[i].queueFlags & queue_bit) {
+                spdlog::debug("{}", queue_flag_bit_to_string(queue_bit));
+            }
         }
 
-        spdlog::debug("Min image timestamp granularity: width {}, heigth {}, depth {}",
+        spdlog::debug("Min image transfer granularity: width {}, heigth {}, depth {}",
                       queue_family_properties[i].minImageTransferGranularity.width,
                       queue_family_properties[i].minImageTransferGranularity.height,
                       queue_family_properties[i].minImageTransferGranularity.depth);
@@ -67,7 +62,7 @@ void print_physical_device_queue_families(const VkPhysicalDevice graphics_card) 
 }
 
 void print_instance_layers() {
-    std::uint32_t instance_layer_count = 0;
+    std::uint32_t instance_layer_count{0};
 
     // Query how many instance layers are available.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
@@ -81,7 +76,8 @@ void print_instance_layers() {
         return;
     }
 
-    std::vector<VkLayerProperties> instance_layers(instance_layer_count);
+    std::vector<VkLayerProperties> instance_layers;
+    instance_layers.reserve(instance_layer_count);
 
     // Store all available instance layers.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
@@ -90,17 +86,17 @@ void print_instance_layers() {
         return;
     }
 
-    for (const auto &instance_layer : instance_layers) {
-        spdlog::debug("Name: {}", instance_layer.layerName);
-        spdlog::debug("Spec Version: {}", VK_VERSION_MAJOR(instance_layer.specVersion),
-                      VK_VERSION_MINOR(instance_layer.specVersion), VK_VERSION_PATCH(instance_layer.specVersion));
-        spdlog::debug("Impl Version: {}", instance_layer.implementationVersion);
-        spdlog::debug("Description: {}", instance_layer.description);
+    for (const auto &layer : instance_layers) {
+        spdlog::debug("Name: {}", layer.layerName);
+        spdlog::debug("Spec Version: {}", VK_VERSION_MAJOR(layer.specVersion), VK_VERSION_MINOR(layer.specVersion),
+                      VK_VERSION_PATCH(layer.specVersion));
+        spdlog::debug("Impl Version: {}", layer.implementationVersion);
+        spdlog::debug("Description: {}", layer.description);
     }
 }
 
 void print_instance_extensions() {
-    std::uint32_t instance_extension_count = 0;
+    std::uint32_t instance_extension_count{0};
 
     // Query how many instance extensions are available.
     if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
@@ -115,7 +111,8 @@ void print_instance_extensions() {
         return;
     }
 
-    std::vector<VkExtensionProperties> extensions(instance_extension_count);
+    std::vector<VkExtensionProperties> extensions;
+    extensions.reserve(instance_extension_count);
 
     // Store all available instance extensions.
     if (const auto result =
@@ -132,14 +129,13 @@ void print_instance_extensions() {
     }
 }
 
-void print_device_layers(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_device_layers(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
-    std::uint32_t device_layer_count = 0;
+    std::uint32_t device_layer_count{0};
 
     // Query how many device layers are available.
-    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, nullptr);
-        result != VK_SUCCESS) {
+    if (const auto result = vkEnumerateDeviceLayerProperties(gpu, &device_layer_count, nullptr); result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", result_to_string(result));
         return;
     }
@@ -150,32 +146,32 @@ void print_device_layers(const VkPhysicalDevice graphics_card) {
         return;
     }
 
-    std::vector<VkLayerProperties> device_layers(device_layer_count);
+    std::vector<VkLayerProperties> device_layers;
+    device_layers.reserve(device_layer_count);
 
     // Store all available device layers.
-    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, device_layers.data());
+    if (const auto result = vkEnumerateDeviceLayerProperties(gpu, &device_layer_count, device_layers.data());
         result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", result_to_string(result));
         return;
     }
 
-    for (const auto &device_layer : device_layers) {
-        spdlog::debug("Name: {}", device_layer.layerName);
-        spdlog::debug("Spec Version: {}.{}.{}", VK_VERSION_MAJOR(device_layer.specVersion),
-                      VK_VERSION_MINOR(device_layer.specVersion), VK_VERSION_PATCH(device_layer.specVersion));
-        spdlog::debug("Impl Version: {}", device_layer.implementationVersion);
-        spdlog::debug("Description: {}", device_layer.description);
+    for (const auto &layer : device_layers) {
+        spdlog::debug("Name: {}", layer.layerName);
+        spdlog::debug("Spec Version: {}.{}.{}", VK_VERSION_MAJOR(layer.specVersion),
+                      VK_VERSION_MINOR(layer.specVersion), VK_VERSION_PATCH(layer.specVersion));
+        spdlog::debug("Impl Version: {}", layer.implementationVersion);
+        spdlog::debug("Description: {}", layer.description);
     }
 }
 
-void print_device_extensions(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_device_extensions(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
-    std::uint32_t device_extension_count = 0;
+    std::uint32_t device_extension_count{0};
 
     // First check how many device extensions are available.
-    if (const auto result =
-            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
+    if (const auto result = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &device_extension_count, nullptr);
         result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!", result_to_string(result));
         return;
@@ -187,33 +183,33 @@ void print_device_extensions(const VkPhysicalDevice graphics_card) {
         return;
     }
 
-    std::vector<VkExtensionProperties> device_extensions(device_extension_count);
+    std::vector<VkExtensionProperties> device_extensions;
+    device_extensions.reserve(device_extension_count);
 
     // Store all available device extensions.
-    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
-                                                                 device_extensions.data());
+    if (const auto result =
+            vkEnumerateDeviceExtensionProperties(gpu, nullptr, &device_extension_count, device_extensions.data());
         result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!", result_to_string(result));
         return;
     }
 
-    for (const auto &device_extension : device_extensions) {
-        spdlog::debug("Spec version: {}.{}.{}\t Name: {}", VK_VERSION_MAJOR(device_extension.specVersion),
-                      VK_VERSION_MINOR(device_extension.specVersion), VK_VERSION_PATCH(device_extension.specVersion),
-                      device_extension.extensionName);
+    for (const auto &extension : device_extensions) {
+        spdlog::debug("Spec version: {}.{}.{}\t Name: {}", VK_VERSION_MAJOR(extension.specVersion),
+                      VK_VERSION_MINOR(extension.specVersion), VK_VERSION_PATCH(extension.specVersion),
+                      extension.extensionName);
     }
 }
 
-void print_surface_capabilities(const VkPhysicalDevice graphics_card, const VkSurfaceKHR vulkan_surface) {
-    assert(graphics_card);
-    assert(vulkan_surface);
+void print_surface_capabilities(const VkPhysicalDevice gpu, const VkSurfaceKHR surface) {
+    assert(gpu);
+    assert(surface);
 
     spdlog::debug("Printing surface capabilities.");
 
     VkSurfaceCapabilitiesKHR surface_capabilities;
 
-    if (const auto result =
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(graphics_card, vulkan_surface, &surface_capabilities);
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_capabilities);
         result != VK_SUCCESS) {
         spdlog::error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result_to_string(result));
         return;
@@ -234,14 +230,14 @@ void print_surface_capabilities(const VkPhysicalDevice graphics_card, const VkSu
     spdlog::debug("supportedUsageFlags: {}", surface_capabilities.supportedUsageFlags);
 }
 
-void print_supported_surface_formats(const VkPhysicalDevice graphics_card, const VkSurfaceKHR vulkan_surface) {
-    assert(graphics_card);
-    assert(vulkan_surface);
+void print_supported_surface_formats(const VkPhysicalDevice gpu, const VkSurfaceKHR surface) {
+    assert(gpu);
+    assert(surface);
 
-    std::uint32_t format_count = 0;
+    std::uint32_t format_count{0};
 
     // Query how many formats are supported.
-    if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &format_count, nullptr);
+    if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &format_count, nullptr);
         result != VK_SUCCESS) {
         spdlog::error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR returned {}!", result);
         return;
@@ -253,29 +249,28 @@ void print_supported_surface_formats(const VkPhysicalDevice graphics_card, const
         return;
     }
 
-    std::vector<VkSurfaceFormatKHR> surface_formats(format_count);
+    std::vector<VkSurfaceFormatKHR> surface_formats;
+    surface_formats.reserve(format_count);
 
-    if (const auto result =
-            vkGetPhysicalDeviceSurfaceFormatsKHR(graphics_card, vulkan_surface, &format_count, surface_formats.data());
+    if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &format_count, surface_formats.data());
         result != VK_SUCCESS) {
         spdlog::error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR returned {}!", result_to_string(result));
         return;
     }
 
-    for (const auto format : surface_formats) {
+    for (const auto &format : surface_formats) {
         spdlog::debug("Surface format: {}", format_to_string(format.format));
     }
 }
 
-void print_presentation_modes(const VkPhysicalDevice graphics_card, const VkSurfaceKHR vulkan_surface) {
-    assert(graphics_card);
-    assert(vulkan_surface);
+void print_presentation_modes(const VkPhysicalDevice gpu, const VkSurfaceKHR surface) {
+    assert(gpu);
+    assert(surface);
 
-    std::uint32_t present_mode_count = 0;
+    std::uint32_t present_mode_count{0};
 
     // Query how many presentation modes are available.
-    if (const auto result =
-            vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface, &present_mode_count, nullptr);
+    if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, nullptr);
         result != VK_SUCCESS) {
         spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!", result_to_string(result));
         return;
@@ -287,28 +282,29 @@ void print_presentation_modes(const VkPhysicalDevice graphics_card, const VkSurf
         return;
     }
 
-    std::vector<VkPresentModeKHR> present_modes(present_mode_count);
+    std::vector<VkPresentModeKHR> present_modes;
+    present_modes.reserve(present_mode_count);
 
-    if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(graphics_card, vulkan_surface,
-                                                                      &present_mode_count, present_modes.data());
+    if (const auto result =
+            vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, present_modes.data());
         result != VK_SUCCESS) {
         spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!", result_to_string(result));
         return;
     }
 
-    for (const auto mode : present_modes) {
+    for (const auto &mode : present_modes) {
         spdlog::debug("Present mode: {}", present_mode_khr_to_string(mode));
     }
 }
 
-void print_physical_device_info(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_physical_device_info(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
     VkPhysicalDeviceProperties gpu_properties;
 
-    vkGetPhysicalDeviceProperties(graphics_card, &gpu_properties);
+    vkGetPhysicalDeviceProperties(gpu, &gpu_properties);
 
-    spdlog::debug("Graphics card: {}", gpu_properties.deviceName);
+    spdlog::debug("Gpu: {}", gpu_properties.deviceName);
 
     spdlog::debug("Vulkan API supported version: {}.{}.{}", VK_VERSION_MAJOR(gpu_properties.apiVersion),
                   VK_VERSION_MINOR(gpu_properties.apiVersion), VK_VERSION_PATCH(gpu_properties.apiVersion));
@@ -321,71 +317,56 @@ void print_physical_device_info(const VkPhysicalDevice graphics_card) {
     spdlog::debug("Device type: {}", physical_device_type_to_string(gpu_properties.deviceType));
 }
 
-void print_physical_device_memory_properties(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_physical_device_memory_properties(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
-    spdlog::debug("Graphics card's memory properties:");
+    spdlog::debug("Gpu memory properties:");
 
-    VkPhysicalDeviceMemoryProperties gpu_memory_properties;
+    VkPhysicalDeviceMemoryProperties gpu_mem_properties;
 
-    vkGetPhysicalDeviceMemoryProperties(graphics_card, &gpu_memory_properties);
+    vkGetPhysicalDeviceMemoryProperties(gpu, &gpu_mem_properties);
 
-    spdlog::debug("Number of memory types: {}", gpu_memory_properties.memoryTypeCount);
-    spdlog::debug("Number of heap types: {}", gpu_memory_properties.memoryHeapCount);
+    spdlog::debug("Number of memory types: {}", gpu_mem_properties.memoryTypeCount);
+    spdlog::debug("Number of heap types: {}", gpu_mem_properties.memoryHeapCount);
 
-    for (std::size_t i = 0; i < gpu_memory_properties.memoryTypeCount; i++) {
-        spdlog::debug("[{}] Heap index: {}", i, gpu_memory_properties.memoryTypes[i].heapIndex);
+    constexpr std::array mem_prop_flags{
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,       VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+        VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT,    VK_MEMORY_PROPERTY_PROTECTED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD, VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD};
 
-        const auto &property_flag = gpu_memory_properties.memoryTypes[i].propertyFlags;
+    for (std::size_t i = 0; i < gpu_mem_properties.memoryTypeCount; i++) {
+        spdlog::debug("[{}] Heap index: {}", i, gpu_mem_properties.memoryTypes[i].heapIndex);
 
-        if (property_flag & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
-            spdlog::debug("VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-            spdlog::debug("VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
-            spdlog::debug("VK_MEMORY_PROPERTY_HOST_COHERENT_BIT");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) {
-            spdlog::debug("VK_MEMORY_PROPERTY_HOST_CACHED_BIT");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) {
-            spdlog::debug("VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_PROTECTED_BIT) {
-            spdlog::debug("VK_MEMORY_PROPERTY_PROTECTED_BIT");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) {
-            spdlog::debug("VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD");
-        }
-        if (property_flag & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) {
-            spdlog::debug("VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD");
+        for (const auto &mem_prop_flag : mem_prop_flags) {
+            if (gpu_mem_properties.memoryTypes[i].propertyFlags & mem_prop_flag) {
+                spdlog::debug("{}", memory_property_flag_to_string(mem_prop_flag));
+            }
         }
     }
 
-    for (std::size_t i = 0; i < gpu_memory_properties.memoryHeapCount; i++) {
-        spdlog::debug("Heap [{}], memory size: {}", i, gpu_memory_properties.memoryHeaps[i].size / (1000 * 1000));
+    constexpr std::array mem_heap_prop_flags{VK_MEMORY_HEAP_DEVICE_LOCAL_BIT, VK_MEMORY_HEAP_MULTI_INSTANCE_BIT,
+                                             VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR, VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM};
 
-        const auto &property_flag = gpu_memory_properties.memoryHeaps[i].flags;
+    for (std::size_t i = 0; i < gpu_mem_properties.memoryHeapCount; i++) {
+        spdlog::debug("Heap [{}], memory size: {}", i, gpu_mem_properties.memoryHeaps[i].size / (1000 * 1000));
 
-        if (property_flag & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
-            spdlog::debug("VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ");
-        }
-        if (property_flag & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT) {
-            spdlog::debug("VK_MEMORY_HEAP_MULTI_INSTANCE_BIT");
+        for (const auto &mem_heap_prop_flag : mem_heap_prop_flags) {
+            if (gpu_mem_properties.memoryHeaps[i].flags & mem_heap_prop_flag) {
+                spdlog::debug("{}", memory_heap_flag_to_string(mem_heap_prop_flag));
+            }
         }
     }
 }
 
-void print_physical_device_features(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_physical_device_features(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
     VkPhysicalDeviceFeatures gpu_features;
 
-    vkGetPhysicalDeviceFeatures(graphics_card, &gpu_features);
+    vkGetPhysicalDeviceFeatures(gpu, &gpu_features);
 
-    spdlog::debug("Graphics card's features:");
+    spdlog::debug("Gpu features:");
 
     spdlog::debug("robustBufferAccess: {}", gpu_features.robustBufferAccess);
     spdlog::debug("fullDrawIndexUint32: {}", gpu_features.fullDrawIndexUint32);
@@ -444,31 +425,32 @@ void print_physical_device_features(const VkPhysicalDevice graphics_card) {
     spdlog::debug("inheritedQueries: {}", gpu_features.inheritedQueries);
 }
 
-void print_physical_device_sparse_properties(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_physical_device_sparse_properties(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
     VkPhysicalDeviceProperties gpu_properties;
 
-    vkGetPhysicalDeviceProperties(graphics_card, &gpu_properties);
+    vkGetPhysicalDeviceProperties(gpu, &gpu_properties);
 
-    spdlog::debug("Graphics card's sparse properties:");
+    spdlog::debug("Gpu sparse properties:");
 
-    spdlog::debug("residencyStandard2DBlockShape: {}", gpu_properties.sparseProperties.residencyStandard2DBlockShape);
-    spdlog::debug("residencyStandard2DMultisampleBlockShape: {}",
-                  gpu_properties.sparseProperties.residencyStandard2DMultisampleBlockShape);
-    spdlog::debug("residencyStandard3DBlockShape: {}", gpu_properties.sparseProperties.residencyStandard3DBlockShape);
-    spdlog::debug("residencyAlignedMipSize: {}", gpu_properties.sparseProperties.residencyAlignedMipSize);
-    spdlog::debug("residencyNonResidentStrict: {}", gpu_properties.sparseProperties.residencyNonResidentStrict);
+    const auto props = gpu_properties.sparseProperties;
+
+    spdlog::debug("residencyStandard2DBlockShape: {}", props.residencyStandard2DBlockShape);
+    spdlog::debug("residencyStandard2DMultisampleBlockShape: {}", props.residencyStandard2DMultisampleBlockShape);
+    spdlog::debug("residencyStandard3DBlockShape: {}", props.residencyStandard3DBlockShape);
+    spdlog::debug("residencyAlignedMipSize: {}", props.residencyAlignedMipSize);
+    spdlog::debug("residencyNonResidentStrict: {}", props.residencyNonResidentStrict);
 }
 
-void print_physical_device_limits(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
+void print_physical_device_limits(const VkPhysicalDevice gpu) {
+    assert(gpu);
 
     VkPhysicalDeviceProperties gpu_properties;
 
-    vkGetPhysicalDeviceProperties(graphics_card, &gpu_properties);
+    vkGetPhysicalDeviceProperties(gpu, &gpu_properties);
 
-    spdlog::debug("Graphics card's limits:");
+    spdlog::debug("Gpu limits:");
 
     const auto limits = gpu_properties.limits;
 
@@ -592,45 +574,46 @@ void print_physical_device_limits(const VkPhysicalDevice graphics_card) {
     spdlog::debug("nonCoherentAtomSize: {}", limits.nonCoherentAtomSize);
 }
 
-void print_all_physical_devices(const VkInstance vulkan_instance, const VkSurfaceKHR vulkan_surface) {
-    assert(vulkan_surface);
-    assert(vulkan_instance);
+void print_all_physical_devices(const VkInstance instance, const VkSurfaceKHR surface) {
+    assert(instance);
+    assert(surface);
 
-    std::uint32_t gpu_count = 0;
+    std::uint32_t gpu_count{0};
 
     // Query how many graphics cards are available.
-    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &gpu_count, nullptr); result != VK_SUCCESS) {
+    if (const auto result = vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr); result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", result_to_string(result));
         return;
     }
+
+    spdlog::debug("Number of available gpus: {}", gpu_count);
 
     if (gpu_count == 0) {
         return;
     }
 
-    spdlog::debug("Number of available graphics cards: {}", gpu_count);
-
-    std::vector<VkPhysicalDevice> available_graphics_cards(gpu_count);
+    std::vector<VkPhysicalDevice> available_gpus;
+    available_gpus.reserve(gpu_count);
 
     // Store all available graphics cards.
-    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &gpu_count, available_graphics_cards.data());
+    if (const auto result = vkEnumeratePhysicalDevices(instance, &gpu_count, available_gpus.data());
         result != VK_SUCCESS) {
         spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", result_to_string(result));
         return;
     }
 
-    for (auto *graphics_card : available_graphics_cards) {
-        print_device_layers(graphics_card);
-        print_device_extensions(graphics_card);
-        print_physical_device_info(graphics_card);
-        print_physical_device_queue_families(graphics_card);
-        print_surface_capabilities(graphics_card, vulkan_surface);
-        print_supported_surface_formats(graphics_card, vulkan_surface);
-        print_presentation_modes(graphics_card, vulkan_surface);
-        print_physical_device_memory_properties(graphics_card);
-        print_physical_device_features(graphics_card);
-        print_physical_device_sparse_properties(graphics_card);
-        print_physical_device_limits(graphics_card);
+    for (auto *gpu : available_gpus) {
+        print_device_layers(gpu);
+        print_device_extensions(gpu);
+        print_physical_device_info(gpu);
+        print_physical_device_queue_families(gpu);
+        print_surface_capabilities(gpu, surface);
+        print_supported_surface_formats(gpu, surface);
+        print_presentation_modes(gpu, surface);
+        print_physical_device_memory_properties(gpu);
+        print_physical_device_features(gpu);
+        print_physical_device_sparse_properties(gpu);
+        print_physical_device_limits(gpu);
     }
 }
 

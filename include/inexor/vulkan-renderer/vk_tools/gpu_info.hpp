@@ -2,70 +2,68 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include <string>
-
 namespace inexor::vulkan_renderer::vk_tools {
 
-/// @brief Query which version of the Vulkan API is supported on this system.
-/// @note Inexor engine does not use a Vulkan meta loader like volk.
+/// @brief Print available version of Vulkan API.
+/// @note Inexor engine does not use a Vulkan metaloader such as Volk.
 void print_driver_vulkan_version();
 
-/// @brief Print information about a graphics card's device queue families.
-/// @param graphics_card The regarded graphics card.
-void print_physical_device_queue_families(VkPhysicalDevice graphics_card);
+/// @brief Print information about a gpu's device queue families.
+/// @param gpu The regarded gpu.
+void print_physical_device_queue_families(VkPhysicalDevice gpu);
 
-/// @brief Print which instance layers are available for the regarded graphics card on this system.
+/// @brief Print all available Vulkan instance layers.
 void print_instance_layers();
 
-/// @brief Print which instance extensions are available for the regarded graphics card on this system.
+/// @brief Print all available Vulkan instance extensions.
 void print_instance_extensions();
 
-/// @brief Print which device layers are available for the regarded graphics card on this system.
-/// @param graphics_card The regarded graphics card.
-void print_device_layers(VkPhysicalDevice graphics_card);
+/// @brief Print all available Vulkan device layers for a specified gpu.
+/// @param gpu The regarded gpu.
+void print_device_layers(VkPhysicalDevice gpu);
 
-/// @brief Print which device extensions are available for the regarded graphics card on this system.
-/// @param graphics_card The regarded graphics card.
-void print_device_extensions(VkPhysicalDevice graphics_card);
+/// @brief Print all available Vulkan device extensions.
+/// @param gpu The regarded gpu.
+void print_device_extensions(VkPhysicalDevice gpu);
 
-/// @brief Print supported surface capabilities of the regarded combination of graphics card and surface.
-/// @param graphics_card The regarded graphics card.
-/// @param vulkan_surface The regarded surface.
-void print_surface_capabilities(VkPhysicalDevice graphics_card, VkSurfaceKHR vulkan_surface);
+/// @brief Print all supported surface capabilities of a given combination of gpu and surface.
+/// @param gpu The regarded gpu.
+/// @param surface The regarded surface.
+void print_surface_capabilities(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-/// @brief Print supported surface formats of the regarded combination of graphics card and surface.
-/// @param graphics_card The regarded graphics card.
-// @param vulkan_surface The regarded Vulkan (window) surface.
-void print_supported_surface_formats(VkPhysicalDevice graphics_card, VkSurfaceKHR vulkan_surface);
+/// @brief Print all supported surface formats of a given combination of gpu and surface.
+/// @param gpu The regarded gpu.
+/// @param surface The regarded Vulkan window surface.
+void print_supported_surface_formats(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-/// @brief List up all supported presentation modes.
-/// @param graphics_card The regarded graphics card.
-/// @param vulkan_surface The regarded surface.
-void print_presentation_modes(VkPhysicalDevice graphics_card, VkSurfaceKHR vulkan_surface);
+/// @brief Print all available presentation modes.
+/// @param gpu The regarded gpu.
+/// @param surface The regarded surface.
+void print_presentation_modes(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-/// @brief Print the information about the graphics card.
-/// @param graphics_card The regarded graphics card.
-void print_physical_device_info(VkPhysicalDevice graphics_card);
+/// @brief Print information about the specified gpu.
+/// @param gpu The regarded gpu.
+void print_physical_device_info(VkPhysicalDevice gpu);
 
-/// @brief Print information about the limits of the graphics card.
-/// @param graphics_card The regarded graphics card.
-void print_physical_device_limits(VkPhysicalDevice graphics_card);
+/// @brief Print information about the limits of the specified gpu.
+/// @param gpu The regarded gpu.
+void print_physical_device_limits(VkPhysicalDevice gpu);
 
-/// @brief Print information about the sparse properties of the graphics card.
-/// @param graphics_card The regarded graphics card.
-void print_physical_device_sparse_properties(VkPhysicalDevice graphics_card);
+/// @brief Print information about the sparse properties of the specified gpu.
+/// @param gpu The regarded gpu.
+void print_physical_device_sparse_properties(VkPhysicalDevice gpu);
 
-/// @brief Print information about the features of the graphics card.
-/// @param graphics_card The regarded graphics card.
-void print_physical_device_features(VkPhysicalDevice graphics_card);
+/// @brief Print information about the features of the gpu.
+/// @param gpu The regarded gpu.
+void print_physical_device_features(VkPhysicalDevice gpu);
 
-/// @brief Print information about the graphics card's memory properties.
-/// @param graphics_card The regarded graphics card.
-void print_physical_device_memory_properties(VkPhysicalDevice graphics_card);
+/// @brief Print information about the memory properties of a specified gpu.
+/// @param gpu The regarded gpu.
+void print_physical_device_memory_properties(VkPhysicalDevice gpu);
 
-/// @brief List up all available physical devices.
-/// @param vulkan_instance The instance of Vulkan.
-/// @param vulkan_surface The regarded Vulkan (window) surface.
-void print_all_physical_devices(VkInstance vulkan_instance, VkSurfaceKHR vulkan_surface);
+/// @brief List up all available gpus.
+/// @param instance The instance of Vulkan.
+/// @param surface The regarded Vulkan window surface.
+void print_all_physical_devices(VkInstance instance, VkSurfaceKHR surface);
 
 } // namespace inexor::vulkan_renderer::vk_tools

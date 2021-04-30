@@ -691,4 +691,76 @@ std::string result_to_description(const VkResult result) {
     return "Unknown";
 }
 
+std::string queue_flag_bit_to_string(const VkQueueFlagBits bit) {
+    switch (bit) {
+    case VK_QUEUE_GRAPHICS_BIT:
+        return "VK_QUEUE_GRAPHICS_BIT";
+        break;
+    case VK_QUEUE_COMPUTE_BIT:
+        return "VK_QUEUE_COMPUTE_BIT";
+        break;
+    case VK_QUEUE_TRANSFER_BIT:
+        return "VK_QUEUE_TRANSFER_BIT";
+        break;
+    case VK_QUEUE_SPARSE_BINDING_BIT:
+        return "VK_QUEUE_SPARSE_BINDING_BIT";
+        break;
+    case VK_QUEUE_PROTECTED_BIT:
+        return "VK_QUEUE_PROTECTED_BIT";
+        break;
+    case VK_QUEUE_FLAG_BITS_MAX_ENUM:
+        return "VK_QUEUE_FLAG_BITS_MAX_ENUM";
+        break;
+    default:
+        break;
+    }
+
+    // Don't forget to offer a default value.
+    return "Unknown";
+}
+
+std::string memory_property_flag_to_string(const VkMemoryPropertyFlags bit) {
+    switch (bit) {
+    case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT:
+        return "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
+    case VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT:
+        return "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT";
+    case VK_MEMORY_PROPERTY_HOST_COHERENT_BIT:
+        return "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT";
+    case VK_MEMORY_PROPERTY_HOST_CACHED_BIT:
+        return "VK_MEMORY_PROPERTY_HOST_CACHED_BIT";
+    case VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT:
+        return "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT";
+    case VK_MEMORY_PROPERTY_PROTECTED_BIT:
+        return "VK_MEMORY_PROPERTY_PROTECTED_BIT";
+    case VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD:
+        return "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD";
+    case VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD:
+        return "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD";
+    case VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM:
+        return "VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM";
+    default:
+        break;
+    }
+
+    // Don't forget to offer a default value.
+    return "Unknown";
+}
+
+std::string memory_heap_flag_to_string(const VkMemoryHeapFlagBits bit) {
+    switch (bit) {
+    case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT:
+        return "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT";
+    case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT: // same as VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR
+        return "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT";
+    case VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM:
+        return "VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM";
+    default:
+        break;
+    }
+
+    // Don't forget to offer a default value.
+    return "Unknown";
+}
+
 } // namespace inexor::vulkan_renderer::vk_tools
