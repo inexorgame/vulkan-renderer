@@ -167,7 +167,17 @@ void Cube::rotate<3>(const RotationAxis::Type &axis) {
 
 Cube::Cube(const float size, const glm::vec3 &position) : m_size(size), m_position(position) {}
 
+Cube::Cube(const Type type, const float size, const glm::vec3 &position) : m_size(size), m_position(position) {
+    // Do not just set the type in the constructor list, as Cube::Type::OCTANT requires allocation of sub-cubes.
+    set_type(type);
+}
+
 Cube::Cube(std::weak_ptr<Cube> parent, const float size, const glm::vec3 &position) : Cube(size, position) {
+    m_parent = std::move(parent);
+}
+
+Cube::Cube(std::weak_ptr<Cube> parent, const Type type, float size, const glm::vec3 &position)
+    : Cube(type, size, position) {
     m_parent = std::move(parent);
 }
 

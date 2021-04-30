@@ -88,8 +88,12 @@ public:
     Cube() = default;
     /// Create a solid cube.
     Cube(float size, const glm::vec3 &position);
+    /// Create a cube of a certain type.
+    Cube(Type type, float size, const glm::vec3 &position);
     /// Create a solid cube.
     Cube(std::weak_ptr<Cube> parent, float size, const glm::vec3 &position);
+    /// Create a cube of a certain type.
+    Cube(std::weak_ptr<Cube> parent, Type type, float size, const glm::vec3 &position);
     /// Use clone() to create an independent copy of a cube.
     Cube(const Cube &rhs) = delete;
     Cube(Cube &&rhs) noexcept;
