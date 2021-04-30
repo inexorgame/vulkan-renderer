@@ -34,7 +34,7 @@ class Cube : public std::enable_shared_from_this<Cube> {
     friend class io::NXOCParser;
 
 public:
-    /// Maximum of sub cubes (childs)
+    /// Maximum of sub cubes (children)
     static constexpr std::size_t SUB_CUBES{8};
     /// Cube edges.
     static constexpr std::size_t EDGES{12};
@@ -65,14 +65,14 @@ private:
 
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations;
-    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs;
+    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_children;
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
     mutable PolygonCache m_polygon_cache;
     mutable bool m_polygon_cache_valid{false};
 
-    /// Removes all childs recursive.
-    void remove_childs();
+    /// Removes all children recursive.
+    void remove_children();
 
     /// Get the root to this cube.
     [[nodiscard]] std::shared_ptr<Cube> root() noexcept;
@@ -119,8 +119,8 @@ public:
     /// Get type.
     [[nodiscard]] Type type() const noexcept;
 
-    /// Get childs.
-    [[nodiscard]] const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &childs() const;
+    /// Get children.
+    [[nodiscard]] const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &children() const;
     /// Get indentations.
     [[nodiscard]] std::array<Indentation, Cube::EDGES> indentations() const noexcept;
 
