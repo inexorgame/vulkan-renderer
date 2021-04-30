@@ -49,8 +49,8 @@ void print_physical_device_queue_families(const VkPhysicalDevice gpu) {
         spdlog::debug("Timestamp valid bits: {}", queue_family_properties[i].timestampValidBits);
 
         for (const auto &queue_bit : QUEUE_BITS) {
-            if ((queue_family_properties[i].queueFlags & queue_bit) != 0) {
-                spdlog::debug("{}", queue_flag_bit_to_string(queue_bit));
+            if (static_cast<bool>(queue_family_properties[i].queueFlags & queue_bit)) {
+                spdlog::debug("{}", vk_tools::as_string<VkQueueFlags>(queue_bit));
             }
         }
 
@@ -259,7 +259,7 @@ void print_supported_surface_formats(const VkPhysicalDevice gpu, const VkSurface
     }
 
     for (const auto &format : surface_formats) {
-        spdlog::debug("Surface format: {}", format_to_string(format.format));
+        spdlog::debug("Surface format: {}", vk_tools::as_string<VkFormat>(format.format));
     }
 }
 
@@ -293,7 +293,7 @@ void print_presentation_modes(const VkPhysicalDevice gpu, const VkSurfaceKHR sur
     }
 
     for (const auto &mode : present_modes) {
-        spdlog::debug("Present mode: {}", present_mode_khr_to_string(mode));
+        spdlog::debug("Present mode: {}", vk_tools::as_string<VkPresentModeKHR>(mode));
     }
 }
 
@@ -314,7 +314,7 @@ void print_physical_device_info(const VkPhysicalDevice gpu) {
                   VK_VERSION_MINOR(gpu_properties.driverVersion), VK_VERSION_PATCH(gpu_properties.driverVersion));
     spdlog::debug("Vendor ID: {}", gpu_properties.vendorID);
     spdlog::debug("Device ID: {}", gpu_properties.deviceID);
-    spdlog::debug("Device type: {}", physical_device_type_to_string(gpu_properties.deviceType));
+    spdlog::debug("Device type: {}", vk_tools::as_string<VkPhysicalDeviceType>(gpu_properties.deviceType));
 }
 
 void print_physical_device_memory_properties(const VkPhysicalDevice gpu) {
@@ -339,8 +339,8 @@ void print_physical_device_memory_properties(const VkPhysicalDevice gpu) {
         spdlog::debug("[{}] Heap index: {}", i, gpu_mem_properties.memoryTypes[i].heapIndex);
 
         for (const auto &mem_prop_flag : MEM_PROP_FLAGS) {
-            if ((gpu_mem_properties.memoryTypes[i].propertyFlags & mem_prop_flag) != 0) {
-                spdlog::debug("{}", memory_property_flag_to_string(mem_prop_flag));
+            if (static_cast<bool>(gpu_mem_properties.memoryTypes[i].propertyFlags & mem_prop_flag)) {
+                spdlog::debug("{}", vk_tools::as_string<VkMemoryPropertyFlags>(mem_prop_flag));
             }
         }
     }
@@ -352,8 +352,8 @@ void print_physical_device_memory_properties(const VkPhysicalDevice gpu) {
         spdlog::debug("Heap [{}], memory size: {}", i, gpu_mem_properties.memoryHeaps[i].size / (1000 * 1000));
 
         for (const auto &mem_heap_prop_flag : MEM_HEAP_PROP_FLAGS) {
-            if ((gpu_mem_properties.memoryHeaps[i].flags & mem_heap_prop_flag) != 0) {
-                spdlog::debug("{}", memory_heap_flag_to_string(mem_heap_prop_flag));
+            if (static_cast<bool>(gpu_mem_properties.memoryHeaps[i].flags & mem_heap_prop_flag)) {
+                spdlog::debug("{}", vk_tools::as_string<VkMemoryHeapFlags>(mem_heap_prop_flag));
             }
         }
     }

@@ -2,7 +2,11 @@
 
 namespace inexor::vulkan_renderer::vk_tools {
 
-std::string present_mode_khr_to_string(const VkPresentModeKHR present_mode) {
+/// @brief Convert a VkPresentModeKHR value into a corresponding std::string_view.
+/// @param present_mode The present mode.
+/// @return A std::string_view which contains the presentation mode.
+template <>
+std::string_view as_string(const VkPresentModeKHR present_mode) {
     switch (present_mode) {
     case VK_PRESENT_MODE_IMMEDIATE_KHR:
         return "VK_PRESENT_MODE_IMMEDIATE_KHR";
@@ -19,12 +23,14 @@ std::string present_mode_khr_to_string(const VkPresentModeKHR present_mode) {
     default:
         break;
     }
-
-    // If no name can be found, convert the present mode's value to std::string and return it.
-    return std::to_string(present_mode);
+    return "Unknown";
 }
 
-std::string physical_device_type_to_string(const VkPhysicalDeviceType gpu_type) {
+/// @brief Convert a VkPhysicalDeviceType value into a corresponding std::string_view.
+/// @param gpu_type The type of the physical device.
+/// @return A std::string_view which contains the physical device type.
+template <>
+std::string_view as_string(const VkPhysicalDeviceType gpu_type) {
     switch (gpu_type) {
     case VK_PHYSICAL_DEVICE_TYPE_OTHER:
         return "VK_PHYSICAL_DEVICE_TYPE_OTHER";
@@ -39,12 +45,14 @@ std::string physical_device_type_to_string(const VkPhysicalDeviceType gpu_type) 
     default:
         break;
     }
-
-    // If no name can be found, convert the physical device type value to a std::string and return it.
-    return std::to_string(gpu_type);
+    return "Unknown";
 }
 
-std::string format_to_string(const VkFormat format) {
+/// @brief Convert a VkFormat value into the corresponding value as std::string_view.
+/// @param format The VkFormat to convert.
+/// @return A std::string_view which contains the VkFormat.
+template <>
+std::string_view as_string(const VkFormat format) {
     switch (format) {
     case VK_FORMAT_UNDEFINED:
         return "VK_FORMAT_UNDEFINED";
@@ -531,9 +539,7 @@ std::string format_to_string(const VkFormat format) {
     default:
         break;
     }
-
-    // If not name can be found, convert the format value to std::string and return it.
-    return std::to_string(format);
+    return "Unknown";
 }
 
 std::string result_to_string(const VkResult result) {
@@ -601,8 +607,6 @@ std::string result_to_string(const VkResult result) {
     default:
         break;
     }
-
-    // Don't forget to offer a default value.
     return "Unknown";
 }
 
@@ -622,77 +626,78 @@ std::string result_to_description(const VkResult result) {
         return "A return array was too small for the result";
     case VK_SUBOPTIMAL_KHR:
         return "A swapchain no longer matches the surface properties exactly, but can still be used to present to the "
-               "surface successfully.";
+               "surface successfully";
     case VK_ERROR_OUT_OF_HOST_MEMORY:
-        return "A host memory allocation has failed.";
+        return "A host memory allocation has failed";
     case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-        return "A device memory allocation has failed.";
+        return "A device memory allocation has failed";
     case VK_ERROR_INITIALIZATION_FAILED:
-        return "Initialization of an object could not be completed for implementation-specific reasons.";
+        return "Initialization of an object could not be completed for implementation-specific reasons";
     case VK_ERROR_DEVICE_LOST:
         return "The logical or physical device has been lost. See Lost Device";
     case VK_ERROR_MEMORY_MAP_FAILED:
-        return "Mapping of a memory object has failed.";
+        return "Mapping of a memory object has failed";
     case VK_ERROR_LAYER_NOT_PRESENT:
-        return "A requested layer is not present or could not be loaded.";
+        return "A requested layer is not present or could not be loaded";
     case VK_ERROR_EXTENSION_NOT_PRESENT:
-        return "A requested extension is not supported.";
+        return "A requested extension is not supported";
     case VK_ERROR_FEATURE_NOT_PRESENT:
-        return "A requested feature is not supported.";
+        return "A requested feature is not supported";
     case VK_ERROR_INCOMPATIBLE_DRIVER:
         return "The requested version of Vulkan is not supported by the driver or is otherwise incompatible for "
-               "implementation-specific reasons.";
+               "implementation-specific reasons";
     case VK_ERROR_TOO_MANY_OBJECTS:
-        return "Too many objects of the type have already been created.";
+        return "Too many objects of the type have already been created";
     case VK_ERROR_FORMAT_NOT_SUPPORTED:
-        return "A requested format is not supported on this device.";
+        return "A requested format is not supported on this device";
     case VK_ERROR_FRAGMENTED_POOL:
         return "A pool allocation has failed due to fragmentation of the pool�s memory. This must only be returned if "
                "no attempt to allocate host or device memory was made to accommodate the new allocation. This should "
                "be returned in preference to VK_ERROR_OUT_OF_POOL_MEMORY, but only if the implementation is certain "
-               "that the pool allocation failure was due to fragmentation.";
+               "that the pool allocation failure was due to fragmentation";
     case VK_ERROR_SURFACE_LOST_KHR:
-        return "A surface is no longer available.";
+        return "A surface is no longer available";
     case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
         return "The requested window is already in use by Vulkan or another API in a manner which prevents it from "
-               "being used again.";
+               "being used again";
     case VK_ERROR_OUT_OF_DATE_KHR:
         return "A surface has changed in such a way that it is no longer compatible with the swapchain, and further "
                "presentation requests using the swapchain will fail. Applications must query the new surface "
-               "properties and recreate their swapchain if they wish to continue presenting to the surface.";
+               "properties and recreate their swapchain if they wish to continue presenting to the surface";
     case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
         return "The display used by a swapchain does not use the same presentable image layout, or is incompatible in "
-               "a way that prevents sharing an image.";
+               "a way that prevents sharing an image";
     case VK_ERROR_INVALID_SHADER_NV:
         return "One or more shaders failed to compile or link. More details are reported back to the application via "
-               "VK_EXT_debug_report if enabled.";
+               "VK_EXT_debug_report if enabled";
     case VK_ERROR_OUT_OF_POOL_MEMORY:
         return "A pool memory allocation has failed. This must only be returned if no attempt to allocate host or "
                "device memory was made to accommodate the new allocation. If the failure was definitely due to "
-               "fragmentation of the pool, VK_ERROR_FRAGMENTED_POOL should be returned instead.";
+               "fragmentation of the pool, VK_ERROR_FRAGMENTED_POOL should be returned instead";
     case VK_ERROR_INVALID_EXTERNAL_HANDLE:
-        return "An external handle is not a valid handle of the specified type.";
+        return "An external handle is not a valid handle of the specified type";
     case VK_ERROR_FRAGMENTATION:
-        return "A descriptor pool creation has failed due to fragmentation.";
+        return "A descriptor pool creation has failed due to fragmentation";
     case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
-        return "A buffer creation failed because the requested address is not available.";
+        return "A buffer creation failed because the requested address is not available";
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
         return "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT "
                "failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent "
-               "reasons, outside of  the application�s control.";
+               "reasons, outside of the application�s control";
     case VK_ERROR_UNKNOWN:
         return "An unknown error has occurred; either the application has provided invalid input, or an implementation "
-               "failure has occurred.";
+               "failure has occurred";
     default:
         break;
     }
-
-    // Don't forget to offer a default value.
     return "Unknown";
 }
 
-std::string queue_flag_bit_to_string(const VkQueueFlagBits bit) {
-    switch (bit) {
+/// @brief Convert a VkQueueFlagBits value into the corresponding value as std::string_view.
+/// @param bit The queue flag bit.
+template <>
+std::string_view as_string(const VkQueueFlagBits queue_flag_bit) {
+    switch (queue_flag_bit) {
     case VK_QUEUE_GRAPHICS_BIT:
         return "VK_QUEUE_GRAPHICS_BIT";
         break;
@@ -714,13 +719,14 @@ std::string queue_flag_bit_to_string(const VkQueueFlagBits bit) {
     default:
         break;
     }
-
-    // Don't forget to offer a default value.
     return "Unknown";
 }
 
-std::string memory_property_flag_to_string(const VkMemoryPropertyFlags bit) {
-    switch (bit) {
+/// @brief Convert a VkMemoryPropertyFlags value into the corresponding value as std::string.
+/// @param bit The memory property flag bit.
+template <>
+std::string_view as_string(const VkMemoryPropertyFlags mem_prop_flag_bit) {
+    switch (mem_prop_flag_bit) {
     case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT:
         return "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
     case VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT:
@@ -742,13 +748,14 @@ std::string memory_property_flag_to_string(const VkMemoryPropertyFlags bit) {
     default:
         break;
     }
-
-    // Don't forget to offer a default value.
     return "Unknown";
 }
 
-std::string memory_heap_flag_to_string(const VkMemoryHeapFlagBits bit) {
-    switch (bit) {
+/// @brief Convert a VkMemoryHeapFlagBits value into the corresponding value as std::string.
+/// @param bit The memory heap flag bit.
+template <>
+std::string_view as_string(const VkMemoryHeapFlagBits heap_flag_bit) {
+    switch (heap_flag_bit) {
     case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT:
         return "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT";
     case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT: // same as VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR
@@ -758,8 +765,6 @@ std::string memory_heap_flag_to_string(const VkMemoryHeapFlagBits bit) {
     default:
         break;
     }
-
-    // Don't forget to offer a default value.
     return "Unknown";
 }
 
