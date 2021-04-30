@@ -31,4 +31,16 @@ namespace inexor::vulkan_renderer::vk_tools {
 /// @param result The VkResult return value which will be turned into a string.
 [[nodiscard]] std::string result_to_description(VkResult result);
 
+/// @brief Convert a VkQueueFlagBits value into the corresponding value as std::string.
+/// @param bit The queue flag bit.
+[[nodiscard]] std::string queue_flag_bit_to_string(VkQueueFlagBits bit);
+
+/// @brief Convert a VkMemoryPropertyFlags value into the corresponding value as std::string.
+/// @param bit The memory property flag bit.
+[[nodiscard]] std::string memory_property_flag_to_string(VkMemoryPropertyFlags bit);
+
+/// @brief Convert a VkMemoryHeapFlagBits value into the corresponding value as std::string.
+/// @param bit The memory heap flag bit.
+[[nodiscard]] std::string memory_heap_flag_to_string(VkMemoryHeapFlagBits bit);
+
 } // namespace inexor::vulkan_renderer::vk_tools
