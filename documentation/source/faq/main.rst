@@ -18,6 +18,7 @@ Please visit `inexor.org <https://inexor.org>`__ and join our `Discord server <h
 - `How difficult is development with Vulkan API?`_
 - `Does my graphics card support Vulkan API?`_
 - `Will you support other rendering APIs?`_
+- `Which topics are currently not in focus of development?`_
 
 ----
 
@@ -205,5 +206,13 @@ Will you support other rendering APIs?
 - No, because testing for Vulkan already takes a lot of time and there is no sense in supporting deprecated technology.
 - Some studios like id-software also `dropped OpenGL entirely <https://youtu.be/0R23npUCCnw?t=252>`__.
 - Vulkan API is the only low level multi platform graphics and compute API.
+
+----
+
+Which topics are currently not in focus of development?
+-------------------------------------------------------
+- We are currently focussing on the renderer and Vulkan API. When the time has come, we will take parallelization into account.
+- A game engine needs other components besides redering of course. However, we are currently not focussing in the following topics: network, sound, physics, packaging of game engine ressources and everything else which is not related to rendering.
+- We will not begin to support additional platforms besides Linux and Windows in the near future.
 
 ----
