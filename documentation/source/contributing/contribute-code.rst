@@ -6,6 +6,12 @@ Contribute code
 - Open a `pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__.
 - We want to keep commit as small in size as possible.
 
+Signing commits
+---------------
+
+- We encourage you to sign your commits, although this is not a strict requirement from our side.
+- You can find help on how to sign commits in `GitHub's docs <https://docs.github.com/en/github/authenticating-to-github/signing-commits>`__.
+
 Commit naming convention
 ------------------------
 
