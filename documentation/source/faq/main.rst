@@ -211,8 +211,8 @@ Will you support other rendering APIs?
 
 Which topics are currently not in focus of development?
 -------------------------------------------------------
-- We are currently focussing on the renderer and Vulkan API. When the time has come, we will take parallelization into account.
-- A game engine needs other components besides redering of course. However, we are currently not focussing in the following topics: network, sound, physics, packaging of game engine ressources and everything else which is not related to rendering.
+- We are currently focusing on the renderer and Vulkan API. When the time has come, we will take parallelization into account.
+- A game engine needs other components besides rendering of course. However, we are currently not focusing on the following topics: networking, sound, physics, packaging of game engine resources and everything else which is not related to rendering.
 - We will not begin to support additional platforms besides Linux and Windows in the near future.
 
 ----
