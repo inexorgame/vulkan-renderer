@@ -542,7 +542,7 @@ std::string_view as_string(const VkFormat format) {
     return "Unknown";
 }
 
-std::string result_to_string(const VkResult result) {
+std::string_view result_to_string(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "VK_SUCCESS";
@@ -610,7 +610,7 @@ std::string result_to_string(const VkResult result) {
     return "Unknown";
 }
 
-std::string result_to_description(const VkResult result) {
+std::string_view result_to_description(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "Command successfully completed";
