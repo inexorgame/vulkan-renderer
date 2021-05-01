@@ -542,7 +542,11 @@ std::string_view as_string(const VkFormat format) {
     return "Unknown";
 }
 
-std::string_view result_to_string(const VkResult result) {
+/// @brief Convert a VkResult value into the corresponding value as std::string_view.
+/// @param format The VkResult to convert.
+/// @return A std::string_view which contains the VkResult.
+template <>
+std::string_view as_string<VkResult>(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "VK_SUCCESS";

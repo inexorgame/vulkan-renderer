@@ -14,7 +14,7 @@ void print_driver_vulkan_version() {
     std::uint32_t api_version{0};
 
     if (const auto result = vkEnumerateInstanceVersion(&api_version); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -66,7 +66,7 @@ void print_instance_layers() {
 
     // Query how many instance layers are available.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceLayerProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateInstanceLayerProperties returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -82,7 +82,7 @@ void print_instance_layers() {
     // Store all available instance layers.
     if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceLayerProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateInstanceLayerProperties returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -101,7 +101,8 @@ void print_instance_extensions() {
     // Query how many instance extensions are available.
     if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceExtensionProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateInstanceExtensionProperties returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -118,7 +119,8 @@ void print_instance_extensions() {
     if (const auto result =
             vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, extensions.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceExtensionProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateInstanceExtensionProperties returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -136,7 +138,7 @@ void print_device_layers(const VkPhysicalDevice gpu) {
 
     // Query how many device layers are available.
     if (const auto result = vkEnumerateDeviceLayerProperties(gpu, &device_layer_count, nullptr); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -152,7 +154,7 @@ void print_device_layers(const VkPhysicalDevice gpu) {
     // Store all available device layers.
     if (const auto result = vkEnumerateDeviceLayerProperties(gpu, &device_layer_count, device_layers.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -173,7 +175,8 @@ void print_device_extensions(const VkPhysicalDevice gpu) {
     // First check how many device extensions are available.
     if (const auto result = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &device_extension_count, nullptr);
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -190,7 +193,8 @@ void print_device_extensions(const VkPhysicalDevice gpu) {
     if (const auto result =
             vkEnumerateDeviceExtensionProperties(gpu, nullptr, &device_extension_count, device_extensions.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumerateDeviceExtensionProperties returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -211,7 +215,8 @@ void print_surface_capabilities(const VkPhysicalDevice gpu, const VkSurfaceKHR s
 
     if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_capabilities);
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result_to_string(result));
+        spdlog::error("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -254,7 +259,8 @@ void print_supported_surface_formats(const VkPhysicalDevice gpu, const VkSurface
 
     if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &format_count, surface_formats.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR returned {}!", result_to_string(result));
+        spdlog::error("Error: vkGetPhysicalDeviceSurfaceFormatsKHR returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -272,7 +278,8 @@ void print_presentation_modes(const VkPhysicalDevice gpu, const VkSurfaceKHR sur
     // Query how many presentation modes are available.
     if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, nullptr);
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!", result_to_string(result));
+        spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -288,7 +295,8 @@ void print_presentation_modes(const VkPhysicalDevice gpu, const VkSurfaceKHR sur
     if (const auto result =
             vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, present_modes.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!", result_to_string(result));
+        spdlog::error("Error: vkGetPhysicalDeviceSurfacePresentModesKHR returned {}!",
+                      vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -582,7 +590,7 @@ void print_all_physical_devices(const VkInstance instance, const VkSurfaceKHR su
 
     // Query how many graphics cards are available.
     if (const auto result = vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 
@@ -598,7 +606,7 @@ void print_all_physical_devices(const VkInstance instance, const VkSurfaceKHR su
     // Store all available graphics cards.
     if (const auto result = vkEnumeratePhysicalDevices(instance, &gpu_count, available_gpus.data());
         result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", result_to_string(result));
+        spdlog::error("Error: vkEnumeratePhysicalDevices returned {}!", vk_tools::as_string<VkResult>(result));
         return;
     }
 

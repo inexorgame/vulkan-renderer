@@ -5,10 +5,10 @@
 namespace inexor::vulkan_renderer {
 
 VulkanException::VulkanException(std::string message, const VkResult result)
-    : InexorException(message.append(std::string_view(" ("))
-                          .append(vk_tools::result_to_string(result))
-                          .append(std::string_view(": "))
+    : InexorException(message.append(" (")
+                          .append(vk_tools::as_string<VkResult>(result))
+                          .append(": ")
                           .append(vk_tools::result_to_description(result))
-                          .append(std::string_view(")"))) {}
+                          .append(")")) {}
 
 } // namespace inexor::vulkan_renderer
