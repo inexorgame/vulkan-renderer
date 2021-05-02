@@ -98,32 +98,6 @@ if(MSVC)
     target_compile_options(inexor-vulkan-renderer PRIVATE "-EHs")
 endif()
 
-# The marked constants in application.hpp will be replaced with the following values
-set(ENGINE_NAME "Inexor Engine")
-set(APP_NAME "Inexor Vulkan-renderer example")
-
-set(ENGINE_VERSION_MAJOR 0)
-set(ENGINE_VERSION_MINOR 1)
-set(ENGINE_VERSION_PATCH 0)
-
-set(APP_VERSION_MAJOR 1)
-set(APP_VERSION_MINOR 0)
-set(APP_VERSION_PATCH 0)
-
-set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
-
-# Extract the current git sha
-find_package(Git REQUIRED)
-set(GIT_SHA "unknown")
-
-execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=7
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    ERROR_QUIET
-    OUTPUT_VARIABLE GIT_SHA
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 # Replace variables in header file with CMake values
 configure_file(
     ../include/inexor/vulkan-renderer/meta.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta.hpp
@@ -135,7 +109,7 @@ target_include_directories(
     PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/third_party
-# Include configured header files
+    # Include configured header file which contains engine metadata
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
