@@ -33,6 +33,32 @@ find_package(Vulkan REQUIRED)
 # Dependency setup with conan
 include(conan_setup)
 
+# The marked constants in application.hpp will be replaced with the following values
+set(ENGINE_NAME "Inexor Engine")
+set(APP_NAME "Inexor Vulkan-renderer example")
+
+set(ENGINE_VERSION_MAJOR 0)
+set(ENGINE_VERSION_MINOR 1)
+set(ENGINE_VERSION_PATCH 0)
+
+set(APP_VERSION_MAJOR 0)
+set(APP_VERSION_MINOR 1)
+set(APP_VERSION_PATCH 0)
+
+set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
+
+find_package(Git REQUIRED)
+set(GIT_SHA "unknown")
+
+# Extract the current git sha
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=7
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    ERROR_QUIET
+    OUTPUT_VARIABLE GIT_SHA
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 add_subdirectory(shaders)
 add_subdirectory(src)
 
