@@ -262,15 +262,17 @@ void Cube::set_type(const Type new_type) {
         auto create_cube = [&](const glm::vec3 &offset) {
             return std::make_shared<Cube>(weak_from_this(), half_size, m_position + offset);
         };
-        // about the order look into the octree documentation
-        m_childs = {create_cube({0, 0, 0}),
-                    create_cube({0, 0, half_size}),
-                    create_cube({0, half_size, 0}),
-                    create_cube({0, half_size, half_size}),
-                    create_cube({half_size, 0, 0}),
-                    create_cube({half_size, 0, half_size}),
-                    create_cube({half_size, half_size, 0}),
-                    create_cube({half_size, half_size, half_size})};
+        // Look into octree documentation to find information about the order of subcubes in space.
+        // We can't use initializer list here because clang-tidy complains about it.
+        // To the best of our knowledge, this is a false positive.
+        m_childs[0] = create_cube({0, 0, 0});
+        m_childs[1] = create_cube({0, 0, half_size});
+        m_childs[2] = create_cube({0, half_size, 0});
+        m_childs[3] = create_cube({0, half_size, half_size});
+        m_childs[4] = create_cube({half_size, 0, 0});
+        m_childs[5] = create_cube({half_size, 0, half_size});
+        m_childs[6] = create_cube({half_size, half_size, 0});
+        m_childs[7] = create_cube({half_size, half_size, half_size});
         break;
     }
     if (m_type == Type::OCTANT && new_type != Type::OCTANT) {
