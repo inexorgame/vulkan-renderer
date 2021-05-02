@@ -95,6 +95,8 @@ public:
     Cube(Cube &&rhs) noexcept;
     ~Cube() = default;
     Cube &operator=(Cube rhs);
+    Cube &operator=(Cube &&) = delete;
+
     /// Get child.
     std::shared_ptr<Cube> operator[](std::size_t idx);
     /// Get child.
