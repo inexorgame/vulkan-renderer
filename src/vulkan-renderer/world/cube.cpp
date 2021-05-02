@@ -194,7 +194,7 @@ std::shared_ptr<Cube> Cube::operator[](std::size_t idx) {
     return m_childs[idx];
 }
 
-const std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
+std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
     assert(idx <= SUB_CUBES);
     return m_childs[idx];
 }
@@ -406,23 +406,22 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     std::vector<PolygonCache> polygons;
     polygons.reserve(count_geometry_cubes());
 
-    std::function<void(std::shared_ptr<const world::Cube>)> collect;
     // post-order traversal
-    collect = [&collect, &polygons, &update_invalid](std::shared_ptr<const world::Cube> cube) {
-        if (cube->type() == world::Cube::Type::OCTANT) {
-            for (const auto &child : cube->childs()) {
-                collect(child);
+    std::function<void(const Cube &)> collect = [&collect, &polygons, &update_invalid](const Cube &cube) {
+        if (cube.type() == world::Cube::Type::OCTANT) {
+            for (const auto &child : cube.childs()) {
+                collect(*child);
             }
             return;
         }
-        if (!cube->m_polygon_cache_valid && update_invalid) {
-            cube->update_polygon_cache();
+        if (!cube.m_polygon_cache_valid && update_invalid) {
+            cube.update_polygon_cache();
         }
-        if (cube->m_polygon_cache != nullptr) {
-            polygons.push_back(cube->m_polygon_cache);
+        if (cube.m_polygon_cache != nullptr) {
+            polygons.push_back(cube.m_polygon_cache);
         }
     };
-    collect(this->shared_from_this());
+    collect(*this);
     return polygons;
 }
 } // namespace inexor::vulkan_renderer::world

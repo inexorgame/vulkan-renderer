@@ -100,7 +100,7 @@ public:
     /// Get child.
     std::shared_ptr<Cube> operator[](std::size_t idx);
     /// Get child.
-    const std::shared_ptr<const Cube> operator[](std::size_t idx) const;
+    std::shared_ptr<const Cube> operator[](std::size_t idx) const; // NOLINT
 
     /// Clone a cube, which has no relations to the current one or its children.
     /// It will be a root cube.
