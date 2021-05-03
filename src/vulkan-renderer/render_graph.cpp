@@ -409,7 +409,6 @@ void RenderGraph::compile(const RenderResource &target) {
 #endif
 
         if (const auto *buffer_resource = resource->as<BufferResource>()) {
-            assert(buffer_resource->m_usage != BufferUsage::INVALID);
             auto *phys = create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
 
             const bool is_uploading_data = buffer_resource->m_data != nullptr;
@@ -444,8 +443,6 @@ void RenderGraph::compile(const RenderResource &target) {
         }
 
         if (const auto *texture_resource = resource->as<TextureResource>()) {
-            assert(texture_resource->m_usage != TextureUsage::INVALID);
-
             // Back buffer gets special handling.
             if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
                 // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.

@@ -69,10 +69,6 @@ public:
 };
 
 enum class BufferUsage {
-    /// @brief Invalid buffer usage
-    /// @note Leaving a buffer as this usage will cause render graph compilation to fail!
-    INVALID,
-
     /// @brief Specifies that the buffer will be used to input index data
     INDEX_BUFFER,
 
@@ -84,7 +80,7 @@ class BufferResource : public RenderResource {
     friend RenderGraph;
 
 private:
-    BufferUsage m_usage{BufferUsage::INVALID};
+    const BufferUsage m_usage;
     std::vector<VkVertexInputAttributeDescription> m_vertex_attributes;
 
     // Data to upload during render graph compilation.
@@ -93,14 +89,7 @@ private:
     std::size_t m_element_size{0};
 
 public:
-    explicit BufferResource(std::string &&name) : RenderResource(name) {}
-
-    /// @brief Specifies the usage of this buffer resource
-    /// @note Currently, the only valid value of usage is BufferUsage::VERTEX_BUFFER
-    /// @see BufferUsage
-    void set_usage(BufferUsage usage) {
-        m_usage = usage;
-    }
+    BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
 
     /// @brief Specifies that element `offset` of this vertex buffer is of format `format`
     /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER!
@@ -121,10 +110,6 @@ public:
 };
 
 enum class TextureUsage {
-    /// @brief Invalid texture usage
-    /// @note Leaving a texture as this usage will cause render graph compilation to fail!
-    INVALID,
-
     /// @brief Specifies that this texture is the result of the render graph
     // TODO: Refactor back buffer system more (remove need for BACK_BUFFER texture usage)
     BACK_BUFFER,
@@ -141,23 +126,17 @@ class TextureResource : public RenderResource {
     friend RenderGraph;
 
 private:
+    const TextureUsage m_usage;
     VkFormat m_format{VK_FORMAT_UNDEFINED};
-    TextureUsage m_usage{TextureUsage::INVALID};
 
 public:
-    explicit TextureResource(std::string &&name) : RenderResource(name) {}
+    TextureResource(std::string &&name, TextureUsage usage) : RenderResource(name), m_usage(usage) {}
 
     /// @brief Specifies the format of this texture that is required when a physical resource is made
     /// @details For TextureUsage::BACK_BUFFER textures, using the swapchain image format is preferable in most cases.
     ///          For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used!
     void set_format(VkFormat format) {
         m_format = format;
-    }
-
-    /// @brief Specifies the usage of this texture resource
-    /// @see TextureUsage
-    void set_usage(TextureUsage usage) {
-        m_usage = usage;
     }
 };
 

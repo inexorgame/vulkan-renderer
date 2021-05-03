@@ -16,20 +16,16 @@
 namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_render_graph() {
-    auto &back_buffer = m_render_graph->add<TextureResource>("back buffer");
+    auto &back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
     back_buffer.set_format(m_swapchain->image_format());
-    back_buffer.set_usage(TextureUsage::BACK_BUFFER);
 
-    auto &depth_buffer = m_render_graph->add<TextureResource>("depth buffer");
+    auto &depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
-    depth_buffer.set_usage(TextureUsage::DEPTH_STENCIL_BUFFER);
 
-    auto &index_buffer = m_render_graph->add<BufferResource>("index buffer");
-    index_buffer.set_usage(BufferUsage::INDEX_BUFFER);
+    auto &index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
     index_buffer.upload_data(m_octree_indices);
 
-    auto &vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer");
-    vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
+    auto &vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
     vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
     vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
     vertex_buffer.upload_data(m_octree_vertices);
