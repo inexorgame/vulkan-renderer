@@ -34,6 +34,11 @@ find_package(Vulkan REQUIRED)
 include(conan_setup)
 
 add_subdirectory(shaders)
+
+if(MSVC)
+    add_subdirectory(platform/windows)
+endif()
+
 add_subdirectory(src)
 
 if(INEXOR_BUILD_BENCHMARKS)
