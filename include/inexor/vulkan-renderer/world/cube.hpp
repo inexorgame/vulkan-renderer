@@ -97,11 +97,11 @@ private:
     void rotate(const RotationAxis::Type &axis);
 
 public:
-    /// Create a solid cube.
+    /// Create an empty cube.
     Cube() = default;
-    /// Create a solid cube.
+    /// Create an empty cube.
     Cube(float size, const glm::vec3 &position);
-    /// Create a solid cube.
+    /// Create an empty cube.
     Cube(std::weak_ptr<Cube> parent, uint8_t index, float size, const glm::vec3 &position);
     /// Use clone() to create an independent copy of a cube.
     Cube(const Cube &rhs) = delete;
@@ -173,6 +173,9 @@ public:
     /// @param update_invalid If true it will update invalid polygon caches.
     [[nodiscard]] std::vector<PolygonCache> polygons(bool update_invalid = false) const;
 
+    /// Get the neighbor of this cube.
+    /// @param axis The axis on which to get the neighboring cube
+    /// @param direction Whether to get the cube which is above or below this cube on the selected axis
     [[nodiscard]] std::weak_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
 };
 
