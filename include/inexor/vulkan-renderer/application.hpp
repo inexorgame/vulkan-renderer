@@ -65,9 +65,9 @@ public:
 
     /// @brief Call glfwSetCursorPosCallback.
     /// @param window The window that received the event.
-    /// @param xpos The new x-coordinate, in screen coordinates, of the cursor.
-    /// @param ypos The new y-coordinate, in screen coordinates, of the cursor.
-    void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
+    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
+    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
+    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
 
     /// @brief Call glfwSetMouseButtonCallback.
     /// @param window The window that received the event.
@@ -78,9 +78,9 @@ public:
 
     /// @brief Call camera's process_mouse_scroll method.
     /// @param window The window that received the event.
-    /// @param xoffset The change of x-offset of the mouse wheel.
-    /// @param yoffset The change of y-offset of the mouse wheel.
-    void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+    /// @param x_offset The change of x-offset of the mouse wheel.
+    /// @param y_offset The change of y-offset of the mouse wheel.
+    void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset);
 
     void run();
 };
