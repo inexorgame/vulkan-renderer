@@ -11,4 +11,3 @@ Engine design
     code-design
     design-patterns
     regressions
-    labeling
