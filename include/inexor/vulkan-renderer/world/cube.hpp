@@ -8,8 +8,8 @@
 #include <spdlog/spdlog.h>
 
 #include <array>
-#include <functional>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stack>
@@ -176,7 +176,7 @@ public:
     /// Get the neighbor of this cube.
     /// @param axis The axis on which to get the neighboring cube
     /// @param direction Whether to get the cube which is above or below this cube on the selected axis
-    [[nodiscard]] std::weak_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
+    [[nodiscard]] std::optional<std::shared_ptr<Cube>> neighbor(NeighborAxis axis, NeighborDirection direction);
 };
 
 } // namespace inexor::vulkan_renderer::world

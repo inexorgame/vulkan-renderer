@@ -171,7 +171,8 @@ void Cube::rotate<3>(const RotationAxis::Type &axis) {
 
 Cube::Cube(const float size, const glm::vec3 &position) : m_size(size), m_position(position) {}
 
-Cube::Cube(std::weak_ptr<Cube> parent, uint8_t index, const float size, const glm::vec3 &position) : Cube(size, position) {
+Cube::Cube(std::weak_ptr<Cube> parent, uint8_t index, const float size, const glm::vec3 &position)
+    : Cube(size, position) {
     m_parent = std::move(parent);
     m_index = index;
 }
@@ -423,7 +424,7 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     collect(*this);
     return polygons;
 }
-std::weak_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirection direction) {
+std::optional<std::shared_ptr<Cube>> Cube::neighbor(NeighborAxis axis, NeighborDirection direction) {
     assert(!is_root());
 
     // Each axis only requires information and manipulation of one (relevant) bit to find the neighbor.
@@ -443,13 +444,12 @@ std::weak_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirect
     // The relevant bit denotes whether `m_parent` and `this` share a face on the upper side of the relevant axis.
     // If they share one and also the user wants to go in the positive direction, then the neighbor is not a sibling.
     // (Same for opposite, i.e. share face on lower side and going negative direction.)
-    if (this_bit && direction == NeighborDirection::NEGATIVE
-        || !this_bit && direction == NeighborDirection::POSITIVE) {
+    if (this_bit && direction == NeighborDirection::NEGATIVE || !this_bit && direction == NeighborDirection::POSITIVE) {
         // The demanded neighbor is a sibling! Return the neighboring sibling.
         return parent->m_children[toggle_bit(index)];
     }
     if (parent->is_root()) {
-        return std::weak_ptr<Cube>();
+        return std::nullopt;
     }
     // the neighbor is further away than a sibling
 
@@ -465,7 +465,7 @@ std::weak_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirect
     while (get_bit(p_index) == this_bit) {
         parent = parent->m_parent.lock();
         if (parent->is_root()) {
-            return std::weak_ptr<Cube>();
+            return std::nullopt;
         }
         p_index = parent->m_index.value();
         history.push(p_index);
@@ -478,13 +478,13 @@ std::weak_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirect
     while (!history.empty()) {
         if (child->m_type != Type::OCTANT) {
             // The neighbor is larger but still a neighbor!
-            return std::weak_ptr<Cube>(child);
+            return std::shared_ptr<Cube>(child);
         }
         child = child->m_children[toggle_bit(history.top())];
         history.pop();
     }
 
     // We found a same-sized neighbor!
-    return std::weak_ptr<Cube>(child);
+    return std::shared_ptr<Cube>(child);
 }
 } // namespace inexor::vulkan_renderer::world
