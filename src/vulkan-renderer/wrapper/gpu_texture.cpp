@@ -8,6 +8,8 @@
 #include <spdlog/spdlog.h>
 #include <vk_mem_alloc.h>
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
@@ -26,11 +28,16 @@ GpuTexture::GpuTexture(const wrapper::Device &device, void *data, const std::siz
 }
 
 GpuTexture::GpuTexture(GpuTexture &&other) noexcept
-    : m_texture_image(std::exchange(other.m_texture_image, nullptr)), m_name(std::move(other.m_name)),
-      m_texture_width(other.m_texture_width), m_texture_height(other.m_texture_height),
-      m_texture_channels(other.m_texture_channels), m_mip_levels(other.m_mip_levels), m_device(other.m_device),
-      m_sampler(std::exchange(other.m_sampler, nullptr)), m_texture_image_format(other.m_texture_image_format),
-      m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {}
+    : m_device(other.m_device), m_texture_image_format(other.m_texture_image_format),
+      m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {
+    m_texture_image = std::exchange(other.m_texture_image, nullptr);
+    m_name = std::move(other.m_name);
+    m_texture_width = other.m_texture_width;
+    m_texture_height = other.m_texture_height;
+    m_texture_channels = other.m_texture_channels;
+    m_mip_levels = other.m_mip_levels;
+    m_sampler = std::exchange(other.m_sampler, nullptr);
+}
 
 GpuTexture::~GpuTexture() {
     vkDestroySampler(m_device.device(), m_sampler, nullptr);
@@ -53,8 +60,7 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
 
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
 
-    transition_image_layout(m_texture_image->get(), m_texture_image_format, VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region{};
     buffer_image_region.bufferOffset = 0;
@@ -75,14 +81,13 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
 
     m_copy_command_buffer.end_recording_and_submit_command();
 
-    transition_image_layout(m_texture_image->get(), m_texture_image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     create_texture_sampler();
 }
 
-void GpuTexture::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
-                                         VkImageLayout new_layout) {
+void GpuTexture::transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout) {
 
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = old_layout;

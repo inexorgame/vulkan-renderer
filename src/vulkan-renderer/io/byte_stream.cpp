@@ -47,7 +47,7 @@ std::uint8_t ByteStreamReader::read() {
 template <>
 std::uint32_t ByteStreamReader::read() {
     check_end(4);
-    return (*m_iter++ << 0U) | (*m_iter++ << 8U) | (*m_iter++ << 16U) | (*m_iter++ << 24U);
+    return (*m_iter++ << 0u) | (*m_iter++ << 8u) | (*m_iter++ << 16u) | (*m_iter++ << 24u);
 }
 
 template <>
@@ -67,13 +67,13 @@ template <>
 std::array<world::Indentation, 12> ByteStreamReader::read() {
     check_end(9);
     std::array<world::Indentation, 12> indentations;
-    auto writer = indentations.begin();
+    auto writer = indentations.begin(); // NOLINT
     const auto end = m_iter + 9;
     while (m_iter != end) {
-        *writer++ = world::Indentation(*m_iter >> 2U);
-        *writer++ = world::Indentation(((*m_iter & 0b00000011U) << 4U) | (*(++m_iter) >> 4U));
-        *writer++ = world::Indentation(((*m_iter & 0b00001111U) << 2U) | (*(++m_iter) >> 6U));
-        *writer++ = world::Indentation(*m_iter++ & 0b00111111U);
+        *writer++ = world::Indentation(*m_iter >> 2u);
+        *writer++ = world::Indentation(((*m_iter & 0b00000011u) << 4u) | (*(++m_iter) >> 4u));
+        *writer++ = world::Indentation(((*m_iter & 0b00001111u) << 2u) | (*(++m_iter) >> 6u));
+        *writer++ = world::Indentation(*m_iter++ & 0b00111111u);
     }
     return indentations;
 }
@@ -85,9 +85,9 @@ void ByteStreamWriter::write(const std::uint8_t &value) {
 
 template <>
 void ByteStreamWriter::write(const std::uint32_t &value) {
-    m_buffer.emplace_back(value >> 24U);
-    m_buffer.emplace_back(value >> 16U);
-    m_buffer.emplace_back(value >> 8U);
+    m_buffer.emplace_back(value >> 24u);
+    m_buffer.emplace_back(value >> 16u);
+    m_buffer.emplace_back(value >> 8u);
     m_buffer.emplace_back(value);
 }
 
@@ -103,10 +103,10 @@ void ByteStreamWriter::write(const world::Cube::Type &value) {
 
 template <>
 void ByteStreamWriter::write(const std::array<world::Indentation, 12> &value) {
-    for (auto iter = value.begin(); iter != value.end(); iter++) {
-        write<std::uint8_t>((iter->uid() << 2U) | ((++iter)->uid() >> 4));
-        write<std::uint8_t>((iter->uid() << 4U) | ((++iter)->uid() >> 2));
-        write<std::uint8_t>((iter->uid() << 6U) | ((++iter)->uid()));
+    for (auto iter = value.begin(); iter != value.end(); iter++) { // NOLINT
+        write<std::uint8_t>((iter->uid() << 2u) | ((++iter)->uid() >> 4));
+        write<std::uint8_t>((iter->uid() << 4u) | ((++iter)->uid() >> 2));
+        write<std::uint8_t>((iter->uid() << 6u) | ((++iter)->uid()));
     }
 }
 } // namespace inexor::vulkan_renderer::io

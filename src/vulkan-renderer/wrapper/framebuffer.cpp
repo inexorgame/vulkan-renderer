@@ -8,12 +8,13 @@
 #include <spdlog/spdlog.h>
 
 #include <array>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
 Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                         const wrapper::Swapchain &swapchain, const std::string &name)
-    : m_device(device), m_name(name) {
+                         const wrapper::Swapchain &swapchain, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     spdlog::trace("Creating framebuffer {}.", m_name);
 
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
@@ -35,9 +36,10 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
     spdlog::debug("Created framebuffer {} successfully.", m_name);
 }
 
-Framebuffer::Framebuffer(Framebuffer &&other) noexcept
-    : m_device(other.m_device), m_framebuffer(std::exchange(other.m_framebuffer, nullptr)),
-      m_name(std::move(other.m_name)) {}
+Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {
+    m_framebuffer = std::exchange(other.m_framebuffer, nullptr);
+    m_name = std::move(other.m_name);
+}
 
 Framebuffer::~Framebuffer() {
     vkDestroyFramebuffer(m_device.device(), m_framebuffer, nullptr);

@@ -64,11 +64,8 @@ public:
     /// @brief Call glfwShowWindow.
     void show();
 
-    /// @brief Call glfwHideWindow.
-    void hide();
-
     /// @brief Call glfwPollEvents.
-    void poll();
+    static void poll();
 
     /// @brief Check if the window is about to close.
     /// @return ``true`` if the window will be closed.
@@ -78,11 +75,11 @@ public:
         return m_window;
     }
 
-    [[nodiscard]] int width() const {
+    [[nodiscard]] std::uint32_t width() const {
         return m_width;
     }
 
-    [[nodiscard]] int height() const {
+    [[nodiscard]] std::uint32_t height() const {
         return m_height;
     }
 };

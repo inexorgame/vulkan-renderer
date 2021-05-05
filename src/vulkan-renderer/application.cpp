@@ -1,7 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
@@ -19,11 +18,7 @@
 
 namespace inexor::vulkan_renderer {
 
-void Application::frame_buffer_resize_callback(GLFWwindow *window, int width, int height) {
-    spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
-}
-
-void Application::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+void Application::key_callback(GLFWwindow * /*window*/, int key, int, int action, int /*mods*/) {
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_key(key);
@@ -31,14 +26,16 @@ void Application::key_callback(GLFWwindow *window, int key, int scancode, int ac
     case GLFW_RELEASE:
         m_input_data->release_key(key);
         break;
+    default:
+        break;
     }
 }
 
-void Application::cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
-    m_input_data->set_cursor_pos(xpos, ypos);
+void Application::cursor_position_callback(GLFWwindow * /*window*/, double x_pos, double y_pos) {
+    m_input_data->set_cursor_pos(x_pos, y_pos);
 }
 
-void Application::mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+void Application::mouse_button_callback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_mouse_button(button);
@@ -46,11 +43,13 @@ void Application::mouse_button_callback(GLFWwindow *window, int button, int acti
     case GLFW_RELEASE:
         m_input_data->release_mouse_button(button);
         break;
+    default:
+        break;
     }
 }
 
-void Application::mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    m_camera->change_zoom(static_cast<float>(yoffset));
+void Application::mouse_scroll_callback(GLFWwindow * /*window*/, double /*x_offset*/, double y_offset) {
+    m_camera->change_zoom(static_cast<float>(y_offset));
 }
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
@@ -142,9 +141,6 @@ void Application::load_textures() {
     assert(m_device->physical_device());
     assert(m_device->allocator());
 
-    // TODO: Refactor! use key from TOML file as name!
-    const std::size_t texture_number = 1;
-
     // Insert the new texture into the list of textures.
     std::string texture_name = "unnamed texture";
 
@@ -162,8 +158,6 @@ void Application::load_shaders() {
     if (m_vertex_shader_files.empty()) {
         spdlog::error("No vertex shaders to load!");
     }
-
-    const auto total_number_of_shaders = m_vertex_shader_files.size() + m_fragment_shader_files.size();
 
     // Loop through the list of vertex shaders and initialise all of them.
     for (const auto &vertex_shader_file : m_vertex_shader_files) {
@@ -224,7 +218,7 @@ void Application::check_application_specific_features() {
     vkGetPhysicalDeviceFeatures(m_device->physical_device(), &graphics_card_features);
 
     // Check if anisotropic filtering is available!
-    if (!graphics_card_features.samplerAnisotropy) {
+    if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
         spdlog::warn("The selected graphics card does not support anisotropic filtering!");
     } else {
         spdlog::debug("The selected graphics card does support anisotropic filtering.");
@@ -242,7 +236,7 @@ void Application::setup_window_and_input_callbacks() {
 
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->frame_buffer_resize_callback(window, width, height);
+        spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
         app->m_window_resized = true;
     };
 
@@ -285,6 +279,73 @@ void Application::setup_window_and_input_callbacks() {
     m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
+void Application::setup_vulkan_debug_callback() {
+    // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
+    if (m_enable_validation_layers) {
+        spdlog::debug("Khronos validation layer is enabled.");
+
+        if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
+            auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
+            debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | // NOLINT
+                                    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |                     // NOLINT
+                                    VK_DEBUG_REPORT_ERROR_BIT_EXT;                                    // NOLINT
+
+            // We use this user data pointer to signal the callback if "" is specified.
+            // All other solutions to this problem either involve duplicated versions of the lambda
+            // or global variables.
+            debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message); // NOLINT
+
+            debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>( // NOLINT
+                +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT, std::uint64_t, std::size_t, std::int32_t,
+                    const char *, const char *message, void *user_data) {
+                    if ((flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0) {
+                        spdlog::info(message);
+                    } else if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0) {
+                        spdlog::debug(message);
+                    } else if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0) {
+                        spdlog::error(message);
+                    } else {
+                        // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
+                        spdlog::warn(message);
+                    }
+
+                    // Check if --stop-on-validation-message is enabled.
+                    if (user_data != nullptr) {
+                        // This feature stops command lines from overflooding with messages in case many validation
+                        // layer messages are reported in a short amount of time.
+                        spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
+                        spdlog::critical("Application will cause a break point now!");
+
+                        // Wait for spdlog to shut down before aborting.
+                        spdlog::shutdown();
+                        std::abort();
+                    }
+                    return VK_FALSE;
+                });
+
+            // We have to explicitly load this function.
+            auto vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>( // NOLINT
+                vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
+
+            if (vkCreateDebugReportCallbackEXT != nullptr) {
+                if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,
+                                                                       nullptr, &m_debug_report_callback);
+                    result != VK_SUCCESS) {
+                    throw VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
+                }
+                spdlog::debug("Creating Vulkan debug callback.");
+                m_debug_report_callback_initialised = true;
+            } else {
+                spdlog::error("vkCreateDebugReportCallbackEXT is a null-pointer! Function not available.");
+            }
+        } else {
+            spdlog::warn("Khronos validation layer is not available!");
+        }
+    } else {
+        spdlog::warn("Khronos validation layer is DISABLED.");
+    }
+}
+
 Application::Application(int argc, char **argv) {
     spdlog::debug("Initialising vulkan-renderer.");
     spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
@@ -310,23 +371,21 @@ Application::Application(int argc, char **argv) {
 #endif
     }
 
-    bool enable_khronos_validation_instance_layer = true;
-
     // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
     // disabled. For debug builds, this is not advisable! Always use validation layers during development!
     const auto disable_validation = cla_parser.arg<bool>("--no-validation");
     if (disable_validation.value_or(false)) {
         spdlog::warn("--no-validation specified, disabling validation layers.");
-        enable_khronos_validation_instance_layer = false;
+        m_enable_validation_layers = false;
     }
 
     spdlog::debug("Creating Vulkan instance.");
 
     m_glfw_context = std::make_unique<wrapper::GLFWContext>();
 
-    m_instance = std::make_unique<wrapper::Instance>(
-        m_application_name, m_engine_name, m_application_version, m_engine_version, VK_API_VERSION_1_1,
-        enable_khronos_validation_instance_layer, enable_renderdoc_instance_layer);
+    m_instance = std::make_unique<wrapper::Instance>(m_application_name, m_engine_name, m_application_version,
+                                                     m_engine_version, VK_API_VERSION_1_1, m_enable_validation_layers,
+                                                     enable_renderdoc_instance_layer);
 
     m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
 
@@ -343,71 +402,7 @@ Application::Application(int argc, char **argv) {
         m_stop_on_validation_message = true;
     }
 
-    // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
-    if (enable_khronos_validation_instance_layer) {
-        spdlog::debug("Khronos validation layer is enabled.");
-
-        if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
-            auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
-            debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
-                                    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
-
-            // We use this user data pointer to signal the callback if "" is specified.
-            // All other solutions to this problem either involve duplicated versions of the lambda
-            // or global variables.
-            debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message);
-
-            debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>(
-                +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, std::uint64_t object,
-                    std::size_t location, std::int32_t message_code, const char *layer_prefix, const char *message,
-                    void *user_data) {
-                    if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
-                        spdlog::info(message);
-                    } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
-                        spdlog::debug(message);
-                    } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-                        spdlog::error(message);
-                    } else {
-                        // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
-                        spdlog::warn(message);
-                    }
-
-                    // Check if --stop-on-validation-message is enabled.
-                    if (static_cast<bool>(user_data)) {
-                        // This feature stops command lines from overflooding with messages in case many validation
-                        // layer messages are reported in a short amount of time.
-                        spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
-                        spdlog::critical("Application will cause a break point now!");
-
-                        // Wait for spdlog to shut down before aborting.
-                        spdlog::shutdown();
-                        std::abort();
-                    }
-                    return VK_FALSE;
-                });
-
-            // We have to explicitly load this function.
-            PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-                reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-                    vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
-
-            if (vkCreateDebugReportCallbackEXT) {
-                if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,
-                                                                       nullptr, &m_debug_report_callback);
-                    result != VK_SUCCESS) {
-                    throw VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
-                }
-                spdlog::debug("Creating Vulkan debug callback.");
-                m_debug_report_callback_initialised = true;
-            } else {
-                spdlog::error("vkCreateDebugReportCallbackEXT is a null-pointer! Function not available.");
-            }
-        } else {
-            spdlog::warn("Khronos validation layer is not available!");
-        }
-    } else {
-        spdlog::warn("Khronos validation layer is DISABLED.");
-    }
+    setup_vulkan_debug_callback();
 #endif
 
     spdlog::debug("Creating window surface.");

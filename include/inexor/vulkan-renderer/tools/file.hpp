@@ -19,13 +19,13 @@ private:
 public:
     File() = default;
 
-    ~File() = default;
+    [[nodiscard]] std::size_t file_size() const {
+        return m_file_size;
+    }
 
-    /// @brief Return the size of the file.
-    [[nodiscard]] const std::size_t file_size() const;
-
-    /// @brief Return the file's data.
-    [[nodiscard]] const std::vector<char> &file_data() const;
+    [[nodiscard]] const std::vector<char> &file_data() const {
+        return m_file_data;
+    }
 
     /// @brief Load the entire file into memory.
     /// @param file_name The name of the file.

@@ -2,8 +2,6 @@
 
 namespace inexor::vulkan_renderer::input {
 
-KeyboardMouseInputData::KeyboardMouseInputData() {}
-
 void KeyboardMouseInputData::press_key(const std::int32_t key) {
     m_pressed_keys[key] = true;
     keyboard_updated = true;

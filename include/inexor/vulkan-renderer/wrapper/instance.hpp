@@ -36,8 +36,8 @@ public:
     /// @param requested_instance_layers The instance layers which are requested.
     Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
              std::uint32_t engine_version, std::uint32_t vulkan_api_version, bool enable_validation_layers,
-             bool enable_renderdoc_layer, std::vector<std::string> requested_instance_extensions,
-             std::vector<std::string> requested_instance_layers);
+             bool enable_renderdoc_layer, const std::vector<std::string> &requested_instance_extensions,
+             const std::vector<std::string> &requested_instance_layers);
 
     /// @brief Construct the Vulkan instance without the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name.

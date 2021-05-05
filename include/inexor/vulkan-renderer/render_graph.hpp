@@ -41,11 +41,11 @@ struct RenderGraphObject {
     /// @brief Casts this object to type `T`
     /// @return The object as type `T` or `nullptr` if the cast failed
     template <typename T>
-    T *as();
+    [[nodiscard]] T *as();
 
     /// @copydoc as
     template <typename T>
-    const T *as() const;
+    [[nodiscard]] const T *as() const;
 };
 
 /// @brief A single resource in the render graph
@@ -441,12 +441,12 @@ public:
 };
 
 template <typename T>
-T *RenderGraphObject::as() {
+[[nodiscard]] T *RenderGraphObject::as() {
     return dynamic_cast<T *>(this);
 }
 
 template <typename T>
-const T *RenderGraphObject::as() const {
+[[nodiscard]] const T *RenderGraphObject::as() const {
     return dynamic_cast<const T *>(this);
 }
 

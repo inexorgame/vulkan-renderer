@@ -28,12 +28,12 @@ class Device {
 
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
-    PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag;
-    PFN_vkDebugMarkerSetObjectNameEXT m_vk_debug_marker_set_object_name;
-    PFN_vkCmdDebugMarkerBeginEXT m_vk_cmd_debug_marker_begin;
-    PFN_vkCmdDebugMarkerEndEXT m_vk_cmd_debug_marker_end;
-    PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert;
-    PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name;
+    PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag{nullptr};
+    PFN_vkDebugMarkerSetObjectNameEXT m_vk_debug_marker_set_object_name{nullptr};
+    PFN_vkCmdDebugMarkerBeginEXT m_vk_cmd_debug_marker_begin{nullptr};
+    PFN_vkCmdDebugMarkerEndEXT m_vk_cmd_debug_marker_end{nullptr};
+    PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert{nullptr};
+    PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
 
     const bool m_enable_vulkan_debug_markers{false};
 
@@ -47,9 +47,9 @@ public:
     /// @brief Check if a certain device layer is available for a specific graphics card.
     /// @note Vulkan device layers were deprecated, essentially making all layers instance layers.
     /// @param graphics_card The graphics card.
-    /// @param extension The name of the device layer.
+    /// @param layer_name The name of the device layer.
     /// @return ``true`` if the requested device layer is available.
-    [[nodiscard]] static bool is_layer_supported(VkPhysicalDevice graphics_card, const std::string &extension);
+    [[nodiscard]] static bool is_layer_supported(VkPhysicalDevice graphics_card, const std::string &layer_name);
 
     /// @brief Check if a swapchain is available for a specific graphics card.
     /// @param graphics_card The graphics card.

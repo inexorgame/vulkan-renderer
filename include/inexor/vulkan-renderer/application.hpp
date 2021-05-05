@@ -14,7 +14,7 @@
 // forward declarations
 namespace inexor::vulkan_renderer::input {
 class KeyboardMouseInputData;
-}
+} // namespace inexor::vulkan_renderer::input
 
 namespace inexor::vulkan_renderer {
 
@@ -28,10 +28,11 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_vertex_shader_files;
     std::vector<std::string> m_fragment_shader_files;
     std::vector<std::string> m_texture_files;
-    std::vector<std::string> m_shader_files;
     std::vector<std::string> m_gltf_model_files;
 
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
+
+    bool m_enable_validation_layers = true;
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call std::abort();
     // after reporting a validation layer (error) message.
@@ -44,21 +45,15 @@ class Application : public VulkanRenderer {
     void load_textures();
     void load_shaders();
     void load_octree_geometry();
+    void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
     void check_application_specific_features();
     void update_uniform_buffers();
     void process_mouse_input();
-    // TODO: Implement a method for processing keyboard input.
 
 public:
     Application(int argc, char **argv);
-
-    /// @brief Call glfwSetFramebufferSizeCallback.
-    /// @param window The window whose framebuffer was resized.
-    /// @param width The new width, in pixels, of the framebuffer.
-    /// @param height The new height, in pixels, of the framebuffer.
-    void frame_buffer_resize_callback(GLFWwindow *window, int width, int height);
 
     /// @brief Call glfwSetKeyCallback.
     /// @param window The window that received the event.
@@ -70,9 +65,9 @@ public:
 
     /// @brief Call glfwSetCursorPosCallback.
     /// @param window The window that received the event.
-    /// @param xpos The new x-coordinate, in screen coordinates, of the cursor.
-    /// @param ypos The new y-coordinate, in screen coordinates, of the cursor.
-    void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
+    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
+    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
+    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
 
     /// @brief Call glfwSetMouseButtonCallback.
     /// @param window The window that received the event.
@@ -83,9 +78,9 @@ public:
 
     /// @brief Call camera's process_mouse_scroll method.
     /// @param window The window that received the event.
-    /// @param xoffset The change of x-offset of the mouse wheel.
-    /// @param yoffset The change of y-offset of the mouse wheel.
-    void mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+    /// @param x_offset The change of x-offset of the mouse wheel.
+    /// @param y_offset The change of y-offset of the mouse wheel.
+    void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset);
 
     void run();
 };

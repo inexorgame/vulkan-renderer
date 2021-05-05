@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -28,9 +29,10 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
     spdlog::debug("Created semaphore successfully.");
 }
 
-Semaphore::Semaphore(Semaphore &&other) noexcept
-    : m_device(other.m_device), m_semaphore(std::exchange(other.m_semaphore, nullptr)),
-      m_name(std::move(other.m_name)) {}
+Semaphore::Semaphore(Semaphore &&other) noexcept : m_device(other.m_device) {
+    m_semaphore = std::exchange(other.m_semaphore, nullptr);
+    m_name = std::move(other.m_name);
+}
 
 Semaphore::~Semaphore() {
     vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);

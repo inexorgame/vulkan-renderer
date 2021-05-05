@@ -59,14 +59,12 @@ public:
     /// @param device A reference to the device wrapper.
     /// @param swapchain A reference to the swapchain.
     ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain);
-
+    ImGUIOverlay(const ImGUIOverlay &) = delete;
+    ImGUIOverlay(ImGUIOverlay &&) noexcept = delete;
     ~ImGUIOverlay();
 
-    ImGUIOverlay(const ImGUIOverlay &) = delete;
-    ImGUIOverlay(ImGUIOverlay &&other) noexcept;
-
-    ImGUIOverlay &operator=(const ImGUIOverlay &other) = delete;
-    ImGUIOverlay &operator=(ImGUIOverlay &&other) = delete;
+    ImGUIOverlay &operator=(const ImGUIOverlay &) = delete;
+    ImGUIOverlay &operator=(ImGUIOverlay &&) = delete;
 
     [[nodiscard]] float get_scale() const {
         return m_scale;

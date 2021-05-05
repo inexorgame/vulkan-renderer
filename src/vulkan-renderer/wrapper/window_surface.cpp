@@ -19,8 +19,10 @@ WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_
     spdlog::debug("Created window surface successfully");
 }
 
-WindowSurface::WindowSurface(WindowSurface &&other) noexcept
-    : m_instance(other.m_instance), m_surface(std::exchange(other.m_surface, nullptr)) {}
+WindowSurface::WindowSurface(WindowSurface &&other) noexcept {
+    m_instance = other.m_instance;
+    m_surface = std::exchange(other.m_surface, nullptr);
+}
 
 WindowSurface::~WindowSurface() {
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);

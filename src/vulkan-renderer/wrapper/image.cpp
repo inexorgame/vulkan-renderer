@@ -6,6 +6,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::wrapper {
 
 Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
@@ -71,10 +73,14 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
-Image::Image(Image &&other) noexcept
-    : m_device(other.m_device), m_allocation(other.m_allocation), m_allocation_info(other.m_allocation_info),
-      m_image(other.m_image), m_format(other.m_format), m_image_view(other.m_image_view),
-      m_name(std::move(other.m_name)) {}
+Image::Image(Image &&other) noexcept : m_device(other.m_device) {
+    m_allocation = other.m_allocation;
+    m_allocation_info = other.m_allocation_info;
+    m_image = other.m_image;
+    m_format = other.m_format;
+    m_image_view = other.m_image_view;
+    m_name = std::move(other.m_name);
+}
 
 Image::~Image() {
     vkDestroyImageView(m_device.device(), m_image_view, nullptr);

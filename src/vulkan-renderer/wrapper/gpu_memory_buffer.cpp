@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -62,10 +63,13 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
     std::memcpy(m_allocation_info.pMappedData, data, data_size);
 }
 
-GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept
-    : m_name(std::move(other.m_name)), m_device(other.m_device), m_buffer(std::exchange(other.m_buffer, nullptr)),
-      m_allocation(std::exchange(other.m_allocation, nullptr)), m_allocation_info(std::move(other.m_allocation_info)),
-      m_allocation_ci(std::move(other.m_allocation_ci)) {}
+GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept : m_device(other.m_device) {
+    m_name = std::move(other.m_name);
+    m_buffer = std::exchange(other.m_buffer, nullptr);
+    m_allocation = std::exchange(other.m_allocation, nullptr);
+    m_allocation_info = other.m_allocation_info;
+    m_allocation_ci = other.m_allocation_ci;
+}
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);

@@ -52,7 +52,7 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
     // requirements of std::uint32_t. Lucky for us, the data is stored in an std::vector where the default
     // allocator already ensures that the data satisfies the worst case alignment requirements.
-    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data());
+    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data()); // NOLINT
 
     spdlog::debug("Creating shader module {}.", name);
     if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module);
@@ -64,9 +64,12 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     m_device.set_debug_marker_name(m_shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
 }
 
-Shader::Shader(Shader &&other) noexcept
-    : m_device(other.m_device), m_type(other.m_type), m_name(std::move(other.m_name)),
-      m_entry_point(std::move(other.m_entry_point)), m_shader_module(std::exchange(other.m_shader_module, nullptr)) {}
+Shader::Shader(Shader &&other) noexcept : m_device(other.m_device) {
+    m_type = other.m_type;
+    m_name = std::move(other.m_name);
+    m_entry_point = std::move(other.m_entry_point);
+    m_shader_module = std::exchange(other.m_shader_module, nullptr);
+}
 
 Shader::~Shader() {
     vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);

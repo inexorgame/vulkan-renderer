@@ -24,7 +24,7 @@ public:
     /// @param swapchain The associated swapchain.
     /// @param name The internal debug marker name of the VkFramebuffer.
     Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
-                const Swapchain &swapchain, const std::string &name);
+                const Swapchain &swapchain, std::string name);
 
     Framebuffer(const Framebuffer &) = delete;
     Framebuffer(Framebuffer &&) noexcept;

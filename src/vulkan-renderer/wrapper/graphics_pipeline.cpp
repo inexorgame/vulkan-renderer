@@ -6,12 +6,15 @@
 #include <spdlog/spdlog.h>
 
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept
-    : m_device(other.m_device), graphics_pipeline(std::exchange(other.graphics_pipeline, nullptr)),
-      pipeline_cache(std::exchange(other.pipeline_cache, nullptr)), name(std::move(other.name)) {}
+GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept : m_device(other.m_device) {
+    graphics_pipeline = std::exchange(other.graphics_pipeline, nullptr);
+    pipeline_cache = std::exchange(other.pipeline_cache, nullptr);
+    name = std::move(other.name);
+}
 
 GraphicsPipeline::GraphicsPipeline(const Device &device, const VkPipelineLayout pipeline_layout,
                                    const VkRenderPass render_pass,

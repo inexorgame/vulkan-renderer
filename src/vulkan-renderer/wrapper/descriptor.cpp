@@ -7,16 +7,19 @@
 #include <spdlog/spdlog.h>
 
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
-    : m_device(other.m_device), m_name(std::move(other.m_name)),
-      m_descriptor_pool(std::exchange(other.m_descriptor_pool, nullptr)),
-      m_descriptor_set_layout(std::exchange(other.m_descriptor_set_layout, nullptr)),
-      m_descriptor_set_layout_bindings(std::move(other.m_descriptor_set_layout_bindings)),
-      m_write_descriptor_sets(std::move(other.m_write_descriptor_sets)),
-      m_descriptor_sets(std::move(other.m_descriptor_sets)), m_swapchain_image_count(other.m_swapchain_image_count) {}
+ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept : m_device(other.m_device) {
+    m_name = std::move(other.m_name);
+    m_descriptor_pool = std::exchange(other.m_descriptor_pool, nullptr);
+    m_descriptor_set_layout = std::exchange(other.m_descriptor_set_layout, nullptr);
+    m_descriptor_set_layout_bindings = std::move(other.m_descriptor_set_layout_bindings);
+    m_write_descriptor_sets = std::move(other.m_write_descriptor_sets);
+    m_descriptor_sets = std::move(other.m_descriptor_sets);
+    m_swapchain_image_count = other.m_swapchain_image_count;
+}
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
                                        std::vector<VkDescriptorSetLayoutBinding> &&layout_bindings,
@@ -37,6 +40,8 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     }
 
     std::vector<VkDescriptorPoolSize> pool_sizes;
+
+    pool_sizes.reserve(layout_bindings.size());
 
     for (const auto &descriptor_pool_type : layout_bindings) {
         pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, swapchain_image_count});

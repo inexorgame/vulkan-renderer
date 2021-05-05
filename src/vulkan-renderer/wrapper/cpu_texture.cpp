@@ -5,6 +5,7 @@
 #include <stb_image.h>
 
 #include <array>
+#include <utility>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -44,10 +45,14 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
     }
 }
 
-CpuTexture::CpuTexture(CpuTexture &&other) noexcept
-    : m_name(std::move(other.m_name)), m_texture_width(other.m_texture_width), m_texture_height(other.m_texture_height),
-      m_texture_channels(other.m_texture_channels), m_mip_levels(other.m_mip_levels),
-      m_texture_data(other.m_texture_data) {}
+CpuTexture::CpuTexture(CpuTexture &&other) noexcept {
+    m_name = std::move(other.m_name);
+    m_texture_width = other.m_texture_width;
+    m_texture_height = other.m_texture_height;
+    m_texture_channels = other.m_texture_channels;
+    m_mip_levels = other.m_mip_levels;
+    m_texture_data = other.m_texture_data;
+}
 
 CpuTexture::~CpuTexture() {
     stbi_image_free(m_texture_data);
@@ -67,22 +72,18 @@ void CpuTexture::generate_error_texture_data() {
     constexpr std::array<std::array<unsigned char, 4>, 2> COLORS{{{0xFF, 0x69, 0xB4, 0xFF}, {0x94, 0x00, 0xD3, 0xFF}}};
 
     const auto get_color = [](int x, int y, int square_dimension, std::size_t colors) -> int {
-        return (std::size_t(x / square_dimension) + std::size_t(y / square_dimension)) % colors;
+        return static_cast<int>(
+            (static_cast<std::size_t>(x / square_dimension) + static_cast<std::size_t>(y / square_dimension)) % colors);
     };
 
     // Note: Using the stb library function since we are freeing with stbi_image_free.
-    m_texture_data = static_cast<stbi_uc *>(STBI_MALLOC(data_size()));
+    m_texture_data = static_cast<stbi_uc *>(STBI_MALLOC(data_size())); // NOLINT
 
     // Performance could be improved by copying complete rows after one or two rows are created with the loops.
     for (int y = 0; y < m_texture_height; y++) {
         for (int x = 0; x < m_texture_width; x++) {
-            const int index = (x + (y * m_texture_width)) * m_texture_channels;
             const int color_id = get_color(x, y, SQUARE_DIMENSION, COLORS.size());
-
-            m_texture_data[index + 0] = COLORS[color_id][0];
-            m_texture_data[index + 1] = COLORS[color_id][1];
-            m_texture_data[index + 2] = COLORS[color_id][2];
-            m_texture_data[index + 3] = COLORS[color_id][3];
+            std::memcpy(m_texture_data, &COLORS[color_id][0], 4 * sizeof(COLORS[color_id][0]));
         }
     }
 }

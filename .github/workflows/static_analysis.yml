@@ -1,0 +1,84 @@
+name: Static Analysis
+on: [push, pull_request]
+
+env:
+  inexor_vulkan_version: "1.2.131.1"
+  inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
+
+jobs:
+  clang-tidy:
+    name: Clang Tidy
+    runs-on: ubuntu-latest
+    container: ubuntu:rolling
+    env:
+      DEBIAN_FRONTEND: "noninteractive"
+      inexor_conan_path: "$HOME/.local/bin"
+    steps:
+      - name: Update environment
+        run: |
+          # Update package lists
+          apt update -qq
+
+          # Install tools
+          apt install -y \
+            clang-tidy \
+            cmake \
+            curl \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxcb-dri3-dev \
+            libxcb-icccm4-dev \
+            libxcb-image0-dev \
+            libxcb-keysyms1-dev \
+            libxcb-randr0-dev \
+            libxcb-render-util0-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-sync-dev \
+            libxcb-util-dev \
+            libxcb-xfixes0-dev \
+            libxcb-xinerama0-dev \
+            libxcb-xkb-dev \
+            parallel \
+            pkg-config \
+            python3 \
+            python3-pip \
+            xkb-data \
+            xorg-dev
+
+          pip3 install wheel setuptools
+          pip3 install conan mako
+
+      - name: Install Vulkan SDK
+        run: |
+          # Download Vulkan SDK
+          curl -LS -o vulkansdk.tar.gz \
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
+          # Create Vulkan SDK directory and extract
+          mkdir "${{ env.inexor_vulkan_sdk }}"
+          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure CMake
+        run: |
+          export CC=gcc
+          export CXX=g++
+          export PATH="${{ env.inexor_conan_path }}":$PATH
+          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
+          export PATH=$VULKAN_SDK/bin:$PATH
+          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+          cmake . -Bbuild -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy
+        run: |
+          find example src \
+            -name '*.cpp' \
+            -print0 |
+          parallel -0 \
+            clang-tidy -p build --header-filter=inexor/ --quiet {} 2>/dev/null |
+          tee output
+          if [ -s output ]; then exit 1; fi

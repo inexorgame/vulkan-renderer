@@ -8,7 +8,7 @@ namespace inexor::vulkan_renderer {
 
 /// @brief A class for counting frames per seconds.
 class FPSCounter {
-    std::size_t m_frames{0};
+    std::uint32_t m_frames{0};
 
     std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time;
 

@@ -55,9 +55,6 @@ protected:
 
     FPSCounter m_fps_counter;
 
-    // TODO: Refactor this!
-    VkDescriptorBufferInfo m_uniform_buffer_info;
-
     bool m_vsync_enabled{false};
 
     std::unique_ptr<Camera> m_camera;

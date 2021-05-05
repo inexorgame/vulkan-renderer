@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <functional>
 #include <utility>
 
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept {
@@ -58,14 +59,22 @@ std::array<glm::vec3, 8> Cube::vertices() const noexcept {
         const float step = m_size / Indentation::MAX;
         const std::array<Indentation, Cube::EDGES> &ind = m_indentations;
 
-        return {{{pos.x + ind[0].start() * step, pos.y + ind[1].start() * step, pos.z + ind[2].start() * step},
-                 {pos.x + ind[9].start() * step, pos.y + ind[4].start() * step, max.z - ind[2].end() * step},
-                 {pos.x + ind[3].start() * step, max.y - ind[1].end() * step, pos.z + ind[11].start() * step},
-                 {pos.x + ind[6].start() * step, max.y - ind[4].end() * step, max.z - ind[11].end() * step},
-                 {max.x - ind[0].end() * step, pos.y + ind[10].start() * step, pos.z + ind[5].start() * step},
-                 {max.x - ind[9].end() * step, pos.y + ind[7].start() * step, max.z - ind[5].end() * step},
-                 {max.x - ind[3].end() * step, max.y - ind[10].end() * step, pos.z + ind[8].start() * step},
-                 {max.x - ind[6].end() * step, max.y - ind[7].end() * step, max.z - ind[8].end() * step}}};
+        return {{{pos.x + static_cast<float>(ind[0].start()) * step, pos.y + static_cast<float>(ind[1].start()) * step,
+                  pos.z + static_cast<float>(ind[2].start()) * step},
+                 {pos.x + static_cast<float>(ind[9].start()) * step, pos.y + static_cast<float>(ind[4].start()) * step,
+                  max.z - static_cast<float>(ind[2].end()) * step},
+                 {pos.x + static_cast<float>(ind[3].start()) * step, max.y - static_cast<float>(ind[1].end()) * step,
+                  pos.z + static_cast<float>(ind[11].start()) * step},
+                 {pos.x + static_cast<float>(ind[6].start()) * step, max.y - static_cast<float>(ind[4].end()) * step,
+                  max.z - static_cast<float>(ind[11].end()) * step},
+                 {max.x - static_cast<float>(ind[0].end()) * step, pos.y + static_cast<float>(ind[10].start()) * step,
+                  pos.z + static_cast<float>(ind[5].start()) * step},
+                 {max.x - static_cast<float>(ind[9].end()) * step, pos.y + static_cast<float>(ind[7].start()) * step,
+                  max.z - static_cast<float>(ind[5].end()) * step},
+                 {max.x - static_cast<float>(ind[3].end()) * step, max.y - static_cast<float>(ind[10].end()) * step,
+                  pos.z + static_cast<float>(ind[8].start()) * step},
+                 {max.x - static_cast<float>(ind[6].end()) * step, max.y - static_cast<float>(ind[7].end()) * step,
+                  max.z - static_cast<float>(ind[8].end()) * step}}};
     }
     return {};
 }
@@ -185,7 +194,7 @@ std::shared_ptr<Cube> Cube::operator[](std::size_t idx) {
     return m_childs[idx];
 }
 
-const std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
+std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
     assert(idx <= SUB_CUBES);
     return m_childs[idx];
 }
@@ -253,15 +262,17 @@ void Cube::set_type(const Type new_type) {
         auto create_cube = [&](const glm::vec3 &offset) {
             return std::make_shared<Cube>(weak_from_this(), half_size, m_position + offset);
         };
-        // about the order look into the octree documentation
-        m_childs = {create_cube({0, 0, 0}),
-                    create_cube({0, 0, half_size}),
-                    create_cube({0, half_size, 0}),
-                    create_cube({0, half_size, half_size}),
-                    create_cube({half_size, 0, 0}),
-                    create_cube({half_size, 0, half_size}),
-                    create_cube({half_size, half_size, 0}),
-                    create_cube({half_size, half_size, half_size})};
+        // Look into octree documentation to find information about the order of subcubes in space.
+        // We can't use initializer list here because clang-tidy complains about it.
+        // To the best of our knowledge, this is a false positive.
+        m_childs[0] = create_cube({0, 0, 0});
+        m_childs[1] = create_cube({0, 0, half_size});
+        m_childs[2] = create_cube({0, half_size, 0});
+        m_childs[3] = create_cube({0, half_size, half_size});
+        m_childs[4] = create_cube({half_size, 0, 0});
+        m_childs[5] = create_cube({half_size, 0, half_size});
+        m_childs[6] = create_cube({half_size, half_size, 0});
+        m_childs[7] = create_cube({half_size, half_size, half_size});
         break;
     }
     if (m_type == Type::OCTANT && new_type != Type::OCTANT) {
@@ -319,6 +330,8 @@ void Cube::rotate(const RotationAxis::Type &axis, int rotations) {
         break;
     case 3:
         rotate<3>(axis);
+        break;
+    default:
         break;
     }
 }
@@ -395,23 +408,22 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     std::vector<PolygonCache> polygons;
     polygons.reserve(count_geometry_cubes());
 
-    std::function<void(std::shared_ptr<const world::Cube>)> collect;
     // post-order traversal
-    collect = [&collect, &polygons, &update_invalid](std::shared_ptr<const world::Cube> cube) {
-        if (cube->type() == world::Cube::Type::OCTANT) {
-            for (const auto &child : cube->childs()) {
-                collect(child);
+    std::function<void(const Cube &)> collect = [&collect, &polygons, &update_invalid](const Cube &cube) {
+        if (cube.type() == world::Cube::Type::OCTANT) {
+            for (const auto &child : cube.childs()) {
+                collect(*child);
             }
             return;
         }
-        if (!cube->m_polygon_cache_valid && update_invalid) {
-            cube->update_polygon_cache();
+        if (!cube.m_polygon_cache_valid && update_invalid) {
+            cube.update_polygon_cache();
         }
-        if (cube->m_polygon_cache != nullptr) {
-            polygons.push_back(cube->m_polygon_cache);
+        if (cube.m_polygon_cache != nullptr) {
+            polygons.push_back(cube.m_polygon_cache);
         }
     };
-    collect(this->shared_from_this());
+    collect(*this);
     return polygons;
 }
 } // namespace inexor::vulkan_renderer::world

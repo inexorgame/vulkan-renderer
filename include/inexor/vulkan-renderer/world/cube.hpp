@@ -39,7 +39,7 @@ public:
     /// Cube edges.
     static constexpr std::size_t EDGES{12};
     /// Cube Type.
-    enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
+    enum class Type { EMPTY = 0b00u, SOLID = 0b01u, NORMAL = 0b10u, OCTANT = 0b11u };
 
     /// IDs of the children and edges which will be swapped to receive the rotation.
     /// To achieve a 90 degree rotation the 0th index have to be swapped with the 1st and the 1st with the 2nd, etc.
@@ -58,7 +58,7 @@ public:
 private:
     Type m_type{Type::SOLID};
     float m_size{32};
-    glm::vec3 m_position{0.0F, 0.0F, 0.0F};
+    glm::vec3 m_position{0.0f, 0.0f, 0.0f};
 
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
@@ -95,10 +95,12 @@ public:
     Cube(Cube &&rhs) noexcept;
     ~Cube() = default;
     Cube &operator=(Cube rhs);
+    Cube &operator=(Cube &&) = delete;
+
     /// Get child.
     std::shared_ptr<Cube> operator[](std::size_t idx);
     /// Get child.
-    const std::shared_ptr<const Cube> operator[](std::size_t idx) const;
+    std::shared_ptr<const Cube> operator[](std::size_t idx) const; // NOLINT
 
     /// Clone a cube, which has no relations to the current one or its children.
     /// It will be a root cube.
