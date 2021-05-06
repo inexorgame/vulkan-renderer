@@ -191,10 +191,10 @@ void Application::load_octree_geometry() {
     std::shared_ptr<world::Cube> cube = std::make_shared<world::Cube>(2.0f, glm::vec3{0, -1, -1});
     cube->set_type(world::Cube::Type::OCTANT);
 
-    cube->childs()[3]->set_type(world::Cube::Type::EMPTY);
-    cube->childs()[5]->set_type(world::Cube::Type::EMPTY);
-    cube->childs()[6]->set_type(world::Cube::Type::EMPTY);
-    cube->childs()[7]->set_type(world::Cube::Type::EMPTY);
+    cube->children()[3]->set_type(world::Cube::Type::EMPTY);
+    cube->children()[5]->set_type(world::Cube::Type::EMPTY);
+    cube->children()[6]->set_type(world::Cube::Type::EMPTY);
+    cube->children()[7]->set_type(world::Cube::Type::EMPTY);
 
     for (const auto &polygons : cube->polygons(true)) {
         for (const auto &triangle : *polygons) {

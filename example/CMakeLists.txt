@@ -9,6 +9,7 @@ set_target_properties(
 )
 
 if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
+    set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "inexor-vulkan-renderer-example")
     target_compile_options(inexor-vulkan-renderer-example PRIVATE "/MP")
     set_target_properties(
         inexor-vulkan-renderer-example
@@ -27,5 +28,3 @@ target_link_libraries(
     PRIVATE
     inexor-vulkan-renderer
 )
-
-set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "inexor-vulkan-renderer-example")
