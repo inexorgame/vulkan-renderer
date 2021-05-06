@@ -2,6 +2,8 @@
 
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
+#include <glm/geometric.hpp>
+#include <glm/gtx/vector_angle.hpp>
 #include <glm/vec3.hpp>
 
 #include <array>
@@ -113,6 +115,22 @@ public:
     [[nodiscard]] std::size_t grid_level() const noexcept;
     /// Count the number of Type::SOLID and Type::NORMAL cubes.
     [[nodiscard]] std::size_t count_geometry_cubes() const noexcept;
+
+    [[nodiscard]] glm::vec3 center() const noexcept {
+        return m_position + 0.5f * m_size;
+    }
+
+    [[nodiscard]] glm::vec3 position() const noexcept {
+        return m_position;
+    }
+
+    [[nodiscard]] std::array<glm::vec3, 2> bounding_box() const {
+        return {m_position, {m_position.x + m_size, m_position.y + m_size, m_position.z + m_size}};
+    }
+
+    [[nodiscard]] float size() const noexcept {
+        return m_size;
+    }
 
     /// Set a new type.
     void set_type(Type new_type);
