@@ -398,15 +398,13 @@ public:
     template <typename T, typename... Args>
     T &add(Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
-        auto &ret = *ptr;
         if constexpr (std::is_base_of_v<RenderResource, T>) {
-            m_resources.push_back(std::move(ptr));
+            return static_cast<T &>(*m_resources.emplace_back(std::move(ptr)));
         } else if constexpr (std::is_base_of_v<RenderStage, T>) {
-            m_stages.push_back(std::move(ptr));
+            return static_cast<T &>(*m_stages.emplace_back(std::move(ptr)));
         } else {
             static_assert(!std::is_same_v<T, T>, "T must be a RenderResource or RenderStage");
         }
-        return ret;
     }
 
     /// @brief Compiles the render graph resources/stages into physical vulkan objects
