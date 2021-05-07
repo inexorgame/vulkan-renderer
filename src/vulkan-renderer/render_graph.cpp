@@ -130,9 +130,8 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage *phys, int image_index) const {
-    // TODO: Remove simultaneous usage once we have proper max frames in flight control.
     auto &cmd_buf = phys->m_command_buffers[image_index];
-    cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+    cmd_buf.begin();
 
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
