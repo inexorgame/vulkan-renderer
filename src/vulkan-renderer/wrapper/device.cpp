@@ -46,7 +46,8 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
     }
 
     if (device_extension_count == 0) {
-        throw std::runtime_error("Error: No Vulkan device extensions available!");
+        spdlog::info("No Vulkan device extensions available!");
+        return false;
     }
 
     std::vector<VkExtensionProperties> device_extensions(device_extension_count);
@@ -78,7 +79,8 @@ bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std:
     }
 
     if (device_layer_count == 0) {
-        throw std::runtime_error("Error: No Vulkan device extensions available!");
+        spdlog::info("No Vulkan device layers available!");
+        return false;
     }
 
     std::vector<VkLayerProperties> device_layers(device_layer_count);

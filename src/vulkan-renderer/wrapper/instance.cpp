@@ -19,7 +19,8 @@ bool Instance::is_layer_supported(const std::string &layer_name) {
     }
 
     if (instance_layer_count == 0) {
-        throw std::runtime_error("Error: No Vulkan instance layers available!");
+        spdlog::info("No Vulkan instance layers available!");
+        return false;
     }
 
     std::vector<VkLayerProperties> instance_layers(instance_layer_count);
@@ -45,7 +46,8 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
     }
 
     if (instance_extension_count == 0) {
-        throw std::runtime_error("Error: No Vulkan instance extensions available!");
+        spdlog::info("No Vulkan instance extensions available!");
+        return false;
     }
 
     std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
