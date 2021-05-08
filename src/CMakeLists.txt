@@ -37,6 +37,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
+    vulkan-renderer/wrapper/query_pool.cpp
     vulkan-renderer/wrapper/renderpass.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
@@ -47,7 +48,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/window_surface.cpp
 
     vulkan-renderer/world/cube.cpp
-    vulkan-renderer/world/indentation.cpp)
+    vulkan-renderer/world/indentation.cpp ../include/inexor/vulkan-renderer/wrapper/query_pool.hpp)
 
 foreach(FILE ${INEXOR_SOURCE_FILES})
     get_filename_component(PARENT_DIR "${FILE}" PATH)

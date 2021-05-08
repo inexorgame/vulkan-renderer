@@ -270,4 +270,11 @@ VkSwapchainCreateInfoKHR make_info() {
     return ret;
 }
 
+template <>
+VkQueryPoolCreateInfo make_info() {
+    VkQueryPoolCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+    return ret;
+}
+
 } // namespace inexor::vulkan_renderer::wrapper
