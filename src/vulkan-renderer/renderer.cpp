@@ -51,8 +51,8 @@ void VulkanRenderer::setup_render_graph() {
 }
 
 void VulkanRenderer::generate_octree_indices() {
-    const auto old_vertex_count = m_octree_vertices.size();
     auto old_vertices = std::move(m_octree_vertices);
+    m_octree_indices.clear();
     m_octree_vertices.clear();
     std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
     for (auto &vertex : old_vertices) {
