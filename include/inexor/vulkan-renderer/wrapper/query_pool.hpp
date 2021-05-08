@@ -38,7 +38,7 @@ private:
         VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT, // requires tesselation shaders
         VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT};
 
-    [[nodiscard]] std::string get_pipeline_stats_flag_bit_name(VkQueryPipelineStatisticFlagBits bit) const;
+    [[nodiscard]] static std::string get_pipeline_stats_flag_bit_name(VkQueryPipelineStatisticFlagBits bit);
 
     /// @brief Validates every specified VkQueryPipelineStatisticFlagBits into one VkQueryPipelineStatisticFlags.
     /// Some VkQueryPipelineStatisticFlagBits values require special checks (tesselation shaders for example).
