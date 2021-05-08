@@ -383,7 +383,7 @@ private:
     // Functions for building stage related vulkan objects.
     void alloc_command_buffers(const RenderStage *, PhysicalStage *) const;
     void build_pipeline_layout(const RenderStage *, PhysicalStage *) const;
-    void record_command_buffers(const RenderStage *, PhysicalStage *) const;
+    void record_command_buffer(const RenderStage *, PhysicalStage *, int image_index) const;
 
     // Functions for building graphics stage related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *) const;
