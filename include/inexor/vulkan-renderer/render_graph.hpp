@@ -86,6 +86,7 @@ private:
     // Data to upload during render graph compilation.
     const void *m_data{nullptr};
     std::size_t m_data_size{0};
+    bool m_data_upload_needed{false};
     std::size_t m_element_size{0};
 
 public:
@@ -240,6 +241,7 @@ class PhysicalBuffer : public PhysicalResource {
     friend RenderGraph;
 
 private:
+    VmaAllocationInfo m_alloc_info{};
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
@@ -377,6 +379,7 @@ private:
     }
 
     // Functions for building resource related vulkan objects.
+    void build_buffer(const BufferResource *, PhysicalBuffer *) const;
     void build_image(const TextureResource *, PhysicalImage *, VmaAllocationCreateInfo *) const;
     void build_image_view(const TextureResource *, PhysicalImage *) const;
 
@@ -414,7 +417,7 @@ public:
     /// @brief Submits the command frame's command buffers for drawing
     /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
     void render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
-                VkQueue graphics_queue) const;
+                VkQueue graphics_queue);
 };
 
 template <typename T>
@@ -431,6 +434,7 @@ template <typename T>
 void BufferResource::upload_data(const T *data, std::size_t count) {
     m_data = data;
     m_data_size = count * (m_element_size = sizeof(T));
+    m_data_upload_needed = true;
 }
 
 template <typename T>

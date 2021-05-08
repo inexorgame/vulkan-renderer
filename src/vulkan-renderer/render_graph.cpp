@@ -62,6 +62,34 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(device(), m_render_pass, nullptr);
 }
 
+void RenderGraph::build_buffer(const BufferResource *buffer_resource, PhysicalBuffer *phys) const {
+    // TODO: Don't always create mapped.
+    VmaAllocationCreateInfo alloc_ci{};
+    alloc_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    alloc_ci.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+    auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>();
+    buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    buffer_ci.size = buffer_resource->m_data_size;
+    switch (buffer_resource->m_usage) {
+    case BufferUsage::INDEX_BUFFER:
+        buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        break;
+    case BufferUsage::VERTEX_BUFFER:
+        buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        break;
+    default:
+        assert(false);
+    }
+
+    VmaAllocationInfo &alloc_info = phys->m_alloc_info;
+    if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &phys->m_buffer,
+                                            &phys->m_allocation, &alloc_info);
+        result != VK_SUCCESS) {
+        throw VulkanException("Failed to create buffer!", result);
+    }
+}
+
 void RenderGraph::build_image(const TextureResource *resource, PhysicalImage *phys,
                               VmaAllocationCreateInfo *alloc_ci) const {
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
@@ -406,37 +434,7 @@ void RenderGraph::compile(const RenderResource &target) {
 #endif
 
         if (const auto *buffer_resource = resource->as<BufferResource>()) {
-            auto *phys = create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
-
-            const bool is_uploading_data = buffer_resource->m_data != nullptr;
-            alloc_ci.flags |= is_uploading_data ? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0u;
-            alloc_ci.usage = is_uploading_data ? VMA_MEMORY_USAGE_CPU_TO_GPU : VMA_MEMORY_USAGE_GPU_ONLY;
-
-            auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>();
-            buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            buffer_ci.size = buffer_resource->m_data_size;
-            switch (buffer_resource->m_usage) {
-            case BufferUsage::INDEX_BUFFER:
-                buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-                break;
-            case BufferUsage::VERTEX_BUFFER:
-                buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-                break;
-            default:
-                assert(false);
-            }
-
-            VmaAllocationInfo alloc_info;
-            if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &phys->m_buffer,
-                                                    &phys->m_allocation, &alloc_info);
-                result != VK_SUCCESS) {
-                throw VulkanException("Failed to create buffer!", result);
-            }
-
-            if (is_uploading_data) {
-                assert(alloc_info.pMappedData != nullptr);
-                std::memcpy(alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
-            }
+            create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
         }
 
         if (const auto *texture_resource = resource->as<TextureResource>()) {
@@ -502,7 +500,24 @@ void RenderGraph::compile(const RenderResource &target) {
 }
 
 void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore,
-                         VkSemaphore wait_semaphore, VkQueue graphics_queue) const {
+                         VkSemaphore wait_semaphore, VkQueue graphics_queue) {
+    // Update dynamic buffers.
+    for (auto &resource : m_resources) {
+        auto *buffer_resource = resource->as<BufferResource>();
+        if (buffer_resource != nullptr && buffer_resource->m_data_upload_needed) {
+            auto *phys = m_resource_map[buffer_resource]->as<PhysicalBuffer>();
+
+            // Destroy the old buffer and create a new one with the required size.
+            vmaDestroyBuffer(phys->m_allocator, phys->m_buffer, phys->m_allocation);
+            build_buffer(buffer_resource, phys);
+
+            // Upload new data.
+            assert(phys->m_alloc_info.pMappedData != nullptr);
+            std::memcpy(phys->m_alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
+            buffer_resource->m_data_upload_needed = false;
+        }
+    }
+
     // Re-record all command buffers. This isn't great, but it's fine for simple rendering pipelines. Eventually we'll
     // want to generate these in parallel.
     vkResetCommandPool(m_device.device(), m_command_pool, 0);
