@@ -24,16 +24,16 @@ void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset)
     m_vertex_attributes.push_back(vertex_attribute);
 }
 
-void RenderStage::writes_to(const RenderResource &resource) {
-    m_writes.push_back(&resource);
+void RenderStage::writes_to(const RenderResource *resource) {
+    m_writes.push_back(resource);
 }
 
-void RenderStage::reads_from(const RenderResource &resource) {
-    m_reads.push_back(&resource);
+void RenderStage::reads_from(const RenderResource *resource) {
+    m_reads.push_back(resource);
 }
 
-void GraphicsStage::bind_buffer(const BufferResource &buffer, std::uint32_t binding) {
-    m_buffer_bindings.emplace(&buffer, binding);
+void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
+    m_buffer_bindings.emplace(buffer, binding);
 }
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
@@ -385,7 +385,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     }
 }
 
-void RenderGraph::compile(const RenderResource &target) {
+void RenderGraph::compile(const RenderResource *target) {
     // TODO(GH-204): Better logging and input validation.
     // TODO: Many opportunities for optimisation.
 
@@ -410,7 +410,7 @@ void RenderGraph::compile(const RenderResource &target) {
     };
 
     // DFS starting from writers of target (initial stage executants).
-    for (auto *stage : writers[&target]) {
+    for (auto *stage : writers[target]) {
         dfs(stage);
     }
 

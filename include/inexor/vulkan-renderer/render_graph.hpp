@@ -166,10 +166,10 @@ public:
     RenderStage &operator=(RenderStage &&) = delete;
 
     /// @brief Specifies that this stage writes to `resource`
-    void writes_to(const RenderResource &resource);
+    void writes_to(const RenderResource *resource);
 
     /// @brief Specifies that this stage reads from `resource`
-    void reads_from(const RenderResource &resource);
+    void reads_from(const RenderResource *resource);
 
     /// @brief Binds a descriptor set layout to this render stage
     /// @note This function will soon be removed
@@ -209,7 +209,7 @@ public:
     }
 
     /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage
-    void bind_buffer(const BufferResource &buffer, std::uint32_t binding);
+    void bind_buffer(const BufferResource *buffer, std::uint32_t binding);
 
     /// @brief Specifies that `shader` should be used during the pipeline of this stage
     /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour!
@@ -399,12 +399,12 @@ public:
     /// @brief Adds either a render resource or render stage to the render graph
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
-    T &add(Args &&... args) {
+    T *add(Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         if constexpr (std::is_base_of_v<RenderResource, T>) {
-            return static_cast<T &>(*m_resources.emplace_back(std::move(ptr)));
+            return static_cast<T *>(m_resources.emplace_back(std::move(ptr)).get());
         } else if constexpr (std::is_base_of_v<RenderStage, T>) {
-            return static_cast<T &>(*m_stages.emplace_back(std::move(ptr)));
+            return static_cast<T *>(m_stages.emplace_back(std::move(ptr)).get());
         } else {
             static_assert(!std::is_same_v<T, T>, "T must be a RenderResource or RenderStage");
         }
@@ -412,7 +412,7 @@ public:
 
     /// @brief Compiles the render graph resources/stages into physical vulkan objects
     /// @param target The resource to start the depth first search from
-    void compile(const RenderResource &target);
+    void compile(const RenderResource *target);
 
     /// @brief Submits the command frame's command buffers for drawing
     /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
