@@ -38,12 +38,12 @@ private:
         VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT, // requires tesselation shaders
         VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT};
 
-    std::string get_pipeline_stats_flag_bit_name(VkQueryPipelineStatisticFlagBits bit) const;
+    [[nodiscard]] std::string get_pipeline_stats_flag_bit_name(VkQueryPipelineStatisticFlagBits bit) const;
 
     /// @brief Validates every specified VkQueryPipelineStatisticFlagBits into one VkQueryPipelineStatisticFlags.
     /// Some VkQueryPipelineStatisticFlagBits values require special checks (tesselation shaders for example).
     /// @return A vector which contains the valid Vulkan pipeline query statistics flag bits.
-    std::vector<VkQueryPipelineStatisticFlagBits>
+    [[nodiscard]] std::vector<VkQueryPipelineStatisticFlagBits>
     validate_pipeline_stats_flag_bits(const std::vector<VkQueryPipelineStatisticFlagBits> &pipeline_stats_flag_bits);
 
 public:
