@@ -505,8 +505,8 @@ void RenderGraph::compile(const RenderResource &target) {
     }
 }
 
-void RenderGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
-                         VkQueue graphics_queue) const {
+void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore,
+                         VkSemaphore wait_semaphore, VkQueue graphics_queue) const {
     auto submit_info = wrapper::make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
     submit_info.signalSemaphoreCount = 1;
@@ -521,7 +521,7 @@ void RenderGraph::render(int image_index, VkSemaphore signal_semaphore, VkSemaph
     for (const auto *stage : m_phys_stage_stack) {
         auto *cmd_buf = stage->m_command_buffers[image_index].get();
         submit_info.pCommandBuffers = &cmd_buf;
-        vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+        vkQueueSubmit(graphics_queue, 1, &submit_info, signal_fence);
     }
 }
 

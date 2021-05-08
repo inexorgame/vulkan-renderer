@@ -413,7 +413,7 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing
     /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
-    void render(int image_index, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
+    void render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
                 VkQueue graphics_queue) const;
 };
 
