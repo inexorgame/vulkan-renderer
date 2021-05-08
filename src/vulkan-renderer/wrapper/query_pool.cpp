@@ -69,7 +69,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
     return ret_val;
 }
 
-std::string QueryPool::get_pipeline_stats_flag_bit_name(const VkQueryPipelineStatisticFlagBits bit) const {
+std::string QueryPool::get_pipeline_stats_flag_bit_name(const VkQueryPipelineStatisticFlagBits bit) {
     switch (bit) {
     case VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT:
         return "Input assembly vertex count";
