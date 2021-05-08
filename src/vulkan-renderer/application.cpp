@@ -184,13 +184,15 @@ void Application::load_shaders() {
     spdlog::debug("Loading shaders finished.");
 }
 
-void Application::load_octree_geometry() {
+void Application::load_octree_geometry(bool initialize) {
     spdlog::debug("Creating octree geometry.");
 
     // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
     m_worlds.clear();
-    m_worlds.push_back(world::create_random_world(2, {0.0f, 0.0f, 0.0f}, 42));
-    m_worlds.push_back(world::create_random_world(2, {10.0f, 0.0f, 0.0f}, 60));
+    m_worlds.push_back(
+        world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
+    m_worlds.push_back(
+        world::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
 
     m_octree_vertices.clear();
     for (const auto &world : m_worlds) {
@@ -493,7 +495,7 @@ Application::Application(int argc, char **argv) {
         descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
             .build("Default uniform buffer"));
 
-    load_octree_geometry();
+    load_octree_geometry(true);
     generate_octree_indices();
 
     spdlog::debug("Vulkan initialisation finished.");
@@ -600,6 +602,12 @@ void Application::run() {
         update_imgui_overlay();
         render_frame();
         process_mouse_input();
+        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+            load_octree_geometry(false);
+            generate_octree_indices();
+            m_index_buffer->upload_data(m_octree_indices);
+            m_vertex_buffer->upload_data(m_octree_vertices);
+        }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
         check_octree_collisions();

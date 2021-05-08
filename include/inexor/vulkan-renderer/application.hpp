@@ -42,7 +42,8 @@ class Application : public VulkanRenderer {
     void load_toml_configuration_file(const std::string &file_name);
     void load_textures();
     void load_shaders();
-    void load_octree_geometry();
+    /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
+    void load_octree_geometry(bool initialize);
     void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();

@@ -80,6 +80,10 @@ protected:
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
+    // Render graph buffers for octree geometry.
+    BufferResource *m_index_buffer{nullptr};
+    BufferResource *m_vertex_buffer{nullptr};
+
     void setup_render_graph();
     void generate_octree_indices();
     void recreate_swapchain();

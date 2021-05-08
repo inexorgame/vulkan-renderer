@@ -22,20 +22,20 @@ void VulkanRenderer::setup_render_graph() {
     auto &depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer.set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    auto &index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
-    index_buffer.upload_data(m_octree_indices);
+    m_index_buffer = &m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
+    m_index_buffer->upload_data(m_octree_indices);
 
-    auto &vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
-    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
-    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
-    vertex_buffer.upload_data(m_octree_vertices);
+    m_vertex_buffer = &m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
+    m_vertex_buffer->upload_data(m_octree_vertices);
 
     auto &main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage.writes_to(back_buffer);
     main_stage.writes_to(depth_buffer);
-    main_stage.reads_from(index_buffer);
-    main_stage.reads_from(vertex_buffer);
-    main_stage.bind_buffer(vertex_buffer, 0);
+    main_stage.reads_from(*m_index_buffer);
+    main_stage.reads_from(*m_vertex_buffer);
+    main_stage.bind_buffer(*m_vertex_buffer, 0);
     main_stage.set_clears_screen(true);
     main_stage.set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], phys->pipeline_layout());
