@@ -17,7 +17,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
     for (const auto flag_bit : pipeline_stats_flag_bits) {
         switch (flag_bit) {
         case VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT:
-            if (!m_device_features.tessellationShader) {
+            if (!static_cast<bool>(m_device_features.tessellationShader)) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT to "
                              "pipeline statistics flag bit!");
                 spdlog::warn(
@@ -28,7 +28,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
             ret_val.emplace_back(VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT);
             break;
         case VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT:
-            if (!m_device_features.tessellationShader) {
+            if (!static_cast<bool>(m_device_features.tessellationShader)) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT to "
                              "pipeline statistics flag bit!");
                 spdlog::warn(
@@ -39,7 +39,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
             ret_val.emplace_back(VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT);
             break;
         case VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT:
-            if (!m_device_features.geometryShader) {
+            if (!static_cast<bool>(m_device_features.geometryShader)) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT to pipeline "
                              "statistics flag bit!");
                 spdlog::warn("Geometry shaders are not available on this gpu (device_features.geometryShader = false)");
@@ -49,7 +49,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
             }
             break;
         case VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT:
-            if (!m_device_features.geometryShader) {
+            if (!static_cast<bool>(m_device_features.geometryShader)) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT to pipeline "
                              "statistics flag bit!");
                 spdlog::warn("Geometry shaders are not available on this gpu (device_features.geometryShader = false)");
@@ -111,7 +111,7 @@ QueryPool::QueryPool(const Device &device, const std::string &name,
     // We must first check if pipeline query statistics are available.
     vkGetPhysicalDeviceFeatures(m_device.physical_device(), &m_device_features);
 
-    if (!m_device_features.pipelineStatisticsQuery) {
+    if (!static_cast<bool>(m_device_features.pipelineStatisticsQuery)) {
         throw InexorException("Error: vkGetPhysicalDeviceFeatures shows pipelineStatisticsQuery is not supported");
     }
 
@@ -129,7 +129,7 @@ QueryPool::QueryPool(const Device &device, const std::string &name,
         m_pipeline_stat_names.emplace_back(get_pipeline_stats_flag_bit_name(valid_bit));
     }
 
-    VkQueryPoolCreateInfo query_pool_ci = make_info<VkQueryPoolCreateInfo>();
+    auto query_pool_ci = make_info<VkQueryPoolCreateInfo>();
 
     query_pool_ci.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
     query_pool_ci.pipelineStatistics = pipeline_stats_flags;
