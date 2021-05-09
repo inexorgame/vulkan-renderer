@@ -54,17 +54,19 @@ void VulkanRenderer::generate_octree_indices() {
     const auto old_vertex_count = m_octree_vertices.size();
     auto old_vertices = std::move(m_octree_vertices);
     m_octree_vertices.clear();
-    std::unordered_map<OctreeGpuVertex, std::uint16_t> vertex_map;
+    std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
     for (auto &vertex : old_vertices) {
         // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
         if (vertex_map.count(vertex) == 0) {
-            assert(vertex_map.size() < std::numeric_limits<std::uint16_t>::max() && "Octree too big!");
-            vertex_map.emplace(vertex, static_cast<std::uint16_t>(vertex_map.size()));
+            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
+            vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
             m_octree_vertices.push_back(vertex);
         }
         m_octree_indices.push_back(vertex_map.at(vertex));
     }
-    spdlog::trace("Reduced octree by {} vertices", old_vertices.size() - old_vertex_count);
+    spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
+                  old_vertices.size(), m_octree_vertices.size());
+    spdlog::trace("Total indices {} ", m_octree_indices.size());
 }
 
 void VulkanRenderer::recreate_swapchain() {

@@ -77,7 +77,7 @@ protected:
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;
-    std::vector<std::uint16_t> m_octree_indices;
+    std::vector<std::uint32_t> m_octree_indices;
 
     void setup_render_graph();
     void generate_octree_indices();
