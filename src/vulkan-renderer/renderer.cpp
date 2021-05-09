@@ -37,8 +37,8 @@ void VulkanRenderer::setup_render_graph() {
     main_stage->reads_from(m_vertex_buffer);
     main_stage->bind_buffer(m_vertex_buffer, 0);
     main_stage->set_clears_screen(true);
-    main_stage->set_on_record([&](const PhysicalStage *phys, const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.bind_descriptor(m_descriptors[0], phys->pipeline_layout());
+    main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+        cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
         cmd_buf.draw_indexed(m_octree_indices.size());
     });
 

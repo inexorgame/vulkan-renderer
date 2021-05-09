@@ -25,6 +25,8 @@
 
 namespace inexor::vulkan_renderer {
 
+class PhysicalResource;
+class PhysicalStage;
 class RenderGraph;
 
 /// @brief Base class of all render graph objects (resources and stages)
@@ -55,6 +57,7 @@ class RenderResource : public RenderGraphObject {
 
 private:
     const std::string m_name;
+    std::shared_ptr<PhysicalResource> m_physical;
 
 protected:
     explicit RenderResource(std::string name) : m_name(std::move(name)) {}
@@ -148,11 +151,12 @@ class RenderStage : public RenderGraphObject {
 
 private:
     const std::string m_name;
+    std::unique_ptr<PhysicalStage> m_physical;
     std::vector<const RenderResource *> m_writes;
     std::vector<const RenderResource *> m_reads;
 
     std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
-    std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> m_on_record;
+    std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> m_on_record;
 
 protected:
     explicit RenderStage(std::string name) : m_name(std::move(name)) {}
@@ -181,7 +185,7 @@ public:
     /// @brief Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
     ///          common use for this is for draw commands.
-    void set_on_record(std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> on_record) {
+    void set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
     }
 };
@@ -342,55 +346,26 @@ private:
     const wrapper::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
-    // Vectors of render resources and stages. These own the memory. Note that unique_ptr must be used as Render* is
-    // just an inheritable base class.
-    std::vector<std::unique_ptr<RenderResource>> m_resources;
+    // Vectors of render resources and stages.
+    std::vector<std::unique_ptr<BufferResource>> m_buffer_resources;
+    std::vector<std::unique_ptr<TextureResource>> m_texture_resources;
     std::vector<std::unique_ptr<RenderStage>> m_stages;
 
     // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
-    std::vector<PhysicalStage *> m_phys_stage_stack;
-
-    // Resource to physical resource map.
-    std::unordered_map<const RenderResource *, std::unique_ptr<PhysicalResource>> m_resource_map;
-
-    // Stage to physical stage map.
-    std::unordered_map<const RenderStage *, std::unique_ptr<PhysicalStage>> m_stage_map;
-
-    // Helper function used to create a physical resource during render graph compilation.
-    // TODO: Use concepts when we switch to C++ 20.
-    template <typename T, typename... Args, std::enable_if_t<std::is_base_of_v<PhysicalResource, T>, int> = 0>
-    T *create(const RenderResource *resource, Args &&... args) {
-        auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
-        auto *ret = ptr.get();
-        m_resource_map.emplace(resource, std::move(ptr));
-        return ret;
-    }
-
-    // Helper function used to create a physical stage during render graph compilation.
-    // TODO: Use concepts when we switch to C++ 20.
-    template <typename T, typename... Args, std::enable_if_t<std::is_base_of_v<PhysicalStage, T>, int> = 0>
-    T *create(const RenderStage *stage, Args &&... args) {
-        auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
-        auto *ret = ptr.get();
-        m_stage_map.emplace(stage, std::move(ptr));
-        m_phys_stage_stack.push_back(ret);
-        return ret;
-    }
 
     // Functions for building resource related vulkan objects.
-    void build_buffer(const BufferResource *, PhysicalBuffer *) const;
-    void build_image(const TextureResource *, PhysicalImage *, VmaAllocationCreateInfo *) const;
-    void build_image_view(const TextureResource *, PhysicalImage *) const;
+    void build_buffer(const BufferResource &, PhysicalBuffer &) const;
+    void build_image(const TextureResource &, PhysicalImage &, VmaAllocationCreateInfo *) const;
+    void build_image_view(const TextureResource &, PhysicalImage &) const;
 
     // Functions for building stage related vulkan objects.
-    void alloc_command_buffers(const RenderStage *, PhysicalStage *) const;
-    void build_pipeline_layout(const RenderStage *, PhysicalStage *) const;
-    void record_command_buffer(const RenderStage *, PhysicalStage *, int image_index) const;
+    void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
+    void record_command_buffer(const RenderStage *, PhysicalStage &, int image_index) const;
 
     // Functions for building graphics stage related vulkan objects.
-    void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage *) const;
-    void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage *) const;
+    void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage &) const;
+    void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage &) const;
 
 public:
     RenderGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
@@ -399,10 +374,12 @@ public:
     /// @brief Adds either a render resource or render stage to the render graph
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
-    T *add(Args &&... args) {
+    T *add(Args &&...args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
-        if constexpr (std::is_base_of_v<RenderResource, T>) {
-            return static_cast<T *>(m_resources.emplace_back(std::move(ptr)).get());
+        if constexpr (std::is_same_v<T, BufferResource>) {
+            return static_cast<T *>(m_buffer_resources.emplace_back(std::move(ptr)).get());
+        } else if constexpr (std::is_same_v<T, TextureResource>) {
+            return static_cast<T *>(m_texture_resources.emplace_back(std::move(ptr)).get());
         } else if constexpr (std::is_base_of_v<RenderStage, T>) {
             return static_cast<T *>(m_stages.emplace_back(std::move(ptr)).get());
         } else {

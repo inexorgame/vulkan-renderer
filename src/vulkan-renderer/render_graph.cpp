@@ -62,7 +62,7 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(device(), m_render_pass, nullptr);
 }
 
-void RenderGraph::build_buffer(const BufferResource *buffer_resource, PhysicalBuffer *phys) const {
+void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
     // TODO: Don't always create mapped.
     VmaAllocationCreateInfo alloc_ci{};
     alloc_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -70,8 +70,8 @@ void RenderGraph::build_buffer(const BufferResource *buffer_resource, PhysicalBu
 
     auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>();
     buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    buffer_ci.size = buffer_resource->m_data_size;
-    switch (buffer_resource->m_usage) {
+    buffer_ci.size = buffer_resource.m_data_size;
+    switch (buffer_resource.m_usage) {
     case BufferUsage::INDEX_BUFFER:
         buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
         break;
@@ -82,15 +82,15 @@ void RenderGraph::build_buffer(const BufferResource *buffer_resource, PhysicalBu
         assert(false);
     }
 
-    VmaAllocationInfo &alloc_info = phys->m_alloc_info;
-    if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &phys->m_buffer,
-                                            &phys->m_allocation, &alloc_info);
+    VmaAllocationInfo &alloc_info = physical.m_alloc_info;
+    if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
+                                            &physical.m_allocation, &alloc_info);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create buffer!", result);
     }
 }
 
-void RenderGraph::build_image(const TextureResource *resource, PhysicalImage *phys,
+void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical,
                               VmaAllocationCreateInfo *alloc_ci) const {
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
@@ -102,69 +102,62 @@ void RenderGraph::build_image(const TextureResource *resource, PhysicalImage *ph
 
     image_ci.arrayLayers = 1;
     image_ci.mipLevels = 1;
-    image_ci.format = resource->m_format;
+    image_ci.format = texture_resource.m_format;
     image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
     image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.usage = resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+    image_ci.usage = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
                          ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
                          : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     VmaAllocationInfo alloc_info;
-    if (const auto result =
-            vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &phys->m_image, &phys->m_allocation, &alloc_info);
+    if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &physical.m_image,
+                                           &physical.m_allocation, &alloc_info);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create image!", result);
     }
 }
 
-void RenderGraph::build_image_view(const TextureResource *resource, PhysicalImage *phys) const {
+void RenderGraph::build_image_view(const TextureResource &texture_resource, PhysicalImage &physical) const {
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
-    image_view_ci.format = resource->m_format;
-    image_view_ci.image = phys->m_image;
-    image_view_ci.subresourceRange.aspectMask = resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+    image_view_ci.format = texture_resource.m_format;
+    image_view_ci.image = physical.m_image;
+    image_view_ci.subresourceRange.aspectMask = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
                                                     ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
                                                     : VK_IMAGE_ASPECT_COLOR_BIT;
     image_view_ci.subresourceRange.layerCount = 1;
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &phys->m_image_view);
+    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create image view!", result);
     }
 }
 
-void RenderGraph::alloc_command_buffers(const RenderStage *stage, PhysicalStage *phys) const {
-    m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
-    for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-        phys->m_command_buffers.emplace_back(m_device, m_command_pool, "Command buffer for stage " + stage->m_name);
-    }
-}
-
-void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage *phys) const {
+void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
     if (const auto result =
-            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &phys->m_pipeline_layout);
+            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline layout!", result);
     }
 
-    m_device.set_debug_marker_name(phys->m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
+    m_device.set_debug_marker_name(physical.m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
                                    stage->m_name + " pipeline layout");
 }
 
-void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage *phys, int image_index) const {
-    auto &cmd_buf = phys->m_command_buffers[image_index];
+void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical, int image_index) const {
+    auto &cmd_buf = physical.m_command_buffers[image_index];
     cmd_buf.begin();
 
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
     if (graphics_stage != nullptr) {
-        const auto *phys_graphics_stage = phys->as<PhysicalGraphicsStage>();
+        const auto *phys_graphics_stage = physical.as<PhysicalGraphicsStage>();
         assert(phys_graphics_stage != nullptr);
 
         auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
@@ -188,13 +181,11 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
             continue;
         }
 
-        const auto *phys_buffer = m_resource_map.at(resource)->as<PhysicalBuffer>();
-        assert(phys_buffer != nullptr);
-
+        auto *physical_buffer = buffer_resource->m_physical->as<PhysicalBuffer>();
         if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
-            cmd_buf.bind_index_buffer(phys_buffer->m_buffer);
+            cmd_buf.bind_index_buffer(physical_buffer->m_buffer);
         } else if (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) {
-            vertex_buffers.push_back(phys_buffer->m_buffer);
+            vertex_buffers.push_back(physical_buffer->m_buffer);
         }
     }
 
@@ -202,8 +193,8 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
         cmd_buf.bind_vertex_buffers(vertex_buffers);
     }
 
-    cmd_buf.bind_graphics_pipeline(phys->m_pipeline);
-    stage->m_on_record(phys, cmd_buf);
+    cmd_buf.bind_graphics_pipeline(physical.m_pipeline);
+    stage->m_on_record(physical, cmd_buf);
 
     if (graphics_stage != nullptr) {
         cmd_buf.end_render_pass();
@@ -211,7 +202,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
     cmd_buf.end();
 }
 
-void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
+void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
     std::vector<VkAttachmentDescription> attachments;
     std::vector<VkAttachmentReference> colour_refs;
     std::vector<VkAttachmentReference> depth_refs;
@@ -274,13 +265,13 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
     render_pass_ci.pAttachments = attachments.data();
     render_pass_ci.pDependencies = &subpass_dependency;
     render_pass_ci.pSubpasses = &subpass_description;
-    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &phys->m_render_pass);
+    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create render pass!", result);
     }
 }
 
-void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage *phys) const {
+void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
     // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;
@@ -372,14 +363,14 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     pipeline_ci.pMultisampleState = &multisample_state;
     pipeline_ci.pColorBlendState = &blend_state;
     pipeline_ci.pViewportState = &viewport_state;
-    pipeline_ci.layout = phys->m_pipeline_layout;
-    pipeline_ci.renderPass = phys->m_render_pass;
+    pipeline_ci.layout = physical.m_pipeline_layout;
+    pipeline_ci.renderPass = physical.m_render_pass;
     pipeline_ci.stageCount = static_cast<std::uint32_t>(stage->m_shaders.size());
     pipeline_ci.pStages = stage->m_shaders.data();
 
     // TODO: Pipeline caching (basically load the render graph from a file)
     if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &phys->m_pipeline);
+            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline!", result);
     }
@@ -422,43 +413,45 @@ void RenderGraph::compile(const RenderResource *target) {
     // Create physical resources. For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage
     // respectively. Every physical resource also has a VmaAllocation.
     // TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources).
-    for (const auto &resource : m_resources) {
-        // Build allocation (using VMA for now).
-        m_log->trace("Allocating physical resource for resource '{}'", resource->m_name);
-        VmaAllocationCreateInfo alloc_ci{};
+    for (auto &buffer_resource : m_buffer_resources) {
+        m_log->trace("Allocating physical resource for buffer '{}'", buffer_resource->m_name);
+        buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device.allocator(), m_device.device());
+    }
+    for (auto &texture_resource : m_texture_resources) {
+        m_log->trace("Allocating physical resource for texture '{}'", texture_resource->m_name);
+        // Back buffer gets special handling.
+        if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
+            // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
+            texture_resource->m_physical =
+                std::make_shared<PhysicalBackBuffer>(m_device.allocator(), m_device.device(), m_swapchain);
+            continue;
+        }
 
         // TODO: Use a constexpr bool.
+        VmaAllocationCreateInfo alloc_ci{};
 #if VMA_RECORDING_ENABLED
         alloc_ci.flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
         alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
 #endif
 
-        if (const auto *buffer_resource = resource->as<BufferResource>()) {
-            create<PhysicalBuffer>(buffer_resource, m_device.allocator(), m_device.device());
-        }
-
-        if (const auto *texture_resource = resource->as<TextureResource>()) {
-            // Back buffer gets special handling.
-            if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
-                // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
-                create<PhysicalBackBuffer>(texture_resource, m_device.allocator(), m_device.device(), m_swapchain);
-            } else {
-                auto *phys = create<PhysicalImage>(texture_resource, m_device.allocator(), m_device.device());
-                alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-                build_image(texture_resource, phys, &alloc_ci);
-                build_image_view(texture_resource, phys);
-            }
-        }
+        auto physical = std::make_shared<PhysicalImage>(m_device.allocator(), m_device.device());
+        texture_resource->m_physical = physical;
+        alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        build_image(*texture_resource, *physical, &alloc_ci);
+        build_image_view(*texture_resource, *physical);
     }
 
     // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
     // command buffers. Each graphics stage also maps to a vulkan render pass.
-    for (const auto *stage : m_stage_stack) {
-        if (const auto *graphics_stage = stage->as<GraphicsStage>()) {
-            auto *phys = create<PhysicalGraphicsStage>(graphics_stage, m_device);
-            build_render_pass(graphics_stage, phys);
-            build_pipeline_layout(graphics_stage, phys);
-            build_graphics_pipeline(graphics_stage, phys);
+    for (auto *stage : m_stage_stack) {
+        if (auto *graphics_stage = stage->as<GraphicsStage>()) {
+            auto physical_ptr = std::make_unique<PhysicalGraphicsStage>(m_device);
+            auto &physical = *physical_ptr;
+            graphics_stage->m_physical = std::move(physical_ptr);
+
+            build_render_pass(graphics_stage, physical);
+            build_pipeline_layout(graphics_stage, physical);
+            build_graphics_pipeline(graphics_stage, physical);
 
             // If we write to at least one texture, we need to make framebuffers.
             if (!stage->m_writes.empty()) {
@@ -466,11 +459,13 @@ void RenderGraph::compile(const RenderResource *target) {
                 std::vector<const PhysicalBackBuffer *> back_buffers;
                 std::vector<const PhysicalImage *> images;
                 for (const auto *resource : stage->m_writes) {
-                    const auto *phys_resource = m_resource_map[resource].get();
-                    if (const auto *back_buffer = phys_resource->as<PhysicalBackBuffer>()) {
-                        back_buffers.push_back(back_buffer);
-                    } else if (const auto *image = phys_resource->as<PhysicalImage>()) {
-                        images.push_back(image);
+                    if (const auto *texture = resource->as<TextureResource>()) {
+                        const auto &physical_texture = *texture->m_physical;
+                        if (const auto *back_buffer = physical_texture.as<PhysicalBackBuffer>()) {
+                            back_buffers.push_back(back_buffer);
+                        } else if (const auto *image = physical_texture.as<PhysicalImage>()) {
+                            images.push_back(image);
+                        }
                     }
                 }
 
@@ -485,8 +480,8 @@ void RenderGraph::compile(const RenderResource *target) {
                         image_views.push_back(image->m_image_view);
                     }
 
-                    phys->m_framebuffers.emplace_back(m_device, phys->m_render_pass, image_views, m_swapchain,
-                                                      "Framebuffer");
+                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
+                                                         "Framebuffer");
                 }
             }
         }
@@ -494,26 +489,29 @@ void RenderGraph::compile(const RenderResource *target) {
 
     // Allocate command buffers.
     for (const auto *stage : m_stage_stack) {
-        auto *phys = m_stage_map[stage].get();
-        alloc_command_buffers(stage, phys);
+        auto &physical = *stage->m_physical;
+        m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
+        for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
+            physical.m_command_buffers.emplace_back(m_device, m_command_pool,
+                                                    "Command buffer for stage " + stage->m_name);
+        }
     }
 }
 
 void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore,
                          VkSemaphore wait_semaphore, VkQueue graphics_queue) {
     // Update dynamic buffers.
-    for (auto &resource : m_resources) {
-        auto *buffer_resource = resource->as<BufferResource>();
-        if (buffer_resource != nullptr && buffer_resource->m_data_upload_needed) {
-            auto *phys = m_resource_map[buffer_resource]->as<PhysicalBuffer>();
+    for (auto &buffer_resource : m_buffer_resources) {
+        if (buffer_resource->m_data_upload_needed) {
+            auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
 
             // Destroy the old buffer and create a new one with the required size.
-            vmaDestroyBuffer(phys->m_allocator, phys->m_buffer, phys->m_allocation);
-            build_buffer(buffer_resource, phys);
+            vmaDestroyBuffer(physical.m_allocator, physical.m_buffer, physical.m_allocation);
+            build_buffer(*buffer_resource, physical);
 
             // Upload new data.
-            assert(phys->m_alloc_info.pMappedData != nullptr);
-            std::memcpy(phys->m_alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
+            assert(physical.m_alloc_info.pMappedData != nullptr);
+            std::memcpy(physical.m_alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
             buffer_resource->m_data_upload_needed = false;
         }
     }
@@ -522,8 +520,7 @@ void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore sign
     // want to generate these in parallel.
     vkResetCommandPool(m_device.device(), m_command_pool, 0);
     for (const auto *stage : m_stage_stack) {
-        auto &phys = *m_stage_map.at(stage);
-        record_command_buffer(stage, &phys, image_index);
+        record_command_buffer(stage, *stage->m_physical, image_index);
     }
 
     auto submit_info = wrapper::make_info<VkSubmitInfo>();
@@ -537,8 +534,9 @@ void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore sign
     submit_info.pWaitDstStageMask = wait_stage_mask.data();
 
     // TODO: Batch submit infos.
-    for (const auto *stage : m_phys_stage_stack) {
-        auto *cmd_buf = stage->m_command_buffers[image_index].get();
+    for (const auto *stage : m_stage_stack) {
+        const auto &physical = *stage->m_physical;
+        auto *cmd_buf = physical.m_command_buffers[image_index].get();
         submit_info.pCommandBuffers = &cmd_buf;
         vkQueueSubmit(graphics_queue, 1, &submit_info, signal_fence);
     }
