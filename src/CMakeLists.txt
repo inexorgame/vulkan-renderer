@@ -10,6 +10,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/time_step.cpp
 
+    vulkan-renderer/gltf2/gltf2_file.cpp
+
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
