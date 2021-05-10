@@ -37,9 +37,11 @@ void Model::load_textures() {
             // The pointer to the rgb data we read from.
             unsigned char *mem_source_rgb = &texture.image[0];
 
-            for (size_t i = 0; i < texture.width * texture.height; ++i) {
+            for (std::size_t i = 0; i < texture.width * texture.height; ++i) {
                 std::memcpy(mem_target_rgba, mem_source_rgb, sizeof(unsigned char) * 3);
+                // TODO: Remove pointer arithmetic or add NOLINT
                 mem_target_rgba += 4;
+                // TODO: Remove pointer arithmetic or add NOLINT
                 mem_source_rgb += 3;
             }
 
@@ -49,7 +51,7 @@ void Model::load_textures() {
             m_textures.emplace_back(m_device, &texture.image[0], texture_size, texture.width, texture.height,
                                     texture.component, 1, "glTF2 model texture");
         } else {
-            spdlog::error("Can't load texture from model file {}", m_file_name);
+            spdlog::error("Can't load texture with {} channels!", texture.component);
 
             // Generate an error texture (checkboard pattern of pink and black squares).
             m_textures.emplace_back(m_device, wrapper::CpuTexture());
@@ -157,10 +159,13 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             }
 
             // Append data to model's vertex buffer
-            for (size_t vertex_number = 0; vertex_number < vertex_count; vertex_number++) {
+            for (std::size_t vertex_number = 0; vertex_number < vertex_count; vertex_number++) {
                 ModelVertex new_vertex{};
+                // TODO: Remove pointer arithmetic or add NOLINT
                 new_vertex.pos = glm::vec4(glm::make_vec3(&position_buffer[vertex_number * 3]), 1.0f);
+                // TODO: Remove pointer arithmetic or add NOLINT
                 new_vertex.normal = glm::normalize(glm::vec3(
+                    // TODO: Remove pointer arithmetic or add NOLINT
                     normals_buffer != nullptr ? glm::make_vec3(&normals_buffer[vertex_number * 3]) : glm::vec3(0.0f)));
                 new_vertex.uv = texture_coordinate_buffer != nullptr
                                     ? glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2])
@@ -215,8 +220,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
                 break;
             }
             default:
-                spdlog::error("Index component type {} not supported!", accessor.componentType);
-                return;
+                // TODO: Is this worth an exception or not?
+                spdlog::error("Index component type {} is not supported!", accessor.componentType);
             }
 
             ModelPrimitive new_primitive{};
@@ -244,11 +249,8 @@ void Model::load_nodes() {
 
     for (const auto &scene : m_model.scenes) {
         for (const auto &node : scene.nodes) {
-            auto vertices = m_scenes[scene_index].get_vertices();
-            auto indices = m_scenes[scene_index].get_indices();
-            load_node(m_model.nodes[node], nullptr, vertices, indices);
+            load_node(m_model.nodes[node], nullptr, m_scenes[scene_index].vertices, m_scenes[scene_index].indices);
         }
-
         scene_index++;
     }
 }
