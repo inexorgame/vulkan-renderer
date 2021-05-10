@@ -30,11 +30,11 @@ public:
     ModelFile &operator=(const ModelFile &) = delete;
     ModelFile &operator=(ModelFile &&) = delete;
 
-    [[nodiscard]] const tinygltf::Model model() const noexcept {
+    [[nodiscard]] const tinygltf::Model &model() const noexcept {
         return m_model;
     }
 
-    [[nodiscard]] const std::string file_name() const noexcept {
+    [[nodiscard]] const std::string &file_name() const noexcept {
         return m_file_name;
     }
 };

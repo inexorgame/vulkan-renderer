@@ -36,11 +36,11 @@ struct ModelScene {
     std::vector<ModelVertex> vertices;
     std::vector<uint32_t> indices;
 
-    [[nodiscard]] const auto get_vertices() const noexcept {
+    [[nodiscard]] auto get_vertices() const noexcept {
         return vertices;
     }
 
-    [[nodiscard]] const auto get_indices() const noexcept {
+    [[nodiscard]] auto get_indices() const noexcept {
         return indices;
     }
 };
