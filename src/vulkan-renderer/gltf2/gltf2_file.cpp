@@ -11,7 +11,7 @@ gltf2_file::gltf2_file(const std::string &file_name) {
     assert(!file_name.empty());
 
     // Get the file extension from the file name.
-    const std::string file_extension = file_name.substr(file_name.find_last_of(".") + 1);
+    const std::string file_extension = file_name.substr(file_name.find_last_of('.') + 1);
 
     if (file_extension.empty()) {
         throw InexorException("Error: Could not determine file extension from " + file_name);
@@ -23,11 +23,10 @@ gltf2_file::gltf2_file(const std::string &file_name) {
 
     if (file_extension == "gltf") {
         spdlog::info("Loading ASCII gltf file {}", file_name);
-        loading_succeeded = m_loader.LoadASCIIFromFile(&m_model, &loading_errors, &loading_warnings, file_name.c_str());
+        loading_succeeded = m_loader.LoadASCIIFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
     } else if (file_extension == "glb") {
         spdlog::info("Loading binary gltf file {}", file_name);
-        loading_succeeded =
-            m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, file_name.c_str());
+        loading_succeeded = m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
     } else {
         throw InexorException("Error Unknown file extension " + file_extension);
     }
