@@ -89,7 +89,7 @@ public:
     /// @brief Extract the model data from a model file.
     /// @paran device The device wrapper.
     /// @param file The glTF2 model file.
-    Model(const wrapper::Device &device, const ModelFile &file);
+    Model(const wrapper::Device &device, tinygltf::Model &model);
 
     Model(const Model &) = delete;
     Model(Model &&) = delete;

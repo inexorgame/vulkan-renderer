@@ -7,8 +7,7 @@
 
 namespace inexor::vulkan_renderer::gltf2 {
 
-Model::Model(const wrapper::Device &device, const ModelFile &file)
-    : m_device(device), m_model(file.model()), m_file_name(file.file_name()) {
+Model::Model(const wrapper::Device &device, tinygltf::Model &model) : m_device(device), m_model(model) {
     assert(m_device.device());
     load_textures();
     load_materials();
