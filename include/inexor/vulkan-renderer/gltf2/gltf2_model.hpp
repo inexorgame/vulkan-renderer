@@ -35,19 +35,11 @@ struct ModelPrimitive {
 struct ModelScene {
     std::vector<ModelVertex> vertices;
     std::vector<uint32_t> indices;
-
-    [[nodiscard]] auto get_vertices() const noexcept {
-        return vertices;
-    }
-
-    [[nodiscard]] auto get_indices() const noexcept {
-        return indices;
-    }
 };
 
 /// @brief A struct for glTF2 model nodes.
 struct ModelNode {
-    ModelNode *parent = nullptr;
+    ModelNode *parent{nullptr};
     std::vector<ModelNode> children;
     std::vector<ModelPrimitive> mesh;
     glm::mat4 matrix{};
@@ -60,7 +52,6 @@ class Model {
 private:
     const tinygltf::Model &m_model;
     const wrapper::Device &m_device;
-    const std::string m_file_name;
 
     std::vector<wrapper::GpuTexture> m_textures;
     std::vector<std::uint32_t> m_texture_indices;
@@ -84,6 +75,7 @@ private:
     // TODO: load animation skins
     // TODO: load pbr (physically based rendering) settings
     // TODO: load multiple texture coordinate sets
+    // TODO: try to .reserve() memory for vectors and use emplace_back()
 
 public:
     /// @brief Extract the model data from a model file.
