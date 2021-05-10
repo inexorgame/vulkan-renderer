@@ -38,6 +38,8 @@ struct ModelScene {
 };
 
 /// @brief A struct for glTF2 model nodes.
+/// @warning Since glTF2 models can be very huge, we could run into out of stack problems when calling the destructors
+/// of the tree's nodes.
 struct ModelNode {
     ModelNode *parent{nullptr};
     std::vector<ModelNode> children;
@@ -76,20 +78,18 @@ private:
     // TODO: load pbr (physically based rendering) settings
     // TODO: load multiple texture coordinate sets
     // TODO: try to .reserve() memory for vectors and use emplace_back()
+    // TODO: should we move node loading into a separate class?
 
 public:
     /// @brief Extract the model data from a model file.
     /// @paran device The device wrapper.
     /// @param file The glTF2 model file.
     Model(const wrapper::Device &device, tinygltf::Model &model);
-
     Model(const Model &) = delete;
     Model(Model &&) = delete;
 
     Model &operator=(const Model &) = delete;
     Model &operator=(Model &&) = delete;
-
-    ~Model();
 };
 
 } // namespace inexor::vulkan_renderer::gltf2

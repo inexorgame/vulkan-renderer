@@ -52,6 +52,7 @@ void Model::load_textures() {
                                     texture.component, 1, "glTF2 model texture");
         } else {
             spdlog::error("Can't load texture with {} channels!", texture.component);
+            spdlog::warn("Generating error texture as a replacement.");
 
             // Generate an error texture (checkboard pattern of pink and black squares).
             m_textures.emplace_back(m_device, wrapper::CpuTexture());
@@ -119,10 +120,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
     // If the node contains mesh data, we load vertices and indices from the buffers.
     // In glTF this is done via accessors and buffer views.
     if (start_node.mesh > -1) {
-        const tinygltf::Mesh mesh = m_model.meshes[start_node.mesh];
-
         // Iterate through all primitives of this node's mesh.
-        for (const auto &primitive : mesh.primitives) {
+        for (const auto &primitive : m_model.meshes[start_node.mesh].primitives) {
             const auto attr = primitive.attributes;
 
             // Load Vertices.
@@ -134,8 +133,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 
             // Get buffer data for vertex normals.
             if (attr.find("POSITION") != attr.end()) {
-                const tinygltf::Accessor &accessor = m_model.accessors[attr.find("POSITION")->second];
-                const tinygltf::BufferView &view = m_model.bufferViews[accessor.bufferView];
+                const auto &accessor = m_model.accessors[attr.find("POSITION")->second];
+                const auto &view = m_model.bufferViews[accessor.bufferView];
                 position_buffer = reinterpret_cast<const float *>( // NOLINT
                     &(m_model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
                 vertex_count = accessor.count;
@@ -143,17 +142,17 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 
             // Get buffer data for vertex normals.
             if (attr.find("NORMAL") != attr.end()) {
-                const tinygltf::Accessor &accessor = m_model.accessors[attr.find("NORMAL")->second];
-                const tinygltf::BufferView &view = m_model.bufferViews[accessor.bufferView];
+                const auto &accessor = m_model.accessors[attr.find("NORMAL")->second];
+                const auto &view = m_model.bufferViews[accessor.bufferView];
                 normals_buffer = reinterpret_cast<const float *>( // NOLINT
                     &(m_model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
             }
 
             // Get buffer data for vertex texture coordinates.
-            // glTF supports multiple sets, we only load the first one.
+            // glTF supports multiple sets, we currently only load the first one.
             if (attr.find("TEXCOORD_0") != attr.end()) {
-                const tinygltf::Accessor &accessor = m_model.accessors[attr.find("TEXCOORD_0")->second];
-                const tinygltf::BufferView &view = m_model.bufferViews[accessor.bufferView];
+                const auto &accessor = m_model.accessors[attr.find("TEXCOORD_0")->second];
+                const auto &view = m_model.bufferViews[accessor.bufferView];
                 texture_coordinate_buffer = reinterpret_cast<const float *>( // NOLINT
                     &(m_model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
             }
@@ -161,15 +160,24 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             // Append data to model's vertex buffer
             for (std::size_t vertex_number = 0; vertex_number < vertex_count; vertex_number++) {
                 ModelVertex new_vertex{};
+
                 // TODO: Remove pointer arithmetic or add NOLINT
                 new_vertex.pos = glm::vec4(glm::make_vec3(&position_buffer[vertex_number * 3]), 1.0f);
-                // TODO: Remove pointer arithmetic or add NOLINT
-                new_vertex.normal = glm::normalize(glm::vec3(
+
+                if (normals_buffer != nullptr) {
                     // TODO: Remove pointer arithmetic or add NOLINT
-                    normals_buffer != nullptr ? glm::make_vec3(&normals_buffer[vertex_number * 3]) : glm::vec3(0.0f)));
-                new_vertex.uv = texture_coordinate_buffer != nullptr
-                                    ? glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2])
-                                    : glm::vec3(0.0f);
+                    new_vertex.normal = glm::normalize(glm::make_vec3(&normals_buffer[vertex_number * 3]));
+                } else {
+                    new_vertex.normal = glm::normalize(glm::vec3(0.0f));
+                }
+
+                if (texture_coordinate_buffer != nullptr) {
+                    // TODO: Remove pointer arithmetic or add NOLINT
+                    new_vertex.uv = glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2]);
+                } else {
+                    new_vertex.uv = glm::vec3(0.0f);
+                }
+
                 new_vertex.color = glm::vec3(1.0f);
 
                 vertices.push_back(new_vertex);
@@ -180,9 +188,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             const auto &buffer_view = m_model.bufferViews[accessor.bufferView];
             const auto &buffer = m_model.buffers[buffer_view.buffer];
 
-            auto first_index = static_cast<std::uint32_t>(indices.size());
             auto vertex_start = static_cast<std::uint32_t>(vertices.size());
-            auto index_count = static_cast<std::uint32_t>(accessor.count);
 
             // glTF2 supports different component types of indices.
             switch (accessor.componentType) {
@@ -225,8 +231,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             }
 
             ModelPrimitive new_primitive{};
-            new_primitive.first_index = first_index;
-            new_primitive.index_count = index_count;
+            new_primitive.first_index = static_cast<std::uint32_t>(indices.size());
+            new_primitive.index_count = static_cast<std::uint32_t>(accessor.count);
             new_primitive.material_index = primitive.material;
             new_node.mesh.push_back(new_primitive);
         }
@@ -245,10 +251,9 @@ void Model::load_nodes() {
     // Preallocate memory for the model model.
     m_scenes.reserve(m_model.scenes.size());
 
-    std::size_t scene_index = 0;
-
-    for (const auto &scene : m_model.scenes) {
-        for (const auto &node : scene.nodes) {
+    for (std::size_t scene_index = 0; scene_index < m_model.scenes.size(); scene_index++) {
+        for (const auto &node : m_model.scenes[scene_index].nodes) {
+            // Load child nodes recursively.
             load_node(m_model.nodes[node], nullptr, m_scenes[scene_index].vertices, m_scenes[scene_index].indices);
         }
         scene_index++;
