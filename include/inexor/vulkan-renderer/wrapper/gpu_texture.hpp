@@ -32,6 +32,8 @@ class GpuTexture {
 
     std::string m_name;
     const wrapper::Device &m_device;
+
+    // TODO: Expose this as parameter and support other texture formats as well?
     const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
     /// @brief Create the texture.
@@ -56,7 +58,6 @@ public:
     GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a block of memory.
-    /// @param device The const reference to a device RAII wrapper instance.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param texture_data A pointer to the texture data.
     /// @param texture_width The width of the texture.

@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/gltf2/gltf2_file.hpp"
 
+#define TINYGLTF_IMPLEMENTATION
+
 #include "inexor/vulkan-renderer/exception.hpp"
 #include <spdlog/spdlog.h>
 
@@ -7,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::gltf2 {
 
-gltf2_file::gltf2_file(const std::string &file_name) {
+ModelFile::ModelFile(const std::string &file_name) {
     assert(!file_name.empty());
 
     // Get the file extension from the file name.
