@@ -108,7 +108,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
     }
 
     // Load child nodes recursively.
-    if (start_node.children.size() > 0) {
+    if (!start_node.children.empty()) {
         for (const auto &child_node : start_node.children) {
             load_node(m_model.nodes[child_node], parent, vertices, indices);
         }
@@ -120,7 +120,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
         const tinygltf::Mesh mesh = m_model.meshes[start_node.mesh];
 
         // Iterate through all primitives of this node's mesh.
-        for (const auto primitive : mesh.primitives) {
+        for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
 
             // Load Vertices.
@@ -160,9 +160,9 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             for (size_t vertex_number = 0; vertex_number < vertex_count; vertex_number++) {
                 ModelVertex new_vertex{};
                 new_vertex.pos = glm::vec4(glm::make_vec3(&position_buffer[vertex_number * 3]), 1.0f);
-                new_vertex.normal = glm::normalize(
-                    glm::vec3(normals_buffer ? glm::make_vec3(&normals_buffer[vertex_number * 3]) : glm::vec3(0.0f)));
-                new_vertex.uv = texture_coordinate_buffer
+                new_vertex.normal = glm::normalize(glm::vec3(
+                    normals_buffer != nullptr ? glm::make_vec3(&normals_buffer[vertex_number * 3]) : glm::vec3(0.0f)));
+                new_vertex.uv = texture_coordinate_buffer != nullptr
                                     ? glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2])
                                     : glm::vec3(0.0f);
                 new_vertex.color = glm::vec3(1.0f);
@@ -227,7 +227,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
         }
     }
 
-    if (parent) {
+    if (parent != nullptr) {
         parent->children.push_back(new_node);
     } else {
         m_nodes.push_back(new_node);
