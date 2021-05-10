@@ -11,6 +11,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/gltf2/gltf2_file.cpp
+    vulkan-renderer/gltf2/gltf2_model.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 

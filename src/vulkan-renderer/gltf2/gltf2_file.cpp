@@ -7,7 +7,7 @@
 
 namespace inexor::vulkan_renderer::gltf2 {
 
-glTF2_File::glTF2_File(const std::string &file_name) {
+gltf2_file::gltf2_file(const std::string &file_name) {
     assert(!file_name.empty());
 
     // Get the file extension from the file name.
