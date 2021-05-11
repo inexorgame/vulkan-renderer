@@ -26,26 +26,21 @@ void Model::load_textures() {
 
         // We need to convert RGB-only images to RGBA format, because most devices don't support rgb-formats in Vulkan.
         if (texture.component == 3) {
-            std::vector<unsigned char> conversion_buffer;
+            std::vector<std::array<std::uint32_t, 3>> rgb_source;
+            rgb_source.reserve(texture_size);
 
-            // Preallocate memory for a texture with 4 channels (RGBA).
-            conversion_buffer.reserve(texture_size);
+            // Copy the memory into the vector so we can safely perform std::transform on it.
+            std::memcpy(rgb_source.data(), &texture.image[0], texture_size);
 
-            // The pointer to which we will write data to.
-            unsigned char *mem_target_rgba = conversion_buffer.data();
+            std::vector<std::array<std::uint32_t, 4>> rgba_target;
+            rgba_target.reserve(texture_size);
 
-            // The pointer to the rgb data we read from.
-            unsigned char *mem_source_rgb = &texture.image[0];
+            std::transform(rgb_source.begin(), rgb_source.end(), rgba_target.begin(),
+                           [](const std::array<std::uint32_t, 3> a) {
+                               return std::array<std::uint32_t, 4>{a[0], a[1], a[2], 1};
+                           });
 
-            for (std::size_t i = 0; i < texture.width * texture.height; ++i) {
-                std::memcpy(mem_target_rgba, mem_source_rgb, sizeof(unsigned char) * 3);
-                // TODO: Remove pointer arithmetic or add NOLINT
-                mem_target_rgba += 4;
-                // TODO: Remove pointer arithmetic or add NOLINT
-                mem_source_rgb += 3;
-            }
-
-            m_textures.emplace_back(m_device, &conversion_buffer[0], texture_size, texture.width, texture.height,
+            m_textures.emplace_back(m_device, rgba_target.data(), texture_size, texture.width, texture.height,
                                     texture.component, 1, "glTF2 model texture");
         } else if (texture.component == 4) {
             m_textures.emplace_back(m_device, &texture.image[0], texture_size, texture.width, texture.height,
