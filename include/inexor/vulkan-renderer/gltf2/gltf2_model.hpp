@@ -87,6 +87,7 @@ public:
     Model(const wrapper::Device &device, tinygltf::Model &model);
     Model(const Model &) = delete;
     Model(Model &&) = delete;
+    ~Model() = default;
 
     Model &operator=(const Model &) = delete;
     Model &operator=(Model &&) = delete;
