@@ -111,7 +111,7 @@ QueryPool::QueryPool(const Device &device, const std::string &name,
     // We must first check if pipeline query statistics are available.
     vkGetPhysicalDeviceFeatures(m_device.physical_device(), &m_device_features);
 
-    if (!static_cast<bool>(m_device_features.pipelineStatisticsQuery)) {
+    if (m_device_features.pipelineStatisticsQuery == VK_FALSE) {
         throw InexorException("Error: vkGetPhysicalDeviceFeatures shows pipelineStatisticsQuery is not supported");
     }
 
