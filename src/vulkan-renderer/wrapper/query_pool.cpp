@@ -18,7 +18,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
     for (const auto flag_bit : pipeline_stats_flag_bits) {
         switch (flag_bit) {
         case VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT:
-            if (!static_cast<bool>(m_device_features.tessellationShader)) {
+            if (m_device_features.tessellationShader == VK_FALSE) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT to "
                              "pipeline statistics flag bit!");
                 spdlog::warn(
@@ -29,7 +29,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
             ret_val.emplace_back(VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT);
             break;
         case VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT:
-            if (!static_cast<bool>(m_device_features.tessellationShader)) {
+            if (m_device_features.tessellationShader == VK_FALSE) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT to "
                              "pipeline statistics flag bit!");
                 spdlog::warn(
@@ -40,7 +40,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
             ret_val.emplace_back(VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT);
             break;
         case VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT:
-            if (!static_cast<bool>(m_device_features.geometryShader)) {
+            if (m_device_features.geometryShader == VK_FALSE) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT to pipeline "
                              "statistics flag bit!");
                 spdlog::warn("Geometry shaders are not available on this gpu (device_features.geometryShader = false)");
@@ -50,7 +50,7 @@ std::vector<VkQueryPipelineStatisticFlagBits> QueryPool::validate_pipeline_stats
             }
             break;
         case VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT:
-            if (!static_cast<bool>(m_device_features.geometryShader)) {
+            if (m_device_features.geometryShader == VK_FALSE) {
                 spdlog::warn("Can't add VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT to pipeline "
                              "statistics flag bit!");
                 spdlog::warn("Geometry shaders are not available on this gpu (device_features.geometryShader = false)");
