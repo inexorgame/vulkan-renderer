@@ -100,7 +100,7 @@ std::string QueryPool::get_pipeline_stats_flag_bit_name(const VkQueryPipelineSta
 }
 
 QueryPool::QueryPool(const Device &device, const std::string &name)
-    : QueryPool(device, name, default_pipeline_stats_flag_bits){};
+    : QueryPool(device, name, default_pipeline_stats_flag_bits){}
 
 QueryPool::QueryPool(const Device &device, const std::string &name,
                      const std::vector<VkQueryPipelineStatisticFlagBits> &pipeline_stats_flag_bits)
