@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/query_pool.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -100,7 +101,7 @@ std::string QueryPool::get_pipeline_stats_flag_bit_name(const VkQueryPipelineSta
 }
 
 QueryPool::QueryPool(const Device &device, const std::string &name)
-    : QueryPool(device, name, default_pipeline_stats_flag_bits){}
+    : QueryPool(device, name, default_pipeline_stats_flag_bits) {}
 
 QueryPool::QueryPool(const Device &device, const std::string &name,
                      const std::vector<VkQueryPipelineStatisticFlagBits> &pipeline_stats_flag_bits)
@@ -141,20 +142,17 @@ QueryPool::QueryPool(const Device &device, const std::string &name,
     }
 }
 
-void QueryPool::reset(const VkCommandBuffer cmd_buffer) const {
-    assert(cmd_buffer);
+void QueryPool::reset(const wrapper::CommandBuffer &cmd_buffer) const {
     assert(!m_pipeline_stats.empty());
-    vkCmdResetQueryPool(cmd_buffer, m_query_pool, 0, static_cast<std::uint32_t>(m_pipeline_stats.size()));
+    vkCmdResetQueryPool(cmd_buffer.get(), m_query_pool, 0, static_cast<std::uint32_t>(m_pipeline_stats.size()));
 }
 
-void QueryPool::begin(const VkCommandBuffer cmd_buffer) const {
-    assert(cmd_buffer);
-    vkCmdBeginQuery(cmd_buffer, m_query_pool, 0, 0);
+void QueryPool::begin(const wrapper::CommandBuffer &cmd_buffer) const {
+    vkCmdBeginQuery(cmd_buffer.get(), m_query_pool, 0, 0);
 }
 
-void QueryPool::end(const VkCommandBuffer cmd_buffer) const {
-    assert(cmd_buffer);
-    vkCmdEndQuery(cmd_buffer, m_query_pool, 0);
+void QueryPool::end(const wrapper::CommandBuffer &cmd_buffer) const {
+    vkCmdEndQuery(cmd_buffer.get(), m_query_pool, 0);
 }
 
 void QueryPool::get_results() {
