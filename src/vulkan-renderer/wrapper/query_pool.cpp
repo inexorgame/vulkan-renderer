@@ -129,7 +129,6 @@ QueryPool::QueryPool(const Device &device, const std::string &name,
 
     VkQueryPipelineStatisticFlags pipeline_stats_flags{};
 
-    // No special check required for this flag.
     for (const auto valid_bit : valid_pipeline_stats_flag_bits) {
         pipeline_stats_flags |= valid_bit;
         m_pipeline_stat_names.emplace_back(get_pipeline_stats_flag_bit_name(valid_bit));
