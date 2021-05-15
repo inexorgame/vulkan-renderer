@@ -77,15 +77,15 @@ public:
     /// Call <a
     /// href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#vkCmdResetQueryPool">
     /// vkCmdResetQueryPool</a>
-    void reset(const wrapper::CommandBuffer & cmd_buffer) const;
+    void reset(const wrapper::CommandBuffer &cmd_buffer) const;
 
     /// Call <a href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#vkCmdBeginQuery">
     /// vkCmdBeginQuery</a>
-    void begin(const wrapper::CommandBuffer & cmd_buffer) const;
+    void begin(const wrapper::CommandBuffer &cmd_buffer) const;
 
     /// Call <a href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#vkCmdEndQuery">
     /// vkCmdEndQuery</a>
-    void end(const wrapper::CommandBuffer & cmd_buffer) const;
+    void end(const wrapper::CommandBuffer &cmd_buffer) const;
 
     /// Call <a
     /// href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#vkGetQueryPoolResults">
