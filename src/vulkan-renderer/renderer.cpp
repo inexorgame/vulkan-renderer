@@ -16,8 +16,8 @@
 namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_render_graph() {
-    auto *back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
-    back_buffer->set_format(m_swapchain->image_format());
+    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
+    m_back_buffer->set_format(m_swapchain->image_format());
 
     auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
@@ -31,12 +31,13 @@ void VulkanRenderer::setup_render_graph() {
     m_vertex_buffer->upload_data(m_octree_vertices);
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
-    main_stage->writes_to(back_buffer);
+    main_stage->writes_to(m_back_buffer);
     main_stage->writes_to(depth_buffer);
     main_stage->reads_from(m_index_buffer);
     main_stage->reads_from(m_vertex_buffer);
     main_stage->bind_buffer(m_vertex_buffer, 0);
     main_stage->set_clears_screen(true);
+    main_stage->set_depth_options(true, true);
     main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
         cmd_buf.draw_indexed(m_octree_indices.size());
@@ -47,7 +48,6 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
-    m_render_graph->compile(back_buffer);
 }
 
 void VulkanRenderer::generate_octree_indices() {
@@ -79,12 +79,8 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
     setup_render_graph();
 
-    m_frame_finished_fence.reset();
     m_image_available_semaphore.reset();
-    m_rendering_finished_semaphore.reset();
-    m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Frame finished fence", true);
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
-    m_rendering_finished_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Rendering finished semaphore");
 
     m_camera = std::make_unique<Camera>(glm::vec3(5.0f, 5.0f, 10.0f), 250.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
@@ -93,7 +89,8 @@ void VulkanRenderer::recreate_swapchain() {
     m_camera->set_rotation_speed(0.5f);
 
     m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain);
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
+    m_render_graph->compile(m_back_buffer);
 }
 
 void VulkanRenderer::render_frame() {
@@ -103,16 +100,9 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
-    // Wait for last frame to finish rendering.
-    m_frame_finished_fence->block();
-    m_frame_finished_fence->reset();
-
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_render_graph->render(static_cast<int>(image_index), m_frame_finished_fence->get(),
-                           m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
-                           m_device->graphics_queue());
-
-    m_imgui_overlay->render(image_index);
+    VkSemaphore wait_semaphore = m_render_graph->render(static_cast<int>(image_index),
+                                                        m_image_available_semaphore->get(), m_device->graphics_queue());
 
     // TODO(): Create a queue wrapper class
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
@@ -120,8 +110,7 @@ void VulkanRenderer::render_frame() {
     present_info.waitSemaphoreCount = 1;
     present_info.pImageIndices = &image_index;
     present_info.pSwapchains = m_swapchain->swapchain_ptr();
-    present_info.pWaitSemaphores = m_rendering_finished_semaphore->ptr();
-
+    present_info.pWaitSemaphores = &wait_semaphore;
     vkQueuePresentKHR(m_device->present_queue(), &present_info);
 
     if (auto fps_value = m_fps_counter.update()) {

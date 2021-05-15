@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
@@ -99,6 +100,12 @@ public:
     /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER!
     void add_vertex_attribute(VkFormat format, std::uint32_t offset);
 
+    /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
+    /// @param element_size The element size in bytes
+    void set_element_size(std::size_t element_size) {
+        m_element_size = element_size;
+    }
+
     /// @brief Specifies that data should be uploaded to this buffer during render graph compilation
     /// @param count The number of elements (not bytes) to upload from CPU memory to GPU memory
     /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
@@ -156,7 +163,8 @@ private:
     std::vector<const RenderResource *> m_reads;
 
     std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
-    std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> m_on_record;
+    std::vector<VkPushConstantRange> m_push_constant_ranges;
+    std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> m_on_record{[](auto &, auto &) {}};
 
 protected:
     explicit RenderStage(std::string name) : m_name(std::move(name)) {}
@@ -182,9 +190,15 @@ public:
         m_descriptor_layouts.push_back(layout);
     }
 
+    /// @brief Add a push constant range to this render stage.
+    /// @param range The push constant range
+    void add_push_constant_range(VkPushConstantRange range) {
+        m_push_constant_ranges.push_back(range);
+    }
+
     /// @brief Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
-    ///          common use for this is for draw commands.
+    /// common use for this is for draw commands.
     void set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
     }
@@ -195,6 +209,9 @@ class GraphicsStage : public RenderStage {
 
 private:
     bool m_clears_screen{false};
+    bool m_depth_test{false};
+    bool m_depth_write{false};
+    VkPipelineColorBlendAttachmentState m_blend_attachment{};
     std::unordered_map<const BufferResource *, std::uint32_t> m_buffer_bindings;
     std::vector<VkPipelineShaderStageCreateInfo> m_shaders;
 
@@ -210,6 +227,20 @@ public:
     /// @brief Specifies that this stage should clear the screen before rendering
     void set_clears_screen(bool clears_screen) {
         m_clears_screen = clears_screen;
+    }
+
+    /// @brief Specifies the depth options for this stage.
+    /// @param depth_test Whether depth testing should be performed
+    /// @param depth_write Whether depth writing should be performed
+    void set_depth_options(bool depth_test, bool depth_write) {
+        m_depth_test = depth_test;
+        m_depth_write = depth_write;
+    }
+
+    /// @brief Set the blend attachment for this stage.
+    /// @param blend_attachment The blend attachment
+    void set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
+        m_blend_attachment = blend_attachment;
     }
 
     /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage
@@ -298,6 +329,7 @@ class PhysicalStage : public RenderGraphObject {
 private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
     const wrapper::Device &m_device;
+    std::unique_ptr<wrapper::Semaphore> m_finished_semaphore;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
@@ -393,8 +425,7 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing
     /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
-    void render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
-                VkQueue graphics_queue);
+    VkSemaphore render(int image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue);
 };
 
 template <typename T>

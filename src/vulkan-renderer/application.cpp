@@ -521,7 +521,7 @@ void Application::update_imgui_overlay() {
     auto cursor_pos = m_input_data->get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
-    io.DeltaTime = std::clamp(m_time_passed, 0.001f, 100.0f);
+    io.DeltaTime = m_time_passed;
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
     io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
     io.MouseDown[1] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
@@ -550,7 +550,7 @@ void Application::update_imgui_overlay() {
     ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
     const auto cam_fov = m_camera->fov();
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
-    ImGui::PushItemWidth(150.0f * m_imgui_overlay->get_scale());
+    ImGui::PushItemWidth(150.0f * m_imgui_overlay->scale());
     ImGui::PopItemWidth();
     ImGui::End();
     ImGui::PopStyleVar();

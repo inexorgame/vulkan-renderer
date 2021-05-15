@@ -140,6 +140,8 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+    pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
+    pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
         result != VK_SUCCESS) {
@@ -182,6 +184,9 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
         }
 
         auto *physical_buffer = buffer_resource->m_physical->as<PhysicalBuffer>();
+        if (physical_buffer->m_buffer == nullptr) {
+            continue;
+        }
         if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
             cmd_buf.bind_index_buffer(physical_buffer->m_buffer);
         } else if (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) {
@@ -255,7 +260,7 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
     VkSubpassDescription subpass_description{};
     subpass_description.colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size());
     subpass_description.pColorAttachments = colour_refs.data();
-    subpass_description.pDepthStencilAttachment = depth_refs.data();
+    subpass_description.pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr;
     subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
     auto render_pass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
@@ -312,12 +317,11 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     input_assembly.primitiveRestartEnable = VK_FALSE;
     input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-    // TODO: Allow depth testing to be disabled.
     // TODO: Also allow depth compare func to be changed?
     auto depth_stencil = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>();
     depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depth_stencil.depthTestEnable = VK_TRUE;
-    depth_stencil.depthWriteEnable = VK_TRUE;
+    depth_stencil.depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE;
+    depth_stencil.depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE;
 
     // TODO: Allow culling to be disabled.
     // TODO: Wireframe rendering.
@@ -332,7 +336,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     multisample_state.minSampleShading = 1.0f;
     multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    VkPipelineColorBlendAttachmentState blend_attachment{};
+    VkPipelineColorBlendAttachmentState blend_attachment = stage->m_blend_attachment;
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
@@ -487,9 +491,11 @@ void RenderGraph::compile(const RenderResource *target) {
         }
     }
 
-    // Allocate command buffers.
+    // Allocate command buffers and finished semaphore.
     for (const auto *stage : m_stage_stack) {
         auto &physical = *stage->m_physical;
+        physical.m_finished_semaphore =
+            std::make_unique<wrapper::Semaphore>(m_device, "Finished semaphore for stage " + stage->m_name);
         m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
         for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
             physical.m_command_buffers.emplace_back(m_device, m_command_pool,
@@ -498,8 +504,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore signal_semaphore,
-                         VkSemaphore wait_semaphore, VkQueue graphics_queue) {
+VkSemaphore RenderGraph::render(int image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -527,19 +532,23 @@ void RenderGraph::render(int image_index, VkFence signal_fence, VkSemaphore sign
     submit_info.commandBufferCount = 1;
     submit_info.signalSemaphoreCount = 1;
     submit_info.waitSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &signal_semaphore;
-    submit_info.pWaitSemaphores = &wait_semaphore;
 
-    std::array<VkPipelineStageFlags, 1> wait_stage_mask = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    std::array<VkPipelineStageFlags, 1> wait_stage_mask{
+        // Wait on wait_semaphore before writing to the framebuffer.
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    };
     submit_info.pWaitDstStageMask = wait_stage_mask.data();
 
     // TODO: Batch submit infos.
     for (const auto *stage : m_stage_stack) {
         const auto &physical = *stage->m_physical;
-        auto *cmd_buf = physical.m_command_buffers[image_index].get();
-        submit_info.pCommandBuffers = &cmd_buf;
-        vkQueueSubmit(graphics_queue, 1, &submit_info, signal_fence);
+        submit_info.pCommandBuffers = physical.m_command_buffers[image_index].ptr();
+        submit_info.pSignalSemaphores = physical.m_finished_semaphore->ptr();
+        submit_info.pWaitSemaphores = &wait_semaphore;
+        vkQueueSubmit(graphics_queue, 1, &submit_info, nullptr);
+        wait_semaphore = physical.m_finished_semaphore->get();
     }
+    return m_stage_stack.back()->m_physical->m_finished_semaphore->get();
 }
 
 } // namespace inexor::vulkan_renderer

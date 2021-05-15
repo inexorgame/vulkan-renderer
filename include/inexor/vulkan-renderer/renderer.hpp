@@ -68,9 +68,7 @@ protected:
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
     std::unique_ptr<wrapper::CommandPool> m_command_pool;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
-    std::unique_ptr<wrapper::Fence> m_frame_finished_fence;
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
-    std::unique_ptr<wrapper::Semaphore> m_rendering_finished_semaphore;
     std::unique_ptr<RenderGraph> m_render_graph;
 
     std::vector<wrapper::Shader> m_shaders;
@@ -79,6 +77,8 @@ protected:
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
+
+    TextureResource *m_back_buffer{nullptr};
 
     // Render graph buffers for octree geometry.
     BufferResource *m_index_buffer{nullptr};
