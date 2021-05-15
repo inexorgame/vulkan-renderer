@@ -139,7 +139,7 @@ QueryPool::QueryPool(const Device &device, const std::string &name,
 
     query_pool_ci.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
     query_pool_ci.pipelineStatistics = pipeline_stats_flags;
-    query_pool_ci.queryCount = 0;
+    query_pool_ci.queryCount = static_cast<std::uint32_t>(valid_pipeline_stats_flag_bits.size());
 
     if (const auto result = vkCreateQueryPool(m_device.device(), &query_pool_ci, nullptr, &m_query_pool);
         result != VK_SUCCESS) {
