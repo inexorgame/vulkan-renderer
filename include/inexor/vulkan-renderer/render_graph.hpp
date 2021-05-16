@@ -393,7 +393,7 @@ private:
 
     // Functions for building stage related vulkan objects.
     void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
-    void record_command_buffer(const RenderStage *, PhysicalStage &, int image_index) const;
+    void record_command_buffer(const RenderStage *, PhysicalStage &, std::uint32_t image_index) const;
 
     // Functions for building graphics stage related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage &) const;
@@ -425,7 +425,7 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing
     /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
-    VkSemaphore render(int image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue);
+    VkSemaphore render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue);
 };
 
 template <typename T>

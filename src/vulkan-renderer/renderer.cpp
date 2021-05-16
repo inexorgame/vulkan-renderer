@@ -101,8 +101,8 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    VkSemaphore wait_semaphore = m_render_graph->render(static_cast<int>(image_index),
-                                                        m_image_available_semaphore->get(), m_device->graphics_queue());
+    VkSemaphore wait_semaphore =
+        m_render_graph->render(image_index, m_image_available_semaphore->get(), m_device->graphics_queue());
 
     // TODO(): Create a queue wrapper class
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();

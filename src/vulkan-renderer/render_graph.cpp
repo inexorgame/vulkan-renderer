@@ -152,7 +152,8 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
                                    stage->m_name + " pipeline layout");
 }
 
-void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical, int image_index) const {
+void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical,
+                                        const std::uint32_t image_index) const {
     auto &cmd_buf = physical.m_command_buffers[image_index];
     cmd_buf.begin();
 
@@ -504,7 +505,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-VkSemaphore RenderGraph::render(int image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue) {
+VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
