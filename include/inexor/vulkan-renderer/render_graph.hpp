@@ -1,6 +1,6 @@
 #pragma once
 
-// TODO: Forward declare
+// TODO: Forward declare.
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
@@ -21,8 +21,8 @@
 #include <utility>
 #include <vector>
 
-// TODO: Compute stages
-// TODO: Uniform buffers
+// TODO: Compute stages.
+// TODO: Uniform buffers.
 
 namespace inexor::vulkan_renderer {
 
@@ -30,8 +30,8 @@ class PhysicalResource;
 class PhysicalStage;
 class RenderGraph;
 
-/// @brief Base class of all render graph objects (resources and stages)
-/// @note This is just for internal use
+/// @brief Base class of all render graph objects (resources and stages).
+/// @note This is just for internal use.
 struct RenderGraphObject {
     RenderGraphObject() = default;
     RenderGraphObject(const RenderGraphObject &) = delete;
@@ -51,8 +51,8 @@ struct RenderGraphObject {
     [[nodiscard]] const T *as() const;
 };
 
-/// @brief A single resource in the render graph
-/// @note May become multiple physical (vulkan) resources during render graph compilation
+/// @brief A single resource in the render graph.
+/// @note May become multiple physical (vulkan) resources during render graph compilation.
 class RenderResource : public RenderGraphObject {
     friend RenderGraph;
 
@@ -73,10 +73,10 @@ public:
 };
 
 enum class BufferUsage {
-    /// @brief Specifies that the buffer will be used to input index data
+    /// @brief Specifies that the buffer will be used to input index data.
     INDEX_BUFFER,
 
-    /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader
+    /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader.
     VERTEX_BUFFER,
 };
 
@@ -96,8 +96,8 @@ private:
 public:
     BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
 
-    /// @brief Specifies that element `offset` of this vertex buffer is of format `format`
-    /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER!
+    /// @brief Specifies that element `offset` of this vertex buffer is of format `format`.
+    /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER.
     void add_vertex_attribute(VkFormat format, std::uint32_t offset);
 
     /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
@@ -106,8 +106,8 @@ public:
         m_element_size = element_size;
     }
 
-    /// @brief Specifies that data should be uploaded to this buffer during render graph compilation
-    /// @param count The number of elements (not bytes) to upload from CPU memory to GPU memory
+    /// @brief Specifies the data that should be uploaded to this buffer at the start of the next frame.
+    /// @param count The number of elements (not bytes) to upload
     /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
     // TODO: Use std::span when we switch to C++ 20.
     template <typename T>
@@ -121,15 +121,15 @@ public:
 };
 
 enum class TextureUsage {
-    /// @brief Specifies that this texture is the result of the render graph
+    /// @brief Specifies that this texture is the output of the render graph.
     // TODO: Refactor back buffer system more (remove need for BACK_BUFFER texture usage)
     BACK_BUFFER,
 
-    /// @brief Specifies that this texture is a combined depth/stencil buffer
-    /// @note This may mean that this texture is completely GPU-sided and cannot be accessed by the CPU in any way!
+    /// @brief Specifies that this texture is a combined depth/stencil buffer.
+    /// @note This may mean that this texture is completely GPU-sided and cannot be accessed by the CPU in any way.
     DEPTH_STENCIL_BUFFER,
 
-    /// @brief Specifies that this texture isn't used for any special purpose (can be accessed by both the CPU and GPU)
+    /// @brief Specifies that this texture isn't used for any special purpose.
     NORMAL,
 };
 
@@ -143,16 +143,16 @@ private:
 public:
     TextureResource(std::string &&name, TextureUsage usage) : RenderResource(name), m_usage(usage) {}
 
-    /// @brief Specifies the format of this texture that is required when a physical resource is made
+    /// @brief Specifies the format of this texture that is required when the physical texture is made.
     /// @details For TextureUsage::BACK_BUFFER textures, using the swapchain image format is preferable in most cases.
-    ///          For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used!
+    /// For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used.
     void set_format(VkFormat format) {
         m_format = format;
     }
 };
 
-/// @brief A single render stage in the render graph
-/// @note Not to be confused with a vulkan render pass!
+/// @brief A single render stage in the render graph.
+/// @note Not to be confused with a vulkan render pass.
 class RenderStage : public RenderGraphObject {
     friend RenderGraph;
 
@@ -177,14 +177,15 @@ public:
     RenderStage &operator=(const RenderStage &) = delete;
     RenderStage &operator=(RenderStage &&) = delete;
 
-    /// @brief Specifies that this stage writes to `resource`
+    /// @brief Specifies that this stage writes to `resource`.
     void writes_to(const RenderResource *resource);
 
-    /// @brief Specifies that this stage reads from `resource`
+    /// @brief Specifies that this stage reads from `resource`.
     void reads_from(const RenderResource *resource);
 
-    /// @brief Binds a descriptor set layout to this render stage
-    /// @note This function will soon be removed
+    /// @brief Binds a descriptor set layout to this render stage.
+    /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
+    /// deal with descriptors at all.
     // TODO: Refactor descriptor management in the render graph
     void add_descriptor_layout(VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
@@ -224,7 +225,7 @@ public:
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
-    /// @brief Specifies that this stage should clear the screen before rendering
+    /// @brief Specifies that this stage should clear the screen before rendering.
     void set_clears_screen(bool clears_screen) {
         m_clears_screen = clears_screen;
     }
@@ -243,11 +244,11 @@ public:
         m_blend_attachment = blend_attachment;
     }
 
-    /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage
+    /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage.
     void bind_buffer(const BufferResource *buffer, std::uint32_t binding);
 
-    /// @brief Specifies that `shader` should be used during the pipeline of this stage
-    /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour!
+    /// @brief Specifies that `shader` should be used during the pipeline of this stage.
+    /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour.
     void uses_shader(const wrapper::Shader &shader);
 };
 
@@ -347,7 +348,7 @@ public:
     PhysicalStage &operator=(const PhysicalStage &) = delete;
     PhysicalStage &operator=(PhysicalStage &&) = delete;
 
-    /// @brief Retrieve the pipeline layout of this physical stage
+    /// @brief Retrieve the pipeline layout of this physical stage.
     // TODO: This can be removed once descriptors are properly implemented in the render graph.
     [[nodiscard]] VkPipelineLayout pipeline_layout() const {
         return m_pipeline_layout;
@@ -403,7 +404,7 @@ public:
     RenderGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
         : m_device(device), m_command_pool(command_pool), m_swapchain(swapchain) {}
 
-    /// @brief Adds either a render resource or render stage to the render graph
+    /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
     T *add(Args &&...args) {
@@ -419,12 +420,15 @@ public:
         }
     }
 
-    /// @brief Compiles the render graph resources/stages into physical vulkan objects
-    /// @param target The resource to start the depth first search from
+    /// @brief Compiles the render graph resources/stages into physical vulkan objects.
+    /// @param target The target resource of the render graph (usually the back buffer)
     void compile(const RenderResource *target);
 
-    /// @brief Submits the command frame's command buffers for drawing
-    /// @param image_index The current frame, typically retrieved from vkAcquireNextImageKhr
+    /// @brief Submits the command frame's command buffers for drawing.
+    /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
+    /// @param wait_semaphore The semaphore to wait on before rendering, typically some kind of "swapchain image
+    /// available" semaphore
+    /// @param graphics_queue The graphics queue to push rendering commands to
     VkSemaphore render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue);
 };
 
