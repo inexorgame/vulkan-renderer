@@ -17,6 +17,7 @@
 #include <spdlog/spdlog.h>
 #include <toml11/toml.hpp>
 
+#include <random>
 #include <thread>
 
 namespace inexor::vulkan_renderer {
@@ -186,21 +187,12 @@ void Application::load_shaders() {
 void Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
-    m_worlds.reserve(3);
+    // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
+    m_worlds.clear();
+    m_worlds.push_back(world::create_random_world(2, {0.0f, 0.0f, 0.0f}, 42));
+    m_worlds.push_back(world::create_random_world(2, {10.0f, 0.0f, 0.0f}, 60));
 
-    m_worlds.emplace_back(std::make_shared<world::Cube>(5.0f, glm::vec3{10, 0, 0}));
-    m_worlds.emplace_back(std::make_shared<world::Cube>(1.0f, glm::vec3{0, 0, 0}));
-    m_worlds.emplace_back(std::make_shared<world::Cube>(1.6f, glm::vec3{0, 10, 0}));
-
-    m_worlds[0]->set_type(world::Cube::Type::OCTANT);
-    m_worlds[1]->set_type(world::Cube::Type::SOLID);
-    m_worlds[2]->set_type(world::Cube::Type::OCTANT);
-
-    m_worlds[0]->children()[3]->set_type(world::Cube::Type::EMPTY);
-    m_worlds[0]->children()[5]->set_type(world::Cube::Type::EMPTY);
-    m_worlds[0]->children()[6]->set_type(world::Cube::Type::EMPTY);
-    m_worlds[0]->children()[7]->set_type(world::Cube::Type::EMPTY);
-
+    m_octree_vertices.clear();
     for (const auto &world : m_worlds) {
         for (const auto &polygons : world->polygons(true)) {
             for (const auto &triangle : *polygons) {
