@@ -157,18 +157,18 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
                 ModelVertex new_vertex{};
 
                 // TODO: Remove pointer arithmetic or add NOLINT
-                new_vertex.pos = glm::vec4(glm::make_vec3(&position_buffer[vertex_number * 3]), 1.0f);
+                new_vertex.pos = glm::vec4(glm::make_vec3(&position_buffer[vertex_number * 3]), 1.0f); // NOLINT
 
                 if (normals_buffer != nullptr) {
                     // TODO: Remove pointer arithmetic or add NOLINT
-                    new_vertex.normal = glm::normalize(glm::make_vec3(&normals_buffer[vertex_number * 3]));
+                    new_vertex.normal = glm::normalize(glm::make_vec3(&normals_buffer[vertex_number * 3])); // NOLINT
                 } else {
                     new_vertex.normal = glm::normalize(glm::vec3(0.0f));
                 }
 
                 if (texture_coordinate_buffer != nullptr) {
                     // TODO: Remove pointer arithmetic or add NOLINT
-                    new_vertex.uv = glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2]);
+                    new_vertex.uv = glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2]); // NOLINT
                 } else {
                     new_vertex.uv = glm::vec3(0.0f);
                 }
