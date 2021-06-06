@@ -10,11 +10,11 @@ Indentation::Indentation(const std::uint8_t start, const std::uint8_t end) noexc
 
 Indentation::Indentation(const std::uint8_t uid) noexcept {
     assert(uid <= 44);
-    constexpr std::array<std::uint8_t, Indentation::MAX> masks{44, 42, 39, 35, 30, 24, 17, 9};
+    constexpr std::array<std::uint8_t, Indentation::MAX> MASKS{44, 42, 39, 35, 30, 24, 17, 9};
     for (std::uint8_t idx = 0; idx < Indentation::MAX; idx++) {
-        if (masks[idx] <= uid) {
+        if (MASKS[idx] <= uid) {
             m_start = Indentation::MAX - idx;
-            m_end = m_start + (uid - masks[idx]);
+            m_end = m_start + (uid - MASKS[idx]);
             return;
         }
     }
@@ -60,11 +60,11 @@ std::uint8_t Indentation::offset() const noexcept {
     return this->m_end - this->m_start;
 }
 
-void Indentation::indent_start(std::int8_t steps) noexcept {
+void Indentation::indent_start(std::uint8_t steps) noexcept {
     this->set_start(this->m_start + steps);
 }
 
-void Indentation::indent_end(std::int8_t steps) noexcept {
+void Indentation::indent_end(std::uint8_t steps) noexcept {
     this->set_end(this->m_end - steps);
 }
 

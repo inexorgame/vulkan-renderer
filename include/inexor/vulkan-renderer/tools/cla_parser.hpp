@@ -37,7 +37,7 @@ public:
     explicit CommandLineArgumentValue(std::string value) : m_value(std::move(value)) {}
 
     template <typename T>
-    T as() const;
+    [[nodiscard]] T as() const;
 };
 
 /// @brief A simple command line argument parser.

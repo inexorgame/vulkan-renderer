@@ -19,8 +19,10 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
 }
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
-    : m_device(other.m_device), m_queue(other.m_queue), m_command_pool(std::move(other.m_command_pool)),
-      m_command_buffer(std::exchange(other.m_command_buffer, nullptr)), m_recording_started(other.m_recording_started) {
+    : m_device(other.m_device), m_command_pool(std::move(other.m_command_pool)) {
+    m_queue = other.m_queue;
+    m_command_buffer = std::exchange(other.m_command_buffer, nullptr);
+    m_recording_started = other.m_recording_started;
 }
 
 OnceCommandBuffer::~OnceCommandBuffer() {

@@ -16,7 +16,9 @@ GLFWContext::GLFWContext() {
     spdlog::debug("Created GLFW context successfully.");
 }
 
-GLFWContext::GLFWContext(GLFWContext &&other) noexcept : m_initialized(other.m_initialized) {}
+GLFWContext::GLFWContext(GLFWContext &&other) noexcept {
+    m_initialized = other.m_initialized;
+}
 
 GLFWContext::~GLFWContext() {
     glfwTerminate();

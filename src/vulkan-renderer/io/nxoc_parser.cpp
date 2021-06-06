@@ -10,7 +10,7 @@
 
 namespace inexor::vulkan_renderer::io {
 template <>
-ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube> cube) {
+ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube> cube) { // NOLINT
     ByteStreamWriter writer;
     writer.write<std::string>("Inexor Octree");
     writer.write<std::uint32_t>(0);
@@ -20,7 +20,7 @@ ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube
     iter_func = [&iter_func, &writer](const std::shared_ptr<const world::Cube> &cube) {
         writer.write(cube->type());
         if (cube->type() == world::Cube::Type::OCTANT) {
-            for (const auto &child : cube->childs()) {
+            for (const auto &child : cube->children()) {
                 iter_func(child);
             }
             return;
@@ -32,7 +32,7 @@ ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube
 
     iter_func(cube);
     return writer;
-};
+}
 
 template <>
 std::shared_ptr<world::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &stream) {
@@ -49,7 +49,7 @@ std::shared_ptr<world::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &s
     iter_func = [&iter_func, &reader](std::shared_ptr<world::Cube> &cube) {
         cube->set_type(reader.read<world::Cube::Type>());
         if (cube->type() == world::Cube::Type::OCTANT) {
-            for (auto child : cube->childs()) {
+            for (auto child : cube->children()) {
                 iter_func(child);
             }
             return;
@@ -66,12 +66,12 @@ ByteStream NXOCParser::serialize(const std::shared_ptr<const world::Cube> cube, 
     if (cube == nullptr) {
         throw std::invalid_argument("cube cannot be a nullptr.");
     }
-    switch (version) {
+    switch (version) { // NOLINT
     case 0:
         return serialize_impl<0>(cube);
     default:
         throw IoException("Unsupported octree version.");
-    };
+    }
 }
 
 std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
@@ -80,11 +80,11 @@ std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
         throw IoException("Wrong identifier.");
     }
     const auto version = reader.read<std::uint32_t>();
-    switch (version) {
+    switch (version) { // NOLINT
     case 0:
         return deserialize_impl<0>(stream);
     default:
         throw IoException("Unsupported octree version.");
-    };
+    }
 }
 } // namespace inexor::vulkan_renderer::io

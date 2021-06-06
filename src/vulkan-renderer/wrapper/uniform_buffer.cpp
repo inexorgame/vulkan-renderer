@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -16,4 +17,4 @@ void UniformBuffer::update(void *data, const std::size_t size) {
     std::memcpy(m_allocation_info.pMappedData, data, size);
 }
 
-}; // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper

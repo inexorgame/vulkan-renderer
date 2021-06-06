@@ -17,22 +17,21 @@ class KeyboardMouseInputData {
     bool mouse_buttons_updated{false};
 
 public:
-    KeyboardMouseInputData();
+    KeyboardMouseInputData() = default;
     KeyboardMouseInputData(const KeyboardMouseInputData &) = delete;
     KeyboardMouseInputData(KeyboardMouseInputData &&) = delete;
-
     ~KeyboardMouseInputData() = default;
 
     KeyboardMouseInputData &operator=(const KeyboardMouseInputData &) = delete;
     KeyboardMouseInputData &operator=(KeyboardMouseInputData &&) = delete;
 
     /// @brief Change the key's state to pressed.
-    /// @param button The key which was pressed.
+    /// @param key The key which was pressed.
     void press_key(std::int32_t key);
 
     /// @brief Change the key's state to unpressed.
-    /// @param button The key which was released.
-    void release_key(std::int32_t button);
+    /// @param key The key which was released.
+    void release_key(std::int32_t key);
 
     /// @brief Change the mouse button's state to pressed.
     /// @param button The mouse button which was pressed.
@@ -45,7 +44,7 @@ public:
     /// @brief Set the current cursor position.
     /// @param cursor_pos_x The current x-coordinate of the cursor.
     /// @param cursor_pos_y The current y-coordinate of the cursor.
-    void set_cursor_pos(double cursor_pos_x, double coursor_pos_y);
+    void set_cursor_pos(double cursor_pos_x, double cursor_pos_y);
 
     /// @return Return a std::array of size 2 which contains the x-position in index 0 and y-position in index 1.
     [[nodiscard]] std::array<std::int64_t, 2> get_cursor_pos() const;

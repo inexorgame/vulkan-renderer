@@ -126,4 +126,4 @@ void Camera::update(const float delta_time) {
     }
 }
 
-}; // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer

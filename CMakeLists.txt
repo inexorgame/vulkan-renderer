@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
+
+# https://cmake.org/cmake/help/latest/prop_tgt/MSVC_RUNTIME_LIBRARY.html
+cmake_policy(SET CMP0091 NEW)
+
 project(inexor-vulkan-renderer)
 
 # Stop in source builds

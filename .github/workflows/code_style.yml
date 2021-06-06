@@ -1,20 +1,14 @@
 name: Code Style
-on:
-  pull_request:
-    branches:
-      - master
+on: pull_request
 
 jobs:
   clang-format:
     name: Clang Format
     runs-on: ubuntu-latest
-    container: ubuntu:20.04
+    container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
       - name: Update environment
         shell: bash
         run: |
@@ -26,9 +20,18 @@ jobs:
             clang-format \
             git
 
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Fetch ${{ github.base_ref }}
+        shell: bash
+        run: |
+          git fetch --progress --depth=1 origin ${{ github.base_ref }}
+          git log --pretty=oneline
+
       - name: Style check
         shell: bash
         run: |
-          git-clang-format origin/master
+          git-clang-format origin/${{ github.base_ref }}
           git diff | tee format-diff
           if [ -s format-diff ]; then exit 1; fi

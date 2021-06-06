@@ -6,6 +6,8 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
     container: ubuntu:rolling
+    env:
+      DEBIAN_FRONTEND: "noninteractive"
     steps:
       - name: Update environment
         run: |
@@ -38,7 +40,13 @@ jobs:
         shell: bash
         run: |
           cmake --build build
-          cmake --build build --target inexor-vulkan-renderer-documentation-linkcheck
+
+      - name: Linkcheck
+        working-directory: ${{ github.workspace }}/documentation
+        shell: bash
+        # TODO: return true as long GitHub does not allow specific steps to fail
+        run: |
+          cmake --build build --target inexor-vulkan-renderer-documentation-linkcheck || true
 
       - name: Prepare upload
         working-directory: ${{ github.workspace }}/documentation

@@ -30,8 +30,8 @@ void VulkanRenderer::setup_render_graph() {
 
     auto &vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer");
     vertex_buffer.set_usage(BufferUsage::VERTEX_BUFFER);
-    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position));
-    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));
+    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
+    vertex_buffer.add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
     vertex_buffer.upload_data(m_octree_vertices);
 
     auto &main_stage = m_render_graph->add<GraphicsStage>("main stage");
@@ -55,7 +55,9 @@ void VulkanRenderer::setup_render_graph() {
 }
 
 void VulkanRenderer::generate_octree_indices() {
+    const auto old_vertex_count = m_octree_vertices.size();
     auto old_vertices = std::move(m_octree_vertices);
+    m_octree_vertices.clear();
     std::unordered_map<OctreeGpuVertex, std::uint16_t> vertex_map;
     for (auto &vertex : old_vertices) {
         // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
@@ -66,7 +68,7 @@ void VulkanRenderer::generate_octree_indices() {
         }
         m_octree_indices.push_back(vertex_map.at(vertex));
     }
-    spdlog::trace("Reduced octree by {} vertices", old_vertices.size() - m_octree_vertices.size());
+    spdlog::trace("Reduced octree by {} vertices", old_vertices.size() - old_vertex_count);
 }
 
 void VulkanRenderer::recreate_swapchain() {
@@ -99,8 +101,8 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_render_graph->render(image_index, m_rendering_finished_semaphore->get(), m_image_available_semaphore->get(),
-                           m_device->graphics_queue());
+    m_render_graph->render(static_cast<int>(image_index), m_rendering_finished_semaphore->get(),
+                           m_image_available_semaphore->get(), m_device->graphics_queue());
 
     m_imgui_overlay->render(image_index);
 
@@ -145,7 +147,7 @@ void VulkanRenderer::calculate_memory_budget() {
 
     std::string memory_dump_file_name = "vma-dumps/dump.json";
     std::ofstream vma_memory_dump(memory_dump_file_name, std::ios::out);
-    vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string));
+    vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string)); // NOLINT
     vma_memory_dump.close();
 
     vmaFreeStatsString(m_device->allocator(), vma_stats_string);
@@ -161,7 +163,7 @@ VulkanRenderer::~VulkanRenderer() {
     }
 
     // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
-    auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+    auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>( // NOLINT
         vkGetInstanceProcAddr(m_instance->instance(), "vkDestroyDebugReportCallbackEXT"));
     if (vk_destroy_debug_report_callback != nullptr) {
         vk_destroy_debug_report_callback(m_instance->instance(), m_debug_report_callback, nullptr);

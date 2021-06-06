@@ -10,19 +10,6 @@
 
 namespace inexor::vulkan_renderer {
 
-ImGUIOverlay::ImGUIOverlay(ImGUIOverlay &&other) noexcept
-    : m_device(other.m_device), m_swapchain(other.m_swapchain), m_scale(other.m_scale),
-      m_imgui_mesh(std::exchange(other.m_imgui_mesh, nullptr)),
-      m_imgui_texture(std::exchange(other.m_imgui_texture, nullptr)),
-      m_renderpass(std::exchange(other.m_renderpass, nullptr)),
-      m_vert_shader(std::exchange(other.m_vert_shader, nullptr)),
-      m_frag_shader(std::exchange(other.m_frag_shader, nullptr)),
-      m_command_pool(std::exchange(other.m_command_pool, nullptr)),
-      m_descriptor(std::exchange(other.m_descriptor, nullptr)), m_pipeline(std::exchange(other.m_pipeline, nullptr)),
-      m_subpass(other.m_subpass), m_vertex_count(other.m_vertex_count), m_index_count(other.m_index_count),
-      m_shaders(other.m_shaders), m_command_buffers(std::move(other.m_command_buffers)),
-      m_framebuffers(std::move(other.m_framebuffers)), m_push_const_block(other.m_push_const_block) {}
-
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain) {
     assert(device.device());
@@ -189,19 +176,19 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     vertex_input_attrs[0].binding = 0;
     vertex_input_attrs[0].location = 0;
     vertex_input_attrs[0].format = VK_FORMAT_R32G32_SFLOAT;
-    vertex_input_attrs[0].offset = offsetof(ImDrawVert, pos);
+    vertex_input_attrs[0].offset = offsetof(ImDrawVert, pos); // NOLINT
 
     // Location 1: UV
     vertex_input_attrs[1].binding = 0;
     vertex_input_attrs[1].location = 1;
     vertex_input_attrs[1].format = VK_FORMAT_R32G32_SFLOAT;
-    vertex_input_attrs[1].offset = offsetof(ImDrawVert, uv);
+    vertex_input_attrs[1].offset = offsetof(ImDrawVert, uv); // NOLINT
 
     // Location 2: Color
     vertex_input_attrs[2].binding = 0;
     vertex_input_attrs[2].location = 2;
     vertex_input_attrs[2].format = VK_FORMAT_R8G8B8A8_UNORM;
-    vertex_input_attrs[2].offset = offsetof(ImDrawVert, col);
+    vertex_input_attrs[2].offset = offsetof(ImDrawVert, col); // NOLINT
 
     spdlog::debug("Creating ImGUI graphics pipeline");
 
@@ -266,15 +253,16 @@ void ImGUIOverlay::update() {
 
     if (update_command_buffers) {
 
+        // TOOD: Implement update_vertex_buffer() and update_index_buffer().
         auto *vertex_buffer_address = static_cast<ImDrawVert *>(m_imgui_mesh->get_vertex_buffer_address());
         auto *index_buffer_address = static_cast<ImDrawIdx *>(m_imgui_mesh->get_index_buffer_address());
 
         for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
+            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
             std::memcpy(vertex_buffer_address, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
             std::memcpy(index_buffer_address, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-            vertex_buffer_address += cmd_list->VtxBuffer.Size;
-            index_buffer_address += cmd_list->IdxBuffer.Size;
+            vertex_buffer_address += cmd_list->VtxBuffer.Size; // NOLINT
+            index_buffer_address += cmd_list->IdxBuffer.Size;  // NOLINT
         }
 
         const ImGuiIO &io = ImGui::GetIO();
@@ -338,10 +326,10 @@ void ImGUIOverlay::update() {
                                  VK_INDEX_TYPE_UINT16);
 
             std::int32_t vertex_offset{0};
-            std::int32_t index_offset{0};
+            std::uint32_t index_offset{0};
 
             for (int32_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
+                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
                 for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                     const ImDrawCmd *imgui_draw_command = &cmd_list->CmdBuffer[j];
                     vkCmdDrawIndexed(m_command_buffers[k]->get(), imgui_draw_command->ElemCount, 1, index_offset,

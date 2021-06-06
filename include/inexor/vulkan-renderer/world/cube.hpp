@@ -34,12 +34,12 @@ class Cube : public std::enable_shared_from_this<Cube> {
     friend class io::NXOCParser;
 
 public:
-    /// Maximum of sub cubes (childs)
+    /// Maximum of sub cubes (children)
     static constexpr std::size_t SUB_CUBES{8};
     /// Cube edges.
     static constexpr std::size_t EDGES{12};
     /// Cube Type.
-    enum class Type { EMPTY = 0b00U, SOLID = 0b01U, NORMAL = 0b10U, OCTANT = 0b11U };
+    enum class Type { EMPTY = 0b00u, SOLID = 0b01u, NORMAL = 0b10u, OCTANT = 0b11u };
 
     /// IDs of the children and edges which will be swapped to receive the rotation.
     /// To achieve a 90 degree rotation the 0th index have to be swapped with the 1st and the 1st with the 2nd, etc.
@@ -58,24 +58,24 @@ public:
 private:
     Type m_type{Type::SOLID};
     float m_size{32};
-    glm::vec3 m_position{0.0F, 0.0F, 0.0F};
+    glm::vec3 m_position{0.0f, 0.0f, 0.0f};
 
-    /// Root cube points to itself.
-    std::weak_ptr<Cube> m_parent{weak_from_this()};
+    /// Root cube is empty.
+    std::weak_ptr<Cube> m_parent{};
 
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations;
-    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_childs;
+    std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_children;
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
     mutable PolygonCache m_polygon_cache;
     mutable bool m_polygon_cache_valid{false};
 
-    /// Removes all childs recursive.
-    void remove_childs();
+    /// Removes all children recursive.
+    void remove_children();
 
     /// Get the root to this cube.
-    [[nodiscard]] std::weak_ptr<Cube> root() const noexcept;
+    [[nodiscard]] std::shared_ptr<Cube> root() noexcept;
     /// Get the vertices of this cube. Use only on geometry cubes.
     [[nodiscard]] std::array<glm::vec3, 8> vertices() const noexcept;
 
@@ -84,18 +84,27 @@ private:
     void rotate(const RotationAxis::Type &axis);
 
 public:
+    /// Create a solid cube.
     Cube() = default;
-    explicit Cube(Type type);
-    Cube(Type type, float size, const glm::vec3 &position);
-    Cube(std::weak_ptr<Cube> parent, Type type, float size, const glm::vec3 &position);
-    Cube(const Cube &rhs);
+    /// Create a solid cube.
+    Cube(float size, const glm::vec3 &position);
+    /// Create a solid cube.
+    Cube(std::weak_ptr<Cube> parent, float size, const glm::vec3 &position);
+    /// Use clone() to create an independent copy of a cube.
+    Cube(const Cube &rhs) = delete;
     Cube(Cube &&rhs) noexcept;
     ~Cube() = default;
     Cube &operator=(Cube rhs);
+    Cube &operator=(Cube &&) = delete;
+
     /// Get child.
     std::shared_ptr<Cube> operator[](std::size_t idx);
     /// Get child.
-    const std::shared_ptr<const Cube> operator[](std::size_t idx) const;
+    std::shared_ptr<const Cube> operator[](std::size_t idx) const; // NOLINT
+
+    /// Clone a cube, which has no relations to the current one or its children.
+    /// It will be a root cube.
+    [[nodiscard]] std::shared_ptr<Cube> clone() const;
 
     /// Is the current cube root.
     [[nodiscard]] bool is_root() const noexcept;
@@ -110,8 +119,8 @@ public:
     /// Get type.
     [[nodiscard]] Type type() const noexcept;
 
-    /// Get childs.
-    [[nodiscard]] const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &childs() const;
+    /// Get children.
+    [[nodiscard]] const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &children() const;
     /// Get indentations.
     [[nodiscard]] std::array<Indentation, Cube::EDGES> indentations() const noexcept;
 

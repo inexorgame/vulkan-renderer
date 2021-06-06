@@ -27,7 +27,7 @@ struct VulkanSettingsDecisionMaker {
     /// @todo Implement additional graphics card rating criteria if desired.
     /// @param graphics_card The graphics card which will be rated.
     /// @return The graphics card's score which is greater or equal to 0.
-    [[nodiscard]] std::size_t rate_graphics_card(const VkPhysicalDevice &graphics_card);
+    [[nodiscard]] static std::size_t rate_graphics_card(VkPhysicalDevice graphics_card);
 
     /// @brief Automatically decide if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
@@ -38,12 +38,12 @@ struct VulkanSettingsDecisionMaker {
     /// @return ``true`` if the graphics card is suitable.
     /// @warning When implementing additional graphics card suitability criteria, do not return false for graphics cards
     /// which are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU!
-    [[nodiscard]] bool is_graphics_card_suitable(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
+    [[nodiscard]] static bool is_graphics_card_suitable(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Gets the VkPhysicalDeviceType of a graphics card.
     /// @param graphics_card The graphics card.
     /// @return The type of the graphics card.
-    [[nodiscard]] VkPhysicalDeviceType graphics_card_type(const VkPhysicalDevice &graphics_card);
+    [[nodiscard]] static VkPhysicalDeviceType graphics_card_type(VkPhysicalDevice graphics_card);
 
     /// @brief Automatically select the best graphics card considering all available ones.
     /// Please take a look at Inexor's advanced device selection mechanism which is build into this method.
@@ -54,46 +54,45 @@ struct VulkanSettingsDecisionMaker {
     /// @param surface The selected (window) surface.
     /// @param preferred_graphics_card_index The preferred graphics card (by array index).
     /// @return A physical device which was chosen if a suitable one could be found, std::nullopt otherwise.
-    [[nodiscard]] std::optional<VkPhysicalDevice>
-    decide_which_graphics_card_to_use(const VkInstance &vulkan_instance, const VkSurfaceKHR &surface,
-                                      const std::optional<std::uint32_t> &preferred_graphics_card_index = std::nullopt);
+    [[nodiscard]] static std::optional<VkPhysicalDevice>
+    decide_which_graphics_card_to_use(VkInstance vulkan_instance, VkSurfaceKHR surface,
+                                      std::optional<std::uint32_t> preferred_gpu_index = std::nullopt);
 
     /// @brief Automatically decide how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The number of images that will be used in swap chain.
-    [[nodiscard]] std::uint32_t decide_how_many_images_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
-                                                                           const VkSurfaceKHR &surface);
+    [[nodiscard]] static std::uint32_t decide_how_many_images_in_swapchain_to_use(VkPhysicalDevice graphics_card,
+                                                                                  VkSurfaceKHR surface);
 
     /// @brief Automatically decide whcih surface color to use in swapchain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The surface format for swapchain if any could be determined, std::nullopt otherwise.
-    [[nodiscard]] std::optional<VkSurfaceFormatKHR>
-    decide_which_surface_color_format_in_swapchain_to_use(const VkPhysicalDevice &graphics_card,
-                                                          const VkSurfaceKHR &surface);
+    [[nodiscard]] static std::optional<VkSurfaceFormatKHR>
+    decide_which_surface_color_format_in_swapchain_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Automatically decide which width and height to use as swapchain extent.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
-    SwapchainSettings decide_swapchain_extent(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                              std::uint32_t window_width, std::uint32_t window_height);
+    SwapchainSettings static decide_swapchain_extent(VkPhysicalDevice graphics_card, VkSurfaceKHR surface,
+                                                     std::uint32_t window_width, std::uint32_t window_height);
 
     /// @brief Automatically find the image transform, relative to the presentation engine's natural orientation,
     /// applied to the image content prior to presentation.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The image transform flags.
-    [[nodiscard]] VkSurfaceTransformFlagsKHR
-    decide_which_image_transformation_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface);
+    [[nodiscard]] static VkSurfaceTransformFlagsKHR
+    decide_which_image_transformation_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Find a supported composite alpha format.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The composite alpha flag bits.
-    [[nodiscard]] std::optional<VkCompositeAlphaFlagBitsKHR>
+    [[nodiscard]] static std::optional<VkCompositeAlphaFlagBitsKHR>
     find_composite_alpha_format(VkPhysicalDevice selected_graphics_card, VkSurfaceKHR surface);
 
     /// @brief Automatically decide which presentation mode the presentation engine will be using.
@@ -106,9 +105,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param surface The selected (window) surface.
     /// @param vsync True if vertical synchronization is desired, false otherwise.
     /// @return The presentation mode which will be used by the presentation engine.
-    [[nodiscard]] std::optional<VkPresentModeKHR>
-    decide_which_presentation_mode_to_use(const VkPhysicalDevice &graphics_card, const VkSurfaceKHR &surface,
-                                          bool vsync = false);
+    [[nodiscard]] static std::optional<VkPresentModeKHR>
+    decide_which_presentation_mode_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface, bool vsync = false);
 
     /// @brief Decide which graphics queue family index to use in case it is not possible to use one for both graphics
     /// and presentation.
@@ -116,7 +114,7 @@ struct VulkanSettingsDecisionMaker {
     /// presentation!
     /// @param graphics_card The selected graphics card.
     /// @return The index of the queue family which can be used for graphics.
-    [[nodiscard]] std::optional<std::uint32_t> find_graphics_queue_family(const VkPhysicalDevice &graphics_card);
+    [[nodiscard]] static std::optional<std::uint32_t> find_graphics_queue_family(VkPhysicalDevice graphics_card);
 
     /// @brief Decide which presentation queue family index to use in case it is not possible to use one for both
     /// graphics and presentation.
@@ -125,17 +123,16 @@ struct VulkanSettingsDecisionMaker {
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The index of the queue family which can be used for presentation.
-    [[nodiscard]] std::optional<std::uint32_t> find_presentation_queue_family(const VkPhysicalDevice &graphics_card,
-                                                                              const VkSurfaceKHR &surface);
+    [[nodiscard]] static std::optional<std::uint32_t> find_presentation_queue_family(VkPhysicalDevice graphics_card,
+                                                                                     VkSurfaceKHR surface);
 
     /// @brief Check if there is a queue family (index) which can be used for both graphics and presentation.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The queue family index which can be used for both graphics and presentation (if existent), std::nullopt
     /// otherwise.
-    [[nodiscard]] std::optional<std::uint32_t>
-    find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice &graphics_card,
-                                                         const VkSurfaceKHR &surface);
+    [[nodiscard]] static std::optional<std::uint32_t>
+    find_queue_family_for_both_graphics_and_presentation(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Find a queue family which has VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT.
     /// @warning It might be the case that there is no distinct queue family available on your system!
@@ -143,8 +140,8 @@ struct VulkanSettingsDecisionMaker {
     /// has VK_QUEUE_TRANSFER_BIT (besides other flags).
     /// @param graphics_card The selected graphics card.
     /// @return The index of the queue family which can be used exclusively  for data transfer.
-    [[nodiscard]] std::optional<std::uint32_t>
-    find_distinct_data_transfer_queue_family(const VkPhysicalDevice &graphics_card);
+    [[nodiscard]] static std::optional<std::uint32_t>
+    find_distinct_data_transfer_queue_family(VkPhysicalDevice graphics_card);
 
     /// @brief Find a queue family which supports VK_QUEUE_TRANSFER_BIT.
     /// @warning You should try to find a distinct queue family first using find_distinct_data_transfer_queue_family!
@@ -154,8 +151,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param graphics_card The selected graphics card.
     /// @return The index of the queue family which can be used for data transfer.
     /// @return A queue family index which can be used for data transfer if any could be found, std::nullopt otherwise.
-    [[nodiscard]] std::optional<std::uint32_t>
-    find_any_data_transfer_queue_family(const VkPhysicalDevice &graphics_card);
+    [[nodiscard]] static std::optional<std::uint32_t>
+    find_any_data_transfer_queue_family(VkPhysicalDevice graphics_card);
 
     /// @brief Find a suitable depth buffer format.
     /// @param graphics_card The selected graphics card.
@@ -163,10 +160,10 @@ struct VulkanSettingsDecisionMaker {
     /// @param tiling The desired depth buffer's image tiling.
     /// @param feature_flags The desired depth buffer's feature flags.
     /// @return A VkFormat value if a suitable depth buffer format could be found, std::nullopt otherwise.
-    [[nodiscard]] std::optional<VkFormat> find_depth_buffer_format(const VkPhysicalDevice &graphics_card,
-                                                                   const std::vector<VkFormat> &formats,
-                                                                   VkImageTiling tiling,
-                                                                   VkFormatFeatureFlags feature_flags);
+    [[nodiscard]] static std::optional<VkFormat> find_depth_buffer_format(VkPhysicalDevice graphics_card,
+                                                                          const std::vector<VkFormat> &formats,
+                                                                          VkImageTiling tiling,
+                                                                          VkFormatFeatureFlags feature_flags);
 };
 
 } // namespace inexor::vulkan_renderer

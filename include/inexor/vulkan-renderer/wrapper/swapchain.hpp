@@ -16,8 +16,8 @@ class Swapchain {
     const wrapper::Device &m_device;
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
-    VkSurfaceFormatKHR m_surface_format;
-    VkExtent2D m_extent;
+    VkSurfaceFormatKHR m_surface_format{};
+    VkExtent2D m_extent{};
 
     std::vector<VkImage> m_swapchain_images;
     std::vector<VkImageView> m_swapchain_image_views;
@@ -41,7 +41,7 @@ public:
     /// @param enable_vsync True if vertical synchronization is requested, false otherwise.
     /// @param name The internal debug marker name of the VkSwapchainKHR.
     Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
-              bool enable_vsync, const std::string &name);
+              bool enable_vsync, std::string name);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;

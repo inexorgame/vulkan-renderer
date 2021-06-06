@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <stdexcept>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -30,8 +31,10 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
     spdlog::debug("Created fence {} successfully.", m_name);
 }
 
-Fence::Fence(Fence &&other) noexcept
-    : m_device(other.m_device), m_fence(std::exchange(other.m_fence, nullptr)), m_name(std::move(other.m_name)) {}
+Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {
+    m_fence = std::exchange(other.m_fence, nullptr);
+    m_name = std::move(other.m_name);
+}
 
 Fence::~Fence() {
     vkDestroyFence(m_device.device(), m_fence, nullptr);

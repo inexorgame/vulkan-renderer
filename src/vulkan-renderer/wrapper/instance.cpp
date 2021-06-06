@@ -19,7 +19,8 @@ bool Instance::is_layer_supported(const std::string &layer_name) {
     }
 
     if (instance_layer_count == 0) {
-        throw std::runtime_error("Error: No Vulkan instance layers available!");
+        spdlog::info("No Vulkan instance layers available!");
+        return false;
     }
 
     std::vector<VkLayerProperties> instance_layers(instance_layer_count);
@@ -45,7 +46,8 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
     }
 
     if (instance_extension_count == 0) {
-        throw std::runtime_error("Error: No Vulkan instance extensions available!");
+        spdlog::info("No Vulkan instance extensions available!");
+        return false;
     }
 
     std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
@@ -66,9 +68,9 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const std::uint32_t vulkan_api_version, bool enable_validation_layers,
-                   bool enable_renderdoc_instance_layer, std::vector<std::string> requested_instance_extensions,
-                   std::vector<std::string> requested_instance_layers) {
+                   const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer,
+                   const std::vector<std::string> &requested_instance_extensions,
+                   const std::vector<std::string> &requested_instance_layers) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
@@ -116,8 +118,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     // Add all instance extensions which are required by GLFW to our wishlist.
     for (std::size_t i = 0; i < glfw_extension_count; i++) {
-        spdlog::debug(glfw_extensions[i]);
-        instance_extension_wishlist.push_back(glfw_extensions[i]);
+        spdlog::debug(glfw_extensions[i]);                         // NOLINT
+        instance_extension_wishlist.push_back(glfw_extensions[i]); // NOLINT
     }
 
     // We have to check which instance extensions of our wishlist are available on the current system!
@@ -144,7 +146,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // RenderDoc is a very useful open source graphics debugger for Vulkan and other APIs.
     // Not using it all the time during development is fine, but as soon as something crashes
     // you should enable it, take a snapshot and look up what's wrong.
-    if (enable_renderdoc_instance_layer) {
+    if (enable_renderdoc_layer) {
         instance_layers_wishlist.push_back("VK_LAYER_RENDERDOC_Capture");
     }
 
@@ -214,7 +216,9 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
 }
 
-Instance::Instance(Instance &&other) noexcept : m_instance(std::exchange(other.m_instance, nullptr)) {}
+Instance::Instance(Instance &&other) noexcept {
+    m_instance = std::exchange(other.m_instance, nullptr);
+}
 
 Instance::~Instance() {
     vkDestroyInstance(m_instance, nullptr);

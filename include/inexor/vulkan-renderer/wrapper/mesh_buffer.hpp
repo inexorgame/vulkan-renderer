@@ -89,7 +89,7 @@ public:
         : m_vertex_buffer(device, name, sizeof(VertexType) * vertex_count,
                           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                           VMA_MEMORY_USAGE_CPU_ONLY),
-          m_index_buffer(std::nullopt), m_number_of_vertices(vertex_count), m_number_of_indices(0), m_device(device) {
+          m_index_buffer(std::nullopt), m_number_of_vertices(vertex_count), m_device(device) {
 
         assert(device.device());
         assert(device.allocator());
@@ -125,7 +125,7 @@ public:
 
         staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
 
-        if (indices.size() > 0) {
+        if (!indices.empty()) {
             VkDeviceSize indices_memory_size = sizeof(IndexType) * indices.size();
 
             StagingBuffer staging_buffer_for_indices(m_device, name, index_buffer_size,
@@ -172,6 +172,8 @@ public:
           m_index_buffer(std::exchange(other.m_index_buffer, std::nullopt)),
           m_number_of_vertices(other.m_number_of_vertices), m_number_of_indices(other.m_number_of_indices),
           m_device(other.m_device) {}
+
+    ~MeshBuffer() = default;
 
     MeshBuffer &operator=(const MeshBuffer &) = delete;
     MeshBuffer &operator=(MeshBuffer &&) = delete;

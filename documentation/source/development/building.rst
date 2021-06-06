@@ -14,7 +14,7 @@ This project uses out of source builds using either `gcc <https://gcc.gnu.org/>`
 
 Generating the documentation will create two subfolders in ``doc`` which will be ignored by git.
 
-There are four CMake targets and options are available:
+The following CMake targets and options are available:
 
 .. list-table:: List of CMake build targets.
    :header-rows: 1
@@ -54,7 +54,7 @@ There are four CMake targets and options are available:
      - Builds inexor-renderer-benchmarks.
      - ``OFF``
    * - INEXOR_CONAN_PROFILE
-     - To adjust the conan profile, use ``-DCONNECTOR_CONAN_PROFILE=<name>``.
+     - To adjust the conan profile, use ``-DINEXOR_CONAN_PROFILE=<name>``.
      - ``default``
    * - INEXOR_USE_VMA_RECORDING
      - Enables or disables `Vulkan Memory Allocator's <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ recording feature.
@@ -183,7 +183,7 @@ Configure cmake:
 
 .. note::
 
-    - Only pass ``-GNinja`` if the ninja build tool is installed.
+    Only pass ``-GNinja`` if the ninja build tool is installed.
 
 .. code-block:: shell-session
 

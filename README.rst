@@ -27,7 +27,7 @@ Quickstart: `Building Instructions`_ (`Windows`_/`Linux`_) & `Getting started`_
 
 Inexor is an open-source project which combines modern C++ with Vulkan API.
 
-Inexor’s current main objective is the development of a new octree game engine based on C++17 and Vulkan API 1.1.
+Our current main objective is the development of a new 3d octree game engine.
 
 `Click here <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__ to read our faq and documentation.
 

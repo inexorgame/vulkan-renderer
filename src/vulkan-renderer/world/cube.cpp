@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <functional>
 #include <utility>
 
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept {
@@ -12,27 +13,30 @@ void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::wo
     std::swap(lhs.m_position, rhs.m_position);
     std::swap(lhs.m_parent, rhs.m_parent);
     std::swap(lhs.m_indentations, rhs.m_indentations);
-    std::swap(lhs.m_childs, rhs.m_childs);
+    std::swap(lhs.m_children, rhs.m_children);
     std::swap(lhs.m_polygon_cache, rhs.m_polygon_cache);
     std::swap(lhs.m_polygon_cache_valid, rhs.m_polygon_cache_valid);
 }
 
 namespace inexor::vulkan_renderer::world {
-void Cube::remove_childs() {
-    for (auto &child : m_childs) {
-        child->remove_childs();
+void Cube::remove_children() {
+    for (auto &child : m_children) {
+        child->remove_children();
         child.reset();
     }
 }
 
-std::weak_ptr<Cube> Cube::root() const noexcept {
-    if (auto parent = m_parent.lock(); parent != nullptr) {
-        while (!parent->is_root()) {
-            parent = parent->m_parent.lock();
-        }
-        return parent;
+std::shared_ptr<Cube> Cube::root() noexcept {
+    std::shared_ptr<Cube> new_parent = m_parent.lock();
+    if (!new_parent) {
+        return shared_from_this();
     }
-    return m_parent;
+    std::shared_ptr<Cube> parent;
+    while (new_parent) {
+        parent = new_parent;
+        new_parent = parent->m_parent.lock();
+    }
+    return parent;
 }
 
 std::array<glm::vec3, 8> Cube::vertices() const noexcept {
@@ -55,14 +59,22 @@ std::array<glm::vec3, 8> Cube::vertices() const noexcept {
         const float step = m_size / Indentation::MAX;
         const std::array<Indentation, Cube::EDGES> &ind = m_indentations;
 
-        return {{{pos.x + ind[0].start() * step, pos.y + ind[1].start() * step, pos.z + ind[2].start() * step},
-                 {pos.x + ind[9].start() * step, pos.y + ind[4].start() * step, max.z - ind[2].end() * step},
-                 {pos.x + ind[3].start() * step, max.y - ind[1].end() * step, pos.z + ind[11].start() * step},
-                 {pos.x + ind[6].start() * step, max.y - ind[4].end() * step, max.z - ind[11].end() * step},
-                 {max.x - ind[0].end() * step, pos.y + ind[10].start() * step, pos.z + ind[5].start() * step},
-                 {max.x - ind[9].end() * step, pos.y + ind[7].start() * step, max.z - ind[5].end() * step},
-                 {max.x - ind[3].end() * step, max.y - ind[10].end() * step, pos.z + ind[8].start() * step},
-                 {max.x - ind[6].end() * step, max.y - ind[7].end() * step, max.z - ind[8].end() * step}}};
+        return {{{pos.x + static_cast<float>(ind[0].start()) * step, pos.y + static_cast<float>(ind[1].start()) * step,
+                  pos.z + static_cast<float>(ind[2].start()) * step},
+                 {pos.x + static_cast<float>(ind[9].start()) * step, pos.y + static_cast<float>(ind[4].start()) * step,
+                  max.z - static_cast<float>(ind[2].end()) * step},
+                 {pos.x + static_cast<float>(ind[3].start()) * step, max.y - static_cast<float>(ind[1].end()) * step,
+                  pos.z + static_cast<float>(ind[11].start()) * step},
+                 {pos.x + static_cast<float>(ind[6].start()) * step, max.y - static_cast<float>(ind[4].end()) * step,
+                  max.z - static_cast<float>(ind[11].end()) * step},
+                 {max.x - static_cast<float>(ind[0].end()) * step, pos.y + static_cast<float>(ind[10].start()) * step,
+                  pos.z + static_cast<float>(ind[5].start()) * step},
+                 {max.x - static_cast<float>(ind[9].end()) * step, pos.y + static_cast<float>(ind[7].start()) * step,
+                  max.z - static_cast<float>(ind[5].end()) * step},
+                 {max.x - static_cast<float>(ind[3].end()) * step, max.y - static_cast<float>(ind[10].end()) * step,
+                  pos.z + static_cast<float>(ind[8].start()) * step},
+                 {max.x - static_cast<float>(ind[6].end()) * step, max.y - static_cast<float>(ind[7].end()) * step,
+                  max.z - static_cast<float>(ind[8].end()) * step}}};
     }
     return {};
 }
@@ -90,11 +102,11 @@ void Cube::rotate<1>(const RotationAxis::Type &axis) {
     if (m_type == Type::OCTANT) {
         const RotationAxis::ChildType &child_rotation = std::get<0>(axis);
         for (const auto &order : child_rotation) {
-            std::swap(m_childs[order[0]], m_childs[order[1]]);
-            std::swap(m_childs[order[1]], m_childs[order[2]]);
-            std::swap(m_childs[order[2]], m_childs[order[3]]);
+            std::swap(m_children[order[0]], m_children[order[1]]);
+            std::swap(m_children[order[1]], m_children[order[2]]);
+            std::swap(m_children[order[2]], m_children[order[3]]);
         }
-        for (auto &child : m_childs) {
+        for (auto &child : m_children) {
             child->rotate<1>(axis);
         }
     }
@@ -122,10 +134,10 @@ void Cube::rotate<2>(const RotationAxis::Type &axis) {
     if (m_type == Type::OCTANT) {
         const RotationAxis::ChildType &child_rotation = std::get<0>(axis);
         for (const auto &order : child_rotation) {
-            std::swap(m_childs[order[0]], m_childs[order[2]]);
-            std::swap(m_childs[order[1]], m_childs[order[3]]);
+            std::swap(m_children[order[0]], m_children[order[2]]);
+            std::swap(m_children[order[1]], m_children[order[3]]);
         }
-        for (auto &child : m_childs) {
+        for (auto &child : m_children) {
             child->rotate<2>(axis);
         }
     }
@@ -152,45 +164,20 @@ void Cube::rotate<3>(const RotationAxis::Type &axis) {
     if (m_type == Type::OCTANT) {
         const RotationAxis::ChildType &child_rotation = std::get<0>(axis);
         for (const auto &order : child_rotation) {
-            std::swap(m_childs[order[0]], m_childs[order[3]]);
-            std::swap(m_childs[order[3]], m_childs[order[2]]);
-            std::swap(m_childs[order[2]], m_childs[order[1]]);
+            std::swap(m_children[order[0]], m_children[order[3]]);
+            std::swap(m_children[order[3]], m_children[order[2]]);
+            std::swap(m_children[order[2]], m_children[order[1]]);
         }
-        for (auto &child : m_childs) {
+        for (auto &child : m_children) {
             child->rotate<3>(axis);
         }
     }
 }
 
-Cube::Cube(const Type type) {
-    set_type(type);
-}
+Cube::Cube(const float size, const glm::vec3 &position) : m_size(size), m_position(position) {}
 
-Cube::Cube(const Type type, const float size, const glm::vec3 &position) : m_size(size), m_position(position) {
-    set_type(type);
-}
-
-Cube::Cube(std::weak_ptr<Cube> parent, const Type type, const float size, const glm::vec3 &position)
-    : Cube(type, size, position) {
+Cube::Cube(std::weak_ptr<Cube> parent, const float size, const glm::vec3 &position) : Cube(size, position) {
     m_parent = std::move(parent);
-    set_type(type);
-}
-
-Cube::Cube(const Cube &rhs) : Cube(rhs.m_type, rhs.m_size, rhs.m_position) {
-    if (!rhs.is_root()) {
-        m_parent = rhs.m_parent;
-    }
-    if (m_type == Type::NORMAL) {
-        m_indentations = rhs.m_indentations;
-    } else if (m_type == Type::OCTANT) {
-        for (std::size_t idx = 0; idx <= rhs.m_childs.size(); idx++) {
-            m_childs[idx] = std::make_shared<Cube>(*rhs.m_childs[idx]);
-        }
-    }
-    m_polygon_cache_valid = rhs.m_polygon_cache_valid;
-    if (m_type == Type::NORMAL || m_type == Type::SOLID) {
-        m_polygon_cache = std::make_shared<std::vector<Polygon>>(*rhs.m_polygon_cache);
-    }
 }
 
 Cube::Cube(Cube &&rhs) noexcept : Cube() {
@@ -204,16 +191,35 @@ Cube &Cube::operator=(Cube rhs) {
 
 std::shared_ptr<Cube> Cube::operator[](std::size_t idx) {
     assert(idx <= SUB_CUBES);
-    return m_childs[idx];
+    return m_children[idx];
 }
 
-const std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
+std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
     assert(idx <= SUB_CUBES);
-    return m_childs[idx];
+    return m_children[idx];
+}
+
+std::shared_ptr<Cube> Cube::clone() const {
+    std::shared_ptr<Cube> clone = std::make_shared<Cube>(this->m_size, this->m_position);
+    clone->m_type = this->m_type;
+
+    if (clone->m_type == Type::NORMAL) {
+        clone->m_indentations = this->m_indentations;
+    } else if (clone->m_type == Type::OCTANT) {
+        for (std::size_t idx = 0; idx <= this->m_children.size(); idx++) {
+            clone->m_children[idx] = this->m_children[idx]->clone();
+            clone->m_children[idx]->m_parent = clone;
+        }
+    }
+    clone->m_polygon_cache_valid = this->m_polygon_cache_valid;
+    if (clone->m_type == Type::NORMAL || clone->m_type == Type::SOLID) {
+        clone->m_polygon_cache = std::make_shared<std::vector<Polygon>>(*this->m_polygon_cache);
+    }
+    return clone;
 }
 
 bool Cube::is_root() const noexcept {
-    return &(*m_parent.lock()) == this;
+    return m_parent.lock() == nullptr;
 }
 
 std::size_t Cube::grid_level() const noexcept {
@@ -232,7 +238,7 @@ std::size_t Cube::count_geometry_cubes() const noexcept {
     }
     if (m_type == Type::OCTANT) {
         std::size_t count = 0;
-        for (const auto &cube : m_childs) {
+        for (const auto &cube : m_children) {
             count += cube->count_geometry_cubes();
         }
         return count;
@@ -254,21 +260,23 @@ void Cube::set_type(const Type new_type) {
     case Type::OCTANT:
         const float half_size = m_size / 2;
         auto create_cube = [&](const glm::vec3 &offset) {
-            return std::make_shared<Cube>(weak_from_this(), Type::SOLID, half_size, m_position + offset);
+            return std::make_shared<Cube>(weak_from_this(), half_size, m_position + offset);
         };
-        // about the order look into the octree documentation
-        m_childs = {create_cube({0, 0, 0}),
-                    create_cube({0, 0, half_size}),
-                    create_cube({0, half_size, 0}),
-                    create_cube({0, half_size, half_size}),
-                    create_cube({half_size, 0, 0}),
-                    create_cube({half_size, 0, half_size}),
-                    create_cube({half_size, half_size, 0}),
-                    create_cube({half_size, half_size, half_size})};
+        // Look into octree documentation to find information about the order of subcubes in space.
+        // We can't use initializer list here because clang-tidy complains about it.
+        // To the best of our knowledge, this is a false positive.
+        m_children[0] = create_cube({0, 0, 0});
+        m_children[1] = create_cube({0, 0, half_size});
+        m_children[2] = create_cube({0, half_size, 0});
+        m_children[3] = create_cube({0, half_size, half_size});
+        m_children[4] = create_cube({half_size, 0, 0});
+        m_children[5] = create_cube({half_size, 0, half_size});
+        m_children[6] = create_cube({half_size, half_size, 0});
+        m_children[7] = create_cube({half_size, half_size, half_size});
         break;
     }
     if (m_type == Type::OCTANT && new_type != Type::OCTANT) {
-        remove_childs();
+        remove_children();
     }
     m_polygon_cache_valid = false;
     m_type = new_type;
@@ -279,8 +287,8 @@ Cube::Type Cube::type() const noexcept {
     return m_type;
 }
 
-const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &Cube::childs() const {
-    return m_childs;
+const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &Cube::children() const {
+    return m_children;
 }
 
 std::array<Indentation, Cube::EDGES> Cube::indentations() const noexcept {
@@ -322,6 +330,8 @@ void Cube::rotate(const RotationAxis::Type &axis, int rotations) {
         break;
     case 3:
         rotate<3>(axis);
+        break;
+    default:
         break;
     }
 }
@@ -398,23 +408,22 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     std::vector<PolygonCache> polygons;
     polygons.reserve(count_geometry_cubes());
 
-    std::function<void(std::shared_ptr<const world::Cube>)> collect;
     // post-order traversal
-    collect = [&collect, &polygons, &update_invalid](std::shared_ptr<const world::Cube> cube) {
-        if (cube->type() == world::Cube::Type::OCTANT) {
-            for (const auto &child : cube->childs()) {
-                collect(child);
+    std::function<void(const Cube &)> collect = [&collect, &polygons, &update_invalid](const Cube &cube) {
+        if (cube.type() == world::Cube::Type::OCTANT) {
+            for (const auto &child : cube.children()) {
+                collect(*child);
             }
             return;
         }
-        if (!cube->m_polygon_cache_valid && update_invalid) {
-            cube->update_polygon_cache();
+        if (!cube.m_polygon_cache_valid && update_invalid) {
+            cube.update_polygon_cache();
         }
-        if (cube->m_polygon_cache != nullptr) {
-            polygons.push_back(cube->m_polygon_cache);
+        if (cube.m_polygon_cache != nullptr) {
+            polygons.push_back(cube.m_polygon_cache);
         }
     };
-    collect(this->shared_from_this());
+    collect(*this);
     return polygons;
 }
 } // namespace inexor::vulkan_renderer::world
