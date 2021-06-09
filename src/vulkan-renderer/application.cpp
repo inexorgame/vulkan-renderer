@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
@@ -188,23 +189,32 @@ void Application::load_shaders() {
 void Application::load_octree_geometry() {
     spdlog::debug("Creating octree geometry.");
 
-    std::shared_ptr<world::Cube> cube = std::make_shared<world::Cube>(2.0f, glm::vec3{0, -1, -1});
-    cube->set_type(world::Cube::Type::OCTANT);
+    m_worlds.reserve(3);
 
-    cube->children()[3]->set_type(world::Cube::Type::EMPTY);
-    cube->children()[5]->set_type(world::Cube::Type::EMPTY);
-    cube->children()[6]->set_type(world::Cube::Type::EMPTY);
-    cube->children()[7]->set_type(world::Cube::Type::EMPTY);
+    m_worlds.emplace_back(std::make_shared<world::Cube>(5.0f, glm::vec3{10, 0, 0}));
+    m_worlds.emplace_back(std::make_shared<world::Cube>(1.0f, glm::vec3{0, 0, 0}));
+    m_worlds.emplace_back(std::make_shared<world::Cube>(1.6f, glm::vec3{0, 10, 0}));
 
-    for (const auto &polygons : cube->polygons(true)) {
-        for (const auto &triangle : *polygons) {
-            for (const auto &vertex : triangle) {
-                glm::vec3 color = {
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                };
-                m_octree_vertices.emplace_back(vertex, color);
+    m_worlds[0]->set_type(world::Cube::Type::OCTANT);
+    m_worlds[1]->set_type(world::Cube::Type::SOLID);
+    m_worlds[2]->set_type(world::Cube::Type::OCTANT);
+
+    m_worlds[0]->children()[3]->set_type(world::Cube::Type::EMPTY);
+    m_worlds[0]->children()[5]->set_type(world::Cube::Type::EMPTY);
+    m_worlds[0]->children()[6]->set_type(world::Cube::Type::EMPTY);
+    m_worlds[0]->children()[7]->set_type(world::Cube::Type::EMPTY);
+
+    for (const auto &world : m_worlds) {
+        for (const auto &polygons : world->polygons(true)) {
+            for (const auto &triangle : *polygons) {
+                for (const auto &vertex : triangle) {
+                    glm::vec3 color = {
+                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                    };
+                    m_octree_vertices.emplace_back(vertex, color);
+                }
             }
         }
     }
@@ -566,6 +576,27 @@ void Application::process_mouse_input() {
     m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
 }
 
+void Application::check_octree_collisions() {
+    // Check for collision between camera ray and every octree
+    for (const auto &world : m_worlds) {
+        const auto collision = ray_cube_collision_check(*world, m_camera->position(), m_camera->front());
+
+        if (collision) {
+            const auto intersection = collision.value().intersection();
+            const auto face_normal = collision.value().face();
+            const auto corner = collision.value().corner();
+            const auto edge = collision.value().edge();
+
+            spdlog::trace("pos {} {} {} | face {} {} {} | corner {} {} {} | edge {} {} {}", intersection.x,
+                          intersection.y, intersection.z, face_normal.x, face_normal.y, face_normal.z, corner.x,
+                          corner.y, corner.z, edge.x, edge.y, edge.z);
+
+            // Break after one collision.
+            break;
+        }
+    }
+}
+
 void Application::run() {
     spdlog::debug("Running Application.");
 
@@ -577,6 +608,7 @@ void Application::run() {
         process_mouse_input();
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
+        check_octree_collisions();
     }
 }
 

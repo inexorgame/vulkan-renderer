@@ -1,4 +1,10 @@
-add_executable(inexor-vulkan-renderer-benchmarks engine_benchmark_main.cpp)
+set(INEXOR_BENCHMARKING_SOURCE_FILES
+    engine_benchmark_main.cpp
+
+    world/cube_collision.cpp
+)
+
+add_executable(inexor-vulkan-renderer-benchmarks ${INEXOR_BENCHMARKING_SOURCE_FILES})
 
 set_target_properties(
     inexor-vulkan-renderer-benchmarks PROPERTIES

@@ -41,7 +41,7 @@ class InexorConan(ConanFile):
 
     def requirements(self):
         if self.options.build_benchmarks:
-            self.requires("benchmark/1.5.0")
+            self.requires("benchmark/1.5.2")
         if self.options.build_tests:
             self.requires("gtest/1.10.0")
 

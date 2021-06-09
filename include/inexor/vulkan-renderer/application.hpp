@@ -2,6 +2,8 @@
 
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
+#include "inexor/vulkan-renderer/world/collision_query.hpp"
+#include "inexor/vulkan-renderer/world/cube.hpp"
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_core.h>
@@ -33,6 +35,8 @@ class Application : public VulkanRenderer {
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 
     bool m_enable_validation_layers = true;
+    /// Inexor engine supports a variable number of octrees.
+    std::vector<std::shared_ptr<world::Cube>> m_worlds;
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call std::abort();
     // after reporting a validation layer (error) message.
@@ -50,6 +54,8 @@ class Application : public VulkanRenderer {
     void update_imgui_overlay();
     void check_application_specific_features();
     void update_uniform_buffers();
+    /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
+    void check_octree_collisions();
     void process_mouse_input();
 
 public:

@@ -4,6 +4,6 @@
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    RUN_ALL_TESTS();
+    std::cout << "RUN_ALL_TESTS() returned: " << RUN_ALL_TESTS() << std::endl;
     std::cin.get();
 }

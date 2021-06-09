@@ -1,4 +1,10 @@
-add_executable(inexor-vulkan-renderer-tests unit_tests_main.cpp)
+set(INEXOR_UNIT_TEST_SOURCE_FILES
+    unit_tests_main.cpp
+
+    world/cube_collision.cpp
+)
+
+add_executable(inexor-vulkan-renderer-tests ${INEXOR_UNIT_TEST_SOURCE_FILES})
 
 set_target_properties(
     inexor-vulkan-renderer-tests PROPERTIES
