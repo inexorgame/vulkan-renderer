@@ -22,6 +22,7 @@ minor = 0
 patch = 0
 
 [application.window]
+mode = "windowed"
 width = 800
 height = 800
 name = "Inexor-Vulkan-Renderer"
