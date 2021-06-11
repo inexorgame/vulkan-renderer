@@ -70,6 +70,19 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
     spdlog::debug("Title: '{}'", configuration_title);
 
+    using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
+    const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
+    if (wmodestr == "windowed") {
+        m_window_mode = WindowMode::WINDOWED;
+    } else if (wmodestr == "windowed_fullscreen") {
+        m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
+    } else if (wmodestr == "fullscreen") {
+        m_window_mode = WindowMode::FULLSCREEN;
+    } else {
+        spdlog::warn("Invalid application window mode: {}", wmodestr);
+        m_window_mode = WindowMode::WINDOWED;
+    }
+
     m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
     m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
     m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
@@ -397,7 +410,8 @@ Application::Application(int argc, char **argv) {
                                                      m_engine_version, VK_API_VERSION_1_1, m_enable_validation_layers,
                                                      enable_renderdoc_instance_layer);
 
-    m_window = std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true);
+    m_window =
+        std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
     m_input_data = std::make_unique<input::KeyboardMouseInputData>();
 

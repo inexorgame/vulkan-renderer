@@ -50,6 +50,7 @@ protected:
 
     std::uint32_t m_window_width{0};
     std::uint32_t m_window_height{0};
+    wrapper::Window::Mode m_window_mode{wrapper::Window::Mode::WINDOWED};
 
     std::string m_window_title;
 
