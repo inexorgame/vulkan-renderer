@@ -429,7 +429,9 @@ public:
     /// @param wait_semaphore The semaphore to wait on before rendering, typically some kind of "swapchain image
     /// available" semaphore
     /// @param graphics_queue The graphics queue to push rendering commands to
-    VkSemaphore render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue);
+    /// @param signal_fence The fence to signal on completion of the whole frame
+    VkSemaphore render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue,
+                       VkFence signal_fence);
 };
 
 template <typename T>

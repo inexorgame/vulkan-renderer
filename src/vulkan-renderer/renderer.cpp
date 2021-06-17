@@ -79,7 +79,9 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
     setup_render_graph();
 
+    m_frame_finished_fence.reset();
     m_image_available_semaphore.reset();
+    m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
 
     m_camera = std::make_unique<Camera>(glm::vec3(5.0f, 5.0f, 10.0f), 250.0f, 0.0f,
@@ -100,9 +102,13 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
+    // Wait for last frame to finish rendering.
+    m_frame_finished_fence->block();
+    m_frame_finished_fence->reset();
+
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    VkSemaphore wait_semaphore =
-        m_render_graph->render(image_index, m_image_available_semaphore->get(), m_device->graphics_queue());
+    VkSemaphore wait_semaphore = m_render_graph->render(image_index, m_image_available_semaphore->get(),
+                                                        m_device->graphics_queue(), m_frame_finished_fence->get());
 
     // TODO(): Create a queue wrapper class
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();

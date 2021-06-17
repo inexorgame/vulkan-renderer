@@ -505,7 +505,8 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue) {
+VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue,
+                                VkFence signal_fence) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -540,15 +541,21 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
     };
     submit_info.pWaitDstStageMask = wait_stage_mask.data();
 
-    // TODO: Batch submit infos.
+    std::vector<VkSemaphore> wait_semaphores;
     for (const auto *stage : m_stage_stack) {
-        const auto &physical = *stage->m_physical;
+        wait_semaphores.push_back(wait_semaphore);
+        wait_semaphore = stage->m_physical->m_finished_semaphore->get();
+    }
+
+    std::vector<VkSubmitInfo> submit_infos;
+    for (std::size_t i = 0; i < m_stage_stack.size(); i++) {
+        const auto &physical = *m_stage_stack[i]->m_physical;
         submit_info.pCommandBuffers = physical.m_command_buffers[image_index].ptr();
         submit_info.pSignalSemaphores = physical.m_finished_semaphore->ptr();
-        submit_info.pWaitSemaphores = &wait_semaphore;
-        vkQueueSubmit(graphics_queue, 1, &submit_info, nullptr);
-        wait_semaphore = physical.m_finished_semaphore->get();
+        submit_info.pWaitSemaphores = &wait_semaphores[i];
+        submit_infos.push_back(submit_info);
     }
+    vkQueueSubmit(graphics_queue, submit_infos.size(), submit_infos.data(), signal_fence);
     return m_stage_stack.back()->m_physical->m_finished_semaphore->get();
 }
 
