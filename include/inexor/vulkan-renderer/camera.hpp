@@ -53,7 +53,7 @@ private:
     /// The camera's maximum pitch angle.
     /// Looking straight upwards is the maximum pitch angle.
     float m_pitch_max{+89.0f};
-    /// The camera's field of view.
+    /// The camera's horizontal field of view.
     float m_fov{90.0f};
     /// The camera's maximum field of view.
     float m_fov_max{90.0f};

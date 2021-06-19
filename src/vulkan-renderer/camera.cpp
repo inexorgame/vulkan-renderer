@@ -28,8 +28,9 @@ void Camera::update_vectors() {
 
 void Camera::update_matrices() {
     if (m_type == CameraType::LOOK_AT) {
+        const float vertical_fov = 2.0f * glm::atan(glm::tan(glm::radians(m_fov) / 2.0f) / m_aspect_ratio);
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, m_up);
-        m_perspective_matrix = glm::perspective(glm::radians(m_fov), m_aspect_ratio, m_near_plane, m_far_plane);
+        m_perspective_matrix = glm::perspective(vertical_fov, m_aspect_ratio, m_near_plane, m_far_plane);
         m_update_needed = false;
     }
 }
