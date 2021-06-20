@@ -84,7 +84,7 @@ void VulkanRenderer::recreate_swapchain() {
     m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
 
-    m_camera = std::make_unique<Camera>(glm::vec3(5.0f, 5.0f, 10.0f), 250.0f, 0.0f,
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
     m_camera->set_movement_speed(5.0f);
