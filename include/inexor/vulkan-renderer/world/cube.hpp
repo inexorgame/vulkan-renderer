@@ -47,8 +47,6 @@ public:
     static constexpr std::size_t EDGES{12};
     /// Cube Type.
     enum class Type { EMPTY = 0b00u, SOLID = 0b01u, NORMAL = 0b10u, OCTANT = 0b11u };
-    enum class NeighborAxis { X = 2, Y = 1, Z = 0 };
-    enum class NeighborDirection { POSITIVE, NEGATIVE };
 
     /// IDs of the children and edges which will be swapped to receive the rotation.
     /// To achieve a 90 degree rotation the 0th index have to be swapped with the 1st and the 1st with the 2nd, etc.
@@ -73,8 +71,8 @@ private:
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
 
-    /// Index of this in m_parent.m_children; nullopt if root.
-    std::optional<uint8_t> m_index{std::nullopt};
+    /// Index of this in m_parent.m_children; undefined behaviour if root.
+    uint8_t m_child_index{0};
 
     /// Indentations, should only be used if it is a geometry cube.
     std::array<Indentation, Cube::EDGES> m_indentations;
@@ -176,7 +174,7 @@ public:
     /// Get the neighbor of this cube.
     /// @param axis The axis on which to get the neighboring cube
     /// @param direction Whether to get the cube which is above or below this cube on the selected axis
-    [[nodiscard]] std::optional<std::shared_ptr<Cube>> neighbor(NeighborAxis axis, NeighborDirection direction);
+    [[nodiscard]] std::optional<std::shared_ptr<Cube>> neighbor(const glm::vec<3, int> &direction);
 };
 
 } // namespace inexor::vulkan_renderer::world

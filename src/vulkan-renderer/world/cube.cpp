@@ -1,12 +1,14 @@
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
+#include <set>
+
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept {
     std::swap(lhs.m_type, rhs.m_type);
     std::swap(lhs.m_size, rhs.m_size);
     std::swap(lhs.m_position, rhs.m_position);
     std::swap(lhs.m_parent, rhs.m_parent);
-    std::swap(lhs.m_index, rhs.m_index);
+    std::swap(lhs.m_child_index, rhs.m_child_index);
     std::swap(lhs.m_indentations, rhs.m_indentations);
     std::swap(lhs.m_children, rhs.m_children);
     std::swap(lhs.m_polygon_cache, rhs.m_polygon_cache);
@@ -174,7 +176,7 @@ Cube::Cube(const float size, const glm::vec3 &position) : m_size(size), m_positi
 Cube::Cube(std::weak_ptr<Cube> parent, const std::uint8_t index, const float size, const glm::vec3 &position)
     : Cube(size, position) {
     m_parent = std::move(parent);
-    m_index = index;
+    m_child_index = index;
 }
 
 Cube::Cube(Cube &&rhs) noexcept : Cube() {
@@ -206,6 +208,7 @@ std::shared_ptr<Cube> Cube::clone() const {
         for (std::size_t idx = 0; idx <= this->m_children.size(); idx++) {
             clone->m_children[idx] = this->m_children[idx]->clone();
             clone->m_children[idx]->m_parent = clone;
+            clone->m_children[idx]->m_child_index = static_cast<std::uint8_t>(idx);
         }
     }
     clone->m_polygon_cache_valid = this->m_polygon_cache_valid;
@@ -399,9 +402,11 @@ void Cube::update_polygon_cache() const {
     // This point should not be reached.
     assert(false);
 }
+
 void Cube::invalidate_polygon_cache() const {
     m_polygon_cache_valid = false;
 }
+
 std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     std::vector<PolygonCache> polygons;
     polygons.reserve(count_geometry_cubes());
@@ -424,67 +429,54 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     collect(*this);
     return polygons;
 }
-std::optional<std::shared_ptr<Cube>> Cube::neighbor(const NeighborAxis axis, const NeighborDirection direction) {
-    assert(!is_root());
 
-    // Each axis only requires information and manipulation of one (relevant) bit to find the neighbor.
-    const auto relevant_bit_index = static_cast<std::uint8_t>(axis); // bit index of the axis we are working on
-
-    std::function<bool(const std::uint8_t)> get_bit = [&relevant_bit_index](const std::uint8_t bit_index) {
-        return (bit_index >> relevant_bit_index) & 1u;
-    };
-    std::function<std::uint8_t(const std::uint8_t)> toggle_bit = [&relevant_bit_index](const std::uint8_t bit_index) {
-        return bit_index ^ (1u << relevant_bit_index);
-    };
-
-    auto parent = m_parent.lock();
-    const std::uint8_t index = m_index.value();
-    const bool this_bit = get_bit(index);
-
-    // The relevant bit denotes whether `m_parent` and `this` share a face on the upper side of the relevant axis.
-    // If they share one and also the user wants to go in the positive direction, then the neighbor is not a sibling.
-    // (Same for opposite, i.e. share face on lower side and going negative direction.)
-    if (this_bit && direction == NeighborDirection::NEGATIVE || !this_bit && direction == NeighborDirection::POSITIVE) {
-        // The demanded neighbor is a sibling! Return the neighboring sibling.
-        return parent->m_children[toggle_bit(index)];
-    }
-    if (parent->is_root()) {
+std::optional<std::shared_ptr<Cube>> Cube::neighbor(const glm::vec<3, int> &direction) {
+    assert((direction.x + direction.y + direction.z) == 1);
+    // this includes the root check, root would be nullptr
+    std::shared_ptr<Cube> parent = m_parent.lock();
+    if (parent == nullptr) {
         return std::nullopt;
     }
-    // the neighbor is further away than a sibling
 
-    // Keep the history of indices because we just need to mirror indices (i.e. toggle the relevant bit)
-    // to find the desired neighboring cube.
-    std::stack<std::uint8_t> history;
-    history.push(index);
-
-    // Find the first cube where the bit (of `get_bit`) is different to `this_bit`.
-    // That cubes parent is the first mutual parent of the desired neighbor and `this`.
-    std::uint8_t p_index = parent->m_index.value();
-    history.push(p_index);
-    while (get_bit(p_index) == this_bit) {
-        parent = parent->m_parent.lock();
-        if (parent->is_root()) {
-            return std::nullopt;
+    // X axis
+    if (direction.x != 0) {
+        const bool is_back = m_child_index == 0 || m_child_index == 1 || m_child_index == 2 ||
+                             m_child_index == 3;
+        if (is_back && direction.x == 1) {
+            return parent->m_children[m_child_index + 4];
         }
-        p_index = parent->m_index.value();
-        history.push(p_index);
+        if (!is_back && direction.x == -1) {
+            return parent->m_children[m_child_index - 4];
+        }
+        /// TODO: neighbor is not inside the parent cube
     }
 
-    // get the first mutual parent of neighbor and `this`.
-    std::shared_ptr<Cube> child = parent->m_parent.lock();
-
-    // Now mirror the path we took by just flipping the relevant bit of each index in the history.
-    while (!history.empty()) {
-        if (child->m_type != Type::OCTANT) {
-            // The neighbor is larger but still a neighbor!
-            return std::shared_ptr<Cube>(child);
+    // Y axis
+    if (direction.y != 0) {
+        const bool is_left = m_child_index == 0 || m_child_index == 1 || m_child_index == 4 ||
+                             m_child_index == 5;
+        if (is_left && direction.y == 1) {
+            return parent->m_children[m_child_index + 2];
         }
-        child = child->m_children[toggle_bit(history.top())];
-        history.pop();
+        if (!is_left && direction.y == -1) {
+            return parent->m_children[m_child_index - 2];
+        }
+        /// TODO: neighbor is not inside the parent cube
+    }
+    // Z axis
+    if (direction.z != 0) {
+        const bool is_lower = m_child_index == 0 || m_child_index == 2 || m_child_index == 4 ||
+                              m_child_index == 6;
+        if (is_lower && direction.z == 1) {
+            return parent->m_children[m_child_index + 1];
+        }
+        if (!is_lower && direction.z == -1) {
+            return parent->m_children[m_child_index - 1];
+        }
+        /// TODO: neighbor is not inside the parent cube
     }
 
     // We found a same-sized neighbor!
-    return std::shared_ptr<Cube>(child);
+    return std::nullopt;
 }
 } // namespace inexor::vulkan_renderer::world
