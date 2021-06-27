@@ -13,8 +13,8 @@ name = "Inexor-Engine"
 
 [application.window]
 mode = "windowed"
-width = 800
-height = 800
+width = 1280
+height = 720
 name = "Inexor-Vulkan-Renderer"
 
 [shaders]
