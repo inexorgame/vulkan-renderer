@@ -6,41 +6,13 @@
 
 namespace inexor::vulkan_renderer::vk_tools {
 
-/// @brief Convert a VkPresentModeKHR value into the corresponding std::string value.
-/// @param present_mode The present mode.
-/// @return A std::string which contains the presentation mode.
-[[nodiscard]] std::string present_mode_khr_to_string(VkPresentModeKHR present_mode);
+/// @brief Convert a Vulkan data structure into a std::string_view.
+template <typename VulkanDataType>
+[[nodiscard]] std::string_view as_string(VulkanDataType);
 
-/// @brief Convert a VkPhysicalDeviceType value into the corresponding std::string value.
-/// @param gpu_type The type of the physical device.
-/// @return A std::string which contains the physical device type.
-[[nodiscard]] std::string physical_device_type_to_string(VkPhysicalDeviceType gpu_type);
-
-/// @brief Convert a VkFormat value into the corresponding value as std::string.
-/// @param format The VkFormat to convert.
-/// @return A std::string which contains the VkFormat.
-[[nodiscard]] std::string format_to_string(VkFormat format);
-
-/// @brief Turn a VkResult into a string.
+/// @brief Return a VkResult's description text as std::string_view.
 /// @note This function can be used for both VkResult error and success values.
-/// @param result The VkResult return value which will be turned into a string.
-[[nodiscard]] std::string result_to_string(VkResult result);
-
-/// @brief Return a VkResult's description text.
-/// @note This function can be used for both VkResult error and success values.
-/// @param result The VkResult return value which will be turned into a string.
-[[nodiscard]] std::string result_to_description(VkResult result);
-
-/// @brief Convert a VkQueueFlagBits value into the corresponding value as std::string.
-/// @param bit The queue flag bit.
-[[nodiscard]] std::string queue_flag_bit_to_string(VkQueueFlagBits bit);
-
-/// @brief Convert a VkMemoryPropertyFlags value into the corresponding value as std::string.
-/// @param bit The memory property flag bit.
-[[nodiscard]] std::string memory_property_flag_to_string(VkMemoryPropertyFlags bit);
-
-/// @brief Convert a VkMemoryHeapFlagBits value into the corresponding value as std::string.
-/// @param bit The memory heap flag bit.
-[[nodiscard]] std::string memory_heap_flag_to_string(VkMemoryHeapFlagBits bit);
+/// @param result The VkResult return value which will be turned into a std::string_view.
+[[nodiscard]] std::string_view result_to_description(VkResult result);
 
 } // namespace inexor::vulkan_renderer::vk_tools

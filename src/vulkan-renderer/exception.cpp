@@ -4,8 +4,11 @@
 
 namespace inexor::vulkan_renderer {
 
-VulkanException::VulkanException(const std::string &message, const VkResult result)
-    : InexorException(message + " (" + vk_tools::result_to_string(result) + ": " +
-                      vk_tools::result_to_description(result) + ")") {}
+VulkanException::VulkanException(std::string message, const VkResult result)
+    : InexorException(message.append(" (")
+                          .append(vk_tools::as_string<VkResult>(result))
+                          .append(": ")
+                          .append(vk_tools::result_to_description(result))
+                          .append(")")) {}
 
 } // namespace inexor::vulkan_renderer

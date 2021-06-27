@@ -19,7 +19,7 @@ class VulkanException final : public InexorException {
 public:
     /// @param message The exception message.
     /// @param result The VkResult value of the Vulkan API call which failed.
-    VulkanException(const std::string &message, VkResult result);
+    VulkanException(std::string message, VkResult result);
 };
 
 } // namespace inexor::vulkan_renderer
