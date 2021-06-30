@@ -14,14 +14,6 @@ set_target_properties(
     CXX_STANDARD_REQUIRED ON
 )
 
-target_include_directories(
-    inexor-vulkan-renderer-tests
-
-    PUBLIC
-    # Include configured header file which contains engine metadata
-    ${CMAKE_BINARY_DIR}/src/include/inexor/vulkan-renderer/
-)
-
 target_link_libraries(
     inexor-vulkan-renderer-tests
 

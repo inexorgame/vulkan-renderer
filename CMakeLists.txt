@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.19)
 
 # https://cmake.org/cmake/help/latest/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
@@ -38,18 +38,16 @@ find_package(Vulkan REQUIRED)
 include(conan_setup)
 
 # The marked constants in application.hpp will be replaced with the following values
-set(ENGINE_NAME "Inexor Engine")
-set(APP_NAME "Inexor Vulkan-renderer example")
+set(INEXOR_ENGINE_NAME "Inexor Engine")
+set(INEXOR_APP_NAME "Inexor Vulkan-renderer example")
 
-set(ENGINE_VERSION_MAJOR 0)
-set(ENGINE_VERSION_MINOR 1)
-set(ENGINE_VERSION_PATCH 0)
+set(INEXOR_ENGINE_VERSION_MAJOR 0)
+set(INEXOR_ENGINE_VERSION_MINOR 1)
+set(INEXOR_ENGINE_VERSION_PATCH 0)
 
-set(APP_VERSION_MAJOR 0)
-set(APP_VERSION_MINOR 1)
-set(APP_VERSION_PATCH 0)
-
-set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
+set(INEXOR_APP_VERSION_MAJOR 0)
+set(INEXOR_APP_VERSION_MINOR 1)
+set(INEXOR_APP_VERSION_PATCH 0)
 
 find_package(Git REQUIRED)
 
@@ -57,8 +55,9 @@ find_package(Git REQUIRED)
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=7
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_SHA
+    OUTPUT_VARIABLE INEXOR_GIT_SHA
     OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
 )
 
 add_subdirectory(shaders)
