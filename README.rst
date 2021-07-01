@@ -33,6 +33,17 @@ Our current main objective is the development of a new 3d octree game engine.
 
 Inexor is licensed under the `MIT license <https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE>`__.
 
+
+Sponsors
+########
+
+Special thanks to `JetBrains <https://www.jetbrains.com/?from=github.com/inexorgame>`__ for providing us with CLion licenses!
+
+
+.. image:: documentation/source/images/icon_CLion.svg
+   :width: 150px
+
+
 .. Badges.
 
 .. |language| image:: https://img.shields.io/badge/language-C%2B%2B17-brightgreen
