@@ -365,7 +365,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     // This is very useful every time there is a bug in memory management.
     VmaRecordSettings vma_record_settings;
 
-    // We flush the stream after every write operation because we are expecting unforseen program crashes.
+    // We flush the stream after every write operation because we are expecting unforeseen program crashes.
     // This might has a negative effect on the application's performance but it's worth it for now.
     vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
     vma_record_settings.pFilePath = vma_replay_file.c_str();

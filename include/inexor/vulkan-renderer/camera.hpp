@@ -67,7 +67,7 @@ private:
     float m_movement_speed{2.0f};
     /// The camera's aspect ratio (width divided by height).
     float m_aspect_ratio{1920.0f / 1080.0f};
-    /// The sensivity of the mouse.
+    /// The sensitivity of the mouse.
     float m_mouse_sensitivity{0.005f};
     /// The camera's near plane.
     float m_near_plane{0.001f};

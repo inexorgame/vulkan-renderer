@@ -655,7 +655,7 @@ std::string_view result_to_description(const VkResult result) {
     case VK_ERROR_FORMAT_NOT_SUPPORTED:
         return "A requested format is not supported on this device";
     case VK_ERROR_FRAGMENTED_POOL:
-        return "A pool allocation has failed due to fragmentation of the pool�s memory. This must only be returned if "
+        return "A pool allocation has failed due to fragmentation of the pool's memory. This must only be returned if "
                "no attempt to allocate host or device memory was made to accommodate the new allocation. This should "
                "be returned in preference to VK_ERROR_OUT_OF_POOL_MEMORY, but only if the implementation is certain "
                "that the pool allocation failure was due to fragmentation";
@@ -686,8 +686,8 @@ std::string_view result_to_description(const VkResult result) {
         return "A buffer creation failed because the requested address is not available";
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
         return "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT "
-               "failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent "
-               "reasons, outside of the application�s control";
+               "failed as it did not have exclusive full-screen access. This may occur due to implementation-dependent "
+               "reasons, outside of the application's control";
     case VK_ERROR_UNKNOWN:
         return "An unknown error has occurred; either the application has provided invalid input, or an implementation "
                "failure has occurred";

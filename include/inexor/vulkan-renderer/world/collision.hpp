@@ -9,7 +9,7 @@ namespace inexor::vulkan_renderer::world {
 
 /// @brief A wrapper for collisions between a ray and octree geometry.
 /// This class is used for octree collision, but it can be used for every cube-like data structure
-/// @tparam T A templatable type which offers a size() and center() method.
+/// @tparam T A template type which offers a size() and center() method.
 template <typename T>
 class RayCubeCollision {
     const T &m_cube;

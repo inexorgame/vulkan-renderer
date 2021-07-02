@@ -20,7 +20,7 @@ public:
     /// @brief Default constructor.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the VkFence.
-    /// @param in_signaled_state True if the VkFence will be constructored in signaled state, false otherwise.
+    /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
     Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state);
 

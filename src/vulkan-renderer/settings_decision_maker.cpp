@@ -75,7 +75,7 @@ VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_u
         accepted_color_format.format = VK_FORMAT_B8G8R8A8_UNORM;
         accepted_color_format.colorSpace = available_surface_formats[0].colorSpace;
     } else {
-        // This vector contais all the formats that we can accept.
+        // This vector contains all the formats that we can accept.
         // Currently we use VK_FORMAT_B8G8R8A8_UNORM only, since it's the norm.
         std::vector<VkFormat> accepted_formats = {
             VK_FORMAT_B8G8R8A8_UNORM
@@ -178,7 +178,7 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(VkPhysicalDevice gra
         return false;
     }
 
-    // Add more suitability checks here if neccesary.
+    // Add more suitability checks here if necessary.
 
     return true;
 }
@@ -290,13 +290,13 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(VkInstance vulkan
     if (preferred_gpu_index) {
         // Check if this array index is valid!
         if (*preferred_gpu_index >= 0 && preferred_gpu_index < gpu_count) {
-            spdlog::debug("Command line parameter for prefered GPU specified. Checking graphics card with index {}",
+            spdlog::debug("Command line parameter for preferred GPU specified. Checking graphics card with index {}",
                           *preferred_gpu_index);
 
             // Check if the graphics card selected by the user meets all the criteria we need!
             if (is_graphics_card_suitable(available_gpus[*preferred_gpu_index], surface)) {
                 // We are done: Use the graphics card which was specified by the user's command line argument.
-                spdlog::debug("The prefered graphics card is suitable for this application");
+                spdlog::debug("The preferred graphics card is suitable for this application");
                 spdlog::debug("Score: {}", rate_graphics_card(available_gpus[*preferred_gpu_index]));
                 return available_gpus[*preferred_gpu_index];
             }
@@ -326,7 +326,7 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(VkInstance vulkan
     // ATTEMPT 3
     // There are more than 1 graphics card available and the user did not specify which one to use.
     // If there are exactly 2 graphics card and one of them is VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU and the other one
-    // is VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, we should prefere the real graphics card over the integrated one.
+    // is VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, we should prefer the real graphics card over the integrated one.
     // We also need to check if the VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU one is suitable though!
     // If that is not the case, we check if the VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU is suitable and use it instead.
     // If both are unsuitable, there are no suitable graphics cards available on this machine!
@@ -596,7 +596,7 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDev
     }
 
     spdlog::error("VK_PRESENT_MODE_FIFO_KHR is not supported by the regarded device.");
-    spdlog::error("Accoring to the Vulkan specification, this shouldn't even be possible!");
+    spdlog::error("According to the Vulkan specification, this shouldn't even be possible!");
 
     // Lets try with any present mode available!
     if (!available_present_modes.empty()) {
@@ -626,7 +626,7 @@ SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(VkPhysica
 
     if (surface_capabilities.currentExtent.width == std::numeric_limits<std::uint32_t>::max() &&
         surface_capabilities.currentExtent.height == std::numeric_limits<std::uint32_t>::max()) {
-        // The size of the window dictates the swapchain's extent.
+        // The size of the window dictates the extent of the swapchain.
         updated_swapchain_settings.swapchain_size.width = window_width;
         updated_swapchain_settings.swapchain_size.height = window_height;
     } else {

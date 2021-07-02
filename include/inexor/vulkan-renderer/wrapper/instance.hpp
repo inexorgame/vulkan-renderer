@@ -25,7 +25,7 @@ public:
 
     /// @brief Construct the Vulkan instance and specify the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name.
-    /// @param engine_name The Vulkan appliation's internal engine name.
+    /// @param engine_name The Vulkan application's internal engine name.
     /// @param application_version The Vulkan application's internal version.
     /// @param engine_version The Vulkan application's internal engine version.
     /// @param vulkan_api_version The requested version of Vulkan API from which an instance will be created.
@@ -41,7 +41,7 @@ public:
 
     /// @brief Construct the Vulkan instance without the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name.
-    /// @param engine_name The Vulkan appliation's internal engine name.
+    /// @param engine_name The Vulkan application's internal engine name.
     /// @param application_version The Vulkan application's internal version.
     /// @param engine_version The Vulkan application's internal engine version.
     /// @param vulkan_api_version The requested version of Vulkan API from which an instance will be created.

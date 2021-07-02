@@ -111,7 +111,7 @@ public:
     }
 
     /// @note Transfer queues are the fastest way to copy data across the PCIe bus. They are heavily underutilized
-    /// even in modern games. Transfer queues can be used asynchronously to graphics queuey.
+    /// even in modern games. Transfer queues can be used asynchronously to graphics queue.
     [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
     }

@@ -98,7 +98,7 @@ public:
 
     bool m_window_resized{false};
 
-    /// Neccesary for taking into account the relative speed of the system's CPU.
+    /// Necessary for taking into account the relative speed of the system's CPU.
     float m_time_passed{0.0f};
 
     ///

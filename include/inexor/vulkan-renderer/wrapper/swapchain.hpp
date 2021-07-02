@@ -27,7 +27,7 @@ class Swapchain {
 
     /// @brief Set up the swapchain.
     /// @param old_swapchain The old swapchain.
-    /// @note Swapchain recreation can be speeded up drastically when passing the old swapchian.
+    /// @note Swapchain recreation can be made faster drastically when passing the old swapchain.
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
     void setup_swapchain(VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);

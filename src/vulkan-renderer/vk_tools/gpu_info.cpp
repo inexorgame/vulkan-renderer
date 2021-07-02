@@ -54,7 +54,7 @@ void print_physical_device_queue_families(const VkPhysicalDevice gpu) {
             }
         }
 
-        spdlog::debug("Min image transfer granularity: width {}, heigth {}, depth {}",
+        spdlog::debug("Min image transfer granularity: width {}, height {}, depth {}",
                       queue_family_properties[i].minImageTransferGranularity.width,
                       queue_family_properties[i].minImageTransferGranularity.height,
                       queue_family_properties[i].minImageTransferGranularity.depth);

@@ -198,8 +198,8 @@ public:
         m_descriptor_layouts.push_back(layout);
     }
 
-    /// @brief Specifies a function that will be called during command buffer recordation for this stage
-    /// @details This function can be used to specify other vulkan commands during command buffer recordation. The most
+    /// @brief Specifies a function that will be called during command buffer recording for this stage
+    /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
     ///          common use for this is for draw commands.
     void set_on_record(std::function<void(const class PhysicalStage *, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
