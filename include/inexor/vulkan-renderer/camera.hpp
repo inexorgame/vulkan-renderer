@@ -16,7 +16,7 @@ constexpr glm::vec3 DEFAULT_FRONT{1.0f, 0.0f, 0.0f};
 constexpr glm::vec3 DEFAULT_RIGHT{0.0f, 1.0f, 0.0f};
 /// The default value of the camera's up vector.
 constexpr glm::vec3 DEFAULT_UP{0.0f, 0.0f, 1.0f};
-}; // namespace directions
+} // namespace directions
 
 enum class CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
 
@@ -225,4 +225,4 @@ public:
         return m_perspective_matrix;
     }
 };
-}; // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer
