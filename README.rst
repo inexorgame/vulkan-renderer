@@ -2,9 +2,7 @@
 vulkan-renderer
 ***************
 
-|language| |platforms| |github actions| |readthedocs| |license|
-
-|issues| |last commit| |code size| |contributors| |discord| |downloads|
+|language| |platforms| |github actions| |readthedocs| |discord| |downloads| |license|
 
 
 .. image:: documentation/source/images/banner.jpg
@@ -59,17 +57,7 @@ Special thanks to `JetBrains <https://www.jetbrains.com/?from=github.com/inexorg
 .. |license| image:: https://img.shields.io/github/license/inexorgame/vulkan-renderer?color=brightgreen
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
 
-.. |contributors| image:: https://img.shields.io/github/contributors/inexorgame/vulkan-renderer
-   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributing/contributors.html
-
 .. |downloads| image:: https://img.shields.io/github/downloads/inexorgame/vulkan-renderer/total?color=brightgreen
 
 .. |readthedocs| image:: https://readthedocs.org/projects/inexor-vulkan-renderer/badge/?version=latest
    :target: https://inexor-vulkan-renderer.readthedocs.io
-
-.. |last commit| image:: https://img.shields.io/github/last-commit/inexorgame/vulkan-renderer
-
-.. |issues| image:: https://img.shields.io/github/issues/inexorgame/vulkan-renderer
-   :target: https://github.com/inexorgame/vulkan-renderer/issues
-
-.. |code size| image:: https://img.shields.io/github/languages/code-size/inexorgame/vulkan-renderer
