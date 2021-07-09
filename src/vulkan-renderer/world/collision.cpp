@@ -23,14 +23,14 @@ RayCubeCollision<T>::RayCubeCollision(RayCubeCollision &&other) noexcept : m_cub
 template <typename T>
 RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, const glm::vec3 ray_dir) : m_cube(cube) {
 
-    // This lambda adjusts the center points on a cube's face to the size of the octree,
-    // so collision works with cubes of any size. This does not yet account for rotations!
+    /// In order to work with cubes of arbitrary size, this lambda calculates the center of a cube's face with respect
+    /// to the size of the octree.
     const auto adjust_coordinates = [=](const glm::vec3 pos) {
         // TODO: Take rotation of the cube into account.
         return m_cube.center() + pos * (m_cube.size() / 2);
     };
 
-    // x: left/right, y: front/back, z: top/bottom.
+    /// x: left/right, y: front/back, z: top/bottom
     static constexpr std::array BBOX_DIRECTIONS{
         glm::vec3(-1.0f, 0.0f, 0.0f), // left
         glm::vec3(1.0f, 0.0f, 0.0f),  // right
@@ -40,7 +40,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         glm::vec3(0.0f, 0.0f, -1.0f)  // bottom
     };
 
-    // The coordinates of the center of every face of the cube.
+    /// The coordinates of the center of every face of the cube
     const std::array bbox_face_centers{adjust_coordinates(BBOX_DIRECTIONS[0]),  // left
                                        adjust_coordinates(BBOX_DIRECTIONS[1]),  // right
                                        adjust_coordinates(BBOX_DIRECTIONS[2]),  // front
@@ -59,7 +59,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
 
     using bbox_corner_on_face_index = std::array<std::size_t, 4>;
 
-    // These indices specify which 4 points describe the corners on the given face.
+    /// These indices specify which 4 bounding box corner points are the corners on the given face
     static constexpr std::array BBOX_CORNERS_ON_FACE_INDICES{
         bbox_corner_on_face_index{0, 1, 2, 3}, // left
         bbox_corner_on_face_index{4, 5, 6, 7}, // right
@@ -69,7 +69,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         bbox_corner_on_face_index{0, 2, 4, 6}  // bottom
     };
 
-    // The coordinates of the center of every edge of the cube.
+    /// The coordinates of the center of every edge of the cube
     const std::array bbox_edges{adjust_coordinates({-1.0f, 0.0f, 1.0f}),  // left top
                                 adjust_coordinates({-1.0f, 1.0f, 0.0f}),  // left front
                                 adjust_coordinates({-1.0f, 0.0f, -1.0f}), // left bottom
@@ -85,7 +85,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
 
     using edge_on_face_index = std::array<std::size_t, 4>;
 
-    // These indices specify which 4 edges are associated with a given face of the bounding box.
+    /// These indices specify which 4 edges are associated with a given face of the bounding box
     static constexpr std::array BBOX_EDGE_ON_FACE_INDICES{
         edge_on_face_index{0, 1, 2, 3},   // left
         edge_on_face_index{4, 5, 6, 7},   // right
@@ -96,11 +96,11 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
     };
 
     /// @brief Determine the intersection point between a ray and a plane.
-    /// @note This function is not available in glm.
-    /// @param plane_pos The position of the plane.
-    /// @param plane_norm The normal vector of the plane.
-    /// @param ray_pos Point a on the ray.
-    /// @param ray_dir Point b on the ray.
+    /// @note This function is not implemented by default in glm
+    /// @param plane_pos The position of the plane
+    /// @param plane_norm The normal vector of the plane
+    /// @param ray_pos Point a on the ray
+    /// @param ray_dir Point b on the ray
     const auto ray_plane_intersection_point = [&](const glm::vec3 &plane_pos, const glm::vec3 &plane_norm,
                                                   const glm::vec3 &ray_pos, const glm::vec3 &ray_dir) {
         return ray_pos - ray_dir * (glm::dot((ray_pos - plane_pos), plane_norm) / glm::dot(ray_dir, plane_norm));
@@ -115,8 +115,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
     /// vector coordinates. This is not necessary in this case, as we are not interested in the exact distance but
     /// rather in a value which allows us to determine the nearest corner. This means we can use the squared
     /// distance, which allows us to avoid the costly call of ``sqrt``.
-    /// @param pos1 The first point.
-    /// @param pos2 The second point.
+    /// @param points A const reference to a std::array of size 2 which contains both points
     const auto square_of_distance = [&](const std::array<glm::vec3, 2> &points) {
         return glm::distance2(points[0], points[1]);
     };
@@ -124,15 +123,16 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
     float shortest_squared_distance{std::numeric_limits<float>::max()};
     float squared_distance{std::numeric_limits<float>::max()};
 
-    // The index of the array which contains the coordinates of the face centers of the cube's bounding box.
+    /// The index of the array which contains the coordinates of the face centers of the cube's bounding box
     std::size_t selected_face_index{0};
 
-    // Loop though all faces of the cube and check for collision between ray and face plane.
+    // Loop though all faces of the cube and check for collision between ray and face plane
+    // There is no need to sort the data as we are interested in the smallest value only
     for (std::size_t i = 0; i < 6; i++) {
 
         // Check if the cube side is facing the camera: if the dot product of the two vectors is smaller than
         // zero, the corresponding angle is smaller than 90 degrees, so the side is facing the camera. Check the
-        // references page for a detailed explanation of this formula.
+        // references page or math books about geometry for a detailed explanation of this equation.
         if (glm::dot(BBOX_DIRECTIONS[i], ray_dir) < 0.0f) {
 
             const auto intersection =
@@ -149,10 +149,10 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         }
     }
 
-    // Reset value to maximum for the search of the closest corner.
+    // Reset value to maximum for the search of the closest corner
     shortest_squared_distance = std::numeric_limits<float>::max();
 
-    // Loop through all corners of this face and check for the nearest one.
+    // Loop through all corners of this face and check for the nearest one
     for (const auto corner_index : BBOX_CORNERS_ON_FACE_INDICES[selected_face_index]) {
         squared_distance = square_of_distance({bbox_corners[corner_index], m_intersection});
 
@@ -162,10 +162,10 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         }
     }
 
-    // Reset value to maximum for the search of the closest edge.
+    // Reset value to maximum for the search of the closest edge
     shortest_squared_distance = std::numeric_limits<float>::max();
 
-    // Iterate through all edges on this face and select the nearest one.
+    // Iterate through all edges on this face and select the nearest one
     for (const auto edge_index : BBOX_EDGE_ON_FACE_INDICES[selected_face_index]) {
 
         squared_distance = square_of_distance({bbox_edges[edge_index], m_intersection});
