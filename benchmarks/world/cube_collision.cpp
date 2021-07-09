@@ -20,4 +20,4 @@ void CubeCollision(benchmark::State &state) {
 
 BENCHMARK(CubeCollision);
 
-}; // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer

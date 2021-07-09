@@ -279,7 +279,7 @@ void Application::setup_window_and_input_callbacks() {
 }
 
 void Application::setup_vulkan_debug_callback() {
-    // Check if validation is enabled check for availabiliy of VK_EXT_debug_utils.
+    // Check if validation is enabled check for availability of VK_EXT_debug_utils.
     if (m_enable_validation_layers) {
         spdlog::debug("Khronos validation layer is enabled.");
 
@@ -310,7 +310,7 @@ void Application::setup_vulkan_debug_callback() {
 
                     // Check if --stop-on-validation-message is enabled.
                     if (user_data != nullptr) {
-                        // This feature stops command lines from overflooding with messages in case many validation
+                        // This feature stops command lines from overflowing with messages in case many validation
                         // layer messages are reported in a short amount of time.
                         spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
                         spdlog::critical("Application will cause a break point now!");
@@ -412,9 +412,9 @@ Application::Application(int argc, char **argv) {
     spdlog::debug("Creating window surface.");
 
     // The user can specify with "--gpu <number>" which graphics card to prefer.
-    auto prefered_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
-    if (prefered_graphics_card) {
-        spdlog::debug("Preferential graphics card index {} specified.", *prefered_graphics_card);
+    auto preferred_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
+    if (preferred_graphics_card) {
+        spdlog::debug("Preferential graphics card index {} specified.", *preferred_graphics_card);
     }
 
     bool display_graphics_card_info = true;
@@ -470,7 +470,7 @@ Application::Application(int argc, char **argv) {
 
     m_device = std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
                                                  enable_debug_marker_device_extension, use_distinct_data_transfer_queue,
-                                                 prefered_graphics_card);
+                                                 preferred_graphics_card);
 
     check_application_specific_features();
 

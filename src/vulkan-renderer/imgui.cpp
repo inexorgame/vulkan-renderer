@@ -253,7 +253,7 @@ void ImGUIOverlay::update() {
 
     if (update_command_buffers) {
 
-        // TOOD: Implement update_vertex_buffer() and update_index_buffer().
+        // TODO: Implement update_vertex_buffer() and update_index_buffer().
         auto *vertex_buffer_address = static_cast<ImDrawVert *>(m_imgui_mesh->get_vertex_buffer_address());
         auto *index_buffer_address = static_cast<ImDrawIdx *>(m_imgui_mesh->get_index_buffer_address());
 

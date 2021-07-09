@@ -22,7 +22,7 @@ struct SwapchainSettings {
 /// - Which presentation modes should be used?
 struct VulkanSettingsDecisionMaker {
 
-    /// @brief Rate a graphcs card by its features.
+    /// @brief Rate a graphics card by its features.
     /// @note The current implementation just sums up all available memory as a score.
     /// @todo Implement additional graphics card rating criteria if desired.
     /// @param graphics_card The graphics card which will be rated.
@@ -30,10 +30,10 @@ struct VulkanSettingsDecisionMaker {
     [[nodiscard]] static std::size_t rate_graphics_card(VkPhysicalDevice graphics_card);
 
     /// @brief Automatically decide if a graphics card is suitable for this application's purposes.
-    /// In order to be a suitable graphcs card for Inexor's purposes, it must fulfill the following criteria:
+    /// In order to be a suitable graphics card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.
     /// - It must support presentation.
-    /// @todo Add more checks to the validation mechanism if neccesary, e.h. check for geometry shader support.
+    /// @todo Add more checks to the validation mechanism if necessary, e.h. check for geometry shader support.
     /// @param graphics_card The graphics card which will be checked for suitability.
     /// @return ``true`` if the graphics card is suitable.
     /// @warning When implementing additional graphics card suitability criteria, do not return false for graphics cards
@@ -65,7 +65,7 @@ struct VulkanSettingsDecisionMaker {
     [[nodiscard]] static std::uint32_t decide_how_many_images_in_swapchain_to_use(VkPhysicalDevice graphics_card,
                                                                                   VkSurfaceKHR surface);
 
-    /// @brief Automatically decide whcih surface color to use in swapchain.
+    /// @brief Automatically decide which surface color to use in swapchain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The surface format for swapchain if any could be determined, std::nullopt otherwise.

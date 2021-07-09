@@ -158,7 +158,7 @@ void GpuTexture::create_texture_sampler() {
     // white or transparent in either float or int formats. You cannot specify an arbitrary color.
     sampler_ci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 
-    // The unnormalizedCoordinates field specifies which coordinate system you
+    // The unnormalized coordinates field specifies which coordinate system you
     // want to use to address texels in an image. If this field is VK_TRUE, then you
     // can simply use coordinates within the [0, texWidth) and [0, texHeight)
     // range. If it is VK_FALSE, then the texels are addressed using the [0, 1) range

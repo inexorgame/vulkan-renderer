@@ -5,7 +5,7 @@
 // INTRODUCTION
 // A bezier curve (named after french mathematician PIERRE ETIENNE BEZIER) is a parametric curve
 // whose only purpose is to look soft and smooth. Bezier curves are all about elegance!
-// Those curves can be used to represent the path of a everything (imagin a camera which is moving along a path for
+// Those curves can be used to represent the path of a everything (imagine a camera which is moving along a path for
 // example).
 //
 // Bezier curves are fast, flexible, beautiful and easy to compute. You just pass a bunch of parameter points to

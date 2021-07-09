@@ -5,7 +5,7 @@
 namespace inexor::vulkan_renderer {
 
 /// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
-/// Since every machine has slightly different speed, it is neccesary to the timestep when animating something.
+/// Since every machine has slightly different speed, it is necessary to the timestep when animating something.
 /// @todo Implement time step for every thread?
 class TimeStep {
     // The time point of the last render call.
