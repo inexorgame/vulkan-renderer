@@ -37,6 +37,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/once_command_buffer.cpp
+    vulkan-renderer/wrapper/query_pool.cpp
     vulkan-renderer/wrapper/renderpass.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp

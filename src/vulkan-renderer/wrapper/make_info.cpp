@@ -222,6 +222,13 @@ VkPresentInfoKHR make_info() {
 }
 
 template <>
+VkQueryPoolCreateInfo make_info() {
+    VkQueryPoolCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+    return ret;
+}
+
+template <>
 VkRenderPassBeginInfo make_info() {
     VkRenderPassBeginInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
