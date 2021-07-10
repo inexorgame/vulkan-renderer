@@ -1,0 +1,42 @@
+#include "resource.hpp"
+
+#define APSTUDIO_READONLY_SYMBOLS
+#include "winres.h"
+#undef APSTUDIO_READONLY_SYMBOLS
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION ${APP_VERSION_MAJOR},${APP_VERSION_MINOR},${APP_VERSION_PATCH},0
+ PRODUCTVERSION ${APP_VERSION_MAJOR},${APP_VERSION_MINOR},${APP_VERSION_PATCH},0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            // These placeholders will be filled out with the values specified by CMake
+            VALUE "CompanyName", "${APP_MANUFACTURER_NAME}"
+            VALUE "FileDescription", "${APP_DESCRIPTION}"
+            VALUE "FileVersion", "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}"
+            VALUE "InternalName", "${APP_NAME}"
+            VALUE "LegalCopyright", "${APP_LICENSE}"
+            VALUE "OriginalFilename", "${APP_ORIGINAL_NAME}"
+            VALUE "ProductName", "${APP_NAME}"
+            VALUE "ProductVersion", "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+// Use Inexor logo as icon for executable
+IDI_ICON1               ICON                    "${PROJECT_SOURCE_DIR}\\platform\\windows\\inexor_icon_256px.ico"
