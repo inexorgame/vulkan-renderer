@@ -40,7 +40,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         glm::vec3(0.0f, 0.0f, -1.0f)  // bottom
     };
 
-    /// The coordinates of the center of every face of the cube
+    /// The coordinates of the center of every face of the cube.
     const std::array bbox_face_centers{adjust_coordinates(BBOX_DIRECTIONS[0]),  // left
                                        adjust_coordinates(BBOX_DIRECTIONS[1]),  // right
                                        adjust_coordinates(BBOX_DIRECTIONS[2]),  // front
@@ -59,7 +59,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
 
     using bbox_corner_on_face_index = std::array<std::size_t, 4>;
 
-    /// These indices specify which 4 bounding box corner points are the corners on the given face
+    /// These indices specify which 4 bounding box corner points are the corners on the given face.
     static constexpr std::array BBOX_CORNERS_ON_FACE_INDICES{
         bbox_corner_on_face_index{0, 1, 2, 3}, // left
         bbox_corner_on_face_index{4, 5, 6, 7}, // right
@@ -69,7 +69,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         bbox_corner_on_face_index{0, 2, 4, 6}  // bottom
     };
 
-    /// The coordinates of the center of every edge of the cube
+    /// The coordinates of the center of every edge of the cube.
     const std::array bbox_edges{adjust_coordinates({-1.0f, 0.0f, 1.0f}),  // left top
                                 adjust_coordinates({-1.0f, 1.0f, 0.0f}),  // left front
                                 adjust_coordinates({-1.0f, 0.0f, -1.0f}), // left bottom
@@ -85,7 +85,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
 
     using edge_on_face_index = std::array<std::size_t, 4>;
 
-    /// These indices specify which 4 edges are associated with a given face of the bounding box
+    /// These indices specify which 4 edges are associated with a given face of the bounding box.
     static constexpr std::array BBOX_EDGE_ON_FACE_INDICES{
         edge_on_face_index{0, 1, 2, 3},   // left
         edge_on_face_index{4, 5, 6, 7},   // right
@@ -123,11 +123,11 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
     float shortest_squared_distance{std::numeric_limits<float>::max()};
     float squared_distance{std::numeric_limits<float>::max()};
 
-    /// The index of the array which contains the coordinates of the face centers of the cube's bounding box
+    /// The index of the array which contains the coordinates of the face centers of the cube's bounding box.
     std::size_t selected_face_index{0};
 
     // Loop though all faces of the cube and check for collision between ray and face plane
-    // There is no need to sort the data as we are interested in the smallest value only
+    // There is no need to sort the data as we are interested in the smallest value only.
     for (std::size_t i = 0; i < 6; i++) {
 
         // Check if the cube side is facing the camera: if the dot product of the two vectors is smaller than
@@ -149,10 +149,10 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         }
     }
 
-    // Reset value to maximum for the search of the closest corner
+    // Reset value to maximum for the search of the closest corner.
     shortest_squared_distance = std::numeric_limits<float>::max();
 
-    // Loop through all corners of this face and check for the nearest one
+    // Loop through all corners of this face and check for the nearest one.
     for (const auto corner_index : BBOX_CORNERS_ON_FACE_INDICES[selected_face_index]) {
         squared_distance = square_of_distance({bbox_corners[corner_index], m_intersection});
 
@@ -162,10 +162,10 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
         }
     }
 
-    // Reset value to maximum for the search of the closest edge
+    // Reset value to maximum for the search of the closest edge.
     shortest_squared_distance = std::numeric_limits<float>::max();
 
-    // Iterate through all edges on this face and select the nearest one
+    // Iterate through all edges on this face and select the nearest one.
     for (const auto edge_index : BBOX_EDGE_ON_FACE_INDICES[selected_face_index]) {
 
         squared_distance = square_of_distance({bbox_edges[edge_index], m_intersection});
