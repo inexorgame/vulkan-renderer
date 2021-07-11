@@ -69,11 +69,6 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         if (grid_level_counter.has_value()) {
             // Check if the maximum depth is reached.
             if (grid_level_counter.value() == 0) {
-                // The maximum depth is reached but the cube is empty, no collision was found.
-                if (cube.type() == Cube::Type::EMPTY) {
-                    return std::nullopt;
-                }
-
                 // The current cube is of type OCTANT but not of type SOLID, but since we reached the maximum depth of
                 // iteration, we treat it as type SOLID.
                 // TODO: How can we solve respecting octree indentation for this case?
