@@ -35,6 +35,50 @@ bool ray_box_collision(const std::array<glm::vec3, 2> &box_bounds, const glm::ve
     return !((tmin > tzmax) || (tzmin > tmax));
 }
 
+std::optional<glm::vec3> ray_cube_vertex_intersection(const Cube &cube, const glm::vec3 pos, const glm::vec3 dir) {
+    // Get all the vertices of the cube.
+    const auto cube_polygons = cube.polygons();
+
+    // If the cube does not contain any vertex data, no collision with vertex data can take place inside of it.
+    if (cube_polygons.empty()) {
+        return std::nullopt;
+    }
+
+    const auto max_float = std::numeric_limits<float>::max();
+
+    // Calculate the intersection points and select the one closest to the camera by squared distance.
+    glm::vec3 vertex_intersection{max_float, max_float, max_float};
+
+    float m_nearest_square_distance = std::numeric_limits<float>::max();
+    bool any_collision_found = false;
+
+    // TODO: Does this naming make sense?
+    for (const auto polygon : cube_polygons) {
+        for (const auto &triangle : *polygon) {
+            for (const auto vertex : triangle) {
+
+                glm::vec3 collision_output{};
+
+                const auto collision_found = glm::intersectLineTriangle(
+                    pos, dir, glm::vec3(vertex[0]), glm::vec3(vertex[1]), glm::vec3(vertex[2]), collision_output);
+
+                if (collision_found) {
+                    any_collision_found = true;
+                    const auto squared_distance = glm::distance2(collision_output, pos);
+
+                    // Always store the collision which is closest to the camera.
+                    if (squared_distance < m_nearest_square_distance) {
+                        vertex_intersection = collision_output;
+                        m_nearest_square_distance = squared_distance;
+                    }
+                }
+            }
+        }
+    }
+
+    return vertex_intersection;
+}
+
 std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube, const glm::vec3 pos,
                                                                const glm::vec3 dir,
                                                                const std::optional<std::uint32_t> grid_level_counter) {
@@ -66,14 +110,11 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         std::size_t collision_subcube_index{0};
         float m_nearest_square_distance = std::numeric_limits<float>::max();
 
-        // TODO: Can we simplify this?
-        if (grid_level_counter.has_value()) {
-            // Check if the maximum depth is reached.
-            if (grid_level_counter.value() == 0) {
-                // We reached the smallest grid level and treat the current cube as if it was of type Cube::Type::SOLID.
-                // TODO: How can we solve respecting octree indentation for this case?
-                return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
-            }
+        // Check if the maximum depth is reached.
+        if (grid_level_counter.value_or(1) == 0) {
+            // We reached the smallest grid level and treat the current cube as if it was of type Cube::Type::SOLID.
+            // TODO: How can we solve respecting octree indentation for this case?
+            return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
         }
 
         auto subcubes = cube.children();
@@ -111,13 +152,24 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
             return std::make_optional<RayCubeCollision<Cube>>(*subcubes[collision_subcube_index], pos, dir);
         }
     } else if (cube.type() == Cube::Type::SOLID) {
+        // We found a leaf cube. However, even if the cube is of type solid, it could have arbitrary indentations.
         // If any collision takes place and the cube is of type solid, the collision must be inside of this cube.
         // Technically, it's possible that the cube is indented in a way so there is more than one collision inside
         // of it. However there can only be one collision closest to the camera, which is the final collision found.
 
-        if() {
-            return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
+        const auto vertex_intersection = ray_cube_vertex_intersection(cube, pos, dir);
+
+        if (vertex_intersection) {
+            // The bounding box of the cube is being intersected and the ray also collides with the vertex geometry
+            // inside of the cube. In this case the collision data contains the cube vertex intersection point, the
+            // bounding box intersection point, the selected face, nearest corner, and nearest edge.
+            return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir, vertex_intersection);
         }
+
+        // The bounding box of the cube is being intersected, but the cube's geometry is not.
+        // In this case the collision data contains only the bounding box intersection point,
+        // the selected face, nearest corner, and nearest edge.
+        return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
     }
 
     return std::nullopt;

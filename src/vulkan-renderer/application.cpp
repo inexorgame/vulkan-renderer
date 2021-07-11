@@ -576,10 +576,10 @@ void Application::check_octree_collisions() {
         const auto collision = ray_cube_collision_check(*world, m_camera->position(), m_camera->front());
 
         if (collision) {
-            const auto intersection = collision.value().intersection();
-            const auto face_normal = collision.value().face();
-            const auto corner = collision.value().corner();
-            const auto edge = collision.value().edge();
+            const auto intersection = collision.value().cube_intersection();
+            const auto face_normal = collision.value().cube_face();
+            const auto corner = collision.value().nearest_cube_corner();
+            const auto edge = collision.value().nearest_cube_edge();
 
             spdlog::trace("pos {} {} {} | face {} {} {} | corner {} {} {} | edge {} {} {}", intersection.x,
                           intersection.y, intersection.z, face_normal.x, face_normal.y, face_normal.z, corner.x,
