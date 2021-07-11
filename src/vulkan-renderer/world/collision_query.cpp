@@ -61,7 +61,7 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         return std::nullopt;
     }
 
-    if (cube.type() != Cube::Type::SOLID) {
+    if (cube.type() == Cube::Type::OCTANT) {
         std::size_t hit_candidate_count{0};
         std::size_t collision_subcube_index{0};
         float m_nearest_square_distance = std::numeric_limits<float>::max();
@@ -108,12 +108,16 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         }
 
         if (hit_candidate_count > 0) {
-            //
             return std::make_optional<RayCubeCollision<Cube>>(*subcubes[collision_subcube_index], pos, dir);
         }
     } else if (cube.type() == Cube::Type::SOLID) {
-        //
-        return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
+        // If any collision takes place and the cube is of type solid, the collision must be inside of this cube.
+        // Technically, it's possible that the cube is indented in a way so there is more than one collision inside
+        // of it. However there can only be one collision closest to the camera, which is the final collision found.
+
+        if() {
+            return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
+        }
     }
 
     return std::nullopt;
