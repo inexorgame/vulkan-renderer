@@ -66,11 +66,11 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         std::size_t collision_subcube_index{0};
         float m_nearest_square_distance = std::numeric_limits<float>::max();
 
+        // TODO: Can we simplify this?
         if (grid_level_counter.has_value()) {
             // Check if the maximum depth is reached.
             if (grid_level_counter.value() == 0) {
-                // The current cube is of type OCTANT but not of type SOLID, but since we reached the maximum depth of
-                // iteration, we treat it as type SOLID.
+                // We reached the smallest grid level and treat the current cube as if it was of type Cube::Type::SOLID.
                 // TODO: How can we solve respecting octree indentation for this case?
                 return std::make_optional<RayCubeCollision<Cube>>(cube, pos, dir);
             }
@@ -79,7 +79,7 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         auto subcubes = cube.children();
 
         // Iterate through all sub cubes and check for collision of the subcubes with the ray.
-        for (std::int32_t i = 0; i < 8; i++) { // TODO: Turn into range loop?
+        for (std::int32_t i = 0; i < 8; i++) {
             if (subcubes[i]->type() != Cube::Type::EMPTY) {
                 const std::optional<std::uint32_t> next_grid_level =
                     grid_level_counter.has_value() ? std::make_optional<std::uint32_t>(grid_level_counter.value() + 1)
