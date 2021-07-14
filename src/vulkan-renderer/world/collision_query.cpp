@@ -68,7 +68,7 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
         return std::nullopt;
     }
 
-    if (cube.type() != Cube::Type::SOLID) {
+    if (cube.type() == Cube::Type::OCTANT) {
         std::size_t hit_candidate_count{0};
         std::size_t collision_subcube_index{0};
         float m_nearest_square_distance = std::numeric_limits<float>::max();

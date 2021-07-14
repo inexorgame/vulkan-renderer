@@ -1,6 +1,8 @@
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
+#include <random>
+
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept {
     std::swap(lhs.m_type, rhs.m_type);
     std::swap(lhs.m_size, rhs.m_size);
@@ -425,6 +427,7 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     collect(*this);
     return polygons;
 }
+
 std::shared_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirection direction) {
     if (is_root()) {
         return nullptr;
@@ -490,4 +493,43 @@ std::shared_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDire
     // We found a same-sized neighbor!
     return std::shared_ptr<Cube>(child);
 }
+
+std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
+                                          std::optional<std::uint32_t> seed) {
+    std::random_device rd;
+    std::mt19937 mt(seed ? *seed : rd());
+    std::uniform_int_distribution<std::uint8_t> indent(0, 44);
+    std::uniform_int_distribution<std::uint32_t> cube_type(0, 100);
+
+    std::shared_ptr<Cube> cube = std::make_shared<Cube>(4.0f, position);
+    cube->set_type(Cube::Type::OCTANT);
+    std::function<void(const Cube &, std::uint32_t)> populate_cube = [&](const Cube &parent, std::uint32_t depth) {
+        for (const auto &child : parent.children()) {
+            if (depth != max_depth) {
+                child->set_type(Cube::Type::OCTANT);
+                populate_cube(*child, depth + 1);
+                continue;
+            }
+            auto ty = cube_type(mt);
+            if (ty < 30) {
+                child->set_type(Cube::Type::EMPTY);
+                continue;
+            }
+            if (ty < 60) {
+                child->set_type(Cube::Type::SOLID);
+                continue;
+            }
+            if (ty < 100) {
+                child->set_type(Cube::Type::NORMAL);
+                for (int i = 0; i < 12; i++) {
+                    child->set_indent(i, Indentation(indent(mt)));
+                }
+                continue;
+            }
+        }
+    };
+    populate_cube(*cube, 0);
+    return cube;
+}
+
 } // namespace inexor::vulkan_renderer::world

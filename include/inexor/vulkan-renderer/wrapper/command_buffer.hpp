@@ -45,6 +45,13 @@ public:
     /// @param layout The pipeline layout which will be used to bind the resource descriptor.
     void bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const;
 
+    /// @brief Update push constant data.
+    /// @param layout The pipeline layout
+    /// @param stage The shader stage that will be accepting the push constants
+    /// @param size The size of the push constant data in bytes
+    /// @param data A pointer to the push constant data
+    void push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size, void *data) const;
+
     /// @brief Call vkEndCommandBuffer.
     void end() const;
 

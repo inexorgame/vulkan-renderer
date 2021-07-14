@@ -27,7 +27,7 @@ bool KeyboardMouseInputData::is_key_pressed(const std::int32_t key) const {
 bool KeyboardMouseInputData::was_key_pressed_once(const std::int32_t key) {
     assert(key < GLFW_KEY_LAST);
     std::scoped_lock lock(m_input_mutex);
-    if (m_pressed_keys[key] || !m_keyboard_updated) {
+    if (!m_pressed_keys[key] || !m_keyboard_updated) {
         return false;
     }
     m_pressed_keys[key] = false;

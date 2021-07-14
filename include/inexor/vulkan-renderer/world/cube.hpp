@@ -183,4 +183,7 @@ public:
     [[nodiscard]] std::shared_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
 };
 
+std::shared_ptr<world::Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
+                                                 std::optional<std::uint32_t> = std::nullopt);
+
 } // namespace inexor::vulkan_renderer::world
