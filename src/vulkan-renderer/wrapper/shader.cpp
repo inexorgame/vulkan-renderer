@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
+#include <spirv/unified1/spirv.h>
 
 #include <cassert>
 #include <fstream>
@@ -30,47 +31,71 @@ std::vector<char> read_binary(const std::string &file_name) {
     return buffer;
 }
 
+VkShaderStageFlagBits shader_stage(SpvExecutionModel execution_model) {
+    switch (execution_model) {
+    case SpvExecutionModelVertex:
+        return VK_SHADER_STAGE_VERTEX_BIT;
+    case SpvExecutionModelFragment:
+        return VK_SHADER_STAGE_FRAGMENT_BIT;
+    case SpvExecutionModelGLCompute:
+        return VK_SHADER_STAGE_COMPUTE_BIT;
+    default:
+        assert(false);
+    }
+}
+
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std::string &name,
-               const std::string &file_name)
-    : Shader(device, type, name, read_binary(file_name)) {}
+Shader::Shader(const Device &device, const std::string &name, const std::string &file_name)
+    : Shader(device, name, read_binary(file_name)) {}
 
-Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std::string &name,
-               const std::vector<char> &code)
-    : m_device(device), m_type(type), m_name(name) {
-    assert(device.device());
+Shader::Shader(const Device &device, const std::string &name, std::vector<char> &&binary)
+    : m_device(device), m_name(name) {
     assert(!name.empty());
-    assert(!code.empty());
-
-    auto shader_module_ci = make_info<VkShaderModuleCreateInfo>();
-    shader_module_ci.codeSize = code.size();
+    assert(!binary.empty());
 
     // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
     // requirements of std::uint32_t. Lucky for us, the data is stored in an std::vector where the default
     // allocator already ensures that the data satisfies the worst case alignment requirements.
-    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data()); // NOLINT
+    const auto *code = reinterpret_cast<const std::uint32_t *>(binary.data()); // NOLINT
+    auto shader_module_ci = make_info<VkShaderModuleCreateInfo>();
+    shader_module_ci.codeSize = binary.size();
+    shader_module_ci.pCode = code;
 
-    spdlog::debug("Creating shader module {}.", name);
-    if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module);
+    spdlog::debug("Creating shader module {}", name);
+    if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_module);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateShaderModule failed for shader " + name + "!", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
+    m_device.set_debug_marker_name(m_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
+
+    // Parse SPIR-V to extract the shader stage.
+    assert(code[0] == SpvMagicNumber);
+    const auto *inst = code + 5;
+    while (inst != code + (binary.size() / 4)) {
+        // Each instruction starts with a dword with the upper 16 bits holding the total number of words in the
+        // instruction and the lower 16 bits holding the opcode.
+        std::uint16_t opcode = (inst[0] >> 0u) & 0xffffu;
+        std::uint16_t word_count = (inst[0] >> 16u) & 0xffffu;
+        if (opcode == SpvOpEntryPoint) {
+            assert(word_count >= 2);
+            m_stage = shader_stage(static_cast<SpvExecutionModel>(inst[1]));
+        }
+        inst += word_count;
+    }
 }
 
-Shader::Shader(Shader &&other) noexcept : m_device(other.m_device) {
-    m_type = other.m_type;
+Shader::Shader(Shader &&other) noexcept : m_device(other.m_device), m_stage(other.m_stage) {
     m_name = std::move(other.m_name);
-    m_shader_module = std::exchange(other.m_shader_module, nullptr);
+    m_module = std::exchange(other.m_module, nullptr);
 }
 
 Shader::~Shader() {
-    vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
+    vkDestroyShaderModule(m_device.device(), m_module, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
