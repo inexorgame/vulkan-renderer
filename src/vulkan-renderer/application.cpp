@@ -22,6 +22,10 @@
 namespace inexor::vulkan_renderer {
 
 void Application::key_callback(GLFWwindow * /*window*/, int key, int, int action, int /*mods*/) {
+    if (key < 0 || key > GLFW_KEY_LAST) {
+        return;
+    }
+
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_key(key);
@@ -39,6 +43,10 @@ void Application::cursor_position_callback(GLFWwindow * /*window*/, double x_pos
 }
 
 void Application::mouse_button_callback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
+    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
+        return;
+    }
+
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_mouse_button(button);
