@@ -171,6 +171,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
                     &(m_model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
             }
 
+            vertices.reserve(vertices.size() + vertex_count);
+
             // Append data to model's vertex buffer.
             for (std::size_t vertex_number = 0; vertex_number < vertex_count; vertex_number++) {
                 ModelVertex new_vertex{};
@@ -190,7 +192,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 
                 new_vertex.color = glm::vec3(1.0f);
 
-                vertices.push_back(new_vertex);
+                vertices.emplace_back(new_vertex);
             }
 
             // Load indices.
@@ -204,33 +206,42 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
                 std::vector<std::uint32_t> index_data;
                 index_data.reserve(accessor.count);
+
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint32_t));
 
+                indices.reserve(indices.size() + accessor.count);
+
                 for (std::size_t index = 0; index < accessor.count; index++) {
-                    indices.push_back(index_data[index] + vertex_start);
+                    indices.emplace_back(index_data[index] + vertex_start);
                 }
                 break;
             }
             case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
                 std::vector<std::uint16_t> index_data;
                 index_data.reserve(accessor.count);
+
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint16_t));
 
+                indices.reserve(indices.size() + accessor.count);
+
                 for (std::size_t index = 0; index < accessor.count; index++) {
-                    indices.push_back(index_data[index] + vertex_start);
+                    indices.emplace_back(index_data[index] + vertex_start);
                 }
                 break;
             }
             case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
                 std::vector<std::uint8_t> index_data;
                 index_data.reserve(accessor.count);
+
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint8_t));
 
+                indices.reserve(indices.size() + accessor.count);
+
                 for (std::size_t index = 0; index < accessor.count; index++) {
-                    indices.push_back(index_data[index] + vertex_start);
+                    indices.emplace_back(index_data[index] + vertex_start);
                 }
                 break;
             }
@@ -261,11 +272,10 @@ void Model::load_nodes() {
     // Preallocate memory for the model model.
     m_scenes.reserve(m_model.scenes.size());
 
-    // TODO: Test this!
     for (std::size_t scene_index = 0; scene_index < m_model.scenes.size(); scene_index++) {
         for (std::size_t i = 0; i < m_model.scenes[scene_index].nodes.size(); i++) {
             const tinygltf::Node node = m_model.nodes[m_model.scenes[scene_index].nodes[i]];
-            load_node(node, nullptr, m_scenes[0].vertices, m_scenes[0].indices);
+            load_node(node, nullptr, m_scenes[scene_index].vertices, m_scenes[scene_index].indices);
         }
     }
 }

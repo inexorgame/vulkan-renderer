@@ -89,6 +89,26 @@ public:
 
     Model &operator=(const Model &) = delete;
     Model &operator=(Model &&) = delete;
+
+    [[nodiscard]] std::size_t texture_count() const noexcept {
+        return m_textures.size();
+    }
+
+    [[nodiscard]] std::size_t texture_index_count() const noexcept {
+        return m_texture_indices.size();
+    }
+
+    [[nodiscard]] std::size_t material_count() const noexcept {
+        return m_materials.size();
+    }
+
+    [[nodiscard]] std::size_t node_count() const noexcept {
+        return m_nodes.size();
+    }
+
+    [[nodiscard]] std::size_t scene_count() const noexcept {
+        return m_scenes.size();
+    }
 };
 
 } // namespace inexor::vulkan_renderer::gltf2
