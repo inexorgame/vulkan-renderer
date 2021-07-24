@@ -9,8 +9,10 @@
 
 namespace inexor::vulkan_renderer::gltf2 {
 
-ModelFile::ModelFile(const std::string &file_name) {
+ModelFile::ModelFile(const std::string &file_name, const std::string &model_name)
+    : m_file_name(file_name), m_model_name(model_name) {
     assert(!file_name.empty());
+    assert(!model_name.empty());
 
     // Get the file extension from the file name.
     const std::string file_extension = file_name.substr(file_name.find_last_of('.') + 1);
@@ -24,10 +26,10 @@ ModelFile::ModelFile(const std::string &file_name) {
     std::string loading_warnings;
 
     if (file_extension == "gltf") {
-        spdlog::info("Loading ASCII gltf file {}", file_name);
+        spdlog::info("Loading ASCII glTF file {}", file_name);
         loading_succeeded = m_loader.LoadASCIIFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
     } else if (file_extension == "glb") {
-        spdlog::info("Loading binary gltf file {}", file_name);
+        spdlog::info("Loading binary glTF file {}", file_name);
         loading_succeeded = m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
     } else {
         throw InexorException("Error Unknown file extension " + file_extension);

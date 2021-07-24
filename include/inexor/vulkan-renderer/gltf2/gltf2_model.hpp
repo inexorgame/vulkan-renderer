@@ -17,7 +17,7 @@ struct ModelMaterial {
     std::uint32_t base_color_texture_index{0};
 };
 
-/// @brief A struct for model vertices.
+/// @brief A struct for glTF2 model vertices.
 struct ModelVertex {
     glm::vec3 pos{};
     glm::vec3 normal{};
@@ -61,11 +61,11 @@ private:
     std::vector<ModelNode> m_nodes;
     std::vector<ModelScene> m_scenes;
 
-    /// @brief Loads a glTF2 model node.
-    /// @param start_node The node to begin with.
-    /// @param parent The parent node.
-    /// @param vertices The model node's vertices.
-    /// @param indices The model node's indices.
+    /// @brief Load a glTF2 model node.
+    /// @param start_node The node to begin with
+    /// @param parent The parent node
+    /// @param vertices The model node's vertices
+    /// @param indices The model node's indices
     void load_node(const tinygltf::Node &start_node, ModelNode *parent, std::vector<ModelVertex> &vertices,
                    std::vector<std::uint32_t> &indices);
 
@@ -78,16 +78,14 @@ private:
     // TODO: load pbr (physically based rendering) settings
     // TODO: load multiple texture coordinate sets
     // TODO: try to .reserve() memory for vectors and use emplace_back()
-    // TODO: should we move node loading into a separate class?
 
 public:
     /// @brief Extract the model data from a model file.
-    /// @paran device The device wrapper.
-    /// @param file The glTF2 model file.
+    /// @paran device The device wrapper
+    /// @param file The glTF2 model file
     Model(const wrapper::Device &device, tinygltf::Model &model);
     Model(const Model &) = delete;
     Model(Model &&) = delete;
-    ~Model() = default;
 
     Model &operator=(const Model &) = delete;
     Model &operator=(Model &&) = delete;

@@ -25,7 +25,8 @@ void Model::load_textures() {
         const std::size_t texture_size = texture.width * texture.height * 4;
 
         // We need to convert RGB-only images to RGBA format, because most devices don't support rgb-formats in Vulkan.
-        if (texture.component == 3) {
+        switch (texture.component) {
+        case 3: {
             std::vector<std::array<std::uint32_t, 3>> rgb_source;
             rgb_source.reserve(texture_size);
 
@@ -37,20 +38,33 @@ void Model::load_textures() {
 
             std::transform(rgb_source.begin(), rgb_source.end(), rgba_target.begin(),
                            [](const std::array<std::uint32_t, 3> a) {
+                               // convert RGB-only to RGBA.
                                return std::array<std::uint32_t, 4>{a[0], a[1], a[2], 1};
                            });
 
+            std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
+
+            // Create a texture using the data which was converted to RGBA.
             m_textures.emplace_back(m_device, rgba_target.data(), texture_size, texture.width, texture.height,
-                                    texture.component, 1, "glTF2 model texture");
-        } else if (texture.component == 4) {
+                                    texture.component, 1, texture_name);
+            break;
+        }
+        case 4: {
+            std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
+
+            // Create a texture using RGBA data.
             m_textures.emplace_back(m_device, &texture.image[0], texture_size, texture.width, texture.height,
-                                    texture.component, 1, "glTF2 model texture");
-        } else {
+                                    texture.component, 1, texture_name);
+            break;
+        }
+        default: {
             spdlog::error("Can't load texture with {} channels!", texture.component);
             spdlog::warn("Generating error texture as a replacement.");
 
-            // Generate an error texture (checkboard pattern of pink and black squares).
+            // Generate an error texture.
             m_textures.emplace_back(m_device, wrapper::CpuTexture());
+            break;
+        }
         }
     }
 
@@ -87,6 +101,7 @@ void Model::load_materials() {
 
 void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::vector<ModelVertex> &vertices,
                       std::vector<std::uint32_t> &indices) {
+
     ModelNode new_node{};
     new_node.matrix = glm::mat4(1.0f);
 
@@ -115,6 +130,10 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
     // If the node contains mesh data, we load vertices and indices from the buffers.
     // In glTF this is done via accessors and buffer views.
     if (start_node.mesh > -1) {
+
+        // Preallocate memory for the meshes of the model.
+        new_node.mesh.reserve(m_model.meshes[start_node.mesh].primitives.size());
+
         // Iterate through all primitives of this node's mesh.
         for (const auto &primitive : m_model.meshes[start_node.mesh].primitives) {
             const auto attr = primitive.attributes;
@@ -152,22 +171,18 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
                     &(m_model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
             }
 
-            // Append data to model's vertex buffer
+            // Append data to model's vertex buffer.
             for (std::size_t vertex_number = 0; vertex_number < vertex_count; vertex_number++) {
                 ModelVertex new_vertex{};
-
-                // TODO: Remove pointer arithmetic or add NOLINT
                 new_vertex.pos = glm::vec4(glm::make_vec3(&position_buffer[vertex_number * 3]), 1.0f); // NOLINT
 
                 if (normals_buffer != nullptr) {
-                    // TODO: Remove pointer arithmetic or add NOLINT
                     new_vertex.normal = glm::normalize(glm::make_vec3(&normals_buffer[vertex_number * 3])); // NOLINT
                 } else {
                     new_vertex.normal = glm::normalize(glm::vec3(0.0f));
                 }
 
                 if (texture_coordinate_buffer != nullptr) {
-                    // TODO: Remove pointer arithmetic or add NOLINT
                     new_vertex.uv = glm::make_vec2(&texture_coordinate_buffer[vertex_number * 2]); // NOLINT
                 } else {
                     new_vertex.uv = glm::vec3(0.0f);
@@ -182,8 +197,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             const auto &accessor = m_model.accessors[primitive.indices];
             const auto &buffer_view = m_model.bufferViews[accessor.bufferView];
             const auto &buffer = m_model.buffers[buffer_view.buffer];
-
-            auto vertex_start = static_cast<std::uint32_t>(vertices.size());
+            const auto vertex_start = static_cast<std::uint32_t>(vertices.size());
 
             // glTF2 supports different component types of indices.
             switch (accessor.componentType) {
@@ -229,7 +243,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             new_primitive.first_index = static_cast<std::uint32_t>(indices.size());
             new_primitive.index_count = static_cast<std::uint32_t>(accessor.count);
             new_primitive.material_index = primitive.material;
-            new_node.mesh.push_back(new_primitive);
+
+            new_node.mesh.emplace_back(new_primitive);
         }
     }
 
@@ -246,12 +261,12 @@ void Model::load_nodes() {
     // Preallocate memory for the model model.
     m_scenes.reserve(m_model.scenes.size());
 
+    // TODO: Test this!
     for (std::size_t scene_index = 0; scene_index < m_model.scenes.size(); scene_index++) {
-        for (const auto &node : m_model.scenes[scene_index].nodes) {
-            // Load child nodes recursively.
-            load_node(m_model.nodes[node], nullptr, m_scenes[scene_index].vertices, m_scenes[scene_index].indices);
+        for (std::size_t i = 0; i < m_model.scenes[scene_index].nodes.size(); i++) {
+            const tinygltf::Node node = m_model.nodes[m_model.scenes[scene_index].nodes[i]];
+            load_node(node, nullptr, m_scenes[0].vertices, m_scenes[0].indices);
         }
-        scene_index++;
     }
 }
 
