@@ -1,5 +1,6 @@
 #pragma once
 
+#define TINYGLTF_NO_STB_IMAGE_WRITE
 #include "tiny_gltf.h"
 
 #include <string>
@@ -25,14 +26,6 @@ public:
     /// @param m_model_name The internal model name of the model which should be user friendly to be displayed to the
     /// user
     explicit ModelFile(const std::string &file_name, const std::string &model_name);
-
-    ModelFile(const ModelFile &) = delete;
-    ModelFile(ModelFile &&) = delete;
-
-    ~ModelFile();
-
-    ModelFile &operator=(const ModelFile &) = delete;
-    ModelFile &operator=(ModelFile &&) = delete;
 
     [[nodiscard]] const tinygltf::Model &model() const noexcept {
         return m_model;

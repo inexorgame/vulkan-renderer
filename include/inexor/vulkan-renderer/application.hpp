@@ -44,6 +44,7 @@ class Application : public VulkanRenderer {
     void load_shaders();
     /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
     void load_octree_geometry(bool initialize);
+    void load_gltf_example_model();
     void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();

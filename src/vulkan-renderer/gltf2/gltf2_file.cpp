@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/gltf2/gltf2_file.hpp"
 
 #define TINYGLTF_IMPLEMENTATION
+#include "tiny_gltf.h"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include <spdlog/spdlog.h>

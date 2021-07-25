@@ -1,6 +1,8 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/gltf2/gltf2_file.hpp"
+#include "inexor/vulkan-renderer/gltf2/gltf2_model.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -182,6 +184,16 @@ void Application::load_shaders() {
     }
 
     spdlog::debug("Loading shaders finished.");
+}
+
+void Application::load_gltf_example_model() {
+    try {
+        gltf2::ModelFile gltf_file("assets/models/inexor/5_objects.gltf", "example model");
+        gltf2::Model example_model(*m_device, gltf_file.model());
+    }
+    catch(InexorException &exception) {
+        spdlog::critical("{}", exception.what());
+    }
 }
 
 void Application::load_octree_geometry(bool initialize) {
@@ -494,6 +506,7 @@ Application::Application(int argc, char **argv) {
             .build("Default uniform buffer"));
 
     load_octree_geometry(true);
+    load_gltf_example_model();
     generate_octree_indices();
 
     spdlog::debug("Vulkan initialisation finished.");
