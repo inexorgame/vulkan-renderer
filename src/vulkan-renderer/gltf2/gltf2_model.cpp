@@ -15,7 +15,7 @@ Model::Model(const wrapper::Device &device, const tinygltf::Model &model) : m_de
 }
 
 void Model::load_textures() {
-    spdlog::info("Loading {} glTF2 model textures", m_model.images.size());
+    spdlog::debug("Loading {} glTF2 model textures", m_model.images.size());
 
     // Preallocate memory for the model images.
     m_textures.reserve(m_model.images.size());
@@ -68,7 +68,7 @@ void Model::load_textures() {
         }
     }
 
-    spdlog::info("Loading {} glTF2 model texture indices", m_model.textures.size());
+    spdlog::debug("Loading {} glTF2 model texture indices", m_model.textures.size());
 
     // Preallocate memory for the texture indices.
     m_texture_indices.reserve(m_model.textures.size());
@@ -79,7 +79,7 @@ void Model::load_textures() {
 }
 
 void Model::load_materials() {
-    spdlog::info("Loading {} glTF2 model materials", m_model.materials.size());
+    spdlog::debug("Loading {} glTF2 model materials", m_model.materials.size());
 
     // Preallocate memory for the model materials.
     m_materials.resize(m_model.materials.size());
@@ -205,7 +205,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             switch (accessor.componentType) {
             case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
                 std::vector<std::uint32_t> index_data;
-                index_data.reserve(accessor.count);
+                index_data.resize(accessor.count);
 
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint32_t));
@@ -219,7 +219,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             }
             case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
                 std::vector<std::uint16_t> index_data;
-                index_data.reserve(accessor.count);
+                index_data.resize(accessor.count);
 
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint16_t));
@@ -233,7 +233,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
             }
             case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
                 std::vector<std::uint8_t> index_data;
-                index_data.reserve(accessor.count);
+                index_data.resize(accessor.count);
 
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint8_t));
@@ -267,15 +267,16 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 }
 
 void Model::load_nodes() {
-    spdlog::info("Loading {} glTF2 model scenes", m_model.scenes.size());
+    spdlog::debug("Loading {} glTF2 model scenes", m_model.scenes.size());
 
     // Preallocate memory for the model model.
-    m_scenes.reserve(m_model.scenes.size());
+    m_scenes.resize(m_model.scenes.size());
 
+    // Iterate through all scenes and load the model nodes scene by scene.
     for (std::size_t scene_index = 0; scene_index < m_model.scenes.size(); scene_index++) {
-        for (std::size_t i = 0; i < m_model.scenes[scene_index].nodes.size(); i++) {
-            const tinygltf::Node node = m_model.nodes[m_model.scenes[scene_index].nodes[i]];
-            load_node(node, nullptr, m_scenes[scene_index].vertices, m_scenes[scene_index].indices);
+        for (std::size_t node_index = 0; node_index < m_model.scenes[scene_index].nodes.size(); node_index++) {
+            load_node(m_model.nodes[m_model.scenes[scene_index].nodes[node_index]], nullptr,
+                      m_scenes[scene_index].vertices, m_scenes[scene_index].indices);
         }
     }
 }

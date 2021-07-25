@@ -187,12 +187,15 @@ void Application::load_shaders() {
 }
 
 void Application::load_gltf_example_model() {
-    try {
-        gltf2::ModelFile gltf_file("assets/models/inexor/5_objects.gltf", "example model");
-        gltf2::Model example_model(*m_device, gltf_file.model());
-    }
-    catch(InexorException &exception) {
-        spdlog::critical("{}", exception.what());
+
+    const std::string file_names[] = {"5_objects.gltf"};
+
+    for (const auto file : file_names) {
+        try {
+            const std::string full_file_name = "assets/models/inexor/" + file;
+            gltf2::ModelFile gltf_file(full_file_name, "example model");
+            gltf2::Model example_model(*m_device, gltf_file.model());
+        } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
     }
 }
 
