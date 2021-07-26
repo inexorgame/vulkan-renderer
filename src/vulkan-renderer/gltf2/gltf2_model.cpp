@@ -14,6 +14,8 @@ Model::Model(const wrapper::Device &device, const tinygltf::Model &model) : m_de
     load_nodes();
 }
 
+Model::Model(const wrapper::Device &device, const ModelFile &model_file) : Model(device, model_file.model()) {}
+
 void Model::load_textures() {
     spdlog::debug("Loading {} glTF2 model textures", m_model.images.size());
 

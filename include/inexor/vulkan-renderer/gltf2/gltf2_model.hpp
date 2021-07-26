@@ -82,8 +82,13 @@ private:
 public:
     /// @brief Extract the model data from a model file.
     /// @paran device The device wrapper
-    /// @param file The glTF2 model file
+    /// @param model The glTF2 model
     Model(const wrapper::Device &device, const tinygltf::Model &model);
+
+    /// @brief Overloaded constructor which accepts ModelFile as argument
+    /// @paran device The device wrapper
+    /// @param model_file The glTF2 model file
+    Model(const wrapper::Device &device, const ModelFile &model_file);
 
     [[nodiscard]] std::size_t texture_count() const noexcept {
         return m_textures.size();
