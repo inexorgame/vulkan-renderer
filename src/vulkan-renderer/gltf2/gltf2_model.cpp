@@ -17,7 +17,7 @@ Model::Model(const wrapper::Device &device, const tinygltf::Model &model) : m_de
 Model::Model(const wrapper::Device &device, const ModelFile &model_file) : Model(device, model_file.model()) {}
 
 void Model::load_textures() {
-    spdlog::debug("Loading {} glTF2 model textures", m_model.images.size());
+    spdlog::trace("Loading {} glTF2 model textures", m_model.images.size());
 
     // Preallocate memory for the model images.
     m_textures.reserve(m_model.images.size());
@@ -70,7 +70,7 @@ void Model::load_textures() {
         }
     }
 
-    spdlog::debug("Loading {} glTF2 model texture indices", m_model.textures.size());
+    spdlog::trace("Loading {} glTF2 model texture indices", m_model.textures.size());
 
     // Preallocate memory for the texture indices.
     m_texture_indices.reserve(m_model.textures.size());
@@ -81,7 +81,7 @@ void Model::load_textures() {
 }
 
 void Model::load_materials() {
-    spdlog::debug("Loading {} glTF2 model materials", m_model.materials.size());
+    spdlog::trace("Loading {} glTF2 model materials", m_model.materials.size());
 
     // Preallocate memory for the model materials.
     m_materials.resize(m_model.materials.size());
@@ -269,7 +269,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 }
 
 void Model::load_nodes() {
-    spdlog::debug("Loading {} glTF2 model scenes", m_model.scenes.size());
+    spdlog::trace("Loading {} glTF2 model scenes", m_model.scenes.size());
 
     // Preallocate memory for the model model.
     m_scenes.resize(m_model.scenes.size());
