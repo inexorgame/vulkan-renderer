@@ -183,4 +183,16 @@ public:
     [[nodiscard]] std::shared_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
 };
 
+/// @brief Construct a randomly generated cube world.
+/// Using the following probabilities:
+/// empty: 30%
+/// solid: 30%
+/// normal: 40%
+/// The number of intendations are evenly distributed. Empty normal cubes are not generated.
+/// @param max_depth The maximum of nested octants.
+/// @param position The position where the root cube is placed.
+/// @param seed The seed used for the random number generator.
+std::shared_ptr<world::Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
+                                                 std::optional<std::uint32_t> seed = std::nullopt);
+
 } // namespace inexor::vulkan_renderer::world

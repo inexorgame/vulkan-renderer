@@ -17,6 +17,7 @@
 #include <spdlog/spdlog.h>
 #include <toml11/toml.hpp>
 
+#include <random>
 #include <thread>
 
 namespace inexor::vulkan_renderer {
@@ -183,24 +184,17 @@ void Application::load_shaders() {
     spdlog::debug("Loading shaders finished.");
 }
 
-void Application::load_octree_geometry() {
+void Application::load_octree_geometry(bool initialize) {
     spdlog::debug("Creating octree geometry.");
 
-    m_worlds.reserve(3);
+    // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
+    m_worlds.clear();
+    m_worlds.push_back(
+        world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
+    m_worlds.push_back(
+        world::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
 
-    m_worlds.emplace_back(std::make_shared<world::Cube>(5.0f, glm::vec3{10, 0, 0}));
-    m_worlds.emplace_back(std::make_shared<world::Cube>(1.0f, glm::vec3{0, 0, 0}));
-    m_worlds.emplace_back(std::make_shared<world::Cube>(1.6f, glm::vec3{0, 10, 0}));
-
-    m_worlds[0]->set_type(world::Cube::Type::OCTANT);
-    m_worlds[1]->set_type(world::Cube::Type::SOLID);
-    m_worlds[2]->set_type(world::Cube::Type::OCTANT);
-
-    m_worlds[0]->children()[3]->set_type(world::Cube::Type::EMPTY);
-    m_worlds[0]->children()[5]->set_type(world::Cube::Type::EMPTY);
-    m_worlds[0]->children()[6]->set_type(world::Cube::Type::EMPTY);
-    m_worlds[0]->children()[7]->set_type(world::Cube::Type::EMPTY);
-
+    m_octree_vertices.clear();
     for (const auto &world : m_worlds) {
         for (const auto &polygons : world->polygons(true)) {
             for (const auto &triangle : *polygons) {
@@ -501,7 +495,7 @@ Application::Application(int argc, char **argv) {
         descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
             .build("Default uniform buffer"));
 
-    load_octree_geometry();
+    load_octree_geometry(true);
     generate_octree_indices();
 
     spdlog::debug("Vulkan initialisation finished.");
@@ -527,7 +521,7 @@ void Application::update_imgui_overlay() {
     auto cursor_pos = m_input_data->get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
-    io.DeltaTime = std::clamp(m_time_passed, 0.001f, 100.0f);
+    io.DeltaTime = m_time_passed;
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
     io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
     io.MouseDown[1] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
@@ -556,7 +550,7 @@ void Application::update_imgui_overlay() {
     ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
     const auto cam_fov = m_camera->fov();
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
-    ImGui::PushItemWidth(150.0f * m_imgui_overlay->get_scale());
+    ImGui::PushItemWidth(150.0f * m_imgui_overlay->scale());
     ImGui::PopItemWidth();
     ImGui::End();
     ImGui::PopStyleVar();
@@ -608,6 +602,12 @@ void Application::run() {
         update_imgui_overlay();
         render_frame();
         process_mouse_input();
+        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+            load_octree_geometry(false);
+            generate_octree_indices();
+            m_index_buffer->upload_data(m_octree_indices);
+            m_vertex_buffer->upload_data(m_octree_vertices);
+        }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
         check_octree_collisions();
