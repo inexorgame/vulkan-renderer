@@ -505,21 +505,27 @@ Application::Application(int argc, char **argv) {
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index());
 
-    m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
+    m_uniform_buffers.emplace_back(*m_device, "octree uniform buffer", sizeof(UniformBufferObject));
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
     wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
-    // TODO: ModelDescriptorBuilder for rendering of glTF2 models.
     m_descriptors.emplace_back(
         descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
-            .build("Default uniform buffer"));
+            .build("octree uniform buffer"));
 
     load_octree_geometry(true);
-    load_gltf_example_model();
     generate_octree_indices();
+
+    m_uniform_buffers.emplace_back(*m_device, "glTF2 model uniform buffer", sizeof(UniformBufferObject));
+
+    m_descriptors.emplace_back(
+        descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[1].buffer(), 1)
+            .build("glTF2 model uniform buffer"));
+
+    load_gltf_example_model();
 
     spdlog::debug("Vulkan initialisation finished.");
     spdlog::debug("Showing window.");
@@ -538,6 +544,14 @@ void Application::update_uniform_buffers() {
 
     // TODO: Embed this into the render graph.
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
+
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = m_camera->view_matrix();
+    ubo.proj = m_camera->perspective_matrix();
+    ubo.proj[1][1] *= -1;
+
+    // TODO: Embed this into the render graph.
+    m_uniform_buffers[1].update(&ubo, sizeof(ubo));
 }
 
 void Application::update_imgui_overlay() {

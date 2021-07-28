@@ -283,4 +283,4 @@ void Model::load_nodes() {
     }
 }
 
-} // namespace inexor::vulkan_renderer::gltf2
+} // namespace inexor::vulkan_renderer::gltf

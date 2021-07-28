@@ -22,13 +22,24 @@ void VulkanRenderer::setup_render_graph() {
     auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_octree_index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
+    m_octree_index_buffer = m_render_graph->add<BufferResource>("octree index buffer", BufferUsage::INDEX_BUFFER);
     m_octree_index_buffer->upload_data(m_octree_indices);
 
-    m_octree_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
-    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
+    m_octree_vertex_buffer = m_render_graph->add<BufferResource>("octree vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
+                                                 offsetof(OctreeGpuVertex, position)); // NOLINT
+    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
+                                                 offsetof(OctreeGpuVertex, color)); // NOLINT
     m_octree_vertex_buffer->upload_data(m_octree_vertices);
+
+    m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
+    m_gltf_index_buffer->upload_data(m_gltf_indices);
+
+    m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)); // NOLINT
+    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
+                                               offsetof(gltf::ModelVertex, color)); // NOLINT
+    m_gltf_vertex_buffer->upload_data(m_gltf_vertices);
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);
@@ -36,11 +47,19 @@ void VulkanRenderer::setup_render_graph() {
     main_stage->reads_from(m_octree_index_buffer);
     main_stage->reads_from(m_octree_vertex_buffer);
     main_stage->bind_buffer(m_octree_vertex_buffer, 0);
+    main_stage->reads_from(m_gltf_index_buffer);
+    main_stage->reads_from(m_gltf_vertex_buffer);
+    main_stage->bind_buffer(m_gltf_vertex_buffer, 1);
     main_stage->set_clears_screen(true);
     main_stage->set_depth_options(true, true);
     main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+        // Render octrees
         cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
         cmd_buf.draw_indexed(m_octree_indices.size());
+
+        // Render glTF2 models
+        cmd_buf.bind_descriptor(m_descriptors[1], physical.pipeline_layout());
+        cmd_buf.draw_indexed(m_gltf_indices.size());
     });
 
     for (const auto &shader : m_shaders) {
@@ -48,6 +67,7 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
+    main_stage->add_descriptor_layout(m_descriptors[1].descriptor_set_layout());
 }
 
 void VulkanRenderer::generate_octree_indices() {

@@ -25,9 +25,9 @@ struct ModelVertex {
     ///
     ModelVertex(const glm::vec3 position, const glm::vec3 color_rgb) : pos(position), color(color_rgb) {}
     glm::vec3 pos{};
+    glm::vec3 color{};
     glm::vec3 normal{};
     glm::vec2 uv{};
-    glm::vec3 color{};
 };
 
 /// @brief A struct for glTF2 model primitives.
