@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf2/gltf2_file.hpp"
+#include "inexor/vulkan-renderer/gltf/model_file.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 
@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace inexor::vulkan_renderer::gltf2 {
+namespace inexor::vulkan_renderer::gltf {
 
 /// @brief A struct for glTF2 model materials.
 struct ModelMaterial {
@@ -19,6 +19,11 @@ struct ModelMaterial {
 
 /// @brief A struct for glTF2 model vertices.
 struct ModelVertex {
+    ModelVertex() {}
+    ///
+    ///
+    ///
+    ModelVertex(const glm::vec3 position, const glm::vec3 color_rgb) : pos(position), color(color_rgb) {}
     glm::vec3 pos{};
     glm::vec3 normal{};
     glm::vec2 uv{};
@@ -109,6 +114,26 @@ public:
     [[nodiscard]] std::size_t scene_count() const noexcept {
         return m_scenes.size();
     }
+
+    [[nodiscard]] auto scene_vertices(const std::size_t scene_index) const {
+        assert(scene_index < m_scenes.size());
+        if (scene_index > m_scenes.size()) {
+            // TODO: Is this worth an exception?
+            spdlog::error("No vertices for scene index {}!", scene_index);
+            return std::vector<ModelVertex>{};
+        }
+        return m_scenes[scene_index].vertices;
+    }
+
+    [[nodiscard]] auto scene_indices(const std::size_t scene_index) const {
+        assert(scene_index < m_scenes.size());
+        if (scene_index > m_scenes.size()) {
+            // TODO: Is this worth an exception?
+            spdlog::error("No vertices for scene index {}!", scene_index);
+            return std::vector<std::uint32_t>{};
+        }
+        return m_scenes[scene_index].indices;
+    }
 };
 
-} // namespace inexor::vulkan_renderer::gltf2
+} // namespace inexor::vulkan_renderer::gltf

@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
+#include "inexor/vulkan-renderer/gltf/model.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -76,12 +77,18 @@ protected:
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
+    std::vector<gltf::ModelVertex> m_gltf_vertices;
+    std::vector<std::uint32_t> m_gltf_indices;
 
     TextureResource *m_back_buffer{nullptr};
 
     // Render graph buffers for octree geometry.
-    BufferResource *m_index_buffer{nullptr};
-    BufferResource *m_vertex_buffer{nullptr};
+    BufferResource *m_octree_vertex_buffer{nullptr};
+    BufferResource *m_octree_index_buffer{nullptr};
+
+    // Render graph buffers for glTF2 model geometry.
+    BufferResource *m_gltf_vertex_buffer{nullptr};
+    BufferResource *m_gltf_index_buffer{nullptr};
 
     void setup_render_graph();
     void generate_octree_indices();

@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/gltf2/gltf2_model.hpp"
+#include "inexor/vulkan-renderer/gltf/model.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <spdlog/spdlog.h>
 
 #include <cassert>
 
-namespace inexor::vulkan_renderer::gltf2 {
+namespace inexor::vulkan_renderer::gltf {
 
 Model::Model(const wrapper::Device &device, const tinygltf::Model &model) : m_device(device), m_model(model) {
     assert(m_device.device());

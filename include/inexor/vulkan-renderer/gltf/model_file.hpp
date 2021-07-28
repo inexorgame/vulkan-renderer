@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::gltf2 {
+namespace inexor::vulkan_renderer::gltf {
 
 /// @brief A wrapper class for glTF2 model files based on tinygltf library.
 /// https://github.com/syoyo/tinygltf

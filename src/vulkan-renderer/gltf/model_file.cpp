@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf2/gltf2_file.hpp"
+#include "inexor/vulkan-renderer/gltf/model_file.hpp"
 
 #define TINYGLTF_IMPLEMENTATION
 #include "tiny_gltf.h"
@@ -8,7 +8,7 @@
 
 #include <cassert>
 
-namespace inexor::vulkan_renderer::gltf2 {
+namespace inexor::vulkan_renderer::gltf {
 
 ModelFile::ModelFile(const std::string &file_name, const std::string &model_name)
     : m_file_name(file_name), m_model_name(model_name) {

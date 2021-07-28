@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/gltf/model.hpp"
+#include "inexor/vulkan-renderer/gltf/model_file.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
@@ -25,6 +27,7 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_fragment_shader_files;
     std::vector<std::string> m_texture_files;
     std::vector<std::string> m_gltf_model_files;
+    std::vector<gltf::Model> m_gltf_models;
 
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 

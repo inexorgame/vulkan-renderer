@@ -1,8 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/gltf2/gltf2_file.hpp"
-#include "inexor/vulkan-renderer/gltf2/gltf2_model.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -190,11 +188,21 @@ void Application::load_gltf_example_model() {
 
     const std::array<std::string, 1> file_names = {"5_objects.gltf"};
 
+    m_gltf_models.reserve(file_names.size());
+
     for (const auto &file : file_names) {
         try {
             const std::string full_file_name = "assets/models/inexor/" + file;
-            gltf2::ModelFile gltf_file(full_file_name, "example model");
-            gltf2::Model example_model(*m_device, gltf_file);
+            const auto gltf_file = gltf::ModelFile(full_file_name, "example model");
+
+            gltf::Model gltf_model = gltf::Model(*m_device, gltf_file);
+            m_gltf_models.emplace_back(*m_device, gltf_file);
+
+            const auto model_vertices = gltf_model.scene_vertices(0);
+            const auto model_indices = gltf_model.scene_indices(0);
+
+            m_gltf_vertices.insert(m_gltf_vertices.end(), model_vertices.begin(), model_vertices.end());
+            m_gltf_indices.insert(m_gltf_indices.end(), model_indices.begin(), model_indices.end());
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
     }
 }
@@ -504,6 +512,7 @@ Application::Application(int argc, char **argv) {
     wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
+    // TODO: ModelDescriptorBuilder for rendering of glTF2 models.
     m_descriptors.emplace_back(
         descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
             .build("Default uniform buffer"));
@@ -619,8 +628,8 @@ void Application::run() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
-            m_index_buffer->upload_data(m_octree_indices);
-            m_vertex_buffer->upload_data(m_octree_vertices);
+            m_octree_index_buffer->upload_data(m_octree_indices);
+            m_octree_vertex_buffer->upload_data(m_octree_vertices);
         }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
