@@ -243,6 +243,11 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
             colour_refs.push_back({static_cast<std::uint32_t>(i), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
             break;
         case TextureUsage::DEPTH_STENCIL_BUFFER:
+            // TODO: Proper image layout tracking.
+            if (!stage->m_clears_screen) {
+                attachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+            }
             attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             depth_refs.push_back({static_cast<std::uint32_t>(i), attachment.finalLayout});
             break;

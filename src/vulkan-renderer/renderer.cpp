@@ -41,33 +41,42 @@ void VulkanRenderer::setup_render_graph() {
                                                offsetof(gltf::ModelVertex, color)); // NOLINT
     m_gltf_vertex_buffer->upload_data(m_gltf_vertices);
 
+    auto *gltf_stage = m_render_graph->add<GraphicsStage>("gltf stage");
+    gltf_stage->writes_to(m_back_buffer);
+    gltf_stage->writes_to(depth_buffer);
+    gltf_stage->reads_from(m_gltf_index_buffer);
+    gltf_stage->reads_from(m_gltf_vertex_buffer);
+    gltf_stage->bind_buffer(m_gltf_vertex_buffer, 0);
+    gltf_stage->set_clears_screen(true);
+    gltf_stage->set_depth_options(true, true);
+    gltf_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+        // Render glTF2 models
+        cmd_buf.bind_descriptor(m_descriptors[1], physical.pipeline_layout());
+        cmd_buf.draw_indexed(m_gltf_indices.size());
+    });
+
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);
     main_stage->writes_to(depth_buffer);
     main_stage->reads_from(m_octree_index_buffer);
     main_stage->reads_from(m_octree_vertex_buffer);
     main_stage->bind_buffer(m_octree_vertex_buffer, 0);
-    main_stage->reads_from(m_gltf_index_buffer);
-    main_stage->reads_from(m_gltf_vertex_buffer);
-    main_stage->bind_buffer(m_gltf_vertex_buffer, 1);
-    main_stage->set_clears_screen(true);
     main_stage->set_depth_options(true, true);
     main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         // Render octrees
         cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
         cmd_buf.draw_indexed(m_octree_indices.size());
-
-        // Render glTF2 models
-        cmd_buf.bind_descriptor(m_descriptors[1], physical.pipeline_layout());
-        cmd_buf.draw_indexed(m_gltf_indices.size());
     });
 
+    for (const auto &shader : m_shaders) {
+        gltf_stage->uses_shader(shader);
+    }
     for (const auto &shader : m_shaders) {
         main_stage->uses_shader(shader);
     }
 
     main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
-    main_stage->add_descriptor_layout(m_descriptors[1].descriptor_set_layout());
+    gltf_stage->add_descriptor_layout(m_descriptors[1].descriptor_set_layout());
 }
 
 void VulkanRenderer::generate_octree_indices() {
