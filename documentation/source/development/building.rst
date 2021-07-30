@@ -172,6 +172,47 @@ Install dependencies and tools:
 |        |                                      |
 |        |     # emerge dev-util/ninja          |
 +--------+--------------------------------------+
+| Debian | Follow the                           |
+|        | `Install the SDK`_-instructions on   |
+|        | the vulkan-sdk page.                 |
+|        |                                      |
+|        | Install the required packages:[#f1]_ |
+|        |                                      |
+|        | .. code-block:: shell-session        |
+|        |                                      |
+|        |     # apt install -y \               |
+|        |         libvulkan-dev                |
+|        |         glslang-dev                  |
+|        |         glslang-tools                |
+|        |         vulkan-tools                 |
+|        |         vulkan-validationlayers-dev  |
+|        |         spirv-tools                  |
+|        |         pkg-config \                 |
+|        |         libglm-dev \                 |
+|        |         libxcb-dri3-0 \              |
+|        |         libxcb-present0 \            |
+|        |         libpciaccess0 \              |
+|        |         libpng-dev \                 |
+|        |         libxcb-keysyms1-dev \        |
+|        |         libxcb-dri3-dev \            |
+|        |         libx11-dev  \                |
+|        |         libmirclient-dev \           |
+|        |         libwayland-dev \             |
+|        |         libxrandr-dev \              |
+|        |         libxcb-ewmh-dev              |
+|        |     # apt install -y \               |
+|        |         cmake \                      |
+|        |         ninja-build \                |
+|        |         clang-tidy \                 |
+|        |         vulkan-sdk \                 |
+|        |         python3 \                    |
+|        |         python3-pip                  |
+|        |     $ pip3 install \                 |
+|        |         wheel \                      |
+|        |         setuptools \                 |
+|        |         conan                        |
+|        |                                      |
++--------+--------------------------------------+
 | Other  | Planned. `We would love to see a     |
 |        | pull request on this file if you get |
 |        | it running on other                  |
