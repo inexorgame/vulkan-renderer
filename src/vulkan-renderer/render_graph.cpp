@@ -235,6 +235,10 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         switch (texture->m_usage) {
         case TextureUsage::BACK_BUFFER:
+            if (!stage->m_clears_screen) {
+                attachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+            }
             attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             colour_refs.push_back({static_cast<std::uint32_t>(i), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
             break;
