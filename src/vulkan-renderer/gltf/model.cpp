@@ -24,7 +24,8 @@ void Model::load_textures() {
 
     for (auto texture : m_model.images) {
         // The size of the texture if it had 4 channels (rgba).
-        const std::size_t texture_size = texture.width * texture.height * 4;
+        const std::size_t texture_size =
+            static_cast<std::size_t>(texture.width) * static_cast<std::size_t>(texture.height) * 4;
 
         // We need to convert RGB-only images to RGBA format, because most devices don't support rgb-formats in Vulkan.
         switch (texture.component) {
@@ -129,23 +130,28 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
         }
     }
 
+    if (start_node.name == "Light") {
+        spdlog::trace("Loading lights from glTF2 models is not supported yet.");
+    } else if (start_node.name == "Camera") {
+        spdlog::trace("Loading cameras from glTF2 models is not supported yet.");
+    }
     // If the node contains mesh data, we load vertices and indices from the buffers.
     // In glTF this is done via accessors and buffer views.
-    if (start_node.mesh > -1) {
+    else if (start_node.mesh > -1) {
 
         // Preallocate memory for the meshes of the model.
         new_node.mesh.reserve(m_model.meshes[start_node.mesh].primitives.size());
 
-        // Iterate through all primitives of this node's mesh.
+        // Iterate through all primitives of this node's mesh and load its vertices and indices.
         for (const auto &primitive : m_model.meshes[start_node.mesh].primitives) {
             const auto attr = primitive.attributes;
-
-            // Load Vertices.
             const float *position_buffer = nullptr;
             const float *normals_buffer = nullptr;
             const float *texture_coordinate_buffer = nullptr;
 
-            size_t vertex_count = 0;
+            std::size_t vertex_count = 0;
+
+            // TODO: Iterate through the map and list up all unsupported attributes.
 
             // Get buffer data for vertex normals.
             if (attr.find("POSITION") != attr.end()) {
@@ -212,6 +218,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
                 std::memcpy(index_data.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset],
                             accessor.count * sizeof(std::uint32_t));
 
+                // TODO: Can we rewrite this as .insert()?
                 indices.reserve(indices.size() + accessor.count);
 
                 for (std::size_t index = 0; index < accessor.count; index++) {
@@ -228,6 +235,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 
                 indices.reserve(indices.size() + accessor.count);
 
+                // TODO: Can we rewrite this as .insert()?
                 for (std::size_t index = 0; index < accessor.count; index++) {
                     indices.emplace_back(index_data[index] + vertex_start);
                 }
@@ -242,6 +250,7 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 
                 indices.reserve(indices.size() + accessor.count);
 
+                // TODO: Can we rewrite this as .insert()?
                 for (std::size_t index = 0; index < accessor.count; index++) {
                     indices.emplace_back(index_data[index] + vertex_start);
                 }
@@ -259,6 +268,8 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
 
             new_node.mesh.emplace_back(new_primitive);
         }
+    } else {
+        spdlog::trace("Unknown node type: {}", start_node.name);
     }
 
     if (parent != nullptr) {

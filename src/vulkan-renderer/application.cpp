@@ -186,7 +186,7 @@ void Application::load_shaders() {
 
 void Application::load_gltf_example_model() {
 
-    const std::array<std::string, 1> file_names = {"5_objects.gltf"};
+    const std::array<std::string, 1> file_names = {"two_cubes.gltf"};
 
     m_gltf_models.reserve(file_names.size());
 
@@ -198,11 +198,13 @@ void Application::load_gltf_example_model() {
             gltf::Model gltf_model = gltf::Model(*m_device, gltf_file);
             m_gltf_models.emplace_back(*m_device, gltf_file);
 
-            const auto model_vertices = gltf_model.scene_vertices(0);
-            const auto model_indices = gltf_model.scene_indices(0);
+            for (std::size_t i = 0; i < gltf_model.scene_count(); i++) {
+                const auto model_vertices = gltf_model.scene_vertices(i);
+                const auto model_indices = gltf_model.scene_indices(i);
 
-            m_gltf_vertices.insert(m_gltf_vertices.end(), model_vertices.begin(), model_vertices.end());
-            m_gltf_indices.insert(m_gltf_indices.end(), model_indices.begin(), model_indices.end());
+                m_gltf_vertices.insert(m_gltf_vertices.end(), model_vertices.begin(), model_vertices.end());
+                m_gltf_indices.insert(m_gltf_indices.end(), model_indices.begin(), model_indices.end());
+            }
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
     }
 }
