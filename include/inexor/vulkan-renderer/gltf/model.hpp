@@ -19,7 +19,7 @@ struct ModelMaterial {
 
 /// @brief A struct for glTF2 model vertices.
 struct ModelVertex {
-    ModelVertex() {}
+    ModelVertex() = default;
     ///
     ///
     ///
