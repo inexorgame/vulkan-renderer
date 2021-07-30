@@ -49,4 +49,4 @@ ModelFile::ModelFile(const std::string &file_name, const std::string &model_name
     }
 }
 
-} // namespace inexor::vulkan_renderer::gltf2
+} // namespace inexor::vulkan_renderer::gltf
