@@ -79,12 +79,6 @@ void Model::load_textures() {
     for (const auto &texture : m_model.textures) {
         m_texture_indices.emplace_back(texture.source);
     }
-
-    m_texture_descriptors.reserve(m_model.textures.size());
-
-    m_texture_descriptors.emplace_back(
-        m_descriptor_builder.add_combined_image_sampler(texture.sampler(), texture.image_view(), 0)
-            .build("glTF2 model node"));
 }
 
 void Model::load_materials() {
