@@ -17,6 +17,54 @@ ModelRenderer::ModelRenderer(RenderGraph *render_graph, const TextureResource *b
     assert(!shaders.empty());
 }
 
+void ModelRenderer::render_model_node(const Model &model, const wrapper::CommandBuffer &cmd_buf,
+                                      const VkPipelineLayout layout, const ModelNode &node) {
+    if (!node.mesh.empty()) {
+        // Pass the node's matrix via push constants.
+        // Traverse node hierarchy to the top-most parent to get the final matrix of the current node.
+        // TODO: Implement caching for this!
+        glm::mat4 node_matrix = node.matrix;
+        auto *current_parent = node.parent;
+
+        while (current_parent != nullptr) {
+            node_matrix = current_parent->matrix * node_matrix;
+            current_parent = current_parent->parent;
+        }
+
+        cmd_buf.push_constants(layout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), &node_matrix);
+
+        for (const auto &primitive : node.mesh) {
+            if (primitive.index_count > 0) {
+                std::size_t texture_index = model.material(primitive.material_index).base_color_texture_index;
+                const auto &texture = model.texture(texture_index);
+
+                auto new_descriptor =
+                    m_descriptor_builder.add_combined_image_sampler(texture.sampler(), texture.image_view(), 0)
+                        .build("glTF2 model node");
+
+                cmd_buf.bind_descriptor(new_descriptor, layout);
+                cmd_buf.draw_indexed(primitive.index_count);
+            }
+        }
+    }
+
+    for (const auto &child_node : node.children) {
+        render_model_node(model, cmd_buf, layout, child_node);
+    }
+}
+
+void ModelRenderer::render_model(const Model &model, const wrapper::CommandBuffer &cmd_buf,
+                                 const VkPipelineLayout layout) {
+    const VkDeviceSize offsets[1] = {0};
+
+    // TODO: Render
+
+    // Render all nodes of the glTF model recursively.
+    for (const auto &node : model.nodes()) {
+        render_model_node(model, cmd_buf, layout, node);
+    }
+}
+
 void ModelRenderer::render_model(const Model &model, const std::size_t scene_index) {
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
 
@@ -40,21 +88,16 @@ void ModelRenderer::render_model(const Model &model, const std::size_t scene_ind
     gltf_stage->set_clears_screen(true);
     gltf_stage->set_depth_options(true, true);
 
-    const auto indices_count = model.scene_indices(scene_index).size();
-
-    // TODO: Render model correctly
-    // TODO: Build descriptors!
-
     gltf_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
-        cmd_buf.draw_indexed(indices_count);
+        render_model(model, cmd_buf, physical.pipeline_layout());
     });
 
     for (const auto &shader : m_shaders) {
         gltf_stage->uses_shader(shader);
     }
 
-    gltf_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
+    // TODO: Do we have to pass the descriptors form the textures to here as well?
+    //gltf_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
 }
 
 } // namespace inexor::vulkan_renderer::gltf

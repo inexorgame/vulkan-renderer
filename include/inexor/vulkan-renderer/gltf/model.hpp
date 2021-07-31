@@ -134,6 +134,22 @@ public:
         }
         return m_scenes[scene_index].indices;
     }
+
+    [[nodiscard]] const std::vector<ModelNode> &nodes() const noexcept {
+        return m_nodes;
+    }
+
+    [[nodiscard]] const wrapper::GpuTexture &texture(const std::size_t texture_index) const {
+        // TODO: Create an error texture or throw an exception in case of invalid texture access?
+        assert(texture_index < m_textures.size());
+        return m_textures.at(texture_index);
+    }
+
+    [[nodiscard]] const ModelMaterial &material(const std::size_t material_index) const {
+        // TODO: Throw an exception in case of invalid access?
+        assert(material_index < m_materials.size());
+        return m_materials.at(material_index);
+    }
 };
 
 } // namespace inexor::vulkan_renderer::gltf

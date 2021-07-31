@@ -20,6 +20,20 @@ private:
     BufferResource *m_gltf_vertex_buffer{nullptr};
     BufferResource *m_gltf_index_buffer{nullptr};
 
+    /// @brief Render a glTF model node.
+    /// @param model The glTF2 model
+    /// @param cmd_buf The command buffer
+    /// @param layout The pipeline layout
+    /// @param node The glTF model node
+    void render_model_node(const Model &model, const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout layout,
+                           const ModelNode &node);
+
+    /// @brief Render the model.
+    /// @param model The glTF2 model
+    /// @param cmd_buf
+    /// @param layout The pipeline layout
+    void render_model(const Model &model, const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout layout);
+
 public:
     ModelRenderer() = delete;
 

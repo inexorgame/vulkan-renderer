@@ -27,10 +27,10 @@ ModelFile::ModelFile(const std::string &file_name, const std::string &model_name
     std::string loading_warnings;
 
     if (file_extension == "gltf") {
-        spdlog::info("Loading ASCII glTF file {}", file_name);
+        spdlog::trace("Loading ASCII glTF file {}", file_name);
         loading_succeeded = m_loader.LoadASCIIFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
     } else if (file_extension == "glb") {
-        spdlog::info("Loading binary glTF file {}", file_name);
+        spdlog::trace("Loading binary glTF file {}", file_name);
         loading_succeeded = m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
     } else {
         throw InexorException("Error Unknown file extension " + file_extension);
