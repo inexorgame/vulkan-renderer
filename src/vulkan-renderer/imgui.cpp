@@ -39,9 +39,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     spdlog::debug("Loading ImGUI shaders");
     m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
-                                                        "shaders/ui.vert.spv");
+                                                        "shaders/imgui/ui.vert.spv");
     m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                                          "ImGUI fragment shader", "shaders/ui.frag.spv");
+                                                          "ImGUI fragment shader", "shaders/imgui/ui.frag.spv");
 
     // Load font texture
 

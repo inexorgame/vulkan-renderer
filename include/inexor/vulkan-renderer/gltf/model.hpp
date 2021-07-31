@@ -19,11 +19,14 @@ struct ModelMaterial {
 
 /// @brief A struct for glTF2 model vertices.
 struct ModelVertex {
+    /// @brief Default constructor.
     ModelVertex() = default;
-    ///
-    ///
-    ///
+
+    /// @brief Overloaded constructor.
+    /// @param position The position of the model vertex
+    /// @param color_rgb The color of the model vertex
     ModelVertex(const glm::vec3 position, const glm::vec3 color_rgb) : pos(position), color(color_rgb) {}
+
     glm::vec3 pos{};
     glm::vec3 color{};
     glm::vec3 normal{};
@@ -68,7 +71,7 @@ private:
 
     /// @brief Load a glTF2 model node.
     /// @param start_node The node to begin with
-    /// @param parent The parent node
+    /// @param parent The parent node. If no parent exists this will be ``nullptr``
     /// @param vertices The model node's vertices
     /// @param indices The model node's indices
     void load_node(const tinygltf::Node &start_node, ModelNode *parent, std::vector<ModelVertex> &vertices,
@@ -82,7 +85,6 @@ private:
     // TODO: load animation skins
     // TODO: load pbr (physically based rendering) settings
     // TODO: load multiple texture coordinate sets
-    // TODO: try to .reserve() memory for vectors and use emplace_back()
 
 public:
     /// @brief Extract the model data from a model file.
@@ -118,7 +120,6 @@ public:
     [[nodiscard]] auto scene_vertices(const std::size_t scene_index) const {
         assert(scene_index < m_scenes.size());
         if (scene_index > m_scenes.size()) {
-            // TODO: Is this worth an exception?
             spdlog::error("No vertices for scene index {}!", scene_index);
             return std::vector<ModelVertex>{};
         }
@@ -128,7 +129,6 @@ public:
     [[nodiscard]] auto scene_indices(const std::size_t scene_index) const {
         assert(scene_index < m_scenes.size());
         if (scene_index > m_scenes.size()) {
-            // TODO: Is this worth an exception?
             spdlog::error("No vertices for scene index {}!", scene_index);
             return std::vector<std::uint32_t>{};
         }

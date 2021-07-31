@@ -50,6 +50,7 @@ public:
     /// @param back_buffer A pointer to the target of the ImGUI rendering
     ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain, RenderGraph *render_graph,
                  TextureResource *back_buffer);
+
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

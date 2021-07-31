@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gltf/model.hpp"
+#include "inexor/vulkan-renderer/gltf/model_renderer.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -10,6 +11,7 @@
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
+#include "inexor/vulkan-renderer/world/octree_renderer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
@@ -56,6 +58,16 @@ protected:
 
     FPSCounter m_fps_counter;
 
+    std::vector<std::string> m_gltf_vertex_shader_files;
+    std::vector<std::string> m_gltf_fragment_shader_files;
+    std::vector<std::string> m_octree_vertex_shader_files;
+    std::vector<std::string> m_octree_fragment_shader_files;
+    std::vector<wrapper::Shader> m_gltf_shaders;
+    std::vector<wrapper::Shader> m_octree_shaders;
+    std::vector<std::string> m_gltf_model_files;
+    std::vector<gltf::Model> m_gltf_models;
+    std::vector<std::string> m_texture_files;
+
     bool m_vsync_enabled{false};
 
     std::unique_ptr<Camera> m_camera;
@@ -70,28 +82,12 @@ protected:
     std::unique_ptr<wrapper::Fence> m_frame_finished_fence;
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<RenderGraph> m_render_graph;
-
-    std::vector<wrapper::Shader> m_shaders;
+    std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
+    std::unique_ptr<world::OctreeRenderer> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
-    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
-    std::vector<wrapper::ResourceDescriptor> m_descriptors;
-    std::vector<OctreeGpuVertex> m_octree_vertices;
-    std::vector<std::uint32_t> m_octree_indices;
-    std::vector<gltf::ModelVertex> m_gltf_vertices;
-    std::vector<std::uint32_t> m_gltf_indices;
-
     TextureResource *m_back_buffer{nullptr};
 
-    // Render graph buffers for octree geometry.
-    BufferResource *m_octree_vertex_buffer{nullptr};
-    BufferResource *m_octree_index_buffer{nullptr};
-
-    // Render graph buffers for glTF2 model geometry.
-    BufferResource *m_gltf_vertex_buffer{nullptr};
-    BufferResource *m_gltf_index_buffer{nullptr};
-
     void setup_render_graph();
-    void generate_octree_indices();
     void recreate_swapchain();
     void render_frame();
 

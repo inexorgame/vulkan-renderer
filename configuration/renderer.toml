@@ -18,14 +18,34 @@ height = 800
 name = "Inexor-Vulkan-Renderer"
 
 [shaders]
-[shaders.vertex]
+[shaders.gltf.vertex]
 files = [
-	"shaders/main.vert.spv",
+	"shaders/gltf/texture.vert.spv",
 ]
 
-[shaders.fragment]
+[shaders.octree.vertex]
 files = [
-	"shaders/main.frag.spv",
+	"shaders/octree/main.vert.spv",
+]
+
+[shaders.imgui.vertex]
+files = [
+	"shaders/imgui/main.vert.spv",
+]
+
+[shaders.gltf.fragment]
+files = [
+	"shaders/gltf/texture.frag.spv",
+]
+
+[shaders.octree.fragment]
+files = [
+	"shaders/octree/main.frag.spv",
+]
+
+[shaders.imgui.fragment]
+files = [
+	"shaders/imgui/main.frag.spv",
 ]
 
 # TODO: Use key/value pairs and give textures user friendly names.
@@ -43,7 +63,7 @@ files = [
 
 # glTF 2.0 is the new standard 3D model format.
 # https://www.khronos.org/gltf/
-[glTFmodels]
+[gltfmodels]
 files = [
-	"assets/models/inexor-logo/inexor_logo.gltf",
+	"assets/models/inexor/5_objects.gltf",
 ]

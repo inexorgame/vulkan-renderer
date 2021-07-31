@@ -257,7 +257,6 @@ void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::
                 break;
             }
             default:
-                // TODO: Is this worth an exception or not?
                 spdlog::error("Index component type {} is not supported!", accessor.componentType);
             }
 

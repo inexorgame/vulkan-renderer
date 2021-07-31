@@ -12,6 +12,7 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/gltf/model.cpp
     vulkan-renderer/gltf/model_file.cpp
+    vulkan-renderer/gltf/model_renderer.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
@@ -49,7 +50,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp
     vulkan-renderer/world/cube.cpp
-    vulkan-renderer/world/indentation.cpp)
+    vulkan-renderer/world/indentation.cpp
+    vulkan-renderer/world/octree_renderer.cpp)
 
 foreach(FILE ${INEXOR_SOURCE_FILES})
     get_filename_component(PARENT_DIR "${FILE}" PATH)

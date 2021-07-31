@@ -1,101 +1,34 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
-#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
-#include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 
 #include <array>
-#include <cassert>
 #include <fstream>
-#include <limits>
-#include <unordered_map>
 
 namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_render_graph() {
+    // Create an instance of the resource descriptor builder.
+    // This allows us to make resource descriptors with the help of a builder pattern.
+    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
+
     m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
     m_back_buffer->set_format(m_swapchain->image_format());
 
     auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_octree_index_buffer = m_render_graph->add<BufferResource>("octree index buffer", BufferUsage::INDEX_BUFFER);
-    m_octree_index_buffer->upload_data(m_octree_indices);
+    m_gltf_model_renderer.reset();
+    m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
+                                                                  m_gltf_shaders, descriptor_builder);
 
-    m_octree_vertex_buffer = m_render_graph->add<BufferResource>("octree vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                                 offsetof(OctreeGpuVertex, position)); // NOLINT
-    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                                 offsetof(OctreeGpuVertex, color)); // NOLINT
-    m_octree_vertex_buffer->upload_data(m_octree_vertices);
-
-    m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
-    m_gltf_index_buffer->upload_data(m_gltf_indices);
-
-    m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)); // NOLINT
-    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                               offsetof(gltf::ModelVertex, color)); // NOLINT
-    m_gltf_vertex_buffer->upload_data(m_gltf_vertices);
-
-    auto *gltf_stage = m_render_graph->add<GraphicsStage>("gltf stage");
-    gltf_stage->writes_to(m_back_buffer);
-    gltf_stage->writes_to(depth_buffer);
-    gltf_stage->reads_from(m_gltf_index_buffer);
-    gltf_stage->reads_from(m_gltf_vertex_buffer);
-    gltf_stage->bind_buffer(m_gltf_vertex_buffer, 0);
-    gltf_stage->set_clears_screen(true);
-    gltf_stage->set_depth_options(true, true);
-    gltf_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        // Render glTF2 models
-        cmd_buf.bind_descriptor(m_descriptors[1], physical.pipeline_layout());
-        cmd_buf.draw_indexed(m_gltf_indices.size());
-    });
-
-    auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
-    main_stage->writes_to(m_back_buffer);
-    main_stage->writes_to(depth_buffer);
-    main_stage->reads_from(m_octree_index_buffer);
-    main_stage->reads_from(m_octree_vertex_buffer);
-    main_stage->bind_buffer(m_octree_vertex_buffer, 0);
-    main_stage->set_depth_options(true, true);
-    main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        // Render octrees
-        cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
-        cmd_buf.draw_indexed(m_octree_indices.size());
-    });
-
-    for (const auto &shader : m_shaders) {
-        gltf_stage->uses_shader(shader);
-    }
-    for (const auto &shader : m_shaders) {
-        main_stage->uses_shader(shader);
-    }
-
-    main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
-    gltf_stage->add_descriptor_layout(m_descriptors[1].descriptor_set_layout());
-}
-
-void VulkanRenderer::generate_octree_indices() {
-    auto old_vertices = std::move(m_octree_vertices);
-    m_octree_indices.clear();
-    m_octree_vertices.clear();
-    std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
-    for (auto &vertex : old_vertices) {
-        // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
-        if (vertex_map.count(vertex) == 0) {
-            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
-            vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
-            m_octree_vertices.push_back(vertex);
-        }
-        m_octree_indices.push_back(vertex_map.at(vertex));
-    }
-    spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
-                  old_vertices.size(), m_octree_vertices.size());
-    spdlog::trace("Total indices {} ", m_octree_indices.size());
+    m_octree_renderer.reset();
+    m_octree_renderer = std::make_unique<world::OctreeRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
+                                                                m_octree_shaders, descriptor_builder);
 }
 
 void VulkanRenderer::recreate_swapchain() {

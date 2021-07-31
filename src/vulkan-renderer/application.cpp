@@ -97,6 +97,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
     m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
     m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
+
     spdlog::debug("Window: '{}', {} x {}", m_window_title, m_window_width, m_window_height);
 
     m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
@@ -107,32 +108,49 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
         spdlog::debug("{}", texture_file);
     }
 
-    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
+    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "gltfmodels", "files");
 
-    spdlog::debug("glTF 2.0 models:");
+    spdlog::debug("glTF models:");
 
     for (const auto &gltf_model_file : m_gltf_model_files) {
         spdlog::debug("{}", gltf_model_file);
     }
 
-    m_vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
+    m_gltf_vertex_shader_files =
+        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "gltf", "vertex", "files");
 
-    spdlog::debug("Vertex shaders:");
+    spdlog::debug("glTF vertex shaders:");
 
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
+    for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
         spdlog::debug("{}", vertex_shader_file);
     }
 
-    m_fragment_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
+    m_gltf_fragment_shader_files =
+        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "gltf", "fragment", "files");
 
-    spdlog::debug("Fragment shaders:");
+    spdlog::debug("glTF fragment shaders:");
 
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
+    for (const auto &fragment_shader_file : m_gltf_fragment_shader_files) {
         spdlog::debug("{}", fragment_shader_file);
     }
 
-    // TODO: Load more info from TOML file.
+    m_octree_vertex_shader_files =
+        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "octree", "vertex", "files");
+
+    spdlog::debug("octree vertex shaders:");
+
+    for (const auto &vertex_shader_file : m_octree_vertex_shader_files) {
+        spdlog::debug("{}", vertex_shader_file);
+    }
+
+    m_octree_fragment_shader_files =
+        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "octree", "fragment", "files");
+
+    spdlog::debug("glTF fragment shaders:");
+
+    for (const auto &fragment_shader_file : m_octree_fragment_shader_files) {
+        spdlog::debug("{}", fragment_shader_file);
+    }
 }
 
 void Application::load_textures() {
@@ -152,59 +170,66 @@ void Application::load_textures() {
 void Application::load_shaders() {
     assert(m_device->device());
 
-    spdlog::debug("Loading vertex shaders.");
+    spdlog::debug("Loading glTF vertex shaders.");
 
-    if (m_vertex_shader_files.empty()) {
-        spdlog::error("No vertex shaders to load!");
+    if (m_gltf_vertex_shader_files.empty()) {
+        spdlog::error("No glTF vertex shaders to load!");
     }
 
-    // Loop through the list of vertex shaders and initialise all of them.
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
-        spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
-
-        // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
+    for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
+        spdlog::debug("Loading glTF vertex shader file {}.", vertex_shader_file);
+        m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed glTF vertex shader",
+                                    vertex_shader_file);
     }
 
-    spdlog::debug("Loading fragment shaders.");
+    spdlog::debug("Loading glTF fragment shaders.");
 
-    if (m_fragment_shader_files.empty()) {
-        spdlog::error("No fragment shaders to load!");
+    if (m_gltf_fragment_shader_files.empty()) {
+        spdlog::error("No glTF fragment shaders to load!");
     }
 
-    // Loop through the list of fragment shaders and initialise all of them.
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
-        spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
+    for (const auto &fragment_shader_file : m_gltf_fragment_shader_files) {
+        spdlog::debug("Loading glTF fragment shader file {}.", fragment_shader_file);
+        m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed glTF fragment shader",
+                                    fragment_shader_file);
+    }
 
-        // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
-                               fragment_shader_file);
+    spdlog::debug("Loading octree vertex shaders.");
+
+    if (m_gltf_vertex_shader_files.empty()) {
+        spdlog::error("No octree vertex shaders to load!");
+    }
+
+    for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
+        spdlog::debug("Loading octree vertex shader file {}.", vertex_shader_file);
+        m_octree_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed octree vertex shader",
+                                      vertex_shader_file);
+    }
+
+    spdlog::debug("Loading octree fragment shaders.");
+
+    if (m_gltf_fragment_shader_files.empty()) {
+        spdlog::error("No octree fragment shaders to load!");
+    }
+
+    for (const auto &fragment_shader_file : m_gltf_fragment_shader_files) {
+        spdlog::debug("Loading octree fragment shader file {}.", fragment_shader_file);
+        m_octree_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed octree fragment shader",
+                                      fragment_shader_file);
     }
 
     spdlog::debug("Loading shaders finished.");
 }
 
-void Application::load_gltf_example_model() {
+void Application::load_gltf_models() {
+    m_gltf_models.reserve(m_gltf_model_files.size());
 
-    const std::array<std::string, 1> file_names = {"two_cubes.gltf"};
-
-    m_gltf_models.reserve(file_names.size());
-
-    for (const auto &file : file_names) {
+    for (const auto &gltf_file_name : m_gltf_model_files) {
         try {
-            const std::string full_file_name = "assets/models/inexor/" + file;
-            const auto gltf_file = gltf::ModelFile(full_file_name, "example model");
-
+            const auto gltf_file = gltf::ModelFile(gltf_file_name, "example model");
             gltf::Model gltf_model = gltf::Model(*m_device, gltf_file);
+
             m_gltf_models.emplace_back(*m_device, gltf_file);
-
-            for (std::size_t i = 0; i < gltf_model.scene_count(); i++) {
-                const auto model_vertices = gltf_model.scene_vertices(i);
-                const auto model_indices = gltf_model.scene_indices(i);
-
-                m_gltf_vertices.insert(m_gltf_vertices.end(), model_vertices.begin(), model_vertices.end());
-                m_gltf_indices.insert(m_gltf_indices.end(), model_indices.begin(), model_indices.end());
-            }
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
     }
 }
@@ -216,24 +241,6 @@ void Application::load_octree_geometry(bool initialize) {
     m_worlds.clear();
     m_worlds.push_back(
         world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
-    m_worlds.push_back(
-        world::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
-
-    m_octree_vertices.clear();
-    for (const auto &world : m_worlds) {
-        for (const auto &polygons : world->polygons(true)) {
-            for (const auto &triangle : *polygons) {
-                for (const auto &vertex : triangle) {
-                    glm::vec3 color = {
-                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                    };
-                    m_octree_vertices.emplace_back(vertex, color);
-                }
-            }
-        }
-    }
 }
 
 void Application::check_application_specific_features() {
@@ -507,27 +514,8 @@ Application::Application(int argc, char **argv) {
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index());
 
-    m_uniform_buffers.emplace_back(*m_device, "octree uniform buffer", sizeof(UniformBufferObject));
-
-    // Create an instance of the resource descriptor builder.
-    // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
-
-    // Make use of the builder to create a resource descriptor for the uniform buffer.
-    m_descriptors.emplace_back(
-        descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
-            .build("octree uniform buffer"));
-
     load_octree_geometry(true);
-    generate_octree_indices();
-
-    m_uniform_buffers.emplace_back(*m_device, "glTF2 model uniform buffer", sizeof(UniformBufferObject));
-
-    m_descriptors.emplace_back(
-        descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[1].buffer(), 1)
-            .build("glTF2 model uniform buffer"));
-
-    load_gltf_example_model();
+    load_gltf_models();
 
     spdlog::debug("Vulkan initialisation finished.");
     spdlog::debug("Showing window.");
@@ -546,14 +534,6 @@ void Application::update_uniform_buffers() {
 
     // TODO: Embed this into the render graph.
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
-
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = m_camera->view_matrix();
-    ubo.proj = m_camera->perspective_matrix();
-    ubo.proj[1][1] *= -1;
-
-    // TODO: Embed this into the render graph.
-    m_uniform_buffers[1].update(&ubo, sizeof(ubo));
 }
 
 void Application::update_imgui_overlay() {
@@ -641,11 +621,12 @@ void Application::run() {
         update_imgui_overlay();
         render_frame();
         process_mouse_input();
+        // Create a new random octree world if key N is pressed.
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
-            generate_octree_indices();
-            m_octree_index_buffer->upload_data(m_octree_indices);
-            m_octree_vertex_buffer->upload_data(m_octree_vertices);
+            // TODO: Fix this!
+            // m_octree_index_buffer->upload_data(m_octree_indices);
+            // m_octree_vertex_buffer->upload_data(m_octree_vertices);
         }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
