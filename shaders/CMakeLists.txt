@@ -5,8 +5,8 @@ endif()
 
 set(
     SHADERS
-    gltf/texture.vert
-    gltf/texture.frag
+    gltf/mesh.vert
+    gltf/mesh.frag
     imgui/ui.vert
     imgui/ui.frag
     octree/main.frag

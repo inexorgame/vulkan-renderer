@@ -20,7 +20,7 @@ name = "Inexor-Vulkan-Renderer"
 [shaders]
 [shaders.gltf.vertex]
 files = [
-	"shaders/gltf/texture.vert.spv",
+	"shaders/gltf/mesh.vert.spv",
 ]
 
 [shaders.octree.vertex]
@@ -35,7 +35,7 @@ files = [
 
 [shaders.gltf.fragment]
 files = [
-	"shaders/gltf/texture.frag.spv",
+	"shaders/gltf/mesh.frag.spv",
 ]
 
 [shaders.octree.fragment]
@@ -65,5 +65,5 @@ files = [
 # https://www.khronos.org/gltf/
 [gltfmodels]
 files = [
-	"assets/models/inexor/5_objects.gltf",
+	"assets/models/inexor/glTF-Binary/ToyCar.glb",
 ]

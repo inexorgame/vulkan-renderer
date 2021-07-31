@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 namespace inexor::vulkan_renderer::gltf {
 
@@ -32,7 +33,7 @@ private:
     /// @param model The glTF2 model
     /// @param cmd_buf
     /// @param layout The pipeline layout
-    void render_model(const Model &model, const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout layout);
+    void render_model_nodes(const Model &model, const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout layout);
 
 public:
     ModelRenderer() = delete;
@@ -56,7 +57,8 @@ public:
     /// @brief Render a glTF2 model's nodes.
     /// @param model The glTF2 model
     /// @param scene_index The scene index of the glTF2 model
-    void render_model(const Model &model, std::size_t scene_index);
+    /// @param uniform_buffer The uniform buffer
+    void render_model(const Model &model, std::size_t scene_index, const wrapper::UniformBuffer &uniform_buffer);
 };
 
 } // namespace inexor::vulkan_renderer::gltf

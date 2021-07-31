@@ -527,6 +527,7 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
 
             // Upload new data.
             assert(physical.m_alloc_info.pMappedData != nullptr);
+            assert(buffer_resource);
             std::memcpy(physical.m_alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
             buffer_resource->m_data_upload_needed = false;
         }

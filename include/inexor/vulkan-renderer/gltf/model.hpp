@@ -11,6 +11,13 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
+/// @brief The shader data for glTF model rendering.
+struct ModelShaderData {
+    glm::mat4 projection;
+    glm::mat4 model;
+    glm::vec4 light_position = glm::vec4(5.0f, 5.0f, -5.0f, 1.0f);
+};
+
 /// @brief A struct for glTF2 model materials.
 struct ModelMaterial {
     glm::vec4 base_color_factor{1.0f};
@@ -62,6 +69,7 @@ class Model {
 private:
     const tinygltf::Model &m_model;
     const wrapper::Device &m_device;
+    ModelShaderData m_shader_data;
 
     std::vector<wrapper::GpuTexture> m_textures;
     std::vector<std::uint32_t> m_texture_indices;
@@ -149,6 +157,10 @@ public:
         // TODO: Throw an exception in case of invalid access?
         assert(material_index < m_materials.size());
         return m_materials.at(material_index);
+    }
+
+    [[nodiscard]] const ModelShaderData &shader_data() const noexcept {
+        return m_shader_data;
     }
 };
 

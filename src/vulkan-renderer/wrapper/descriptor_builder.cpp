@@ -24,6 +24,8 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, std::move(m_layout_bindings),
                                             std::move(m_write_sets), std::move(name));
 
+    m_layout_bindings.clear();
+    m_write_sets.clear();
     m_descriptor_buffer_infos.clear();
     m_descriptor_image_infos.clear();
 

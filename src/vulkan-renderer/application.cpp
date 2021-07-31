@@ -1,6 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/gltf/model.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -178,6 +179,8 @@ void Application::load_shaders() {
 
     for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
         spdlog::debug("Loading glTF vertex shader file {}.", vertex_shader_file);
+
+        // TODO: Add try/catch block for missing files!
         m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed glTF vertex shader",
                                     vertex_shader_file);
     }
@@ -230,6 +233,9 @@ void Application::load_gltf_models() {
             gltf::Model gltf_model = gltf::Model(*m_device, gltf_file);
 
             m_gltf_models.emplace_back(*m_device, gltf_file);
+            m_gltf_uniform_buffers.push_back(
+                wrapper::UniformBuffer(*m_device, "glTF uniform buffer", sizeof(gltf::ModelShaderData)));
+
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
     }
 }
@@ -242,7 +248,7 @@ void Application::load_octree_geometry(bool initialize) {
     m_worlds.push_back(
         world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
 
-    m_uniform_buffers.push_back(
+    m_octree_uniform_buffers.push_back(
         wrapper::UniformBuffer(*m_device, "octree uniform buffer", sizeof(UniformBufferObject)));
 }
 
@@ -536,7 +542,7 @@ void Application::update_uniform_buffers() {
     ubo.proj[1][1] *= -1;
 
     // TODO: Embed this into the render graph.
-    m_uniform_buffers[0].update(&ubo, sizeof(ubo));
+    m_octree_uniform_buffers[0].update(&ubo, sizeof(ubo));
 }
 
 void Application::update_imgui_overlay() {
