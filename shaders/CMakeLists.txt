@@ -5,15 +5,18 @@ endif()
 
 set(
     SHADERS
-    main.vert
-    main.frag
-    ui.frag
-    ui.vert
+    gltf/texture.vert
+    gltf/texture.frag
+    imgui/ui.vert
+    imgui/ui.frag
+    octree/main.frag
+    octree/main.vert
 )
 
 foreach(SHADER ${SHADERS})
     get_filename_component(FILE_NAME ${SHADER} NAME)
-    set(SPIRV ${CMAKE_CURRENT_SOURCE_DIR}/${FILE_NAME}.spv)
+    get_filename_component(FILE_PATH ${SHADER} DIRECTORY)
+    set(SPIRV ${CMAKE_CURRENT_SOURCE_DIR}/${FILE_PATH}/${FILE_NAME}.spv)
     add_custom_command(
         OUTPUT ${SPIRV}
         COMMAND ${GLSL_VALIDATOR} -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${SPIRV}
