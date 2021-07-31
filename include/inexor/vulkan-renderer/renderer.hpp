@@ -67,6 +67,8 @@ protected:
     std::vector<std::string> m_gltf_model_files;
     std::vector<gltf::Model> m_gltf_models;
     std::vector<std::string> m_texture_files;
+    std::vector<std::shared_ptr<world::Cube>> m_worlds;
+    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
 
     bool m_vsync_enabled{false};
 

@@ -6,17 +6,16 @@
 namespace inexor::vulkan_renderer::world {
 
 OctreeRenderer::OctreeRenderer(RenderGraph *render_graph, const TextureResource *back_buffer,
-                               const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders,
-                               wrapper::DescriptorBuilder &descriptor_builder)
-    : m_render_graph(render_graph), m_back_buffer(back_buffer), m_depth_buffer(depth_buffer), m_shaders(shaders),
-      m_descriptor_builder(descriptor_builder) {
+                               const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders)
+    : m_render_graph(render_graph), m_back_buffer(back_buffer), m_depth_buffer(depth_buffer), m_shaders(shaders) {
     assert(render_graph);
     assert(back_buffer);
     assert(depth_buffer);
     assert(!shaders.empty());
 }
 
-void OctreeRenderer::render_octree(const world::Cube &world, wrapper::UniformBuffer uniform_buffer) {
+void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::UniformBuffer &uniform_buffer,
+                                   wrapper::DescriptorBuilder &descriptor_builder) {
     m_octree_vertices.clear();
 
     for (const auto &polygons : world.polygons(true)) {
@@ -75,10 +74,13 @@ void OctreeRenderer::render_octree(const world::Cube &world, wrapper::UniformBuf
     octree_stage->reads_from(m_octree_index_buffer);
     octree_stage->reads_from(m_octree_vertex_buffer);
     octree_stage->bind_buffer(m_octree_vertex_buffer, 0);
+    octree_stage->set_clears_screen(true);
+
+    // TODO: Remove this again as soon as glTF rendering works. We don't need that.
     octree_stage->set_depth_options(true, true);
 
-    m_descriptors.emplace_back(m_descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer(), 0)
-                                   .build("octree uniform buffer"));
+    m_descriptors.push_back(descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer(), 0)
+                                .build("octree uniform buffer"));
 
     octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());

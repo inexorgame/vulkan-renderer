@@ -200,7 +200,7 @@ void Application::load_shaders() {
         spdlog::error("No octree vertex shaders to load!");
     }
 
-    for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
+    for (const auto &vertex_shader_file : m_octree_vertex_shader_files) {
         spdlog::debug("Loading octree vertex shader file {}.", vertex_shader_file);
         m_octree_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed octree vertex shader",
                                       vertex_shader_file);
@@ -212,7 +212,7 @@ void Application::load_shaders() {
         spdlog::error("No octree fragment shaders to load!");
     }
 
-    for (const auto &fragment_shader_file : m_gltf_fragment_shader_files) {
+    for (const auto &fragment_shader_file : m_octree_fragment_shader_files) {
         spdlog::debug("Loading octree fragment shader file {}.", fragment_shader_file);
         m_octree_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed octree fragment shader",
                                       fragment_shader_file);
@@ -241,6 +241,9 @@ void Application::load_octree_geometry(bool initialize) {
     m_worlds.clear();
     m_worlds.push_back(
         world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
+
+    m_uniform_buffers.push_back(
+        wrapper::UniformBuffer(*m_device, "octree uniform buffer", sizeof(UniformBufferObject)));
 }
 
 void Application::check_application_specific_features() {

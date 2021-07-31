@@ -12,23 +12,21 @@
 namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_render_graph() {
-    // Create an instance of the resource descriptor builder.
-    // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
-
     m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
     m_back_buffer->set_format(m_swapchain->image_format());
 
     auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
 
+    /*
     m_gltf_model_renderer.reset();
     m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
                                                                   m_gltf_shaders, descriptor_builder);
+    */
 
     m_octree_renderer.reset();
-    m_octree_renderer = std::make_unique<world::OctreeRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
-                                                                m_octree_shaders, descriptor_builder);
+    m_octree_renderer =
+        std::make_unique<world::OctreeRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer, m_octree_shaders);
 }
 
 void VulkanRenderer::recreate_swapchain() {
@@ -40,6 +38,14 @@ void VulkanRenderer::recreate_swapchain() {
     m_swapchain->recreate(m_window->width(), m_window->height());
     m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
     setup_render_graph();
+
+    // Create an instance of the resource descriptor builder.
+    // This allows us to make resource descriptors with the help of a builder pattern.
+    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
+
+    for (std::size_t i = 0; i < m_worlds.size(); i++) {
+        m_octree_renderer->render_octree(*m_worlds[i], m_uniform_buffers[i], descriptor_builder);
+    }
 
     m_frame_finished_fence.reset();
     m_image_available_semaphore.reset();
@@ -54,6 +60,7 @@ void VulkanRenderer::recreate_swapchain() {
 
     m_imgui_overlay.reset();
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
+
     m_render_graph->compile(m_back_buffer);
 }
 

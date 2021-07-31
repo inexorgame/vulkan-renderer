@@ -34,6 +34,7 @@ public:
 
     ModelRenderer(const ModelRenderer &) = delete;
     ModelRenderer(ModelRenderer &&) = delete;
+    ~ModelRenderer() = default;
 
     ModelRenderer &operator=(const ModelRenderer &) = delete;
     ModelRenderer &operator=(ModelRenderer &&) = delete;

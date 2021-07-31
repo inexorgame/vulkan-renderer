@@ -27,11 +27,6 @@ class Application : public VulkanRenderer {
 
     bool m_enable_validation_layers{true};
 
-    /// Inexor engine supports a variable number of octrees.
-    std::vector<std::shared_ptr<world::Cube>> m_worlds;
-
-    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
-
     // If the user specified command line argument "--stop-on-validation-message", the program will call
     // std::abort(); after reporting a validation layer (error) message.
     bool m_stop_on_validation_message{false};

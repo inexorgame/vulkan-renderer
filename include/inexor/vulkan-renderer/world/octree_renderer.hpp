@@ -19,7 +19,6 @@ private:
     RenderGraph *m_render_graph;
     const TextureResource *m_back_buffer;
     const TextureResource *m_depth_buffer;
-    wrapper::DescriptorBuilder &m_descriptor_builder;
     const std::vector<wrapper::Shader> &m_shaders;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;
@@ -35,9 +34,8 @@ public:
     /// @param back_buffer The back buffer which is used
     /// @param depth_buffer The depth buffer which is used
     /// @param shaders The shaders which are used
-    /// @param descriptor_builder A const reference to a descriptor builder
     OctreeRenderer(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                   const std::vector<wrapper::Shader> &shaders, wrapper::DescriptorBuilder &descriptor_builder);
+                   const std::vector<wrapper::Shader> &shaders);
 
     OctreeRenderer(const OctreeRenderer &) = delete;
     OctreeRenderer(OctreeRenderer &&) = delete;
@@ -49,7 +47,9 @@ public:
     /// Render a give octree
     /// @param world The octree world to render
     /// @param uniform The octree's uniform buffer
-    void render_octree(const world::Cube &world, wrapper::UniformBuffer uniform_buffer);
+    /// @param descriptor_builder A const reference to a descriptor builder
+    void render_octree(const world::Cube &world, const wrapper::UniformBuffer &uniform_buffer,
+                       wrapper::DescriptorBuilder &descriptor_builder);
 };
 
 } // namespace inexor::vulkan_renderer::world
