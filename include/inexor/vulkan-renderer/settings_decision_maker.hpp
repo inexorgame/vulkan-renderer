@@ -56,7 +56,7 @@ struct VulkanSettingsDecisionMaker {
     /// @return A physical device which was chosen if a suitable one could be found, std::nullopt otherwise.
     [[nodiscard]] static std::optional<VkPhysicalDevice>
     graphics_card(VkInstance vulkan_instance, VkSurfaceKHR surface,
-              std::optional<std::uint32_t> preferred_gpu_index = std::nullopt);
+                  std::optional<std::uint32_t> preferred_gpu_index = std::nullopt);
 
     /// @brief Automatically decide how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.
