@@ -8,8 +8,7 @@
 
 namespace inexor::vulkan_renderer {
 
-std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(VkPhysicalDevice graphics_card,
-                                                                                      VkSurfaceKHR surface) {
+std::uint32_t VulkanSettingsDecisionMaker::swapchain_image_count(VkPhysicalDevice graphics_card, VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -37,8 +36,7 @@ std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_t
 }
 
 std::optional<VkSurfaceFormatKHR>
-VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(VkPhysicalDevice graphics_card,
-                                                                                   VkSurfaceKHR surface) {
+VulkanSettingsDecisionMaker::swapchain_surface_color_format(VkPhysicalDevice graphics_card, VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -223,8 +221,8 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(VkPhysicalDevice gra
 }
 
 std::optional<VkPhysicalDevice>
-VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(VkInstance vulkan_instance, VkSurfaceKHR surface,
-                                                               const std::optional<std::uint32_t> preferred_gpu_index) {
+VulkanSettingsDecisionMaker::graphics_card(VkInstance vulkan_instance, VkSurfaceKHR surface,
+                                           const std::optional<std::uint32_t> preferred_gpu_index) {
     assert(vulkan_instance);
     assert(surface);
 
@@ -460,9 +458,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(VkInstance vulkan
     return highest_score_gpu;
 }
 
-VkSurfaceTransformFlagsKHR
-VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(VkPhysicalDevice graphics_card,
-                                                                      VkSurfaceKHR surface) {
+VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::image_transform(VkPhysicalDevice graphics_card,
+                                                                        VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -510,9 +507,8 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(VkPhysicalDevice select
     return std::nullopt;
 }
 
-std::optional<VkPresentModeKHR>
-VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface,
-                                                                   const bool vsync) {
+std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_present_mode(VkPhysicalDevice graphics_card,
+                                                                                 VkSurfaceKHR surface, bool vsync) {
     assert(graphics_card);
     assert(surface);
 
@@ -610,9 +606,9 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDev
     return std::nullopt;
 }
 
-SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(VkPhysicalDevice graphics_card,
-                                                                       VkSurfaceKHR surface, std::uint32_t window_width,
-                                                                       std::uint32_t window_height) {
+SwapchainSettings VulkanSettingsDecisionMaker::swapchain_extent(VkPhysicalDevice graphics_card, VkSurfaceKHR surface,
+                                                                std::uint32_t window_width,
+                                                                std::uint32_t window_height) {
     assert(graphics_card);
     assert(surface);
 
