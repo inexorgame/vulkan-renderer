@@ -319,9 +319,6 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         m_vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>( // NOLINT
             vkGetDeviceProcAddr(m_device, "vkSetDebugUtilsObjectNameEXT"));
         assert(m_vk_set_debug_utils_object_name);
-    } else {
-        spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-        spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
     }
 #endif
 
