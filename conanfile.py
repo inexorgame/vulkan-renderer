@@ -13,12 +13,10 @@ class InexorConan(ConanFile):
         "glfw/3.3.2",
         "glm/0.9.9.8",
         "imgui/1.77",
-        "nlohmann_json/3.8.0",
         "spdlog/1.7.0",
         "stb/20200203",
         "tinygltf/2.2.0",
         "toml11/3.4.0",
-        "vulkan-headers/1.2.172",
         "vulkan-memory-allocator/2.3.0",
     )
 
