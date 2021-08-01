@@ -198,8 +198,6 @@ void GpuTexture::create_texture_sampler() {
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
-
-    spdlog::debug("Image sampler {} created successfully.", m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

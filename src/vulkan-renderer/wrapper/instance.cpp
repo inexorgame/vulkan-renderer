@@ -203,8 +203,6 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);
     }
-
-    spdlog::debug("Created Vulkan instance successfully.");
 }
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,

@@ -156,8 +156,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         // Assign an internal name using Vulkan debug markers.
         m_device.set_debug_marker_name(m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
     }
-
-    spdlog::debug("Created {} swapchain image views successfully.", m_swapchain_image_count);
 }
 
 std::uint32_t Swapchain::acquire_next_image(const Semaphore &semaphore) {

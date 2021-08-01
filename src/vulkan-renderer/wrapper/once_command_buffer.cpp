@@ -69,8 +69,6 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
         throw std::runtime_error("Error: VkEndCommandBuffer failed for once command buffer!");
     }
 
-    spdlog::debug("Command buffer recording ended successfully.");
-
     spdlog::debug("Starting to submit command.");
 
     auto submit_info = make_info<VkSubmitInfo>();

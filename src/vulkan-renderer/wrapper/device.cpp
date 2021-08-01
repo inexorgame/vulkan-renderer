@@ -285,7 +285,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     device_ci.ppEnabledExtensionNames = enabled_device_extensions.data();
     device_ci.pEnabledFeatures = &used_features;
 
-    spdlog::debug("Creating physical device (graphics card interface).");
+    spdlog::debug("Creating physical device.");
 
     if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
@@ -338,7 +338,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
     }
 
-    spdlog::debug("Creating vma allocator");
+    spdlog::debug("Creating VMA allocator.");
 
     // Make sure to set the root directory of this repository as working directory in the debugger!
     // Otherwise, VMA won't be able to open this allocation replay file for writing.
@@ -380,8 +380,6 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
-
-    spdlog::debug("Created device successfully.");
 }
 
 Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
