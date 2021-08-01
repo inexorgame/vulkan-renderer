@@ -47,7 +47,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
         pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, swapchain_image_count});
     }
 
-    spdlog::debug("Creating new descriptor pool {}.", m_name);
+    spdlog::trace("Creating new descriptor pool {}.", m_name);
 
     auto descriptor_pool_ci = wrapper::make_info<VkDescriptorPoolCreateInfo>();
     descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
@@ -62,7 +62,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
 
-    spdlog::debug("Creating descriptor set layout for descriptor '{}'.", m_name);
+    spdlog::trace("Creating descriptor set layout for descriptor '{}'.", m_name);
 
     auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>();
     descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size());
@@ -78,7 +78,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     m_device.set_debug_marker_name(m_descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
                                    m_name);
 
-    spdlog::debug("Creating descriptor sets for '{}'.", m_name);
+    spdlog::trace("Creating descriptor sets for '{}'.", m_name);
 
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(swapchain_image_count, m_descriptor_set_layout);
 

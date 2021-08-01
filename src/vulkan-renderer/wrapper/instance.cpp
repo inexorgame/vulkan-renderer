@@ -114,7 +114,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
             "Error: glfwGetRequiredInstanceExtensions results 0 as number of required instance extensions!");
     }
 
-    spdlog::debug("Required GLFW instance extensions:");
+    spdlog::trace("Required GLFW instance extensions:");
 
     // Add all instance extensions which are required by GLFW to our wishlist.
     for (std::size_t i = 0; i < glfw_extension_count; i++) {
@@ -133,7 +133,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &instance_extension : instance_extension_wishlist) {
         if (is_extension_supported(instance_extension)) {
-            spdlog::debug("Adding '{}' to list of enabled instance extensions.", instance_extension);
+            spdlog::trace("Adding '{}' to list of enabled instance extensions.", instance_extension);
             enabled_instance_extensions.push_back(instance_extension);
         } else {
             spdlog::error("Requested instance extension '{}' is not available on this system!", instance_extension);
@@ -180,7 +180,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // We are not checking for duplicated entries but this is no problem.
     for (const auto &current_layer : instance_layers_wishlist) {
         if (is_layer_supported(current_layer)) {
-            spdlog::debug("Adding '{}' to list of enabled instance layers.", current_layer);
+            spdlog::trace("Adding '{}' to list of enabled instance layers.", current_layer);
             enabled_instance_layers.push_back(current_layer);
         } else {
 #ifdef NDEBUG
@@ -188,7 +188,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
                 spdlog::error("You can't use command line argument -renderdoc in release mode.");
             }
 #else
-            spdlog::error("Requested instance layer '{}' is not available on this system!", current_layer);
+            spdlog::trace("Requested instance layer '{}' is not available on this system!", current_layer);
 #endif
         }
     }
@@ -210,8 +210,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
                    const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer)
     : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version,
                enable_validation_layers, enable_renderdoc_layer, {}, {}) {
-    spdlog::debug("No instance extensions or instance layers specified.");
-    spdlog::debug("Validation layers are requested. RenderDoc instance layer is not requested.");
+    spdlog::trace("No instance extensions or instance layers specified.");
+    spdlog::trace("Validation layers are requested. RenderDoc instance layer is not requested.");
 }
 
 Instance::Instance(Instance &&other) noexcept {
