@@ -566,7 +566,7 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDev
     }
 
     spdlog::warn("VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device.");
-    spdlog::warn("Let's see if VK_PRESENT_MODE_IMMEDIATE_KHR is supported.");
+    spdlog::debug("Let's see if VK_PRESENT_MODE_IMMEDIATE_KHR is supported.");
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
