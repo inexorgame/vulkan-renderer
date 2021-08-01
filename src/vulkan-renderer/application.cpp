@@ -69,7 +69,8 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
-        throw std::runtime_error("Could not open configuration file: " + file_name + "!");
+        // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
+        throw std::runtime_error("Could not find configuration file: " + file_name + "! You must set the working directory properly in your IDE.");
     }
 
     toml_file.close();
