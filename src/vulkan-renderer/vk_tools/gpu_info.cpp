@@ -73,6 +73,7 @@ void print_instance_layers() {
     spdlog::debug("Number of instance layers: {}", instance_layer_count);
 
     if (instance_layer_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance layers.
         return;
     }
 
@@ -109,6 +110,7 @@ void print_instance_extensions() {
     spdlog::debug("Number of instance extensions: {} ", instance_extension_count);
 
     if (instance_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance extensions.
         return;
     }
 
@@ -145,6 +147,7 @@ void print_device_layers(const VkPhysicalDevice gpu) {
     spdlog::debug("Number of device layers: {}", device_layer_count);
 
     if (device_layer_count == 0) {
+        // This is not an error. Some platforms simply don't have any device layers.
         return;
     }
 
@@ -183,6 +186,7 @@ void print_device_extensions(const VkPhysicalDevice gpu) {
     spdlog::debug("Number of device extensions: {}", device_extension_count);
 
     if (device_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any device extensions.
         return;
     }
 

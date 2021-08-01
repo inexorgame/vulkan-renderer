@@ -46,6 +46,7 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
     }
 
     if (device_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any device extensions.
         spdlog::info("No Vulkan device extensions available!");
         return false;
     }
@@ -79,6 +80,7 @@ bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std:
     }
 
     if (device_layer_count == 0) {
+        // This is not an error. Some platforms simply don't have any device layers.
         spdlog::info("No Vulkan device layers available!");
         return false;
     }
@@ -117,8 +119,9 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
     return presentation_supported == VK_TRUE;
 }
 
-Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
+Device::Device(const VkInstance instance, const std::uint32_t vulkan_api_version, const VkSurfaceKHR surface,
+               bool enable_vulkan_debug_markers, bool prefer_distinct_transfer_queue,
+               const std::optional<std::uint32_t> preferred_physical_device_index)
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
     const auto selected_gpu = VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(
@@ -370,6 +373,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     vma_allocator_ci.physicalDevice = m_graphics_card;
     vma_allocator_ci.instance = instance;
     vma_allocator_ci.device = m_device;
+    vma_allocator_ci.vulkanApiVersion = vulkan_api_version;
 #if VMA_RECORDING_ENABLED
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif

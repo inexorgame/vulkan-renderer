@@ -19,6 +19,7 @@ bool Instance::is_layer_supported(const std::string &layer_name) {
     }
 
     if (instance_layer_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance layers.
         spdlog::info("No Vulkan instance layers available!");
         return false;
     }
@@ -46,6 +47,7 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
     }
 
     if (instance_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance extensions.
         spdlog::info("No Vulkan instance extensions available!");
         return false;
     }
