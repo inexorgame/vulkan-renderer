@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
         renderer = std::make_unique<inexor::vulkan_renderer::Application>(argc, argv);
     } catch (const inexor::vulkan_renderer::VulkanException &exception) {
         spdlog::critical(exception.what());
-        std::abort();
+        return 1;
     }
 
     renderer->run();
