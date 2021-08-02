@@ -67,38 +67,6 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
                         }) != device_extensions.end();
 }
 
-bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std::string &layer_name) {
-    assert(graphics_card);
-    assert(!layer_name.empty());
-
-    std::uint32_t device_layer_count = 0;
-
-    // Query how many device layers are available.
-    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
-    }
-
-    if (device_layer_count == 0) {
-        // This is not an error. Some platforms simply don't have any device layers.
-        spdlog::info("No Vulkan device layers available!");
-        return false;
-    }
-
-    std::vector<VkLayerProperties> device_layers(device_layer_count);
-
-    // Store all available device layers.
-    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, device_layers.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
-    }
-
-    // Search for the requested instance extensions.
-    return std::find_if(device_layers.begin(), device_layers.end(), [&](const VkLayerProperties device_extension) {
-               return device_extension.layerName == layer_name;
-           }) != device_layers.end();
-}
-
 bool Device::is_swapchain_supported(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
     return is_extension_supported(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
