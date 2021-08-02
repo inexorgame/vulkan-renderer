@@ -70,9 +70,10 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer,
+                   const std::uint32_t vk_api_version, bool enable_validation_layers, bool enable_renderdoc_layer,
                    const std::vector<std::string> &requested_instance_extensions,
-                   const std::vector<std::string> &requested_instance_layers) {
+                   const std::vector<std::string> &requested_instance_layers)
+    : m_vk_api_version(vk_api_version) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
@@ -86,15 +87,15 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::debug("Engine name: '{}'", engine_name);
     spdlog::debug("Engine version: {}.{}.{}", VK_VERSION_MAJOR(engine_version), VK_VERSION_MINOR(engine_version),
                   VK_VERSION_PATCH(engine_version));
-    spdlog::debug("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(vulkan_api_version),
-                  VK_VERSION_MINOR(vulkan_api_version), VK_VERSION_PATCH(vulkan_api_version));
+    spdlog::debug("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(m_vk_api_version),
+                  VK_VERSION_MINOR(m_vk_api_version), VK_VERSION_PATCH(m_vk_api_version));
 
     auto app_info = make_info<VkApplicationInfo>();
     app_info.pApplicationName = application_name.c_str();
     app_info.applicationVersion = application_version;
     app_info.pEngineName = engine_name.c_str();
     app_info.engineVersion = engine_version;
-    app_info.apiVersion = vulkan_api_version;
+    app_info.apiVersion = m_vk_api_version;
 
     std::vector<const char *> instance_extension_wishlist = {
 #ifndef NDEBUG
@@ -209,14 +210,14 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const std::uint32_t vulkan_api_version, bool enable_validation_layers, bool enable_renderdoc_layer)
-    : Instance(application_name, engine_name, application_version, engine_version, vulkan_api_version,
+                   const std::uint32_t vk_api_version, bool enable_validation_layers, bool enable_renderdoc_layer)
+    : Instance(application_name, engine_name, application_version, engine_version, vk_api_version,
                enable_validation_layers, enable_renderdoc_layer, {}, {}) {
     spdlog::trace("No instance extensions or instance layers specified.");
     spdlog::trace("Validation layers are requested. RenderDoc instance layer is not requested.");
 }
 
-Instance::Instance(Instance &&other) noexcept {
+Instance::Instance(Instance &&other) noexcept : m_vk_api_version(other.m_vk_api_version) {
     m_instance = std::exchange(other.m_instance, nullptr);
 }
 

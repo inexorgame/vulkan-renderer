@@ -87,13 +87,12 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
     return presentation_supported == VK_TRUE;
 }
 
-Device::Device(const VkInstance instance, const std::uint32_t vulkan_api_version, const VkSurfaceKHR surface,
-               bool enable_vulkan_debug_markers, bool prefer_distinct_transfer_queue,
-               const std::optional<std::uint32_t> preferred_physical_device_index)
+Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
     const auto selected_gpu =
-        VulkanSettingsDecisionMaker::graphics_card(instance, surface, preferred_physical_device_index);
+        VulkanSettingsDecisionMaker::graphics_card(instance.instance(), surface, preferred_physical_device_index);
 
     if (!selected_gpu) {
         throw std::runtime_error("Error: Could not find suitable graphics card!");
@@ -339,9 +338,9 @@ Device::Device(const VkInstance instance, const std::uint32_t vulkan_api_version
 
     VmaAllocatorCreateInfo vma_allocator_ci{};
     vma_allocator_ci.physicalDevice = m_graphics_card;
-    vma_allocator_ci.instance = instance;
+    vma_allocator_ci.instance = instance.instance();
     vma_allocator_ci.device = m_device;
-    vma_allocator_ci.vulkanApiVersion = vulkan_api_version;
+    vma_allocator_ci.vulkanApiVersion = instance.vulkan_api_version();
 #if VMA_RECORDING_ENABLED
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif

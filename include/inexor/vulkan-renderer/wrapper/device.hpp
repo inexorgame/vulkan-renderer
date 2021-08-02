@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
@@ -58,7 +59,7 @@ public:
     [[nodiscard]] static bool is_presentation_supported(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Default constructor.
-    /// @param instance The Vulkan instance from which the device will be created.
+    /// @param instance The instance wrapper from which the device will be created.
     /// @param surface The surface which will be associated with the device.
     /// @param enable_vulkan_debug_markers True if Vulkan debug markers should be enabled, false otherwise.
     /// @param prefer_distinct_transfer_queue True if a distinct data transfer queue (if available) should be
@@ -69,8 +70,8 @@ public:
     /// selection mechanism!
     /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the
     /// future!
-    Device(VkInstance instance, std::uint32_t vulkan_api_version, VkSurfaceKHR surface,
-           bool enable_vulkan_debug_markers, bool prefer_distinct_transfer_queue,
+    Device(const wrapper::Instance &instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+           bool prefer_distinct_transfer_queue,
            std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
 
     Device(const Device &) = delete;
