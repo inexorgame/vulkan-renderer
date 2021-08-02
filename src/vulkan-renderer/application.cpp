@@ -388,6 +388,8 @@ Application::Application(int argc, char **argv) {
     m_window =
         std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
+    vk_tools::print_driver_vulkan_version();
+
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_VERSION(APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_VERSION(ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), VK_API_VERSION_1_1,
