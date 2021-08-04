@@ -71,23 +71,15 @@ void ModelRenderer::render_model(const Model &model, const std::size_t scene_ind
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
     m_gltf_index_buffer->upload_data(model.scene_indices(scene_index));
 
-    m_descriptors.emplace_back(
-        m_descriptor_builder.add_uniform_buffer<ModelShaderData>(uniform_buffer.buffer(), 0).build("glTF2 uniform"));
-
-    std::size_t descriptor_binding = 1;
-
-    for (std::size_t i = 0; i < model.texture_count(); i++) {
-        m_texture_descriptors.emplace_back(m_descriptor_builder
-                                               .add_combined_image_sampler(model.texture(i).sampler(),
-                                                                           model.texture(i).image_view(),
-                                                                           descriptor_binding)
-                                               .build("glTF2 texture"));
-    }
+    m_descriptors.emplace_back(m_descriptor_builder.add_uniform_buffer<ModelShaderData>(uniform_buffer.buffer())
+                                   .add_combined_image_samplers(model.textures())
+                                   .build("glTF2 model"));
 
     auto *gltf_stage = m_render_graph->add<GraphicsStage>("gltf stage");
     gltf_stage->writes_to(m_back_buffer);
     gltf_stage->writes_to(m_depth_buffer);
     gltf_stage->reads_from(m_gltf_index_buffer);
+    // TODO: Add rendergraph validation warning if no index buffer is bound!
     gltf_stage->reads_from(m_gltf_vertex_buffer);
     gltf_stage->bind_buffer(m_gltf_vertex_buffer, 0);
     gltf_stage->set_clears_screen(true);
@@ -101,18 +93,10 @@ void ModelRenderer::render_model(const Model &model, const std::size_t scene_ind
         gltf_stage->add_descriptor_layout(descriptor.descriptor_set_layout());
     }
 
-    gltf_stage->add_descriptor_layout(m_texture_descriptors[0].descriptor_set_layout());
-
-    // Setup push constant range for global translation and scale.
-    VkPushConstantRange push_constant_range{};
-    push_constant_range.offset = 0;
-    push_constant_range.size = sizeof(glm::mat4);
-    push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-    gltf_stage->add_push_constant_range(push_constant_range);
+    // Add a push constant range for the model matrix.
+    gltf_stage->add_push_constant_range(sizeof(glm::mat4));
 
     gltf_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
         render_model_nodes(model, cmd_buf, physical.pipeline_layout());
     });
 }

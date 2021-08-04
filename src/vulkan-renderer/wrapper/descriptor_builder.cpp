@@ -9,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-DescriptorBuilder::DescriptorBuilder(const Device &device, std::uint32_t swapchain_image_count)
+DescriptorBuilder::DescriptorBuilder(const Device &device, const std::uint32_t swapchain_image_count)
     : m_device(device), m_swapchain_image_count(swapchain_image_count) {
     assert(m_device.device());
     assert(m_swapchain_image_count > 0);
@@ -20,7 +20,6 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     assert(!m_write_sets.empty());
     assert(m_write_sets.size() == m_layout_bindings.size());
 
-    // Generate a new resource descriptor.
     ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, std::move(m_layout_bindings),
                                             std::move(m_write_sets), std::move(name));
 
@@ -28,19 +27,19 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     m_write_sets.clear();
     m_descriptor_buffer_infos.clear();
     m_descriptor_image_infos.clear();
+    m_binding = 0;
 
     return std::move(generated_descriptor);
 }
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler image_sampler,
                                                                  const VkImageView image_view,
-                                                                 const std::uint32_t binding,
                                                                  const VkShaderStageFlagBits shader_stage) {
     assert(image_sampler);
     assert(image_view);
 
     VkDescriptorSetLayoutBinding layout_binding{};
-    layout_binding.binding = 0;
+    layout_binding.binding = m_binding;
     layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_binding.descriptorCount = 1;
     layout_binding.stageFlags = shader_stage;
@@ -57,13 +56,27 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     VkWriteDescriptorSet descriptor_write{};
     descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptor_write.dstSet = nullptr;
-    descriptor_write.dstBinding = binding;
+    descriptor_write.dstBinding = m_binding;
     descriptor_write.dstArrayElement = 0;
     descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor_write.descriptorCount = 1;
     descriptor_write.pImageInfo = &m_descriptor_image_infos.back();
 
     m_write_sets.push_back(descriptor_write);
+
+    m_binding++;
+
+    return *this;
+}
+
+DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const wrapper::GpuTexture &texture) {
+    return add_combined_image_sampler(texture.sampler(), texture.image_view());
+}
+
+DescriptorBuilder &DescriptorBuilder::add_combined_image_samplers(const std::vector<wrapper::GpuTexture> &textures) {
+    for (const auto &texture : textures) {
+        const auto &result = add_combined_image_sampler(texture.sampler(), texture.image_view());
+    }
 
     return *this;
 }

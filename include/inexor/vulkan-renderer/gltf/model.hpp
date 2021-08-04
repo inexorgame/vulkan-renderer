@@ -153,6 +153,10 @@ public:
         return m_textures.at(texture_index);
     }
 
+    [[nodiscard]] const std::vector<wrapper::GpuTexture> &textures() const {
+        return m_textures;
+    }
+
     [[nodiscard]] const ModelMaterial &material(const std::size_t material_index) const {
         // TODO: Throw an exception in case of invalid access?
         assert(material_index < m_materials.size());

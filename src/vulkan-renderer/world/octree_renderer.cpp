@@ -74,12 +74,13 @@ void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::Unif
     octree_stage->reads_from(m_octree_index_buffer);
     octree_stage->reads_from(m_octree_vertex_buffer);
     octree_stage->bind_buffer(m_octree_vertex_buffer, 0);
+    octree_stage->bind_buffer(m_octree_index_buffer, 0);
     octree_stage->set_clears_screen(true);
 
     // TODO: Remove this again as soon as glTF rendering works. We don't need that.
     octree_stage->set_depth_options(true, true);
 
-    m_descriptors.push_back(descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer(), 0)
+    m_descriptors.push_back(descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
                                 .build("octree uniform buffer"));
 
     octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {

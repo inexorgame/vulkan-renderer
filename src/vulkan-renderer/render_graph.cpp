@@ -565,7 +565,7 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
         submit_info.pWaitSemaphores = &wait_semaphores[i];
         submit_infos.push_back(submit_info);
     }
-    vkQueueSubmit(graphics_queue, submit_infos.size(), submit_infos.data(), signal_fence);
+    vkQueueSubmit(graphics_queue, static_cast<std::uint32_t>(submit_infos.size()), submit_infos.data(), signal_fence);
     return m_stage_stack.back()->m_physical->m_finished_semaphore->get();
 }
 

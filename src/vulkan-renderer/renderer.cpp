@@ -34,12 +34,9 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
                                                                   m_gltf_shaders, descriptor_builder);
 
-    // shaderData.values.projection = camera.matrices.perspective;
-    // shaderData.values.model = camera.matrices.view;
-
     for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
         // TODO: We are rendering only scene index 0.
-        m_gltf_model_renderer->render_model(m_gltf_models[i], 0, m_gltf_uniform_buffers[i]);
+        // m_gltf_model_renderer->render_model(m_gltf_models[i], 0, m_gltf_uniform_buffers[i]);
     }
 }
 
