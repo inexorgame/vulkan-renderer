@@ -38,10 +38,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     io.FontGlobalScale = m_scale;
 
     spdlog::debug("Loading ImGUI shaders");
-    m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
-                                                        "shaders/ui.vert.spv");
-    m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                                          "ImGUI fragment shader", "shaders/ui.frag.spv");
+    m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, "ImGUI vertex shader", "shaders/ui.vert.spv");
+    m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, "ImGUI fragment shader", "shaders/ui.frag.spv");
 
     // Load font texture
 

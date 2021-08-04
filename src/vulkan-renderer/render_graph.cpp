@@ -39,8 +39,8 @@ void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     auto create_info = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
     create_info.module = shader.module();
-    create_info.stage = shader.type();
-    create_info.pName = shader.entry_point().c_str();
+    create_info.stage = shader.stage();
+    create_info.pName = "main";
     m_shaders.push_back(create_info);
 }
 
