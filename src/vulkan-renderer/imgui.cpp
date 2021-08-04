@@ -83,7 +83,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(
-        descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI"));
+        descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI")[0]);
 
     m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
     m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);

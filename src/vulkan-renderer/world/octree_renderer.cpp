@@ -55,17 +55,13 @@ void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::Unif
     spdlog::trace("Total indices {} ", m_octree_indices.size());
 
     m_octree_index_buffer = m_render_graph->add<BufferResource>("octree index buffer", BufferUsage::INDEX_BUFFER);
-
     m_octree_index_buffer->upload_data(m_octree_indices);
 
     m_octree_vertex_buffer = m_render_graph->add<BufferResource>("octree vertex buffer", BufferUsage::VERTEX_BUFFER);
-
     m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
                                                  offsetof(OctreeGpuVertex, position)); // NOLINT
-
     m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
                                                  offsetof(OctreeGpuVertex, color)); // NOLINT
-
     m_octree_vertex_buffer->upload_data(m_octree_vertices);
 
     auto *octree_stage = m_render_graph->add<GraphicsStage>("octree stage");
@@ -80,8 +76,8 @@ void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::Unif
     // TODO: Remove this again as soon as glTF rendering works. We don't need that.
     octree_stage->set_depth_options(true, true);
 
-    m_descriptors.push_back(descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
-                                .build("octree uniform buffer"));
+    m_descriptors = descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
+                        .build("octree uniform buffer");
 
     octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());

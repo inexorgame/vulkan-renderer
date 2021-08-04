@@ -36,7 +36,7 @@ void ModelRenderer::render_model_node(const Model &model, const wrapper::Command
         for (const auto &primitive : node.mesh) {
             if (primitive.index_count > 0) {
                 const auto &texture_index = model.material(primitive.material_index).base_color_texture_index;
-                cmd_buf.bind_descriptor(m_texture_descriptors[texture_index], layout);
+                cmd_buf.bind_descriptor(m_descriptors[/* texture_index*/ 0], layout);
                 cmd_buf.draw_indexed(primitive.index_count);
             }
         }
@@ -57,8 +57,6 @@ void ModelRenderer::render_model_nodes(const Model &model, const wrapper::Comman
 
 void ModelRenderer::render_model(const Model &model, const std::size_t scene_index,
                                  const wrapper::UniformBuffer &uniform_buffer) {
-    m_descriptors.clear();
-
     m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
     m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)); // NOLINT
     m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
@@ -71,9 +69,9 @@ void ModelRenderer::render_model(const Model &model, const std::size_t scene_ind
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
     m_gltf_index_buffer->upload_data(model.scene_indices(scene_index));
 
-    m_descriptors.emplace_back(m_descriptor_builder.add_uniform_buffer<ModelShaderData>(uniform_buffer.buffer())
-                                   .add_combined_image_samplers(model.textures())
-                                   .build("glTF2 model"));
+    m_descriptors = m_descriptor_builder.add_uniform_buffer<ModelShaderData>(uniform_buffer.buffer())
+                        .add_combined_image_sampler(model.texture(0)) // TODO: Change me pls!
+                        .build("glTF2 model");
 
     auto *gltf_stage = m_render_graph->add<GraphicsStage>("gltf stage");
     gltf_stage->writes_to(m_back_buffer);

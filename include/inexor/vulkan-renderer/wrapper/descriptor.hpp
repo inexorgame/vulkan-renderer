@@ -15,31 +15,27 @@ class ResourceDescriptor {
     const Device &m_device;
     VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
-    std::vector<VkDescriptorSetLayoutBinding> m_descriptor_set_layout_bindings;
-    std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
-    std::vector<VkDescriptorSet> m_descriptor_sets;
+    VkDescriptorSetLayoutBinding m_descriptor_set_layout_binding;
+    VkWriteDescriptorSet m_write_descriptor_set;
+    VkDescriptorSet m_descriptor_set;
     std::uint32_t m_swapchain_image_count{0};
 
 public:
     /// @brief Default constructor.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param swapchain_image_count The number of images in swapchain.
-    /// @param layout_bindings The descriptor layout bindings.
-    /// @param descriptor_writes The write descriptor sets.
+    /// @param layout_binding The descriptor layout bindings.
+    /// @param descriptor_write The write descriptor sets.
     /// @param name The internal debug marker name of the resource descriptor.
     ResourceDescriptor(const Device &device, std::uint32_t swapchain_image_count,
-                       std::vector<VkDescriptorSetLayoutBinding> &&layout_bindings,
-                       std::vector<VkWriteDescriptorSet> &&descriptor_writes, std::string &&name);
+                       VkDescriptorSetLayoutBinding layout_binding, VkWriteDescriptorSet descriptor_write,
+                       std::string name);
 
-    ResourceDescriptor(const ResourceDescriptor &) = delete;
-    ResourceDescriptor(ResourceDescriptor &&) noexcept;
+    ResourceDescriptor(const ResourceDescriptor &) = default;
     ~ResourceDescriptor();
 
-    ResourceDescriptor &operator=(const ResourceDescriptor &) = delete;
-    ResourceDescriptor &operator=(ResourceDescriptor &&) = delete;
-
-    [[nodiscard]] const auto &descriptor_sets() const {
-        return m_descriptor_sets;
+    [[nodiscard]] const auto &descriptor_set() const {
+        return m_descriptor_set;
     }
 
     [[nodiscard]] auto descriptor_set_layout() const {
@@ -47,7 +43,7 @@ public:
     }
 
     [[nodiscard]] const auto &descriptor_set_layout_bindings() const {
-        return m_descriptor_set_layout_bindings;
+        return m_descriptor_set_layout_binding;
     }
 };
 

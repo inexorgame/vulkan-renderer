@@ -40,7 +40,7 @@ void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
 
 void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const {
     vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1,
-                            descriptor.descriptor_sets().data(), 0, nullptr);
+                            &descriptor.descriptor_set(), 0, nullptr);
 }
 
 void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size,

@@ -73,7 +73,7 @@ public:
     /// @brief Builds the resource descriptor.
     /// @param name The internal name of the resource descriptor.
     /// @return The resource descriptor which was created by the builder.
-    [[nodiscard]] ResourceDescriptor build(std::string name);
+    [[nodiscard]] std::vector<ResourceDescriptor> build(std::string name);
 };
 
 template <typename T>

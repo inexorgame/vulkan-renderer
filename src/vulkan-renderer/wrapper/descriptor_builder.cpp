@@ -15,13 +15,19 @@ DescriptorBuilder::DescriptorBuilder(const Device &device, const std::uint32_t s
     assert(m_swapchain_image_count > 0);
 }
 
-ResourceDescriptor DescriptorBuilder::build(std::string name) {
+std::vector<ResourceDescriptor> DescriptorBuilder::build(std::string name) {
     assert(!m_layout_bindings.empty());
     assert(!m_write_sets.empty());
+    assert(!name.empty());
     assert(m_write_sets.size() == m_layout_bindings.size());
 
-    ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, std::move(m_layout_bindings),
-                                            std::move(m_write_sets), std::move(name));
+    std::vector<ResourceDescriptor> generated_descriptors;
+    generated_descriptors.reserve(m_layout_bindings.size());
+
+    for (std::size_t i = 0; i < m_layout_bindings.size(); i++) {
+        generated_descriptors.emplace_back(m_device, m_swapchain_image_count, m_layout_bindings[i], m_write_sets[i],
+                                           name);
+    }
 
     m_layout_bindings.clear();
     m_write_sets.clear();
@@ -29,7 +35,7 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     m_descriptor_image_infos.clear();
     m_binding = 0;
 
-    return std::move(generated_descriptor);
+    return generated_descriptors;
 }
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler image_sampler,

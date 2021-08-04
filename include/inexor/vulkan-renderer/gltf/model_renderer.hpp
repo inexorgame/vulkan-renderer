@@ -16,7 +16,6 @@ private:
     const std::vector<wrapper::Shader> &m_shaders;
     wrapper::DescriptorBuilder &m_descriptor_builder;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
-    std::vector<wrapper::ResourceDescriptor> m_texture_descriptors;
 
     // Rendergraph buffers for glTF2 model geometry
     BufferResource *m_gltf_vertex_buffer{nullptr};

@@ -30,9 +30,9 @@ void VulkanRenderer::setup_render_graph() {
         m_octree_renderer->render_octree(*m_worlds[i], m_octree_uniform_buffers[i], descriptor_builder);
     }
 
-    m_gltf_model_renderer.reset();
-    m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
-                                                                  m_gltf_shaders, descriptor_builder);
+    // m_gltf_model_renderer.reset();
+    // m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
+    //                                                              m_gltf_shaders, descriptor_builder);
 
     for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
         // TODO: We are rendering only scene index 0.
