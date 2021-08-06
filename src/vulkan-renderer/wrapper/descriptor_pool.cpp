@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> pool_sizes,
+DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
                                std::string name)
     : m_device(device), m_pool_sizes(pool_sizes), m_name(name) {
     assert(device.device());

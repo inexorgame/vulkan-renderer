@@ -73,6 +73,7 @@ void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::Unif
     octree_stage->bind_buffer(m_octree_index_buffer, 0);
 
     octree_stage->set_clears_screen(true);
+    octree_stage->set_depth_options(true, true);
 
     m_descriptor = descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
                        .build("octree uniform buffer");
