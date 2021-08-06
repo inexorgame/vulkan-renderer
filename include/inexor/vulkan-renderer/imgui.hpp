@@ -36,6 +36,7 @@ class ImGUIOverlay {
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
     std::vector<std::uint32_t> m_index_data;
     std::vector<ImDrawVert> m_vertex_data;
+    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
 
     struct PushConstBlock {
         glm::vec2 scale;

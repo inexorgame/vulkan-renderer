@@ -89,6 +89,7 @@ protected:
     std::unique_ptr<world::OctreeRenderer> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
     TextureResource *m_back_buffer{nullptr};
+    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
 
     void setup_render_graph();
     void recreate_swapchain();

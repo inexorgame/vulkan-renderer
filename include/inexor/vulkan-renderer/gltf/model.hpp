@@ -125,21 +125,13 @@ public:
         return m_scenes.size();
     }
 
-    [[nodiscard]] auto scene_vertices(const std::size_t scene_index) const {
+    [[nodiscard]] const auto &scene_vertices(const std::size_t scene_index) const {
         assert(scene_index < m_scenes.size());
-        if (scene_index > m_scenes.size()) {
-            spdlog::error("No vertices for scene index {}!", scene_index);
-            return std::vector<ModelVertex>{};
-        }
         return m_scenes[scene_index].vertices;
     }
 
-    [[nodiscard]] auto scene_indices(const std::size_t scene_index) const {
+    [[nodiscard]] const auto &scene_indices(const std::size_t scene_index) const {
         assert(scene_index < m_scenes.size());
-        if (scene_index > m_scenes.size()) {
-            spdlog::error("No vertices for scene index {}!", scene_index);
-            return std::vector<std::uint32_t>{};
-        }
         return m_scenes[scene_index].indices;
     }
 

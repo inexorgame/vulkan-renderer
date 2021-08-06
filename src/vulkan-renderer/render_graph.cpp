@@ -138,10 +138,25 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
+
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
-    pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+
+    if (stage->m_descriptor_layouts.empty()) {
+        pipeline_layout_ci.pSetLayouts = nullptr;
+    } else {
+        assert(stage->m_descriptor_layouts.data());
+        pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+    }
+
     pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
-    pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
+
+    if (stage->m_push_constant_ranges.empty()) {
+        pipeline_layout_ci.pPushConstantRanges = nullptr;
+    } else {
+        assert(stage->m_push_constant_ranges.data());
+        pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
+    }
+
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
         result != VK_SUCCESS) {
@@ -287,6 +302,8 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
+    spdlog::trace("building graphics pipeline for stage {}", stage->m_name);
+
     // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;

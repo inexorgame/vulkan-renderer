@@ -38,8 +38,8 @@ void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
     vkBeginCommandBuffer(m_command_buffer, &begin_info);
 }
 
-void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const {
-    vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1,
+void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, std::uint32_t first_set, VkPipelineLayout layout) const {
+    vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, first_set, 1,
                             &descriptor.descriptor_set(), 0, nullptr);
 }
 

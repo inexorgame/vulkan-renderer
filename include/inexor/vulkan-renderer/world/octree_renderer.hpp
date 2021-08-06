@@ -20,7 +20,7 @@ private:
     const TextureResource *m_back_buffer;
     const TextureResource *m_depth_buffer;
     const std::vector<wrapper::Shader> &m_shaders;
-    std::vector<wrapper::ResourceDescriptor> m_descriptors;
+    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
     BufferResource *m_octree_vertex_buffer{nullptr};

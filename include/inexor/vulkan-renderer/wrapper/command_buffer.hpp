@@ -43,7 +43,7 @@ public:
     /// @brief Call vkCmdBindDescriptorSets.
     /// @param descriptor The const reference to the resource descriptor RAII wrapper instance.
     /// @param layout The pipeline layout which will be used to bind the resource descriptor.
-    void bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const;
+    void bind_descriptor(const ResourceDescriptor &descriptor, std::uint32_t first_set, VkPipelineLayout layout) const;
 
     /// @brief Update push constant data.
     /// @param layout The pipeline layout

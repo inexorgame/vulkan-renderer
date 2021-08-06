@@ -30,6 +30,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/descriptor_builder.cpp
+    vulkan-renderer/wrapper/descriptor_pool.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp

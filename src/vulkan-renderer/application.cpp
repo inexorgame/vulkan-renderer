@@ -496,6 +496,8 @@ Application::Application(int argc, char **argv) {
 
     bool enable_debug_marker_device_extension = true;
 
+
+
     if (!enable_renderdoc_instance_layer) {
         // Debug markers are only available if RenderDoc is enabled.
         enable_debug_marker_device_extension = false;
@@ -512,6 +514,7 @@ Application::Application(int argc, char **argv) {
     m_device = std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
                                                  enable_debug_marker_device_extension, use_distinct_data_transfer_queue,
                                                  preferred_graphics_card);
+
 
     check_application_specific_features();
 

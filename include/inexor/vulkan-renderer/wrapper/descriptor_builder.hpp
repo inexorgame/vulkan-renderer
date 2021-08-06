@@ -17,22 +17,21 @@ class ResourceDescriptor;
 class DescriptorBuilder {
 private:
     const Device &m_device;
-    const std::uint32_t m_swapchain_image_count{0};
     std::uint32_t m_binding{0};
 
     std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings;
     std::vector<VkWriteDescriptorSet> m_write_sets;
     std::vector<VkDescriptorBufferInfo> m_descriptor_buffer_infos;
     std::vector<VkDescriptorImageInfo> m_descriptor_image_infos;
+    VkDescriptorPool m_descriptor_pool;
 
 public:
     /// @brief Constructs the descriptor builder.
     /// @param device The const reference to a device RAII wrapper instance.
-    /// @param swapchain_image_count The number of images in swapchain.
-    DescriptorBuilder(const Device &device, std::uint32_t swapchain_image_count);
+    /// @param descriptor_pool The descriptor pool.
+    DescriptorBuilder(const Device &device, VkDescriptorPool descriptor_pool);
 
-    DescriptorBuilder(const DescriptorBuilder &) = delete;
-    DescriptorBuilder(DescriptorBuilder &&) = delete;
+    DescriptorBuilder(DescriptorBuilder &&);
     ~DescriptorBuilder() = default;
 
     DescriptorBuilder &operator=(const DescriptorBuilder &) = delete;
@@ -73,7 +72,7 @@ public:
     /// @brief Builds the resource descriptor.
     /// @param name The internal name of the resource descriptor.
     /// @return The resource descriptor which was created by the builder.
-    [[nodiscard]] std::vector<ResourceDescriptor> build(std::string name);
+    [[nodiscard]] std::unique_ptr<ResourceDescriptor> build(std::string name);
 };
 
 template <typename T>
@@ -108,7 +107,7 @@ DescriptorBuilder &DescriptorBuilder::add_uniform_buffer(const VkBuffer uniform_
 
     m_write_sets.push_back(descriptor_write);
 
-    m_binding++;
+    //m_binding++;
 
     return *this;
 }

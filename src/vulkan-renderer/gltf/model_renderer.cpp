@@ -7,10 +7,8 @@
 namespace inexor::vulkan_renderer::gltf {
 
 ModelRenderer::ModelRenderer(RenderGraph *render_graph, const TextureResource *back_buffer,
-                             const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders,
-                             wrapper::DescriptorBuilder &descriptor_builder)
-    : m_render_graph(render_graph), m_back_buffer(back_buffer), m_depth_buffer(depth_buffer), m_shaders(shaders),
-      m_descriptor_builder(descriptor_builder) {
+                             const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders)
+    : m_render_graph(render_graph), m_back_buffer(back_buffer), m_depth_buffer(depth_buffer), m_shaders(shaders) {
     assert(render_graph);
     assert(back_buffer);
     assert(depth_buffer);
@@ -36,7 +34,7 @@ void ModelRenderer::render_model_node(const Model &model, const wrapper::Command
         for (const auto &primitive : node.mesh) {
             if (primitive.index_count > 0) {
                 const auto &texture_index = model.material(primitive.material_index).base_color_texture_index;
-                cmd_buf.bind_descriptor(m_descriptors[/* texture_index*/ 0], layout);
+                cmd_buf.bind_descriptor(*m_texture_descriptors[texture_index], 1, layout);
                 cmd_buf.draw_indexed(primitive.index_count);
             }
         }
@@ -55,9 +53,14 @@ void ModelRenderer::render_model_nodes(const Model &model, const wrapper::Comman
     }
 }
 
-void ModelRenderer::render_model(const Model &model, const std::size_t scene_index,
+void ModelRenderer::render_model(const wrapper::Device &device, const Model &model, const std::size_t scene_index,
                                  const wrapper::UniformBuffer &uniform_buffer) {
+
+    // TODO: This should not be in the ModelRenderer, should it?
+
     m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
+
+    // TODO: Apply builder pattern
     m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)); // NOLINT
     m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
                                                offsetof(gltf::ModelVertex, color)); // NOLINT
@@ -69,9 +72,21 @@ void ModelRenderer::render_model(const Model &model, const std::size_t scene_ind
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
     m_gltf_index_buffer->upload_data(model.scene_indices(scene_index));
 
-    m_descriptors = m_descriptor_builder.add_uniform_buffer<ModelShaderData>(uniform_buffer.buffer())
-                        .add_combined_image_sampler(model.texture(0)) // TODO: Change me pls!
-                        .build("glTF2 model");
+    std::vector<VkDescriptorPoolSize> pool_sizes{
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<std::uint32_t>(model.texture_count())}};
+
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "glTF model");
+
+    m_descriptor_builder = std::make_unique<wrapper::DescriptorBuilder>(device, m_descriptor_pool->descriptor_pool());
+
+    m_descriptor_ubo =
+        m_descriptor_builder->add_uniform_buffer<ModelShaderData>(uniform_buffer.buffer()).build("glTF2 model UBO");
+
+    for (const auto &texture : model.textures()) {
+        m_texture_descriptors.push_back(
+            std::move(m_descriptor_builder->add_combined_image_sampler(texture).build("glTF2 model texture")));
+    }
 
     auto *gltf_stage = m_render_graph->add<GraphicsStage>("gltf stage");
     gltf_stage->writes_to(m_back_buffer);
@@ -83,18 +98,22 @@ void ModelRenderer::render_model(const Model &model, const std::size_t scene_ind
     gltf_stage->set_clears_screen(true);
     gltf_stage->set_depth_options(true, true);
 
-    for (const auto &shader : m_shaders) {
+    for(const auto& shader : m_shaders) {
         gltf_stage->uses_shader(shader);
+
     }
 
-    for (const auto &descriptor : m_descriptors) {
-        gltf_stage->add_descriptor_layout(descriptor.descriptor_set_layout());
+    gltf_stage->add_descriptor_layout(m_descriptor_ubo->descriptor_set_layout());
+
+    for (const auto &descriptor : m_texture_descriptors) {
+        gltf_stage->add_descriptor_layout(descriptor->descriptor_set_layout());
     }
 
     // Add a push constant range for the model matrix.
     gltf_stage->add_push_constant_range(sizeof(glm::mat4));
 
     gltf_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+        cmd_buf.bind_descriptor(*m_descriptor_ubo, 0, physical.pipeline_layout());
         render_model_nodes(model, cmd_buf, physical.pipeline_layout());
     });
 }

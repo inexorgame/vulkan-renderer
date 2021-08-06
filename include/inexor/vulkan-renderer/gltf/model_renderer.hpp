@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 namespace inexor::vulkan_renderer::gltf {
@@ -14,8 +15,10 @@ private:
     const TextureResource *m_back_buffer;
     const TextureResource *m_depth_buffer;
     const std::vector<wrapper::Shader> &m_shaders;
-    wrapper::DescriptorBuilder &m_descriptor_builder;
-    std::vector<wrapper::ResourceDescriptor> m_descriptors;
+    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
+    std::unique_ptr<wrapper::DescriptorBuilder> m_descriptor_builder;
+    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor_ubo;
+    std::vector<std::unique_ptr<wrapper::ResourceDescriptor>> m_texture_descriptors;
 
     // Rendergraph buffers for glTF2 model geometry
     BufferResource *m_gltf_vertex_buffer{nullptr};
@@ -43,9 +46,8 @@ public:
     /// @param back_buffer The back buffer which is used
     /// @param depth_buffer The depth buffer which is used
     /// @param shaders The shaders which are used
-    /// @param descriptor_builder A const reference to a descriptor builder
     ModelRenderer(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                  const std::vector<wrapper::Shader> &shaders, wrapper::DescriptorBuilder &descriptor_builder);
+                  const std::vector<wrapper::Shader> &shaders);
 
     ModelRenderer(const ModelRenderer &) = delete;
     ModelRenderer(ModelRenderer &&) = delete;
@@ -55,10 +57,12 @@ public:
     ModelRenderer &operator=(ModelRenderer &&) = delete;
 
     /// @brief Render a glTF2 model's nodes.
+    /// @param device The device wrapper
     /// @param model The glTF2 model
     /// @param scene_index The scene index of the glTF2 model
     /// @param uniform_buffer The uniform buffer
-    void render_model(const Model &model, std::size_t scene_index, const wrapper::UniformBuffer &uniform_buffer);
+    void render_model(const wrapper::Device &device, const Model &model, std::size_t scene_index,
+                      const wrapper::UniformBuffer &uniform_buffer);
 };
 
 } // namespace inexor::vulkan_renderer::gltf

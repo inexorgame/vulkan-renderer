@@ -9,25 +9,28 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-DescriptorBuilder::DescriptorBuilder(const Device &device, const std::uint32_t swapchain_image_count)
-    : m_device(device), m_swapchain_image_count(swapchain_image_count) {
-    assert(m_device.device());
-    assert(m_swapchain_image_count > 0);
+DescriptorBuilder::DescriptorBuilder(DescriptorBuilder &&other) : m_device(other.m_device) {
+    m_descriptor_pool = std::exchange(other.m_descriptor_pool, nullptr);
+    m_binding = other.m_binding;
+    m_layout_bindings = std::move(other.m_layout_bindings);
+    m_write_sets = std::move(other.m_write_sets);
+    m_descriptor_buffer_infos = std::move(other.m_descriptor_buffer_infos);
+    m_descriptor_image_infos = std::move(other.m_descriptor_image_infos);
 }
 
-std::vector<ResourceDescriptor> DescriptorBuilder::build(std::string name) {
+DescriptorBuilder::DescriptorBuilder(const Device &device, const VkDescriptorPool descriptor_pool)
+    : m_device(device), m_descriptor_pool(descriptor_pool) {
+    assert(m_device.device());
+}
+
+std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(std::string name) {
     assert(!m_layout_bindings.empty());
     assert(!m_write_sets.empty());
     assert(!name.empty());
     assert(m_write_sets.size() == m_layout_bindings.size());
 
-    std::vector<ResourceDescriptor> generated_descriptors;
-    generated_descriptors.reserve(m_layout_bindings.size());
-
-    for (std::size_t i = 0; i < m_layout_bindings.size(); i++) {
-        generated_descriptors.emplace_back(m_device, m_swapchain_image_count, m_layout_bindings[i], m_write_sets[i],
-                                           name);
-    }
+    std::unique_ptr<ResourceDescriptor> generated_descriptor =
+        std::make_unique<ResourceDescriptor>(m_device, m_descriptor_pool, m_layout_bindings[0], m_write_sets[0], name);
 
     m_layout_bindings.clear();
     m_write_sets.clear();
@@ -35,7 +38,7 @@ std::vector<ResourceDescriptor> DescriptorBuilder::build(std::string name) {
     m_descriptor_image_infos.clear();
     m_binding = 0;
 
-    return generated_descriptors;
+    return std::move(generated_descriptor);
 }
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler image_sampler,
@@ -62,7 +65,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     VkWriteDescriptorSet descriptor_write{};
     descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptor_write.dstSet = nullptr;
-    descriptor_write.dstBinding = m_binding;
+    descriptor_write.dstBinding = 0;
     descriptor_write.dstArrayElement = 0;
     descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor_write.descriptorCount = 1;

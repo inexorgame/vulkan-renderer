@@ -18,9 +18,13 @@ void VulkanRenderer::setup_render_graph() {
     auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
 
+    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(*m_device, pool_sizes, "octree");
+
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
+    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_descriptor_pool->descriptor_pool());
 
     m_octree_renderer.reset();
     m_octree_renderer =
@@ -30,13 +34,13 @@ void VulkanRenderer::setup_render_graph() {
         m_octree_renderer->render_octree(*m_worlds[i], m_octree_uniform_buffers[i], descriptor_builder);
     }
 
-    // m_gltf_model_renderer.reset();
-    // m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer,
-    //                                                              m_gltf_shaders, descriptor_builder);
+    m_gltf_model_renderer.reset();
+    m_gltf_model_renderer =
+        std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer, m_gltf_shaders);
 
     for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
         // TODO: We are rendering only scene index 0.
-        // m_gltf_model_renderer->render_model(m_gltf_models[i], 0, m_gltf_uniform_buffers[i]);
+        m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], 0, m_gltf_uniform_buffers[i]);
     }
 }
 

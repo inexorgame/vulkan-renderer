@@ -76,19 +76,19 @@ void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::Unif
     // TODO: Remove this again as soon as glTF rendering works. We don't need that.
     octree_stage->set_depth_options(true, true);
 
-    m_descriptors = descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
-                        .build("octree uniform buffer");
+    m_descriptor = descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
+                                   .build("octree uniform buffer");
+
+    octree_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
 
     octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.bind_descriptor(m_descriptors[0], physical.pipeline_layout());
+        cmd_buf.bind_descriptor(*m_descriptor, 0, physical.pipeline_layout());
         cmd_buf.draw_indexed(m_octree_indices.size());
     });
 
     for (const auto &shader : m_shaders) {
         octree_stage->uses_shader(shader);
     }
-
-    octree_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
 }
 
 } // namespace inexor::vulkan_renderer::world
