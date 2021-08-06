@@ -101,11 +101,6 @@ public:
     /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER.
     BufferResource *add_vertex_attribute(VkFormat format, std::uint32_t offset);
 
-    /// @brief
-    /// @param
-    BufferResource *
-    BufferResource::add_vertex_attributes(const std::vector<std::pair<VkFormat, std::size_t>> &vertex_attributes);
-
     /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
     /// @param element_size The element size in bytes
     void set_element_size(std::size_t element_size) {

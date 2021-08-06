@@ -25,14 +25,6 @@ BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint3
     return this;
 }
 
-BufferResource *
-BufferResource::add_vertex_attributes(const std::vector<std::pair<VkFormat, std::size_t>> &vertex_attributes) {
-    for (const auto &attribute : vertex_attributes) {
-        add_vertex_attribute(attribute.first, static_cast<std::uint32_t>(attribute.second));
-    }
-    return this;
-}
-
 void RenderStage::writes_to(const RenderResource *resource) {
     m_writes.push_back(resource);
 }

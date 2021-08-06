@@ -64,10 +64,10 @@ void ModelRenderer::render_model(const wrapper::Device &device, const Model &mod
 
     m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
 
-    m_gltf_vertex_buffer->add_vertex_attributes({{VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)},
-                                                 {VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, color)},
-                                                 {VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal)},
-                                                 {VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv)}});
+    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, color))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv));
 
     m_gltf_vertex_buffer->upload_data(model.scene_vertices(scene_index));
 
