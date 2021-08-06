@@ -16,12 +16,21 @@
 
 namespace inexor::vulkan_renderer {
 
-void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
+BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
     VkVertexInputAttributeDescription vertex_attribute{};
     vertex_attribute.format = format;
     vertex_attribute.location = static_cast<std::uint32_t>(m_vertex_attributes.size());
     vertex_attribute.offset = offset;
     m_vertex_attributes.push_back(vertex_attribute);
+    return this;
+}
+
+BufferResource *
+BufferResource::add_vertex_attributes(const std::vector<std::pair<VkFormat, std::size_t>> &vertex_attributes) {
+    for (const auto &attribute : vertex_attributes) {
+        add_vertex_attribute(attribute.first, static_cast<std::uint32_t>(attribute.second));
+    }
+    return this;
 }
 
 void RenderStage::writes_to(const RenderResource *resource) {
@@ -181,7 +190,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
         auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
         std::array<VkClearValue, 2> clear_values{};
         if (graphics_stage->m_clears_screen) {
-            clear_values[0].color = {0, 0, 0, 0};
+            clear_values[0].color = {0.0f, 0, 0.3f, 0};
             clear_values[1].depthStencil = {1.0f, 0};
             render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
             render_pass_bi.pClearValues = clear_values.data();

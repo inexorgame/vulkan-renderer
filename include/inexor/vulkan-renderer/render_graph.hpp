@@ -2,6 +2,7 @@
 
 // TODO: Forward declare.
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
@@ -98,7 +99,12 @@ public:
 
     /// @brief Specifies that element `offset` of this vertex buffer is of format `format`.
     /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER.
-    void add_vertex_attribute(VkFormat format, std::uint32_t offset);
+    BufferResource *add_vertex_attribute(VkFormat format, std::uint32_t offset);
+
+    /// @brief
+    /// @param
+    BufferResource *
+    BufferResource::add_vertex_attributes(const std::vector<std::pair<VkFormat, std::size_t>> &vertex_attributes);
 
     /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
     /// @param element_size The element size in bytes
@@ -189,6 +195,11 @@ public:
     // TODO: Refactor descriptor management in the render graph
     void add_descriptor_layout(VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
+    }
+
+    /// @brief Binds a descriptor set layout to this render stage.
+    void add_descriptor_layout(const wrapper::ResourceDescriptor &descriptor) {
+        add_descriptor_layout(descriptor.descriptor_set_layout());
     }
 
     /// @brief Add a push constant range to this render stage.

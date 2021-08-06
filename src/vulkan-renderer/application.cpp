@@ -227,12 +227,13 @@ void Application::load_shaders() {
 void Application::load_gltf_models() {
     m_gltf_models.reserve(m_gltf_model_files.size());
 
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+
     for (const auto &gltf_file_name : m_gltf_model_files) {
         try {
             const auto gltf_file = gltf::ModelFile(gltf_file_name, "example model");
-            gltf::Model gltf_model = gltf::Model(*m_device, gltf_file);
-
-            m_gltf_models.emplace_back(*m_device, gltf_file);
+            m_gltf_models.emplace_back(*m_device, gltf_file, m_camera->perspective_matrix(), m_camera->view_matrix());
             m_gltf_uniform_buffers.push_back(
                 wrapper::UniformBuffer(*m_device, "glTF uniform buffer", sizeof(gltf::ModelShaderData)));
 
@@ -359,8 +360,10 @@ void Application::setup_vulkan_debug_callback() {
                         spdlog::critical("Application will cause a break point now!");
 
                         // Wait for spdlog to shut down before aborting.
-                        spdlog::shutdown();
-                        std::abort();
+                        if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+                            spdlog::shutdown();
+                            std::abort();
+                        }
                     }
                     return VK_FALSE;
                 });
@@ -496,8 +499,6 @@ Application::Application(int argc, char **argv) {
 
     bool enable_debug_marker_device_extension = true;
 
-
-
     if (!enable_renderdoc_instance_layer) {
         // Debug markers are only available if RenderDoc is enabled.
         enable_debug_marker_device_extension = false;
@@ -514,7 +515,6 @@ Application::Application(int argc, char **argv) {
     m_device = std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
                                                  enable_debug_marker_device_extension, use_distinct_data_transfer_queue,
                                                  preferred_graphics_card);
-
 
     check_application_specific_features();
 
@@ -545,7 +545,13 @@ void Application::update_uniform_buffers() {
     ubo.proj[1][1] *= -1;
 
     // TODO: Embed this into the render graph.
-    m_octree_uniform_buffers[0].update(&ubo, sizeof(ubo));
+    for (auto &uniform_buffer : m_octree_uniform_buffers) {
+        uniform_buffer.update(&ubo, sizeof(ubo));
+    }
+
+    for (auto &uniform_buffer : m_gltf_uniform_buffers) {
+        uniform_buffer.update(&ubo, sizeof(ubo));
+    }
 }
 
 void Application::update_imgui_overlay() {
@@ -636,7 +642,6 @@ void Application::run() {
         // Create a new random octree world if key N is pressed.
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
-            // TODO: Fix this!
             // m_octree_index_buffer->upload_data(m_octree_indices);
             // m_octree_vertex_buffer->upload_data(m_octree_vertices);
         }

@@ -14,7 +14,9 @@ private:
     RenderGraph *m_render_graph;
     const TextureResource *m_back_buffer;
     const TextureResource *m_depth_buffer;
-    const std::vector<wrapper::Shader> &m_shaders;
+    const wrapper::Shader &m_vertex_shader;
+    const wrapper::Shader &m_fragment_shader_texture;
+    const wrapper::Shader &m_fragment_shader_color;
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::DescriptorBuilder> m_descriptor_builder;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor_ubo;
@@ -45,9 +47,12 @@ public:
     /// @param render_graph The rendergraph which is used
     /// @param back_buffer The back buffer which is used
     /// @param depth_buffer The depth buffer which is used
-    /// @param shaders The shaders which are used
+    /// @param vertex_shader
+    /// @param fragment_shader_texture
+    /// @param fragment_shader_color
     ModelRenderer(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                  const std::vector<wrapper::Shader> &shaders);
+                  const wrapper::Shader &vertex_shader, const wrapper::Shader &fragment_shader_texture,
+                  const wrapper::Shader &fragment_shader_color);
 
     ModelRenderer(const ModelRenderer &) = delete;
     ModelRenderer(ModelRenderer &&) = delete;

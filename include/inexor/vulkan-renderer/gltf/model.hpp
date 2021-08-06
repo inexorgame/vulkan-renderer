@@ -98,30 +98,34 @@ public:
     /// @brief Extract the model data from a model file.
     /// @paran device The device wrapper
     /// @param model The glTF2 model
-    Model(const wrapper::Device &device, const tinygltf::Model &model);
+    ///
+    ///
+    Model(const wrapper::Device &device, const tinygltf::Model &model, glm::mat4 projection, glm::mat4 model_matrix);
 
     /// @brief Overloaded constructor which accepts ModelFile as argument
     /// @paran device The device wrapper
     /// @param model_file The glTF2 model file
-    Model(const wrapper::Device &device, const ModelFile &model_file);
+    ///
+    ///
+    Model(const wrapper::Device &device, const ModelFile &model_file, glm::mat4 projection, glm::mat4 model);
 
-    [[nodiscard]] std::size_t texture_count() const noexcept {
+    [[nodiscard]] std::size_t texture_count() const {
         return m_textures.size();
     }
 
-    [[nodiscard]] std::size_t texture_index_count() const noexcept {
+    [[nodiscard]] std::size_t texture_index_count() const {
         return m_texture_indices.size();
     }
 
-    [[nodiscard]] std::size_t material_count() const noexcept {
+    [[nodiscard]] std::size_t material_count() const {
         return m_materials.size();
     }
 
-    [[nodiscard]] std::size_t node_count() const noexcept {
+    [[nodiscard]] std::size_t node_count() const {
         return m_nodes.size();
     }
 
-    [[nodiscard]] std::size_t scene_count() const noexcept {
+    [[nodiscard]] std::size_t scene_count() const {
         return m_scenes.size();
     }
 
@@ -135,7 +139,7 @@ public:
         return m_scenes[scene_index].indices;
     }
 
-    [[nodiscard]] const std::vector<ModelNode> &nodes() const noexcept {
+    [[nodiscard]] const std::vector<ModelNode> &nodes() const {
         return m_nodes;
     }
 
@@ -151,13 +155,17 @@ public:
 
     [[nodiscard]] const ModelMaterial &material(const std::size_t material_index) const {
         // TODO: Throw an exception in case of invalid access?
-        assert(material_index < m_materials.size());
+        if (material_index < m_materials.size()) {
+            return m_materials.at(0);
+        }
         return m_materials.at(material_index);
     }
 
-    [[nodiscard]] const ModelShaderData &shader_data() const noexcept {
+    [[nodiscard]] const ModelShaderData &shader_data() const {
         return m_shader_data;
     }
+
+    void update_matrices(glm::mat4 projection, glm::mat4 view);
 };
 
 } // namespace inexor::vulkan_renderer::gltf

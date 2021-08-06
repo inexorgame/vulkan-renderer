@@ -7,12 +7,15 @@
 namespace inexor::vulkan_renderer::gltf {
 
 ModelRenderer::ModelRenderer(RenderGraph *render_graph, const TextureResource *back_buffer,
-                             const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders)
-    : m_render_graph(render_graph), m_back_buffer(back_buffer), m_depth_buffer(depth_buffer), m_shaders(shaders) {
+                             const TextureResource *depth_buffer, const wrapper::Shader &vertex_shader,
+                             const wrapper::Shader &fragment_shader_texture,
+                             const wrapper::Shader &fragment_shader_color)
+    : m_render_graph(render_graph), m_back_buffer(back_buffer), m_depth_buffer(depth_buffer),
+      m_vertex_shader(vertex_shader), m_fragment_shader_texture(fragment_shader_texture),
+      m_fragment_shader_color(fragment_shader_color) {
     assert(render_graph);
     assert(back_buffer);
     assert(depth_buffer);
-    assert(!shaders.empty());
 }
 
 void ModelRenderer::render_model_node(const Model &model, const wrapper::CommandBuffer &cmd_buf,
@@ -33,8 +36,12 @@ void ModelRenderer::render_model_node(const Model &model, const wrapper::Command
 
         for (const auto &primitive : node.mesh) {
             if (primitive.index_count > 0) {
-                const auto &texture_index = model.material(primitive.material_index).base_color_texture_index;
-                cmd_buf.bind_descriptor(*m_texture_descriptors[texture_index], 1, layout);
+                if (model.texture_count() > 0) {
+                    // Only attempt to render textures if model has textures.
+                    const auto &texture_index = model.material(primitive.material_index).base_color_texture_index;
+                    cmd_buf.bind_descriptor(*m_texture_descriptors[texture_index], 1, layout);
+                }
+
                 cmd_buf.draw_indexed(primitive.index_count);
             }
         }
@@ -47,7 +54,6 @@ void ModelRenderer::render_model_node(const Model &model, const wrapper::Command
 
 void ModelRenderer::render_model_nodes(const Model &model, const wrapper::CommandBuffer &cmd_buf,
                                        const VkPipelineLayout layout) {
-    // Render all nodes of the glTF model recursively.
     for (const auto &node : model.nodes()) {
         render_model_node(model, cmd_buf, layout, node);
     }
@@ -56,25 +62,26 @@ void ModelRenderer::render_model_nodes(const Model &model, const wrapper::Comman
 void ModelRenderer::render_model(const wrapper::Device &device, const Model &model, const std::size_t scene_index,
                                  const wrapper::UniformBuffer &uniform_buffer) {
 
-    // TODO: This should not be in the ModelRenderer, should it?
-
     m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
 
-    // TODO: Apply builder pattern
-    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)); // NOLINT
-    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                               offsetof(gltf::ModelVertex, color)); // NOLINT
-    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                               offsetof(gltf::ModelVertex, normal));                         // NOLINT
-    m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv)); // NOLINT
+    m_gltf_vertex_buffer->add_vertex_attributes({{VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos)},
+                                                 {VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, color)},
+                                                 {VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal)},
+                                                 {VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv)}});
+
     m_gltf_vertex_buffer->upload_data(model.scene_vertices(scene_index));
 
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
+
     m_gltf_index_buffer->upload_data(model.scene_indices(scene_index));
 
-    std::vector<VkDescriptorPoolSize> pool_sizes{
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<std::uint32_t>(model.texture_count())}};
+    std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+
+    // Only append textures if model has textures.
+    if (model.texture_count() > 0) {
+        pool_sizes.push_back(
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<std::uint32_t>(model.texture_count())});
+    }
 
     m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "glTF model");
 
@@ -92,24 +99,22 @@ void ModelRenderer::render_model(const wrapper::Device &device, const Model &mod
     gltf_stage->writes_to(m_back_buffer);
     gltf_stage->writes_to(m_depth_buffer);
     gltf_stage->reads_from(m_gltf_index_buffer);
-    // TODO: Add rendergraph validation warning if no index buffer is bound!
     gltf_stage->reads_from(m_gltf_vertex_buffer);
     gltf_stage->bind_buffer(m_gltf_vertex_buffer, 0);
-    gltf_stage->set_clears_screen(true);
-    gltf_stage->set_depth_options(true, true);
+    gltf_stage->uses_shader(m_vertex_shader);
 
-    for(const auto& shader : m_shaders) {
-        gltf_stage->uses_shader(shader);
-
+    if (model.texture_count() > 0) {
+        gltf_stage->uses_shader(m_fragment_shader_texture);
+    } else {
+        gltf_stage->uses_shader(m_fragment_shader_color);
     }
 
-    gltf_stage->add_descriptor_layout(m_descriptor_ubo->descriptor_set_layout());
+    gltf_stage->add_descriptor_layout(*m_descriptor_ubo);
 
     for (const auto &descriptor : m_texture_descriptors) {
-        gltf_stage->add_descriptor_layout(descriptor->descriptor_set_layout());
+        gltf_stage->add_descriptor_layout(*descriptor);
     }
 
-    // Add a push constant range for the model matrix.
     gltf_stage->add_push_constant_range(sizeof(glm::mat4));
 
     gltf_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {

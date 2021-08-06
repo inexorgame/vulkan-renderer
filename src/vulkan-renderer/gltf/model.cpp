@@ -7,14 +7,21 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-Model::Model(const wrapper::Device &device, const tinygltf::Model &model) : m_device(device), m_model(model) {
+Model::Model(const wrapper::Device &device, const tinygltf::Model &model, const glm::mat4 projection,
+             const glm::mat4 model_matrix)
+    : m_device(device), m_model(model) {
     assert(m_device.device());
+
+    m_shader_data.model = model_matrix;
+    m_shader_data.projection = projection;
+
     load_textures();
     load_materials();
     load_nodes();
 }
 
-Model::Model(const wrapper::Device &device, const ModelFile &model_file) : Model(device, model_file.model()) {}
+Model::Model(const wrapper::Device &device, const ModelFile &model_file, glm::mat4 projection, glm::mat4 model)
+    : Model(device, model_file.model(), projection, model) {}
 
 void Model::load_textures() {
     spdlog::trace("Loading {} glTF2 model textures", m_model.images.size());

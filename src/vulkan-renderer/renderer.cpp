@@ -36,11 +36,13 @@ void VulkanRenderer::setup_render_graph() {
 
     m_gltf_model_renderer.reset();
     m_gltf_model_renderer =
-        std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer, m_gltf_shaders);
+        std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer, m_octree_shaders[0],
+                                              m_octree_shaders[1], m_octree_shaders[1]);
 
     for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
-        // TODO: We are rendering only scene index 0.
-        m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], 0, m_gltf_uniform_buffers[i]);
+        for (std::size_t j = 0; j < m_gltf_models[i].scene_count(); j++) {
+            m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], j, m_gltf_uniform_buffers[i]);
+        }
     }
 }
 
@@ -58,9 +60,6 @@ void VulkanRenderer::recreate_swapchain() {
     m_image_available_semaphore.reset();
     m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
-
-    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
-                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
