@@ -7,13 +7,12 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-Model::Model(const wrapper::Device &device, const ModelFile &model_file, const glm::mat4 projection,
-             const glm::mat4 model_matrix)
+Model::Model(const wrapper::Device &device, const ModelFile &model_file, glm::mat4 projection, glm::mat4 model)
     : m_device(device), m_model(model_file.model()) {
     assert(m_device.device());
 
     // TODO: Refactor
-    m_shader_data.model = model_matrix;
+    m_shader_data.model = model;
     m_shader_data.projection = projection;
 
     load_textures();

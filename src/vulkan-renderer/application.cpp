@@ -109,7 +109,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
         spdlog::debug("{}", texture_file);
     }
 
-    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "gltfmodels", "files");
+    m_gltf_model_file_names = toml::find<std::vector<std::string>>(renderer_configuration, "gltfmodels", "files");
 
     spdlog::debug("glTF models:");
 
@@ -225,12 +225,10 @@ void Application::load_shaders() {
 }
 
 void Application::load_gltf_models() {
-    m_gltf_models.reserve(m_gltf_model_files.size());
-
-    for (const auto &gltf_file_name : m_gltf_model_files) {
+    for (const auto &file_name : m_gltf_model_file_names) {
         try {
-            const auto gltf_file = gltf::ModelFile(gltf_file_name, "example model");
-            m_gltf_models.emplace_back(*m_device, gltf_file, m_camera->perspective_matrix(), m_camera->view_matrix());
+            m_gltf_model_files.push_back(gltf::ModelFile(file_name, "example glTF model"));
+            m_gltf_models.push_back(gltf::Model(*m_device, m_gltf_model_files.back(), m_camera->perspective_matrix(), m_camera->view_matrix()));
             m_gltf_uniform_buffers.push_back(
                 wrapper::UniformBuffer(*m_device, "glTF uniform buffer", sizeof(gltf::ModelShaderData)));
 

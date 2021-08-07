@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gltf/model.hpp"
+#include "inexor/vulkan-renderer/gltf/model_file.hpp"
 #include "inexor/vulkan-renderer/gltf/model_renderer.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
@@ -64,7 +65,8 @@ protected:
     std::vector<std::string> m_octree_fragment_shader_files;
     std::vector<wrapper::Shader> m_gltf_shaders;
     std::vector<wrapper::Shader> m_octree_shaders;
-    std::vector<std::string> m_gltf_model_files;
+    std::vector<std::string> m_gltf_model_file_names;
+    std::vector<gltf::ModelFile> m_gltf_model_files;
     std::vector<gltf::Model> m_gltf_models;
     std::vector<std::string> m_texture_files;
     std::vector<std::shared_ptr<world::Cube>> m_worlds;

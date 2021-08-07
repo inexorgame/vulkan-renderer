@@ -25,7 +25,7 @@ public:
     /// @param file_name The name of the glTF2 file
     /// @param m_model_name The internal model name of the model which should be user friendly to be displayed to the
     /// user
-    explicit ModelFile(const std::string &file_name, const std::string &model_name);
+    ModelFile(const std::string &file_name, const std::string &model_name);
 
     [[nodiscard]] const tinygltf::Model &model() const noexcept {
         return m_model;
