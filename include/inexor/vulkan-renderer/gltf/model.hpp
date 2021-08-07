@@ -69,7 +69,6 @@ class Model {
 private:
     const tinygltf::Model &m_model;
     const wrapper::Device &m_device;
-    const std::string m_name;
 
     ModelShaderData m_shader_data;
 

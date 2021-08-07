@@ -140,7 +140,7 @@ void Model::load_materials() {
 
     // Print the list of unsupported materials.
     for (auto const &[key, val] : unsupported_features) {
-        spdlog::warn("Material {} in glTF2 model {} is not supported!", key, m_name);
+        spdlog::warn("Material {} is not supported!", key);
     }
 
     // Add a default material at the end for models with no materials assigned to them.
