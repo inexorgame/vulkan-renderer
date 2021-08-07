@@ -58,36 +58,30 @@ void OctreeRenderer::render_octree(const world::Cube &world, const wrapper::Unif
     m_octree_index_buffer->upload_data(m_octree_indices);
 
     m_octree_vertex_buffer = m_render_graph->add<BufferResource>("octree vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                                 offsetof(OctreeGpuVertex, position)); // NOLINT
-    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT,
-                                                 offsetof(OctreeGpuVertex, color)); // NOLINT
-    m_octree_vertex_buffer->upload_data(m_octree_vertices);
-
-    auto *octree_stage = m_render_graph->add<GraphicsStage>("octree stage");
-    octree_stage->writes_to(m_back_buffer);
-    octree_stage->writes_to(m_depth_buffer);
-    octree_stage->reads_from(m_octree_index_buffer);
-    octree_stage->reads_from(m_octree_vertex_buffer);
-    octree_stage->bind_buffer(m_octree_vertex_buffer, 0);
-    octree_stage->bind_buffer(m_octree_index_buffer, 0);
-
-    octree_stage->set_clears_screen(true);
-    octree_stage->set_depth_options(true, true);
+    m_octree_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color))
+        ->upload_data(m_octree_vertices);
 
     m_descriptor = descriptor_builder.add_uniform_buffer<UniformBufferObject>(uniform_buffer.buffer())
                        .build("octree uniform buffer");
 
-    octree_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
+    auto *octree_stage = m_render_graph->add<GraphicsStage>("octree stage");
+
+    octree_stage->set_depth_options(true, true)
+        ->bind_buffer(m_octree_vertex_buffer, 0)
+        ->bind_buffer(m_octree_index_buffer, 0)
+        ->uses_shaders(m_shaders)
+        ->set_clears_screen(true)
+        ->writes_to(m_back_buffer)
+        ->writes_to(m_depth_buffer)
+        ->reads_from(m_octree_index_buffer)
+        ->reads_from(m_octree_vertex_buffer)
+        ->add_descriptor_layout(*m_descriptor);
 
     octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor(*m_descriptor, 0, physical.pipeline_layout());
         cmd_buf.draw_indexed(m_octree_indices.size());
     });
-
-    for (const auto &shader : m_shaders) {
-        octree_stage->uses_shader(shader);
-    }
 }
 
 } // namespace inexor::vulkan_renderer::world

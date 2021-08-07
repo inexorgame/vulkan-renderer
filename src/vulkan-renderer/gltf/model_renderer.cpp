@@ -67,9 +67,8 @@ void ModelRenderer::render_model(const wrapper::Device &device, const Model &mod
     m_gltf_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos))
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, color))
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal))
-        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv));
-
-    m_gltf_vertex_buffer->upload_data(model.scene_vertices(scene_index));
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv))
+        ->upload_data(model.scene_vertices(scene_index));
 
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
 
@@ -95,21 +94,23 @@ void ModelRenderer::render_model(const wrapper::Device &device, const Model &mod
             std::move(m_descriptor_builder->add_combined_image_sampler(texture).build("glTF2 model texture")));
     }
 
+    // TODO: Can we turn this into one builder pattern call?
     auto *gltf_stage = m_render_graph->add<GraphicsStage>("gltf stage");
-    gltf_stage->writes_to(m_back_buffer);
-    gltf_stage->writes_to(m_depth_buffer);
-    gltf_stage->reads_from(m_gltf_index_buffer);
-    gltf_stage->reads_from(m_gltf_vertex_buffer);
-    gltf_stage->bind_buffer(m_gltf_vertex_buffer, 0);
-    gltf_stage->uses_shader(m_vertex_shader);
+
+    gltf_stage->uses_shader(m_vertex_shader)
+        ->bind_buffer(m_gltf_vertex_buffer, 0)
+        ->set_depth_options(true, true)
+        ->writes_to(m_back_buffer)
+        ->writes_to(m_depth_buffer)
+        ->reads_from(m_gltf_index_buffer)
+        ->reads_from(m_gltf_vertex_buffer)
+        ->add_descriptor_layout(*m_descriptor_ubo);
 
     if (model.texture_count() > 0) {
         gltf_stage->uses_shader(m_fragment_shader_texture);
     } else {
         gltf_stage->uses_shader(m_fragment_shader_color);
     }
-
-    gltf_stage->add_descriptor_layout(*m_descriptor_ubo);
 
     for (const auto &descriptor : m_texture_descriptors) {
         gltf_stage->add_descriptor_layout(*descriptor);

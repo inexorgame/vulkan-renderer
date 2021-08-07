@@ -7,11 +7,12 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-Model::Model(const wrapper::Device &device, const tinygltf::Model &model, const glm::mat4 projection,
+Model::Model(const wrapper::Device &device, const ModelFile &model_file, const glm::mat4 projection,
              const glm::mat4 model_matrix)
-    : m_device(device), m_model(model) {
+    : m_device(device), m_model(model_file.model()) {
     assert(m_device.device());
 
+    // TODO: Refactor
     m_shader_data.model = model_matrix;
     m_shader_data.projection = projection;
 
@@ -20,28 +21,55 @@ Model::Model(const wrapper::Device &device, const tinygltf::Model &model, const 
     load_nodes();
 }
 
-Model::Model(const wrapper::Device &device, const ModelFile &model_file, glm::mat4 projection, glm::mat4 model)
-    : Model(device, model_file.model(), projection, model) {}
-
 void Model::load_textures() {
-    spdlog::trace("Loading {} glTF2 model textures", m_model.images.size());
+
+    spdlog::trace("Loading {} glTF2 model texture indices", m_model.textures.size());
+
+    // Preallocate memory for the texture indices.
+    m_texture_indices.reserve(m_model.textures.size());
+
+    for (const auto &texture : m_model.textures) {
+        m_texture_indices.emplace_back(texture.source);
+    }
+
+    spdlog::trace("Loading {} texture samplers.", m_model.samplers.size());
+
+    // Preallocate memory for the texture samplers.
+    m_texture_samplers.reserve(m_model.samplers.size());
+
+    for (const auto &sampler : m_model.samplers) {
+        m_texture_samplers.emplace_back(sampler.minFilter, sampler.magFilter, sampler.wrapS, sampler.wrapT);
+    }
+
+    spdlog::trace("Loading {} textures from glTF2 model.", m_model.images.size());
 
     // Preallocate memory for the model images.
     m_textures.reserve(m_model.images.size());
 
-    for (auto texture : m_model.images) {
+    for (const auto &texture : m_model.textures) {
+        auto texture_image = m_model.images[texture.source];
+
+        TextureSampler new_sampler;
+
+        if (texture.sampler == -1) {
+            // No sampler specified, use a default one.
+            new_sampler = m_default_texture_sampler;
+        } else {
+            new_sampler = m_texture_samplers.at(texture.sampler);
+        }
+
         // The size of the texture if it had 4 channels (rgba).
         const std::size_t texture_size =
-            static_cast<std::size_t>(texture.width) * static_cast<std::size_t>(texture.height) * 4;
+            static_cast<std::size_t>(texture_image.width) * static_cast<std::size_t>(texture_image.height) * 4;
 
         // We need to convert RGB-only images to RGBA format, because most devices don't support rgb-formats in Vulkan.
-        switch (texture.component) {
+        switch (texture_image.component) {
         case 3: {
             std::vector<std::array<std::uint32_t, 3>> rgb_source;
             rgb_source.reserve(texture_size);
 
             // Copy the memory into the vector so we can safely perform std::transform on it.
-            std::memcpy(rgb_source.data(), &texture.image[0], texture_size);
+            std::memcpy(rgb_source.data(), texture_image.image.data(), texture_size);
 
             std::vector<std::array<std::uint32_t, 4>> rgba_target;
             rgba_target.reserve(texture_size);
@@ -55,58 +83,69 @@ void Model::load_textures() {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using the data which was converted to RGBA.
-            m_textures.emplace_back(m_device, rgba_target.data(), texture_size, texture.width, texture.height,
-                                    texture.component, 1, texture_name);
+            m_textures.emplace_back(m_device, new_sampler, rgba_target.data(), texture_size, texture_image.width,
+                                    texture_image.height, texture_image.component, 1, texture_name);
             break;
         }
         case 4: {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using RGBA data.
-            m_textures.emplace_back(m_device, &texture.image[0], texture_size, texture.width, texture.height,
-                                    texture.component, 1, texture_name);
+            m_textures.emplace_back(m_device, new_sampler, texture_image.image.data(), texture_size,
+                                    texture_image.width, texture_image.height, texture_image.component, 1,
+                                    texture_name);
             break;
         }
         default: {
-            spdlog::error("Can't load texture with {} channels!", texture.component);
+            spdlog::error("Can't load texture with {} channels!", texture_image.component);
             spdlog::warn("Generating error texture as a replacement.");
 
             // Generate an error texture.
-            m_textures.emplace_back(m_device, wrapper::CpuTexture());
+            // m_textures.emplace_back(m_device, m_default_texture_sampler, wrapper::CpuTexture());
             break;
         }
         }
-    }
 
-    spdlog::trace("Loading {} glTF2 model texture indices", m_model.textures.size());
-
-    // Preallocate memory for the texture indices.
-    m_texture_indices.reserve(m_model.textures.size());
-
-    for (const auto &texture : m_model.textures) {
-        m_texture_indices.emplace_back(texture.source);
+        // TODO: Generate mipmaps!
     }
 }
 
 void Model::load_materials() {
     spdlog::trace("Loading {} glTF2 model materials", m_model.materials.size());
 
-    // Preallocate memory for the model materials.
-    m_materials.resize(m_model.materials.size());
+    // Preallocate memory for the model materials and one default material.
+    m_materials.resize(1 + m_model.materials.size());
 
-    ModelMaterial model_material{};
+    std::unordered_map<std::string, bool> unsupported_features{};
 
-    for (auto material : m_model.materials) {
-        if (material.values.find("baseColorFactor") != material.values.end()) {
-            model_material.base_color_factor = glm::make_vec4(material.values["baseColorFactor"].ColorFactor().data());
+    for (const auto &material : m_model.materials) {
+        for (const auto &material_value : material.values) {
+
+            const auto &material_name = material_value.first;
+
+            ModelMaterial model_material{};
+
+            if (material_name == "baseColorFactor") {
+                model_material.base_color_factor = glm::make_vec4(material_value.second.ColorFactor().data());
+            } else if (material_name == "baseColorTexture") {
+                model_material.base_color_texture_index = material_value.second.TextureIndex();
+            } else {
+                // If the material name is not supported, add it to the list of unsupported materials.
+                // This list will be printed at the end of material loading.
+                unsupported_features[material_name] = true;
+            }
+
+            m_materials.emplace_back(model_material);
         }
-        if (material.values.find("baseColorTexture") != material.values.end()) {
-            model_material.base_color_texture_index = material.values["baseColorTexture"].TextureIndex();
-        }
-        // TODO: Extract more material data from the glTF2 file as needed.
-
-        m_materials.emplace_back(model_material);
     }
+
+    // Print the list of unsupported materials.
+    for (auto const &[key, val] : unsupported_features) {
+        spdlog::warn("Material {} in glTF2 model {} is not supported!", key, m_name);
+    }
+
+    // Add a default material at the end for models with no materials assigned to them.
+    m_materials.emplace_back();
 }
 
 void Model::load_node(const tinygltf::Node &start_node, ModelNode *parent, std::vector<ModelVertex> &vertices,

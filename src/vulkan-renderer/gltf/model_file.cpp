@@ -32,8 +32,14 @@ ModelFile::ModelFile(const std::string &file_name, const std::string &model_name
     } else if (file_extension == "glb") {
         spdlog::trace("Loading binary glTF file {}", file_name);
         loading_succeeded = m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
+    } else if (file_extension == "obj") {
+        throw InexorException("Error: Object files (.obj) are not supported. Use glTF2 format!");
+    } else if (file_extension == "fbx") {
+        throw InexorException("Error: Autodesk filmbox format (.fbx) is not supported. Use glTF2 format!");
+    } else if (file_extension == "blend") {
+        throw InexorException("Error: Blender project maps (.blend) are not supported yet. Use glTF2 format!");
     } else {
-        throw InexorException("Error Unknown file extension " + file_extension);
+        throw InexorException("Error: Unknown file extension " + file_extension + "!");
     }
 
     if (!loading_warnings.empty()) {
@@ -45,7 +51,7 @@ ModelFile::ModelFile(const std::string &file_name, const std::string &model_name
     }
 
     if (!loading_succeeded) {
-        throw InexorException("Error: failed to load glTF2 file " + file_name);
+        throw InexorException("Error: Failed to load glTF2 file " + file_name + "!");
     }
 }
 

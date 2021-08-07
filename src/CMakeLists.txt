@@ -13,6 +13,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/gltf/model.cpp
     vulkan-renderer/gltf/model_file.cpp
     vulkan-renderer/gltf/model_renderer.cpp
+    vulkan-renderer/gltf/texture_sampler.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 

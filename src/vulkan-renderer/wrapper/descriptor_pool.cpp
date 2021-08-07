@@ -23,7 +23,7 @@ DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescrip
     }
 
     auto descriptor_pool_ci = wrapper::make_info<VkDescriptorPoolCreateInfo>();
-    descriptor_pool_ci.poolSizeCount = m_pool_sizes.size();
+    descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(m_pool_sizes.size());
     descriptor_pool_ci.pPoolSizes = m_pool_sizes.data();
     descriptor_pool_ci.maxSets = max_sets;
 

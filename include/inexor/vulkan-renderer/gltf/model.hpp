@@ -1,6 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/gltf/model_file.hpp"
+#include "inexor/vulkan-renderer/gltf/texture_sampler.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 
@@ -26,7 +27,6 @@ struct ModelMaterial {
 
 /// @brief A struct for glTF2 model vertices.
 struct ModelVertex {
-    /// @brief Default constructor.
     ModelVertex() = default;
 
     /// @brief Overloaded constructor.
@@ -69,13 +69,19 @@ class Model {
 private:
     const tinygltf::Model &m_model;
     const wrapper::Device &m_device;
+    const std::string m_name;
+
     ModelShaderData m_shader_data;
 
     std::vector<wrapper::GpuTexture> m_textures;
+    std::vector<TextureSampler> m_texture_samplers;
     std::vector<std::uint32_t> m_texture_indices;
     std::vector<ModelMaterial> m_materials;
     std::vector<ModelNode> m_nodes;
     std::vector<ModelScene> m_scenes;
+
+    const TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                                   VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
 
     /// @brief Load a glTF2 model node.
     /// @param start_node The node to begin with
@@ -85,8 +91,13 @@ private:
     void load_node(const tinygltf::Node &start_node, ModelNode *parent, std::vector<ModelVertex> &vertices,
                    std::vector<std::uint32_t> &indices);
 
+    ///  @brief
     void load_materials();
+
+    ///  @brief
     void load_textures();
+
+    ///  @brief
     void load_nodes();
 
     // TODO: load animations
@@ -95,13 +106,6 @@ private:
     // TODO: load multiple texture coordinate sets
 
 public:
-    /// @brief Extract the model data from a model file.
-    /// @paran device The device wrapper
-    /// @param model The glTF2 model
-    ///
-    ///
-    Model(const wrapper::Device &device, const tinygltf::Model &model, glm::mat4 projection, glm::mat4 model_matrix);
-
     /// @brief Overloaded constructor which accepts ModelFile as argument
     /// @paran device The device wrapper
     /// @param model_file The glTF2 model file

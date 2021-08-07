@@ -179,10 +179,10 @@ public:
     RenderStage &operator=(RenderStage &&) = delete;
 
     /// @brief Specifies that this stage writes to `resource`.
-    void writes_to(const RenderResource *resource);
+    RenderStage *writes_to(const RenderResource *resource);
 
     /// @brief Specifies that this stage reads from `resource`.
-    void reads_from(const RenderResource *resource);
+    RenderStage *reads_from(const RenderResource *resource);
 
     /// @brief Binds a descriptor set layout to this render stage.
     /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
@@ -245,30 +245,37 @@ public:
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
     /// @brief Specifies that this stage should clear the screen before rendering.
-    void set_clears_screen(bool clears_screen) {
+    GraphicsStage *set_clears_screen(bool clears_screen) {
         m_clears_screen = clears_screen;
+        return this;
     }
 
     /// @brief Specifies the depth options for this stage.
     /// @param depth_test Whether depth testing should be performed
     /// @param depth_write Whether depth writing should be performed
-    void set_depth_options(bool depth_test, bool depth_write) {
+    GraphicsStage *set_depth_options(bool depth_test, bool depth_write) {
         m_depth_test = depth_test;
         m_depth_write = depth_write;
+        return this;
     }
 
     /// @brief Set the blend attachment for this stage.
     /// @param blend_attachment The blend attachment
-    void set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
+    GraphicsStage *set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
         m_blend_attachment = blend_attachment;
+        return this;
     }
 
     /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage.
-    void bind_buffer(const BufferResource *buffer, std::uint32_t binding);
+    GraphicsStage *bind_buffer(const BufferResource *buffer, std::uint32_t binding);
 
     /// @brief Specifies that `shader` should be used during the pipeline of this stage.
     /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour.
-    void uses_shader(const wrapper::Shader &shader);
+    GraphicsStage *uses_shader(const wrapper::Shader &shader);
+
+    ///
+    ///
+    GraphicsStage *uses_shaders(const std::vector<wrapper::Shader> &shaders);
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.

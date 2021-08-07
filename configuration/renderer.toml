@@ -65,5 +65,5 @@ files = [
 # https://www.khronos.org/gltf/
 [gltfmodels]
 files = [
-	"assets/models/inexor/glTF-Binary/ToyCar.glb",
+	"assets/models/inexor/5_objects.gltf",
 ]

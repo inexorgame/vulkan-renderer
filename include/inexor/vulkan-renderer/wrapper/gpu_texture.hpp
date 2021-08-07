@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/gltf/texture_sampler.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
@@ -50,12 +51,20 @@ class GpuTexture {
     /// @brief Create the texture sampler.
     void create_texture_sampler();
 
+    /// @brief Create the texture sampler.
+    void create_texture_sampler(const gltf::TextureSampler &sampler);
+
 public:
     /// @brief Construct a texture from a file.
-    /// @param device The const reference to a device RAII wrapper instance.
-    /// @param file_name The name of the texture file.
-    /// @param name The internal debug marker name of the texture.
+    /// @param device The const reference to a device RAII wrapper instance
+    /// @param cpu_texture A const reference to the CPU texture
     GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
+
+    /// @brief Construct a texture from a file.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param sampler
+    /// @param cpu_texture
+    GpuTexture(const wrapper::Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a block of memory.
     /// @param device The const reference to a device RAII wrapper instance.
@@ -64,18 +73,30 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const wrapper::Device &device, void *data, std::size_t data_size, int texture_width, int texture_height,
-               int texture_channels, int mip_levels, std::string name);
+    GpuTexture(const wrapper::Device &device, void *data, std::size_t data_size, std::uint32_t texture_width,
+               std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
+               std::string name);
+
+    /// @brief Construct a texture from a block of memory for a glTF2 model file texture.
+    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param sampler The texture sampler for the glTF2 model.
+    /// @param texture_data A pointer to the texture data.
+    /// @param texture_width The width of the texture.
+    /// @param texture_height The height of the texture.
+    /// @param texture_size The size of the texture.
+    /// @param name The internal debug marker name of the texture.
+    GpuTexture(const wrapper::Device &device, const gltf::TextureSampler &sampler, void *data, std::size_t data_size,
+               std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
+               std::uint32_t mip_levels, std::string name);
 
     GpuTexture(const GpuTexture &) = delete;
     GpuTexture(GpuTexture &&) noexcept;
-
     ~GpuTexture();
 
     GpuTexture &operator=(const GpuTexture &) = delete;
     GpuTexture &operator=(GpuTexture &&) = delete;
 
-    [[nodiscard]] std::string name() const {
+    [[nodiscard]] const std::string &name() const {
         return m_name;
     }
 

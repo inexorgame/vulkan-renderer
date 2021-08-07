@@ -88,24 +88,26 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
 
-    m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
-    m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col));
-    m_vertex_buffer->set_element_size(sizeof(ImDrawVert));
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertex buffer", BufferUsage::VERTEX_BUFFER);
 
-    m_stage = render_graph->add<GraphicsStage>("imgui stage");
-    m_stage->writes_to(back_buffer);
-    m_stage->reads_from(m_index_buffer);
-    m_stage->reads_from(m_vertex_buffer);
-    m_stage->bind_buffer(m_vertex_buffer, 0);
-    m_stage->uses_shader(*m_vertex_shader);
-    m_stage->uses_shader(*m_fragment_shader);
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos))
+        ->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv))
+        ->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col))
+        ->set_element_size(sizeof(ImDrawVert));
 
-    // Setup push constant range for global translation and scale.
+    m_index_buffer = render_graph->add<BufferResource>("ImGui index buffer", BufferUsage::INDEX_BUFFER);
+
+    m_stage = render_graph->add<GraphicsStage>("ImGui stage");
+
+    m_stage->bind_buffer(m_vertex_buffer, 0)
+        ->uses_shader(*m_vertex_shader)
+        ->uses_shader(*m_fragment_shader)
+        ->writes_to(back_buffer)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
+        ->add_descriptor_layout(m_descriptor->descriptor_set_layout());
+
     m_stage->add_push_constant_range(sizeof(PushConstBlock));
-    m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
 
     // Setup blend attachment.
     VkPipelineColorBlendAttachmentState blend_attachment;

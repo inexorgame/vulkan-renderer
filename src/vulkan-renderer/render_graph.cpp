@@ -25,24 +25,35 @@ BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint3
     return this;
 }
 
-void RenderStage::writes_to(const RenderResource *resource) {
+RenderStage *RenderStage::writes_to(const RenderResource *resource) {
     m_writes.push_back(resource);
+    return this;
 }
 
-void RenderStage::reads_from(const RenderResource *resource) {
+RenderStage *RenderStage::reads_from(const RenderResource *resource) {
     m_reads.push_back(resource);
+    return this;
 }
 
-void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
+GraphicsStage *GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
     m_buffer_bindings.emplace(buffer, binding);
+    return this;
 }
 
-void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
+GraphicsStage *GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     auto create_info = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
     create_info.module = shader.module();
     create_info.stage = shader.type();
     create_info.pName = shader.entry_point().c_str();
     m_shaders.push_back(create_info);
+    return this;
+}
+
+GraphicsStage *GraphicsStage::uses_shaders(const std::vector<wrapper::Shader> &shaders) {
+    for (const auto &shader : shaders) {
+        uses_shader(shader);
+    }
+    return this;
 }
 
 PhysicalBuffer::~PhysicalBuffer() {
@@ -463,7 +474,7 @@ void RenderGraph::compile(const RenderResource *target) {
         VmaAllocationCreateInfo alloc_ci{};
 #if VMA_RECORDING_ENABLED
         alloc_ci.flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-        alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
+        alloc_ci.pUserData = const_cast<char *>(texture_resource->m_name.data());
 #endif
 
         auto physical = std::make_shared<PhysicalImage>(m_device.allocator(), m_device.device());

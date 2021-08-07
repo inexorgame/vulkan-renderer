@@ -20,6 +20,7 @@ void VulkanRenderer::setup_render_graph() {
 
     const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 
+    m_descriptor_pool.reset();
     m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(*m_device, pool_sizes, "octree");
 
     // Create an instance of the resource descriptor builder.
@@ -41,7 +42,7 @@ void VulkanRenderer::setup_render_graph() {
 
     for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
         for (std::size_t j = 0; j < m_gltf_models[i].scene_count(); j++) {
-            //m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], j, m_gltf_uniform_buffers[i]);
+            m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], j, m_gltf_uniform_buffers[i]);
         }
     }
 }
@@ -52,13 +53,16 @@ void VulkanRenderer::recreate_swapchain() {
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
-    m_swapchain->recreate(m_window->width(), m_window->height());
     m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
+
     setup_render_graph();
 
+    m_swapchain->recreate(m_window->width(), m_window->height());
+
     m_frame_finished_fence.reset();
-    m_image_available_semaphore.reset();
     m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
+
+    m_image_available_semaphore.reset();
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
 
     m_camera->set_movement_speed(5.0f);

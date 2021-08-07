@@ -12,17 +12,19 @@ namespace inexor::vulkan_renderer::gltf {
 class ModelRenderer {
 private:
     RenderGraph *m_render_graph;
+
     const TextureResource *m_back_buffer;
     const TextureResource *m_depth_buffer;
+
     const wrapper::Shader &m_vertex_shader;
     const wrapper::Shader &m_fragment_shader_texture;
     const wrapper::Shader &m_fragment_shader_color;
+
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::DescriptorBuilder> m_descriptor_builder;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor_ubo;
     std::vector<std::unique_ptr<wrapper::ResourceDescriptor>> m_texture_descriptors;
 
-    // Rendergraph buffers for glTF2 model geometry
     BufferResource *m_gltf_vertex_buffer{nullptr};
     BufferResource *m_gltf_index_buffer{nullptr};
 

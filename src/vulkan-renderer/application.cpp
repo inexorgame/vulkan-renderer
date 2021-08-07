@@ -227,9 +227,6 @@ void Application::load_shaders() {
 void Application::load_gltf_models() {
     m_gltf_models.reserve(m_gltf_model_files.size());
 
-    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
-                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
-
     for (const auto &gltf_file_name : m_gltf_model_files) {
         try {
             const auto gltf_file = gltf::ModelFile(gltf_file_name, "example model");
@@ -526,6 +523,9 @@ Application::Application(int argc, char **argv) {
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index());
 
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+
     load_octree_geometry(true);
     load_gltf_models();
 
@@ -642,8 +642,9 @@ void Application::run() {
         // Create a new random octree world if key N is pressed.
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
-            // m_octree_index_buffer->upload_data(m_octree_indices);
+            // TODO: Fix me
             // m_octree_vertex_buffer->upload_data(m_octree_vertices);
+            // m_octree_index_buffer->upload_data(m_octree_indices);
         }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
