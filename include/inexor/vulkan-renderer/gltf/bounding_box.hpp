@@ -7,8 +7,8 @@ namespace inexor::vulkan_renderer::gltf {
 
 /// @brief A structure for bounding boxes
 struct BoundingBox {
-    glm::vec3 min;
-    glm::vec3 max;
+    glm::vec3 min{};
+    glm::vec3 max{};
     bool valid{false};
 
     BoundingBox() = default;

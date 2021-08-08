@@ -107,7 +107,7 @@ DescriptorBuilder &DescriptorBuilder::add_uniform_buffer(const VkBuffer uniform_
 
     m_write_sets.push_back(descriptor_write);
 
-    //m_binding++;
+    // m_binding++;
 
     return *this;
 }

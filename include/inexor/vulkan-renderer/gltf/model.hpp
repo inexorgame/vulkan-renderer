@@ -62,6 +62,7 @@ private:
     std::vector<ModelMaterial> m_materials;
     std::vector<ModelNode> m_nodes;
     std::vector<ModelVertex> m_vertices;
+    std::vector<ModelSkin> m_skins;
     std::vector<uint32_t> m_indices;
     std::vector<ModelAnimation> animations;
     std::unordered_set<std::string> m_unsupported_attributes;
@@ -88,27 +89,17 @@ private:
     void load_node(ModelNode *parent, const tinygltf::Node &start_node, std::uint32_t scene_index,
                    std::uint32_t node_index);
 
-    ///  @brief
     void load_materials();
-
-    ///  @brief
     void load_animations();
-
-    ///  @brief
     void load_textures();
-
-    ///  @brief
+    void load_skins();
     void load_nodes();
-
-    // TODO: load animations
-    // TODO: load animation skins
-    // TODO: load pbr (physically based rendering) settings
-    // TODO: load multiple texture coordinate sets
 
 public:
     /// @brief Overloaded constructor which accepts ModelFile as argument
     /// @paran device The device wrapper
     /// @param model_file The glTF2 model file
+    ///
     ///
     ///
     Model(const wrapper::Device &device, const ModelFile &model_file, float scale, glm::mat4 projection,

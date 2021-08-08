@@ -320,10 +320,7 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
                 std::uint32_t weight_byte_stride = 0;
                 std::uint32_t joint_component_type = 0;
 
-                // Position attribute is required!
-                if (primitive.attributes.find("POSITION") == primitive.attributes.end()) {
-                    throw InexorException("Error: glTF2 model " + m_name + " is missing position attribute!");
-                }
+                // TODO: Position attribute is required!
 
                 const auto &pos_accessor = m_model.accessors[primitive.attributes.find("POSITION")->second];
                 const auto &pos_view = m_model.bufferViews[pos_accessor.bufferView];
@@ -531,6 +528,41 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
         parent->children.push_back(new_node);
     } else {
         m_nodes.push_back(new_node);
+    }
+}
+
+void Model::load_skins() {
+    for (const auto &source : m_model.skins) {
+        ModelSkin new_skin;
+
+        new_skin.name = source.name;
+
+        // Find skeleton root node
+        if (source.skeleton > -1) {
+            new_skin.skeleton_root = node_from_index(source.skeleton);
+        }
+
+        // Find joint nodes
+        for (int joint_index : source.joints) {
+            auto *node = node_from_index(joint_index);
+            if (node) {
+                new_skin.joints.push_back(node_from_index(joint_index));
+            }
+        }
+
+        // Get inverse bind matrices from buffer
+        if (source.inverseBindMatrices > -1) {
+            const auto &accessor = m_model.accessors[source.inverseBindMatrices];
+            const auto &bufferView = m_model.bufferViews[accessor.bufferView];
+            const auto &buffer = m_model.buffers[bufferView.buffer];
+
+            new_skin.inverse_bind_matrices.resize(accessor.count);
+
+            std::memcpy(new_skin.inverse_bind_matrices.data(),
+                        &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(glm::mat4));
+        }
+
+        m_skins.push_back(new_skin);
     }
 }
 

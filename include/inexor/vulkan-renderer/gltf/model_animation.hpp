@@ -24,6 +24,13 @@ struct ModelAnimationSampler {
     std::vector<glm::vec4> outputs;
 };
 
+struct ModelSkin {
+    std::string name;
+    ModelNode *skeleton_root{nullptr};
+    std::vector<glm::mat4> inverse_bind_matrices;
+    std::vector<ModelNode*> joints;
+};
+
 struct ModelAnimation {
     std::string name;
     std::vector<ModelAnimationSampler> samplers;

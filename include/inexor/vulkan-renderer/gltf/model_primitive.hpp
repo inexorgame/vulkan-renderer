@@ -19,7 +19,7 @@ struct ModelPrimitive {
     ///
     ///
     ///
-    ModelPrimitive(const std::uint32_t firstIndex, const std::uint32_t indexCount, const std::uint32_t vertexCount,
+    ModelPrimitive(std::uint32_t first_index, std::uint32_t index_count, std::uint32_t vertex_count,
                    ModelMaterial &material);
 
     [[nodiscard]] std::uint32_t index_count() const {
@@ -29,7 +29,7 @@ struct ModelPrimitive {
     ///
     ///
     ///
-    void set_bbox(const glm::vec3 min, const glm::vec3 max);
+    void set_bbox(glm::vec3 min, glm::vec3 max);
 };
 
 } // namespace inexor::vulkan_renderer::gltf
