@@ -120,7 +120,6 @@ void Model::load_materials() {
     m_materials.resize(1 + m_model.materials.size());
 
     std::unordered_map<std::string, bool> unsupported_features{};
-    std::unordered_map<std::string, bool> unsupported_additional_features{};
 
     for (const auto &material : m_model.materials) {
         ModelMaterial new_material{};
@@ -169,7 +168,7 @@ void Model::load_materials() {
                 new_material.emissiveFactor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
                 new_material.emissiveFactor = glm::vec4(0.0f);
             } else {
-                unsupported_additional_features[name] = true;
+                unsupported_features[name] = true;
             }
 
             // Load materials from extensions.
@@ -210,7 +209,9 @@ void Model::load_materials() {
         m_materials.push_back(new_material);
     }
 
-    // TODO: Print list of unsupported features and unsupported additional features!
+    for (const auto &[name, value] : unsupported_features) {
+        spdlog::warn("Material feature {} not supported!", name);
+    }
 
     // Add a default material at the end of the list for meshes with no material assigned.
     m_materials.emplace_back();
