@@ -481,7 +481,7 @@ void Model::load_animations() {
         }
 
         // Samplers
-        for (auto &samp : anim.samplers) {
+        for (const auto &samp : anim.samplers) {
             ModelAnimationSampler sampler{};
 
             if (samp.interpolation == "LINEAR") {
@@ -554,7 +554,7 @@ void Model::load_animations() {
         }
 
         // Channels
-        for (auto &source : anim.channels) {
+        for (const auto &source : anim.channels) {
             ModelAnimationChannel channel{};
 
             if (source.target_path == "rotation") {
@@ -570,8 +570,10 @@ void Model::load_animations() {
                 spdlog::warn("Weights in animations are not yet supported, skipping animation channel.");
                 continue;
             }
+
             channel.samplerIndex = source.sampler;
             channel.node = node_from_index(source.target_node);
+
             if (!channel.node) {
                 continue;
             }

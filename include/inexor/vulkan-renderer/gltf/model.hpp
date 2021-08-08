@@ -76,29 +76,30 @@ private:
     const TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                                                    VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
 
-    ModelNode *Model::find_node(ModelNode *parent, uint32_t index) {
-        ModelNode *nodeFound = nullptr;
+
+    ModelNode* find_node(ModelNode* parent, std::uint32_t index) {
+        ModelNode* node_found = nullptr;
         if (parent->index == index) {
             return parent;
         }
-        for (auto &child : parent->children) {
-            nodeFound = find_node(&child, index);
-            if (nodeFound) {
+        for (auto& child : parent->children) {
+            node_found = find_node(&child, index);
+            if (node_found) {
                 break;
             }
         }
-        return nodeFound;
+        return node_found;
     }
 
-    ModelNode *Model::node_from_index(uint32_t index) {
-        ModelNode *nodeFound = nullptr;
-        for (auto &node : m_nodes) {
-            nodeFound = find_node(&node, index);
-            if (nodeFound) {
+    ModelNode* node_from_index(std::uint32_t index) {
+        ModelNode* node_found = nullptr;
+        for (auto& node : m_nodes) {
+            node_found = find_node(&node, index);
+            if (node_found) {node_found
                 break;
             }
         }
-        return nodeFound;
+        return node_found;
     }
 
     /// @brief Load a glTF2 model node.
