@@ -120,37 +120,100 @@ void Model::load_materials() {
     m_materials.resize(1 + m_model.materials.size());
 
     std::unordered_map<std::string, bool> unsupported_features{};
+    std::unordered_map<std::string, bool> unsupported_additional_features{};
 
     for (const auto &material : m_model.materials) {
-        for (const auto &material_value : material.values) {
+        ModelMaterial new_material{};
 
-            const auto &material_name = material_value.first;
-
-            ModelMaterial model_material{};
-
-            if (material_name == "baseColorFactor") {
-                model_material.base_color_factor = glm::make_vec4(material_value.second.ColorFactor().data());
-            } else if (material_name == "baseColorTexture") {
-                model_material.base_color_texture_index = material_value.second.TextureIndex();
+        // Load material values.
+        for (const auto &[name, value] : material.values) {
+            if (name == "baseColorTexture") {
+                new_material.baseColorTexture = &m_textures[value.TextureIndex()];
+                new_material.texCoordSets.baseColor = value.TextureTexCoord();
+            } else if (name == "metallicRoughnessTexture") {
+                new_material.metallicRoughnessTexture = &m_textures[value.TextureIndex()];
+                new_material.texCoordSets.metallicRoughness = value.TextureTexCoord();
+            } else if (name == "roughnessFactor") {
+                new_material.roughnessFactor = static_cast<float>(value.Factor());
+            } else if (name == "metallicFactor") {
+                new_material.metallicFactor = static_cast<float>(value.Factor());
+            } else if (name == "baseColorFactor") {
+                new_material.baseColorFactor = glm::make_vec4(value.ColorFactor().data());
             } else {
-                // If the material name is not supported, add it to the list of unsupported materials.
-                // This list will be printed at the end of material loading.
-                unsupported_features[material_name] = true;
+                unsupported_features[name] = true;
+            }
+        }
+
+        // Load additional material values.
+        for (const auto &[name, value] : material.additionalValues) {
+            if (name == "normalTexture") {
+                new_material.normalTexture = &m_textures[value.TextureIndex()];
+                new_material.texCoordSets.normal = value.TextureTexCoord();
+            } else if (name == "emissiveTexture") {
+                new_material.emissiveTexture = &m_textures[value.TextureIndex()];
+                new_material.texCoordSets.emissive = value.TextureTexCoord();
+            } else if (name == "occlusionTexture") {
+                new_material.occlusionTexture = &m_textures[value.TextureIndex()];
+                new_material.texCoordSets.occlusion = value.TextureTexCoord();
+            } else if (name == "alphaMode") {
+                if (value.string_value == "BLEND") {
+                    new_material.alphaMode = ModelMaterial::AlphaMode::ALPHAMODE_BLEND;
+                }
+                if (value.string_value == "MASK") {
+                    new_material.alphaCutoff = 0.5f;
+                    new_material.alphaMode = ModelMaterial::AlphaMode::ALPHAMODE_MASK;
+                }
+            } else if (name == "alphaCutoff") {
+                new_material.alphaCutoff = static_cast<float>(value.Factor());
+            } else if (name == "emissiveFactor") {
+                new_material.emissiveFactor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
+                new_material.emissiveFactor = glm::vec4(0.0f);
+            } else {
+                unsupported_additional_features[name] = true;
             }
 
-            m_materials.emplace_back(model_material);
+            // Load materials from extensions.
+            auto ext = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
+
+            if (ext->second.Has("specularGlossinessTexture")) {
+                const auto index = ext->second.Get("specularGlossinessTexture").Get("index");
+                new_material.extension.specularGlossinessTexture = &m_textures[index.Get<int>()];
+                const auto texCoordSet = ext->second.Get("specularGlossinessTexture").Get("texCoord");
+                new_material.texCoordSets.specularGlossiness = texCoordSet.Get<int>();
+                new_material.pbrWorkflows.specularGlossiness = true;
+            }
+
+            if (ext->second.Has("diffuseTexture")) {
+                const auto index = ext->second.Get("diffuseTexture").Get("index");
+                new_material.extension.diffuseTexture = &m_textures[index.Get<int>()];
+            }
+
+            if (ext->second.Has("diffuseFactor")) {
+                auto factor = ext->second.Get("diffuseFactor");
+                for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
+                    auto val = factor.Get(i);
+                    new_material.extension.diffuseFactor[i] =
+                        val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                }
+            }
+
+            if (ext->second.Has("specularFactor")) {
+                auto factor = ext->second.Get("specularFactor");
+                for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
+                    auto val = factor.Get(i);
+                    new_material.extension.specularFactor[i] =
+                        val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                }
+            }
         }
+
+        m_materials.push_back(new_material);
     }
 
-    // Print the list of unsupported materials.
-    for (auto const &[key, val] : unsupported_features) {
-        spdlog::warn("Material {} not supported!", key);
-    }
+    // TODO: Print list of unsupported features and unsupported additional features!
 
-    // Add a default material at the end for models with no materials assigned to them.
+    // Add a default material at the end of the list for meshes with no material assigned.
     m_materials.emplace_back();
-
-    // TODO: Support glTF extensions.
 }
 
 ModelNode *Model::find_node(ModelNode *parent, const std::uint32_t index) {
@@ -354,6 +417,9 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
                 }
 
                 has_skin = (buffer_joints != nullptr && buffer_weights != nullptr);
+
+                // Preallocate memory for the new vertices.
+                vertex_buffer.reserve(pos_accessor.count);
 
                 for (std::size_t v = 0; v < pos_accessor.count; v++) {
                     ModelVertex vert{};
