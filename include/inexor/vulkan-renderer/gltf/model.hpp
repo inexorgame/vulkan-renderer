@@ -76,31 +76,13 @@ private:
     const TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                                                    VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
 
+    ///
+    ///
+    ModelNode *find_node(ModelNode *parent, std::uint32_t index);
 
-    ModelNode* find_node(ModelNode* parent, std::uint32_t index) {
-        ModelNode* node_found = nullptr;
-        if (parent->index == index) {
-            return parent;
-        }
-        for (auto& child : parent->children) {
-            node_found = find_node(&child, index);
-            if (node_found) {
-                break;
-            }
-        }
-        return node_found;
-    }
-
-    ModelNode* node_from_index(std::uint32_t index) {
-        ModelNode* node_found = nullptr;
-        for (auto& node : m_nodes) {
-            node_found = find_node(&node, index);
-            if (node_found) {node_found
-                break;
-            }
-        }
-        return node_found;
-    }
+    ///
+    ///
+    ModelNode *node_from_index(std::uint32_t index);
 
     /// @brief Load a glTF2 model node.
     /// @param parent The parent node. If no parent exists this will be ``nullptr``

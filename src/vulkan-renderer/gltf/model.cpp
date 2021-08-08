@@ -153,6 +153,31 @@ void Model::load_materials() {
     // TODO: Support glTF extensions.
 }
 
+ModelNode *Model::find_node(ModelNode *parent, const std::uint32_t index) {
+    ModelNode *node_found = nullptr;
+    if (parent->index == index) {
+        return parent;
+    }
+    for (auto &child : parent->children) {
+        node_found = find_node(&child, index);
+        if (node_found) {
+            break;
+        }
+    }
+    return node_found;
+}
+
+ModelNode *Model::node_from_index(const std::uint32_t index) {
+    ModelNode *node_found = nullptr;
+    for (auto &node : m_nodes) {
+        node_found = find_node(&node, index);
+        if (node_found != nullptr) {
+            break;
+        }
+    }
+    return node_found;
+}
+
 void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::uint32_t scene_index,
                       const std::uint32_t node_index) {
 
@@ -504,7 +529,7 @@ void Model::load_animations() {
 
                 const void *dataPtr = &buffer.data[accessor.byteOffset + bufferView.byteOffset];
                 const float *buf = static_cast<const float *>(dataPtr);
-                for (size_t index = 0; index < accessor.count; index++) {
+                for (std::size_t index = 0; index < accessor.count; index++) {
                     sampler.inputs.push_back(buf[index]);
                 }
 
@@ -531,14 +556,14 @@ void Model::load_animations() {
                 switch (accessor.type) {
                 case TINYGLTF_TYPE_VEC3: {
                     const glm::vec3 *buf = static_cast<const glm::vec3 *>(data_pointer);
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         sampler.outputsVec4.push_back(glm::vec4(buf[index], 0.0f));
                     }
                     break;
                 }
                 case TINYGLTF_TYPE_VEC4: {
                     const glm::vec4 *buf = static_cast<const glm::vec4 *>(data_pointer);
-                    for (size_t index = 0; index < accessor.count; index++) {
+                    for (std::size_t index = 0; index < accessor.count; index++) {
                         sampler.outputsVec4.push_back(buf[index]);
                     }
                     break;
@@ -555,30 +580,30 @@ void Model::load_animations() {
 
         // Channels
         for (const auto &source : anim.channels) {
-            ModelAnimationChannel channel{};
+            ModelAnimationChannel new_channel{};
 
             if (source.target_path == "rotation") {
-                channel.path = ModelAnimationChannel::PathType::ROTATION;
+                new_channel.path = ModelAnimationChannel::PathType::ROTATION;
             }
             if (source.target_path == "translation") {
-                channel.path = ModelAnimationChannel::PathType::TRANSLATION;
+                new_channel.path = ModelAnimationChannel::PathType::TRANSLATION;
             }
             if (source.target_path == "scale") {
-                channel.path = ModelAnimationChannel::PathType::SCALE;
+                new_channel.path = ModelAnimationChannel::PathType::SCALE;
             }
             if (source.target_path == "weights") {
                 spdlog::warn("Weights in animations are not yet supported, skipping animation channel.");
                 continue;
             }
 
-            channel.samplerIndex = source.sampler;
-            channel.node = node_from_index(source.target_node);
+            new_channel.samplerIndex = source.sampler;
+            new_channel.node = node_from_index(source.target_node);
 
-            if (!channel.node) {
+            if (!new_channel.node) {
                 continue;
             }
 
-            new_animation.channels.push_back(channel);
+            new_animation.channels.push_back(new_channel);
         }
 
         animations.push_back(new_animation);
