@@ -127,17 +127,17 @@ void Model::load_materials() {
         // Load material values.
         for (const auto &[name, value] : material.values) {
             if (name == "baseColorTexture") {
-                new_material.baseColorTexture = &m_textures[value.TextureIndex()];
-                new_material.texCoordSets.baseColor = value.TextureTexCoord();
+                new_material.base_color_texture = &m_textures[value.TextureIndex()];
+                new_material.texture_coordinate_set.base_color = value.TextureTexCoord();
             } else if (name == "metallicRoughnessTexture") {
-                new_material.metallicRoughnessTexture = &m_textures[value.TextureIndex()];
-                new_material.texCoordSets.metallicRoughness = value.TextureTexCoord();
+                new_material.metallic_roughness_texture = &m_textures[value.TextureIndex()];
+                new_material.texture_coordinate_set.metallic_roughness = value.TextureTexCoord();
             } else if (name == "roughnessFactor") {
-                new_material.roughnessFactor = static_cast<float>(value.Factor());
+                new_material.roughness_factor = static_cast<float>(value.Factor());
             } else if (name == "metallicFactor") {
-                new_material.metallicFactor = static_cast<float>(value.Factor());
+                new_material.metallic_factor = static_cast<float>(value.Factor());
             } else if (name == "baseColorFactor") {
-                new_material.baseColorFactor = glm::make_vec4(value.ColorFactor().data());
+                new_material.base_color_factor = glm::make_vec4(value.ColorFactor().data());
             } else {
                 unsupported_features[name] = true;
             }
@@ -146,27 +146,27 @@ void Model::load_materials() {
         // Load additional material values.
         for (const auto &[name, value] : material.additionalValues) {
             if (name == "normalTexture") {
-                new_material.normalTexture = &m_textures[value.TextureIndex()];
-                new_material.texCoordSets.normal = value.TextureTexCoord();
+                new_material.normal_texture = &m_textures[value.TextureIndex()];
+                new_material.texture_coordinate_set.normal = value.TextureTexCoord();
             } else if (name == "emissiveTexture") {
-                new_material.emissiveTexture = &m_textures[value.TextureIndex()];
-                new_material.texCoordSets.emissive = value.TextureTexCoord();
+                new_material.emissive_texture = &m_textures[value.TextureIndex()];
+                new_material.texture_coordinate_set.emissive = value.TextureTexCoord();
             } else if (name == "occlusionTexture") {
-                new_material.occlusionTexture = &m_textures[value.TextureIndex()];
-                new_material.texCoordSets.occlusion = value.TextureTexCoord();
+                new_material.occlusion_texture = &m_textures[value.TextureIndex()];
+                new_material.texture_coordinate_set.occlusion = value.TextureTexCoord();
             } else if (name == "alphaMode") {
                 if (value.string_value == "BLEND") {
-                    new_material.alphaMode = ModelMaterial::AlphaMode::ALPHAMODE_BLEND;
+                    new_material.alpha_mode = ModelMaterial::AlphaMode::ALPHAMODE_BLEND;
                 }
                 if (value.string_value == "MASK") {
-                    new_material.alphaCutoff = 0.5f;
-                    new_material.alphaMode = ModelMaterial::AlphaMode::ALPHAMODE_MASK;
+                    new_material.alpha_cutoff = 0.5f;
+                    new_material.alpha_mode = ModelMaterial::AlphaMode::ALPHAMODE_MASK;
                 }
             } else if (name == "alphaCutoff") {
-                new_material.alphaCutoff = static_cast<float>(value.Factor());
+                new_material.alpha_cutoff = static_cast<float>(value.Factor());
             } else if (name == "emissiveFactor") {
-                new_material.emissiveFactor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
-                new_material.emissiveFactor = glm::vec4(0.0f);
+                new_material.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
+                new_material.emissive_factor = glm::vec4(0.0f);
             } else {
                 unsupported_features[name] = true;
             }
@@ -176,22 +176,22 @@ void Model::load_materials() {
 
             if (ext->second.Has("specularGlossinessTexture")) {
                 const auto index = ext->second.Get("specularGlossinessTexture").Get("index");
-                new_material.extension.specularGlossinessTexture = &m_textures[index.Get<int>()];
+                new_material.extension.specular_glossiness_texture = &m_textures[index.Get<int>()];
                 const auto texCoordSet = ext->second.Get("specularGlossinessTexture").Get("texCoord");
-                new_material.texCoordSets.specularGlossiness = texCoordSet.Get<int>();
-                new_material.pbrWorkflows.specularGlossiness = true;
+                new_material.texture_coordinate_set.specular_glossiness = texCoordSet.Get<int>();
+                new_material.pbr_workflows.specular_glossiness = true;
             }
 
             if (ext->second.Has("diffuseTexture")) {
                 const auto index = ext->second.Get("diffuseTexture").Get("index");
-                new_material.extension.diffuseTexture = &m_textures[index.Get<int>()];
+                new_material.extension.diffuse_texture = &m_textures[index.Get<int>()];
             }
 
             if (ext->second.Has("diffuseFactor")) {
                 auto factor = ext->second.Get("diffuseFactor");
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
-                    new_material.extension.diffuseFactor[i] =
+                    new_material.extension.diffuse_factor[i] =
                         val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
                 }
             }
@@ -200,7 +200,7 @@ void Model::load_materials() {
                 auto factor = ext->second.Get("specularFactor");
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
-                    new_material.extension.specularFactor[i] =
+                    new_material.extension.specular_factor[i] =
                         val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
                 }
             }
@@ -628,14 +628,14 @@ void Model::load_animations() {
                 case TINYGLTF_TYPE_VEC3: {
                     const auto *buf = static_cast<const glm::vec3 *>(data_pointer);
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        sampler.outputsVec4.push_back(glm::vec4(buf[index], 0.0f)); // NOLINT
+                        sampler.outputs.push_back(glm::vec4(buf[index], 0.0f)); // NOLINT
                     }
                     break;
                 }
                 case TINYGLTF_TYPE_VEC4: {
                     const auto *buf = static_cast<const glm::vec4 *>(data_pointer);
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        sampler.outputsVec4.push_back(buf[index]); // NOLINT
+                        sampler.outputs.push_back(buf[index]); // NOLINT
                     }
                     break;
                 }
@@ -667,7 +667,7 @@ void Model::load_animations() {
                 continue;
             }
 
-            new_channel.samplerIndex = source.sampler;
+            new_channel.sampler_index = source.sampler;
             new_channel.node = node_from_index(source.target_node);
 
             if (new_channel.node == nullptr) {

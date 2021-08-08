@@ -31,7 +31,7 @@ public:
     /// @param descriptor_pool The descriptor pool.
     DescriptorBuilder(const Device &device, VkDescriptorPool descriptor_pool);
 
-    DescriptorBuilder(DescriptorBuilder &&);
+    DescriptorBuilder(DescriptorBuilder &&) noexcept;
     ~DescriptorBuilder() = default;
 
     DescriptorBuilder &operator=(const DescriptorBuilder &) = delete;

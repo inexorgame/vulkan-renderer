@@ -24,8 +24,8 @@ public:
     /// @param mode_u
     /// @param mode_v
     /// @param mode_w
-    TextureSampler(const VkFilter filter_mag, const VkFilter filter_min, const VkSamplerAddressMode mode_u,
-                   const VkSamplerAddressMode mode_v, const VkSamplerAddressMode mode_w);
+    TextureSampler(VkFilter filter_mag, VkFilter filter_min, VkSamplerAddressMode mode_u, VkSamplerAddressMode mode_v,
+                   VkSamplerAddressMode mode_w);
 
     /// @brief Overloaded constructor.
     /// @param filter_min
@@ -33,8 +33,7 @@ public:
     /// @param mode_s
     /// @param mode_t
     /// @param mode_t
-    TextureSampler(const std::uint32_t filter_min, const std::uint32_t filter_mag, const std::uint32_t mode_s,
-                   const std::uint32_t mode_t);
+    TextureSampler(std::uint32_t filter_min, std::uint32_t filter_mag, std::uint32_t mode_s, std::uint32_t mode_t);
 
     [[nodiscard]] VkFilter min_filter() const {
         return m_min_filter;

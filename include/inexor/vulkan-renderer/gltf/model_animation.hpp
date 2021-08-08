@@ -14,14 +14,14 @@ struct ModelAnimationChannel {
     enum class PathType { TRANSLATION, ROTATION, SCALE };
     PathType path;
     ModelNode *node;
-    std::uint32_t samplerIndex;
+    std::uint32_t sampler_index;
 };
 
 struct ModelAnimationSampler {
     enum class InterpolationType { LINEAR, STEP, CUBICSPLINE };
     InterpolationType interpolation;
     std::vector<float> inputs;
-    std::vector<glm::vec4> outputsVec4;
+    std::vector<glm::vec4> outputs;
 };
 
 struct ModelAnimation {

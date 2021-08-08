@@ -40,8 +40,8 @@ struct ModelVertex {
     glm::vec3 color{};
     glm::vec3 normal{};
     std::array<glm::vec2, 2> uv{};
-    glm::vec4 joint;
-    glm::vec4 weight;
+    glm::vec4 joint{};
+    glm::vec4 weight{};
 };
 
 /// @brief A wrapper class for glTF2 models.

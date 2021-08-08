@@ -9,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-DescriptorBuilder::DescriptorBuilder(DescriptorBuilder &&other) : m_device(other.m_device) {
+DescriptorBuilder::DescriptorBuilder(DescriptorBuilder &&other) noexcept : m_device(other.m_device) {
     m_descriptor_pool = std::exchange(other.m_descriptor_pool, nullptr);
     m_binding = other.m_binding;
     m_layout_bindings = std::move(other.m_layout_bindings);

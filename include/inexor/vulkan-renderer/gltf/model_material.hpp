@@ -8,41 +8,42 @@ namespace inexor::vulkan_renderer::gltf {
 /// @brief A struct for glTF2 model materials.
 struct ModelMaterial {
     enum class AlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
-    AlphaMode alphaMode = AlphaMode::ALPHAMODE_OPAQUE;
+    AlphaMode alpha_mode = AlphaMode::ALPHAMODE_OPAQUE;
 
-    float alphaCutoff = 1.0f;
-    float metallicFactor = 1.0f;
-    float roughnessFactor = 1.0f;
+    float alpha_cutoff = 1.0f;
+    float metallic_factor = 1.0f;
+    float roughness_factor = 1.0f;
 
-    glm::vec4 baseColorFactor = glm::vec4(1.0f);
-    glm::vec4 emissiveFactor = glm::vec4(1.0f);
+    glm::vec4 base_color_factor = glm::vec4(1.0f);
+    glm::vec4 emissive_factor = glm::vec4(1.0f);
 
-    void *baseColorTexture;
-    void *metallicRoughnessTexture;
-    void *normalTexture;
-    void *occlusionTexture;
-    void *emissiveTexture;
+    // TODO: Change types!
+    void *base_color_texture;
+    void *metallic_roughness_texture;
+    void *normal_texture;
+    void *occlusion_texture;
+    void *emissive_texture;
 
     struct TexCoordSets {
-        uint8_t baseColor = 0;
-        uint8_t metallicRoughness = 0;
-        uint8_t specularGlossiness = 0;
+        uint8_t base_color = 0;
+        uint8_t metallic_roughness = 0;
+        uint8_t specular_glossiness = 0;
         uint8_t normal = 0;
         uint8_t occlusion = 0;
         uint8_t emissive = 0;
-    } texCoordSets;
+    } texture_coordinate_set;
 
     struct Extension {
-        void *specularGlossinessTexture;
-        void *diffuseTexture;
-        glm::vec4 diffuseFactor = glm::vec4(1.0f);
-        glm::vec3 specularFactor = glm::vec3(0.0f);
+        void *specular_glossiness_texture;
+        void *diffuse_texture;
+        glm::vec4 diffuse_factor = glm::vec4(1.0f);
+        glm::vec3 specular_factor = glm::vec3(0.0f);
     } extension;
 
     struct PbrWorkflows {
-        bool metallicRoughness = true;
-        bool specularGlossiness = false;
-    } pbrWorkflows;
+        bool metallic_roughness = true;
+        bool specular_glossiness = false;
+    } pbr_workflows;
 };
 
 } // namespace inexor::vulkan_renderer::gltf
