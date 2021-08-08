@@ -44,11 +44,6 @@ struct ModelVertex {
     glm::vec4 weight;
 };
 
-struct ModelScene {
-    std::vector<ModelVertex> vertices;
-    std::vector<uint32_t> indices;
-};
-
 /// @brief A wrapper class for glTF2 models.
 /// Loading the glTF2 file is separated from parsing its data.
 /// This allows for better task-based parallelization.
@@ -66,7 +61,8 @@ private:
     std::vector<std::uint32_t> m_texture_indices;
     std::vector<ModelMaterial> m_materials;
     std::vector<ModelNode> m_nodes;
-    std::vector<ModelScene> m_scenes;
+    std::vector<ModelVertex> m_vertices;
+    std::vector<uint32_t> m_indices;
     std::vector<ModelAnimation> animations;
     std::unordered_set<std::string> m_unsupported_attributes;
 
@@ -138,18 +134,12 @@ public:
         return m_nodes;
     }
 
-    [[nodiscard]] std::size_t scene_count() const {
-        return m_scenes.size();
+    [[nodiscard]] const auto &vertices() const {
+        return m_vertices;
     }
 
-    [[nodiscard]] const auto &scene_vertices(const std::size_t scene_index) const {
-        assert(scene_index < m_scenes.size());
-        return m_scenes[scene_index].vertices;
-    }
-
-    [[nodiscard]] const auto &scene_indices(const std::size_t scene_index) const {
-        assert(scene_index < m_scenes.size());
-        return m_scenes[scene_index].indices;
+    [[nodiscard]] const auto &indices() const {
+        return m_vertices;
     }
 
     [[nodiscard]] const wrapper::GpuTexture &texture(const std::size_t texture_index) const {

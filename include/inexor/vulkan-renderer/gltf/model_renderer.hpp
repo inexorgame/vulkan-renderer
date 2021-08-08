@@ -66,10 +66,8 @@ public:
     /// @brief Render a glTF2 model's nodes.
     /// @param device The device wrapper
     /// @param model The glTF2 model
-    /// @param scene_index The scene index of the glTF2 model
     /// @param uniform_buffer The uniform buffer
-    void render_model(const wrapper::Device &device, const Model &model, std::size_t scene_index,
-                      const wrapper::UniformBuffer &uniform_buffer);
+    void render_model(const wrapper::Device &device, const Model &model, const wrapper::UniformBuffer &uniform_buffer);
 };
 
 } // namespace inexor::vulkan_renderer::gltf

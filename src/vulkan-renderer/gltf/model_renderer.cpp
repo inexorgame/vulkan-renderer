@@ -61,7 +61,7 @@ void ModelRenderer::render_model_nodes(const Model &model, const wrapper::Comman
     }
 }
 
-void ModelRenderer::render_model(const wrapper::Device &device, const Model &model, const std::size_t scene_index,
+void ModelRenderer::render_model(const wrapper::Device &device, const Model &model,
                                  const wrapper::UniformBuffer &uniform_buffer) {
 
     m_gltf_vertex_buffer = m_render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
@@ -70,11 +70,11 @@ void ModelRenderer::render_model(const wrapper::Device &device, const Model &mod
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, color))
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal))
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv))
-        ->upload_data(model.scene_vertices(scene_index));
+        ->upload_data(model.vertices());
 
     m_gltf_index_buffer = m_render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
 
-    m_gltf_index_buffer->upload_data(model.scene_indices(scene_index));
+    m_gltf_index_buffer->upload_data(model.indices());
 
     std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 

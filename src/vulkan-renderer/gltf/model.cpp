@@ -244,10 +244,6 @@ ModelNode *Model::node_from_index(const std::uint32_t index) {
 
 void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::uint32_t scene_index,
                       const std::uint32_t node_index) {
-
-    auto &vertex_buffer = m_scenes[scene_index].vertices;
-    auto &index_buffer = m_scenes[scene_index].indices;
-
     ModelNode new_node;
     new_node.name = node.name;
     new_node.parent = parent;
@@ -295,8 +291,8 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
 
-            auto vertex_start = static_cast<uint32_t>(vertex_buffer.size());
-            auto index_start = static_cast<uint32_t>(index_buffer.size());
+            auto vertex_start = static_cast<uint32_t>(m_vertices.size());
+            auto index_start = static_cast<uint32_t>(m_indices.size());
 
             std::uint32_t vertex_count = 0;
             std::uint32_t index_count = 0;
@@ -420,7 +416,7 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
                 has_skin = (buffer_joints != nullptr && buffer_weights != nullptr);
 
                 // Preallocate memory for the new vertices.
-                vertex_buffer.reserve(pos_accessor.count);
+                m_vertices.reserve(pos_accessor.count);
 
                 for (std::size_t v = 0; v < pos_accessor.count; v++) {
                     ModelVertex vert{};
@@ -476,7 +472,7 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
                         vert.weight = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
                     }
 
-                    vertex_buffer.push_back(vert);
+                    m_vertices.push_back(vert);
                 }
             }
 
@@ -494,21 +490,21 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
                 case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
                     const auto *buf = static_cast<const std::uint32_t *>(index_data_pointer);
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        index_buffer.push_back(buf[index] + vertex_start); // NOLINT
+                        m_indices.push_back(buf[index] + vertex_start); // NOLINT
                     }
                     break;
                 }
                 case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
                     const auto *buf = static_cast<const std::uint16_t *>(index_data_pointer);
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        index_buffer.push_back(buf[index] + vertex_start); // NOLINT
+                        m_indices.push_back(buf[index] + vertex_start); // NOLINT
                     }
                     break;
                 }
                 case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
                     const auto *buf = static_cast<const std::uint8_t *>(index_data_pointer);
                     for (std::size_t index = 0; index < accessor.count; index++) {
-                        index_buffer.push_back(buf[index] + vertex_start); // NOLINT
+                        m_indices.push_back(buf[index] + vertex_start); // NOLINT
                     }
                     break;
                 }
@@ -546,10 +542,6 @@ void Model::load_nodes() {
 
     spdlog::trace("Loading {} glTF2 model scenes", m_model.scenes.size());
 
-    // Preallocate memory for the model.
-    // Call resize and not reserve to make sure constructor is called.
-    m_scenes.resize(m_model.scenes.size());
-
     if (m_model.defaultScene > -1) {
         m_default_scene_index = m_model.defaultScene;
         spdlog::trace("Default scene index: {}", m_model.defaultScene);
@@ -557,7 +549,7 @@ void Model::load_nodes() {
         spdlog::trace("No default scene index specified.");
     }
 
-    for (std::size_t scene_index = 0; scene_index < m_scenes.size(); scene_index++) {
+    for (std::size_t scene_index = 0; scene_index < m_model.scenes.size(); scene_index++) {
         const auto &scene = m_model.scenes[scene_index];
 
         for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {

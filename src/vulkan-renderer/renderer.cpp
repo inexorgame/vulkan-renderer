@@ -41,9 +41,7 @@ void VulkanRenderer::setup_render_graph() {
                                               m_octree_shaders[1], m_octree_shaders[1]);
 
     for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
-        for (std::size_t j = 0; j < m_gltf_models[i].scene_count(); j++) {
-            m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], j, m_gltf_uniform_buffers[i]);
-        }
+        m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], m_gltf_uniform_buffers[i]);
     }
 }
 
