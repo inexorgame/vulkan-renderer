@@ -20,6 +20,7 @@ ModelRenderer::ModelRenderer(RenderGraph *render_graph, const TextureResource *b
 
 void ModelRenderer::render_model_node(const Model &model, const wrapper::CommandBuffer &cmd_buf,
                                       const VkPipelineLayout layout, const ModelNode &node) {
+#if 0 
     if (!node.mesh.empty()) {
         // Pass the node's matrix via push constants.
         // Traverse node hierarchy to the top-most parent to get the final matrix of the current node.
@@ -35,17 +36,18 @@ void ModelRenderer::render_model_node(const Model &model, const wrapper::Command
         cmd_buf.push_constants(layout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), &node_matrix);
 
         for (const auto &primitive : node.mesh) {
-            if (primitive.index_count > 0) {
+            if (primitive.index_count() > 0) {
                 if (model.texture_count() > 0) {
                     // Only attempt to render textures if model has textures.
                     const auto &texture_index = model.material(primitive.material_index).base_color_texture_index;
                     cmd_buf.bind_descriptor(*m_texture_descriptors[texture_index], 1, layout);
                 }
 
-                cmd_buf.draw_indexed(primitive.index_count);
+                cmd_buf.draw_indexed(primitive.index_count());
             }
         }
     }
+#endif
 
     for (const auto &child_node : node.children) {
         render_model_node(model, cmd_buf, layout, child_node);

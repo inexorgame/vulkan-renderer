@@ -10,8 +10,13 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/time_step.cpp
 
+    vulkan-renderer/gltf/bounding_box.cpp
     vulkan-renderer/gltf/model.cpp
+    vulkan-renderer/gltf/model_animation.cpp
     vulkan-renderer/gltf/model_file.cpp
+    vulkan-renderer/gltf/model_material.cpp
+    vulkan-renderer/gltf/model_node.cpp
+    vulkan-renderer/gltf/model_primitive.cpp
     vulkan-renderer/gltf/model_renderer.cpp
     vulkan-renderer/gltf/texture_sampler.cpp
 
