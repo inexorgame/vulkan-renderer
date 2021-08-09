@@ -22,7 +22,7 @@ class OnceCommandBuffer;
 /// @brief RAII wrapper class for textures which are stored in GPU memory.
 /// @todo Support 3D textures and cube maps (implement new and separate wrappers though).
 class GpuTexture {
-    std::unique_ptr<wrapper::Image> m_texture_image;
+    std::unique_ptr<Image> m_texture_image;
     OnceCommandBuffer m_copy_command_buffer;
     VkSampler m_sampler{VK_NULL_HANDLE};
 
@@ -32,7 +32,7 @@ class GpuTexture {
     int m_mip_levels{0};
 
     std::string m_name;
-    const wrapper::Device &m_device;
+    const Device &m_device;
 
     // TODO: Expose this as parameter and support other texture formats as well?
     const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
@@ -58,13 +58,13 @@ public:
     /// @brief Construct a texture from a file.
     /// @param device The const reference to a device RAII wrapper instance
     /// @param cpu_texture A const reference to the CPU texture
-    GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
+    GpuTexture(const Device &device, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a file.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param sampler
     /// @param cpu_texture
-    GpuTexture(const wrapper::Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture);
+    GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a block of memory.
     /// @param device The const reference to a device RAII wrapper instance.
@@ -73,7 +73,7 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const wrapper::Device &device, void *data, std::size_t data_size, std::uint32_t texture_width,
+    GpuTexture(const Device &device, void *data, std::size_t data_size, std::uint32_t texture_width,
                std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
                std::string name);
 
@@ -85,7 +85,7 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const wrapper::Device &device, const gltf::TextureSampler &sampler, void *data, std::size_t data_size,
+    GpuTexture(const Device &device, const gltf::TextureSampler &sampler, void *data, std::size_t data_size,
                std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
                std::uint32_t mip_levels, std::string name);
 

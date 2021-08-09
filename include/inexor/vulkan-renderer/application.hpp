@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/gltf/model.hpp"
 #include "inexor/vulkan-renderer/gltf/model_file.hpp"
+#include "inexor/vulkan-renderer/gltf/model_gpu_data.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"

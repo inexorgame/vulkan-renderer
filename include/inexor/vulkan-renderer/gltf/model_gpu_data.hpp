@@ -4,9 +4,14 @@
 #include "inexor/vulkan-renderer/gltf/model_file.hpp"
 #include "inexor/vulkan-renderer/gltf/model_material.hpp"
 #include "inexor/vulkan-renderer/gltf/model_node.hpp"
+#include "inexor/vulkan-renderer/gltf/model_vertex.hpp"
 #include "inexor/vulkan-renderer/gltf/texture_sampler.hpp"
+#include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
@@ -27,45 +32,32 @@ struct ModelShaderData {
     glm::vec4 light_position = glm::vec4(5.0f, 5.0f, -5.0f, 1.0f);
 };
 
-/// @brief A struct for glTF2 model vertices.
-struct ModelVertex {
-    ModelVertex() = default;
-
-    /// @brief Overloaded constructor.
-    /// @param position The position of the model vertex
-    /// @param color_rgb The color of the model vertex
-    ModelVertex(const glm::vec3 position, const glm::vec3 color_rgb) : pos(position), color(color_rgb) {}
-
-    glm::vec3 pos{};
-    glm::vec3 color{};
-    glm::vec3 normal{};
-    std::array<glm::vec2, 2> uv{};
-    glm::vec4 joint{};
-    glm::vec4 weight{};
-};
-
 /// @brief A wrapper class for glTF2 models.
 /// Loading the glTF2 file is separated from parsing its data.
 /// This allows for better task-based parallelization.
-class Model {
+class ModelGpuData {
 private:
-    const tinygltf::Model &m_model;
-    const wrapper::Device &m_device;
-    const float m_model_scale;
     std::string m_name;
-
+    const float m_model_scale{1.0f};
     ModelShaderData m_shader_data;
 
+    std::vector<std::uint32_t> m_texture_indices;
+    std::vector<std::uint32_t> m_indices;
     std::vector<wrapper::GpuTexture> m_textures;
     std::vector<TextureSampler> m_texture_samplers;
-    std::vector<std::uint32_t> m_texture_indices;
     std::vector<ModelMaterial> m_materials;
     std::vector<ModelNode> m_nodes;
     std::vector<ModelVertex> m_vertices;
     std::vector<ModelSkin> m_skins;
-    std::vector<uint32_t> m_indices;
     std::vector<ModelAnimation> animations;
     std::unordered_set<std::string> m_unsupported_attributes;
+
+    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
+    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
+    std::unique_ptr<wrapper::UniformBuffer> m_uniform_buffer;
+
+    BufferResource *m_vertex_buffer{nullptr};
+    BufferResource *m_index_buffer{nullptr};
 
     // Some glTF2 model files with multiple scenes have a default scene index.
     std::optional<std::uint32_t> m_default_scene_index{};
@@ -73,37 +65,41 @@ private:
     const TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                                                    VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
 
-    ///
-    ///
+    /// @brief Find a node by parent and index in the parent node's children.
+    /// @param parent The node's parent
+    /// @param index The ModelNode's index in m_nodes
     ModelNode *find_node(ModelNode *parent, std::uint32_t index);
 
-    ///
-    ///
+    /// @brief Finds a node by index
+    /// @param index The ModelNode's index in m_nodes
     ModelNode *node_from_index(std::uint32_t index);
 
-    /// @brief Load a glTF2 model node.
-    /// @param parent The parent node. If no parent exists this will be ``nullptr``
-    /// @param start_node The node to begin with
-    /// @param scene_index
-    /// @param node_index
-    void load_node(ModelNode *parent, const tinygltf::Node &start_node, std::uint32_t scene_index,
-                   std::uint32_t node_index);
+    ///
+    void load_node(const tinygltf::Model &model, ModelNode *parent, const tinygltf::Node &start_node,
+                   std::uint32_t scene_index, std::uint32_t node_index);
 
-    void load_materials();
-    void load_animations();
-    void load_textures();
-    void load_skins();
-    void load_nodes();
+    // We pass the const reference to all other methods because we don't want to store the model as const reference for
+    // the entire lifetime of this class.
+
+    void load_materials(const tinygltf::Model &model);
+    void load_animations(const tinygltf::Model &model);
+    void load_textures(RenderGraph *render_graph, const tinygltf::Model &model);
+    void load_skins(const tinygltf::Model &model);
+    void load_nodes(const tinygltf::Model &model);
+
+    void setup_rendering_resources(RenderGraph *render_graph);
 
 public:
-    /// @brief Overloaded constructor which accepts ModelFile as argument
-    /// @paran device The device wrapper
-    /// @param model_file The glTF2 model file
     ///
     ///
     ///
-    Model(const wrapper::Device &device, const ModelFile &model_file, float scale, glm::mat4 projection,
-          glm::mat4 model);
+    ModelGpuData(RenderGraph *render_graph, const ModelFile &model_file);
+    ModelGpuData(const ModelGpuData &) = delete;
+    ModelGpuData(ModelGpuData &&) noexcept;
+    ~ModelGpuData() = default;
+
+    ModelGpuData &operator=(const ModelGpuData &) = delete;
+    ModelGpuData &operator=(ModelGpuData &&) = default;
 
     [[nodiscard]] std::size_t texture_count() const {
         return m_textures.size();
@@ -157,6 +153,26 @@ public:
 
     [[nodiscard]] std::optional<std::uint32_t> default_scene_index() const {
         return m_default_scene_index;
+    }
+
+    [[nodiscard]] const auto &index_buffer() const {
+        return m_index_buffer;
+    }
+
+    [[nodiscard]] const auto &vertex_buffer() const {
+        return m_index_buffer;
+    }
+
+    [[nodiscard]] const auto &ubo() const {
+        return m_uniform_buffer;
+    }
+
+    [[nodiscard]] const auto &descriptor_layout() const {
+        return m_descriptor->descriptor_set_layout();
+    }
+
+    [[nodiscard]] const auto &descriptor() const {
+        return m_descriptor;
     }
 
     void update_matrices(glm::mat4 projection, glm::mat4 view);

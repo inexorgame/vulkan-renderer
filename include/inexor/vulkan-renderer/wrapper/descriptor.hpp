@@ -30,7 +30,11 @@ public:
                        VkDescriptorSetLayoutBinding layout_binding, VkWriteDescriptorSet descriptor_write,
                        std::string name);
     ResourceDescriptor(const ResourceDescriptor &) = delete;
+    ResourceDescriptor(ResourceDescriptor &&) = delete;
     ~ResourceDescriptor();
+
+    ResourceDescriptor &operator=(const ResourceDescriptor &) = delete;
+    ResourceDescriptor &operator=(ResourceDescriptor &&) = delete;
 
     [[nodiscard]] const VkDescriptorSet &descriptor_set() const {
         return m_descriptor_set;

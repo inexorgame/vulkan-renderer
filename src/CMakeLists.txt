@@ -11,13 +11,14 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/gltf/bounding_box.cpp
-    vulkan-renderer/gltf/model.cpp
+    vulkan-renderer/gltf/model_gpu_data.cpp
     vulkan-renderer/gltf/model_animation.cpp
     vulkan-renderer/gltf/model_file.cpp
     vulkan-renderer/gltf/model_material.cpp
     vulkan-renderer/gltf/model_node.cpp
     vulkan-renderer/gltf/model_primitive.cpp
     vulkan-renderer/gltf/model_renderer.cpp
+    vulkan-renderer/gltf/model_vertex.cpp
     vulkan-renderer/gltf/texture_sampler.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
@@ -58,6 +59,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/world/collision_query.cpp
     vulkan-renderer/world/cube.cpp
     vulkan-renderer/world/indentation.cpp
+    vulkan-renderer/world/octree_gpu_data.cpp
     vulkan-renderer/world/octree_renderer.cpp)
 
 foreach(FILE ${INEXOR_SOURCE_FILES})

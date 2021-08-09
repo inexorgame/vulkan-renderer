@@ -1,6 +1,10 @@
-#include "inexor/vulkan-renderer/gltf/model.hpp"
+#include "inexor/vulkan-renderer/gltf/model_gpu_data.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+
 #include <glm/gtc/type_ptr.hpp>
 #include <spdlog/spdlog.h>
 
@@ -8,49 +12,64 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-Model::Model(const wrapper::Device &device, const ModelFile &model_file, float scale, glm::mat4 projection,
-             glm::mat4 model)
-    : m_device(device), m_model(model_file.model()), m_name(model_file.model_name()),
-      m_default_scene_index(std::nullopt), m_model_scale(scale) {
-    assert(m_device.device());
+ModelGpuData::ModelGpuData(RenderGraph *render_graph, const ModelFile &model_file) : m_name(model_file.model_name()) {
 
-    // TODO: Refactor
-    m_shader_data.model = model;
-    m_shader_data.projection = projection;
+    assert(render_graph);
 
-    load_textures();
-    load_materials();
-    load_nodes();
-    load_animations();
+    const auto &model = model_file.model();
+    load_textures(render_graph, model);
+    load_materials(model);
+    load_nodes(model);
+    load_animations(model);
+    load_skins(model);
+    setup_rendering_resources(render_graph);
 }
 
-void Model::load_textures() {
+ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
 
-    spdlog::trace("Loading {} glTF2 model texture indices", m_model.textures.size());
+    : m_model_scale(other.m_model_scale), m_default_texture_sampler(other.m_default_texture_sampler) {
+
+    m_name = std::move(other.m_name);
+    m_default_scene_index = other.m_default_scene_index;
+    m_shader_data = other.m_shader_data;
+    m_textures = std::move(other.m_textures);
+    m_texture_samplers = std::move(other.m_texture_samplers);
+    m_texture_indices = std::move(other.m_texture_indices);
+    m_materials = std::move(other.m_materials);
+    m_nodes = std::move(other.m_nodes);
+    m_vertices = std::move(other.m_vertices);
+    m_skins = std::move(other.m_skins);
+    m_indices = std::move(other.m_indices);
+    animations = std::move(other.animations);
+    m_unsupported_attributes = std::move(other.m_unsupported_attributes);
+}
+
+void ModelGpuData::load_textures(RenderGraph *render_graph, const tinygltf::Model &model) {
+    spdlog::trace("Loading {} glTF2 model texture indices", model.textures.size());
 
     // Preallocate memory for the texture indices.
-    m_texture_indices.reserve(m_model.textures.size());
+    m_texture_indices.reserve(model.textures.size());
 
-    for (const auto &texture : m_model.textures) {
+    for (const auto &texture : model.textures) {
         m_texture_indices.emplace_back(texture.source);
     }
 
-    spdlog::trace("Loading {} texture samplers.", m_model.samplers.size());
+    spdlog::trace("Loading {} texture samplers.", model.samplers.size());
 
     // Preallocate memory for the texture samplers.
-    m_texture_samplers.reserve(m_model.samplers.size());
+    m_texture_samplers.reserve(model.samplers.size());
 
-    for (const auto &sampler : m_model.samplers) {
+    for (const auto &sampler : model.samplers) {
         m_texture_samplers.emplace_back(sampler.minFilter, sampler.magFilter, sampler.wrapS, sampler.wrapT);
     }
 
-    spdlog::trace("Loading {} textures from glTF2 model.", m_model.images.size());
+    spdlog::trace("Loading {} textures from glTF2 model.", model.images.size());
 
     // Preallocate memory for the model images.
-    m_textures.reserve(m_model.images.size());
+    m_textures.reserve(model.images.size());
 
-    for (const auto &texture : m_model.textures) {
-        auto texture_image = m_model.images[texture.source];
+    for (const auto &texture : model.textures) {
+        const auto &texture_image = model.images[texture.source];
 
         TextureSampler new_sampler{};
 
@@ -86,16 +105,17 @@ void Model::load_textures() {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using the data which was converted to RGBA.
-            m_textures.emplace_back(m_device, new_sampler, rgba_target.data(), texture_size, texture_image.width,
-                                    texture_image.height, texture_image.component, 1, texture_name);
+            m_textures.emplace_back(render_graph->device_wrapper(), new_sampler, rgba_target.data(), texture_size,
+                                    texture_image.width, texture_image.height, texture_image.component, 1,
+                                    texture_name);
             break;
         }
         case 4: {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using RGBA data.
-            m_textures.emplace_back(m_device, new_sampler, texture_image.image.data(), texture_size,
-                                    texture_image.width, texture_image.height, texture_image.component, 1,
+            m_textures.emplace_back(render_graph->device_wrapper(), new_sampler, texture_image.image.data(),
+                                    texture_size, texture_image.width, texture_image.height, texture_image.component, 1,
                                     texture_name);
             break;
         }
@@ -104,7 +124,8 @@ void Model::load_textures() {
             spdlog::warn("Generating error texture as a replacement.");
 
             // Generate an error texture.
-            // m_textures.emplace_back(m_device, m_default_texture_sampler, wrapper::CpuTexture());
+            // m_textures.emplace_back(render_graph->device_wrapper(), m_default_texture_sampler,
+            // wrapper::CpuTexture());
             break;
         }
         }
@@ -113,15 +134,15 @@ void Model::load_textures() {
     }
 }
 
-void Model::load_materials() {
-    spdlog::trace("Loading {} glTF2 model materials", m_model.materials.size());
+void ModelGpuData::load_materials(const tinygltf::Model &model) {
+    spdlog::trace("Loading {} glTF2 model materials", model.materials.size());
 
     // Preallocate memory for the model materials and one default material.
-    m_materials.resize(1 + m_model.materials.size());
+    m_materials.resize(1 + model.materials.size());
 
     std::unordered_map<std::string, bool> unsupported_features{};
 
-    for (const auto &material : m_model.materials) {
+    for (const auto &material : model.materials) {
         ModelMaterial new_material{};
 
         // Load material values.
@@ -139,6 +160,7 @@ void Model::load_materials() {
             } else if (name == "baseColorFactor") {
                 new_material.base_color_factor = glm::make_vec4(value.ColorFactor().data());
             } else {
+                // Remember this unsupported feature.
                 unsupported_features[name] = true;
             }
         }
@@ -168,6 +190,7 @@ void Model::load_materials() {
                 new_material.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
                 new_material.emissive_factor = glm::vec4(0.0f);
             } else {
+                // Remember this unsupported feature.
                 unsupported_features[name] = true;
             }
 
@@ -217,7 +240,7 @@ void Model::load_materials() {
     m_materials.emplace_back();
 }
 
-ModelNode *Model::find_node(ModelNode *parent, const std::uint32_t index) {
+ModelNode *ModelGpuData::find_node(ModelNode *parent, const std::uint32_t index) {
     ModelNode *node_found = nullptr;
     if (parent->index == index) {
         return parent;
@@ -231,7 +254,7 @@ ModelNode *Model::find_node(ModelNode *parent, const std::uint32_t index) {
     return node_found;
 }
 
-ModelNode *Model::node_from_index(const std::uint32_t index) {
+ModelNode *ModelGpuData::node_from_index(const std::uint32_t index) {
     ModelNode *node_found = nullptr;
     for (auto &node : m_nodes) {
         node_found = find_node(&node, index);
@@ -242,8 +265,8 @@ ModelNode *Model::node_from_index(const std::uint32_t index) {
     return node_found;
 }
 
-void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::uint32_t scene_index,
-                      const std::uint32_t node_index) {
+void ModelGpuData::load_node(const tinygltf::Model &model, ModelNode *parent, const tinygltf::Node &node,
+                             const std::uint32_t scene_index, const std::uint32_t node_index) {
     ModelNode new_node;
     new_node.name = node.name;
     new_node.parent = parent;
@@ -271,8 +294,7 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
 
     if (!node.children.empty()) {
         for (std::size_t child_index = 0; child_index < node.children.size(); child_index++) {
-            // Load child nodes recursively.
-            load_node(&new_node, node, scene_index, node.children[child_index]);
+            load_node(model, &new_node, node, scene_index, node.children[child_index]);
         }
     }
 
@@ -283,10 +305,10 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
     } else if (node.mesh > -1) {
 
         // These definitions help us to shorten the following code passages.
-        const auto &mesh = m_model.meshes[node.mesh];
-        const auto &accessors = m_model.accessors;
-        const auto &buffers = m_model.buffers;
-        const auto &buffer_views = m_model.bufferViews;
+        const auto &mesh = model.meshes[node.mesh];
+        const auto &accessors = model.accessors;
+        const auto &buffers = model.buffers;
+        const auto &buffer_views = model.bufferViews;
 
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
@@ -322,11 +344,11 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
 
                 // TODO: Position attribute is required!
 
-                const auto &pos_accessor = m_model.accessors[primitive.attributes.find("POSITION")->second];
-                const auto &pos_view = m_model.bufferViews[pos_accessor.bufferView];
+                const auto &pos_accessor = model.accessors[primitive.attributes.find("POSITION")->second];
+                const auto &pos_view = model.bufferViews[pos_accessor.bufferView];
 
                 buffer_pos = reinterpret_cast<const float *>( // NOLINT
-                    &(m_model.buffers[pos_view.buffer].data[pos_accessor.byteOffset + pos_view.byteOffset]));
+                    &(model.buffers[pos_view.buffer].data[pos_accessor.byteOffset + pos_view.byteOffset]));
 
                 pos_min = glm::vec3(pos_accessor.minValues[0], pos_accessor.minValues[1], pos_accessor.minValues[2]);
                 pos_max = glm::vec3(pos_accessor.maxValues[0], pos_accessor.maxValues[1], pos_accessor.maxValues[2]);
@@ -531,8 +553,8 @@ void Model::load_node(ModelNode *parent, const tinygltf::Node &node, const std::
     }
 }
 
-void Model::load_skins() {
-    for (const auto &source : m_model.skins) {
+void ModelGpuData::load_skins(const tinygltf::Model &model) {
+    for (const auto &source : model.skins) {
         ModelSkin new_skin;
 
         new_skin.name = source.name;
@@ -543,18 +565,18 @@ void Model::load_skins() {
         }
 
         // Find joint nodes
-        for (int joint_index : source.joints) {
+        for (const auto &joint_index : source.joints) {
             auto *node = node_from_index(joint_index);
-            if (node) {
+            if (node != nullptr) {
                 new_skin.joints.push_back(node_from_index(joint_index));
             }
         }
 
         // Get inverse bind matrices from buffer
         if (source.inverseBindMatrices > -1) {
-            const auto &accessor = m_model.accessors[source.inverseBindMatrices];
-            const auto &bufferView = m_model.bufferViews[accessor.bufferView];
-            const auto &buffer = m_model.buffers[bufferView.buffer];
+            const auto &accessor = model.accessors[source.inverseBindMatrices];
+            const auto &bufferView = model.bufferViews[accessor.bufferView];
+            const auto &buffer = model.buffers[bufferView.buffer];
 
             new_skin.inverse_bind_matrices.resize(accessor.count);
 
@@ -562,50 +584,51 @@ void Model::load_skins() {
                         &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(glm::mat4));
         }
 
+        // TODO: Refactor this into emplace_back!
         m_skins.push_back(new_skin);
     }
 }
 
-void Model::load_nodes() {
-    if (m_model.scenes.empty()) {
+void ModelGpuData::load_nodes(const tinygltf::Model &model) {
+    if (model.scenes.empty()) {
         spdlog::trace("The glTF2 model does not contain nodes.");
         return;
     }
 
-    spdlog::trace("Loading {} glTF2 model scenes", m_model.scenes.size());
+    spdlog::trace("Loading {} glTF2 model scenes", model.scenes.size());
 
-    if (m_model.defaultScene > -1) {
-        m_default_scene_index = m_model.defaultScene;
-        spdlog::trace("Default scene index: {}", m_model.defaultScene);
+    if (model.defaultScene > -1) {
+        m_default_scene_index = model.defaultScene;
+        spdlog::trace("Default scene index: {}", model.defaultScene);
     } else {
         spdlog::trace("No default scene index specified.");
     }
 
-    for (std::size_t scene_index = 0; scene_index < m_model.scenes.size(); scene_index++) {
-        const auto &scene = m_model.scenes[scene_index];
+    for (std::size_t scene_index = 0; scene_index < model.scenes.size(); scene_index++) {
+        const auto &scene = model.scenes[scene_index];
 
         for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {
-            const auto &node = m_model.nodes[scene.nodes[node_index]];
-            load_node(nullptr, node, scene.nodes[node_index], static_cast<std::uint32_t>(scene_index));
+            const auto &node = model.nodes[scene.nodes[node_index]];
+            load_node(model, nullptr, node, scene.nodes[node_index], static_cast<std::uint32_t>(scene_index));
         }
     }
 }
 
-void Model::load_animations() {
-    if (m_model.animations.empty()) {
+void ModelGpuData::load_animations(const tinygltf::Model &model) {
+    if (model.animations.empty()) {
         spdlog::trace("The glTF2 model does not contain animations");
         return;
     }
 
-    spdlog::trace("Loading {} glTF2 model animations", m_model.animations.size());
+    spdlog::trace("Loading {} glTF2 model animations", model.animations.size());
 
-    for (const auto &animation : m_model.animations) {
+    for (const auto &animation : model.animations) {
 
         ModelAnimation new_animation{};
         new_animation.name = animation.name;
 
         if (new_animation.name.empty()) {
-            new_animation.name = std::to_string(m_model.animations.size());
+            new_animation.name = std::to_string(model.animations.size());
         }
 
         // Samplers
@@ -624,9 +647,9 @@ void Model::load_animations() {
 
             // Read sampler input time values
             {
-                const auto &accessor = m_model.accessors[samp.input];
-                const auto &buffer_view = m_model.bufferViews[accessor.bufferView];
-                const auto &buffer = m_model.buffers[buffer_view.buffer];
+                const auto &accessor = model.accessors[samp.input];
+                const auto &buffer_view = model.bufferViews[accessor.bufferView];
+                const auto &buffer = model.buffers[buffer_view.buffer];
 
                 assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
 
@@ -648,9 +671,9 @@ void Model::load_animations() {
 
             // Read sampler output T/R/S values
             {
-                const auto &accessor = m_model.accessors[samp.output];
-                const auto &buffer_view = m_model.bufferViews[accessor.bufferView];
-                const auto &buffer = m_model.buffers[buffer_view.buffer];
+                const auto &accessor = model.accessors[samp.output];
+                const auto &buffer_view = model.bufferViews[accessor.bufferView];
+                const auto &buffer = model.buffers[buffer_view.buffer];
 
                 assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
 
@@ -711,6 +734,32 @@ void Model::load_animations() {
 
         animations.push_back(new_animation);
     }
+}
+
+void ModelGpuData::setup_rendering_resources(RenderGraph *render_graph) {
+
+    m_vertex_buffer = render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
+
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, color))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal))
+        ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv))
+        ->upload_data(m_vertices);
+
+    m_index_buffer = render_graph->add<BufferResource>("gltf index buffer", BufferUsage::INDEX_BUFFER);
+    m_index_buffer->upload_data(m_indices);
+
+    // TODO: Update for glTF2 PBR rendering!
+    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(render_graph->device_wrapper(), pool_sizes, "gltf");
+
+    wrapper::DescriptorBuilder builder(render_graph->device_wrapper(), m_descriptor_pool->descriptor_pool());
+
+    m_uniform_buffer =
+        std::make_unique<wrapper::UniformBuffer>(render_graph->device_wrapper(), "octree", sizeof(UniformBufferObject));
+
+    m_descriptor = builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("octree");
 }
 
 } // namespace inexor::vulkan_renderer::gltf

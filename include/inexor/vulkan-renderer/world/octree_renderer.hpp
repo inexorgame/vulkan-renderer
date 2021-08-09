@@ -2,41 +2,23 @@
 
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
-#include "inexor/vulkan-renderer/standard_ubo.hpp"
-#include "inexor/vulkan-renderer/world/cube.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
-#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
+#include "inexor/vulkan-renderer/world/octree_gpu_data.hpp"
 
 #include <memory>
 #include <vector>
 
 namespace inexor::vulkan_renderer::world {
 
+template <typename VertexType, typename IndexType = std::uint32_t>
 class OctreeRenderer {
 private:
-    RenderGraph *m_render_graph;
-    const TextureResource *m_back_buffer;
-    const TextureResource *m_depth_buffer;
-    const std::vector<wrapper::Shader> &m_shaders;
-    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-    std::vector<OctreeGpuVertex> m_octree_vertices;
-    std::vector<std::uint32_t> m_octree_indices;
-    BufferResource *m_octree_vertex_buffer{nullptr};
-    BufferResource *m_octree_index_buffer{nullptr};
+    const wrapper::Device &m_device;
 
 public:
-    OctreeRenderer() = delete;
-
     /// @brief Default constructor.
-    /// @param render_graph The rendergraph which is used
-    /// @param back_buffer The back buffer which is used
-    /// @param depth_buffer The depth buffer which is used
-    /// @param shaders The shaders which are used
-    OctreeRenderer(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                   const std::vector<wrapper::Shader> &shaders);
-
+    /// @param device A const reference to the device wrapper
+    OctreeRenderer(const wrapper::Device &device) : m_device(device) {}
+    OctreeRenderer() = delete;
     OctreeRenderer(const OctreeRenderer &) = delete;
     OctreeRenderer(OctreeRenderer &&) = delete;
     ~OctreeRenderer() = default;
@@ -44,12 +26,35 @@ public:
     OctreeRenderer &operator=(const OctreeRenderer &) = delete;
     OctreeRenderer &operator=(OctreeRenderer &&) = delete;
 
-    /// Render a give octree
-    /// @param world The octree world to render
-    /// @param uniform The octree's uniform buffer
-    /// @param descriptor_builder A const reference to a descriptor builder
-    void render_octree(const world::Cube &world, const wrapper::UniformBuffer &uniform_buffer,
-                       wrapper::DescriptorBuilder &descriptor_builder);
+    /// Render a given cube or octree.
+    /// @param render_graph The rendergraph
+    /// @param back_buffer The back buffer to render to
+    /// @param depth_buffer The depth buffer to render to
+    /// @param shaders The shaders which are used for rendering
+    /// @param octree_data The octree gpu data for rendering
+    void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
+                     const std::vector<wrapper::Shader> &shaders,
+                     const world::OctreeGPUData<VertexType, IndexType, UniformBufferObject> &octree_data) {
+
+        // TODO: Render multiple octrees in ONE stage!
+        auto *octree_stage = render_graph->add<GraphicsStage>("octree stage");
+
+        octree_stage->set_depth_options(true, true)
+            ->bind_buffer(octree_data.vertex_buffer(), 0)
+            ->bind_buffer(octree_data.index_buffer(), 0)
+            ->uses_shaders(shaders)
+            ->set_clears_screen(true)
+            ->writes_to(back_buffer)
+            ->writes_to(depth_buffer)
+            ->reads_from(octree_data.vertex_buffer())
+            ->reads_from(octree_data.index_buffer())
+            ->add_descriptor_layout(*octree_data.descriptor());
+
+        octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+            cmd_buf.bind_descriptor(*octree_data.descriptor(), 0, physical.pipeline_layout());
+            cmd_buf.draw_indexed(octree_data.index_count());
+        });
+    }
 };
 
 } // namespace inexor::vulkan_renderer::world

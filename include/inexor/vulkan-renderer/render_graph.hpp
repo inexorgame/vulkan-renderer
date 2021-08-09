@@ -142,6 +142,9 @@ private:
     VkFormat m_format{VK_FORMAT_UNDEFINED};
 
 public:
+    TextureResource(std::string &&name, VkFormat format, TextureUsage usage)
+        : RenderResource(name), m_format(format), m_usage(usage) {}
+
     TextureResource(std::string &&name, TextureUsage usage) : RenderResource(name), m_usage(usage) {}
 
     /// @brief Specifies the format of this texture that is required when the physical texture is made.
@@ -444,6 +447,16 @@ public:
         } else {
             static_assert(!std::is_same_v<T, T>, "T must be a RenderResource or RenderStage");
         }
+    }
+
+    /// It's useful to have a get method for the device in the rendergraph itself.
+    [[nodiscard]] VkDevice device() const {
+        return m_device.device();
+    }
+
+    /// It's useful to have a get method for the device in the rendergraph itself.
+    [[nodiscard]] const wrapper::Device &device_wrapper() const {
+        return m_device;
     }
 
     /// @brief Compiles the render graph resources/stages into physical vulkan objects.

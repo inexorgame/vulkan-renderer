@@ -5,8 +5,13 @@ endif()
 
 set(
     SHADERS
-    gltf/mesh.vert
-    gltf/mesh.frag
+    gltf/filtercube.vert
+    gltf/genbrdflut.frag
+    gltf/genbrdflut.vert
+    gltf/irradiancecube.frag
+    gltf/pbr.vert
+    gltf/pbr_khr.frag
+    gltf/prefilterenvmap.frag
     imgui/ui.vert
     imgui/ui.frag
     octree/main.frag

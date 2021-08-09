@@ -22,10 +22,12 @@ public:
     /// @param
     /// @param
     DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::string name);
-    ~DescriptorPool();
-
     DescriptorPool(const DescriptorPool &) = delete;
     DescriptorPool(DescriptorPool &&) = delete;
+    ~DescriptorPool();
+
+    DescriptorPool &operator=(const DescriptorPool &) = delete;
+    DescriptorPool &operator=(DescriptorPool &&) = delete;
 
     [[nodiscard]] const VkDescriptorPool &descriptor_pool() const {
         return m_descriptor_pool;

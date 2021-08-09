@@ -1,7 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/gltf/model.hpp"
+#include "inexor/vulkan-renderer/gltf/model_gpu_data.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -177,12 +177,13 @@ void Application::load_shaders() {
         spdlog::error("No glTF vertex shaders to load!");
     }
 
+    m_gltf_shaders.reserve(m_gltf_vertex_shader_files.size() + m_gltf_fragment_shader_files.size());
+
     for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
         spdlog::debug("Loading glTF vertex shader file {}.", vertex_shader_file);
 
         // TODO: Add try/catch block for missing files!
-        m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed glTF vertex shader",
-                                    vertex_shader_file);
+        m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "glTF PBR shader", vertex_shader_file);
     }
 
     spdlog::debug("Loading glTF fragment shaders.");
@@ -232,10 +233,6 @@ void Application::load_gltf_models() {
     for (const auto &file_name : m_gltf_model_file_names) {
         try {
             m_gltf_model_files.emplace_back(file_name, "example glTF model");
-            m_gltf_models.emplace_back(*m_device, m_gltf_model_files.back(), 1.0f, m_camera->perspective_matrix(),
-                                       m_camera->view_matrix());
-            m_gltf_uniform_buffers.push_back(
-                wrapper::UniformBuffer(*m_device, "glTF uniform buffer", sizeof(gltf::ModelShaderData)));
 
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
     }
@@ -248,9 +245,6 @@ void Application::load_octree_geometry(bool initialize) {
     m_worlds.clear();
     m_worlds.push_back(
         world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
-
-    m_octree_uniform_buffers.push_back(
-        wrapper::UniformBuffer(*m_device, "octree uniform buffer", sizeof(UniformBufferObject)));
 }
 
 void Application::check_application_specific_features() {
@@ -547,18 +541,15 @@ void Application::update_uniform_buffers() {
     ubo.proj = m_camera->perspective_matrix();
     ubo.proj[1][1] *= -1;
 
-    // TODO: Embed this into the render graph.
-    for (auto &uniform_buffer : m_octree_uniform_buffers) {
-        uniform_buffer.update(&ubo, sizeof(ubo));
+    for (auto &octree_data : m_octree_gpu_data) {
+        octree_data.update_ubo(&ubo);
     }
 
-    for (auto &uniform_buffer : m_gltf_uniform_buffers) {
-        uniform_buffer.update(&ubo, sizeof(ubo));
-    }
+    // TODO: Update glTF2 data!
 }
 
 void Application::update_imgui_overlay() {
-    auto cursor_pos = m_input_data->get_cursor_pos();
+    const auto &cursor_pos = m_input_data->get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
     io.DeltaTime = m_time_passed;
@@ -600,7 +591,7 @@ void Application::update_imgui_overlay() {
 }
 
 void Application::process_mouse_input() {
-    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
+    const auto &cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
 
     if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
         m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
@@ -645,9 +636,10 @@ void Application::run() {
         // Create a new random octree world if key N is pressed.
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
-            // TODO: Fix me
-            // m_octree_vertex_buffer->upload_data(m_octree_vertices);
-            // m_octree_index_buffer->upload_data(m_octree_indices);
+
+            for (std::size_t i = 0; i < m_worlds.size(); i++) {
+                m_octree_gpu_data[i].update_octree(m_worlds[i]);
+            }
         }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();

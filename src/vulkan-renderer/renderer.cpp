@@ -12,36 +12,35 @@
 namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_render_graph() {
-    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
-    m_back_buffer->set_format(m_swapchain->image_format());
+    m_back_buffer =
+        m_render_graph->add<TextureResource>("back buffer", m_swapchain->image_format(), TextureUsage::BACK_BUFFER);
 
-    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
-    depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
-
-    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
-
-    m_descriptor_pool.reset();
-    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(*m_device, pool_sizes, "octree");
-
-    // Create an instance of the resource descriptor builder.
-    // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_descriptor_pool->descriptor_pool());
+    m_depth_buffer = m_render_graph->add<TextureResource>("depth buffer", VK_FORMAT_D32_SFLOAT_S8_UINT,
+                                                          TextureUsage::DEPTH_STENCIL_BUFFER);
 
     m_octree_renderer.reset();
-    m_octree_renderer =
-        std::make_unique<world::OctreeRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer, m_octree_shaders);
+    m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
 
-    for (std::size_t i = 0; i < m_worlds.size(); i++) {
-        m_octree_renderer->render_octree(*m_worlds[i], m_octree_uniform_buffers[i], descriptor_builder);
+    m_octree_gpu_data.reserve(m_worlds.size());
+
+    for (const auto &world : m_worlds) {
+        m_octree_gpu_data.emplace_back(m_render_graph.get(), world);
+    }
+
+    for (const auto &data : m_octree_gpu_data) {
+        m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_octree_shaders, data);
+    }
+
+    for (const auto &model_file : m_gltf_model_files) {
+        m_gltf_models.emplace_back(m_render_graph.get(), model_file);
     }
 
     m_gltf_model_renderer.reset();
     m_gltf_model_renderer =
-        std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, depth_buffer, m_octree_shaders[0],
-                                              m_octree_shaders[1], m_octree_shaders[1]);
+        std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_gltf_shaders);
 
-    for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
-        m_gltf_model_renderer->render_model(*m_device, m_gltf_models[i], m_gltf_uniform_buffers[i]);
+    for (const auto &model : m_gltf_models) {
+        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_gltf_shaders, model);
     }
 }
 
@@ -58,7 +57,7 @@ void VulkanRenderer::recreate_swapchain() {
     m_swapchain->recreate(m_window->width(), m_window->height());
 
     m_frame_finished_fence.reset();
-    m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
+    m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Frame finished fence", true);
 
     m_image_available_semaphore.reset();
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
