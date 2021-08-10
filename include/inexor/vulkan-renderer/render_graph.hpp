@@ -454,6 +454,10 @@ public:
         return m_device.device();
     }
 
+    [[nodiscard]] const wrapper::Device& device_wrapper() const {
+        return m_device;
+    }
+
     /// @brief Compiles the render graph resources/stages into physical vulkan objects.
     /// @param target The target resource of the render graph (usually the back buffer)
     void compile(const RenderResource *target);

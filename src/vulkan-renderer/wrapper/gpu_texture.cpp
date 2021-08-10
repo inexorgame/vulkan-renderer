@@ -29,7 +29,7 @@ GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler
     create_texture_sampler(sampler);
 }
 
-GpuTexture::GpuTexture(const Device &device, void *data, std::size_t data_size, std::uint32_t texture_width,
+GpuTexture::GpuTexture(const Device &device, const void *data, std::size_t data_size, std::uint32_t texture_width,
                        std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
                        std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
@@ -39,12 +39,14 @@ GpuTexture::GpuTexture(const Device &device, void *data, std::size_t data_size, 
     create_texture_sampler();
 }
 
-GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, void *data, std::size_t data_size,
+GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data, std::size_t data_size,
                        std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
                        std::uint32_t mip_levels, std::string name)
+
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
+
     create_texture(data, data_size);
     // Create the texture sampler from the settings specified in the glTF2 file.
     create_texture_sampler(sampler);
@@ -66,7 +68,7 @@ GpuTexture::~GpuTexture() {
     vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
-void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
+void GpuTexture::create_texture(const void *texture_data, const std::size_t texture_size) {
 
     StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 

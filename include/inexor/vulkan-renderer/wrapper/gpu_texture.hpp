@@ -40,7 +40,7 @@ class GpuTexture {
     /// @brief Create the texture.
     /// @param texture_data A pointer to the texture data.
     /// @param texture_size The size of the texture.
-    void create_texture(void *texture_data, std::size_t texture_size);
+    void create_texture(const void *texture_data, std::size_t texture_size);
 
     /// @brief Transform the image layout.
     /// @param image The image.
@@ -73,7 +73,7 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const Device &device, void *data, std::size_t data_size, std::uint32_t texture_width,
+    GpuTexture(const Device &device, const void *data, std::size_t data_size, std::uint32_t texture_width,
                std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
                std::string name);
 
@@ -85,7 +85,7 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const Device &device, const gltf::TextureSampler &sampler, void *data, std::size_t data_size,
+    GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data, std::size_t data_size,
                std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
                std::uint32_t mip_levels, std::string name);
 

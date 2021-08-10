@@ -32,7 +32,7 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &model_file : m_gltf_model_files) {
-        m_gltf_models.emplace_back(m_render_graph.get(), model_file);
+        m_gltf_models.emplace_back(*m_device, m_render_graph.get(), model_file);
     }
 
     m_gltf_model_renderer.reset();

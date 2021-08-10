@@ -8,8 +8,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-StagingBuffer::StagingBuffer(const Device &device, const std::string &name, const VkDeviceSize buffer_size, void *data,
-                             const std::size_t data_size)
+StagingBuffer::StagingBuffer(const Device &device, const std::string &name, const VkDeviceSize buffer_size,
+                             const void *data, const std::size_t data_size)
     : GPUMemoryBuffer(device, name, buffer_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                       VMA_MEMORY_USAGE_CPU_ONLY),
       m_command_buffer_for_copying(device, device.transfer_queue(), device.transfer_queue_family_index()),

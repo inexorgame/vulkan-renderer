@@ -71,7 +71,7 @@ void ModelGpuData::load_textures(const wrapper::Device &device_wrapper, const ti
     m_textures.reserve(model.images.size());
 
     for (const auto &texture : model.textures) {
-        const auto &texture_image = model.images[texture.source];
+        auto &texture_image = model.images[texture.source];
 
         const auto &new_sampler =
             (texture.sampler == -1) ? m_default_texture_sampler : m_texture_samplers.at(texture.sampler);
@@ -109,7 +109,7 @@ void ModelGpuData::load_textures(const wrapper::Device &device_wrapper, const ti
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using RGBA data.
-            m_textures.emplace_back(device_wrapper, new_sampler, &texture_image.image[0], texture_size,
+            m_textures.emplace_back(device_wrapper, new_sampler, texture_image.image.data(), texture_size,
                                     texture_image.width, texture_image.height, texture_image.component, 1,
                                     texture_name);
             break;
@@ -194,8 +194,8 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
             if (ext->second.Has("specularGlossinessTexture")) {
                 const auto index = ext->second.Get("specularGlossinessTexture").Get("index");
                 new_material.extension.specular_glossiness_texture = &m_textures[index.Get<int>()];
-                const auto texCoordSet = ext->second.Get("specularGlossinessTexture").Get("texCoord");
-                new_material.texture_coordinate_set.specular_glossiness = texCoordSet.Get<int>();
+                const auto texture_coordinate_set = ext->second.Get("specularGlossinessTexture").Get("texCoord");
+                new_material.texture_coordinate_set.specular_glossiness = texture_coordinate_set.Get<int>();
                 new_material.pbr_workflows.specular_glossiness = true;
             }
 
@@ -209,7 +209,7 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     auto val = factor.Get(i);
                     new_material.extension.diffuse_factor[i] =
-                        val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
+                        val.IsNumber() ? static_cast<float>(val.Get<double>()) : static_cast<float>(val.Get<int>());
                 }
             }
 
