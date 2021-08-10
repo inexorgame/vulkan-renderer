@@ -29,9 +29,9 @@ GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler
     create_texture_sampler(sampler);
 }
 
-GpuTexture::GpuTexture(const Device &device, void *data, const std::size_t data_size, const std::uint32_t texture_width,
-                       const std::uint32_t texture_height, const std::uint32_t texture_channels,
-                       const std::uint32_t mip_levels, std::string name)
+GpuTexture::GpuTexture(const Device &device, void *data, std::size_t data_size, std::uint32_t texture_width,
+                       std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
+                       std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
@@ -39,10 +39,9 @@ GpuTexture::GpuTexture(const Device &device, void *data, const std::size_t data_
     create_texture_sampler();
 }
 
-GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, void *data,
-                       const std::size_t data_size, const std::uint32_t texture_width,
-                       const std::uint32_t texture_height, const std::uint32_t texture_channels,
-                       const std::uint32_t mip_levels, std::string name)
+GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, void *data, std::size_t data_size,
+                       std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
+                       std::uint32_t mip_levels, std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {

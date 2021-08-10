@@ -83,17 +83,17 @@ private:
 
     void load_materials(const tinygltf::Model &model);
     void load_animations(const tinygltf::Model &model);
-    void load_textures(RenderGraph *render_graph, const tinygltf::Model &model);
+    void load_textures(const wrapper::Device &device_wrapper, const tinygltf::Model &model);
     void load_skins(const tinygltf::Model &model);
     void load_nodes(const tinygltf::Model &model);
 
-    void setup_rendering_resources(RenderGraph *render_graph);
+    void setup_rendering_resources(const wrapper::Device &device_wrapper, RenderGraph *render_graph);
 
 public:
     ///
     ///
     ///
-    ModelGpuData(RenderGraph *render_graph, const ModelFile &model_file);
+    ModelGpuData(const wrapper::Device &device_wrapper, RenderGraph *render_graph, const ModelFile &model_file);
     ModelGpuData(const ModelGpuData &) = delete;
     ModelGpuData(ModelGpuData &&) noexcept;
     ~ModelGpuData() = default;

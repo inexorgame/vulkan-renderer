@@ -12,17 +12,19 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-ModelGpuData::ModelGpuData(RenderGraph *render_graph, const ModelFile &model_file) : m_name(model_file.model_name()) {
+ModelGpuData::ModelGpuData(const wrapper::Device &device_wrapper, RenderGraph *render_graph,
+                           const ModelFile &model_file)
+    : m_name(model_file.model_name()) {
 
     assert(render_graph);
 
     const auto &model = model_file.model();
-    load_textures(render_graph, model);
+    load_textures(device_wrapper, model);
     load_materials(model);
     load_nodes(model);
     load_animations(model);
     load_skins(model);
-    setup_rendering_resources(render_graph);
+    setup_rendering_resources(device_wrapper, render_graph);
 }
 
 ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
@@ -44,7 +46,7 @@ ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
     m_unsupported_attributes = std::move(other.m_unsupported_attributes);
 }
 
-void ModelGpuData::load_textures(RenderGraph *render_graph, const tinygltf::Model &model) {
+void ModelGpuData::load_textures(const wrapper::Device &device_wrapper, const tinygltf::Model &model) {
     spdlog::trace("Loading {} glTF2 model texture indices", model.textures.size());
 
     // Preallocate memory for the texture indices.
@@ -71,14 +73,8 @@ void ModelGpuData::load_textures(RenderGraph *render_graph, const tinygltf::Mode
     for (const auto &texture : model.textures) {
         const auto &texture_image = model.images[texture.source];
 
-        TextureSampler new_sampler{};
-
-        if (texture.sampler == -1) {
-            // No sampler specified, use a default one.
-            new_sampler = m_default_texture_sampler;
-        } else {
-            new_sampler = m_texture_samplers.at(texture.sampler);
-        }
+        const auto &new_sampler =
+            (texture.sampler == -1) ? m_default_texture_sampler : m_texture_samplers.at(texture.sampler);
 
         // The size of the texture if it had 4 channels (rgba).
         const std::size_t texture_size =
@@ -97,25 +93,24 @@ void ModelGpuData::load_textures(RenderGraph *render_graph, const tinygltf::Mode
             rgba_target.reserve(texture_size);
 
             std::transform(rgb_source.begin(), rgb_source.end(), rgba_target.begin(),
-                           [](const std::array<std::uint32_t, 3> a) {
+                           [](const std::array<std::uint32_t, 3> rgb_values) {
                                // convert RGB-only to RGBA.
-                               return std::array<std::uint32_t, 4>{a[0], a[1], a[2], 1};
+                               return std::array<std::uint32_t, 4>{rgb_values[0], rgb_values[1], rgb_values[2], 1};
                            });
 
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using the data which was converted to RGBA.
-            m_textures.emplace_back(render_graph->device_wrapper(), new_sampler, rgba_target.data(), texture_size,
-                                    texture_image.width, texture_image.height, texture_image.component, 1,
-                                    texture_name);
+            m_textures.emplace_back(device_wrapper, new_sampler, rgba_target.data(), texture_size, texture_image.width,
+                                    texture_image.height, texture_image.component, 1, texture_name);
             break;
         }
         case 4: {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using RGBA data.
-            m_textures.emplace_back(render_graph->device_wrapper(), new_sampler, texture_image.image.data(),
-                                    texture_size, texture_image.width, texture_image.height, texture_image.component, 1,
+            m_textures.emplace_back(device_wrapper, new_sampler, &texture_image.image[0], texture_size,
+                                    texture_image.width, texture_image.height, texture_image.component, 1,
                                     texture_name);
             break;
         }
@@ -124,8 +119,7 @@ void ModelGpuData::load_textures(RenderGraph *render_graph, const tinygltf::Mode
             spdlog::warn("Generating error texture as a replacement.");
 
             // Generate an error texture.
-            // m_textures.emplace_back(render_graph->device_wrapper(), m_default_texture_sampler,
-            // wrapper::CpuTexture());
+            m_textures.emplace_back(device_wrapper, m_default_texture_sampler, wrapper::CpuTexture());
             break;
         }
         }
@@ -736,7 +730,7 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
     }
 }
 
-void ModelGpuData::setup_rendering_resources(RenderGraph *render_graph) {
+void ModelGpuData::setup_rendering_resources(const wrapper::Device &device_wrapper, RenderGraph *render_graph) {
 
     m_vertex_buffer = render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
 
@@ -752,12 +746,11 @@ void ModelGpuData::setup_rendering_resources(RenderGraph *render_graph) {
     // TODO: Update for glTF2 PBR rendering!
     const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 
-    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(render_graph->device_wrapper(), pool_sizes, "gltf");
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device_wrapper, pool_sizes, "gltf");
 
-    wrapper::DescriptorBuilder builder(render_graph->device_wrapper(), m_descriptor_pool->descriptor_pool());
+    wrapper::DescriptorBuilder builder(device_wrapper, m_descriptor_pool->descriptor_pool());
 
-    m_uniform_buffer =
-        std::make_unique<wrapper::UniformBuffer>(render_graph->device_wrapper(), "octree", sizeof(UniformBufferObject));
+    m_uniform_buffer = std::make_unique<wrapper::UniformBuffer>(device_wrapper, "octree", sizeof(UniformBufferObject));
 
     m_descriptor = builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("octree");
 }
