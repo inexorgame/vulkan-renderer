@@ -1,0 +1,40 @@
+# Maintainer: Inexor Collective <https://inexor.org/>
+
+buildarch=
+
+pkgname="inexor-git"
+pkgver=0.15
+pkgrel=1
+groups=()
+arch=(x86_64)
+pkgdesc="Game Engine for Sauerbraten followup"
+url="https://github.com/inexorgame/vulkan-renderer.git"
+license=('MIT')
+depends=('vulkan-headers' 'vulkan-validation-layers')
+makedepends=('cmake' 'ninja' 'make' 'conan' 'gcc')
+
+prepare() {
+	:
+}
+
+build() {
+	cd ../../../
+	cmake . -Bbuild -GNinja -DCMAKE_BUILD_TYPE=Debug
+   cd build
+   ninja
+}
+
+package(){
+   ls
+   cd ..
+   ls
+   sudo cp Inexor.desktop /usr/share/applications/Inexor.desktop
+   cd
+   ls
+   mkdir -p ~/.icons/
+   cp ~/Dokumente/GitHub/vulkan-renderer/platforms/Arch\ linux/inexor2.png ~/.icons/
+}
+
+
+
+
