@@ -11,14 +11,8 @@ namespace inexor::vulkan_renderer::world {
 
 template <typename VertexType, typename IndexType = std::uint32_t>
 class OctreeRenderer {
-private:
-    const wrapper::Device &m_device;
-
 public:
-    /// @brief Default constructor.
-    /// @param device A const reference to the device wrapper
-    OctreeRenderer(const wrapper::Device &device) : m_device(device) {}
-    OctreeRenderer() = delete;
+    OctreeRenderer() = default;
     OctreeRenderer(const OctreeRenderer &) = delete;
     OctreeRenderer(OctreeRenderer &&) = delete;
     ~OctreeRenderer() = default;
@@ -36,6 +30,11 @@ public:
                      const std::vector<wrapper::Shader> &shaders,
                      const world::OctreeGPUData<VertexType, IndexType, UniformBufferObject> &octree_data) {
 
+        assert(render_graph);
+        assert(back_buffer);
+        assert(depth_buffer);
+        assert(!shaders.empty());
+
         // TODO: Render multiple octrees in ONE stage!
         auto *octree_stage = render_graph->add<GraphicsStage>("octree stage");
 
@@ -48,12 +47,11 @@ public:
             ->writes_to(depth_buffer)
             ->reads_from(octree_data.vertex_buffer())
             ->reads_from(octree_data.index_buffer())
-            ->add_descriptor_layout(*octree_data.descriptor());
-
-        octree_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-            cmd_buf.bind_descriptor(*octree_data.descriptor(), 0, physical.pipeline_layout());
-            cmd_buf.draw_indexed(octree_data.index_count());
-        });
+            ->add_descriptor_layout(octree_data.descriptor_set_layout())
+            ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+                cmd_buf.bind_descriptor(octree_data.descriptor_set(), physical.pipeline_layout());
+                cmd_buf.draw_indexed(octree_data.index_count());
+            });
     }
 };
 

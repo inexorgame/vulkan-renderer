@@ -30,8 +30,11 @@ public:
 
     /// @brief Update uniform buffer data.
     /// @param data A pointer to the uniform buffer data.
-    /// @param size The size of the uniform buffer memory to copy.
-    void update(void *data, std::size_t size);
+    template <typename T>
+    void update(const T *data) {
+        static_assert(sizeof(T) > 0);
+        std::memcpy(m_allocation_info.pMappedData, data, sizeof(T));
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

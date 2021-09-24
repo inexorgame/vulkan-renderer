@@ -5,9 +5,9 @@ endif()
 
 set(
     SHADERS
+    brdflut/genbrdflut.frag
+    brdflut/genbrdflut.vert
     gltf/filtercube.vert
-    gltf/genbrdflut.frag
-    gltf/genbrdflut.vert
     gltf/irradiancecube.frag
     gltf/pbr.vert
     gltf/pbr_khr.frag
@@ -16,6 +16,8 @@ set(
     imgui/ui.frag
     octree/main.frag
     octree/main.vert
+    skybox/skybox.vert
+    skybox/skybox.frag
 )
 
 foreach(SHADER ${SHADERS})

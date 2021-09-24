@@ -10,21 +10,31 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/time_step.cpp
 
-    vulkan-renderer/gltf/bounding_box.cpp
-    vulkan-renderer/gltf/model_gpu_data.cpp
-    vulkan-renderer/gltf/model_animation.cpp
-    vulkan-renderer/gltf/model_file.cpp
-    vulkan-renderer/gltf/model_material.cpp
-    vulkan-renderer/gltf/model_node.cpp
-    vulkan-renderer/gltf/model_primitive.cpp
-    vulkan-renderer/gltf/model_renderer.cpp
-    vulkan-renderer/gltf/model_vertex.cpp
-    vulkan-renderer/gltf/texture_sampler.cpp
+    vulkan-renderer/cubemap/cubemap.cpp
+
+    vulkan-renderer/gltf/gltf_bbox.cpp
+    vulkan-renderer/gltf/gltf_gpu_data.cpp
+    vulkan-renderer/gltf/gltf_animation.cpp
+    vulkan-renderer/gltf/gltf_file.cpp
+    vulkan-renderer/gltf/gltf_material.cpp
+    vulkan-renderer/gltf/gltf_node.cpp
+    vulkan-renderer/gltf/gltf_primitive.cpp
+    vulkan-renderer/gltf/gltf_pbr_renderer.cpp
+    vulkan-renderer/gltf/gltf_vertex.cpp
+    vulkan-renderer/gltf/gltf_texture_sampler.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
+
+    vulkan-renderer/managers/gltf_model_manager.cpp
+    vulkan-renderer/managers/shader_manager.cpp
+    vulkan-renderer/managers/texture_manager.cpp
+
+    vulkan-renderer/pbr/brdf_lot.cpp
+
+    vulkan-renderer/skybox/skybox_renderer.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp

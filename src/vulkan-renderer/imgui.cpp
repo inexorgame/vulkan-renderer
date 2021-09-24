@@ -88,16 +88,16 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
 
-    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER);
 
     m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos))
         ->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv))
         ->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col))
-        ->set_element_size(sizeof(ImDrawVert));
+        ->set_element_size<ImDrawVert>();
 
-    m_index_buffer = render_graph->add<BufferResource>("ImGui index buffer", BufferUsage::INDEX_BUFFER);
+    m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
 
-    m_stage = render_graph->add<GraphicsStage>("ImGui stage");
+    m_stage = render_graph->add<GraphicsStage>("ImGui");
 
     m_stage->bind_buffer(m_vertex_buffer, 0)
         ->uses_shader(*m_vertex_shader)
@@ -105,9 +105,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         ->writes_to(back_buffer)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)
+        ->add_push_constant_range(sizeof(PushConstBlock))
         ->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-
-    m_stage->add_push_constant_range(sizeof(PushConstBlock));
 
     // Setup blend attachment.
     VkPipelineColorBlendAttachmentState blend_attachment;
@@ -173,9 +172,8 @@ void ImGUIOverlay::update() {
         const ImGuiIO &io = ImGui::GetIO();
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
         m_push_const_block.translate = glm::vec2(-1.0f);
-        cmd_buf.bind_descriptor(*m_descriptor, 0, physical.pipeline_layout());
-        cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
-                               &m_push_const_block);
+        cmd_buf.bind_descriptor(m_descriptor->descriptor_set(), physical.pipeline_layout());
+        cmd_buf.push_constants<PushConstBlock>(&m_push_const_block, physical.pipeline_layout());
 
         std::uint32_t index_offset = 0;
         std::int32_t vertex_offset = 0;

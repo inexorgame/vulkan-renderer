@@ -1,7 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/gltf/model_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -159,7 +159,6 @@ void Application::load_textures() {
     assert(m_device->physical_device());
     assert(m_device->allocator());
 
-    // Insert the new texture into the list of textures.
     std::string texture_name = "unnamed texture";
 
     for (const auto &texture_file : m_texture_files) {
@@ -171,18 +170,16 @@ void Application::load_textures() {
 void Application::load_shaders() {
     assert(m_device->device());
 
+    m_gltf_shaders.reserve(m_gltf_vertex_shader_files.size() + m_gltf_fragment_shader_files.size());
+
     spdlog::debug("Loading glTF vertex shaders.");
 
     if (m_gltf_vertex_shader_files.empty()) {
         spdlog::error("No glTF vertex shaders to load!");
     }
 
-    m_gltf_shaders.reserve(m_gltf_vertex_shader_files.size() + m_gltf_fragment_shader_files.size());
-
     for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
         spdlog::debug("Loading glTF vertex shader file {}.", vertex_shader_file);
-
-        // TODO: Add try/catch block for missing files!
         m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "glTF PBR shader", vertex_shader_file);
     }
 
@@ -262,6 +259,11 @@ void Application::check_application_specific_features() {
     }
 
     // TODO: Add more checks if necessary.
+}
+
+void Application::generate_brdf_lookup_table() {
+
+    // TODO: Implement!
 }
 
 void Application::setup_window_and_input_callbacks() {

@@ -102,9 +102,11 @@ public:
     BufferResource *add_vertex_attribute(VkFormat format, std::uint32_t offset);
 
     /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
-    /// @param element_size The element size in bytes
-    void set_element_size(std::size_t element_size) {
-        m_element_size = element_size;
+    template <typename T>
+    BufferResource *set_element_size() {
+        static_assert(sizeof(T) > 0);
+        m_element_size = sizeof(T);
+        return this;
     }
 
     /// @brief Specifies the data that should be uploaded to this buffer at the start of the next frame.
@@ -112,13 +114,13 @@ public:
     /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
     // TODO: Use std::span when we switch to C++ 20.
     template <typename T>
-    void upload_data(const T *data, std::size_t count);
+    BufferResource *upload_data(const T *data, std::size_t count);
 
     /// @brief @copybrief upload_data(const T *, std::size_t)
     /// @note This is equivalent to doing `upload_data(data.data(), data.size() * sizeof(T))`
     /// @see upload_data(const T *data, std::size_t count)
     template <typename T>
-    void upload_data(const std::vector<T> &data);
+    BufferResource *upload_data(const std::vector<T> &data);
 };
 
 enum class TextureUsage {
@@ -191,39 +193,40 @@ public:
     /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
     /// deal with descriptors at all.
     // TODO: Refactor descriptor management in the render graph
-    void add_descriptor_layout(VkDescriptorSetLayout layout) {
+    RenderStage *add_descriptor_layout(const VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
-    }
-
-    /// @brief Binds a descriptor set layout to this render stage.
-    void add_descriptor_layout(const wrapper::ResourceDescriptor &descriptor) {
-        add_descriptor_layout(descriptor.descriptor_set_layout());
+        return this;
     }
 
     /// @brief Add a push constant range to this render stage.
     /// @param range The push constant range
-    void add_push_constant_range(VkPushConstantRange range) {
+    RenderStage *add_push_constant_range(const VkPushConstantRange range) {
+        assert(range.size > 0);
         m_push_constant_ranges.push_back(range);
+        return this;
     }
 
     /// @brief Add a push constant range to this render stage.
     /// @param size The size of the push constant range
     /// @param offset The offset
     /// @param The shader stage flags
-    void add_push_constant_range(const std::uint32_t size, const std::uint32_t offset = 0,
-                                 const VkShaderStageFlags shader_stage_flags = VK_SHADER_STAGE_VERTEX_BIT) {
+    RenderStage *add_push_constant_range(const std::uint32_t size, const std::uint32_t offset = 0,
+                                         const VkShaderStageFlags shader_stage_flags = VK_SHADER_STAGE_VERTEX_BIT) {
+        assert(size > 0);
         VkPushConstantRange push_constant_range{};
         push_constant_range.offset = offset;
         push_constant_range.size = size;
         push_constant_range.stageFlags = shader_stage_flags;
         m_push_constant_ranges.push_back(push_constant_range);
+        return this;
     }
 
     /// @brief Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
     /// common use for this is for draw commands.
-    void set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
+    RenderStage *set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
+        return this;
     }
 };
 
@@ -449,12 +452,11 @@ public:
         }
     }
 
-    /// It's useful to have a get method for the device in the rendergraph itself.
     [[nodiscard]] VkDevice device() const {
         return m_device.device();
     }
 
-    [[nodiscard]] const wrapper::Device& device_wrapper() const {
+    [[nodiscard]] const wrapper::Device &device_wrapper() const {
         return m_device;
     }
 
@@ -483,15 +485,17 @@ template <typename T>
 }
 
 template <typename T>
-void BufferResource::upload_data(const T *data, std::size_t count) {
+BufferResource *BufferResource::upload_data(const T *data, std::size_t count) {
     m_data = data;
     m_data_size = count * (m_element_size = sizeof(T));
     m_data_upload_needed = true;
+    return this;
 }
 
 template <typename T>
-void BufferResource::upload_data(const std::vector<T> &data) {
+BufferResource *BufferResource::upload_data(const std::vector<T> &data) {
     upload_data(data.data(), data.size());
+    return this;
 }
 
 } // namespace inexor::vulkan_renderer

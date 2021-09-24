@@ -198,7 +198,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
             render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
             render_pass_bi.pClearValues = clear_values.data();
         }
-        render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[image_index].get();
+        render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[image_index].framebuffer();
         render_pass_bi.renderArea.extent = m_swapchain.extent();
         render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
         cmd_buf.begin_render_pass(render_pass_bi);
@@ -523,7 +523,8 @@ void RenderGraph::compile(const RenderResource *target) {
                         image_views.push_back(image->m_image_view);
                     }
 
-                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
+                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views,
+                                                         m_swapchain.extent().width, m_swapchain.extent().height,
                                                          "Framebuffer");
                 }
             }

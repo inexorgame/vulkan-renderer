@@ -19,7 +19,7 @@ void VulkanRenderer::setup_render_graph() {
                                                           TextureUsage::DEPTH_STENCIL_BUFFER);
 
     m_octree_renderer.reset();
-    m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
+    m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>();
 
     m_octree_gpu_data.reserve(m_worlds.size());
 
@@ -32,15 +32,17 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &model_file : m_gltf_model_files) {
-        m_gltf_models.emplace_back(*m_device, m_render_graph.get(), model_file);
+        glm::mat4 view = m_camera->view_matrix();
+        glm::mat4 proj = m_camera->perspective_matrix();
+        m_gltf_models.emplace_back(*m_device, m_render_graph.get(), model_file, view, proj);
     }
 
     m_gltf_model_renderer.reset();
-    m_gltf_model_renderer =
-        std::make_unique<gltf::ModelRenderer>(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_gltf_shaders);
+    m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>();
 
     for (const auto &model : m_gltf_models) {
-        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_gltf_shaders, model);
+        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_octree_shaders,
+                                           model);
     }
 }
 

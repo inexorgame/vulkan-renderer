@@ -3,8 +3,6 @@
 
 title = "vulkan-renderer-configuration"
 
-#TODO: Declare further TOML configuration files here?
-
 [application]
 name = "Inexor-Application"
 
@@ -21,8 +19,34 @@ name = "Inexor-Vulkan-Renderer"
 [shaders.gltf.vertex]
 files = [
 	"shaders/gltf/filtercube.vert.spv",
-	"shaders/gltf/genbrdflut.vert.spv",
 	"shaders/gltf/pbr.vert.spv"
+]
+
+[shaders.gltf.fragment]
+files = [
+	"shaders/gltf/irradiancecube.frag.spv",
+	"shaders/gltf/pbr_khr.frag.spv",
+	"shaders/gltf/prefilterenvmap.frag.spv",
+]
+
+[shaders.brdflut.vertex]
+files = [
+	"shaders/brdflut/genbrdflut.vert.spv"
+]
+
+[shaders.brdflut.fragment]
+files = [
+	"shaders/brdflut/genbrdflut.frag.spv"
+]
+
+[shaders.gltfsimple.vertex]
+files = [
+	"shaders/gltf_simple/main.vert.spv"
+]
+
+[shaders.gltfsimple.fragment]
+files = [
+	"shaders/gltf_simple/main.frag.spv"
 ]
 
 [shaders.octree.vertex]
@@ -30,22 +54,14 @@ files = [
 	"shaders/octree/main.vert.spv",
 ]
 
-[shaders.imgui.vertex]
-files = [
-	"shaders/imgui/main.vert.spv",
-]
-
-[shaders.gltf.fragment]
-files = [
-	"shaders/gltf/genbrdflut.frag.spv",
-	"shaders/gltf/irradiancecube.frag.spv",
-	"shaders/gltf/pbr_khr.frag.spv",
-	"shaders/gltf/prefilterenvmap.frag.spv",
-]
-
 [shaders.octree.fragment]
 files = [
 	"shaders/octree/main.frag.spv",
+]
+
+[shaders.imgui.vertex]
+files = [
+	"shaders/imgui/main.vert.spv",
 ]
 
 [shaders.imgui.fragment]
@@ -66,8 +82,6 @@ files = [
 	"assets/textures/logo_rendered.png",
 ]
 
-# glTF 2.0 is the new standard 3D model format.
-# https://www.khronos.org/gltf/
 [gltfmodels]
 files = [
 	"assets/models/inexor/5_objects.gltf",

@@ -2,9 +2,9 @@
 
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
-#include "inexor/vulkan-renderer/gltf/model_file.hpp"
-#include "inexor/vulkan-renderer/gltf/model_gpu_data.hpp"
-#include "inexor/vulkan-renderer/gltf/model_renderer.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_pbr_renderer.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"

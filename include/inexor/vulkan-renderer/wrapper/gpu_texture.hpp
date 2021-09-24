@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/gltf/texture_sampler.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_texture_sampler.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"

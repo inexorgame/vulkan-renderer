@@ -13,8 +13,4 @@ UniformBuffer::UniformBuffer(const Device &device, const std::string &name, cons
 
 UniformBuffer::UniformBuffer(UniformBuffer &&other) noexcept : GPUMemoryBuffer(std::move(other)) {}
 
-void UniformBuffer::update(void *data, const std::size_t size) {
-    std::memcpy(m_allocation_info.pMappedData, data, size);
-}
-
 } // namespace inexor::vulkan_renderer::wrapper

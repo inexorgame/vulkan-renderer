@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/gltf/model_file.hpp"
-#include "inexor/vulkan-renderer/gltf/model_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
@@ -44,7 +44,9 @@ class Application : public VulkanRenderer {
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
     void check_application_specific_features();
+    void generate_brdf_lookup_table();
     void update_uniform_buffers();
+
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
     void process_mouse_input();

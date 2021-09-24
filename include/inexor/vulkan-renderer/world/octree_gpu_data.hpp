@@ -84,18 +84,19 @@ public:
     /// @brief Default constructor
     /// @param device A const reference to the VkDevice wrapper
     /// @cube world The cubeor octree to render
-    OctreeGPUData(RenderGraph *render_graph, std::shared_ptr<world::Cube> cube) : m_cube(cube) {
+    OctreeGPUData(RenderGraph *render_graph, const std::shared_ptr<world::Cube> cube) : m_cube(cube) {
 
         generate_vertices();
         generate_indices();
 
-        m_vertex_buffer = render_graph->add<BufferResource>("octree", BufferUsage::VERTEX_BUFFER);
+        m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER);
 
         m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, position))
             ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, color))
+            ->set_element_size<VertexType>()
             ->upload_data(m_vertices);
 
-        m_index_buffer = render_graph->add<BufferResource>("octree", BufferUsage::INDEX_BUFFER);
+        m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER);
         m_index_buffer->upload_data(m_indices);
 
         const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
@@ -152,8 +153,8 @@ public:
 
     /// @brief Update the otree uniform buffer.
     /// @param data The new uniform buffer data of template type UniformBufferObjectType
-    void update_ubo(UniformBufferObjectType *data) {
-        m_uniform_buffer->update(data, sizeof(UniformBufferObjectType));
+    void update_ubo(const UniformBufferObjectType *data) {
+        m_uniform_buffer->update<UniformBufferObjectType>(data);
     }
 
     /// @note This might return an empty vector.
@@ -182,8 +183,12 @@ public:
         return m_index_buffer;
     }
 
-    [[nodiscard]] const auto &descriptor() const {
-        return m_descriptor;
+    [[nodiscard]] VkDescriptorSet descriptor_set() const {
+        return m_descriptor->descriptor_set();
+    }
+
+    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
+        return m_descriptor->descriptor_set_layout();
     }
 };
 
