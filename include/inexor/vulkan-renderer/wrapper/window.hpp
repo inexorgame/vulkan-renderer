@@ -14,10 +14,10 @@ public:
     enum class Mode { WINDOWED, FULLSCREEN, WINDOWED_FULLSCREEN };
 
 private:
+    std::uint32_t m_width;
+    std::uint32_t m_height;
+    Mode m_mode;
     GLFWwindow *m_window{nullptr};
-    std::uint32_t m_width{0};
-    std::uint32_t m_height{0};
-    Mode m_mode{Mode::WINDOWED};
 
 public:
     /// @brief Default constructor.
@@ -29,11 +29,11 @@ public:
     Window(const std::string &title, std::uint32_t width, std::uint32_t height, bool visible, bool resizable,
            Mode mode);
     Window(const Window &) = delete;
-    Window(Window &&) noexcept;
+    Window(Window &&) = delete;
     ~Window();
 
     Window &operator=(const Window &) = delete;
-    Window &operator=(Window &&) = default;
+    Window &operator=(Window &&) = delete;
 
     /// @brief In case the window has been minimized, process events until it has been restored.
     void wait_for_focus();

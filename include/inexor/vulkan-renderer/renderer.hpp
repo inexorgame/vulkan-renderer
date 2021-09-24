@@ -15,7 +15,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/glfw_context.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -60,7 +59,6 @@ protected:
 
     std::unique_ptr<Camera> m_camera;
 
-    std::unique_ptr<wrapper::GLFWContext> m_glfw_context;
     std::unique_ptr<wrapper::Window> m_window;
     std::unique_ptr<wrapper::Instance> m_instance;
     std::unique_ptr<wrapper::Device> m_device;

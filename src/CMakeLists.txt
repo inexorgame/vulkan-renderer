@@ -29,7 +29,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
-    vulkan-renderer/wrapper/glfw_context.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
