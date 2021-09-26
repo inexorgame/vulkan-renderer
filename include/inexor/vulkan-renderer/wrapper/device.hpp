@@ -12,6 +12,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
+/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_graphics_card{VK_NULL_HANDLE};
@@ -44,8 +45,6 @@ public:
     /// @param extension The name of the device extension.
     /// @return ``true`` if the requested device extension is available.
     [[nodiscard]] static bool is_extension_supported(VkPhysicalDevice graphics_card, const std::string &extension);
-
-    // Note that device layers are deprecated.
 
     /// @brief Check if a swapchain is available for a specific graphics card.
     /// @param graphics_card The graphics card.
