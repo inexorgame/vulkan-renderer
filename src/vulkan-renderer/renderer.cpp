@@ -159,19 +159,21 @@ void VulkanRenderer::calculate_memory_budget() {
 VulkanRenderer::~VulkanRenderer() {
     spdlog::debug("Shutting down vulkan renderer");
 
-    if (m_device != nullptr) {
-        vkDeviceWaitIdle(m_device->device());
+    if (m_device == nullptr) {
+        return;
+    }
 
-        if (!m_debug_report_callback_initialised) {
-            return;
-        }
+    vkDeviceWaitIdle(m_device->device());
 
-        // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
-        auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>( // NOLINT
-            vkGetInstanceProcAddr(m_instance->instance(), "vkDestroyDebugReportCallbackEXT"));
-        if (vk_destroy_debug_report_callback != nullptr) {
-            vk_destroy_debug_report_callback(m_instance->instance(), m_debug_report_callback, nullptr);
-        }
+    if (!m_debug_report_callback_initialised) {
+        return;
+    }
+
+    // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
+    auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>( // NOLINT
+        vkGetInstanceProcAddr(m_instance->instance(), "vkDestroyDebugReportCallbackEXT"));
+    if (vk_destroy_debug_report_callback != nullptr) {
+        vk_destroy_debug_report_callback(m_instance->instance(), m_debug_report_callback, nullptr);
     }
 }
 
