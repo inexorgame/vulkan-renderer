@@ -394,7 +394,7 @@ Application::Application(int argc, char **argv) {
 
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_VERSION(APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
-        VK_MAKE_VERSION(ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), VULKAN_API_VERSION_USED,
+        VK_MAKE_VERSION(ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), VK_API_VERSION_1_2,
         m_enable_validation_layers, enable_renderdoc_instance_layer);
 
     m_input_data = std::make_unique<input::KeyboardMouseInputData>();
@@ -538,8 +538,8 @@ void Application::update_imgui_overlay() {
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
                 BUILD_GIT);
-    ImGui::Text("Vulkan API %d.%d.%d", VK_VERSION_MAJOR(VULKAN_API_VERSION_USED),
-                VK_VERSION_MINOR(VULKAN_API_VERSION_USED), VK_VERSION_PATCH(VULKAN_API_VERSION_USED));
+    ImGui::Text("Vulkan API %d.%d.%d", VK_VERSION_MAJOR(VK_API_VERSION_1_2), VK_VERSION_MINOR(VK_API_VERSION_1_2),
+                VK_VERSION_PATCH(VK_API_VERSION_1_2));
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
