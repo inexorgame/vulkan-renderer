@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <cstring>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
