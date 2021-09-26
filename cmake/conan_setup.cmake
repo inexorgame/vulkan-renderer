@@ -36,7 +36,7 @@ if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
         conan_cmake_install(
             PATH_OR_REFERENCE ${PROJECT_SOURCE_DIR}
             BUILD outdated
-            REMOTE conan-center
+            REMOTE conancenter
             PROFILE ${INEXOR_CONAN_PROFILE}
             GENERATOR cmake_multi
             OPTIONS build_benchmarks=${benchmark_option}
@@ -52,7 +52,7 @@ else()
     conan_cmake_install(
         PATH_OR_REFERENCE ${PROJECT_SOURCE_DIR}
         BUILD outdated
-        REMOTE conan-center
+        REMOTE conancenter
         PROFILE ${INEXOR_CONAN_PROFILE}
         OPTIONS build_benchmarks=${benchmark_option}
         OPTIONS build_tests=${tests_option}
