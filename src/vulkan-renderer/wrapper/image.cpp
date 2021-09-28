@@ -14,6 +14,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
              const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
              const VkExtent2D image_extent)
     : m_device(device), m_format(format), m_name(name) {
+
     assert(device.device());
     assert(device.physical_device());
     assert(device.allocator());
