@@ -16,32 +16,44 @@
 
 namespace inexor::vulkan_renderer {
 
-void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
+BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
     VkVertexInputAttributeDescription vertex_attribute{};
     vertex_attribute.format = format;
     vertex_attribute.location = static_cast<std::uint32_t>(m_vertex_attributes.size());
     vertex_attribute.offset = offset;
     m_vertex_attributes.push_back(vertex_attribute);
+    return this;
 }
 
-void RenderStage::writes_to(const RenderResource *resource) {
+RenderStage *RenderStage::writes_to(const RenderResource *resource) {
     m_writes.push_back(resource);
+    return this;
 }
 
-void RenderStage::reads_from(const RenderResource *resource) {
+RenderStage *RenderStage::reads_from(const RenderResource *resource) {
     m_reads.push_back(resource);
+    return this;
 }
 
-void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
+GraphicsStage *GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
     m_buffer_bindings.emplace(buffer, binding);
+    return this;
 }
 
-void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
+GraphicsStage *GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     auto create_info = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
     create_info.module = shader.module();
     create_info.stage = shader.type();
     create_info.pName = shader.entry_point().c_str();
     m_shaders.push_back(create_info);
+    return this;
+}
+
+GraphicsStage *GraphicsStage::uses_shaders(const std::vector<wrapper::Shader> &shaders) {
+    for (const auto &shader : shaders) {
+        uses_shader(shader);
+    }
+    return this;
 }
 
 PhysicalBuffer::~PhysicalBuffer() {
@@ -138,10 +150,25 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
+
     pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
-    pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+
+    if (stage->m_descriptor_layouts.empty()) {
+        pipeline_layout_ci.pSetLayouts = nullptr;
+    } else {
+        assert(stage->m_descriptor_layouts.data());
+        pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
+    }
+
     pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
-    pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
+
+    if (stage->m_push_constant_ranges.empty()) {
+        pipeline_layout_ci.pPushConstantRanges = nullptr;
+    } else {
+        assert(stage->m_push_constant_ranges.data());
+        pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
+    }
+
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
         result != VK_SUCCESS) {
@@ -166,12 +193,12 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
         auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
         std::array<VkClearValue, 2> clear_values{};
         if (graphics_stage->m_clears_screen) {
-            clear_values[0].color = {0, 0, 0, 0};
+            clear_values[0].color = {0.0f, 0, 0.3f, 0};
             clear_values[1].depthStencil = {1.0f, 0};
             render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
             render_pass_bi.pClearValues = clear_values.data();
         }
-        render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[image_index].get();
+        render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[image_index].framebuffer();
         render_pass_bi.renderArea.extent = m_swapchain.extent();
         render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
         cmd_buf.begin_render_pass(render_pass_bi);
@@ -243,6 +270,11 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
             colour_refs.push_back({static_cast<std::uint32_t>(i), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
             break;
         case TextureUsage::DEPTH_STENCIL_BUFFER:
+            // TODO: Proper image layout tracking.
+            if (!stage->m_clears_screen) {
+                attachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+            }
             attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             depth_refs.push_back({static_cast<std::uint32_t>(i), attachment.finalLayout});
             break;
@@ -282,6 +314,8 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
+    spdlog::trace("building graphics pipeline for stage {}", stage->m_name);
+
     // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;
@@ -440,7 +474,7 @@ void RenderGraph::compile(const RenderResource *target) {
         VmaAllocationCreateInfo alloc_ci{};
 #if VMA_RECORDING_ENABLED
         alloc_ci.flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-        alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
+        alloc_ci.pUserData = const_cast<char *>(texture_resource->m_name.data());
 #endif
 
         auto physical = std::make_shared<PhysicalImage>(m_device.allocator(), m_device.device());
@@ -489,7 +523,8 @@ void RenderGraph::compile(const RenderResource *target) {
                         image_views.push_back(image->m_image_view);
                     }
 
-                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
+                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views,
+                                                         m_swapchain.extent().width, m_swapchain.extent().height,
                                                          "Framebuffer");
                 }
             }
@@ -522,6 +557,7 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
 
             // Upload new data.
             assert(physical.m_alloc_info.pMappedData != nullptr);
+            assert(buffer_resource);
             std::memcpy(physical.m_alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
             buffer_resource->m_data_upload_needed = false;
         }
@@ -559,7 +595,7 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
         submit_info.pWaitSemaphores = &wait_semaphores[i];
         submit_infos.push_back(submit_info);
     }
-    vkQueueSubmit(graphics_queue, submit_infos.size(), submit_infos.data(), signal_fence);
+    vkQueueSubmit(graphics_queue, static_cast<std::uint32_t>(submit_infos.size()), submit_infos.data(), signal_fence);
     return m_stage_stack.back()->m_physical->m_finished_semaphore->get();
 }
 

@@ -5,15 +5,25 @@ endif()
 
 set(
     SHADERS
-    main.vert
-    main.frag
-    ui.frag
-    ui.vert
+    brdflut/genbrdflut.frag
+    brdflut/genbrdflut.vert
+    gltf/filtercube.vert
+    gltf/irradiancecube.frag
+    gltf/pbr.vert
+    gltf/pbr_khr.frag
+    gltf/prefilterenvmap.frag
+    imgui/ui.vert
+    imgui/ui.frag
+    octree/main.frag
+    octree/main.vert
+    skybox/skybox.vert
+    skybox/skybox.frag
 )
 
 foreach(SHADER ${SHADERS})
     get_filename_component(FILE_NAME ${SHADER} NAME)
-    set(SPIRV ${CMAKE_CURRENT_SOURCE_DIR}/${FILE_NAME}.spv)
+    get_filename_component(FILE_PATH ${SHADER} DIRECTORY)
+    set(SPIRV ${CMAKE_CURRENT_SOURCE_DIR}/${FILE_PATH}/${FILE_NAME}.spv)
     add_custom_command(
         OUTPUT ${SPIRV}
         COMMAND ${GLSL_VALIDATOR} -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${SPIRV}

@@ -2,6 +2,9 @@
 
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_pbr_renderer.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -9,6 +12,8 @@
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
+#include "inexor/vulkan-renderer/world/octree_gpu_data.hpp"
+#include "inexor/vulkan-renderer/world/octree_renderer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
@@ -39,11 +44,10 @@ protected:
     std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{
         std::make_shared<VulkanSettingsDecisionMaker>()};
 
-    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
-
     VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
 
     bool m_debug_report_callback_initialised{false};
+    bool m_vsync_enabled{false};
 
     TimeStep m_time_step;
 
@@ -55,7 +59,7 @@ protected:
 
     FPSCounter m_fps_counter;
 
-    bool m_vsync_enabled{false};
+    std::vector<std::string> m_texture_files;
 
     std::unique_ptr<Camera> m_camera;
 
@@ -70,21 +74,28 @@ protected:
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<RenderGraph> m_render_graph;
 
-    std::vector<wrapper::Shader> m_shaders;
+    std::vector<std::string> m_gltf_vertex_shader_files;
+    std::vector<std::string> m_gltf_fragment_shader_files;
+    std::vector<wrapper::Shader> m_gltf_shaders;
+
+    std::vector<std::string> m_gltf_model_file_names;
+    std::vector<gltf::ModelFile> m_gltf_model_files;
+    std::vector<gltf::ModelGpuData> m_gltf_models;
+    std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
+
+    std::vector<std::string> m_octree_vertex_shader_files;
+    std::vector<std::string> m_octree_fragment_shader_files;
+    std::vector<wrapper::Shader> m_octree_shaders;
+
+    std::vector<std::shared_ptr<world::Cube>> m_worlds;
+    std::vector<world::OctreeGPUData<OctreeGpuVertex, std::uint32_t, UniformBufferObject>> m_octree_gpu_data;
+    std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex, std::uint32_t>> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
-    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
-    std::vector<wrapper::ResourceDescriptor> m_descriptors;
-    std::vector<OctreeGpuVertex> m_octree_vertices;
-    std::vector<std::uint32_t> m_octree_indices;
 
     TextureResource *m_back_buffer{nullptr};
-
-    // Render graph buffers for octree geometry.
-    BufferResource *m_index_buffer{nullptr};
-    BufferResource *m_vertex_buffer{nullptr};
+    TextureResource *m_depth_buffer{nullptr};
 
     void setup_render_graph();
-    void generate_octree_indices();
     void recreate_swapchain();
     void render_frame();
 

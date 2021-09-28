@@ -15,7 +15,7 @@ class InexorConan(ConanFile):
         "imgui/1.77",
         "spdlog/1.7.0",
         "stb/20200203",
-        "tinygltf/2.2.0",
+        "tinygltf/2.5.0",
         "toml11/3.4.0",
         "vulkan-memory-allocator/2.3.0",
     )

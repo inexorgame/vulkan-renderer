@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
@@ -21,16 +23,9 @@ class KeyboardMouseInputData;
 namespace inexor::vulkan_renderer {
 
 class Application : public VulkanRenderer {
-    std::vector<std::string> m_vertex_shader_files;
-    std::vector<std::string> m_fragment_shader_files;
-    std::vector<std::string> m_texture_files;
-    std::vector<std::string> m_gltf_model_files;
-
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 
     bool m_enable_validation_layers{true};
-    /// Inexor engine supports a variable number of octrees.
-    std::vector<std::shared_ptr<world::Cube>> m_worlds;
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call
     // std::abort(); after reporting a validation layer (error) message.
@@ -44,11 +39,14 @@ class Application : public VulkanRenderer {
     void load_shaders();
     /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
     void load_octree_geometry(bool initialize);
+    void load_gltf_models();
     void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
     void check_application_specific_features();
+    void generate_brdf_lookup_table();
     void update_uniform_buffers();
+
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
     void process_mouse_input();

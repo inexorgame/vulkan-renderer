@@ -39,9 +39,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     spdlog::debug("Loading ImGUI shaders");
     m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
-                                                        "shaders/ui.vert.spv");
+                                                        "shaders/imgui/ui.vert.spv");
     m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                                          "ImGUI fragment shader", "shaders/ui.frag.spv");
+                                                          "ImGUI fragment shader", "shaders/imgui/ui.frag.spv");
 
     // Load font texture
 
@@ -77,37 +77,36 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
             FONT_MIP_LEVELS, "ImGUI font texture");
     }
 
+    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(m_device, pool_sizes, "ImGui");
+
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(m_device, m_swapchain.image_count());
+    wrapper::DescriptorBuilder descriptor_builder(m_device, m_descriptor_pool->descriptor_pool());
 
     // Make use of the builder to create a resource descriptor for the combined image sampler.
-    m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(
-        descriptor_builder.add_combined_image_sampler(m_imgui_texture->sampler(), m_imgui_texture->image_view(), 0)
-            .build("ImGUI"));
+    m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
 
-    m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
-    m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col));
-    m_vertex_buffer->set_element_size(sizeof(ImDrawVert));
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER);
 
-    m_stage = render_graph->add<GraphicsStage>("imgui stage");
-    m_stage->writes_to(back_buffer);
-    m_stage->reads_from(m_index_buffer);
-    m_stage->reads_from(m_vertex_buffer);
-    m_stage->bind_buffer(m_vertex_buffer, 0);
-    m_stage->uses_shader(*m_vertex_shader);
-    m_stage->uses_shader(*m_fragment_shader);
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos))
+        ->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv))
+        ->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col))
+        ->set_element_size<ImDrawVert>();
 
-    // Setup push constant range for global translation and scale.
-    VkPushConstantRange push_constant_range{};
-    push_constant_range.offset = 0;
-    push_constant_range.size = sizeof(PushConstBlock);
-    push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-    m_stage->add_push_constant_range(push_constant_range);
+    m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
+
+    m_stage = render_graph->add<GraphicsStage>("ImGui");
+
+    m_stage->bind_buffer(m_vertex_buffer, 0)
+        ->uses_shader(*m_vertex_shader)
+        ->uses_shader(*m_fragment_shader)
+        ->writes_to(back_buffer)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
+        ->add_push_constant_range(sizeof(PushConstBlock))
+        ->add_descriptor_layout(m_descriptor->descriptor_set_layout());
 
     // Setup blend attachment.
     VkPipelineColorBlendAttachmentState blend_attachment;
@@ -173,9 +172,8 @@ void ImGUIOverlay::update() {
         const ImGuiIO &io = ImGui::GetIO();
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
         m_push_const_block.translate = glm::vec2(-1.0f);
-        cmd_buf.bind_descriptor(*m_descriptor, physical.pipeline_layout());
-        cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
-                               &m_push_const_block);
+        cmd_buf.bind_descriptor(m_descriptor->descriptor_set(), physical.pipeline_layout());
+        cmd_buf.push_constants<PushConstBlock>(&m_push_const_block, physical.pipeline_layout());
 
         std::uint32_t index_offset = 0;
         std::int32_t vertex_offset = 0;

@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <cassert>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ class ResourceDescriptor;
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
-    VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
+    VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
     const wrapper::Device &m_device;
     std::string m_name;
 
@@ -27,7 +28,6 @@ public:
 
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
-
     ~CommandBuffer() = default;
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;
@@ -41,18 +41,25 @@ public:
     void begin(VkCommandBufferUsageFlags flags = 0) const;
 
     /// @brief Call vkCmdBindDescriptorSets.
-    /// @param descriptor The const reference to the resource descriptor RAII wrapper instance.
-    /// @param layout The pipeline layout which will be used to bind the resource descriptor.
-    void bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const;
+    /// @param descriptor_set The const reference to the resource descriptor RAII wrapper instance
+    /// @param layout The pipeline layout which will be used to bind the resource descriptor
+    /// @param first_set The first set to use
+    void bind_descriptor(VkDescriptorSet descriptor_set, VkPipelineLayout layout, std::uint32_t first_set = 0) const;
 
     /// @brief Update push constant data.
     /// @param layout The pipeline layout
     /// @param stage The shader stage that will be accepting the push constants
     /// @param size The size of the push constant data in bytes
     /// @param data A pointer to the push constant data
-    void push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size, void *data) const;
+    template <typename T>
+    void push_constants(const T *data, VkPipelineLayout layout,
+                        VkShaderStageFlags stage = VK_SHADER_STAGE_VERTEX_BIT) const {
+        static_assert(sizeof(T) > 0);
+        assert(data);
+        vkCmdPushConstants(m_cmd_buf, layout, stage, 0, sizeof(T), data);
+    }
 
-    /// @brief Call vkEndCommandBuffer.
+    /// @brief Call vkEndCommandBuffer.s
     void end() const;
 
     // Graphics commands
@@ -82,17 +89,17 @@ public:
 
     /// @brief Call vkCmdDrawIndexed.
     /// @param index_count The number of indices to draw.
-    void draw_indexed(std::size_t index_count) const;
+    void draw_indexed(std::size_t index_count, std::uint32_t first_index = 0) const;
 
     /// @brief Call vkCmdEndRenderPass.
     void end_render_pass() const;
 
     [[nodiscard]] VkCommandBuffer get() const {
-        return m_command_buffer;
+        return m_cmd_buf;
     }
 
     [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_command_buffer;
+        return &m_cmd_buf;
     }
 };
 
