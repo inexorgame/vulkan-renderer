@@ -46,6 +46,7 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
     }
 
     if (device_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any device extensions.
         spdlog::info("No Vulkan device extensions available!");
         return false;
     }
@@ -64,37 +65,6 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
                         [&](const VkExtensionProperties device_extension) {
                             return device_extension.extensionName == extension_name;
                         }) != device_extensions.end();
-}
-
-bool Device::is_layer_supported(const VkPhysicalDevice graphics_card, const std::string &layer_name) {
-    assert(graphics_card);
-    assert(!layer_name.empty());
-
-    std::uint32_t device_layer_count = 0;
-
-    // Query how many device layers are available.
-    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
-    }
-
-    if (device_layer_count == 0) {
-        spdlog::info("No Vulkan device layers available!");
-        return false;
-    }
-
-    std::vector<VkLayerProperties> device_layers(device_layer_count);
-
-    // Store all available device layers.
-    if (const auto result = vkEnumerateDeviceLayerProperties(graphics_card, &device_layer_count, device_layers.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceLayerProperties failed!", result);
-    }
-
-    // Search for the requested instance extensions.
-    return std::find_if(device_layers.begin(), device_layers.end(), [&](const VkLayerProperties device_extension) {
-               return device_extension.layerName == layer_name;
-           }) != device_layers.end();
 }
 
 bool Device::is_swapchain_supported(const VkPhysicalDevice graphics_card) {
@@ -117,12 +87,12 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
     return presentation_supported == VK_TRUE;
 }
 
-Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
                bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
-    const auto selected_gpu = VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(
-        instance, surface, preferred_physical_device_index);
+    const auto selected_gpu =
+        VulkanSettingsDecisionMaker::graphics_card(instance.instance(), surface, preferred_physical_device_index);
 
     if (!selected_gpu) {
         throw std::runtime_error("Error: Could not find suitable graphics card!");
@@ -135,16 +105,16 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     // Get the information about that graphics card's properties.
     vkGetPhysicalDeviceProperties(m_graphics_card, &graphics_card_properties);
 
-    spdlog::debug("Creating device using graphics card: {}.", graphics_card_properties.deviceName);
+    spdlog::trace("Creating device using graphics card: {}.", graphics_card_properties.deviceName);
 
     m_gpu_name = graphics_card_properties.deviceName;
 
-    spdlog::debug("Creating Vulkan device queues.");
+    spdlog::trace("Creating Vulkan device queues.");
 
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 
     if (prefer_distinct_transfer_queue) {
-        spdlog::debug("The application will try to use a distinct data transfer queue if it is available.");
+        spdlog::trace("The application will try to use a distinct data transfer queue if it is available.");
     } else {
         spdlog::warn("The application is forced not to use a distinct data transfer queue!");
     }
@@ -154,7 +124,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation) {
-        spdlog::debug("One queue for both graphics and presentation will be used.");
+        spdlog::trace("One queue for both graphics and presentation will be used.");
 
         m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
         m_present_queue_family_index = m_graphics_queue_family_index;
@@ -167,8 +137,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
         queues_to_create.push_back(device_queue_ci);
     } else {
-        spdlog::debug("No queue found which supports both graphics and presentation.");
-        spdlog::debug("The application will try to use 2 separate queues.");
+        spdlog::trace("No queue found which supports both graphics and presentation.");
+        spdlog::trace("The application will try to use 2 separate queues.");
 
         // We have to use 2 different queue families.
         // One for graphics and another one for presentation.
@@ -191,8 +161,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
         m_present_queue_family_index = *queue_candidate;
 
-        spdlog::debug("Graphics queue family index: {}.", m_graphics_queue_family_index);
-        spdlog::debug("Presentation queue family index: {}.", m_present_queue_family_index);
+        spdlog::trace("Graphics queue family index: {}.", m_graphics_queue_family_index);
+        spdlog::trace("Presentation queue family index: {}.", m_present_queue_family_index);
 
         // Set up one queue for graphics.
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
@@ -219,8 +189,8 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     if (queue_candidate && prefer_distinct_transfer_queue) {
         m_transfer_queue_family_index = *queue_candidate;
 
-        spdlog::debug("A separate queue will be used for data transfer.");
-        spdlog::debug("Data transfer queue family index: {}.", m_transfer_queue_family_index);
+        spdlog::trace("A separate queue will be used for data transfer.");
+        spdlog::trace("Data transfer queue family index: {}.", m_transfer_queue_family_index);
 
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
@@ -285,7 +255,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
     device_ci.ppEnabledExtensionNames = enabled_device_extensions.data();
     device_ci.pEnabledFeatures = &used_features;
 
-    spdlog::debug("Creating physical device (graphics card interface).");
+    spdlog::trace("Creating physical device.");
 
     if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
@@ -293,7 +263,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
 #ifndef NDEBUG
     if (m_enable_vulkan_debug_markers) {
-        spdlog::debug("Initializing Vulkan debug markers.");
+        spdlog::trace("Initializing Vulkan debug markers.");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
         m_vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>( // NOLINT
@@ -319,16 +289,12 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         m_vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>( // NOLINT
             vkGetDeviceProcAddr(m_device, "vkSetDebugUtilsObjectNameEXT"));
         assert(m_vk_set_debug_utils_object_name);
-    } else {
-        spdlog::warn("Warning: {} not present, debug markers are disabled.", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-        spdlog::warn("Try running from inside a Vulkan graphics debugger (e.g. RenderDoc).");
     }
 #endif
 
-    spdlog::debug("Initialising GPU queues.");
-    spdlog::debug("Graphics queue family index: {}.", m_graphics_queue_family_index);
-    spdlog::debug("Presentation queue family index: {}.", m_present_queue_family_index);
-    spdlog::debug("Data transfer queue family index: {}.", m_transfer_queue_family_index);
+    spdlog::trace("Graphics queue family index: {}.", m_graphics_queue_family_index);
+    spdlog::trace("Presentation queue family index: {}.", m_present_queue_family_index);
+    spdlog::trace("Data transfer queue family index: {}.", m_transfer_queue_family_index);
 
     // Setup the queues for presentation and graphics.
     // Since we only have one queue per queue family, we acquire index 0.
@@ -341,12 +307,12 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
     }
 
-    spdlog::debug("Creating vma allocator");
+    spdlog::trace("Creating VMA allocator.");
 
     // Make sure to set the root directory of this repository as working directory in the debugger!
     // Otherwise, VMA won't be able to open this allocation replay file for writing.
     const std::string vma_replay_file = "vma-replays/vma_replay.csv";
-    spdlog::debug("Opening VMA memory recording file for writing.");
+    spdlog::trace("Opening VMA memory recording file for writing.");
 
     std::ofstream replay_file_test(vma_replay_file, std::ios::out);
 
@@ -356,7 +322,7 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
         throw std::runtime_error("Could not open VMA replay file " + vma_replay_file + " !");
     }
 
-    spdlog::debug("VMA memory recording file opened successfully.");
+    spdlog::trace("VMA memory recording file opened successfully.");
 
     replay_file_test.close();
 
@@ -372,19 +338,18 @@ Device::Device(const VkInstance instance, const VkSurfaceKHR surface, bool enabl
 
     VmaAllocatorCreateInfo vma_allocator_ci{};
     vma_allocator_ci.physicalDevice = m_graphics_card;
-    vma_allocator_ci.instance = instance;
+    vma_allocator_ci.instance = instance.instance();
     vma_allocator_ci.device = m_device;
+    vma_allocator_ci.vulkanApiVersion = instance.vulkan_api_version();
 #if VMA_RECORDING_ENABLED
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif
 
-    spdlog::debug("Creating Vulkan memory allocator instance.");
+    spdlog::trace("Creating Vulkan memory allocator instance.");
 
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
-
-    spdlog::debug("Created device successfully.");
 }
 
 Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {

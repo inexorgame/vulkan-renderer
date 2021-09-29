@@ -8,8 +8,8 @@
 
 namespace inexor::vulkan_renderer {
 
-std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(VkPhysicalDevice graphics_card,
-                                                                                      VkSurfaceKHR surface) {
+std::uint32_t VulkanSettingsDecisionMaker::swapchain_image_count(const VkPhysicalDevice graphics_card,
+                                                                 const VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -37,8 +37,8 @@ std::uint32_t VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_t
 }
 
 std::optional<VkSurfaceFormatKHR>
-VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(VkPhysicalDevice graphics_card,
-                                                                                   VkSurfaceKHR surface) {
+VulkanSettingsDecisionMaker::swapchain_surface_color_format(const VkPhysicalDevice graphics_card,
+                                                            const VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -102,7 +102,8 @@ VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_u
     return accepted_color_format;
 }
 
-bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(VkPhysicalDevice graphics_card, VkSurfaceKHR surface) {
+bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice graphics_card,
+                                                            const VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -183,7 +184,7 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(VkPhysicalDevice gra
     return true;
 }
 
-VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(VkPhysicalDevice graphics_card) {
+VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
 
     // The properties of the graphics card.
@@ -195,7 +196,7 @@ VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(VkPhysicalD
     return graphics_card_properties.deviceType;
 }
 
-std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(VkPhysicalDevice graphics_card) {
+std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
 
     // The score of the graphics card.
@@ -223,8 +224,8 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(VkPhysicalDevice gra
 }
 
 std::optional<VkPhysicalDevice>
-VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(VkInstance vulkan_instance, VkSurfaceKHR surface,
-                                                               const std::optional<std::uint32_t> preferred_gpu_index) {
+VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, const VkSurfaceKHR surface,
+                                           const std::optional<std::uint32_t> preferred_gpu_index) {
     assert(vulkan_instance);
     assert(surface);
 
@@ -460,9 +461,8 @@ VulkanSettingsDecisionMaker::decide_which_graphics_card_to_use(VkInstance vulkan
     return highest_score_gpu;
 }
 
-VkSurfaceTransformFlagsKHR
-VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(VkPhysicalDevice graphics_card,
-                                                                      VkSurfaceKHR surface) {
+VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::image_transform(const VkPhysicalDevice graphics_card,
+                                                                        const VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -481,8 +481,8 @@ VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(VkPhysical
 }
 
 std::optional<VkCompositeAlphaFlagBitsKHR>
-VulkanSettingsDecisionMaker::find_composite_alpha_format(VkPhysicalDevice selected_graphics_card,
-                                                         VkSurfaceKHR surface) {
+VulkanSettingsDecisionMaker::find_composite_alpha_format(const VkPhysicalDevice selected_graphics_card,
+                                                         const VkSurfaceKHR surface) {
     assert(selected_graphics_card);
     assert(surface);
 
@@ -510,9 +510,9 @@ VulkanSettingsDecisionMaker::find_composite_alpha_format(VkPhysicalDevice select
     return std::nullopt;
 }
 
-std::optional<VkPresentModeKHR>
-VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface,
-                                                                   const bool vsync) {
+std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_present_mode(const VkPhysicalDevice graphics_card,
+                                                                                 const VkSurfaceKHR surface,
+                                                                                 const bool vsync) {
     assert(graphics_card);
     assert(surface);
 
@@ -566,7 +566,7 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDev
     }
 
     spdlog::warn("VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device.");
-    spdlog::warn("Let's see if VK_PRESENT_MODE_IMMEDIATE_KHR is supported.");
+    spdlog::debug("Let's see if VK_PRESENT_MODE_IMMEDIATE_KHR is supported.");
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
@@ -610,9 +610,10 @@ VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(VkPhysicalDev
     return std::nullopt;
 }
 
-SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(VkPhysicalDevice graphics_card,
-                                                                       VkSurfaceKHR surface, std::uint32_t window_width,
-                                                                       std::uint32_t window_height) {
+SwapchainSettings VulkanSettingsDecisionMaker::swapchain_extent(const VkPhysicalDevice graphics_card,
+                                                                const VkSurfaceKHR surface,
+                                                                const std::uint32_t window_width,
+                                                                const std::uint32_t window_height) {
     assert(graphics_card);
     assert(surface);
 
@@ -638,7 +639,8 @@ SwapchainSettings VulkanSettingsDecisionMaker::decide_swapchain_extent(VkPhysica
     return updated_swapchain_settings;
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_family(VkPhysicalDevice graphics_card) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
 
     std::uint32_t number_of_available_queue_families = 0;
@@ -670,8 +672,9 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_graphics_queue_fa
     return std::nullopt;
 }
 
-std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queue_family(VkPhysicalDevice graphics_card,
-                                                                                         VkSurfaceKHR surface) {
+std::optional<std::uint32_t>
+VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevice graphics_card,
+                                                            const VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -714,7 +717,7 @@ std::optional<std::uint32_t> VulkanSettingsDecisionMaker::find_presentation_queu
 }
 
 std::optional<std::uint32_t>
-VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(VkPhysicalDevice graphics_card) {
+VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
 
     std::uint32_t number_of_available_queue_families = 0;
@@ -749,7 +752,7 @@ VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(VkPhysical
 }
 
 std::optional<std::uint32_t>
-VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(VkPhysicalDevice graphics_card) {
+VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
 
     std::uint32_t number_of_available_queue_families = 0;
@@ -784,8 +787,8 @@ VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(VkPhysicalDevic
 }
 
 std::optional<std::uint32_t>
-VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(VkPhysicalDevice graphics_card,
-                                                                                  VkSurfaceKHR surface) {
+VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(const VkPhysicalDevice graphics_card,
+                                                                                  const VkSurfaceKHR surface) {
     assert(graphics_card);
     assert(surface);
 
@@ -835,10 +838,10 @@ VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentatio
     return std::nullopt;
 }
 
-std::optional<VkFormat> VulkanSettingsDecisionMaker::find_depth_buffer_format(VkPhysicalDevice graphics_card,
-                                                                              const std::vector<VkFormat> &formats,
-                                                                              VkImageTiling tiling,
-                                                                              VkFormatFeatureFlags feature_flags) {
+std::optional<VkFormat>
+VulkanSettingsDecisionMaker::find_depth_buffer_format(const VkPhysicalDevice graphics_card,
+                                                      const std::vector<VkFormat> &formats, const VkImageTiling tiling,
+                                                      const VkFormatFeatureFlags feature_flags) {
     assert(graphics_card);
     assert(!formats.empty());
     assert(tiling);

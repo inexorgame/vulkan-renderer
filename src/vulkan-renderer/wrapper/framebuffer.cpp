@@ -32,8 +32,6 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
-
-    spdlog::debug("Created framebuffer {} successfully.", m_name);
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {

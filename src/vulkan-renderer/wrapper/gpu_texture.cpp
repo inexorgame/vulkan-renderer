@@ -58,7 +58,7 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
     m_copy_command_buffer.create_command_buffer();
     m_copy_command_buffer.start_recording();
 
-    spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
+    spdlog::trace("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
 
     transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -77,7 +77,7 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
     vkCmdCopyBufferToImage(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
                            m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_image_region);
 
-    spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", m_name);
+    spdlog::trace("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", m_name);
 
     m_copy_command_buffer.end_recording_and_submit_command();
 
@@ -121,7 +121,7 @@ void GpuTexture::transition_image_layout(VkImage image, VkImageLayout old_layout
         throw std::runtime_error("Error: unsupported layout transition!");
     }
 
-    spdlog::debug("Recording pipeline barrier for image layer transition");
+    spdlog::trace("Recording pipeline barrier for image layer transition");
 
     OnceCommandBuffer image_transition_change(m_device, m_device.graphics_queue(),
                                               m_device.graphics_queue_family_index());
@@ -189,7 +189,7 @@ void GpuTexture::create_texture_sampler() {
         sampler_ci.anisotropyEnable = VK_FALSE;
     }
 
-    spdlog::debug("Creating image sampler for texture {}.", m_name);
+    spdlog::trace("Creating image sampler for texture {}.", m_name);
 
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
@@ -198,8 +198,6 @@ void GpuTexture::create_texture_sampler() {
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
-
-    spdlog::debug("Image sampler {} created successfully.", m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

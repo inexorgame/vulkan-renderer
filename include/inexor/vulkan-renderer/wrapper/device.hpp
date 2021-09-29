@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
@@ -11,6 +12,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
+/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_graphics_card{VK_NULL_HANDLE};
@@ -44,13 +46,6 @@ public:
     /// @return ``true`` if the requested device extension is available.
     [[nodiscard]] static bool is_extension_supported(VkPhysicalDevice graphics_card, const std::string &extension);
 
-    /// @brief Check if a certain device layer is available for a specific graphics card.
-    /// @note Vulkan device layers were deprecated, essentially making all layers instance layers.
-    /// @param graphics_card The graphics card.
-    /// @param layer_name The name of the device layer.
-    /// @return ``true`` if the requested device layer is available.
-    [[nodiscard]] static bool is_layer_supported(VkPhysicalDevice graphics_card, const std::string &layer_name);
-
     /// @brief Check if a swapchain is available for a specific graphics card.
     /// @param graphics_card The graphics card.
     /// @return ``true`` if swapchain is supported.
@@ -63,7 +58,7 @@ public:
     [[nodiscard]] static bool is_presentation_supported(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Default constructor.
-    /// @param instance The Vulkan instance from which the device will be created.
+    /// @param instance The instance wrapper from which the device will be created.
     /// @param surface The surface which will be associated with the device.
     /// @param enable_vulkan_debug_markers True if Vulkan debug markers should be enabled, false otherwise.
     /// @param prefer_distinct_transfer_queue True if a distinct data transfer queue (if available) should be
@@ -74,7 +69,7 @@ public:
     /// selection mechanism!
     /// @todo Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions in the
     /// future!
-    Device(VkInstance instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+    Device(const wrapper::Instance &instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
            bool prefer_distinct_transfer_queue,
            std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
 

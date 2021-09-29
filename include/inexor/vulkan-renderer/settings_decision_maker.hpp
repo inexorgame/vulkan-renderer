@@ -55,38 +55,37 @@ struct VulkanSettingsDecisionMaker {
     /// @param preferred_graphics_card_index The preferred graphics card (by array index).
     /// @return A physical device which was chosen if a suitable one could be found, std::nullopt otherwise.
     [[nodiscard]] static std::optional<VkPhysicalDevice>
-    decide_which_graphics_card_to_use(VkInstance vulkan_instance, VkSurfaceKHR surface,
-                                      std::optional<std::uint32_t> preferred_gpu_index = std::nullopt);
+    graphics_card(VkInstance vulkan_instance, VkSurfaceKHR surface,
+                  std::optional<std::uint32_t> preferred_gpu_index = std::nullopt);
 
     /// @brief Automatically decide how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The number of images that will be used in swap chain.
-    [[nodiscard]] static std::uint32_t decide_how_many_images_in_swapchain_to_use(VkPhysicalDevice graphics_card,
-                                                                                  VkSurfaceKHR surface);
+    [[nodiscard]] static std::uint32_t swapchain_image_count(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Automatically decide which surface color to use in swapchain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The surface format for swapchain if any could be determined, std::nullopt otherwise.
     [[nodiscard]] static std::optional<VkSurfaceFormatKHR>
-    decide_which_surface_color_format_in_swapchain_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
+    swapchain_surface_color_format(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// @brief Automatically decide which width and height to use as swapchain extent.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
-    SwapchainSettings static decide_swapchain_extent(VkPhysicalDevice graphics_card, VkSurfaceKHR surface,
-                                                     std::uint32_t window_width, std::uint32_t window_height);
+    [[nodiscard]] static SwapchainSettings swapchain_extent(VkPhysicalDevice graphics_card, VkSurfaceKHR surface,
+                                                            std::uint32_t window_width, std::uint32_t window_height);
 
     /// @brief Automatically find the image transform, relative to the presentation engine's natural orientation,
     /// applied to the image content prior to presentation.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.
     /// @return The image transform flags.
-    [[nodiscard]] static VkSurfaceTransformFlagsKHR
-    decide_which_image_transformation_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
+    [[nodiscard]] static VkSurfaceTransformFlagsKHR image_transform(VkPhysicalDevice graphics_card,
+                                                                    VkSurfaceKHR surface);
 
     /// @brief Find a supported composite alpha format.
     /// @param graphics_card The selected graphics card.
@@ -105,8 +104,8 @@ struct VulkanSettingsDecisionMaker {
     /// @param surface The selected (window) surface.
     /// @param vsync True if vertical synchronization is desired, false otherwise.
     /// @return The presentation mode which will be used by the presentation engine.
-    [[nodiscard]] static std::optional<VkPresentModeKHR>
-    decide_which_presentation_mode_to_use(VkPhysicalDevice graphics_card, VkSurfaceKHR surface, bool vsync = false);
+    [[nodiscard]] static std::optional<VkPresentModeKHR> decide_present_mode(VkPhysicalDevice graphics_card,
+                                                                             VkSurfaceKHR surface, bool vsync = false);
 
     /// @brief Decide which graphics queue family index to use in case it is not possible to use one for both graphics
     /// and presentation.

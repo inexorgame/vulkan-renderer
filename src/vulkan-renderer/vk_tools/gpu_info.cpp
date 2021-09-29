@@ -73,6 +73,7 @@ void print_instance_layers() {
     spdlog::debug("Number of instance layers: {}", instance_layer_count);
 
     if (instance_layer_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance layers.
         return;
     }
 
@@ -109,6 +110,7 @@ void print_instance_extensions() {
     spdlog::debug("Number of instance extensions: {} ", instance_extension_count);
 
     if (instance_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance extensions.
         return;
     }
 
@@ -131,42 +133,6 @@ void print_instance_extensions() {
     }
 }
 
-void print_device_layers(const VkPhysicalDevice gpu) {
-    assert(gpu);
-
-    std::uint32_t device_layer_count{0};
-
-    // Query how many device layers are available.
-    if (const auto result = vkEnumerateDeviceLayerProperties(gpu, &device_layer_count, nullptr); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", vk_tools::as_string<VkResult>(result));
-        return;
-    }
-
-    spdlog::debug("Number of device layers: {}", device_layer_count);
-
-    if (device_layer_count == 0) {
-        return;
-    }
-
-    std::vector<VkLayerProperties> device_layers;
-    device_layers.reserve(device_layer_count);
-
-    // Store all available device layers.
-    if (const auto result = vkEnumerateDeviceLayerProperties(gpu, &device_layer_count, device_layers.data());
-        result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateDeviceLayerProperties returned {}!", vk_tools::as_string<VkResult>(result));
-        return;
-    }
-
-    for (const auto &layer : device_layers) {
-        spdlog::debug("Name: {}", layer.layerName);
-        spdlog::debug("Spec Version: {}.{}.{}", VK_VERSION_MAJOR(layer.specVersion),
-                      VK_VERSION_MINOR(layer.specVersion), VK_VERSION_PATCH(layer.specVersion));
-        spdlog::debug("Impl Version: {}", layer.implementationVersion);
-        spdlog::debug("Description: {}", layer.description);
-    }
-}
-
 void print_device_extensions(const VkPhysicalDevice gpu) {
     assert(gpu);
 
@@ -183,6 +149,7 @@ void print_device_extensions(const VkPhysicalDevice gpu) {
     spdlog::debug("Number of device extensions: {}", device_extension_count);
 
     if (device_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any device extensions.
         return;
     }
 
@@ -611,7 +578,6 @@ void print_all_physical_devices(const VkInstance instance, const VkSurfaceKHR su
     }
 
     for (auto *gpu : available_gpus) {
-        print_device_layers(gpu);
         print_device_extensions(gpu);
         print_physical_device_info(gpu);
         print_physical_device_queue_families(gpu);

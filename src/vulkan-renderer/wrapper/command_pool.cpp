@@ -19,8 +19,6 @@ CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_
     }
 
     // TODO: Assign an internal name to this command pool using Vulkan debug markers.
-
-    spdlog::debug("Created command pool successfully.");
 }
 
 CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device) {

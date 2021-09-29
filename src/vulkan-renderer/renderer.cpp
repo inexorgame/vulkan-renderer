@@ -158,7 +158,11 @@ void VulkanRenderer::calculate_memory_budget() {
 
 VulkanRenderer::~VulkanRenderer() {
     spdlog::debug("Shutting down vulkan renderer");
-    // TODO: Add wrapper::Device::wait_idle()
+
+    if (m_device == nullptr) {
+        return;
+    }
+
     vkDeviceWaitIdle(m_device->device());
 
     if (!m_debug_report_callback_initialised) {

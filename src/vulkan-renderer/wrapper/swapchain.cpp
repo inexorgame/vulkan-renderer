@@ -37,23 +37,22 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
 
 void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
                                 std::uint32_t window_height) {
-    auto swapchain_settings = VulkanSettingsDecisionMaker::decide_swapchain_extent(
-        m_device.physical_device(), m_surface, window_width, window_height);
+    auto swapchain_settings = VulkanSettingsDecisionMaker::swapchain_extent(m_device.physical_device(), m_surface,
+                                                                            window_width, window_height);
 
     m_extent = swapchain_settings.swapchain_size;
 
-    std::optional<VkPresentModeKHR> present_mode = VulkanSettingsDecisionMaker::decide_which_presentation_mode_to_use(
-        m_device.physical_device(), m_surface, m_vsync_enabled);
+    std::optional<VkPresentModeKHR> present_mode =
+        VulkanSettingsDecisionMaker::decide_present_mode(m_device.physical_device(), m_surface, m_vsync_enabled);
 
     if (!present_mode) {
         throw std::runtime_error("Error: Could not find a suitable present mode!");
     }
 
-    m_swapchain_image_count =
-        VulkanSettingsDecisionMaker::decide_how_many_images_in_swapchain_to_use(m_device.physical_device(), m_surface);
+    m_swapchain_image_count = VulkanSettingsDecisionMaker::swapchain_image_count(m_device.physical_device(), m_surface);
 
-    auto surface_format_candidate = VulkanSettingsDecisionMaker::decide_which_surface_color_format_in_swapchain_to_use(
-        m_device.physical_device(), m_surface);
+    auto surface_format_candidate =
+        VulkanSettingsDecisionMaker::swapchain_surface_color_format(m_device.physical_device(), m_surface);
 
     if (!surface_format_candidate) {
         throw std::runtime_error("Error: Could not find an image format for images in swapchain!");
@@ -70,7 +69,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     swapchain_ci.imageExtent.height = m_extent.height;
     swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     swapchain_ci.preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(
-        VulkanSettingsDecisionMaker::decide_which_image_transformation_to_use(m_device.physical_device(), m_surface));
+        VulkanSettingsDecisionMaker::image_transform(m_device.physical_device(), m_surface));
     swapchain_ci.imageArrayLayers = 1;
     swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchain_ci.queueFamilyIndexCount = 0;
@@ -125,7 +124,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
 
-    spdlog::debug("Creating {} swapchain image views.", m_swapchain_image_count);
+    spdlog::trace("Creating {} swapchain image views.", m_swapchain_image_count);
 
     m_swapchain_image_views.resize(m_swapchain_image_count);
 
@@ -143,7 +142,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     image_view_ci.subresourceRange.layerCount = 1;
 
     for (std::size_t i = 0; i < m_swapchain_image_count; i++) {
-        spdlog::debug("Creating swapchain image #{}.", i);
+        spdlog::trace("Creating swapchain image #{}.", i);
 
         image_view_ci.image = m_swapchain_images[i];
 
@@ -156,8 +155,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         // Assign an internal name using Vulkan debug markers.
         m_device.set_debug_marker_name(m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
     }
-
-    spdlog::debug("Created {} swapchain image views successfully.", m_swapchain_image_count);
 }
 
 std::uint32_t Swapchain::acquire_next_image(const Semaphore &semaphore) {

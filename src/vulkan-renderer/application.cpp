@@ -69,7 +69,9 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
-        throw std::runtime_error("Could not open configuration file: " + file_name + "!");
+        // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
+        throw std::runtime_error("Could not find configuration file: " + file_name +
+                                 "! You must set the working directory properly in your IDE.");
     }
 
     toml_file.close();
@@ -388,9 +390,11 @@ Application::Application(int argc, char **argv) {
     m_window =
         std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
+    vk_tools::print_driver_vulkan_version();
+
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_VERSION(APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
-        VK_MAKE_VERSION(ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), VK_API_VERSION_1_1,
+        VK_MAKE_VERSION(ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), VK_API_VERSION_1_2,
         m_enable_validation_layers, enable_renderdoc_instance_layer);
 
     m_input_data = std::make_unique<input::KeyboardMouseInputData>();
@@ -468,9 +472,8 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    m_device = std::make_unique<wrapper::Device>(m_instance->instance(), m_surface->get(),
-                                                 enable_debug_marker_device_extension, use_distinct_data_transfer_queue,
-                                                 preferred_graphics_card);
+    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
+                                                 use_distinct_data_transfer_queue, preferred_graphics_card);
 
     check_application_specific_features();
 
@@ -535,6 +538,8 @@ void Application::update_imgui_overlay() {
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
                 BUILD_GIT);
+    ImGui::Text("Vulkan API %d.%d.%d", VK_VERSION_MAJOR(VK_API_VERSION_1_2), VK_VERSION_MINOR(VK_API_VERSION_1_2),
+                VK_VERSION_PATCH(VK_API_VERSION_1_2));
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();

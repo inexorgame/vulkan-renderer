@@ -18,7 +18,7 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
     assert(!file_name.empty());
     assert(!m_name.empty());
 
-    spdlog::debug("Loading texture file {}.", file_name);
+    spdlog::trace("Loading texture file {}.", file_name);
 
     // Load the texture file using stb_image library.
     // Force stb_image to load an alpha channel as well.
@@ -40,7 +40,7 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
         // TODO: We are currently only supporting 1 mip level.
         m_mip_levels = 1;
 
-        spdlog::debug("Texture dimensions: width: {}, height: {}, channels: {} mip levels: {}.", m_texture_width,
+        spdlog::trace("Texture dimensions: width: {}, height: {}, channels: {} mip levels: {}.", m_texture_width,
                       m_texture_height, m_texture_channels, m_mip_levels);
     }
 }

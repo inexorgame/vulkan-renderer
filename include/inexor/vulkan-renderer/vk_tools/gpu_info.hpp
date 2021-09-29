@@ -18,9 +18,7 @@ void print_instance_layers();
 /// @brief Print all available Vulkan instance extensions.
 void print_instance_extensions();
 
-/// @brief Print all available Vulkan device layers for a specified gpu.
-/// @param gpu The regarded gpu.
-void print_device_layers(VkPhysicalDevice gpu);
+// Note that device layers are deprecated.
 
 /// @brief Print all available Vulkan device extensions.
 /// @param gpu The regarded gpu.
