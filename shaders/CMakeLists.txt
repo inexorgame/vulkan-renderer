@@ -7,11 +7,11 @@ set(
     SHADERS
     brdflut/genbrdflut.frag
     brdflut/genbrdflut.vert
-    gltf/filtercube.vert
-    gltf/irradiancecube.frag
+    cubemap/filtercube.vert
+    cubemap/irradiancecube.frag
+    cubemap/prefilterenvmap.frag
     gltf/pbr.vert
     gltf/pbr_khr.frag
-    gltf/prefilterenvmap.frag
     imgui/ui.vert
     imgui/ui.frag
     octree/main.frag

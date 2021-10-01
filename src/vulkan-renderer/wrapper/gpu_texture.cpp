@@ -39,9 +39,9 @@ GpuTexture::GpuTexture(const Device &device, const void *data, std::size_t data_
     create_texture_sampler();
 }
 
-GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data, std::size_t data_size,
-                       std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
-                       std::uint32_t mip_levels, std::string name)
+GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data,
+                       std::size_t data_size, std::uint32_t texture_width, std::uint32_t texture_height,
+                       std::uint32_t texture_channels, std::uint32_t mip_levels, std::string name)
 
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
@@ -76,16 +76,16 @@ void GpuTexture::create_texture(const void *texture_data, const std::size_t text
     extent.width = m_texture_width;
     extent.height = m_texture_height;
 
-    m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format,
+    m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format, m_texture_width, m_texture_height,
                                               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                              VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
+                                              VK_IMAGE_ASPECT_COLOR_BIT, "texture");
 
     m_copy_command_buffer.create_command_buffer();
     m_copy_command_buffer.start_recording();
 
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
 
-    transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    transition_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy buffer_image_region{};
     buffer_image_region.bufferOffset = 0;
@@ -100,13 +100,13 @@ void GpuTexture::create_texture(const void *texture_data, const std::size_t text
                                        1};
 
     vkCmdCopyBufferToImage(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
-                           m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_image_region);
+                           m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_image_region);
 
     spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", m_name);
 
     m_copy_command_buffer.end_recording_and_submit_command();
 
-    transition_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    transition_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 

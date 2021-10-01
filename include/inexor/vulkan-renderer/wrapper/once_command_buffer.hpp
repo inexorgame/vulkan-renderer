@@ -47,12 +47,14 @@ public:
 
     /// @brief Create the command buffer.
     /// @note We are not merging this into the constructor because we need to be able to call this function separately.
+    // TODO: Merge create_command_buffer() into start_recording().
     void create_command_buffer();
 
     /// @brief Call vkBeginCommandBuffer.
     void start_recording();
 
     /// @brief Call vkEndCommandBuffer and vkFreeCommandBuffers.
+    // TODO: Check if submit was called!
     void end_recording_and_submit_command();
 
     [[nodiscard]] VkCommandBuffer command_buffer() const {

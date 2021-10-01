@@ -18,63 +18,63 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     const VkExtent2D image_extent{512, 512};
 
     m_brdf_lut_image = std::make_unique<wrapper::Image>(
-        device, format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-        VK_SAMPLE_COUNT_1_BIT, "BRDF", image_extent);
+        device, format, image_extent.width, image_extent.height,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, "texture");
 
     // FB, Att, RP, Pipe, etc.
-    VkAttachmentDescription attDesc{};
+    VkAttachmentDescription att_desc{};
 
     // Color attachment
-    attDesc.format = format;
-    attDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-    attDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    VkAttachmentReference colorReference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    att_desc.format = format;
+    att_desc.samples = VK_SAMPLE_COUNT_1_BIT;
+    att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    att_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    att_desc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    VkSubpassDescription subpassDescription{};
-    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpassDescription.colorAttachmentCount = 1;
-    subpassDescription.pColorAttachments = &colorReference;
+    VkAttachmentReference color_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+
+    VkSubpassDescription subpass_desc{};
+    subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_desc.colorAttachmentCount = 1;
+    subpass_desc.pColorAttachments = &color_ref;
 
     // Use subpass dependencies for layout transitions
-    std::array<VkSubpassDependency, 2> dependencies;
+    std::array<VkSubpassDependency, 2> deps;
 
-    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependencies[0].dstSubpass = 0;
-    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    deps[0].dstSubpass = 0;
+    deps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    deps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    deps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    deps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    deps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    dependencies[1].srcSubpass = 0;
-    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    deps[1].srcSubpass = 0;
+    deps[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    deps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    deps[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    deps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     // Create the actual renderpass
-    VkRenderPassCreateInfo renderPassCI{};
-    renderPassCI.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassCI.attachmentCount = 1;
-    renderPassCI.pAttachments = &attDesc;
-    renderPassCI.subpassCount = 1;
-    renderPassCI.pSubpasses = &subpassDescription;
-    renderPassCI.dependencyCount = 2;
-    renderPassCI.pDependencies = dependencies.data();
+    VkRenderPassCreateInfo renderpass_ci{};
+    renderpass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderpass_ci.attachmentCount = 1;
+    renderpass_ci.pAttachments = &att_desc;
+    renderpass_ci.subpassCount = 1;
+    renderpass_ci.pSubpasses = &subpass_desc;
+    renderpass_ci.dependencyCount = 2;
+    renderpass_ci.pDependencies = deps.data();
 
     VkRenderPass renderpass;
 
-    if (const auto result = vkCreateRenderPass(device.device(), &renderPassCI, nullptr, &renderpass);
+    if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &renderpass);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create renderpass (vkCreateRenderPass)!", result);
-        return;
     }
 
     const std::vector<VkImageView> attachments = {m_brdf_lut_image->image_view()};
@@ -91,7 +91,6 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
             vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorsetlayout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create descriptor set layout (vkCreateDescriptorSetLayout)!", result);
-        return;
     }
 
     // Pipeline layout
@@ -155,9 +154,11 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     VkPipelineVertexInputStateCreateInfo emptyInputStateCI{};
     emptyInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-    wrapper::Shader lut_generator_vertex(device, VK_SHADER_STAGE_VERTEX_BIT, "brdf_lut_vertex", "genbrdflut.vert.spv");
+    wrapper::Shader lut_generator_vertex(device, VK_SHADER_STAGE_VERTEX_BIT, "brdf_lut_vertex",
+                                         "shaders/brdflut/genbrdflut.vert.spv");
+
     wrapper::Shader lut_generator_fragment(device, VK_SHADER_STAGE_FRAGMENT_BIT, "brdf_lut_fragment",
-                                           "genbrdflut.frag.spv");
+                                           "shaders/brdflut/genbrdflut.frag.spv");
 
     std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
@@ -171,47 +172,46 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     shader_stages[1].stage = lut_generator_fragment.type();
     shader_stages[1].pName = lut_generator_fragment.entry_point().c_str();
 
-    VkGraphicsPipelineCreateInfo pipelineCI{};
-    pipelineCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineCI.layout = pipelinelayout;
-    pipelineCI.renderPass = renderpass;
-    pipelineCI.pInputAssemblyState = &inputAssemblyStateCI;
-    pipelineCI.pVertexInputState = &emptyInputStateCI;
-    pipelineCI.pRasterizationState = &rasterizationStateCI;
-    pipelineCI.pColorBlendState = &colorBlendStateCI;
-    pipelineCI.pMultisampleState = &multisampleStateCI;
-    pipelineCI.pViewportState = &viewportStateCI;
-    pipelineCI.pDepthStencilState = &depthStencilStateCI;
-    pipelineCI.pDynamicState = &dynamicStateCI;
-    pipelineCI.stageCount = 2;
-    pipelineCI.pStages = shader_stages.data();
+    VkGraphicsPipelineCreateInfo pipeline_ci{};
+    pipeline_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_ci.layout = pipelinelayout;
+    pipeline_ci.renderPass = renderpass;
+    pipeline_ci.pInputAssemblyState = &inputAssemblyStateCI;
+    pipeline_ci.pVertexInputState = &emptyInputStateCI;
+    pipeline_ci.pRasterizationState = &rasterizationStateCI;
+    pipeline_ci.pColorBlendState = &colorBlendStateCI;
+    pipeline_ci.pMultisampleState = &multisampleStateCI;
+    pipeline_ci.pViewportState = &viewportStateCI;
+    pipeline_ci.pDepthStencilState = &depthStencilStateCI;
+    pipeline_ci.pDynamicState = &dynamicStateCI;
+    pipeline_ci.stageCount = 2;
+    pipeline_ci.pStages = shader_stages.data();
 
     VkPipeline pipeline;
 
-    if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipelineCI, nullptr, &pipeline);
+    if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &pipeline);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
-        return;
     }
 
     // Render
-    VkClearValue clearValues[1];
-    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    VkClearValue clear_values[1];
+    clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-    VkRenderPassBeginInfo renderPassBeginInfo{};
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.renderPass = renderpass;
-    renderPassBeginInfo.renderArea.extent = image_extent;
-    renderPassBeginInfo.clearValueCount = 1;
-    renderPassBeginInfo.pClearValues = clearValues;
-    renderPassBeginInfo.framebuffer = m_framebuffer->framebuffer();
+    VkRenderPassBeginInfo renderpass_bi{};
+    renderpass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderpass_bi.renderPass = renderpass;
+    renderpass_bi.renderArea.extent = image_extent;
+    renderpass_bi.clearValueCount = 1;
+    renderpass_bi.pClearValues = clear_values;
+    renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
     wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(), device.graphics_queue_family_index());
 
     cmd_buf.create_command_buffer();
     cmd_buf.start_recording();
 
-    vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
     VkViewport viewport{};
     viewport.width = static_cast<float>(image_extent.width);
