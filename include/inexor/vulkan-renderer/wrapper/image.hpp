@@ -107,7 +107,7 @@ public:
     /// @param aspect_mask The aspect mask of the image view
     /// @param name The internal debug marker name of the image
     /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
-    Image::Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
+    Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
                  VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_mask, std::string name);
 
     Image(const Image &) = delete;

@@ -11,9 +11,6 @@
 #include <glm/mat4x4.hpp>
 #include <spdlog/spdlog.h>
 
-// TODO: In which header is this defined for me?
-#define M_PI 3.141592653589793f /* pi */
-
 #include <math.h>
 #include <vector>
 

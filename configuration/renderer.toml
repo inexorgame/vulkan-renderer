@@ -18,15 +18,15 @@ name = "Inexor-Vulkan-Renderer"
 [shaders]
 [shaders.gltf.vertex]
 files = [
-	"shaders/gltf/filtercube.vert.spv",
+	"shaders/cubemap/filtercube.vert.spv",
 	"shaders/gltf/pbr.vert.spv"
 ]
 
 [shaders.gltf.fragment]
 files = [
-	"shaders/gltf/irradiancecube.frag.spv",
+	"shaders/cubemap/irradiancecube.frag.spv",
 	"shaders/gltf/pbr_khr.frag.spv",
-	"shaders/gltf/prefilterenvmap.frag.spv",
+	"shaders/cubemap/prefilterenvmap.frag.spv",
 ]
 
 [shaders.brdflut.vertex]
