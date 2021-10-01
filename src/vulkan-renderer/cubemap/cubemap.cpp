@@ -11,7 +11,9 @@
 #include <glm/mat4x4.hpp>
 #include <spdlog/spdlog.h>
 
-#include <math.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include <vector>
 
 namespace inexor::vulkan_renderer::cubemap {
