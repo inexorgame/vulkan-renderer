@@ -72,10 +72,6 @@ void GpuTexture::create_texture(const void *texture_data, const std::size_t text
 
     StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
-    VkExtent2D extent;
-    extent.width = m_texture_width;
-    extent.height = m_texture_height;
-
     m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format, m_texture_width, m_texture_height,
                                               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                               VK_IMAGE_ASPECT_COLOR_BIT, "texture");
@@ -83,79 +79,15 @@ void GpuTexture::create_texture(const void *texture_data, const std::size_t text
     m_copy_command_buffer.create_command_buffer();
     m_copy_command_buffer.start_recording();
 
-    spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL.", m_name);
+    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    transition_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-    VkBufferImageCopy buffer_image_region{};
-    buffer_image_region.bufferOffset = 0;
-    buffer_image_region.bufferRowLength = 0;
-    buffer_image_region.bufferImageHeight = 0;
-    buffer_image_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    buffer_image_region.imageSubresource.mipLevel = 0;
-    buffer_image_region.imageSubresource.baseArrayLayer = 0;
-    buffer_image_region.imageSubresource.layerCount = 1;
-    buffer_image_region.imageOffset = {0, 0, 0};
-    buffer_image_region.imageExtent = {static_cast<uint32_t>(m_texture_width), static_cast<uint32_t>(m_texture_height),
-                                       1};
-
-    vkCmdCopyBufferToImage(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
-                           m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_image_region);
-
-    spdlog::debug("Transitioning image layout of texture {} to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.", m_name);
+    m_texture_image->copy_from_buffer(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
+                                      m_texture_width, m_texture_height);
 
     m_copy_command_buffer.end_recording_and_submit_command();
 
-    transition_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-}
-
-void GpuTexture::transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout) {
-
-    auto barrier = make_info<VkImageMemoryBarrier>();
-    barrier.oldLayout = old_layout;
-    barrier.newLayout = new_layout;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-
-    VkPipelineStageFlags source_stage = 0;
-    VkPipelineStageFlags destination_stage = 0;
-
-    if (VK_IMAGE_LAYOUT_UNDEFINED == old_layout && VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == new_layout) {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    } else if (VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == old_layout &&
-               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL == new_layout) {
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    } else {
-        throw std::runtime_error("Error: unsupported layout transition!");
-    }
-
-    spdlog::debug("Recording pipeline barrier for image layer transition");
-
-    OnceCommandBuffer image_transition_change(m_device, m_device.graphics_queue(),
-                                              m_device.graphics_queue_family_index());
-
-    image_transition_change.create_command_buffer();
-    image_transition_change.start_recording();
-
-    vkCmdPipelineBarrier(image_transition_change.command_buffer(), source_stage, destination_stage, 0, 0, nullptr, 0,
-                         nullptr, 1, &barrier);
-
-    image_transition_change.end_recording_and_submit_command();
+    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void GpuTexture::create_texture_sampler(const gltf::TextureSampler &sampler) {

@@ -108,7 +108,7 @@ public:
     /// @param name The internal debug marker name of the image
     /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
     Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
-                 VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_mask, std::string name);
+          VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_mask, std::string name);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
@@ -117,6 +117,51 @@ public:
 
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) = delete;
+
+    /// @brief
+    /// @param old_layout
+    /// @param new_layout
+    void transition_image_layout(VkImageLayout old_layout, VkImageLayout new_layout);
+
+    /// @brief
+    /// @param command_buffer
+    /// @param old_layout
+    /// @param new_layout
+    /// @param src_access_mask
+    /// @param dest_access_mask
+    void place_pipeline_barrier(VkCommandBuffer command_buffer, VkImageLayout old_layout, VkImageLayout new_layout,
+                                VkAccessFlags src_access_mask, VkAccessFlags dest_access_mask,
+                                VkImageSubresourceRange subresource_range);
+
+    /// @brief
+    /// @param command_buffer
+    /// @param old_layout
+    /// @param new_layout
+    /// @param src_access_mask
+    /// @param dest_access_mask
+    void place_pipeline_barrier(VkCommandBuffer command_buffer, VkImageLayout old_layout, VkImageLayout new_layout,
+                                VkAccessFlags src_access_mask, VkAccessFlags dest_access_mask);
+
+    /// @brief
+    /// @param command_buffer
+    /// @param buffer
+    /// @param width
+    /// @param height
+    void copy_from_buffer(VkCommandBuffer command_buffer, VkBuffer src_buffer, std::uint32_t width,
+                          std::uint32_t height);
+
+    /// @brief
+    /// @param command_buffer
+    /// @param target_image
+    /// @param width
+    /// @param height
+    /// @param miplevel_count
+    /// @param layer_count
+    /// @param base_array_layer
+    /// @param mip_level
+    void copy_from_image(VkCommandBuffer command_buffer, VkImage src_image, std::uint32_t width, std::uint32_t height,
+                         std::uint32_t miplevel_count, std::uint32_t layer_count, std::uint32_t base_array_layer,
+                         std::uint32_t mip_level);
 
     [[nodiscard]] VkFormat image_format() const {
         return m_format;

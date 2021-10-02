@@ -14,6 +14,11 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+// TODO: Remove this
+#ifndef M_PI
+#define M_PI 3.1415926535897932
+#endif
+
 #include <vector>
 
 namespace inexor::vulkan_renderer::cubemap {
@@ -118,33 +123,18 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             throw VulkanException("Failed to create renderpass for cubemap generation (vkCreateRenderPass)!", result);
         }
 
-        struct Offscreen {
-            VkImage image;
-            VkImageView view;
-            VkDeviceMemory memory;
-            VkFramebuffer framebuffer;
-        } offscreen;
+        m_offscreen_framebuffer = std::unique_ptr<wrapper::OffscreenFramebuffer>();
 
         // Create offscreen framebuffer
         {
-            m_offscreen_framebuffer = std::unique_ptr<wrapper::OffscreenFramebuffer>();
-
             wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(), device.graphics_queue_family_index());
 
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
-            VkImageMemoryBarrier imageMemoryBarrier{};
-            imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            imageMemoryBarrier.image = offscreen.image;
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            imageMemoryBarrier.srcAccessMask = 0;
-            imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-
-            vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                 VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+            m_offscreen_framebuffer->place_pipeline_barrier(cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
+                                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
             cmd_buf.end_recording_and_submit_command();
         }
@@ -366,7 +356,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         VkRenderPassBeginInfo renderPassBeginInfo{};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassBeginInfo.renderPass = renderpass;
-        renderPassBeginInfo.framebuffer = offscreen.framebuffer;
+        renderPassBeginInfo.framebuffer = m_offscreen_framebuffer->framebuffer();
         renderPassBeginInfo.renderArea.extent.width = dim;
         renderPassBeginInfo.renderArea.extent.height = dim;
         renderPassBeginInfo.clearValueCount = 1;
@@ -393,11 +383,11 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         scissor.extent.width = dim;
         scissor.extent.height = dim;
 
-        VkImageSubresourceRange subresourceRange{};
-        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subresourceRange.baseMipLevel = 0;
-        subresourceRange.levelCount = mipmap_count;
-        subresourceRange.layerCount = 6;
+        VkImageSubresourceRange subres_range{};
+        subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subres_range.baseMipLevel = 0;
+        subres_range.levelCount = mipmap_count;
+        subres_range.layerCount = 6;
 
         // Change image layout for all cubemap faces to transfer destination
         {
@@ -406,17 +396,9 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
-            VkImageMemoryBarrier imageMemoryBarrier{};
-            imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            imageMemoryBarrier.image = m_cubemap_image->image();
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            imageMemoryBarrier.srcAccessMask = 0;
-            imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            imageMemoryBarrier.subresourceRange = subresourceRange;
-
-            vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                 VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+            m_cubemap_image->place_pipeline_barrier(cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0,
+                                                    VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
 
             cmd_buf.end_recording_and_submit_command();
         }
@@ -468,60 +450,10 @@ Cubemap::Cubemap(const wrapper::Device &device) {
 
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
-                VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-                subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                subresourceRange.baseMipLevel = 0;
-                subresourceRange.levelCount = mipmap_count;
-                subresourceRange.layerCount = 6;
-
-                {
-                    VkImageMemoryBarrier imageMemoryBarrier{};
-                    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                    imageMemoryBarrier.image = offscreen.image;
-                    imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-                    imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                    imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-                    imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-
-                    vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1,
-                                         &imageMemoryBarrier);
-                }
-
-                // Copy region for transfer from framebuffer to cube face
-                VkImageCopy copyRegion{};
-                copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                copyRegion.srcSubresource.baseArrayLayer = 0;
-                copyRegion.srcSubresource.mipLevel = 0;
-                copyRegion.srcSubresource.layerCount = 1;
-                copyRegion.srcOffset = {0, 0, 0};
-                copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                copyRegion.dstSubresource.baseArrayLayer = f;
-                copyRegion.dstSubresource.mipLevel = m;
-                copyRegion.dstSubresource.layerCount = 1;
-                copyRegion.dstOffset = {0, 0, 0};
-                copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
-                copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
-                copyRegion.extent.depth = 1;
-
-                vkCmdCopyImage(cmd_buf.command_buffer(), offscreen.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               m_cubemap_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-                {
-                    VkImageMemoryBarrier imageMemoryBarrier{};
-                    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                    imageMemoryBarrier.image = offscreen.image;
-                    imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-                    imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-                    imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                    imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-
-                    vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1,
-                                         &imageMemoryBarrier);
-                }
+                // TODO: Is the copy order correct?
+                m_cubemap_image->copy_from_image(cmd_buf.command_buffer(), m_offscreen_framebuffer->image(),
+                                                 static_cast<std::uint32_t>(viewport.width),
+                                                 static_cast<std::uint32_t>(viewport.height), 1, 1, f, m);
 
                 cmd_buf.end_recording_and_submit_command();
             }
@@ -533,17 +465,10 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
-            VkImageMemoryBarrier imageMemoryBarrier{};
-            imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            imageMemoryBarrier.image = m_cubemap_image->image();
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            imageMemoryBarrier.dstAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
-            imageMemoryBarrier.subresourceRange = subresourceRange;
-
-            vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                 VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+            m_cubemap_image->place_pipeline_barrier(
+                cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
 
             cmd_buf.end_recording_and_submit_command();
         }
