@@ -29,18 +29,16 @@ class GpuTexture {
     int m_texture_width{0};
     int m_texture_height{0};
     int m_texture_channels{0};
-    int m_mip_levels{0};
+    int m_miplevel_count{0};
+    VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
     std::string m_name;
     const Device &m_device;
 
-    // TODO: Expose this as parameter and support other texture formats as well?
-    const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
-
     /// @brief Create the texture.
     /// @param texture_data A pointer to the texture data.
     /// @param texture_size The size of the texture.
-    void create_texture(const void *texture_data, std::size_t texture_size);
+    void create_image_from_data(const void *texture_data, std::size_t texture_size);
 
     /// @brief Transform the image layout.
     /// @param image The image.
@@ -48,46 +46,40 @@ class GpuTexture {
     /// @param new_layout The new image layout.
     void transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 
-    /// @brief Create the texture sampler.
-    void create_texture_sampler();
+    /// @brief Create the default texture sampler.
+    void create_default_texture_sampler();
 
-    /// @brief Create the texture sampler.
+    ///
+    void create_texture_sampler(VkSamplerCreateInfo sampler_ci);
+
+    ///
     void create_texture_sampler(const gltf::TextureSampler &sampler);
 
 public:
     /// @brief Construct a texture from a file.
-    /// @param device The const reference to a device RAII wrapper instance
+    /// @param device A const reference to a device RAII wrapper instance
     /// @param cpu_texture A const reference to the CPU texture
     GpuTexture(const Device &device, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a file.
-    /// @param device The const reference to a device RAII wrapper instance.
-    /// @param sampler
-    /// @param cpu_texture
+    /// @param device A const reference to a device RAII wrapper instance
     GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a block of memory.
-    /// @param device The const reference to a device RAII wrapper instance.
-    /// @param texture_data A pointer to the texture data.
-    /// @param texture_width The width of the texture.
-    /// @param texture_height The height of the texture.
-    /// @param texture_size The size of the texture.
-    /// @param name The internal debug marker name of the texture.
-    GpuTexture(const Device &device, const void *data, std::size_t data_size, std::uint32_t texture_width,
-               std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
-               std::string name);
+    /// @param device A const reference to a device RAII wrapper instance
+    GpuTexture(const Device &device, const void *data, std::size_t data_size, std::uint32_t width, std::uint32_t height,
+               std::uint32_t channel_count, std::uint32_t miplevel_count, std::string name);
 
     /// @brief Construct a texture from a block of memory for a glTF2 model file texture.
-    /// @param device The const reference to a device RAII wrapper instance.
-    /// @param sampler The texture sampler for the glTF2 model.
-    /// @param texture_data A pointer to the texture data.
-    /// @param texture_width The width of the texture.
-    /// @param texture_height The height of the texture.
-    /// @param texture_size The size of the texture.
-    /// @param name The internal debug marker name of the texture.
+    /// @param device A const reference to a device RAII wrapper instance
     GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data, std::size_t data_size,
-               std::uint32_t texture_width, std::uint32_t texture_height, std::uint32_t texture_channels,
-               std::uint32_t mip_levels, std::string name);
+               std::uint32_t width, std::uint32_t height, std::uint32_t channel_count, std::uint32_t miplevel_count,
+               std::string name);
+
+    /// @brief
+    GpuTexture(const Device &device, VkImageCreateFlags image_create_flags, VkFormat format, std::uint32_t width,
+               std::uint32_t height, std::uint32_t miplevel_count, std::uint32_t array_layer_count,
+               VkImageUsageFlags image_usage, std::string name);
 
     GpuTexture(const GpuTexture &) = delete;
     GpuTexture(GpuTexture &&) noexcept;
@@ -102,6 +94,10 @@ public:
 
     [[nodiscard]] VkImage image() const {
         return m_texture_image->image();
+    }
+
+    [[nodiscard]] auto &image_wrapper() const {
+        return m_texture_image;
     }
 
     [[nodiscard]] VkImageView image_view() const {

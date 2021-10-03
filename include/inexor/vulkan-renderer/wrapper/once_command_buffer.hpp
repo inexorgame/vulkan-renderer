@@ -37,6 +37,11 @@ public:
     /// This is the reason we must specify the queue and queue family index in the constructor.
     OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index);
 
+    /// @brief A constructor which takes only the device wrapper as argument.
+    /// The queue and queue family index for data transfer will be determined using the device wrapper's methods.
+    /// @param device The const reference to a device RAII wrapper instance.
+    OnceCommandBuffer(const Device &device);
+
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;
 

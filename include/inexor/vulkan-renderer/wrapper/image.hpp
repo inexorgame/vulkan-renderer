@@ -39,76 +39,32 @@ public:
     Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, std::string name);
 
     /// @brief Call the constructor above, but expose most parameters to the programmer.
-    /// @param device The device wrapper
-    /// @param flags The image creation flags
-    /// @param image_type The type of the image
-    /// @param format The image format
-    /// @param width The width of the image in pixels
-    /// @param height The height of the image in pixels
-    /// @param miplevel_count The number of mip levels
-    /// @param layer_count The number of layers in the image
-    /// @param sample_count The number of samples per pixel
-    /// @param usage_flags The image usage flags
-    /// @param view_type The view type of the image view
-    /// @param view_components The component bits of the image view
-    /// @param aspect_mask The aspect mask of the image view
-    /// @param name The internal debug marker name of the image
-    /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
-    Image(const Device &device, VkImageCreateFlags flags, VkImageType image_type, VkFormat format, std::uint32_t width,
-          std::uint32_t height, std::uint32_t miplevel_count, std::uint32_t layer_count,
-          VkSampleCountFlagBits sample_count, VkImageUsageFlags usage_flags, VkImageViewType view_type,
-          VkComponentMapping view_components, VkImageAspectFlags aspect_mask, std::string name);
+    Image(const Device &device, VkImageCreateFlags image_create_flags, VkImageType image_type, VkFormat format,
+          std::uint32_t width, std::uint32_t height, std::uint32_t miplevel_count, std::uint32_t array_layer_count,
+          VkSampleCountFlagBits sample_count, VkImageUsageFlags image_usage_flags, VkImageViewType image_view_type,
+          VkComponentMapping view_components, VkImageAspectFlags image_aspect_flags, std::string name);
 
     /// @brief Call constructor #2, but don't expose ``view_components``.
-    /// @param device The device wrapper
-    /// @param flags The image creation flags
-    /// @param image_type The type of the image
-    /// @param format The image format
-    /// @param width The width of the image in pixels
-    /// @param height The height of the image in pixels
-    /// @param miplevel_count The number of mip levels
-    /// @param layer_count The number of layers in the image
-    /// @param sample_count The number of samples per pixel
-    /// @param usage_flags The image usage flags
-    /// @param view_type The view type of the image view
-    /// @param aspect_mask The aspect mask of the image view
-    /// @param name The internal debug marker name of the image
-    /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
-    Image(const Device &device, VkImageCreateFlags flags, VkImageType image_type, VkFormat format, std::uint32_t width,
-          std::uint32_t height, std::uint32_t miplevel_count, std::uint32_t layer_count,
-          VkSampleCountFlagBits sample_count, VkImageUsageFlags usage_flags, VkImageViewType view_type,
-          VkImageAspectFlags aspect_mask, std::string name);
+    Image(const Device &device, VkImageCreateFlags image_create_flags, VkImageType image_type, VkFormat format,
+          std::uint32_t width, std::uint32_t height, std::uint32_t miplevel_count, std::uint32_t array_layer_count,
+          VkSampleCountFlagBits sample_count, VkImageUsageFlags image_usage_flags, VkImageViewType image_view_type,
+          VkImageAspectFlags image_aspect_flags, std::string name);
 
     /// @brief Call constructor #2, but don't expose ``flags``.
-    /// @param device The device wrapper
-    /// @param image_type The type of the image
-    /// @param format The image format
-    /// @param width The width of the image in pixels
-    /// @param height The height of the image in pixels
-    /// @param miplevel_count The number of mip levels
-    /// @param layer_count The number of layers in the image
-    /// @param sample_count The number of samples per pixel
-    /// @param usage_flags The image usage flags
-    /// @param view_type The view type of the image view
-    /// @param aspect_mask The aspect mask of the image view
-    /// @param name The internal debug marker name of the image
-    /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
     Image(const Device &device, VkImageType image_type, VkFormat format, std::uint32_t width, std::uint32_t height,
-          std::uint32_t miplevel_count, std::uint32_t layer_count, VkSampleCountFlagBits sample_count,
-          VkImageUsageFlags usage_flags, VkImageViewType view_type, VkImageAspectFlags aspect_mask, std::string name);
+          std::uint32_t miplevel_count, std::uint32_t array_layer_count, VkSampleCountFlagBits sample_count_flags,
+          VkImageUsageFlags image_usage_flags, VkImageViewType image_view_type, VkImageAspectFlags image_aspect_flags,
+          std::string name);
 
     /// @brief Call constructor #2, but don't expose ``image_type``, ``miplevel_count``, ``layer_count``,
     /// ``sample_count``, and ``view_type``.
-    /// @param device The device wrapper
-    /// @param format The image format
-    /// @param width The width of the image in pixels
-    /// @param height The height of the image in pixels
-    /// @param usage_flags The image usage flags
-    /// @param aspect_mask The aspect mask of the image view
-    /// @param name The internal debug marker name of the image
-    /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
     Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
-          VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_mask, std::string name);
+          VkImageUsageFlags image_usage_flags, VkImageAspectFlags image_aspect_flags, std::string name);
+
+    ///
+    Image(const Device &device, VkImageCreateFlags image_create_flags, VkFormat format, std::uint32_t width,
+          std::uint32_t height, std::uint32_t miplevel_count, std::uint32_t array_layer_count,
+          VkSampleCountFlagBits sample_count, VkImageUsageFlags image_usage, std::string name);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;

@@ -11,6 +11,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/cubemap/cubemap.cpp
+    vulkan-renderer/cubemap/texture_cubemap.cpp
+    vulkan-renderer/cubemap/texture2d.cpp
 
     vulkan-renderer/gltf/gltf_bbox.cpp
     vulkan-renderer/gltf/gltf_gpu_data.cpp
@@ -32,7 +34,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/managers/shader_manager.cpp
     vulkan-renderer/managers/texture_manager.cpp
 
-    vulkan-renderer/pbr/brdf_lot.cpp
+    vulkan-renderer/pbr/brdf_lut.cpp
 
     vulkan-renderer/skybox/skybox_renderer.cpp
 

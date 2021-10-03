@@ -44,153 +44,84 @@ Cubemap::Cubemap(const wrapper::Device &device) {
 
         const VkExtent2D image_extent{dim, dim};
 
-        const std::uint32_t mipmap_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
+        const std::uint32_t miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
+        constexpr std::uint32_t array_layer_count = 6;
 
-        m_cubemap_image =
-            std::make_unique<wrapper::Image>(device, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, VK_IMAGE_TYPE_2D, format,
-                                             image_extent.width, image_extent.height, 1, 6, VK_SAMPLE_COUNT_1_BIT,
-                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                             VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT, "cubemap");
+        m_cubemap_texture = std::make_unique<wrapper::GpuTexture>(
+            device, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, format, image_extent.width, image_extent.height,
+            miplevel_count, array_layer_count, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, "cubemap");
 
-        // Sampler
-        VkSamplerCreateInfo sampler_ci{};
-        sampler_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        sampler_ci.magFilter = VK_FILTER_LINEAR;
-        sampler_ci.minFilter = VK_FILTER_LINEAR;
-        sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        sampler_ci.minLod = 0.0f;
-        sampler_ci.maxLod = static_cast<float>(mipmap_count);
-        sampler_ci.maxAnisotropy = 1.0f;
-        sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+        VkAttachmentDescription att_desc{};
+        att_desc.format = format;
+        att_desc.samples = VK_SAMPLE_COUNT_1_BIT;
+        att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        att_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentReference color_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
-        if (const auto result = vkCreateSampler(device.device(), &sampler_ci, nullptr, &m_sampler);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to create cubemap image sampler (vkCreateSampler)!", result);
-        }
+        VkSubpassDescription subpass_desc{};
+        subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass_desc.colorAttachmentCount = 1;
+        subpass_desc.pColorAttachments = &color_ref;
 
-        // FB, Att, RP, Pipe, etc.
-        VkAttachmentDescription attDesc{};
+        std::array<VkSubpassDependency, 2> deps;
+        deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+        deps[0].dstSubpass = 0;
+        deps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        deps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        deps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+        deps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        deps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-        // Color attachment
-        attDesc.format = format;
-        attDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        attDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        VkAttachmentReference colorReference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+        deps[1].srcSubpass = 0;
+        deps[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+        deps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        deps[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        deps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+        deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-        VkSubpassDescription subpassDescription{};
-        subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpassDescription.colorAttachmentCount = 1;
-        subpassDescription.pColorAttachments = &colorReference;
+        auto renderpass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
+        renderpass_ci.attachmentCount = 1;
+        renderpass_ci.pAttachments = &att_desc;
+        renderpass_ci.subpassCount = 1;
+        renderpass_ci.pSubpasses = &subpass_desc;
+        renderpass_ci.dependencyCount = static_cast<std::uint32_t>(deps.size());
+        renderpass_ci.pDependencies = deps.data();
 
-        // Use subpass dependencies for layout transitions
-        std::array<VkSubpassDependency, 2> dependencies;
-        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[0].dstSubpass = 0;
-        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-        dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-        dependencies[1].srcSubpass = 0;
-        dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-        dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-        // Renderpass
-        VkRenderPassCreateInfo renderPassCI{};
-        renderPassCI.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassCI.attachmentCount = 1;
-        renderPassCI.pAttachments = &attDesc;
-        renderPassCI.subpassCount = 1;
-        renderPassCI.pSubpasses = &subpassDescription;
-        renderPassCI.dependencyCount = 2;
-        renderPassCI.pDependencies = dependencies.data();
         VkRenderPass renderpass;
 
-        if (const auto result = vkCreateRenderPass(device.device(), &renderPassCI, nullptr, &renderpass);
+        if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &renderpass);
             result != VK_SUCCESS) {
             throw VulkanException("Failed to create renderpass for cubemap generation (vkCreateRenderPass)!", result);
         }
 
-        m_offscreen_framebuffer = std::unique_ptr<wrapper::OffscreenFramebuffer>();
+        m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
+            device, format, image_extent.width, image_extent.height, renderpass, "offscreen framebuffer");
 
-        // Create offscreen framebuffer
         {
-            wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(), device.graphics_queue_family_index());
+            wrapper::OnceCommandBuffer cmd_buf(device);
 
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
-            m_offscreen_framebuffer->place_pipeline_barrier(cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED,
-                                                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
-                                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+            m_offscreen_framebuffer->m_image->place_pipeline_barrier(
+                cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
             cmd_buf.end_recording_and_submit_command();
         }
 
-        // Descriptors
-        VkDescriptorSetLayout descriptorsetlayout;
-        VkDescriptorSetLayoutBinding setLayoutBinding = {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
-                                                         VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
+        const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
 
-        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-        descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorSetLayoutCI.pBindings = &setLayoutBinding;
-        descriptorSetLayoutCI.bindingCount = 1;
+        m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "gltf");
 
-        if (const auto result =
-                vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorsetlayout);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to create descriptor set layout (vkCreateDescriptorSetLayout)!", result);
-        }
+        wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
-        // Descriptor Pool
-        VkDescriptorPoolSize poolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
-        VkDescriptorPoolCreateInfo descriptorPoolCI{};
-        descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptorPoolCI.poolSizeCount = 1;
-        descriptorPoolCI.pPoolSizes = &poolSize;
-        descriptorPoolCI.maxSets = 2;
-        VkDescriptorPool descriptorpool;
-
-        if (const auto result = vkCreateDescriptorPool(device.device(), &descriptorPoolCI, nullptr, &descriptorpool);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to create descriptor pool (vkCreateDescriptorPool)!", result);
-        }
-
-        // Descriptor sets
-        VkDescriptorSet descriptorset;
-        VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-        descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        descriptorSetAllocInfo.descriptorPool = descriptorpool;
-        descriptorSetAllocInfo.pSetLayouts = &descriptorsetlayout;
-        descriptorSetAllocInfo.descriptorSetCount = 1;
-
-        if (const auto result = vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &descriptorset);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to allocate descriptor sets (vkAllocateDescriptorSets)!", result);
-        }
-
-        VkWriteDescriptorSet writeDescriptorSet{};
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.dstSet = descriptorset;
-        writeDescriptorSet.dstBinding = 0;
-        // writeDescriptorSet.pImageInfo = ?;
-
-        vkUpdateDescriptorSets(device.device(), 1, &writeDescriptorSet, 0, nullptr);
+        m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("octree");
 
         struct PushBlockIrradiance {
             glm::mat4 mvp;
@@ -204,8 +135,8 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             uint32_t numSamples = 32u;
         } pushBlockPrefilterEnv;
 
-        // Pipeline layout
         VkPipelineLayout pipelinelayout;
+
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
@@ -218,62 +149,54 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             break;
         };
 
-        VkPipelineLayoutCreateInfo pipelineLayoutCI{};
-        pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCI.setLayoutCount = 1;
-        pipelineLayoutCI.pSetLayouts = &descriptorsetlayout;
-        pipelineLayoutCI.pushConstantRangeCount = 1;
-        pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
+        auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
+        pipeline_layout_ci.setLayoutCount = 1;
+        pipeline_layout_ci.pSetLayouts = &m_descriptor->descriptor_set_layout();
+        pipeline_layout_ci.pushConstantRangeCount = 1;
+        pipeline_layout_ci.pPushConstantRanges = &pushConstantRange;
 
-        if (const auto result = vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelinelayout);
+        if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipelinelayout);
             result != VK_SUCCESS) {
             throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
         }
 
-        // Pipeline
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI{};
-        inputAssemblyStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssemblyStateCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
+        input_assembly_sci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-        VkPipelineRasterizationStateCreateInfo rasterizationStateCI{};
-        rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
-        rasterizationStateCI.cullMode = VK_CULL_MODE_NONE;
-        rasterizationStateCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-        rasterizationStateCI.lineWidth = 1.0f;
+        auto pipeline_rast_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
+        pipeline_rast_sci.polygonMode = VK_POLYGON_MODE_FILL;
+        pipeline_rast_sci.cullMode = VK_CULL_MODE_NONE;
+        pipeline_rast_sci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        pipeline_rast_sci.lineWidth = 1.0f;
 
-        VkPipelineColorBlendAttachmentState blendAttachmentState{};
-        blendAttachmentState.colorWriteMask =
+        VkPipelineColorBlendAttachmentState blend_att_state{};
+        blend_att_state.colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        blendAttachmentState.blendEnable = VK_FALSE;
+        blend_att_state.blendEnable = VK_FALSE;
 
-        VkPipelineColorBlendStateCreateInfo colorBlendStateCI{};
-        colorBlendStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        colorBlendStateCI.attachmentCount = 1;
-        colorBlendStateCI.pAttachments = &blendAttachmentState;
+        auto color_blend_sci = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
+        color_blend_sci.attachmentCount = 1;
+        color_blend_sci.pAttachments = &blend_att_state;
 
-        VkPipelineDepthStencilStateCreateInfo depthStencilStateCI{};
-        depthStencilStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depthStencilStateCI.depthTestEnable = VK_FALSE;
-        depthStencilStateCI.depthWriteEnable = VK_FALSE;
-        depthStencilStateCI.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-        depthStencilStateCI.front = depthStencilStateCI.back;
-        depthStencilStateCI.back.compareOp = VK_COMPARE_OP_ALWAYS;
+        auto depth_stencil_sci = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>();
+        depth_stencil_sci.depthTestEnable = VK_FALSE;
+        depth_stencil_sci.depthWriteEnable = VK_FALSE;
+        depth_stencil_sci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        depth_stencil_sci.front = depth_stencil_sci.back;
+        depth_stencil_sci.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
-        VkPipelineViewportStateCreateInfo viewportStateCI{};
-        viewportStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        viewportStateCI.viewportCount = 1;
-        viewportStateCI.scissorCount = 1;
+        auto viewport_sci = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
+        viewport_sci.viewportCount = 1;
+        viewport_sci.scissorCount = 1;
 
-        VkPipelineMultisampleStateCreateInfo multisampleStateCI{};
-        multisampleStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        multisampleStateCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
+        multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
         std::vector<VkDynamicState> dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-        VkPipelineDynamicStateCreateInfo dynamicStateCI{};
-        dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamicStateCI.pDynamicStates = dynamicStateEnables.data();
-        dynamicStateCI.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
+
+        auto dynamic_state_ci = wrapper::make_info<VkPipelineDynamicStateCreateInfo>();
+        dynamic_state_ci.pDynamicStates = dynamicStateEnables.data();
+        dynamic_state_ci.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
 
         // TODO: Use vertex structure from other code part
         struct CubemapVertex {
@@ -285,13 +208,11 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             glm::vec4 weight0;
         };
 
-        // Vertex input state
         VkVertexInputBindingDescription vertexInputBinding = {0, sizeof(CubemapVertex), VK_VERTEX_INPUT_RATE_VERTEX};
 
         VkVertexInputAttributeDescription vertexInputAttribute = {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
 
-        VkPipelineVertexInputStateCreateInfo vertexInputStateCI{};
-        vertexInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        auto vertexInputStateCI = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
         vertexInputStateCI.vertexBindingDescriptionCount = 1;
         vertexInputStateCI.pVertexBindingDescriptions = &vertexInputBinding;
         vertexInputStateCI.vertexAttributeDescriptionCount = 1;
@@ -313,39 +234,37 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         shader_stages[0].stage = filtercube.type();
         shader_stages[0].pName = filtercube.entry_point().c_str();
 
+        shader_stages[1] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
+        shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+
         switch (target) {
         case IRRADIANCE:
-            shader_stages[1] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
             shader_stages[1].module = irradiancecube.module();
-            shader_stages[1].stage = irradiancecube.type();
             shader_stages[1].pName = irradiancecube.entry_point().c_str();
             break;
         case PREFILTEREDENV:
-            shader_stages[1] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
             shader_stages[1].module = prefilterenvmap.module();
-            shader_stages[1].stage = prefilterenvmap.type();
             shader_stages[1].pName = prefilterenvmap.entry_point().c_str();
             break;
         };
-        VkGraphicsPipelineCreateInfo pipelineCI{};
-        pipelineCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineCI.layout = pipelinelayout;
-        pipelineCI.renderPass = renderpass;
-        pipelineCI.pInputAssemblyState = &inputAssemblyStateCI;
-        pipelineCI.pVertexInputState = &vertexInputStateCI;
-        pipelineCI.pRasterizationState = &rasterizationStateCI;
-        pipelineCI.pColorBlendState = &colorBlendStateCI;
-        pipelineCI.pMultisampleState = &multisampleStateCI;
-        pipelineCI.pViewportState = &viewportStateCI;
-        pipelineCI.pDepthStencilState = &depthStencilStateCI;
-        pipelineCI.pDynamicState = &dynamicStateCI;
-        pipelineCI.stageCount = 2;
-        pipelineCI.pStages = shader_stages.data();
-        pipelineCI.renderPass = renderpass;
+
+        auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
+        pipeline_ci.layout = pipelinelayout;
+        pipeline_ci.renderPass = renderpass;
+        pipeline_ci.pInputAssemblyState = &input_assembly_sci;
+        pipeline_ci.pVertexInputState = &vertexInputStateCI;
+        pipeline_ci.pRasterizationState = &pipeline_rast_sci;
+        pipeline_ci.pColorBlendState = &color_blend_sci;
+        pipeline_ci.pMultisampleState = &multisample_sci;
+        pipeline_ci.pViewportState = &viewport_sci;
+        pipeline_ci.pDepthStencilState = &depth_stencil_sci;
+        pipeline_ci.pDynamicState = &dynamic_state_ci;
+        pipeline_ci.stageCount = static_cast<std::uint32_t>(shader_stages.size());
+        pipeline_ci.pStages = shader_stages.data();
 
         VkPipeline pipeline;
-        if (const auto result = vkCreateGraphicsPipelines(device.device(), /*pipelineCache*/ nullptr, 1, &pipelineCI,
-                                                          nullptr, &pipeline);
+        if (const auto result =
+                vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &pipeline);
             result != VK_SUCCESS) {
             throw VulkanException("Failed to create graphics pipeline (vkCreateGraphicsPipelines)!", result);
         }
@@ -353,14 +272,13 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         VkClearValue clearValues[1];
         clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
 
-        VkRenderPassBeginInfo renderPassBeginInfo{};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = renderpass;
-        renderPassBeginInfo.framebuffer = m_offscreen_framebuffer->framebuffer();
-        renderPassBeginInfo.renderArea.extent.width = dim;
-        renderPassBeginInfo.renderArea.extent.height = dim;
-        renderPassBeginInfo.clearValueCount = 1;
-        renderPassBeginInfo.pClearValues = clearValues;
+        auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
+        renderpass_bi.renderPass = renderpass;
+        renderpass_bi.framebuffer = m_offscreen_framebuffer->framebuffer();
+        renderpass_bi.renderArea.extent.width = dim;
+        renderpass_bi.renderArea.extent.height = dim;
+        renderpass_bi.clearValueCount = 1;
+        renderpass_bi.pClearValues = clearValues;
 
         const std::vector<glm::mat4> matrices = {
             glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
@@ -383,56 +301,59 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         scissor.extent.width = dim;
         scissor.extent.height = dim;
 
+        // Each cube has 6 faces.
+        constexpr std::uint32_t cube_face_count = 6;
+
         VkImageSubresourceRange subres_range{};
         subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         subres_range.baseMipLevel = 0;
-        subres_range.levelCount = mipmap_count;
-        subres_range.layerCount = 6;
+        subres_range.levelCount = miplevel_count;
+        subres_range.layerCount = cube_face_count;
 
-        // Change image layout for all cubemap faces to transfer destination
         {
-            wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(), device.graphics_queue_family_index());
+            wrapper::OnceCommandBuffer cmd_buf(device);
 
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
-            m_cubemap_image->place_pipeline_barrier(cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED,
-                                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0,
-                                                    VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
+            m_cubemap_texture->image_wrapper()->place_pipeline_barrier(
+                cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0,
+                VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
 
             cmd_buf.end_recording_and_submit_command();
         }
 
-        for (std::uint32_t m = 0; m < mipmap_count; m++) {
-            for (std::uint32_t f = 0; f < 6; f++) {
+        // TODO: Implement graphics pipeline builder
+        // TODO: Split up in setup of pipeline and rendering of cubemaps
 
-                wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(),
-                                                   device.graphics_queue_family_index());
+        for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
+            for (std::uint32_t face = 0; face < cube_face_count; face++) {
+
+                wrapper::OnceCommandBuffer cmd_buf(device);
 
                 cmd_buf.create_command_buffer();
                 cmd_buf.start_recording();
 
-                viewport.width = static_cast<float>(dim * std::pow(0.5f, m));
-                viewport.height = static_cast<float>(dim * std::pow(0.5f, m));
+                viewport.width = static_cast<float>(dim * std::pow(0.5f, mip_level));
+                viewport.height = static_cast<float>(dim * std::pow(0.5f, mip_level));
 
                 vkCmdSetViewport(cmd_buf.command_buffer(), 0, 1, &viewport);
                 vkCmdSetScissor(cmd_buf.command_buffer(), 0, 1, &scissor);
+                vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
-                // Render scene from cube face's point of view
-                vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-                // Pass parameters for current pass using a push constant block
                 switch (target) {
                 case IRRADIANCE:
-                    pushBlockIrradiance.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
+                    pushBlockIrradiance.mvp =
+                        glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
                     vkCmdPushConstants(cmd_buf.command_buffer(), pipelinelayout,
                                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                        sizeof(PushBlockIrradiance), &pushBlockIrradiance);
                     break;
                 case PREFILTEREDENV:
-                    pushBlockPrefilterEnv.mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
-                    pushBlockPrefilterEnv.roughness = (float)m / (float)(mipmap_count - 1);
+                    pushBlockPrefilterEnv.mvp =
+                        glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                    pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
 
                     vkCmdPushConstants(cmd_buf.command_buffer(), pipelinelayout,
                                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
@@ -441,31 +362,34 @@ Cubemap::Cubemap(const wrapper::Device &device) {
                 };
 
                 vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
                 vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelinelayout, 0, 1,
-                                        &descriptorset, 0, nullptr);
+                                        &m_descriptor->descriptor_set(), 0, nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 
-                // models.skybox.draw(cmdBuf);
+                // TODO: draw skybox!
+
+                // TODO: hardcode skybox vertices into code?
 
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
-                // TODO: Is the copy order correct?
-                m_cubemap_image->copy_from_image(cmd_buf.command_buffer(), m_offscreen_framebuffer->image(),
-                                                 static_cast<std::uint32_t>(viewport.width),
-                                                 static_cast<std::uint32_t>(viewport.height), 1, 1, f, m);
+                m_cubemap_texture->image_wrapper()->copy_from_image(
+                    cmd_buf.command_buffer(), m_offscreen_framebuffer->image(),
+                    static_cast<std::uint32_t>(viewport.width), static_cast<std::uint32_t>(viewport.height), 1, 1, face,
+                    mip_level);
 
                 cmd_buf.end_recording_and_submit_command();
             }
         }
 
         {
-            wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(), device.graphics_queue_family_index());
+            wrapper::OnceCommandBuffer cmd_buf(device);
 
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
-            m_cubemap_image->place_pipeline_barrier(
+            m_cubemap_texture->image_wrapper()->place_pipeline_barrier(
                 cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
                 VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
@@ -473,19 +397,19 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             cmd_buf.end_recording_and_submit_command();
         }
 
+        // TODO: Destroy pipeline and other resources
+
         // cubemap.descriptor.imageView = cubemap.view;
         // cubemap.descriptor.sampler = cubemap.sampler;
         // cubemap.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        // cubemap.device = vulkanDevice;
-
         /*
         switch (target) {
         case IRRADIANCE:
-            textures.irradianceCube = cubemap;
+            m_textures.irradiance = m_cubemap_texture;
             break;
         case PREFILTEREDENV:
-            textures.prefilteredCube = cubemap;
-            shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(mipmap_count);
+            m_textures.prefiltered = m_cubemap_texture;
+            shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(miplevel_count);
             break;
         };
         */

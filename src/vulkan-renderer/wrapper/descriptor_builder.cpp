@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -62,8 +63,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
 
     m_descriptor_image_infos.push_back(image_info);
 
-    VkWriteDescriptorSet descriptor_write{};
-    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    auto descriptor_write = make_info<VkWriteDescriptorSet>();
     descriptor_write.dstSet = nullptr;
     descriptor_write.dstBinding = 0;
     descriptor_write.dstArrayElement = 0;

@@ -50,6 +50,7 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
     assert(device.device());
     assert(device.physical_device());
     assert(device.allocator());
+    assert(!name.empty());
 
     create_image(image_ci);
     create_image_view(image_view_ci);
@@ -57,16 +58,16 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
 
 Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImageType image_type, const VkFormat format,
              const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
-             const std::uint32_t layer_count, const VkSampleCountFlagBits sample_count,
-             const VkImageUsageFlags usage_flags, const VkImageViewType view_type,
-             const VkComponentMapping view_components, const VkImageAspectFlags aspect_mask, std::string name)
+             const std::uint32_t array_layer_count, const VkSampleCountFlagBits sample_count_flags,
+             const VkImageUsageFlags image_usage_flags, const VkImageViewType image_view_type,
+             const VkComponentMapping view_components, const VkImageAspectFlags image_aspect_flags, std::string name)
 
     : m_device(device), m_format(format), m_name(std::move(name)) {
 
     assert(device.device());
     assert(device.physical_device());
     assert(device.allocator());
-    assert(layer_count > 0);
+    assert(array_layer_count > 0);
     assert(miplevel_count > 0);
     assert(width > 0);
     assert(height > 0);
@@ -80,10 +81,10 @@ Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImage
     image_ci.extent.height = height;
     image_ci.extent.depth = 1;
     image_ci.mipLevels = miplevel_count;
-    image_ci.arrayLayers = layer_count;
-    image_ci.samples = sample_count;
+    image_ci.arrayLayers = array_layer_count;
+    image_ci.samples = sample_count_flags;
     image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.usage = usage_flags;
+    image_ci.usage = image_usage_flags;
     image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -91,14 +92,14 @@ Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImage
 
     auto image_view_ci = make_info<VkImageViewCreateInfo>();
     image_view_ci.image = m_image;
-    image_view_ci.viewType = view_type;
+    image_view_ci.viewType = image_view_type;
     image_view_ci.format = format;
     image_view_ci.components = view_components;
-    image_view_ci.subresourceRange.aspectMask = aspect_mask;
+    image_view_ci.subresourceRange.aspectMask = image_aspect_flags;
     image_view_ci.subresourceRange.baseMipLevel = 0;
     image_view_ci.subresourceRange.levelCount = miplevel_count;
     image_view_ci.subresourceRange.baseArrayLayer = 0;
-    image_view_ci.subresourceRange.layerCount = layer_count;
+    image_view_ci.subresourceRange.layerCount = array_layer_count;
 
     create_image_view(image_view_ci);
 }
@@ -106,24 +107,37 @@ Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImage
 Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImageType image_type, const VkFormat format,
              const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
              const std::uint32_t layer_count, const VkSampleCountFlagBits sample_count,
-             const VkImageUsageFlags usage_flags, const VkImageViewType view_type, const VkImageAspectFlags aspect_mask,
-             std::string name)
-    : Image(device, flags, image_type, format, width, height, miplevel_count, layer_count, sample_count, usage_flags,
-            view_type, {}, aspect_mask, name) {}
+             const VkImageUsageFlags image_usage_flags, const VkImageViewType image_view_type,
+             const VkImageAspectFlags aspect_mask, std::string name)
+
+    : Image(device, flags, image_type, format, width, height, miplevel_count, layer_count, sample_count,
+            image_usage_flags, image_view_type, {}, aspect_mask, name) {}
 
 Image::Image(const Device &device, const VkImageType image_type, const VkFormat format, const std::uint32_t width,
              const std::uint32_t height, const std::uint32_t miplevel_count, const std::uint32_t layer_count,
-             const VkSampleCountFlagBits sample_count, const VkImageUsageFlags usage_flags,
-             const VkImageViewType view_type, const VkImageAspectFlags aspect_mask, std::string name)
-    : Image(device, {}, image_type, format, width, height, miplevel_count, layer_count, sample_count, usage_flags,
-            view_type, {}, aspect_mask, name) {}
+             const VkSampleCountFlagBits sample_count_flags, const VkImageUsageFlags image_usage_flags,
+             const VkImageViewType image_view_type, const VkImageAspectFlags image_aspect_flags, std::string name)
+
+    : Image(device, {}, image_type, format, width, height, miplevel_count, layer_count, sample_count_flags,
+            image_usage_flags, image_view_type, {}, image_aspect_flags, name) {}
 
 Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
-             const VkImageUsageFlags usage_flags, const VkImageAspectFlags aspect_mask, std::string name)
-    : Image(device, {}, VK_IMAGE_TYPE_2D, format, width, height, 1, 1, VK_SAMPLE_COUNT_1_BIT, usage_flags,
-            VK_IMAGE_VIEW_TYPE_2D, {}, aspect_mask, name) {}
+             const VkImageUsageFlags image_usage_flags, const VkImageAspectFlags image_aspect_flags, std::string name)
+
+    : Image(device, {}, VK_IMAGE_TYPE_2D, format, width, height, 1, 1, VK_SAMPLE_COUNT_1_BIT, image_usage_flags,
+            VK_IMAGE_VIEW_TYPE_2D, {}, image_aspect_flags, name) {}
+
+Image::Image(const Device &device, const VkImageCreateFlags image_create_flags, const VkFormat format,
+             const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
+             const std::uint32_t array_layer_count, const VkSampleCountFlagBits sample_count_flags,
+             const VkImageUsageFlags image_usage_flags, std::string name)
+
+    : Image(device, image_create_flags, VK_IMAGE_TYPE_2D, format, width, height, miplevel_count, array_layer_count,
+            VK_SAMPLE_COUNT_1_BIT, image_usage_flags, VK_IMAGE_VIEW_TYPE_CUBE, {}, VK_IMAGE_ASPECT_COLOR_BIT, name) {}
 
 void Image::transition_image_layout(const VkImageLayout old_layout, const VkImageLayout new_layout) {
+
+    assert(old_layout != new_layout);
 
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = old_layout;
@@ -176,8 +190,12 @@ void Image::place_pipeline_barrier(const VkCommandBuffer command_buffer, const V
                                    const VkAccessFlags dest_access_mask,
                                    const VkImageSubresourceRange subresource_range) {
 
-    VkImageMemoryBarrier mem_barrier{};
-    mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    assert(m_image);
+    assert(command_buffer);
+    assert(old_layout != new_layout);
+    assert(src_access_mask != dest_access_mask);
+
+    auto mem_barrier = make_info<VkImageMemoryBarrier>();
     mem_barrier.image = m_image;
     mem_barrier.oldLayout = old_layout;
     mem_barrier.newLayout = new_layout;
@@ -193,6 +211,10 @@ void Image::place_pipeline_barrier(const VkCommandBuffer command_buffer, const V
                                    const VkImageLayout new_layout, const VkAccessFlags src_access_mask,
                                    const VkAccessFlags dest_access_mask) {
 
+    assert(command_buffer);
+    assert(old_layout != new_layout);
+    assert(src_access_mask != dest_access_mask);
+
     place_pipeline_barrier(command_buffer, old_layout, new_layout, src_access_mask, dest_access_mask,
                            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 }
@@ -202,11 +224,12 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, const VkImage 
                             const std::uint32_t layer_count, const std::uint32_t base_array_layer,
                             const std::uint32_t mip_level) {
 
-    VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    subresourceRange.baseMipLevel = 0;
-    subresourceRange.levelCount = miplevel_count;
-    subresourceRange.layerCount = layer_count;
+    assert(command_buffer);
+    assert(src_image);
+    assert(width > 0);
+    assert(height > 0);
+    assert(miplevel_count > 0);
+    assert(layer_count > 0);
 
     place_pipeline_barrier(command_buffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -237,6 +260,10 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, const VkImage 
 
 void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffer src_buffer, const std::uint32_t width,
                              const std::uint32_t height) {
+    assert(command_buffer);
+    assert(src_buffer);
+    assert(width > 0);
+    assert(height > 0);
 
     VkBufferImageCopy image_copy{};
     image_copy.bufferOffset = 0;

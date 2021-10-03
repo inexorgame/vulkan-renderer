@@ -166,6 +166,13 @@ VkPipelineDepthStencilStateCreateInfo make_info() {
 }
 
 template <>
+VkPipelineDynamicStateCreateInfo make_info() {
+    VkPipelineDynamicStateCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    return ret;
+}
+
+template <>
 VkPipelineInputAssemblyStateCreateInfo make_info() {
     VkPipelineInputAssemblyStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -267,6 +274,13 @@ template <>
 VkSwapchainCreateInfoKHR make_info() {
     VkSwapchainCreateInfoKHR ret{};
     ret.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    return ret;
+}
+
+template <>
+VkWriteDescriptorSet make_info() {
+    VkWriteDescriptorSet ret{};
+    ret.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     return ret;
 }
 

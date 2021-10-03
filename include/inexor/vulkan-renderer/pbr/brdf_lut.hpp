@@ -11,8 +11,6 @@
 
 namespace inexor::vulkan_renderer::pbr {
 
-// TODO: Package this into a separate task using taskflow for parallelization!
-
 /// @brief A wrapper class for bidirectional reflectance distribution (BRDF) look up table (LUT) generator.
 class BrdfLutGenerator {
 private:

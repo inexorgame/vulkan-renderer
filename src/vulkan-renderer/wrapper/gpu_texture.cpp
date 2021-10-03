@@ -14,42 +14,71 @@ namespace inexor::vulkan_renderer::wrapper {
 
 GpuTexture::GpuTexture(const Device &device, const CpuTexture &cpu_texture)
     : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
-      m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()),
+      m_texture_channels(cpu_texture.channels()), m_miplevel_count(cpu_texture.mip_levels()),
+      m_name(cpu_texture.name()),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    create_texture(cpu_texture.data(), cpu_texture.data_size());
-    // TODO: Do we even need to create a texture sampler in this case?
-    create_texture_sampler();
+    create_image_from_data(cpu_texture.data(), cpu_texture.data_size());
+    create_default_texture_sampler();
 }
 
 GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture)
     : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
-      m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()),
+      m_texture_channels(cpu_texture.channels()), m_miplevel_count(cpu_texture.mip_levels()),
+      m_name(cpu_texture.name()),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    create_texture(cpu_texture.data(), cpu_texture.data_size());
+    create_image_from_data(cpu_texture.data(), cpu_texture.data_size());
     create_texture_sampler(sampler);
 }
 
-GpuTexture::GpuTexture(const Device &device, const void *data, std::size_t data_size, std::uint32_t texture_width,
-                       std::uint32_t texture_height, std::uint32_t texture_channels, std::uint32_t mip_levels,
-                       std::string name)
-    : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
-      m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
+GpuTexture::GpuTexture(const Device &device, const void *data, std::size_t data_size, const std::uint32_t width,
+                       const std::uint32_t height, const std::uint32_t channel_count,
+                       const std::uint32_t miplevel_count, std::string name)
+    : m_device(device), m_texture_width(width), m_texture_height(height), m_texture_channels(channel_count),
+      m_miplevel_count(miplevel_count), m_name(std::move(name)),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    create_texture(data, data_size);
-    create_texture_sampler();
+    create_image_from_data(data, data_size);
+    create_default_texture_sampler();
 }
 
 GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data,
-                       std::size_t data_size, std::uint32_t texture_width, std::uint32_t texture_height,
-                       std::uint32_t texture_channels, std::uint32_t mip_levels, std::string name)
+                       const std::size_t data_size, const std::uint32_t width, const std::uint32_t height,
+                       const std::uint32_t channel_count, const std::uint32_t miplevel_count, std::string name)
 
-    : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
-      m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
+    : m_device(device), m_texture_width(width), m_texture_height(height), m_texture_channels(miplevel_count),
+      m_miplevel_count(miplevel_count), m_name(std::move(name)),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
 
-    create_texture(data, data_size);
+    create_image_from_data(data, data_size);
     // Create the texture sampler from the settings specified in the glTF2 file.
     create_texture_sampler(sampler);
+}
+
+GpuTexture::GpuTexture(const Device &device, const VkImageCreateFlags image_create_flags, const VkFormat format,
+                       const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
+                       const std::uint32_t array_layer_count, const VkImageUsageFlags image_usage,
+                       const std::string name)
+
+    : m_device(device), m_texture_image_format(format), m_texture_width(width), m_texture_height(height),
+      m_miplevel_count(miplevel_count), m_name(std::move(name)),
+      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
+
+    m_texture_image =
+        std::make_unique<Image>(m_device, image_create_flags, m_texture_image_format, m_texture_width, m_texture_height,
+                                m_miplevel_count, array_layer_count, VK_SAMPLE_COUNT_1_BIT, image_usage, "texture");
+
+    auto sampler_ci = make_info<VkSamplerCreateInfo>();
+    sampler_ci.magFilter = VK_FILTER_LINEAR;
+    sampler_ci.minFilter = VK_FILTER_LINEAR;
+    sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.minLod = 0.0f;
+    sampler_ci.maxLod = static_cast<float>(miplevel_count);
+    sampler_ci.maxAnisotropy = 1.0f;
+    sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+    create_texture_sampler(sampler_ci);
 }
 
 GpuTexture::GpuTexture(GpuTexture &&other) noexcept
@@ -60,7 +89,8 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
     m_texture_width = other.m_texture_width;
     m_texture_height = other.m_texture_height;
     m_texture_channels = other.m_texture_channels;
-    m_mip_levels = other.m_mip_levels;
+    m_miplevel_count = other.m_miplevel_count;
+    m_texture_image_format = other.m_texture_image_format;
     m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
@@ -68,8 +98,7 @@ GpuTexture::~GpuTexture() {
     vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
-void GpuTexture::create_texture(const void *texture_data, const std::size_t texture_size) {
-
+void GpuTexture::create_image_from_data(const void *texture_data, const std::size_t texture_size) {
     StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
     m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format, m_texture_width, m_texture_height,
@@ -157,7 +186,7 @@ void GpuTexture::create_texture_sampler(const gltf::TextureSampler &sampler) {
     spdlog::debug("Image sampler {} created successfully.", m_name);
 }
 
-void GpuTexture::create_texture_sampler() {
+void GpuTexture::create_default_texture_sampler() {
     auto sampler_ci = make_info<VkSamplerCreateInfo>();
     sampler_ci.magFilter = VK_FILTER_LINEAR;
     sampler_ci.minFilter = VK_FILTER_LINEAR;
@@ -211,7 +240,10 @@ void GpuTexture::create_texture_sampler() {
         sampler_ci.anisotropyEnable = VK_FALSE;
     }
 
-    spdlog::debug("Creating image sampler for texture {}.", m_name);
+    create_texture_sampler(sampler_ci);
+}
+
+void GpuTexture::create_texture_sampler(const VkSamplerCreateInfo sampler_ci) {
 
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
@@ -220,8 +252,6 @@ void GpuTexture::create_texture_sampler() {
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
-
-    spdlog::debug("Image sampler {} created successfully.", m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

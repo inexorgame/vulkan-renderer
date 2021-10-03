@@ -18,6 +18,9 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
     m_recording_started = false;
 }
 
+OnceCommandBuffer::OnceCommandBuffer(const Device &device)
+    : OnceCommandBuffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {}
+
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
     : m_device(other.m_device), m_command_pool(std::move(other.m_command_pool)) {
     m_queue = other.m_queue;

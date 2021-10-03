@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/camera.hpp"
+#include "inexor/vulkan-renderer/cubemap/cubemap.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
@@ -8,6 +9,7 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
+#include "inexor/vulkan-renderer/pbr/brdf_lut.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
@@ -82,6 +84,9 @@ protected:
     std::vector<gltf::ModelFile> m_gltf_model_files;
     std::vector<gltf::ModelGpuData> m_gltf_models;
     std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
+
+    std::unique_ptr<pbr::BrdfLutGenerator> m_pbr_brdf_lut;
+    std::unique_ptr<cubemap::Cubemap> m_cubemap;
 
     std::vector<std::string> m_octree_vertex_shader_files;
     std::vector<std::string> m_octree_fragment_shader_files;

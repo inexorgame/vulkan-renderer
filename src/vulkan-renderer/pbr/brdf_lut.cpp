@@ -21,10 +21,7 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
         device, format, image_extent.width, image_extent.height,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, "texture");
 
-    // FB, Att, RP, Pipe, etc.
     VkAttachmentDescription att_desc{};
-
-    // Color attachment
     att_desc.format = format;
     att_desc.samples = VK_SAMPLE_COUNT_1_BIT;
     att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -41,7 +38,6 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     subpass_desc.colorAttachmentCount = 1;
     subpass_desc.pColorAttachments = &color_ref;
 
-    // Use subpass dependencies for layout transitions
     std::array<VkSubpassDependency, 2> deps;
 
     deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -60,14 +56,12 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    // Create the actual renderpass
-    VkRenderPassCreateInfo renderpass_ci{};
-    renderpass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    auto renderpass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
     renderpass_ci.attachmentCount = 1;
     renderpass_ci.pAttachments = &att_desc;
     renderpass_ci.subpassCount = 1;
     renderpass_ci.pSubpasses = &subpass_desc;
-    renderpass_ci.dependencyCount = 2;
+    renderpass_ci.dependencyCount = static_cast<std::uint32_t>(deps.size());
     renderpass_ci.pDependencies = deps.data();
 
     VkRenderPass renderpass;
@@ -82,77 +76,66 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, renderpass, attachments, image_extent.width,
                                                            image_extent.height, "framebuffer");
 
-    // Desriptors
-    VkDescriptorSetLayout descriptorsetlayout;
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-    descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    VkDescriptorSetLayout desc_set_layout;
+    VkDescriptorSetLayoutCreateInfo desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
 
     if (const auto result =
-            vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorsetlayout);
+            vkCreateDescriptorSetLayout(device.device(), &desc_set_layout_ci, nullptr, &desc_set_layout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create descriptor set layout (vkCreateDescriptorSetLayout)!", result);
     }
 
-    // Pipeline layout
-    VkPipelineLayout pipelinelayout;
-    VkPipelineLayoutCreateInfo pipelineLayoutCI{};
-    pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutCI.setLayoutCount = 1;
-    pipelineLayoutCI.pSetLayouts = &descriptorsetlayout;
+    VkPipelineLayout pipeline_layout;
 
-    if (const auto result = vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelinelayout);
+    auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
+    pipeline_layout_ci.setLayoutCount = 1;
+    pipeline_layout_ci.pSetLayouts = &desc_set_layout;
+
+    if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipeline_layout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
         return;
     }
 
-    // Pipeline
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI{};
-    inputAssemblyStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssemblyStateCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
+    input_assembly_sci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-    VkPipelineRasterizationStateCreateInfo rasterizationStateCI{};
-    rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizationStateCI.cullMode = VK_CULL_MODE_NONE;
-    rasterizationStateCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rasterizationStateCI.lineWidth = 1.0f;
+    auto rasterization_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
+    rasterization_sci.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterization_sci.cullMode = VK_CULL_MODE_NONE;
+    rasterization_sci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization_sci.lineWidth = 1.0f;
 
-    VkPipelineColorBlendAttachmentState blendAttachmentState{};
-    blendAttachmentState.colorWriteMask =
+    VkPipelineColorBlendAttachmentState blend_att_state{};
+    blend_att_state.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    blendAttachmentState.blendEnable = VK_FALSE;
+    blend_att_state.blendEnable = VK_FALSE;
 
-    VkPipelineColorBlendStateCreateInfo colorBlendStateCI{};
-    colorBlendStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlendStateCI.attachmentCount = 1;
-    colorBlendStateCI.pAttachments = &blendAttachmentState;
+    auto color_blend_sci = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
+    color_blend_sci.attachmentCount = 1;
+    color_blend_sci.pAttachments = &blend_att_state;
 
-    VkPipelineDepthStencilStateCreateInfo depthStencilStateCI{};
-    depthStencilStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencilStateCI.depthTestEnable = VK_FALSE;
-    depthStencilStateCI.depthWriteEnable = VK_FALSE;
-    depthStencilStateCI.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depthStencilStateCI.front = depthStencilStateCI.back;
-    depthStencilStateCI.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    auto depth_stencil_sci = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>();
+    depth_stencil_sci.depthTestEnable = VK_FALSE;
+    depth_stencil_sci.depthWriteEnable = VK_FALSE;
+    depth_stencil_sci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_stencil_sci.front = depth_stencil_sci.back;
+    depth_stencil_sci.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
-    VkPipelineViewportStateCreateInfo viewportStateCI{};
-    viewportStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportStateCI.viewportCount = 1;
-    viewportStateCI.scissorCount = 1;
+    auto viewport_sci = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
+    viewport_sci.viewportCount = 1;
+    viewport_sci.scissorCount = 1;
 
-    VkPipelineMultisampleStateCreateInfo multisampleStateCI{};
-    multisampleStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampleStateCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
+    multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    std::vector<VkDynamicState> dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-    VkPipelineDynamicStateCreateInfo dynamicStateCI{};
-    dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicStateCI.pDynamicStates = dynamicStateEnables.data();
-    dynamicStateCI.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
+    std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-    VkPipelineVertexInputStateCreateInfo emptyInputStateCI{};
-    emptyInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    auto dynamic_state_ci = wrapper::make_info<VkPipelineDynamicStateCreateInfo>();
+    dynamic_state_ci.pDynamicStates = dynamic_state_enables.data();
+    dynamic_state_ci.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size());
+
+    auto empty_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
 
     wrapper::Shader lut_generator_vertex(device, VK_SHADER_STAGE_VERTEX_BIT, "brdf_lut_vertex",
                                          "shaders/brdflut/genbrdflut.vert.spv");
@@ -172,19 +155,18 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     shader_stages[1].stage = lut_generator_fragment.type();
     shader_stages[1].pName = lut_generator_fragment.entry_point().c_str();
 
-    VkGraphicsPipelineCreateInfo pipeline_ci{};
-    pipeline_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipeline_ci.layout = pipelinelayout;
+    auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
+    pipeline_ci.layout = pipeline_layout;
     pipeline_ci.renderPass = renderpass;
-    pipeline_ci.pInputAssemblyState = &inputAssemblyStateCI;
-    pipeline_ci.pVertexInputState = &emptyInputStateCI;
-    pipeline_ci.pRasterizationState = &rasterizationStateCI;
-    pipeline_ci.pColorBlendState = &colorBlendStateCI;
-    pipeline_ci.pMultisampleState = &multisampleStateCI;
-    pipeline_ci.pViewportState = &viewportStateCI;
-    pipeline_ci.pDepthStencilState = &depthStencilStateCI;
-    pipeline_ci.pDynamicState = &dynamicStateCI;
-    pipeline_ci.stageCount = 2;
+    pipeline_ci.pInputAssemblyState = &input_assembly_sci;
+    pipeline_ci.pVertexInputState = &empty_input_sci;
+    pipeline_ci.pRasterizationState = &rasterization_sci;
+    pipeline_ci.pColorBlendState = &color_blend_sci;
+    pipeline_ci.pMultisampleState = &multisample_sci;
+    pipeline_ci.pViewportState = &viewport_sci;
+    pipeline_ci.pDepthStencilState = &depth_stencil_sci;
+    pipeline_ci.pDynamicState = &dynamic_state_ci;
+    pipeline_ci.stageCount = static_cast<std::uint32_t>(shader_stages.size());
     pipeline_ci.pStages = shader_stages.data();
 
     VkPipeline pipeline;
@@ -194,19 +176,17 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
         throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
     }
 
-    // Render
     VkClearValue clear_values[1];
     clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-    VkRenderPassBeginInfo renderpass_bi{};
-    renderpass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
     renderpass_bi.renderPass = renderpass;
     renderpass_bi.renderArea.extent = image_extent;
     renderpass_bi.clearValueCount = 1;
     renderpass_bi.pClearValues = clear_values;
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
-    wrapper::OnceCommandBuffer cmd_buf(device, device.graphics_queue(), device.graphics_queue_family_index());
+    wrapper::OnceCommandBuffer cmd_buf(device);
 
     cmd_buf.create_command_buffer();
     cmd_buf.start_recording();

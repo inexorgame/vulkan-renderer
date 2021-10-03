@@ -261,11 +261,6 @@ void Application::check_application_specific_features() {
     // TODO: Add more checks if necessary.
 }
 
-void Application::generate_brdf_lookup_table() {
-
-    // TODO: Implement!
-}
-
 void Application::setup_window_and_input_callbacks() {
     spdlog::debug("Storing GLFW window user pointer.");
 
@@ -527,6 +522,9 @@ Application::Application(int argc, char **argv) {
 
     load_octree_geometry(true);
     load_gltf_models();
+
+    m_pbr_brdf_lut = std::make_unique<pbr::BrdfLutGenerator>(*m_device);
+    m_cubemap = std::make_unique<cubemap::Cubemap>(*m_device);
 
     spdlog::debug("Vulkan initialisation finished.");
     spdlog::debug("Showing window.");
