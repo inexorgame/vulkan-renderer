@@ -91,15 +91,6 @@ public:
 
     /// @brief
     /// @param command_buffer
-    /// @param old_layout
-    /// @param new_layout
-    /// @param src_access_mask
-    /// @param dest_access_mask
-    void place_pipeline_barrier(VkCommandBuffer command_buffer, VkImageLayout old_layout, VkImageLayout new_layout,
-                                VkAccessFlags src_access_mask, VkAccessFlags dest_access_mask);
-
-    /// @brief
-    /// @param command_buffer
     /// @param buffer
     /// @param width
     /// @param height

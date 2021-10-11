@@ -207,18 +207,6 @@ void Image::place_pipeline_barrier(const VkCommandBuffer command_buffer, const V
                          nullptr, 0, nullptr, 1, &mem_barrier);
 }
 
-void Image::place_pipeline_barrier(const VkCommandBuffer command_buffer, const VkImageLayout old_layout,
-                                   const VkImageLayout new_layout, const VkAccessFlags src_access_mask,
-                                   const VkAccessFlags dest_access_mask) {
-
-    assert(command_buffer);
-    assert(old_layout != new_layout);
-    assert(src_access_mask != dest_access_mask);
-
-    place_pipeline_barrier(command_buffer, old_layout, new_layout, src_access_mask, dest_access_mask,
-                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-}
-
 void Image::copy_from_image(const VkCommandBuffer command_buffer, const VkImage src_image, const std::uint32_t width,
                             const std::uint32_t height, const std::uint32_t miplevel_count,
                             const std::uint32_t layer_count, const std::uint32_t base_array_layer,
@@ -231,9 +219,16 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, const VkImage 
     assert(miplevel_count > 0);
     assert(layer_count > 0);
 
+    // TODO: Do we need this here?
+    VkImageSubresourceRange subres_range{};
+    subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subres_range.baseMipLevel = 0;
+    subres_range.levelCount = miplevel_count;
+    subres_range.layerCount = layer_count;
+
     place_pipeline_barrier(command_buffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                           VK_ACCESS_TRANSFER_READ_BIT);
+                           VK_ACCESS_TRANSFER_READ_BIT, subres_range);
 
     VkImageCopy copy_region{};
     copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -255,7 +250,7 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, const VkImage 
 
     place_pipeline_barrier(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
-                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, subres_range);
 }
 
 void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffer src_buffer, const std::uint32_t width,

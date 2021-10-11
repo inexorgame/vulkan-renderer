@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <spdlog/spdlog.h>
 
@@ -11,7 +12,7 @@
 
 namespace inexor::vulkan_renderer::pbr {
 
-BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
+BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) : m_device(device) {
     spdlog::trace("BRDF LUT generation started");
 
     const auto format = VK_FORMAT_R16G16_SFLOAT;
@@ -64,34 +65,29 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     renderpass_ci.dependencyCount = static_cast<std::uint32_t>(deps.size());
     renderpass_ci.pDependencies = deps.data();
 
-    VkRenderPass renderpass;
-
-    if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &renderpass);
+    if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &m_renderpass);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create renderpass (vkCreateRenderPass)!", result);
     }
 
     const std::vector<VkImageView> attachments = {m_brdf_lut_image->image_view()};
 
-    m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, renderpass, attachments, image_extent.width,
+    m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, m_renderpass, attachments, image_extent.width,
                                                            image_extent.height, "framebuffer");
 
-    VkDescriptorSetLayout desc_set_layout;
     VkDescriptorSetLayoutCreateInfo desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
 
     if (const auto result =
-            vkCreateDescriptorSetLayout(device.device(), &desc_set_layout_ci, nullptr, &desc_set_layout);
+            vkCreateDescriptorSetLayout(device.device(), &desc_set_layout_ci, nullptr, &m_desc_set_layout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create descriptor set layout (vkCreateDescriptorSetLayout)!", result);
     }
 
-    VkPipelineLayout pipeline_layout;
-
     auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
     pipeline_layout_ci.setLayoutCount = 1;
-    pipeline_layout_ci.pSetLayouts = &desc_set_layout;
+    pipeline_layout_ci.pSetLayouts = &m_desc_set_layout;
 
-    if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipeline_layout);
+    if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
         return;
@@ -156,8 +152,8 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     shader_stages[1].pName = lut_generator_fragment.entry_point().c_str();
 
     auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
-    pipeline_ci.layout = pipeline_layout;
-    pipeline_ci.renderPass = renderpass;
+    pipeline_ci.layout = m_pipeline_layout;
+    pipeline_ci.renderPass = m_renderpass;
     pipeline_ci.pInputAssemblyState = &input_assembly_sci;
     pipeline_ci.pVertexInputState = &empty_input_sci;
     pipeline_ci.pRasterizationState = &rasterization_sci;
@@ -169,9 +165,7 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     pipeline_ci.stageCount = static_cast<std::uint32_t>(shader_stages.size());
     pipeline_ci.pStages = shader_stages.data();
 
-    VkPipeline pipeline;
-
-    if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &pipeline);
+    if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
     }
@@ -180,7 +174,7 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
     clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
     auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
-    renderpass_bi.renderPass = renderpass;
+    renderpass_bi.renderPass = m_renderpass;
     renderpass_bi.renderArea.extent = image_extent;
     renderpass_bi.clearValueCount = 1;
     renderpass_bi.pClearValues = clear_values;
@@ -205,13 +199,20 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) {
 
     vkCmdSetViewport(cmd_buf.command_buffer(), 0, 1, &viewport);
     vkCmdSetScissor(cmd_buf.command_buffer(), 0, 1, &scissor);
-    vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
     vkCmdDraw(cmd_buf.command_buffer(), 3, 1, 0, 0);
     vkCmdEndRenderPass(cmd_buf.command_buffer());
 
     cmd_buf.end_recording_and_submit_command();
 
     spdlog::trace("Generating BRDF look-up table finished.");
+}
+
+BrdfLutGenerator::~BrdfLutGenerator() {
+    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
+    vkDestroyRenderPass(m_device.device(), m_renderpass, nullptr);
+    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
+    vkDestroyDescriptorSetLayout(m_device.device(), m_desc_set_layout, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::pbr

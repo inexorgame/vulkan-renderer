@@ -47,6 +47,9 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         const std::uint32_t miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
         constexpr std::uint32_t array_layer_count = 6;
 
+        // Each cube has 6 faces.
+        constexpr std::uint32_t cube_face_count = 6;
+
         m_cubemap_texture = std::make_unique<wrapper::GpuTexture>(
             device, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, format, image_extent.width, image_extent.height,
             miplevel_count, array_layer_count, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, "cubemap");
@@ -108,9 +111,16 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             cmd_buf.create_command_buffer();
             cmd_buf.start_recording();
 
+            VkImageSubresourceRange subres_range{};
+            subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            subres_range.baseMipLevel = 0;
+            subres_range.levelCount = 1;
+            subres_range.baseArrayLayer = 0;
+            subres_range.layerCount = 1;
+
             m_offscreen_framebuffer->m_image->place_pipeline_barrier(
                 cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, subres_range);
 
             cmd_buf.end_recording_and_submit_command();
         }
@@ -300,9 +310,6 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         VkRect2D scissor{};
         scissor.extent.width = dim;
         scissor.extent.height = dim;
-
-        // Each cube has 6 faces.
-        constexpr std::uint32_t cube_face_count = 6;
 
         VkImageSubresourceRange subres_range{};
         subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

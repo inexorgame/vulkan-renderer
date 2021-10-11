@@ -62,9 +62,9 @@ GpuTexture::GpuTexture(const Device &device, const VkImageCreateFlags image_crea
       m_miplevel_count(miplevel_count), m_name(std::move(name)),
       m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
 
-    m_texture_image =
-        std::make_unique<Image>(m_device, image_create_flags, m_texture_image_format, m_texture_width, m_texture_height,
-                                m_miplevel_count, array_layer_count, VK_SAMPLE_COUNT_1_BIT, image_usage, "texture");
+    m_texture_image = std::make_unique<Image>(m_device, image_create_flags, m_texture_image_format, m_texture_width,
+                                              m_texture_height, m_miplevel_count, array_layer_count,
+                                              VK_SAMPLE_COUNT_1_BIT, image_usage, "texture_without_data");
 
     auto sampler_ci = make_info<VkSamplerCreateInfo>();
     sampler_ci.magFilter = VK_FILTER_LINEAR;
