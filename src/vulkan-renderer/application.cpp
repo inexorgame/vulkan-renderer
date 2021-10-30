@@ -332,23 +332,58 @@ void Application::setup_vulkan_debug_callback() {
             debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>( // NOLINT
                 +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT, std::uint64_t, std::size_t, std::int32_t,
                     const char *, const char *message, void *user_data) {
+                    std::string form_msg(message);
+
+                    char x = '|';
+                    char y = '\n';
+                    std::replace(form_msg.begin(), form_msg.end(), x, y);
+
+                    x = ',';
+                    y = '\n';
+                    std::replace(form_msg.begin(), form_msg.end(), x, y);
+
+                    x = ';';
+                    y = ' ';
+                    std::replace(form_msg.begin(), form_msg.end(), x, y);
+
+                    auto post = form_msg.find(" The Vulkan Spec states: ");
+
+                    std::string toReplace(" The Vulkan spec states:");
+
+                    const auto pos = form_msg.find(toReplace);
+
+                    if (pos != std::string::npos) {
+                        form_msg.replace(pos, toReplace.length(), "\n The Vulkan spec states:");
+                    }
+
+                    std::string toReplace2(" (https://vulkan.lunarg.com/");
+
+                    const auto pos2 = form_msg.find(toReplace2);
+
+                    if (pos2 != std::string::npos) {
+                        form_msg.replace(pos2, toReplace2.length(), "\n (https://vulkan.lunarg.com/");
+                    }
+
+                    // Add a new line at the end of the message for clarity in console
+                    form_msg.append("\n");
+
                     if ((flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0) {
-                        spdlog::info(message);
+                        spdlog::info(form_msg);
                     } else if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0) {
-                        spdlog::debug(message);
+                        spdlog::debug(form_msg);
                     } else if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0) {
-                        spdlog::error(message);
+                        spdlog::error(form_msg);
                     } else {
                         // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
-                        spdlog::warn(message);
+                        spdlog::warn(form_msg);
                     }
 
                     // Check if --stop-on-validation-message is enabled.
                     if (user_data != nullptr) {
                         // This feature stops command lines from overflowing with messages in case many validation
                         // layer messages are reported in a short amount of time.
-                        spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
-                        spdlog::critical("Application will cause a break point now!");
+                        // spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
+                        // spdlog::critical("Application will cause a break point now!");
 
                         // Wait for spdlog to shut down before aborting.
                         if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
@@ -356,6 +391,7 @@ void Application::setup_vulkan_debug_callback() {
                             // std::abort();
                         }
                     }
+
                     return VK_FALSE;
                 });
 
@@ -524,10 +560,8 @@ Application::Application(int argc, char **argv) {
     load_gltf_models();
 
     m_pbr_brdf_lut = std::make_unique<pbr::BrdfLutGenerator>(*m_device);
-    m_cubemap = std::make_unique<cubemap::Cubemap>(*m_device);
 
-    spdlog::debug("Vulkan initialisation finished.");
-    spdlog::debug("Showing window.");
+    m_cubemap = std::make_unique<cubemap::Cubemap>(*m_device);
 
     m_window->show();
     recreate_swapchain();

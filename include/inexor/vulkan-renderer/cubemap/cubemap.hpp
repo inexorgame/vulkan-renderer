@@ -23,20 +23,10 @@ private:
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
 
-    /* struct CubemapTextures {
-        TextureCubeMap environment;
-        Texture2D empty;
-        Texture2D brdf_lut;
-        TextureCubeMap irradiance;
-        TextureCubeMap prefiltered;
-    };
-
-    CubemapTextures m_textures;
-    */
+    void setup_pipeline();
+    void render_cubemap();
 
 public:
-    /// @brief
-    /// @param device
     Cubemap(const wrapper::Device &device);
 
     [[nodiscard]] auto &image_wrapper() const {

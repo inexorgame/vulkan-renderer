@@ -108,15 +108,14 @@ void GpuTexture::create_image_from_data(const void *texture_data, const std::siz
     m_copy_command_buffer.create_command_buffer();
     m_copy_command_buffer.start_recording();
 
-    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     m_texture_image->copy_from_buffer(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
                                       m_texture_width, m_texture_height);
 
     m_copy_command_buffer.end_recording_and_submit_command();
 
-    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void GpuTexture::create_texture_sampler(const gltf::TextureSampler &sampler) {

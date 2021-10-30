@@ -28,6 +28,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
     enum Target { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
+
         VkFormat format;
         std::uint32_t dim;
 
@@ -45,14 +46,18 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         const VkExtent2D image_extent{dim, dim};
 
         const std::uint32_t miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
+
         constexpr std::uint32_t array_layer_count = 6;
 
-        // Each cube has 6 faces.
+        // Each cube has 6 faces
         constexpr std::uint32_t cube_face_count = 6;
 
+        // TODO: Is this correct?
         m_cubemap_texture = std::make_unique<wrapper::GpuTexture>(
             device, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, format, image_extent.width, image_extent.height,
-            miplevel_count, array_layer_count, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, "cubemap");
+            miplevel_count, array_layer_count,
+            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            "cubemap");
 
         VkAttachmentDescription att_desc{};
         att_desc.format = format;
@@ -63,7 +68,10 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        VkAttachmentReference color_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+
+        VkAttachmentReference color_ref;
+        color_ref.attachment = 0;
+        color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkSubpassDescription subpass_desc{};
         subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -102,28 +110,20 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             throw VulkanException("Failed to create renderpass for cubemap generation (vkCreateRenderPass)!", result);
         }
 
+        // TODO: Is this correct?
         m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
             device, format, image_extent.width, image_extent.height, renderpass, "offscreen framebuffer");
 
-        {
-            wrapper::OnceCommandBuffer cmd_buf(device);
+        VkImageSubresourceRange subres_range{};
+        subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subres_range.baseMipLevel = 0;
+        subres_range.levelCount = 1;
+        subres_range.baseArrayLayer = 0;
+        subres_range.layerCount = 1;
 
-            cmd_buf.create_command_buffer();
-            cmd_buf.start_recording();
-
-            VkImageSubresourceRange subres_range{};
-            subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            subres_range.baseMipLevel = 0;
-            subres_range.levelCount = 1;
-            subres_range.baseArrayLayer = 0;
-            subres_range.layerCount = 1;
-
-            m_offscreen_framebuffer->m_image->place_pipeline_barrier(
-                cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, subres_range);
-
-            cmd_buf.end_recording_and_submit_command();
-        }
+        // TODO: Should the pipeline barrier be embedded into the framebuffer?
+        m_offscreen_framebuffer->m_image->place_pipeline_barrier(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0,
+                                                                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, subres_range);
 
         const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
 
@@ -184,6 +184,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         blend_att_state.blendEnable = VK_FALSE;
 
+        // TODO: Move this into make_info wrapper function?
         auto color_blend_sci = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
         color_blend_sci.attachmentCount = 1;
         color_blend_sci.pAttachments = &blend_att_state;
@@ -195,6 +196,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         depth_stencil_sci.front = depth_stencil_sci.back;
         depth_stencil_sci.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
+        // TODO: Turn all this into a builder pattern?
         auto viewport_sci = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
         viewport_sci.viewportCount = 1;
         viewport_sci.scissorCount = 1;
@@ -222,6 +224,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
 
         VkVertexInputAttributeDescription vertexInputAttribute = {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
 
+        // Move into make_info? builder pattern?
         auto vertexInputStateCI = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
         vertexInputStateCI.vertexBindingDescriptionCount = 1;
         vertexInputStateCI.pVertexBindingDescriptions = &vertexInputBinding;
@@ -245,6 +248,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         shader_stages[0].pName = filtercube.entry_point().c_str();
 
         shader_stages[1] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
+        // Both irradiancecube and prefilterenvmap are fragment shaders!
         shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
         switch (target) {
@@ -272,6 +276,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         pipeline_ci.stageCount = static_cast<std::uint32_t>(shader_stages.size());
         pipeline_ci.pStages = shader_stages.data();
 
+        // TODO: Create builder patter? no?
         VkPipeline pipeline;
         if (const auto result =
                 vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &pipeline);
@@ -279,9 +284,12 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             throw VulkanException("Failed to create graphics pipeline (vkCreateGraphicsPipelines)!", result);
         }
 
+        // We could destroy the shader modules here already btw..
+
         VkClearValue clearValues[1];
         clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
 
+        // builder pattern?
         auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
         renderpass_bi.renderPass = renderpass;
         renderpass_bi.framebuffer = m_offscreen_framebuffer->framebuffer();
@@ -311,28 +319,16 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         scissor.extent.width = dim;
         scissor.extent.height = dim;
 
-        VkImageSubresourceRange subres_range{};
         subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         subres_range.baseMipLevel = 0;
         subres_range.levelCount = miplevel_count;
         subres_range.layerCount = cube_face_count;
 
-        {
-            wrapper::OnceCommandBuffer cmd_buf(device);
-
-            cmd_buf.create_command_buffer();
-            cmd_buf.start_recording();
-
-            m_cubemap_texture->image_wrapper()->place_pipeline_barrier(
-                cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0,
-                VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
-
-            cmd_buf.end_recording_and_submit_command();
-        }
+        m_cubemap_texture->image_wrapper()->place_pipeline_barrier(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
+                                                                   VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
 
         // TODO: Implement graphics pipeline builder
         // TODO: Split up in setup of pipeline and rendering of cubemaps
-
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < cube_face_count; face++) {
 
@@ -377,49 +373,82 @@ Cubemap::Cubemap(const wrapper::Device &device) {
 
                 // TODO: draw skybox!
 
-                // TODO: hardcode skybox vertices into code?
-
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
+                VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+                subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                subresourceRange.baseMipLevel = 0;
+                subresourceRange.levelCount = miplevel_count;
+                subresourceRange.layerCount = 6;
+
+                {
+                    VkImageMemoryBarrier imageMemoryBarrier{};
+                    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                    imageMemoryBarrier.image = m_offscreen_framebuffer->image();
+                    imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                    imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                    imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                    imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+
+                    vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                                         &imageMemoryBarrier);
+                }
+
+                // Copy region for transfer from framebuffer to cube face
+                VkImageCopy copyRegion{};
+                copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                copyRegion.srcSubresource.baseArrayLayer = 0;
+                copyRegion.srcSubresource.mipLevel = 0;
+                copyRegion.srcSubresource.layerCount = 1;
+                copyRegion.srcOffset = {0, 0, 0};
+                copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                copyRegion.dstSubresource.baseArrayLayer = face;
+                copyRegion.dstSubresource.mipLevel = miplevel_count;
+                copyRegion.dstSubresource.layerCount = 1;
+                copyRegion.dstOffset = {0, 0, 0};
+                copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
+                copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
+                copyRegion.extent.depth = 1;
+
+                vkCmdCopyImage(cmd_buf.command_buffer(), m_offscreen_framebuffer->image(),
+                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_cubemap_texture->image(),
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+                {
+                    VkImageMemoryBarrier imageMemoryBarrier{};
+                    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                    imageMemoryBarrier.image = m_offscreen_framebuffer->image();
+                    imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                    imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                    imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                    imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+
+                    vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                                         &imageMemoryBarrier);
+                }
+
+#if 0
                 m_cubemap_texture->image_wrapper()->copy_from_image(
-                    cmd_buf.command_buffer(), m_offscreen_framebuffer->image(),
+                    cmd_buf.command_buffer(), m_offscreen_framebuffer->image_wrapper(),
                     static_cast<std::uint32_t>(viewport.width), static_cast<std::uint32_t>(viewport.height), 1, 1, face,
                     mip_level);
+#endif
 
                 cmd_buf.end_recording_and_submit_command();
             }
         }
 
-        {
-            wrapper::OnceCommandBuffer cmd_buf(device);
+        m_cubemap_texture->image_wrapper()->place_pipeline_barrier(
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
 
-            cmd_buf.create_command_buffer();
-            cmd_buf.start_recording();
-
-            m_cubemap_texture->image_wrapper()->place_pipeline_barrier(
-                cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
-
-            cmd_buf.end_recording_and_submit_command();
-        }
-
-        // TODO: Destroy pipeline and other resources
-
-        // cubemap.descriptor.imageView = cubemap.view;
-        // cubemap.descriptor.sampler = cubemap.sampler;
-        // cubemap.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        /*
-        switch (target) {
-        case IRRADIANCE:
-            m_textures.irradiance = m_cubemap_texture;
-            break;
-        case PREFILTEREDENV:
-            m_textures.prefiltered = m_cubemap_texture;
-            shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(miplevel_count);
-            break;
-        };
-        */
+        vkDestroyRenderPass(device.device(), renderpass, nullptr);
+        vkDestroyPipeline(device.device(), pipeline, nullptr);
+        vkDestroyPipelineLayout(device.device(), pipelinelayout, nullptr);
 
         spdlog::trace("Generating cubemap finished");
     }

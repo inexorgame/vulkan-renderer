@@ -33,6 +33,10 @@ public:
     [[nodiscard]] auto image() const {
         return m_image->image();
     }
+
+    [[nodiscard]] Image &image_wrapper() const {
+        return *m_image;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

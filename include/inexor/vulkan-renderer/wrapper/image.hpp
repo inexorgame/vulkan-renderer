@@ -11,12 +11,14 @@ class Device;
 
 /// @brief RAII wrapper class for VkImage.
 class Image {
+private:
     const Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
     VmaAllocationInfo m_allocation_info{};
     VkImage m_image{VK_NULL_HANDLE};
     VkFormat m_format{VK_FORMAT_UNDEFINED};
     VkImageView m_image_view{VK_NULL_HANDLE};
+    VkImageLayout m_image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
     std::string m_name;
 
     /// @brief Call vmaCreateImage and assign an internal debug marker name.
@@ -74,20 +76,19 @@ public:
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) = delete;
 
-    /// @brief
-    /// @param old_layout
-    /// @param new_layout
-    void transition_image_layout(VkImageLayout old_layout, VkImageLayout new_layout);
+    void transition_image_layout(VkCommandBuffer cmd_buf, VkImageLayout new_layout);
+    void transition_image_layout(VkImageLayout new_layout);
+
+    void place_pipeline_barrier(VkImageLayout new_layout, VkAccessFlags src_access_mask, VkAccessFlags dest_access_mask,
+                                VkImageSubresourceRange subresource_range);
 
     /// @brief
     /// @param command_buffer
-    /// @param old_layout
     /// @param new_layout
     /// @param src_access_mask
     /// @param dest_access_mask
-    void place_pipeline_barrier(VkCommandBuffer command_buffer, VkImageLayout old_layout, VkImageLayout new_layout,
-                                VkAccessFlags src_access_mask, VkAccessFlags dest_access_mask,
-                                VkImageSubresourceRange subresource_range);
+    void place_pipeline_barrier(VkCommandBuffer command_buffer, VkImageLayout new_layout, VkAccessFlags src_access_mask,
+                                VkAccessFlags dest_access_mask, VkImageSubresourceRange subresource_range);
 
     /// @brief
     /// @param command_buffer
@@ -106,7 +107,7 @@ public:
     /// @param layer_count
     /// @param base_array_layer
     /// @param mip_level
-    void copy_from_image(VkCommandBuffer command_buffer, VkImage src_image, std::uint32_t width, std::uint32_t height,
+    void copy_from_image(VkCommandBuffer command_buffer, Image &image, std::uint32_t width, std::uint32_t height,
                          std::uint32_t miplevel_count, std::uint32_t layer_count, std::uint32_t base_array_layer,
                          std::uint32_t mip_level);
 
@@ -120,6 +121,10 @@ public:
 
     [[nodiscard]] VkImage image() const {
         return m_image;
+    }
+
+    [[nodiscard]] VkImageLayout image_layout() const {
+        return m_image_layout;
     }
 };
 

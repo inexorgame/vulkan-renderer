@@ -7,7 +7,7 @@ OffscreenFramebuffer::OffscreenFramebuffer(const wrapper::Device &device, const 
                                            const VkRenderPass renderpass, std::string name) {
 
     m_image = std::make_unique<Image>(device, VK_IMAGE_TYPE_2D, format, width, height, 1, 1, VK_SAMPLE_COUNT_1_BIT,
-                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
                                       VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, name);
 
     std::vector<VkImageView> attachments = {m_image->image_view()};
