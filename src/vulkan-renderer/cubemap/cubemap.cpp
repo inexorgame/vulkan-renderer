@@ -324,7 +324,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         subres_range.levelCount = miplevel_count;
         subres_range.layerCount = cube_face_count;
 
-        m_cubemap_texture->image_wrapper()->place_pipeline_barrier(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
+        m_cubemap_texture->image_wrapper()->place_pipeline_barrier(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0,
                                                                    VK_ACCESS_TRANSFER_WRITE_BIT, subres_range);
 
         // TODO: Implement graphics pipeline builder
@@ -396,7 +396,6 @@ Cubemap::Cubemap(const wrapper::Device &device) {
                                          &imageMemoryBarrier);
                 }
 
-                // Copy region for transfer from framebuffer to cube face
                 VkImageCopy copyRegion{};
                 copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
                 copyRegion.srcSubresource.baseArrayLayer = 0;
@@ -405,7 +404,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
                 copyRegion.srcOffset = {0, 0, 0};
                 copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
                 copyRegion.dstSubresource.baseArrayLayer = face;
-                copyRegion.dstSubresource.mipLevel = miplevel_count;
+                copyRegion.dstSubresource.mipLevel = mip_level;
                 copyRegion.dstSubresource.layerCount = 1;
                 copyRegion.dstOffset = {0, 0, 0};
                 copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
@@ -430,13 +429,6 @@ Cubemap::Cubemap(const wrapper::Device &device) {
                                          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1,
                                          &imageMemoryBarrier);
                 }
-
-#if 0
-                m_cubemap_texture->image_wrapper()->copy_from_image(
-                    cmd_buf.command_buffer(), m_offscreen_framebuffer->image_wrapper(),
-                    static_cast<std::uint32_t>(viewport.width), static_cast<std::uint32_t>(viewport.height), 1, 1, face,
-                    mip_level);
-#endif
 
                 cmd_buf.end_recording_and_submit_command();
             }
