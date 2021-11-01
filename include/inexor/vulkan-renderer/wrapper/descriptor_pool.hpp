@@ -19,8 +19,9 @@ private:
 public:
     // TODO: Let those 2 call one private constructor to avoid code duplication!
     DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::string name);
-    DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::size_t max_sets,
+    DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::uint32_t max_sets,
                    std::string name);
+
     DescriptorPool(const DescriptorPool &) = delete;
     DescriptorPool(DescriptorPool &&) = delete;
     ~DescriptorPool();

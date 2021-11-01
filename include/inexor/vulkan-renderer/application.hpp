@@ -46,7 +46,7 @@ class Application : public VulkanRenderer {
     void update_imgui_overlay();
     void check_application_specific_features();
     void generate_brdf_lookup_table();
-    void setup_node_descriptor_set(gltf::ModelNode *node);
+    void setup_node_descriptor_set(const gltf::ModelNode *node);
     void setup_descriptors();
     void update_uniform_buffers();
     void setup_uniform_buffers();

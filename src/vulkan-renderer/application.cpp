@@ -259,16 +259,18 @@ void Application::setup_uniform_buffers() {
 
     // TODO: Is this even technically correct?
     for (auto &uniformBuffer : uniformBuffers) {
-        uniformBuffer.scene = std::make_unique<wrapper::UniformBuffer>(m_device, "scene", sizeof(shaderValuesScene));
-        uniformBuffer.params = std::make_unique<wrapper::UniformBuffer>(m_device, "params", sizeof(shaderValuesParams));
-        uniformBuffer.skybox = std::make_unique<wrapper::UniformBuffer>(m_device, "skybox", sizeof(shaderValuesSkybox));
+        uniformBuffer.scene = std::make_unique<wrapper::UniformBuffer>(*m_device, "scene", sizeof(shaderValuesScene));
+        uniformBuffer.params =
+            std::make_unique<wrapper::UniformBuffer>(*m_device, "params", sizeof(shaderValuesParams));
+        uniformBuffer.skybox =
+            std::make_unique<wrapper::UniformBuffer>(*m_device, "skybox", sizeof(shaderValuesSkybox));
     }
 
     // TODO!
     // updateUniformBuffers();
 }
 
-void Application::setup_node_descriptor_set(gltf::ModelNode *node) {
+void Application::setup_node_descriptor_set(const gltf::ModelNode *node) {
     if (node->mesh) {
         VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
         descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -290,10 +292,11 @@ void Application::setup_node_descriptor_set(gltf::ModelNode *node) {
     }
 
     for (auto &child : node->children) {
-        setup_node_descriptor_set(child);
+        setup_node_descriptor_set(&child);
     }
 }
 
+// TODO: Move to glTF2 wrapper?
 void Application::setup_descriptors() {
     uint32_t imageSamplerCount = 0;
     uint32_t materialCount = 0;
@@ -309,7 +312,6 @@ void Application::setup_descriptors() {
         }
         for (const auto &node : model.nodes()) {
             if (node.mesh) {
-                // TODO: Move to glTF2 wrapper?
                 meshCount++;
             }
         }
@@ -359,14 +361,14 @@ void Application::setup_descriptors() {
             writeDescriptorSets[0].descriptorCount = 1;
             writeDescriptorSets[0].dstSet = descriptorSets[i].scene;
             writeDescriptorSets[0].dstBinding = 0;
-            writeDescriptorSets[0].pBufferInfo = &uniformBuffers[i].scene->descriptor();
+            writeDescriptorSets[0].pBufferInfo = &uniformBuffers[i].scene->descriptor;
 
             writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             writeDescriptorSets[1].descriptorCount = 1;
             writeDescriptorSets[1].dstSet = descriptorSets[i].scene;
             writeDescriptorSets[1].dstBinding = 1;
-            writeDescriptorSets[1].pBufferInfo = &uniformBuffers[i].params->descriptor();
+            writeDescriptorSets[1].pBufferInfo = &uniformBuffers[i].params->descriptor;
 
             writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -420,32 +422,34 @@ void Application::setup_descriptors() {
                 descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.material;
                 descriptorSetAllocInfo.descriptorSetCount = 1;
 
+                // TODO: Error check. Furthermore this must be destroyed at shutdown!!
                 vkAllocateDescriptorSets(m_device->device(), &descriptorSetAllocInfo, &material.descriptor_set);
 
-                const std::vector<VkDescriptorImageInfo> imageDescriptors = {
+                std::vector<VkDescriptorImageInfo> imageDescriptors = {
                     textures.empty->descriptor(), textures.empty->descriptor(),
-                    material.normal_texture ? material.normal_texture->descriptor : textures.empty->descriptor(),
-                    material.occlusion_texture ? material.occlusion_texture->descriptor : textures.empty->descriptor(),
-                    material.emissive_texture ? material.emissive_texture->descriptor : textures.empty->descriptor()};
+                    material.normal_texture ? material.normal_texture->descriptor() : textures.empty->descriptor(),
+                    material.occlusion_texture ? material.occlusion_texture->descriptor()
+                                               : textures.empty->descriptor(),
+                    material.emissive_texture ? material.emissive_texture->descriptor() : textures.empty->descriptor()};
 
                 // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is
                 // present
 
                 if (material.pbr_workflows.metallic_roughness) {
                     if (material.base_color_texture) {
-                        imageDescriptors[0] = material.base_color_texture->descriptor;
+                        imageDescriptors[0] = material.base_color_texture->descriptor();
                     }
                     if (material.metallic_roughness_texture) {
-                        imageDescriptors[1] = material.metallic_roughness_texture->descriptor;
+                        imageDescriptors[1] = material.metallic_roughness_texture->descriptor();
                     }
                 }
 
                 if (material.pbr_workflows.specular_glossiness) {
                     if (material.extension.diffuse_texture) {
-                        imageDescriptors[0] = material.extension.diffuse_texture->descriptor;
+                        imageDescriptors[0] = material.extension.diffuse_texture->descriptor();
                     }
                     if (material.extension.specular_glossiness_texture) {
-                        imageDescriptors[1] = material.extension.specular_glossiness_texture->descriptor;
+                        imageDescriptors[1] = material.extension.specular_glossiness_texture->descriptor();
                     }
                 }
 
@@ -462,26 +466,24 @@ void Application::setup_descriptors() {
                 vkUpdateDescriptorSets(m_device->device(), static_cast<uint32_t>(writeDescriptorSets.size()),
                                        writeDescriptorSets.data(), 0, NULL);
             }
-        }
 
-        // Model node (matrices)
-        {
-            std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
-            };
+            // Model node (matrices)
+            {
+                std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
+                };
 
-            VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-            descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-            descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+                VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+                descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+                descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 
-            vkCreateDescriptorSetLayout(m_device->device(), &descriptorSetLayoutCI, nullptr,
-                                        &descriptorSetLayouts.node);
+                vkCreateDescriptorSetLayout(m_device->device(), &descriptorSetLayoutCI, nullptr,
+                                            &descriptorSetLayouts.node);
 
-            // Per-Node descriptor set
-            for (auto &model : m_gltf_models) {
+                // Per-Node descriptor set
                 for (auto &node : model.nodes()) {
-                    setup_node_descriptor_set(node);
+                    setup_node_descriptor_set(&node);
                 }
             }
         }
@@ -504,14 +506,14 @@ void Application::setup_descriptors() {
         writeDescriptorSets[0].descriptorCount = 1;
         writeDescriptorSets[0].dstSet = descriptorSets[i].skybox;
         writeDescriptorSets[0].dstBinding = 0;
-        writeDescriptorSets[0].pBufferInfo = &uniformBuffers[i].skybox->descriptor();
+        writeDescriptorSets[0].pBufferInfo = &uniformBuffers[i].skybox->descriptor;
 
         writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         writeDescriptorSets[1].descriptorCount = 1;
         writeDescriptorSets[1].dstSet = descriptorSets[i].skybox;
         writeDescriptorSets[1].dstBinding = 1;
-        writeDescriptorSets[1].pBufferInfo = &uniformBuffers[i].params->descriptor();
+        writeDescriptorSets[1].pBufferInfo = &uniformBuffers[i].params->descriptor;
 
         writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

@@ -2,13 +2,16 @@
 
 #include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
 
+#include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
-#include <limits>
 
+#include <limits>
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::gltf {
+
+struct ModelNode;
 
 struct ModelAnimationChannel {
     enum class PathType { TRANSLATION, ROTATION, SCALE };
@@ -22,13 +25,6 @@ struct ModelAnimationSampler {
     InterpolationType interpolation;
     std::vector<float> inputs;
     std::vector<glm::vec4> outputs;
-};
-
-struct ModelSkin {
-    std::string name;
-    ModelNode *skeleton_root{nullptr};
-    std::vector<glm::mat4> inverse_bind_matrices;
-    std::vector<ModelNode *> joints;
 };
 
 struct ModelAnimation {

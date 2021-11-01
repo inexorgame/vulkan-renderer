@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-const std::size_t MAX_NUM_JOINTS{128u};
+const std::uint32_t MAX_NUM_JOINTS{128u};
 
 struct ModelMesh {
 

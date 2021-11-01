@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     auto vulkan_renderer_log =
         std::make_shared<spdlog::async_logger>("vulkan-renderer", spdlog::sinks_init_list{console_sink, file_sink},
                                                spdlog::thread_pool(), spdlog::async_overflow_policy::block);
-    vulkan_renderer_log->set_level(spdlog::level::trace);
+    vulkan_renderer_log->set_level(spdlog::level::err);
     vulkan_renderer_log->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%-10n] %v");
     vulkan_renderer_log->flush_on(spdlog::level::debug); // TODO: as long as we don't have a flush on crash
 

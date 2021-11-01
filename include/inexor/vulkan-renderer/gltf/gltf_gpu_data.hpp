@@ -48,9 +48,10 @@ private:
     std::vector<TextureSampler> m_texture_samplers;
     std::vector<ModelMaterial> m_materials;
     std::vector<ModelNode> m_nodes;
+    std::vector<ModelNode> m_linear_nodes;
     std::vector<ModelVertex> m_vertices;
-    std::vector<ModelSkin> m_skins;
     std::vector<ModelAnimation> animations;
+    std::vector<ModelSkin> m_skins;
 
     // The glTF2 model file can contain material information.
     // We store all unsupported material features in this unordered map so we can print it in the console after the
@@ -182,7 +183,7 @@ public:
     }
 
     // TODO: not const by intention?
-    [[nodiscard]] auto &materials() const {
+    [[nodiscard]] auto materials() const {
         return m_materials;
     }
 

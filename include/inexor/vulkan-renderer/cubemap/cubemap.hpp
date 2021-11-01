@@ -34,7 +34,7 @@ public:
     }
 
     // TODO: Would it be better to inherit from GpuTexture? (not just for this method..)
-    [[nodiscard]] const auto &descriptor() const {
+    [[nodiscard]] auto &descriptor() const {
         return m_cubemap_texture->descriptor();
     }
 };

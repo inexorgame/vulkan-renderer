@@ -311,6 +311,7 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
         const auto &buffers = model.buffers;
         const auto &buffer_views = model.bufferViews;
 
+        // ?
         std::unique_ptr<ModelMesh> new_mesh = std::make_unique<ModelMesh>(device_wrapper, new_node.matrix);
 
         for (const auto &primitive : mesh.primitives) {
@@ -556,11 +557,16 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
         spdlog::warn("Unknown node type {} is not supported!", node.name);
     }
 
-    if (parent != nullptr) {
+    if (parent) {
+        // TODO: Should we consider using emplace_back here?
         parent->children.push_back(std::move(new_node));
     } else {
-        m_nodes.push_back(new_node);
+        // TODO: Should we consider using emplace_back here?
+        m_nodes.push_back(std::move(new_node));
     }
+
+    // TODO: Should we consider using emplace_back here?
+    m_linear_nodes.push_back(std::move(new_node));
 }
 
 void ModelGpuData::load_skins(const tinygltf::Model &model) {
@@ -600,6 +606,17 @@ void ModelGpuData::load_skins(const tinygltf::Model &model) {
         }
 
         m_skins.push_back(new_skin);
+    }
+
+    for (auto &node : m_linear_nodes) {
+        // Assign skins
+        if (node.skin_index > -1) {
+            node.skin = &m_skins[node.skin_index];
+        }
+        // Initial pose
+        if (node.mesh) {
+            node.update();
+        }
     }
 }
 

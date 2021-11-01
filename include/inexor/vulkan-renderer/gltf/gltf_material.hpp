@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
+
 #include <vulkan/vulkan_core.h>
 
 #include <glm/vec3.hpp>
@@ -9,6 +11,7 @@ namespace inexor::vulkan_renderer::gltf {
 
 /// @brief A struct for glTF2 model materials.
 struct ModelMaterial {
+
     enum class AlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
     AlphaMode alpha_mode = AlphaMode::ALPHAMODE_OPAQUE;
 
@@ -19,12 +22,11 @@ struct ModelMaterial {
     glm::vec4 base_color_factor = glm::vec4(1.0f);
     glm::vec4 emissive_factor = glm::vec4(1.0f);
 
-    // TODO: Change types!
-    void *base_color_texture;
-    void *metallic_roughness_texture;
-    void *normal_texture;
-    void *occlusion_texture;
-    void *emissive_texture;
+    wrapper::GpuTexture *base_color_texture;
+    wrapper::GpuTexture *metallic_roughness_texture;
+    wrapper::GpuTexture *normal_texture;
+    wrapper::GpuTexture *occlusion_texture;
+    wrapper::GpuTexture *emissive_texture;
 
     struct TexCoordSets {
         std::uint8_t base_color = 0;
@@ -36,8 +38,8 @@ struct ModelMaterial {
     } texture_coordinate_set;
 
     struct Extension {
-        void *specular_glossiness_texture;
-        void *diffuse_texture;
+        wrapper::GpuTexture *specular_glossiness_texture;
+        wrapper::GpuTexture *diffuse_texture;
         glm::vec4 diffuse_factor = glm::vec4(1.0f);
         glm::vec3 specular_factor = glm::vec3(0.0f);
     } extension;
