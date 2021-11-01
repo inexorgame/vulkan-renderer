@@ -1,10 +1,12 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/gltf/gltf_mesh.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_primitive.hpp"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/mat4x4.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,7 +21,7 @@ struct ModelNode {
     std::uint32_t index;
     std::uint32_t skin_index;
     std::vector<ModelNode> children;
-    std::vector<ModelPrimitive> mesh;
+    std::unique_ptr<ModelMesh> mesh;
     glm::vec3 translation{};
     glm::vec3 scale{1.0f};
     glm::quat rotation{};

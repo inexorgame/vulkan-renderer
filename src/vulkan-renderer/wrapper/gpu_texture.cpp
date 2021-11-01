@@ -79,6 +79,14 @@ GpuTexture::GpuTexture(const Device &device, const VkImageCreateFlags image_crea
     sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
     create_texture_sampler(sampler_ci);
+
+    update_descriptor();
+}
+
+void GpuTexture::update_descriptor() {
+    m_descriptor.sampler = m_sampler;
+    m_descriptor.imageView = m_texture_image->image_view();
+    m_descriptor.imageLayout = m_texture_image->image_layout();
 }
 
 GpuTexture::GpuTexture(GpuTexture &&other) noexcept

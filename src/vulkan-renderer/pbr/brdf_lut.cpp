@@ -12,11 +12,13 @@
 
 namespace inexor::vulkan_renderer::pbr {
 
-BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) : m_device(device) {
+BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(device) {
     spdlog::trace("BRDF LUT generation started");
 
     const auto format = VK_FORMAT_R16G16_SFLOAT;
     const VkExtent2D image_extent{512, 512};
+
+    spdlog::trace("Generating BRDFLUT texture of size {} x {} pixels", image_extent.width, image_extent.height);
 
     m_brdf_lut_image = std::make_unique<wrapper::Image>(
         device, format, image_extent.width, image_extent.height,
@@ -208,7 +210,7 @@ BrdfLutGenerator::BrdfLutGenerator(const wrapper::Device &device) : m_device(dev
     spdlog::trace("Generating BRDF look-up table finished.");
 }
 
-BrdfLutGenerator::~BrdfLutGenerator() {
+BRDFLUTGenerator::~BRDFLUTGenerator() {
     vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
     vkDestroyRenderPass(m_device.device(), m_renderpass, nullptr);
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);

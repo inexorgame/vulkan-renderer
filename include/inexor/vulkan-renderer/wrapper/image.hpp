@@ -20,6 +20,7 @@ private:
     VkImageView m_image_view{VK_NULL_HANDLE};
     VkImageLayout m_image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
     std::string m_name;
+    VkDescriptorImageInfo m_descriptor;
 
     /// @brief Call vmaCreateImage and assign an internal debug marker name.
     /// @param image_ci The image create info
@@ -28,6 +29,8 @@ private:
     /// @brief Call vkCreateImageView and assign an internal debug marker name.
     /// @param image_view_ci The image view create info
     void create_image_view(VkImageViewCreateInfo image_view_ci);
+
+    void update_descriptor();
 
 public:
     /// @brief This is the most verbose constructor. It offers all create structures as parameters.
@@ -125,6 +128,10 @@ public:
 
     [[nodiscard]] VkImageLayout image_layout() const {
         return m_image_layout;
+    }
+
+    [[nodiscard]] const VkDescriptorImageInfo &descriptor() const {
+        return m_descriptor;
     }
 };
 

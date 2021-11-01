@@ -5,7 +5,6 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-/// @brief A struct for glTF2 model primitives.
 class ModelPrimitive {
 private:
     std::uint32_t m_first_index;
@@ -16,11 +15,6 @@ private:
     BoundingBox m_bb;
 
 public:
-    ///
-    ///
-    ///
-    ///
-    ///
     ModelPrimitive(std::uint32_t first_index, std::uint32_t index_count, std::uint32_t vertex_count,
                    ModelMaterial &material);
 
@@ -32,10 +26,11 @@ public:
         return m_first_index;
     }
 
-    ///
-    ///
-    ///
     void set_bbox(glm::vec3 min, glm::vec3 max);
+
+    [[nodiscard]] const auto &bbox() const {
+        return m_bb;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::gltf

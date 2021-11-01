@@ -6,7 +6,7 @@ namespace inexor::vulkan_renderer::gltf {
 
 void ModelRenderer::draw_node(const ModelGpuData &model, const ModelNode &node, const wrapper::CommandBuffer &cmd_buf,
                               const VkPipelineLayout layout) {
-    if (!node.mesh.empty()) {
+    if (node.mesh) {
         // Pass the node's matrix via push constants
         // Traverse the node hierarchy to the top-most parent to get the final matrix of the current node
         glm::mat4 node_matrix = node.matrix;
@@ -20,7 +20,7 @@ void ModelRenderer::draw_node(const ModelGpuData &model, const ModelNode &node, 
         // Pass the final matrix to the vertex shader using push constants
         cmd_buf.push_constants<glm::mat4>(&node_matrix, layout);
 
-        for (const auto &primitive : node.mesh) {
+        for (const auto &primitive : node.mesh->primitives) {
             if (primitive.index_count() > 0) {
                 cmd_buf.draw_indexed(primitive.index_count(), primitive.first_index());
             }
@@ -43,6 +43,7 @@ void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource
     // TODO: Can we turn this into one builder pattern call?
     auto *gltf_stage = render_graph->add<GraphicsStage>("glTF2 model");
 
+    // TODO: This crashes during swapchain recreation!
     gltf_stage->set_depth_options(true, true)
         ->uses_shaders(shaders)
         ->bind_buffer(model.vertex_buffer(), 0)

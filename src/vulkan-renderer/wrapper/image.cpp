@@ -45,6 +45,13 @@ void Image::create_image_view(const VkImageViewCreateInfo image_view_ci) {
     m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
+void Image::update_descriptor() {
+    // TODO: Fix this!
+    // m_descriptor.sampler = m_sampler;
+    m_descriptor.imageView = m_image_view;
+    m_descriptor.imageLayout = m_image_layout;
+}
+
 Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkImageViewCreateInfo image_view_ci,
              std::string name)
 

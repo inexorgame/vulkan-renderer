@@ -25,6 +25,7 @@ class GpuTexture {
     std::unique_ptr<Image> m_texture_image;
     OnceCommandBuffer m_copy_command_buffer;
     VkSampler m_sampler{VK_NULL_HANDLE};
+    VkDescriptorImageInfo m_descriptor;
 
     int m_texture_width{0};
     int m_texture_height{0};
@@ -54,6 +55,8 @@ class GpuTexture {
 
     ///
     void create_texture_sampler(const gltf::TextureSampler &sampler);
+
+    void update_descriptor();
 
 public:
     /// @brief Construct a texture from a file.
@@ -106,6 +109,10 @@ public:
 
     [[nodiscard]] VkSampler sampler() const {
         return m_sampler;
+    }
+
+    [[nodiscard]] auto &descriptor() const {
+        return m_descriptor;
     }
 };
 

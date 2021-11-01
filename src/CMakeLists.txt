@@ -19,6 +19,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/gltf/gltf_animation.cpp
     vulkan-renderer/gltf/gltf_file.cpp
     vulkan-renderer/gltf/gltf_material.cpp
+    vulkan-renderer/gltf/gltf_mesh.cpp
     vulkan-renderer/gltf/gltf_node.cpp
     vulkan-renderer/gltf/gltf_primitive.cpp
     vulkan-renderer/gltf/gltf_pbr_renderer.cpp

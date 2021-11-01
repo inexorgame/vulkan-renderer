@@ -12,20 +12,20 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-ModelGpuData::ModelGpuData(const wrapper::Device &device, RenderGraph *render_graph, const ModelFile &model_file,
-                           glm::mat4 model_matrix, glm::mat4 proj_matrix)
+ModelGpuData::ModelGpuData(const wrapper::Device &device_wrapper, RenderGraph *render_graph,
+                           const ModelFile &model_file, glm::mat4 model_matrix, glm::mat4 proj_matrix)
     : m_name(model_file.model_name()) {
 
     assert(render_graph);
 
     const auto &model = model_file.model();
-    load_textures(device, model);
+    load_textures(device_wrapper, model);
     load_materials(model);
-    load_nodes(model);
+    load_nodes(device_wrapper, model);
     load_animations(model);
     load_skins(model);
 
-    setup_rendering_resources(device, render_graph, model_matrix, proj_matrix);
+    setup_rendering_resources(device_wrapper, render_graph, model_matrix, proj_matrix);
 }
 
 ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
@@ -81,7 +81,8 @@ void ModelGpuData::load_textures(const wrapper::Device &device, const tinygltf::
         const std::size_t texture_size =
             static_cast<std::size_t>(texture_image.width) * static_cast<std::size_t>(texture_image.height) * 4;
 
-        // We need to convert RGB-only images to RGBA format, because most devices don't support rgb-formats in Vulkan.
+        // We need to convert RGB-only images to RGBA format, because most devices don't support rgb-formats in
+        // Vulkan.
         switch (texture_image.component) {
         case 3: {
             std::vector<std::array<std::uint32_t, 3>> rgb_source;
@@ -154,7 +155,7 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
             } else if (name == "baseColorFactor") {
                 new_material.base_color_factor = glm::make_vec4(value.ColorFactor().data());
             } else {
-                // Remember this unsupported feature.
+                // Remember this unsupported feature
                 unsupported_features[name] = true;
             }
         }
@@ -184,11 +185,11 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
                 new_material.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
                 new_material.emissive_factor = glm::vec4(0.0f);
             } else {
-                // Remember this unsupported feature.
+                // Remember this unsupported feature
                 unsupported_features[name] = true;
             }
 
-            // Load materials from extensions.
+            // Load materials from extensions
             if (material.extensions.find("KHR_materials_pbrSpecularGlossiness") != material.extensions.end()) {
                 const auto &extension = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
 
@@ -233,7 +234,7 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
         spdlog::warn("Material feature {} not supported!", name);
     }
 
-    // Add a default material at the end of the list for meshes with no material assigned.
+    // Add a default material at the end of the list for meshes with no material assigned
     m_materials.emplace_back();
 }
 
@@ -262,8 +263,9 @@ ModelNode *ModelGpuData::node_from_index(const std::uint32_t index) {
     return node_found;
 }
 
-void ModelGpuData::load_node(const tinygltf::Model &model, ModelNode *parent, const tinygltf::Node &node,
-                             const std::uint32_t scene_index, const std::uint32_t node_index) {
+void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygltf::Model &model, ModelNode *parent,
+                             const tinygltf::Node &node, const std::uint32_t scene_index,
+                             const std::uint32_t node_index) {
     ModelNode new_node;
     new_node.name = node.name;
     new_node.parent = parent;
@@ -291,7 +293,7 @@ void ModelGpuData::load_node(const tinygltf::Model &model, ModelNode *parent, co
 
     if (!node.children.empty()) {
         for (std::size_t child_index = 0; child_index < node.children.size(); child_index++) {
-            load_node(model, &new_node, node, scene_index, node.children[child_index]);
+            load_node(device_wrapper, model, &new_node, node, scene_index, node.children[child_index]);
         }
     }
 
@@ -308,6 +310,8 @@ void ModelGpuData::load_node(const tinygltf::Model &model, ModelNode *parent, co
         const auto &accessors = model.accessors;
         const auto &buffers = model.buffers;
         const auto &buffer_views = model.bufferViews;
+
+        std::unique_ptr<ModelMesh> new_mesh = std::make_unique<ModelMesh>(device_wrapper, new_node.matrix);
 
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
@@ -531,17 +535,29 @@ void ModelGpuData::load_node(const tinygltf::Model &model, ModelNode *parent, co
                                          primitive.material > -1 ? m_materials[primitive.material]
                                                                  : m_materials.back());
 
-            new_node.mesh.push_back(new_primitive);
+            new_primitive.set_bbox(pos_min, pos_max);
+
+            new_mesh->primitives.push_back(new_primitive);
         }
 
-        // TODO: Is something missing?
+        // TODO: Is this technically correct?
+        // Mesh BB from BBs of primitives
+        for (auto p : new_mesh->primitives) {
+            if (p.bbox().valid && !new_mesh->bb.valid) {
+                new_mesh->bb = p.bbox();
+                new_mesh->bb.valid = true;
+            }
+            new_mesh->bb.min = glm::min(new_mesh->bb.min, p.bbox().min);
+            new_mesh->bb.max = glm::max(new_mesh->bb.max, p.bbox().max);
+        }
 
+        new_node.mesh = std::move(new_mesh);
     } else {
         spdlog::warn("Unknown node type {} is not supported!", node.name);
     }
 
     if (parent != nullptr) {
-        parent->children.push_back(new_node);
+        parent->children.push_back(std::move(new_node));
     } else {
         m_nodes.push_back(new_node);
     }
@@ -587,7 +603,7 @@ void ModelGpuData::load_skins(const tinygltf::Model &model) {
     }
 }
 
-void ModelGpuData::load_nodes(const tinygltf::Model &model) {
+void ModelGpuData::load_nodes(const wrapper::Device &device_wrapper, const tinygltf::Model &model) {
 
     if (model.scenes.empty()) {
         spdlog::trace("The glTF2 model does not contain nodes.");
@@ -608,7 +624,8 @@ void ModelGpuData::load_nodes(const tinygltf::Model &model) {
 
         for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {
             const auto &node = model.nodes[scene.nodes[node_index]];
-            load_node(model, nullptr, node, scene.nodes[node_index], static_cast<std::uint32_t>(scene_index));
+            load_node(device_wrapper, model, nullptr, node, scene.nodes[node_index],
+                      static_cast<std::uint32_t>(scene_index));
         }
     }
 }
@@ -753,11 +770,12 @@ void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, Rend
     // TODO: Update for glTF2 PBR rendering!
     const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 
-    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "gltf");
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "gltf descriptor pool");
 
     wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
-    m_uniform_buffer = std::make_unique<wrapper::UniformBuffer>(device, "octree", sizeof(UniformBufferObject));
+    m_uniform_buffer =
+        std::make_unique<wrapper::UniformBuffer>(device, "gltf uniform buffer", sizeof(UniformBufferObject));
 
     ModelShaderData shader_data;
 
@@ -766,7 +784,8 @@ void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, Rend
 
     m_uniform_buffer->update<ModelShaderData>(&shader_data);
 
-    m_descriptor = builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("octree");
+    m_descriptor =
+        builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("gltf uniform buffer object");
 }
 
 } // namespace inexor::vulkan_renderer::gltf

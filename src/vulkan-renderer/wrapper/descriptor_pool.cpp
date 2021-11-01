@@ -9,6 +9,27 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                               std::size_t max_sets, std::string name)
+    : m_device(device), m_pool_sizes(pool_sizes), m_name(name) {
+
+    assert(device.device());
+
+    spdlog::debug("Creating new descriptor pool {}.", m_name);
+
+    auto descriptor_pool_ci = wrapper::make_info<VkDescriptorPoolCreateInfo>();
+    descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(m_pool_sizes.size());
+    descriptor_pool_ci.pPoolSizes = m_pool_sizes.data();
+    descriptor_pool_ci.maxSets = max_sets;
+
+    if (const auto result = vkCreateDescriptorPool(device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + m_name + " !", result);
+    }
+
+    m_device.set_debug_marker_name(m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
+}
+
+DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
                                std::string name)
     : m_device(device), m_pool_sizes(pool_sizes), m_name(name) {
     assert(device.device());
@@ -32,7 +53,6 @@ DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescrip
         throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + m_name + " !", result);
     }
 
-    // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
 }
 

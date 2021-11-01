@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vulkan/vulkan_core.h>
+
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
@@ -25,12 +27,12 @@ struct ModelMaterial {
     void *emissive_texture;
 
     struct TexCoordSets {
-        uint8_t base_color = 0;
-        uint8_t metallic_roughness = 0;
-        uint8_t specular_glossiness = 0;
-        uint8_t normal = 0;
-        uint8_t occlusion = 0;
-        uint8_t emissive = 0;
+        std::uint8_t base_color = 0;
+        std::uint8_t metallic_roughness = 0;
+        std::uint8_t specular_glossiness = 0;
+        std::uint8_t normal = 0;
+        std::uint8_t occlusion = 0;
+        std::uint8_t emissive = 0;
     } texture_coordinate_set;
 
     struct Extension {
@@ -40,10 +42,12 @@ struct ModelMaterial {
         glm::vec3 specular_factor = glm::vec3(0.0f);
     } extension;
 
-    struct PbrWorkflows {
+    struct PBRWorkflows {
         bool metallic_roughness = true;
         bool specular_glossiness = false;
     } pbr_workflows;
+
+    VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
 };
 
 } // namespace inexor::vulkan_renderer::gltf

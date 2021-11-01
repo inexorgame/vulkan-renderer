@@ -32,6 +32,11 @@ public:
     [[nodiscard]] auto &image_wrapper() const {
         return m_cubemap_texture->image_wrapper();
     }
+
+    // TODO: Would it be better to inherit from GpuTexture? (not just for this method..)
+    [[nodiscard]] const auto &descriptor() const {
+        return m_cubemap_texture->descriptor();
+    }
 };
 
 } // namespace inexor::vulkan_renderer::cubemap

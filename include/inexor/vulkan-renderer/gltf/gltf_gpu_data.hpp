@@ -81,8 +81,8 @@ private:
     ModelNode *node_from_index(std::uint32_t index);
 
     ///
-    void load_node(const tinygltf::Model &model, ModelNode *parent, const tinygltf::Node &start_node,
-                   std::uint32_t scene_index, std::uint32_t node_index);
+    void load_node(const wrapper::Device &device_wrapper, const tinygltf::Model &model, ModelNode *parent,
+                   const tinygltf::Node &start_node, std::uint32_t scene_index, std::uint32_t node_index);
 
     // We pass the const reference to all other methods because we don't want to store the model as const reference for
     // the entire lifetime of this class.
@@ -109,8 +109,9 @@ private:
     void load_skins(const tinygltf::Model &model);
 
     /// @brief Load the scene nodes from the glTF2 model file.
+    /// @brief device_wrapper A const reference to the RAII Vulkan device wrapper
     /// @brief model A const reference to the tinygltf model
-    void load_nodes(const tinygltf::Model &model);
+    void load_nodes(const wrapper::Device &device_wrapper, const tinygltf::Model &model);
 
     ///
     ///
@@ -124,7 +125,7 @@ public:
     ///
     ///
     ///
-    ModelGpuData(const wrapper::Device &device, RenderGraph *render_graph, const ModelFile &model_file,
+    ModelGpuData(const wrapper::Device &device_wrapper, RenderGraph *render_graph, const ModelFile &model_file,
                  glm::mat4 model_matrix, glm::mat4 proj);
 
     ModelGpuData(const ModelGpuData &) = delete;
@@ -178,6 +179,11 @@ public:
             return m_materials.at(0);
         }
         return m_materials.at(material_index);
+    }
+
+    // TODO: not const by intention?
+    [[nodiscard]] auto &materials() const {
+        return m_materials;
     }
 
     [[nodiscard]] const ModelShaderData &shader_data() const {

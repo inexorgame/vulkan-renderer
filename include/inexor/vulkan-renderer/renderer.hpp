@@ -19,6 +19,7 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
@@ -85,7 +86,7 @@ protected:
     std::vector<gltf::ModelGpuData> m_gltf_models;
     std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
 
-    std::unique_ptr<pbr::BrdfLutGenerator> m_pbr_brdf_lut;
+    std::unique_ptr<pbr::BRDFLUTGenerator> m_pbr_brdf_lut;
     std::unique_ptr<cubemap::Cubemap> m_cubemap;
 
     std::vector<std::string> m_octree_vertex_shader_files;
@@ -99,6 +100,37 @@ protected:
 
     TextureResource *m_back_buffer{nullptr};
     TextureResource *m_depth_buffer{nullptr};
+
+    struct DescriptorSetLayouts {
+        VkDescriptorSetLayout scene;
+        VkDescriptorSetLayout material;
+        VkDescriptorSetLayout node;
+    } descriptorSetLayouts;
+
+    struct DescriptorSets {
+        VkDescriptorSet scene;
+        VkDescriptorSet skybox;
+    };
+
+    std::vector<DescriptorSets> descriptorSets;
+
+    struct UniformBufferSet {
+        std::unique_ptr<wrapper::UniformBuffer> scene;
+        std::unique_ptr<wrapper::UniformBuffer> skybox;
+        std::unique_ptr<wrapper::UniformBuffer> params;
+    };
+
+    std::vector<UniformBufferSet> uniformBuffers;
+
+    struct Textures {
+        std::unique_ptr<cubemap::Cubemap> environmentCube;
+        std::unique_ptr<wrapper::GpuTexture> empty;
+        std::unique_ptr<pbr::BRDFLUTGenerator> lutBrdf;
+        std::unique_ptr<cubemap::Cubemap> irradianceCube;
+        std::unique_ptr<cubemap::Cubemap> prefilteredCube;
+    } textures;
+
+    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
 
     void setup_render_graph();
     void recreate_swapchain();

@@ -375,12 +375,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
 
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
-                VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-                subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                subresourceRange.baseMipLevel = 0;
-                subresourceRange.levelCount = miplevel_count;
-                subresourceRange.layerCount = 6;
-
+                // TODO: Move this into wrapper::Image !
                 {
                     VkImageMemoryBarrier imageMemoryBarrier{};
                     imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
