@@ -237,39 +237,22 @@ void Application::load_gltf_models() {
 
 void Application::setup_uniform_buffers() {
 
-    // TODO: Move this to the correct wrapper!
-    struct UBOMatrices {
-        glm::mat4 projection;
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::vec3 camPos;
-    } shaderValuesScene, shaderValuesSkybox;
-
-    struct shaderValuesParams {
-        glm::vec4 lightDir;
-        float exposure = 4.5f;
-        float gamma = 2.2f;
-        float prefilteredCubeMipLevels;
-        float scaleIBLAmbient = 1.0f;
-        float debugViewInputs = 0;
-        float debugViewEquation = 0;
-    } shaderValuesParams;
-
     uniformBuffers.reserve(m_swapchain->image_count());
 
     // TODO: Is this even technically correct?
     for (auto &uniformBuffer : uniformBuffers) {
-        uniformBuffer.scene = std::make_unique<wrapper::UniformBuffer>(*m_device, "scene", sizeof(shaderValuesScene));
+        uniformBuffer.scene = std::make_unique<wrapper::UniformBuffer>(*m_device, "scene", sizeof(gltf::ModelMatrices));
         uniformBuffer.params =
-            std::make_unique<wrapper::UniformBuffer>(*m_device, "params", sizeof(shaderValuesParams));
+            std::make_unique<wrapper::UniformBuffer>(*m_device, "params", sizeof(gltf::ModelShaderParams));
         uniformBuffer.skybox =
-            std::make_unique<wrapper::UniformBuffer>(*m_device, "skybox", sizeof(shaderValuesSkybox));
+            std::make_unique<wrapper::UniformBuffer>(*m_device, "skybox", sizeof(gltf::ModelMatrices));
     }
 
     // TODO!
-    // updateUniformBuffers();
+    update_uniform_buffers();
 }
 
+// TODO: Move to a wrapper!
 void Application::setup_node_descriptor_set(const gltf::ModelNode *node) {
     if (node->mesh) {
         VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
@@ -870,10 +853,41 @@ void Application::update_uniform_buffers() {
     ubo.proj[1][1] *= -1;
 
     for (auto &octree_data : m_octree_gpu_data) {
+        // TODO: Change to update_matrices()?
         octree_data.update_ubo(&ubo);
     }
 
-    // TODO: Update glTF2 data!
+    // Update each glTF model
+    for (std::size_t i = 0; i < m_gltf_models.size(); i++) {
+        auto &model = m_gltf_models[i];
+
+        model.m_scene.projection = m_camera->perspective_matrix();
+        model.m_scene.view = m_camera->view_matrix();
+
+        float scale =
+            (1.0f / std::max(m_gltf_models[0].aabb[0][0], std::max(model.aabb[1][1], model.aabb[2][2]))) * 0.5f;
+        glm::vec3 translate = -glm::vec3(model.aabb[3][0], model.aabb[3][1], model.aabb[3][2]);
+        translate += -0.5f * glm::vec3(model.aabb[0][0], model.aabb[1][1], model.aabb[2][2]);
+
+        model.m_scene.model = glm::mat4(1.0f);
+        model.m_scene.model[0][0] = scale;
+        model.m_scene.model[1][1] = scale;
+        model.m_scene.model[2][2] = scale;
+        model.m_scene.model = glm::translate(model.m_scene.model, translate);
+
+        const auto campos = m_camera->position();
+        const auto camrot = m_camera->rotation();
+
+        model.m_scene.camPos = glm::vec3(-campos.z * sin(glm::radians(camrot.y)) * cos(glm::radians(camrot.x)),
+                                         -campos.z * sin(glm::radians(camrot.x)),
+                                         campos.z * cos(glm::radians(camrot.y)) * cos(glm::radians(camrot.x)));
+
+        // Skybox
+        // TODO: Create a model.update_skybox() method!
+        model.m_skybox.projection = m_camera->perspective_matrix();
+        model.m_skybox.view = m_camera->view_matrix();
+        model.m_skybox.model = glm::mat4(glm::mat3(m_camera->view_matrix()));
+    }
 }
 
 void Application::update_imgui_overlay() {
@@ -961,6 +975,7 @@ void Application::run() {
         update_imgui_overlay();
         render_frame();
         process_mouse_input();
+
         // Create a new random octree world if key N is pressed.
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
@@ -972,6 +987,10 @@ void Application::run() {
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
         check_octree_collisions();
+
+        update_uniform_buffers();
+
+        // TODO: Update uniform buffers (and shaders parameters) if camera changed!
     }
 }
 

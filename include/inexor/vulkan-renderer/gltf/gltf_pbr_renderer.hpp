@@ -9,14 +9,8 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-///
 class ModelRenderer {
 private:
-    /// @brief Render a glTF2 model node.
-    ///
-    ///
-    ///
-    ///
     void draw_node(const ModelGpuData &model, const ModelNode &node, const wrapper::CommandBuffer &cmd_buf,
                    VkPipelineLayout layout);
 
@@ -29,12 +23,6 @@ public:
     ModelRenderer &operator=(const ModelRenderer &) = delete;
     ModelRenderer &operator=(ModelRenderer &&) = delete;
 
-    /// @brief Render a glTF2 model's nodes.
-    ///
-    ///
-    ///
-    ///
-    ///
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
                      const std::vector<wrapper::Shader> &shaders, const ModelGpuData &model);
 };

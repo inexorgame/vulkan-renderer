@@ -26,21 +26,35 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-/// @brief The shader data for glTF model rendering.
-struct ModelShaderData {
+struct ModelMatrices {
     glm::mat4 projection;
     glm::mat4 model;
-    glm::vec4 light;
+    glm::mat4 view;
+    glm::vec3 camPos;
+};
+
+struct ModelShaderParams {
+    glm::vec4 lightDir;
+    float exposure = 4.5f;
+    float gamma = 2.2f;
+    float prefilteredCubeMipLevels;
+    float scaleIBLAmbient = 1.0f;
+    float debugViewInputs = 0;
+    float debugViewEquation = 0;
 };
 
 /// @brief A wrapper class for glTF2 models.
 /// Loading the glTF2 file is separated from parsing its data.
 /// This allows for better task-based parallelization.
 class ModelGpuData {
+public:
+    ModelMatrices m_scene;
+    ModelMatrices m_skybox;
+    ModelShaderParams m_shader_values;
+
 private:
     std::string m_name;
     const float m_model_scale{1.0f};
-    ModelShaderData m_shader_data;
 
     std::vector<std::uint32_t> m_texture_indices;
     std::vector<std::uint32_t> m_indices;
@@ -81,51 +95,28 @@ private:
     /// @param index The ModelNode's index in m_nodes
     ModelNode *node_from_index(std::uint32_t index);
 
-    ///
     void load_node(const wrapper::Device &device_wrapper, const tinygltf::Model &model, ModelNode *parent,
                    const tinygltf::Node &start_node, std::uint32_t scene_index, std::uint32_t node_index);
 
     // We pass the const reference to all other methods because we don't want to store the model as const reference for
     // the entire lifetime of this class.
 
-    /// @brief Load the materials from the glTF2 model file.
-    /// TODO: Add link to material tutorial here!
-    /// @brief model A const reference to the tinygltf model
     void load_materials(const tinygltf::Model &model);
 
-    ///
-    ///
-    /// @brief model A const reference to the tinygltf model
     void load_animations(const tinygltf::Model &model);
 
-    /// @brief Load the textures which are stored inside the glTF2 model file.
-    /// TODO: Add link to the glTF2 textures tutorial here
-    /// @brief device A const reference to the device wrapper
-    /// This method needs the device wrapper as we need to create the memory for the textures
-    /// @brief model A const reference to the tinygltf model
     void load_textures(const wrapper::Device &device, const tinygltf::Model &model);
 
-    /// @brief Load the animation skins from the glTF2 model file.
-    /// @brief model A const reference to the tinygltf model
     void load_skins(const tinygltf::Model &model);
 
-    /// @brief Load the scene nodes from the glTF2 model file.
-    /// @brief device_wrapper A const reference to the RAII Vulkan device wrapper
-    /// @brief model A const reference to the tinygltf model
     void load_nodes(const wrapper::Device &device_wrapper, const tinygltf::Model &model);
 
-    ///
-    ///
-    ///
-    ///
     void setup_rendering_resources(const wrapper::Device &device_wrapper, RenderGraph *render_graph,
                                    glm::mat4 model_matrix, glm::mat4 proj_matrix);
 
 public:
-    ///
-    ///
-    ///
-    ///
+    glm::mat4 aabb;
+
     ModelGpuData(const wrapper::Device &device_wrapper, RenderGraph *render_graph, const ModelFile &model_file,
                  glm::mat4 model_matrix, glm::mat4 proj);
 
@@ -185,10 +176,6 @@ public:
     // TODO: not const by intention?
     [[nodiscard]] auto materials() const {
         return m_materials;
-    }
-
-    [[nodiscard]] const ModelShaderData &shader_data() const {
-        return m_shader_data;
     }
 
     [[nodiscard]] std::optional<std::uint32_t> default_scene_index() const {

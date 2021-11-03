@@ -84,5 +84,6 @@ files = [
 
 [gltfmodels]
 files = [
-	"assets/models/inexor/5_objects.gltf",
+	"assets/models/inexor/inexor.gltf",
+	"assets/models/inexor/5_objects.gltf"
 ]

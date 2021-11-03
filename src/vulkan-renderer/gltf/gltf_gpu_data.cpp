@@ -34,7 +34,9 @@ ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
 
     m_name = std::move(other.m_name);
     m_default_scene_index = other.m_default_scene_index;
-    m_shader_data = other.m_shader_data;
+    m_shader_values = other.m_shader_values;
+    m_scene = other.m_scene;
+    m_skybox = other.m_skybox;
     m_textures = std::move(other.m_textures);
     m_texture_samplers = std::move(other.m_texture_samplers);
     m_texture_indices = std::move(other.m_texture_indices);
@@ -554,6 +556,7 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
 
         new_node.mesh = std::move(new_mesh);
     } else {
+        // TODO: Store in an unordered_map and iterate through it at the end (see unsupported attributes for example)
         spdlog::warn("Unknown node type {} is not supported!", node.name);
     }
 
@@ -794,12 +797,13 @@ void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, Rend
     m_uniform_buffer =
         std::make_unique<wrapper::UniformBuffer>(device, "gltf uniform buffer", sizeof(UniformBufferObject));
 
-    ModelShaderData shader_data;
+    ModelShaderParams shader_data;
 
-    shader_data.model = model_matrix;
-    shader_data.projection = proj_matrix;
+    m_scene.model = model_matrix;
+    m_scene.projection = proj_matrix;
 
-    m_uniform_buffer->update<ModelShaderData>(&shader_data);
+    // TOOD: Move templating to the entire class, not just to update method!
+    m_uniform_buffer->update<ModelShaderParams>(&shader_data);
 
     m_descriptor =
         builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("gltf uniform buffer object");

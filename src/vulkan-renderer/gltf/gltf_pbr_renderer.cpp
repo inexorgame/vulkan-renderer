@@ -32,6 +32,7 @@ void ModelRenderer::draw_node(const ModelGpuData &model, const ModelNode &node, 
     }
 }
 
+// TODO: The shaders should be hard coded into the corresponding rendering component. They should not be parameters!
 void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer,
                                 const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders,
                                 const ModelGpuData &model) {
@@ -52,7 +53,7 @@ void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource
         ->writes_to(depth_buffer)
         ->reads_from(model.vertex_buffer())
         ->reads_from(model.index_buffer())
-        ->add_push_constant_range(sizeof(glm::mat4))
+        ->add_push_constant_range<glm::mat4>()
         ->add_descriptor_layout(model.descriptor_layout())
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
             for (const auto &node : model.nodes()) {

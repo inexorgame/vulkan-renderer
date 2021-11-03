@@ -221,6 +221,20 @@ public:
         return this;
     }
 
+    /// @brief Add a push constant range to this render stage.
+    /// @param offset The offset
+    /// @param The shader stage flags
+    template <typename T>
+    RenderStage *add_push_constant_range(const VkShaderStageFlags shader_stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
+                                         const std::uint32_t offset = 0) {
+        VkPushConstantRange push_constant_range{};
+        push_constant_range.offset = offset;
+        push_constant_range.size = sizeof(T);
+        push_constant_range.stageFlags = shader_stage_flags;
+        m_push_constant_ranges.push_back(push_constant_range);
+        return this;
+    }
+
     /// @brief Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
     /// common use for this is for draw commands.
