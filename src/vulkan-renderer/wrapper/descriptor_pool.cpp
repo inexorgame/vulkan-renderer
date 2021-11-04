@@ -14,8 +14,6 @@ DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescrip
 
     assert(device.device());
 
-    spdlog::debug("Creating new descriptor pool {}.", m_name);
-
     auto descriptor_pool_ci = wrapper::make_info<VkDescriptorPoolCreateInfo>();
     descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(m_pool_sizes.size());
     descriptor_pool_ci.pPoolSizes = m_pool_sizes.data();
@@ -33,8 +31,6 @@ DescriptorPool::DescriptorPool(const Device &device, const std::vector<VkDescrip
                                std::string name)
     : m_device(device), m_pool_sizes(pool_sizes), m_name(name) {
     assert(device.device());
-
-    spdlog::debug("Creating new descriptor pool {}.", m_name);
 
     std::uint32_t max_sets = 0;
 

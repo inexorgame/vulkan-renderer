@@ -15,8 +15,6 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
     assert(device.device());
     assert(!name.empty());
 
-    spdlog::debug("Creating semaphore {}.", name);
-
     auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
     if (const auto result = vkCreateSemaphore(device.device(), &semaphore_ci, nullptr, &m_semaphore);
         result != VK_SUCCESS) {
@@ -25,8 +23,6 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
-
-    spdlog::debug("Created semaphore successfully.");
 }
 
 Semaphore::Semaphore(Semaphore &&other) noexcept : m_device(other.m_device) {

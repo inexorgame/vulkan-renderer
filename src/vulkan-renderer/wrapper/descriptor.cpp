@@ -18,10 +18,6 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, const VkDescriptorP
       m_descriptor_set_layout_binding(layout_binding) {
     assert(device.device());
 
-    spdlog::debug("Created descriptor pool for descriptor {} successfully.", m_name);
-
-    spdlog::debug("Creating descriptor set layout for descriptor '{}'.", m_name);
-
     auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>();
     descriptor_set_layout_ci.bindingCount = 1;
     descriptor_set_layout_ci.pBindings = &m_descriptor_set_layout_binding;
@@ -35,10 +31,6 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, const VkDescriptorP
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
                                    m_name);
-
-    spdlog::debug("Created descriptor sets for descriptor {} successfully.", m_name);
-
-    spdlog::debug("Creating descriptor sets for '{}'.", m_name);
 
     auto descriptor_set_ai = wrapper::make_info<VkDescriptorSetAllocateInfo>();
     descriptor_set_ai.descriptorPool = descriptor_pool;

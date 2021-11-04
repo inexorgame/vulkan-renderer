@@ -194,8 +194,6 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
         destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     }
 
-    spdlog::debug("Recording pipeline barrier for image layer transition");
-
     vkCmdPipelineBarrier(cmd_buf, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
     m_image_layout = new_layout;

@@ -64,8 +64,6 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     // allocator already ensures that the data satisfies the worst case alignment requirements.
     shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data()); // NOLINT
 
-    spdlog::trace("Creating shader module {}", name);
-
     if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateShaderModule failed for shader " + name + "!", result);
