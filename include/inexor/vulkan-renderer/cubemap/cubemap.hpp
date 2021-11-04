@@ -1,7 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/cubemap/texture2d.hpp"
-#include "inexor/vulkan-renderer/cubemap/texture_cubemap.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -12,7 +10,6 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
-/// @brief A wrapper class for cubemaps
 class Cubemap {
 
 private:

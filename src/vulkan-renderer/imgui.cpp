@@ -13,7 +13,7 @@ namespace inexor::vulkan_renderer {
 
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
                            RenderGraph *render_graph, TextureResource *back_buffer)
-    : m_device(device), m_swapchain(swapchain) {
+    : m_device(device), m_swapchain(swapchain), m_shader_loader(m_device, m_shader_files) {
     spdlog::debug("Creating ImGUI context");
     ImGui::CreateContext();
 
@@ -39,12 +39,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     io.FontGlobalScale = m_scale;
 
     spdlog::trace("Loading ImGUI shaders");
-
-    const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
-        {"shaders/imgui/ui.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader"},
-        {"shaders/imgui/ui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI fragment shader"}};
-
-    wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files);
 
     // Load font texture
 

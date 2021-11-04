@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
 #include <glm/vec2.hpp>
 #include <imgui.h>
@@ -42,6 +42,12 @@ class ImGUIOverlay {
         glm::vec2 scale;
         glm::vec2 translate;
     } m_push_const_block{};
+
+    const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
+        {"shaders/imgui/ui.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader"},
+        {"shaders/imgui/ui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI fragment shader"}};
+
+    wrapper::ShaderLoader m_shader_loader;
 
 public:
     /// @brief Construct a new ImGUI overlay.

@@ -43,7 +43,7 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &model : m_gltf_models) {
-        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
+        // m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
     }
 
     m_imgui_overlay.reset();

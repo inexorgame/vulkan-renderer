@@ -18,11 +18,8 @@ private:
                    VkPipelineLayout layout);
 
     const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
-        {"shaders/cubemap/filtercube.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "gltf vertex shader"},
         {"shaders/gltf/pbr.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "gltf vertex shader"},
-        {"shaders/cubemap/irradiancecube.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"},
-        {"shaders/gltf/pbr_khr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"},
-        {"shaders/cubemap/prefilterenvmap.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"}};
+        {"shaders/gltf/pbr_khr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"}};
 
     wrapper::ShaderLoader m_shader_loader;
 

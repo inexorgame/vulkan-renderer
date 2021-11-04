@@ -42,7 +42,7 @@ void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource
     assert(depth_buffer);
 
     // TODO: Can we turn this into one builder pattern call?
-    auto *gltf_stage = render_graph->add<GraphicsStage>("glTF2 model");
+    auto *gltf_stage = render_graph->add<GraphicsStage>("gltf2 model");
 
     // TODO: This crashes during swapchain recreation!
     gltf_stage->set_depth_options(true, true)
@@ -56,8 +56,8 @@ void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource
         ->add_push_constant_range<glm::mat4>()
         ->add_descriptor_layout(model.descriptor_layout())
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+            // Recursively render all nodes of the model
             for (const auto &node : model.nodes()) {
-                cmd_buf.bind_descriptor(model.descriptor_set(), physical.pipeline_layout());
                 draw_node(model, node, cmd_buf, physical.pipeline_layout());
             }
         });
