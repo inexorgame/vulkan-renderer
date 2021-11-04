@@ -56,6 +56,18 @@ GraphicsStage *GraphicsStage::uses_shaders(const std::vector<wrapper::Shader> &s
     return this;
 }
 
+GraphicsStage *GraphicsStage::uses_shader(const VkPipelineShaderStageCreateInfo &shader) {
+    m_shaders.push_back(shader);
+    return this;
+}
+
+GraphicsStage *GraphicsStage::uses_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shaders) {
+    for (const auto &shader : shaders) {
+        uses_shader(shader);
+    }
+    return this;
+}
+
 PhysicalBuffer::~PhysicalBuffer() {
     vmaDestroyBuffer(m_allocator, m_buffer, m_allocation);
 }

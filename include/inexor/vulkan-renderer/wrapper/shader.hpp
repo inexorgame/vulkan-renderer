@@ -13,7 +13,7 @@ class Device;
 class Shader {
     const Device &m_device;
     std::string m_name;
-    std::string m_entry_point;
+    std::string m_entry_point = "main";
     VkShaderStageFlagBits m_type;
     VkShaderModule m_shader_module{VK_NULL_HANDLE};
 
@@ -23,9 +23,7 @@ public:
     /// @param type The shader type.
     /// @param name The internal debug marker name of the VkShaderModule.
     /// @param code The memory block of the SPIR-V shader.
-    /// @param entry_point The name of the entry point, "main" by default.
-    Shader(const Device &m_device, VkShaderStageFlagBits type, const std::string &name, const std::vector<char> &code,
-           const std::string &entry_point = "main");
+    Shader(const Device &m_device, VkShaderStageFlagBits type, const std::vector<char> &code, const std::string &name);
 
     /// @brief Construct a shader module from a SPIR-V file.
     /// This constructor loads the file content and just calls the other constructor.
@@ -33,9 +31,7 @@ public:
     /// @param type The shader type.
     /// @param name The internal debug marker name of the VkShaderModule.
     /// @param file_name The name of the SPIR-V shader file to load.
-    /// @param entry_point The name of the entry point, "main" by default.
-    Shader(const Device &m_device, VkShaderStageFlagBits type, const std::string &name, const std::string &file_name,
-           const std::string &entry_point = "main");
+    Shader(const Device &m_device, VkShaderStageFlagBits type, const std::string &file_name, const std::string &name);
 
     Shader(const Shader &) = delete;
     Shader(Shader &&) noexcept;

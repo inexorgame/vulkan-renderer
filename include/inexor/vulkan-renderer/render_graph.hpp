@@ -296,6 +296,10 @@ public:
     ///
     ///
     GraphicsStage *uses_shaders(const std::vector<wrapper::Shader> &shaders);
+
+    GraphicsStage *uses_shader(const VkPipelineShaderStageCreateInfo &shader);
+
+    GraphicsStage *uses_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shaders);
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.

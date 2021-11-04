@@ -15,60 +15,6 @@ width = 800
 height = 800
 name = "Inexor-Vulkan-Renderer"
 
-[shaders]
-[shaders.gltf.vertex]
-files = [
-	"shaders/cubemap/filtercube.vert.spv",
-	"shaders/gltf/pbr.vert.spv"
-]
-
-[shaders.gltf.fragment]
-files = [
-	"shaders/cubemap/irradiancecube.frag.spv",
-	"shaders/gltf/pbr_khr.frag.spv",
-	"shaders/cubemap/prefilterenvmap.frag.spv",
-]
-
-[shaders.brdflut.vertex]
-files = [
-	"shaders/brdflut/genbrdflut.vert.spv"
-]
-
-[shaders.brdflut.fragment]
-files = [
-	"shaders/brdflut/genbrdflut.frag.spv"
-]
-
-[shaders.gltfsimple.vertex]
-files = [
-	"shaders/gltf_simple/main.vert.spv"
-]
-
-[shaders.gltfsimple.fragment]
-files = [
-	"shaders/gltf_simple/main.frag.spv"
-]
-
-[shaders.octree.vertex]
-files = [
-	"shaders/octree/main.vert.spv",
-]
-
-[shaders.octree.fragment]
-files = [
-	"shaders/octree/main.frag.spv",
-]
-
-[shaders.imgui.vertex]
-files = [
-	"shaders/imgui/main.vert.spv",
-]
-
-[shaders.imgui.fragment]
-files = [
-	"shaders/imgui/main.frag.spv",
-]
-
 # TODO: Use key/value pairs and give textures user friendly names.
 [textures]
 files = [

@@ -37,7 +37,6 @@ class Application : public VulkanRenderer {
     /// @note It was collectively decided not to use JSON for configuration files.
     void load_toml_configuration_file(const std::string &file_name);
     void load_textures();
-    void load_shaders();
     /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
     void load_octree_geometry(bool initialize);
     void load_gltf_models();

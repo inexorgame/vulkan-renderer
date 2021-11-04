@@ -77,10 +77,6 @@ protected:
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<RenderGraph> m_render_graph;
 
-    std::vector<std::string> m_gltf_vertex_shader_files;
-    std::vector<std::string> m_gltf_fragment_shader_files;
-    std::vector<wrapper::Shader> m_gltf_shaders;
-
     std::vector<std::string> m_gltf_model_file_names;
     std::vector<gltf::ModelFile> m_gltf_model_files;
     std::vector<gltf::ModelGpuData> m_gltf_models;

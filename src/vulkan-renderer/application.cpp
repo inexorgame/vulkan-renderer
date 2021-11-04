@@ -116,42 +116,6 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     for (const auto &file_name : m_gltf_model_file_names) {
         spdlog::debug("{}", file_name);
     }
-
-    m_gltf_vertex_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "gltf", "vertex", "files");
-
-    spdlog::debug("glTF vertex shaders:");
-
-    for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
-        spdlog::debug("{}", vertex_shader_file);
-    }
-
-    m_gltf_fragment_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "gltf", "fragment", "files");
-
-    spdlog::debug("glTF fragment shaders:");
-
-    for (const auto &fragment_shader_file : m_gltf_fragment_shader_files) {
-        spdlog::debug("{}", fragment_shader_file);
-    }
-
-    m_octree_vertex_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "octree", "vertex", "files");
-
-    spdlog::debug("octree vertex shaders:");
-
-    for (const auto &vertex_shader_file : m_octree_vertex_shader_files) {
-        spdlog::debug("{}", vertex_shader_file);
-    }
-
-    m_octree_fragment_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "octree", "fragment", "files");
-
-    spdlog::debug("glTF fragment shaders:");
-
-    for (const auto &fragment_shader_file : m_octree_fragment_shader_files) {
-        spdlog::debug("{}", fragment_shader_file);
-    }
 }
 
 void Application::load_textures() {
@@ -165,61 +129,6 @@ void Application::load_textures() {
         wrapper::CpuTexture cpu_texture(texture_file, texture_name);
         m_textures.emplace_back(*m_device, cpu_texture);
     }
-}
-
-void Application::load_shaders() {
-    assert(m_device->device());
-
-    m_gltf_shaders.reserve(m_gltf_vertex_shader_files.size() + m_gltf_fragment_shader_files.size());
-
-    spdlog::debug("Loading glTF vertex shaders.");
-
-    if (m_gltf_vertex_shader_files.empty()) {
-        spdlog::error("No glTF vertex shaders to load!");
-    }
-
-    for (const auto &vertex_shader_file : m_gltf_vertex_shader_files) {
-        spdlog::debug("Loading glTF vertex shader file {}.", vertex_shader_file);
-        m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "glTF PBR shader", vertex_shader_file);
-    }
-
-    spdlog::debug("Loading glTF fragment shaders.");
-
-    if (m_gltf_fragment_shader_files.empty()) {
-        spdlog::error("No glTF fragment shaders to load!");
-    }
-
-    for (const auto &fragment_shader_file : m_gltf_fragment_shader_files) {
-        spdlog::debug("Loading glTF fragment shader file {}.", fragment_shader_file);
-        m_gltf_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed glTF fragment shader",
-                                    fragment_shader_file);
-    }
-
-    spdlog::debug("Loading octree vertex shaders.");
-
-    if (m_gltf_vertex_shader_files.empty()) {
-        spdlog::error("No octree vertex shaders to load!");
-    }
-
-    for (const auto &vertex_shader_file : m_octree_vertex_shader_files) {
-        spdlog::debug("Loading octree vertex shader file {}.", vertex_shader_file);
-        m_octree_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed octree vertex shader",
-                                      vertex_shader_file);
-    }
-
-    spdlog::debug("Loading octree fragment shaders.");
-
-    if (m_gltf_fragment_shader_files.empty()) {
-        spdlog::error("No octree fragment shaders to load!");
-    }
-
-    for (const auto &fragment_shader_file : m_octree_fragment_shader_files) {
-        spdlog::debug("Loading octree fragment shader file {}.", fragment_shader_file);
-        m_octree_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed octree fragment shader",
-                                      fragment_shader_file);
-    }
-
-    spdlog::debug("Loading shaders finished.");
 }
 
 void Application::load_gltf_models() {
@@ -824,7 +733,6 @@ Application::Application(int argc, char **argv) {
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");
 
     load_textures();
-    load_shaders();
 
     m_command_pool = std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index());
 

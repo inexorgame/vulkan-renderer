@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -37,11 +38,13 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     ImGuiIO &io = ImGui::GetIO();
     io.FontGlobalScale = m_scale;
 
-    spdlog::debug("Loading ImGUI shaders");
-    m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
-                                                        "shaders/imgui/ui.vert.spv");
-    m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                                          "ImGUI fragment shader", "shaders/imgui/ui.frag.spv");
+    spdlog::trace("Loading ImGUI shaders");
+
+    const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
+        {"shaders/imgui/ui.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader"},
+        {"shaders/imgui/ui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI fragment shader"}};
+
+    wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files);
 
     // Load font texture
 
@@ -100,8 +103,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     m_stage = render_graph->add<GraphicsStage>("ImGui");
 
     m_stage->bind_buffer(m_vertex_buffer, 0)
-        ->uses_shader(*m_vertex_shader)
-        ->uses_shader(*m_fragment_shader)
+        ->uses_shaders(m_shader_loader.shaders())
         ->writes_to(back_buffer)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)

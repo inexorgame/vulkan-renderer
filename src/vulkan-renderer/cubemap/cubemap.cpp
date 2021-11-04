@@ -233,14 +233,15 @@ Cubemap::Cubemap(const wrapper::Device &device) {
 
         std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
-        wrapper::Shader filtercube(device, VK_SHADER_STAGE_VERTEX_BIT, "filtercube",
-                                   "shaders/cubemap/filtercube.vert.spv");
+        // TODO: Use ShaderLoader here as well?
+        wrapper::Shader filtercube(device, VK_SHADER_STAGE_VERTEX_BIT, "shaders/cubemap/filtercube.vert.spv",
+                                   "filtercube");
 
-        wrapper::Shader irradiancecube(device, VK_SHADER_STAGE_FRAGMENT_BIT, "irradiancecube",
-                                       "shaders/cubemap/irradiancecube.frag.spv");
+        wrapper::Shader irradiancecube(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/cubemap/irradiancecube.frag.spv",
+                                       "irradiancecube");
 
-        wrapper::Shader prefilterenvmap(device, VK_SHADER_STAGE_FRAGMENT_BIT, "prefilterenvmap",
-                                        "shaders/cubemap/prefilterenvmap.frag.spv");
+        wrapper::Shader prefilterenvmap(device, VK_SHADER_STAGE_FRAGMENT_BIT,
+                                        "shaders/cubemap/prefilterenvmap.frag.spv", "prefilterenvmap");
 
         shader_stages[0] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
         shader_stages[0].module = filtercube.module();

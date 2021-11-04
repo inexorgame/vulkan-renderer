@@ -4,6 +4,8 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
+ModelRenderer::ModelRenderer(const wrapper::Device &device) : m_shader_loader(device, m_shader_files) {}
+
 void ModelRenderer::draw_node(const ModelGpuData &model, const ModelNode &node, const wrapper::CommandBuffer &cmd_buf,
                               const VkPipelineLayout layout) {
     if (node.mesh) {
@@ -34,19 +36,17 @@ void ModelRenderer::draw_node(const ModelGpuData &model, const ModelNode &node, 
 
 // TODO: The shaders should be hard coded into the corresponding rendering component. They should not be parameters!
 void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer,
-                                const TextureResource *depth_buffer, const std::vector<wrapper::Shader> &shaders,
-                                const ModelGpuData &model) {
+                                const TextureResource *depth_buffer, const ModelGpuData &model) {
     assert(render_graph);
     assert(back_buffer);
     assert(depth_buffer);
-    assert(!shaders.empty());
 
     // TODO: Can we turn this into one builder pattern call?
     auto *gltf_stage = render_graph->add<GraphicsStage>("glTF2 model");
 
     // TODO: This crashes during swapchain recreation!
     gltf_stage->set_depth_options(true, true)
-        ->uses_shaders(shaders)
+        ->uses_shaders(m_shader_loader.shaders())
         ->bind_buffer(model.vertex_buffer(), 0)
         ->bind_buffer(model.index_buffer(), 0)
         ->writes_to(back_buffer)

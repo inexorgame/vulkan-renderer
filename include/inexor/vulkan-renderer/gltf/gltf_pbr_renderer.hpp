@@ -5,7 +5,10 @@
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
+
+#include <array>
 
 namespace inexor::vulkan_renderer::gltf {
 
@@ -14,8 +17,17 @@ private:
     void draw_node(const ModelGpuData &model, const ModelNode &node, const wrapper::CommandBuffer &cmd_buf,
                    VkPipelineLayout layout);
 
+    const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
+        {"shaders/cubemap/filtercube.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "gltf vertex shader"},
+        {"shaders/gltf/pbr.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "gltf vertex shader"},
+        {"shaders/cubemap/irradiancecube.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"},
+        {"shaders/gltf/pbr_khr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"},
+        {"shaders/cubemap/prefilterenvmap.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "gltf fragment shader"}};
+
+    wrapper::ShaderLoader m_shader_loader;
+
 public:
-    ModelRenderer() = default;
+    ModelRenderer(const wrapper::Device &device);
     ModelRenderer(const ModelRenderer &) = delete;
     ModelRenderer(ModelRenderer &&) = delete;
     ~ModelRenderer() = default;
@@ -24,7 +36,7 @@ public:
     ModelRenderer &operator=(ModelRenderer &&) = delete;
 
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                     const std::vector<wrapper::Shader> &shaders, const ModelGpuData &model);
+                     const ModelGpuData &model);
 };
 
 } // namespace inexor::vulkan_renderer::gltf

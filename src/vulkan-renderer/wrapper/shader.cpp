@@ -14,6 +14,17 @@
 namespace {
 
 std::vector<char> read_binary(const std::string &file_name) {
+
+    // Let's check if the file extension is spv. While this is not technically necessary, a common source of errors is
+    // to specify the required shaders just as "filename.vert" instead of "filename.vert.spv" for example. These errors
+    // are hard to track, because the source code file will be loaded and Vulkan API attempts to use the file content as
+    // SPIR-V binary code, causing a validation layer error.
+    const std::string file_extension = file_name.substr(file_name.find_last_of('.') + 1);
+
+    if (file_extension != "spv") {
+        throw std::runtime_error("Error: SPIR-V shader file does not have .spv extension!");
+    }
+
     // Open stream at the end of the file to read it's size.
     std::ifstream file(file_name.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
 
@@ -34,17 +45,16 @@ std::vector<char> read_binary(const std::string &file_name) {
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std::string &name,
-               const std::string &file_name, const std::string &entry_point)
-    : Shader(device, type, name, read_binary(file_name), entry_point) {}
+Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std::string &file_name,
+               const std::string &name)
+    : Shader(device, type, read_binary(file_name), name) {}
 
-Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std::string &name,
-               const std::vector<char> &code, const std::string &entry_point)
-    : m_device(device), m_type(type), m_name(name), m_entry_point(entry_point) {
+Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std::vector<char> &code,
+               const std::string &name)
+    : m_device(device), m_type(type), m_name(name) {
     assert(device.device());
     assert(!name.empty());
     assert(!code.empty());
-    assert(!entry_point.empty());
 
     auto shader_module_ci = make_info<VkShaderModuleCreateInfo>();
     shader_module_ci.codeSize = code.size();
@@ -54,7 +64,8 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     // allocator already ensures that the data satisfies the worst case alignment requirements.
     shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data()); // NOLINT
 
-    spdlog::debug("Creating shader module {}.", name);
+    spdlog::trace("Creating shader module {}", name);
+
     if (const auto result = vkCreateShaderModule(device.device(), &shader_module_ci, nullptr, &m_shader_module);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateShaderModule failed for shader " + name + "!", result);

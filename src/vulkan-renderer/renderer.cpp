@@ -20,7 +20,7 @@ void VulkanRenderer::setup_render_graph() {
 
     // Octree rendering
     m_octree_renderer.reset();
-    m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>();
+    m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
 
     m_octree_gpu_data.reserve(m_worlds.size());
 
@@ -29,12 +29,12 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &data : m_octree_gpu_data) {
-        m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_octree_shaders, data);
+        m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, data);
     }
 
     // glTF2 model rendering
     m_gltf_model_renderer.reset();
-    m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>();
+    m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(*m_device);
 
     for (const auto &model_file : m_gltf_model_files) {
         glm::mat4 view = m_camera->view_matrix();
@@ -43,9 +43,11 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &model : m_gltf_models) {
-        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_octree_shaders,
-                                           model);
+        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
     }
+
+    m_imgui_overlay.reset();
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
 }
 
 void VulkanRenderer::recreate_swapchain() {
@@ -56,9 +58,9 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph.reset();
     m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
 
-    setup_render_graph();
-
     m_swapchain->recreate(m_window->width(), m_window->height());
+
+    setup_render_graph();
 
     m_frame_finished_fence.reset();
     m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Frame finished fence", true);
@@ -68,9 +70,6 @@ void VulkanRenderer::recreate_swapchain() {
 
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
-
-    m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
 
     m_render_graph->compile(m_back_buffer);
 }

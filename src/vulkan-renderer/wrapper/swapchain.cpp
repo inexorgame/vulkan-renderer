@@ -35,8 +35,8 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_name = std::move(other.m_name);
 }
 
-void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
-                                std::uint32_t window_height) {
+void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, const std::uint32_t window_width,
+                                const std::uint32_t window_height) {
     auto swapchain_settings = VulkanSettingsDecisionMaker::decide_swapchain_extent(
         m_device.physical_device(), m_surface, window_width, window_height);
 
@@ -167,7 +167,7 @@ std::uint32_t Swapchain::acquire_next_image(const Semaphore &semaphore) {
     return image_index;
 }
 
-void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height) {
+void Swapchain::recreate(const std::uint32_t window_width, const std::uint32_t window_height) {
     // Store the old swapchain. This allows us to pass it to VkSwapchainCreateInfoKHR::oldSwapchain to speed up
     // swapchain recreation.
     VkSwapchainKHR old_swapchain = m_swapchain;

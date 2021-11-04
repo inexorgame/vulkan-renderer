@@ -772,4 +772,25 @@ std::string_view as_string(const VkMemoryHeapFlagBits heap_flag_bit) {
     return "Unknown";
 }
 
+template <>
+std::string_view as_string(const VkShaderStageFlagBits shader_type) {
+    switch (shader_type) {
+    case VK_SHADER_STAGE_VERTEX_BIT:
+        return "vertex shader";
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+        return "tessellation control shader";
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+        return "tessellation evaluation shader";
+    case VK_SHADER_STAGE_GEOMETRY_BIT:
+        return "geometry shader";
+    case VK_SHADER_STAGE_FRAGMENT_BIT:
+        return "fragment shader";
+    case VK_SHADER_STAGE_COMPUTE_BIT:
+        return "compute shader";
+    default:
+        break;
+    }
+    return "Unknown";
+}
+
 } // namespace inexor::vulkan_renderer::vk_tools

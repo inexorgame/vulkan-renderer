@@ -3,7 +3,8 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
+
 #include "vulkan/vulkan_core.h"
 
 #include <spdlog/spdlog.h>
@@ -135,23 +136,11 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
 
     auto empty_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
 
-    wrapper::Shader lut_generator_vertex(device, VK_SHADER_STAGE_VERTEX_BIT, "brdf_lut_vertex",
-                                         "shaders/brdflut/genbrdflut.vert.spv");
+    const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
+        {"shaders/brdflut/genbrdflut.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "BRDFLUT vertex shader"},
+        {"shaders/brdflut/genbrdflut.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "BRDFLUT fragment shader"}};
 
-    wrapper::Shader lut_generator_fragment(device, VK_SHADER_STAGE_FRAGMENT_BIT, "brdf_lut_fragment",
-                                           "shaders/brdflut/genbrdflut.frag.spv");
-
-    std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-
-    shader_stages[0] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
-    shader_stages[0].module = lut_generator_vertex.module();
-    shader_stages[0].stage = lut_generator_vertex.type();
-    shader_stages[0].pName = lut_generator_vertex.entry_point().c_str();
-
-    shader_stages[1] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
-    shader_stages[1].module = lut_generator_fragment.module();
-    shader_stages[1].stage = lut_generator_fragment.type();
-    shader_stages[1].pName = lut_generator_fragment.entry_point().c_str();
+    wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files);
 
     auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
     pipeline_ci.layout = m_pipeline_layout;
@@ -164,8 +153,8 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     pipeline_ci.pViewportState = &viewport_sci;
     pipeline_ci.pDepthStencilState = &depth_stencil_sci;
     pipeline_ci.pDynamicState = &dynamic_state_ci;
-    pipeline_ci.stageCount = static_cast<std::uint32_t>(shader_stages.size());
-    pipeline_ci.pStages = shader_stages.data();
+    pipeline_ci.stageCount = m_shader_loader.shader_stage_count();
+    pipeline_ci.pStages = m_shader_loader.shader_stages().data();
 
     if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
         result != VK_SUCCESS) {

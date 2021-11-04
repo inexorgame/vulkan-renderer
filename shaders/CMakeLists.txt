@@ -14,8 +14,8 @@ set(
     gltf/pbr_khr.frag
     imgui/ui.vert
     imgui/ui.frag
-    octree/main.frag
-    octree/main.vert
+    octree/octree.frag
+    octree/octree.vert
     skybox/skybox.vert
     skybox/skybox.frag
 )
