@@ -15,8 +15,6 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
     assert(device.device());
     assert(!name.empty());
 
-    spdlog::trace("Creating semaphore {}.", name);
-
     auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
     if (const auto result = vkCreateSemaphore(device.device(), &semaphore_ci, nullptr, &m_semaphore);
         result != VK_SUCCESS) {
