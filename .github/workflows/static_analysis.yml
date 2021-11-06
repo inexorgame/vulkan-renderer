@@ -2,7 +2,7 @@ name: Static Analysis
 on: [push, pull_request]
 
 env:
-  inexor_vulkan_version: "1.2.131.1"
+  inexor_vulkan_version: "1.2.189.0"
   inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
 
 jobs:

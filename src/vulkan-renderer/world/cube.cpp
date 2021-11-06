@@ -484,14 +484,14 @@ std::shared_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDire
     while (!history.empty()) {
         if (child->m_type != Type::OCTANT) {
             // The neighbor is larger but still a neighbor!
-            return std::shared_ptr<Cube>(child);
+            return {child};
         }
         child = child->m_children[toggle_bit(history.back())];
         history.pop_back();
     }
 
     // We found a same-sized neighbor!
-    return std::shared_ptr<Cube>(child);
+    return {child};
 }
 
 std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
