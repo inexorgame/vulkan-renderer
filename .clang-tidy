@@ -290,7 +290,6 @@ Checks: >
   performance-unnecessary-copy-initialization,
   performance-unnecessary-value-param,
   portability-restrict-system-includes,
-  portability-simd-intrinsics,
   readability-avoid-const-params-in-decls,
   readability-braces-around-statements,
   readability-const-return-type,
