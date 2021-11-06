@@ -55,7 +55,7 @@ std::string ByteStreamReader::read(const std::size_t &size) {
     check_end(size);
     auto start = m_iter;
     std::advance(m_iter, size);
-    return std::string(start, m_iter);
+    return {start, m_iter};
 }
 
 template <>
