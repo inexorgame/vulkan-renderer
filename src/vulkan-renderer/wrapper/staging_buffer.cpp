@@ -20,12 +20,8 @@ StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
       m_device(other.m_device) {}
 
 void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer) {
-    spdlog::debug("Beginning command buffer recording for copy of staging buffer for vertices");
-
     m_command_buffer_for_copying.create_command_buffer();
     m_command_buffer_for_copying.start_recording();
-
-    spdlog::debug("Specifying vertex buffer copy operation in command buffer");
 
     VkBufferCopy vertex_buffer_copy{};
     vertex_buffer_copy.srcOffset = 0;
@@ -35,11 +31,7 @@ void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer) {
     vkCmdCopyBuffer(m_command_buffer_for_copying.command_buffer(), m_buffer, tarbuffer.buffer(), 1,
                     &vertex_buffer_copy);
 
-    spdlog::debug("Finished uploading mesh data to graphics card memory");
-
     m_command_buffer_for_copying.end_recording_and_submit_command();
-
-    // No need to flush stagingVertexBuffer memory because CPU_ONLY memory is always HOST_COHERENT.
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

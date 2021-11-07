@@ -12,75 +12,62 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GpuTexture::GpuTexture(const Device &device, const CpuTexture &cpu_texture)
-    : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
-      m_texture_channels(cpu_texture.channels()), m_miplevel_count(cpu_texture.mip_levels()),
-      m_name(cpu_texture.name()),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    create_image_from_data(cpu_texture.data(), cpu_texture.data_size());
+GpuTexture::GpuTexture(const Device &device, const CpuTexture &cpu_texture) : m_device(device) {
+    m_attributes = cpu_texture.attributes();
+    create_image(cpu_texture.data(), cpu_texture.data_size());
     create_default_texture_sampler();
 }
 
-GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture)
-    : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
-      m_texture_channels(cpu_texture.channels()), m_miplevel_count(cpu_texture.mip_levels()),
-      m_name(cpu_texture.name()),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    create_image_from_data(cpu_texture.data(), cpu_texture.data_size());
-    create_texture_sampler(sampler);
+GpuTexture::GpuTexture(const Device &device, const CpuTexture &cpu_texture, std::uint32_t faces = 6)
+    : m_device(device) {
+
+    m_attributes = cpu_texture.attributes();
+
+    create_cubemap_image(cpu_texture.data(), cpu_texture.data_size(), cpu_texture.ktx_wrapper());
+    create_default_texture_sampler();
 }
 
 GpuTexture::GpuTexture(const Device &device, const void *data, std::size_t data_size, const std::uint32_t width,
                        const std::uint32_t height, const std::uint32_t channel_count,
                        const std::uint32_t miplevel_count, std::string name)
-    : m_device(device), m_texture_width(width), m_texture_height(height), m_texture_channels(channel_count),
-      m_miplevel_count(miplevel_count), m_name(std::move(name)),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-    create_image_from_data(data, data_size);
+    : m_device(device) {
+
+    assert(data);
+    assert(!name.empty());
+
+    m_attributes.width = width;
+    m_attributes.height = height;
+    m_attributes.mip_levels = miplevel_count;
+    m_attributes.channels = channel_count;
+    m_attributes.name = name;
+
+    create_image(data, data_size);
     create_default_texture_sampler();
 }
 
-GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data,
-                       const std::size_t data_size, const std::uint32_t width, const std::uint32_t height,
-                       const std::uint32_t channel_count, const std::uint32_t miplevel_count, std::string name)
-
-    : m_device(device), m_texture_width(width), m_texture_height(height), m_texture_channels(miplevel_count),
-      m_miplevel_count(miplevel_count), m_name(std::move(name)),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
-
-    create_image_from_data(data, data_size);
-    // Create the texture sampler from the settings specified in the glTF2 file.
+GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const CpuTexture &cpu_texture)
+    : m_device(device) {
+    m_attributes = cpu_texture.attributes();
+    create_image(cpu_texture.data(), cpu_texture.data_size());
     create_texture_sampler(sampler);
 }
 
-GpuTexture::GpuTexture(const Device &device, const VkImageCreateFlags image_create_flags, const VkFormat format,
-                       const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
-                       const std::uint32_t array_layer_count, const VkImageUsageFlags image_usage,
-                       const std::string name)
+GpuTexture::GpuTexture(const Device &device, const gltf::TextureSampler &sampler, const void *data,
+                       std::size_t data_size, std::uint32_t width, std::uint32_t height, std::uint32_t channel_count,
+                       std::uint32_t miplevel_count, std::string name)
+    : m_device(device) {
 
-    : m_device(device), m_texture_image_format(format), m_texture_width(width), m_texture_height(height),
-      m_miplevel_count(miplevel_count), m_name(std::move(name)),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
+    assert(data);
+    assert(!name.empty());
 
-    m_texture_image = std::make_unique<Image>(m_device, image_create_flags, m_texture_image_format, m_texture_width,
-                                              m_texture_height, m_miplevel_count, array_layer_count,
-                                              VK_SAMPLE_COUNT_1_BIT, image_usage, "texture_without_data");
+    m_attributes.width = width;
+    m_attributes.height = height;
+    m_attributes.mip_levels = miplevel_count;
+    m_attributes.channels = channel_count;
+    m_attributes.name = name;
 
-    auto sampler_ci = make_info<VkSamplerCreateInfo>();
-    sampler_ci.magFilter = VK_FILTER_LINEAR;
-    sampler_ci.minFilter = VK_FILTER_LINEAR;
-    sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    sampler_ci.minLod = 0.0f;
-    sampler_ci.maxLod = static_cast<float>(miplevel_count);
-    sampler_ci.maxAnisotropy = 1.0f;
-    sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-    create_texture_sampler(sampler_ci);
-
-    update_descriptor();
+    create_image(data, data_size);
+    create_texture_sampler(sampler);
 }
 
 void GpuTexture::update_descriptor() {
@@ -89,16 +76,8 @@ void GpuTexture::update_descriptor() {
     m_descriptor.imageLayout = m_texture_image->image_layout();
 }
 
-GpuTexture::GpuTexture(GpuTexture &&other) noexcept
-    : m_device(other.m_device), m_texture_image_format(other.m_texture_image_format),
-      m_copy_command_buffer(std::move(other.m_copy_command_buffer)) {
+GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device) {
     m_texture_image = std::exchange(other.m_texture_image, nullptr);
-    m_name = std::move(other.m_name);
-    m_texture_width = other.m_texture_width;
-    m_texture_height = other.m_texture_height;
-    m_texture_channels = other.m_texture_channels;
-    m_miplevel_count = other.m_miplevel_count;
-    m_texture_image_format = other.m_texture_image_format;
     m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
@@ -106,22 +85,77 @@ GpuTexture::~GpuTexture() {
     vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
-void GpuTexture::create_image_from_data(const void *texture_data, const std::size_t texture_size) {
-    StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
+void GpuTexture::create_cubemap_image(const void *texture_data, const std::size_t texture_size, ktxTexture* texture) {
 
-    m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format, m_texture_width, m_texture_height,
-                                              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                              VK_IMAGE_ASPECT_COLOR_BIT, "texture");
+    // Setup buffer copy regions for each face including all of its mip levels
+	std::vector<VkBufferImageCopy> copy_regions;
 
-    m_copy_command_buffer.create_command_buffer();
-    m_copy_command_buffer.start_recording();
+    for (std::uint32_t face=0; face<6; face++) {
+        for (std::uint32_t level = 0; level<m_attributes.mip_levels; level++) {
+            ktx_size_t offset = 0;
+			KTX_error_code result = ktxTexture_GetImageOffset(texture, level, 0, face, &offset);
+
+            if (result != KTX_SUCCESS) {
+                throw std::runtime_error("Error: ktxTexture_GetImageOffset failed!");
+            }
+
+			VkBufferImageCopy bufferCopyRegion               = {};
+			bufferCopyRegion.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			bufferCopyRegion.imageSubresource.mipLevel       = level;
+			bufferCopyRegion.imageSubresource.baseArrayLayer = face;
+			bufferCopyRegion.imageSubresource.layerCount     = 1;
+			bufferCopyRegion.imageExtent.width               = m_attributes.width >> level;
+			bufferCopyRegion.imageExtent.height              = m_attributes.height >> level;
+			bufferCopyRegion.imageExtent.depth               = 1;
+			bufferCopyRegion.bufferOffset                    = offset;
+
+			copy_regions.push_back(bufferCopyRegion);
+        }
+    }
+
+    StagingBuffer staging_buffer(m_device, m_attributes.name, texture_size, texture_data, texture_size);
+
+    m_texture_image = std::make_unique<Image>(m_device, m_attributes.format, m_attributes.width, m_attributes.height,
+                                            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT, "texture");
+
+    wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(),
+                                            m_device.graphics_queue_family_index());
+
+    copy_command.create_command_buffer();
+    copy_command.start_recording();
 
     m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    m_texture_image->copy_from_buffer(m_copy_command_buffer.command_buffer(), texture_staging_buffer.buffer(),
-                                      m_texture_width, m_texture_height);
+    vkCmdCopyBufferToImage(copy_command.command_buffer(), staging_buffer.buffer(), m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
 
-    m_copy_command_buffer.end_recording_and_submit_command();
+    copy_command.end_recording_and_submit_command();
+
+    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+}
+
+void GpuTexture::create_image(const void *texture_data, const std::size_t texture_size) {
+    assert(texture_data);
+
+    StagingBuffer texture_staging_buffer(m_device, m_attributes.name, texture_size, texture_data, texture_size);
+
+    m_texture_image = std::make_unique<Image>(m_device, m_attributes.format, m_attributes.width, m_attributes.height,
+                                              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                              VK_IMAGE_ASPECT_COLOR_BIT, "texture");
+
+    wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(),
+                                            m_device.graphics_queue_family_index());
+
+    copy_command.create_command_buffer();
+    copy_command.start_recording();
+
+    m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    m_texture_image->copy_from_buffer(copy_command.command_buffer(), texture_staging_buffer.buffer(),
+                                      m_attributes.width, m_attributes.height);
+
+    copy_command.end_recording_and_submit_command();
 
     m_texture_image->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
@@ -180,17 +214,13 @@ void GpuTexture::create_texture_sampler(const gltf::TextureSampler &sampler) {
         sampler_ci.anisotropyEnable = VK_FALSE;
     }
 
-    spdlog::debug("Creating image sampler for texture {}.", m_name);
-
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSampler failed for texture " + m_name + " !", result);
+        throw VulkanException("Error: vkCreateSampler failed for texture " + m_attributes.name + " !", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
-
-    spdlog::debug("Image sampler {} created successfully.", m_name);
+    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_attributes.name);
 }
 
 void GpuTexture::create_default_texture_sampler() {
@@ -254,11 +284,11 @@ void GpuTexture::create_texture_sampler(const VkSamplerCreateInfo sampler_ci) {
 
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSampler failed for texture " + m_name + " !", result);
+        throw VulkanException("Error: vkCreateSampler failed for texture " + m_attributes.name + " !", result);
     }
 
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
+    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_attributes.name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

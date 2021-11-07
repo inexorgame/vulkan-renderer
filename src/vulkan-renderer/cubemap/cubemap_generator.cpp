@@ -24,7 +24,7 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
-CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const CubemapCpuTexture &texture) {
+CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
     enum Target { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 

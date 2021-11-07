@@ -742,7 +742,7 @@ Application::Application(int argc, char **argv) {
 
     m_pbr_brdf_lut = std::make_unique<pbr::BRDFLUTGenerator>(*m_device);
 
-    // m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device, "assets/environments/papermill.ktx");
+    // m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device);
 
     setup_descriptors();
 

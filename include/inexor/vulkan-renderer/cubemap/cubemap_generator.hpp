@@ -1,6 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/cubemap/cubemap_cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -25,7 +24,7 @@ private:
     void render_cubemap();
 
 public:
-    CubemapGenerator(const wrapper::Device &device, const CubemapCpuTexture &texture);
+    CubemapGenerator(const wrapper::Device &device);
 
     [[nodiscard]] auto &image_wrapper() const {
         return m_cubemap_texture->image_wrapper();

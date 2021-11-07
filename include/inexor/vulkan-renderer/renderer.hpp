@@ -119,11 +119,11 @@ protected:
     std::vector<UniformBufferSet> uniformBuffers;
 
     struct Textures {
-        std::unique_ptr<cubemap::CubemapCpuTexture> environmentCube;
+        std::unique_ptr<wrapper::GpuTexture> environmentCube;
         std::unique_ptr<wrapper::GpuTexture> empty;
         std::unique_ptr<pbr::BRDFLUTGenerator> lutBrdf;
-        std::unique_ptr<cubemap::CubemapCpuTexture> irradianceCube;
-        std::unique_ptr<cubemap::CubemapCpuTexture> prefilteredCube;
+        std::unique_ptr<wrapper::GpuTexture> irradianceCube;
+        std::unique_ptr<wrapper::GpuTexture> prefilteredCube;
     } textures;
 
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;

@@ -1,9 +1,18 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/exception.hpp"
+
+#include "inexor/vulkan-renderer/wrapper/texture_attributes.hpp"
+
+#include <cassert>
 #include <string>
 #include <vector>
 
 #include <stb_image.h>
+
+#include <vulkan/vulkan.h>
+
+#include <ktxvulkan.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -11,14 +20,14 @@ namespace inexor::vulkan_renderer::wrapper {
 /// TODO: Scan asset directory automatically.
 class CpuTexture {
 private:
-    std::string m_name;
-
-    int m_texture_width{0};
-    int m_texture_height{0};
-    int m_texture_channels{0};
-    int m_mip_levels{0};
+    TextureAttributes m_attributes;
 
     stbi_uc *m_texture_data{nullptr};
+
+    // Khronos texture format library (ktx)
+    ktxTexture *m_ktx_texture{nullptr};
+    ktx_uint8_t *m_ktx_texture_data{nullptr};
+    ktx_size_t m_ktx_texture_data_size{0};
 
     void load_texture(const std::string &file_name);
 
@@ -33,7 +42,7 @@ public:
 
     /// @brief Read a texture from a file.
     /// @param file_name The file name of the texture.
-    /// @param name The internal debug marker name of the command buffer. This must not be an empty string.
+    /// @param name The internal debug marker name of the texture (must not be empty).
     CpuTexture(const std::string &file_name, std::string name);
 
     CpuTexture(const CpuTexture &) = delete;
@@ -44,34 +53,54 @@ public:
     CpuTexture &operator=(const CpuTexture &) = delete;
     CpuTexture &operator=(CpuTexture &&) = default;
 
-    [[nodiscard]] std::string name() const {
-        return m_name;
+    [[nodiscard]] const std::string &name() const {
+        return m_attributes.name;
     }
 
-    [[nodiscard]] int width() const {
-        return m_texture_width;
+    [[nodiscard]] std::uint32_t width() const {
+        return m_attributes.width;
     }
 
-    [[nodiscard]] int height() const {
-        return m_texture_height;
+    [[nodiscard]] std::uint32_t height() const {
+        return m_attributes.height;
     }
 
-    [[nodiscard]] int channels() const {
-        return m_texture_channels;
+    [[nodiscard]] std::uint32_t channels() const {
+        return m_attributes.channels;
     }
 
-    [[nodiscard]] int mip_levels() const {
-        return m_mip_levels;
+    [[nodiscard]] std::uint32_t mip_levels() const {
+        return m_attributes.mip_levels;
     }
 
-    [[nodiscard]] stbi_uc *data() const {
-        return m_texture_data;
+    [[nodiscard]] TextureAttributes attributes() const {
+        return m_attributes;
+    }
+
+    [[nodiscard]] const void *data() const {
+        // The texture data is either stored in stb_image or ktx wrapper
+        return (m_ktx_texture) ? m_ktx_texture_data : m_texture_data;
     }
 
     [[nodiscard]] std::size_t data_size() const {
-        // TODO: We will need to update this once we fully support mip levels.
-        return static_cast<std::size_t>(m_texture_width) * static_cast<std::size_t>(m_texture_height) *
-               static_cast<std::size_t>(m_texture_channels);
+        std::size_t data_size = 0;
+
+        // TODO: Is this correct now with mip level support?
+
+        if (m_texture_data) {
+            data_size = static_cast<std::size_t>(m_attributes.width) * static_cast<std::size_t>(m_attributes.height) *
+                        static_cast<std::size_t>(m_attributes.channels);
+        } else if (m_ktx_texture_data) {
+            data_size = m_ktx_texture_data_size;
+        } else {
+            throw std::runtime_error("Error: texture data size invalid!");
+        }
+
+        return data_size;
+    }
+
+    [[nodiscard]] const auto ktx_wrapper() const {
+        return m_ktx_texture;
     }
 };
 

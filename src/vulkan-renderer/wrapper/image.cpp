@@ -271,12 +271,14 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, Image &image, 
 
     image.transition_image_layout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
+    // TODO: Support mip levels!
     VkImageSubresourceRange subres_range{};
     subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subres_range.baseMipLevel = 0;
     subres_range.levelCount = miplevel_count;
     subres_range.layerCount = layer_count;
 
+    // TODO: Support mip levels!
     VkImageCopy copy_region{};
     copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     copy_region.srcSubresource.baseArrayLayer = 0;
@@ -292,6 +294,7 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, Image &image, 
     copy_region.extent.height = height;
     copy_region.extent.depth = 1;
 
+    // TODO: Support mip levels!
     vkCmdCopyImage(command_buffer, image.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
@@ -302,9 +305,8 @@ void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffe
                              const std::uint32_t height) {
     assert(command_buffer);
     assert(src_buffer);
-    assert(width > 0);
-    assert(height > 0);
 
+    // TODO: Support mip levels!
     VkBufferImageCopy image_copy{};
     image_copy.bufferOffset = 0;
     image_copy.bufferRowLength = 0;
@@ -316,6 +318,7 @@ void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffe
     image_copy.imageOffset = {0, 0, 0};
     image_copy.imageExtent = {width, height, 1};
 
+    // TODO: Support mip levels!
     vkCmdCopyBufferToImage(command_buffer, src_buffer, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
 }
 

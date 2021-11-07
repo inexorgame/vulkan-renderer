@@ -54,7 +54,6 @@ public:
     template <typename T>
     void push_constants(const T *data, VkPipelineLayout layout,
                         VkShaderStageFlags stage = VK_SHADER_STAGE_VERTEX_BIT) const {
-        static_assert(sizeof(T) > 0);
         assert(data);
         vkCmdPushConstants(m_cmd_buf, layout, stage, 0, sizeof(T), data);
     }
