@@ -19,8 +19,6 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
     auto fence_ci = make_info<VkFenceCreateInfo>();
     fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
-    spdlog::trace("Creating Vulkan synchronisation fence {}.", m_name);
-
     if (const auto result = vkCreateFence(device.device(), &fence_ci, nullptr, &m_fence); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateFence failed!", result);
     }

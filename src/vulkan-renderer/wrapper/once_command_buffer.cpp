@@ -42,8 +42,6 @@ void OnceCommandBuffer::start_recording() {
     assert(m_command_pool.get());
     assert(!m_recording_started);
 
-    spdlog::trace("Starting recording of once command buffer.");
-
     auto command_buffer_bi = make_info<VkCommandBufferBeginInfo>();
 
     // We're only going to use the command buffer once and wait with returning from the function until the copy
@@ -63,13 +61,9 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     assert(m_command_buffer);
     assert(m_recording_started);
 
-    spdlog::trace("Ending recording of once command buffer.");
-
     if (vkEndCommandBuffer(m_command_buffer->get()) != VK_SUCCESS) {
         throw std::runtime_error("Error: VkEndCommandBuffer failed for once command buffer!");
     }
-
-    spdlog::trace("Starting to submit command.");
 
     auto submit_info = make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
@@ -83,8 +77,6 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     if (const auto result = vkQueueWaitIdle(m_queue); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueueWaitIdle failed for once command buffer!", result);
     }
-
-    spdlog::trace("Destroying once command buffer.");
 
     // Because we destroy the command buffer after submission, we have to allocate it every time.
     vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, m_command_buffer->ptr());

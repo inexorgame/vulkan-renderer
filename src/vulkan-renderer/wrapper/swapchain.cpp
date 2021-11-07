@@ -142,8 +142,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
     image_view_ci.subresourceRange.layerCount = 1;
 
     for (std::size_t i = 0; i < m_swapchain_image_count; i++) {
-        spdlog::trace("Creating swapchain image #{}.", i);
-
         image_view_ci.image = m_swapchain_images[i];
 
         if (const auto result =
