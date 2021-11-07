@@ -104,7 +104,7 @@ public:
     /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
     template <typename T>
     BufferResource *set_element_size() {
-        static_assert(sizeof(T) > 0);
+        // TODO: Check if the sum of all elements matches the size of T!
         m_element_size = sizeof(T);
         return this;
     }
@@ -503,7 +503,7 @@ template <typename T>
 }
 
 template <typename T>
-BufferResource *BufferResource::upload_data(const T *data, std::size_t count) {
+BufferResource *BufferResource::upload_data(const T *data, const std::size_t count) {
     m_data = data;
     m_data_size = count * (m_element_size = sizeof(T));
     m_data_upload_needed = true;

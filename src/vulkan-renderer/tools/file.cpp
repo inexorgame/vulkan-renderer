@@ -7,6 +7,28 @@
 
 namespace inexor::vulkan_renderer::tools {
 
+std::string get_file_extension_lowercase(std::string file_name) {
+
+    // Get the file extension
+    std::string file_extension = file_name.substr(file_name.find_last_of('.') + 1);
+
+    if (file_extension.empty()) {
+        return "";
+    }
+
+    // Convert every letter to lowercase
+    std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    return file_extension;
+}
+
+File::File(const std::string &file_name) {
+    if (!load_file(file_name)) {
+        throw std::runtime_error("Error: Could not load file " + file_name + "!");
+    }
+}
+
 bool File::load_file(const std::string &file_name) {
     assert(!file_name.empty());
 

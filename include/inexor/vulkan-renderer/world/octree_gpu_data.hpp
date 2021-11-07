@@ -80,15 +80,7 @@ private:
         spdlog::trace("Total indices {} ", m_vertices.size());
     }
 
-public:
-    /// @brief Default constructor
-    /// @param device A const reference to the VkDevice wrapper
-    /// @cube world The cubeor octree to render
-    OctreeGPUData(RenderGraph *render_graph, const std::shared_ptr<world::Cube> cube) : m_cube(cube) {
-
-        generate_vertices();
-        generate_indices();
-
+    void setup_rendering_resources(RenderGraph *render_graph) {
         m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER);
 
         m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, position))
@@ -109,6 +101,7 @@ public:
         wrapper::DescriptorBuilder descriptor_builder(render_graph->device_wrapper(),
                                                       m_descriptor_pool->descriptor_pool());
 
+        // TODO: Make UniformBuffer a templated type!
         m_uniform_buffer = std::make_unique<wrapper::UniformBuffer>(render_graph->device_wrapper(), "octree",
                                                                     sizeof(UniformBufferObjectType));
 
@@ -116,9 +109,17 @@ public:
             descriptor_builder.add_uniform_buffer<UniformBufferObjectType>(m_uniform_buffer->buffer()).build("octree");
     }
 
+public:
+    OctreeGPUData(RenderGraph *render_graph, const std::shared_ptr<world::Cube> cube) : m_cube(cube) {
+        generate_vertices();
+        generate_indices();
+        setup_rendering_resources(render_graph);
+    }
+
     OctreeGPUData() = delete;
     OctreeGPUData(const OctreeGPUData &) = delete;
 
+    // Since this is a template class, we can't put the move assignment constructor in the cpp file.
     OctreeGPUData(OctreeGPUData &&other) noexcept {
         m_cube = std::move(other.m_cube);
         m_vertices = std::move(other.m_vertices);

@@ -1,8 +1,16 @@
 ﻿#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 
+#include "inexor/vulkan-renderer/tools/file.hpp"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <spdlog/spdlog.h>
 #include <stb_image.h>
+
+// TODO: Can we include only vulkan_core.hpp?
+#include <vulkan/vulkan.h>
+
+// Khronos texture format (ktx)
+#include <ktxvulkan.h>
 
 #include <array>
 #include <utility>
@@ -14,12 +22,26 @@ CpuTexture::CpuTexture() : m_name("default texture") {
     generate_error_texture_data();
 }
 
-CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(std::move(name)) {
+void CpuTexture::load_ktx_texture(const std::string &file_name) {
     assert(!file_name.empty());
-    assert(!m_name.empty());
 
-    spdlog::debug("Loading texture file {}.", file_name);
+    spdlog::trace("Loading ktx texture {}", file_name);
 
+    ktxTexture *ktxTexture;
+
+    const auto result =
+        ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktxTexture);
+
+    if (result != KTX_SUCCESS) {
+        throw std::runtime_error("Error: ktxTexture_CreateFromNamedFile failed for file " + file_name + "!");
+    }
+
+    // TODO: continue...
+
+    ktxTexture_Destroy(ktxTexture);
+}
+
+void CpuTexture::load_texture(const std::string &file_name) {
     // Load the texture file using stb_image library.
     // Force stb_image to load an alpha channel as well.
     m_texture_data = stbi_load(file_name.c_str(), &m_texture_width, &m_texture_height, nullptr, STBI_rgb_alpha);
@@ -42,6 +64,26 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
 
         spdlog::debug("Texture dimensions: width: {}, height: {}, channels: {} mip levels: {}.", m_texture_width,
                       m_texture_height, m_texture_channels, m_mip_levels);
+    }
+}
+
+CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(std::move(name)) {
+    assert(!file_name.empty());
+    assert(!m_name.empty());
+
+    spdlog::trace("Loading texture file {}", file_name);
+
+    const auto file_extension = tools::get_file_extension_lowercase(file_name);
+
+    const std::vector<std::string> allowed_formats = {"jpg", "jpeg", "png", "hdr", "gif", "bmp"};
+
+    // Khronos texture format (ktx)
+    if (file_extension == "ktx") {
+        // TODO: Implement
+    } else if (std::find(allowed_formats.begin(), allowed_formats.end(), file_extension) != allowed_formats.end()) {
+        load_texture(file_name);
+    } else {
+        throw std::runtime_error("Error: Unsupported texture format " + file_extension + "!");
     }
 }
 

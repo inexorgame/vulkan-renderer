@@ -1,10 +1,16 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::tools {
+
+/// @brief Extracts the extension of a file as lowercase string.
+/// @param file_name the name of the file. This is allowed to include the relative or complete path.
+/// @return The extension of the file as lowercase
+[[nodiscard]] std::string get_file_extension_lowercase(std::string file_name);
 
 /// @brief A class for loading files into memory.
 /// @todo Refactor into an RAII wrapper.
@@ -18,6 +24,7 @@ private:
 
 public:
     File() = default;
+    File(const std::string &file_name);
 
     [[nodiscard]] std::size_t file_size() const {
         return m_file_size;

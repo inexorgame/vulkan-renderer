@@ -119,15 +119,15 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 }
 
 void Application::load_textures() {
-    assert(m_device->device());
-    assert(m_device->physical_device());
-    assert(m_device->allocator());
+    m_textures.reserve(m_texture_files.size());
 
-    std::string texture_name = "unnamed texture";
-
+    // TODO: Do not load duplicate entries twice! Use an unordered_map to store file names...
     for (const auto &texture_file : m_texture_files) {
-        wrapper::CpuTexture cpu_texture(texture_file, texture_name);
-        m_textures.emplace_back(*m_device, cpu_texture);
+        try {
+            wrapper::CpuTexture cpu_texture(texture_file, "unnamed texture");
+            m_textures.emplace_back(*m_device, cpu_texture);
+        } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
+        // Loading continues if one texture could not be loaded.
     }
 }
 
@@ -141,11 +141,12 @@ void Application::load_gltf_models() {
             m_gltf_model_files.emplace_back(file_name, "example glTF model");
 
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
+        // Loading continues if one model could not be loaded.
     }
 }
 
 void Application::setup_uniform_buffers() {
-
+    // Do we even need one buffer per swapchain image right now?
     uniformBuffers.reserve(m_swapchain->image_count());
 
     // TODO: Is this even technically correct?
@@ -157,7 +158,6 @@ void Application::setup_uniform_buffers() {
             std::make_unique<wrapper::UniformBuffer>(*m_device, "skybox", sizeof(gltf::ModelMatrices));
     }
 
-    // TODO!
     update_uniform_buffers();
 }
 
@@ -267,14 +267,16 @@ void Application::setup_descriptors() {
             writeDescriptorSets[2].descriptorCount = 1;
             writeDescriptorSets[2].dstSet = descriptorSets[i].scene;
             writeDescriptorSets[2].dstBinding = 2;
-            writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->descriptor();
+            // TODO: FIX THIS!
+            // writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->descriptor();
 
             writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             writeDescriptorSets[3].descriptorCount = 1;
             writeDescriptorSets[3].dstSet = descriptorSets[i].scene;
             writeDescriptorSets[3].dstBinding = 3;
-            writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->descriptor();
+            // TODO: FIX THIS!
+            // writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->descriptor();
 
             writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -412,7 +414,8 @@ void Application::setup_descriptors() {
         writeDescriptorSets[2].descriptorCount = 1;
         writeDescriptorSets[2].dstSet = descriptorSets[i].skybox;
         writeDescriptorSets[2].dstBinding = 2;
-        writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->descriptor();
+        // TODO: Fix this!
+        // writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->descriptor();
 
         vkUpdateDescriptorSets(m_device->device(), static_cast<uint32_t>(writeDescriptorSets.size()),
                                writeDescriptorSets.data(), 0, nullptr);
@@ -420,8 +423,6 @@ void Application::setup_descriptors() {
 }
 
 void Application::load_octree_geometry(bool initialize) {
-    spdlog::debug("Creating octree geometry.");
-
     // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
     m_worlds.clear();
     m_worlds.push_back(
@@ -429,20 +430,17 @@ void Application::load_octree_geometry(bool initialize) {
 }
 
 void Application::check_application_specific_features() {
-    assert(m_device->physical_device());
-
     VkPhysicalDeviceFeatures graphics_card_features;
-
     vkGetPhysicalDeviceFeatures(m_device->physical_device(), &graphics_card_features);
 
-    // Check if anisotropic filtering is available!
+    // Check if anisotropic filtering is available
     if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
         spdlog::warn("The selected graphics card does not support anisotropic filtering!");
     } else {
         spdlog::debug("The selected graphics card does support anisotropic filtering.");
     }
 
-    // TODO: Add more checks if necessary.
+    // Add more checks here if necessary
 }
 
 void Application::setup_window_and_input_callbacks() {
@@ -744,7 +742,7 @@ Application::Application(int argc, char **argv) {
 
     m_pbr_brdf_lut = std::make_unique<pbr::BRDFLUTGenerator>(*m_device);
 
-    m_cubemap = std::make_unique<cubemap::Cubemap>(*m_device);
+    // m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device, "assets/environments/papermill.ktx");
 
     setup_descriptors();
 

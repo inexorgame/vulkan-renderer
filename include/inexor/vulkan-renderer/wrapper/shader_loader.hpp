@@ -20,9 +20,6 @@ private:
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
 public:
-    ///
-    ///
-    ///
     ShaderLoader(const Device &device, const std::vector<ShaderLoaderJob> &jobs);
 
     [[nodiscard]] const auto &shaders() const {

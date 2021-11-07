@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/camera.hpp"
-#include "inexor/vulkan-renderer/cubemap/cubemap.hpp"
+#include "inexor/vulkan-renderer/cubemap/cubemap_generator.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
@@ -83,7 +83,7 @@ protected:
     std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
 
     std::unique_ptr<pbr::BRDFLUTGenerator> m_pbr_brdf_lut;
-    std::unique_ptr<cubemap::Cubemap> m_cubemap;
+    std::unique_ptr<cubemap::CubemapGenerator> m_cubemap;
 
     std::vector<std::string> m_octree_vertex_shader_files;
     std::vector<std::string> m_octree_fragment_shader_files;
@@ -119,11 +119,11 @@ protected:
     std::vector<UniformBufferSet> uniformBuffers;
 
     struct Textures {
-        std::unique_ptr<cubemap::Cubemap> environmentCube;
+        std::unique_ptr<cubemap::CubemapCpuTexture> environmentCube;
         std::unique_ptr<wrapper::GpuTexture> empty;
         std::unique_ptr<pbr::BRDFLUTGenerator> lutBrdf;
-        std::unique_ptr<cubemap::Cubemap> irradianceCube;
-        std::unique_ptr<cubemap::Cubemap> prefilteredCube;
+        std::unique_ptr<cubemap::CubemapCpuTexture> irradianceCube;
+        std::unique_ptr<cubemap::CubemapCpuTexture> prefilteredCube;
     } textures;
 
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;

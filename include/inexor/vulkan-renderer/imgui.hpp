@@ -22,6 +22,7 @@ class Swapchain;
 namespace inexor::vulkan_renderer {
 
 class ImGUIOverlay {
+private:
     const wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
     float m_scale{1.0f};
@@ -48,6 +49,8 @@ class ImGUIOverlay {
         {"shaders/imgui/ui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI fragment shader"}};
 
     wrapper::ShaderLoader m_shader_loader;
+
+    void setup_rendering_resources(RenderGraph *render_graph, TextureResource *back_buffer);
 
 public:
     /// @brief Construct a new ImGUI overlay.

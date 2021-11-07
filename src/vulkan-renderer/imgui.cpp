@@ -11,9 +11,55 @@
 
 namespace inexor::vulkan_renderer {
 
+void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureResource *back_buffer) {
+    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+
+    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(m_device, pool_sizes, "ImGui");
+
+    // Create an instance of the resource descriptor builder.
+    // This allows us to make resource descriptors with the help of a builder pattern.
+    wrapper::DescriptorBuilder descriptor_builder(m_device, m_descriptor_pool->descriptor_pool());
+
+    // Make use of the builder to create a resource descriptor for the combined image sampler.
+    m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
+
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER);
+
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos))
+        ->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv))
+        ->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col))
+        ->set_element_size<ImDrawVert>();
+
+    m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
+
+    // TODO: Unify into one call of the builder pattern
+    m_stage = render_graph->add<GraphicsStage>("ImGui");
+
+    m_stage->bind_buffer(m_vertex_buffer, 0)
+        ->uses_shaders(m_shader_loader.shaders())
+        ->writes_to(back_buffer)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
+        ->add_push_constant_range<PushConstBlock>()
+        ->add_descriptor_layout(m_descriptor->descriptor_set_layout());
+
+    VkPipelineColorBlendAttachmentState blend_attachment;
+    blend_attachment.blendEnable = VK_TRUE;
+    blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+    blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    m_stage->set_blend_attachment(blend_attachment);
+}
+
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
                            RenderGraph *render_graph, TextureResource *back_buffer)
+
     : m_device(device), m_swapchain(swapchain), m_shader_loader(m_device, m_shader_files) {
+
     spdlog::debug("Creating ImGUI context");
     ImGui::CreateContext();
 
@@ -38,16 +84,13 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     ImGuiIO &io = ImGui::GetIO();
     io.FontGlobalScale = m_scale;
 
-    spdlog::trace("Loading ImGUI shaders");
-
-    // Load font texture
-
     // TODO: Move this data into a container class; have container class also support bold and italic.
     constexpr const char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
     constexpr float FONT_SIZE = 18.0f;
 
     spdlog::debug("Loading front '{}'", FONT_FILE_PATH);
 
+    // Load font texture
     ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
 
     unsigned char *font_texture_data{};
@@ -56,7 +99,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
 
     if (font == nullptr || font_texture_data == nullptr) {
-        spdlog::error("Unable to load font {}.  Falling back to error texture.", FONT_FILE_PATH);
+        spdlog::error("Unable to load font {}. Using error texture as fallback.", FONT_FILE_PATH);
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
     } else {
         spdlog::debug("Creating ImGUI font texture");
@@ -74,46 +117,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
             FONT_MIP_LEVELS, "ImGUI font texture");
     }
 
-    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
-
-    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(m_device, pool_sizes, "ImGui");
-
-    // Create an instance of the resource descriptor builder.
-    // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(m_device, m_descriptor_pool->descriptor_pool());
-
-    // Make use of the builder to create a resource descriptor for the combined image sampler.
-    m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
-
-    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER);
-
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos))
-        ->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv))
-        ->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col))
-        ->set_element_size<ImDrawVert>();
-
-    m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
-
-    m_stage = render_graph->add<GraphicsStage>("ImGui");
-
-    m_stage->bind_buffer(m_vertex_buffer, 0)
-        ->uses_shaders(m_shader_loader.shaders())
-        ->writes_to(back_buffer)
-        ->reads_from(m_index_buffer)
-        ->reads_from(m_vertex_buffer)
-        ->add_push_constant_range(sizeof(PushConstBlock))
-        ->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-
-    // Setup blend attachment.
-    VkPipelineColorBlendAttachmentState blend_attachment;
-    blend_attachment.blendEnable = VK_TRUE;
-    blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-    blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    m_stage->set_blend_attachment(blend_attachment);
+    setup_rendering_resources(render_graph, back_buffer);
 }
 
 ImGUIOverlay::~ImGUIOverlay() {

@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/cubemap/cubemap.hpp"
+#include "inexor/vulkan-renderer/cubemap/cubemap_generator.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -14,7 +14,8 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-// TODO: Remove this
+// TODO: This must be removed before code review!!
+// I am not saying C++20 would resolve this issue but C++20 would resolve this issue
 #ifndef M_PI
 #define M_PI 3.1415926535897932
 #endif
@@ -23,7 +24,7 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
-Cubemap::Cubemap(const wrapper::Device &device) {
+CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const CubemapCpuTexture &texture) {
 
     enum Target { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
@@ -43,6 +44,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
             break;
         };
 
+        // TODO: Who makes sure the texture has this size actually?
         const VkExtent2D image_extent{dim, dim};
 
         const std::uint32_t miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
@@ -52,12 +54,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         // Each cube has 6 faces
         constexpr std::uint32_t cube_face_count = 6;
 
-        // TODO: Is this correct?
-        m_cubemap_texture = std::make_unique<wrapper::GpuTexture>(
-            device, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, format, image_extent.width, image_extent.height,
-            miplevel_count, array_layer_count,
-            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-            "cubemap");
+        // TODO: Create cubemap texture here!
 
         VkAttachmentDescription att_desc{};
         att_desc.format = format;
@@ -438,7 +435,7 @@ Cubemap::Cubemap(const wrapper::Device &device) {
         vkDestroyPipeline(device.device(), pipeline, nullptr);
         vkDestroyPipelineLayout(device.device(), pipelinelayout, nullptr);
 
-        spdlog::trace("Generating cubemap finished");
+        spdlog::trace("Cubemap generation finished");
     }
 }
 

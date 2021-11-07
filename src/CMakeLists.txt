@@ -10,7 +10,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/settings_decision_maker.cpp
     vulkan-renderer/time_step.cpp
 
-    vulkan-renderer/cubemap/cubemap.cpp
+    vulkan-renderer/cubemap/cubemap_cpu_texture.cpp
+    vulkan-renderer/cubemap/cubemap_generator.cpp
 
     vulkan-renderer/gltf/gltf_bbox.cpp
     vulkan-renderer/gltf/gltf_gpu_data.cpp

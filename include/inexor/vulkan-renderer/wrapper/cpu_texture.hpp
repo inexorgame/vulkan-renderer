@@ -8,8 +8,9 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 /// @brief RAII wrapper class for texture data.
-/// @todo Scan asset directory automatically.
+/// TODO: Scan asset directory automatically.
 class CpuTexture {
+private:
     std::string m_name;
 
     int m_texture_width{0};
@@ -18,6 +19,10 @@ class CpuTexture {
     int m_mip_levels{0};
 
     stbi_uc *m_texture_data{nullptr};
+
+    void load_texture(const std::string &file_name);
+
+    void load_ktx_texture(const std::string &file_name);
 
     /// @brief Generate a chessboard color pattern which will be used as error texture.
     void generate_error_texture_data();
