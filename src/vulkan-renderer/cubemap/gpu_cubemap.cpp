@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
@@ -30,7 +31,7 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     image_ci.arrayLayers = FACE_COUNT;
     image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
     image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    image_ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     image_ci.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
@@ -91,7 +92,7 @@ void GpuCubemap::copy_from_image(const VkCommandBuffer cmd_buf, const VkImage so
     region.extent.height = height;
     region.extent.depth = 1;
 
-    vkCmdCopyImage(cmd_buf, m_image->image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, source_image,
+    vkCmdCopyImage(cmd_buf, source_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image->image(),
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
 

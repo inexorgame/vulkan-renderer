@@ -109,17 +109,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
             device, format, image_extent.width, image_extent.height, renderpass, "offscreen framebuffer");
 
-        {
-            wrapper::OnceCommandBuffer single_command(device);
-            single_command.create_command_buffer();
-            single_command.start_recording();
-
-            m_offscreen_framebuffer->m_image->transition_image_layout(single_command.command_buffer(),
-                                                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 1);
-
-            single_command.end_recording_and_submit_command();
-        }
-
         const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
 
         m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "gltf");
@@ -315,22 +304,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         scissor.extent.width = dim;
         scissor.extent.height = dim;
 
-        {
-            wrapper::OnceCommandBuffer single_command(device);
-            single_command.create_command_buffer();
-            single_command.start_recording();
-
-            m_cubemap_texture->image_wrapper()->transition_image_layout(
-                single_command.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count, cube_face_count);
-
-            single_command.end_recording_and_submit_command();
-        }
-
         // TODO: Implement graphics pipeline builder
         // TODO: Split up in setup of pipeline and rendering of cubemaps
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < cube_face_count; face++) {
 
+                // TODO: Can these once command buffers be grouped outside of the for loops?
                 wrapper::OnceCommandBuffer cmd_buf(device);
 
                 cmd_buf.create_command_buffer();
@@ -346,6 +325,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                 switch (target) {
                 case IRRADIANCE:
                     pushBlockIrradiance.mvp =
+                        // TODO: Use static cast
                         glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
                     vkCmdPushConstants(cmd_buf.command_buffer(), pipelinelayout,
@@ -372,19 +352,17 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
                 // TODO: draw skybox!
 
-                // TODO: More items which need to be rendered here so they are part of the cubemap?
-
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
-                m_offscreen_framebuffer->image_wrapper().transition_image_layout(cmd_buf.command_buffer(),
-                                                                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                m_offscreen_framebuffer->transition_image_layout(cmd_buf.command_buffer(),
+                                                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
                 m_cubemap_texture->copy_from_image(cmd_buf.command_buffer(), m_offscreen_framebuffer->image(), face,
                                                    mip_level, static_cast<std::uint32_t>(viewport.width),
                                                    static_cast<std::uint32_t>(viewport.height));
 
-                m_offscreen_framebuffer->image_wrapper().transition_image_layout(
-                    cmd_buf.command_buffer(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                m_offscreen_framebuffer->transition_image_layout(cmd_buf.command_buffer(),
+                                                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
                 cmd_buf.end_recording_and_submit_command();
             }

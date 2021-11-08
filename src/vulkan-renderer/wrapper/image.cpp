@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
@@ -143,6 +144,11 @@ Image::Image(const Device &device, const VkImageCreateFlags image_create_flags, 
 void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
                                     const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
 
+    spdlog::trace("Image transition from {} to {}", vk_tools::as_string(m_image_layout),
+                  vk_tools::as_string(new_layout));
+
+    assert(new_layout != m_image_layout);
+
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = m_image_layout;
     barrier.newLayout = new_layout;
@@ -150,9 +156,11 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = m_image;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
     // TODO: Expose this as parameter if needed
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = miplevel_count;
+
     // TODO: Expose this as parameter if needed
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = layer_count;
