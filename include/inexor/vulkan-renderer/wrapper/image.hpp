@@ -30,8 +30,6 @@ private:
     /// @param image_view_ci The image view create info
     void create_image_view(VkImageViewCreateInfo image_view_ci);
 
-    void update_descriptor();
-
 public:
     /// @brief This is the most verbose constructor. It offers all create structures as parameters.
     /// @note More constructors with increasing amount of abstraction can be found below. Not that this constructor is
@@ -42,6 +40,8 @@ public:
     /// @param name The internal debug marker name of the image
     /// @note std::move(name) is used since we must take ownership of the memory for assigning a Vulkan debug marker
     Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, std::string name);
+
+    // TODO: Remove the unnecessary overloaded constructors
 
     /// @brief Call the constructor above, but expose most parameters to the programmer.
     Image(const Device &device, VkImageCreateFlags image_create_flags, VkImageType image_type, VkFormat format,
@@ -79,37 +79,21 @@ public:
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) = delete;
 
-    void transition_image_layout(VkCommandBuffer cmd_buf, VkImageLayout new_layout);
-    void transition_image_layout(VkImageLayout new_layout);
+    ///
+    ///
+    ///
+    void transition_image_layout(VkCommandBuffer cmd_buf, VkImageLayout new_layout, std::uint32_t miplevel_count = 1,
+                                 std::uint32_t layer_count = 1);
 
-    void place_pipeline_barrier(VkImageLayout new_layout, VkAccessFlags src_access_mask, VkAccessFlags dest_access_mask,
-                                VkImageSubresourceRange subresource_range);
-
-    /// @brief
-    /// @param command_buffer
-    /// @param new_layout
-    /// @param src_access_mask
-    /// @param dest_access_mask
-    void place_pipeline_barrier(VkCommandBuffer command_buffer, VkImageLayout new_layout, VkAccessFlags src_access_mask,
-                                VkAccessFlags dest_access_mask, VkImageSubresourceRange subresource_range);
-
-    /// @brief
-    /// @param command_buffer
-    /// @param buffer
-    /// @param width
-    /// @param height
+    ///
+    ///
+    ///
     void copy_from_buffer(VkCommandBuffer command_buffer, VkBuffer src_buffer, std::uint32_t width,
                           std::uint32_t height);
 
-    /// @brief
-    /// @param command_buffer
-    /// @param target_image
-    /// @param width
-    /// @param height
-    /// @param miplevel_count
-    /// @param layer_count
-    /// @param base_array_layer
-    /// @param mip_level
+    ///
+    ///
+    ///
     void copy_from_image(VkCommandBuffer command_buffer, Image &image, std::uint32_t width, std::uint32_t height,
                          std::uint32_t miplevel_count, std::uint32_t layer_count, std::uint32_t base_array_layer,
                          std::uint32_t mip_level);

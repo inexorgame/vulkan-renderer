@@ -7,7 +7,6 @@
 
 #include <cassert>
 #include <memory>
-#include <stdexcept>
 
 namespace inexor::vulkan_renderer::wrapper {
 

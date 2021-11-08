@@ -6,6 +6,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// TODO: Should this actually be in wrapper?
 struct TextureAttributes {
     VkFormat format{VK_FORMAT_R8G8B8A8_UNORM};
     std::string name;
@@ -15,4 +16,4 @@ struct TextureAttributes {
     std::uint32_t mip_levels{0};
 };
 
-}
+} // namespace inexor::vulkan_renderer::wrapper

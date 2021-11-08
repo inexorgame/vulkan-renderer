@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -12,13 +13,10 @@ namespace inexor::vulkan_renderer::cubemap {
 
 class CubemapGenerator {
 private:
-    std::unique_ptr<wrapper::GpuTexture> m_cubemap_texture;
+    std::unique_ptr<GpuCubemap> m_cubemap_texture;
     std::unique_ptr<wrapper::OffscreenFramebuffer> m_offscreen_framebuffer;
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-
-    // TODO: Should this be here?
-    VkSampler m_sampler{VK_NULL_HANDLE};
 
     void setup_pipeline();
     void render_cubemap();
@@ -26,14 +24,7 @@ private:
 public:
     CubemapGenerator(const wrapper::Device &device);
 
-    [[nodiscard]] auto &image_wrapper() const {
-        return m_cubemap_texture->image_wrapper();
-    }
-
-    // TODO: Would it be better to inherit from GpuTexture? (not just for this method..)
-    [[nodiscard]] auto &descriptor() const {
-        return m_cubemap_texture->descriptor();
-    }
+    // TODO: Add get methods for cubemap!
 };
 
 } // namespace inexor::vulkan_renderer::cubemap

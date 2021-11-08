@@ -28,34 +28,27 @@ void Image::create_image(const VkImageCreateInfo image_ci) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
 
-    // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
 
     // Keep track of image layouts for image transitioning
     m_image_layout = image_ci.initialLayout;
 }
 
-void Image::create_image_view(const VkImageViewCreateInfo image_view_ci) {
+void Image::create_image_view(VkImageViewCreateInfo image_view_ci) {
+    image_view_ci.image = m_image;
+
     if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &m_image_view);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
 
-    // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
-}
-
-void Image::update_descriptor() {
-    // TODO: Fix this!
-    // m_descriptor.sampler = m_sampler;
-    m_descriptor.imageView = m_image_view;
-    m_descriptor.imageLayout = m_image_layout;
 }
 
 Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkImageViewCreateInfo image_view_ci,
              std::string name)
 
-    : m_device(device), m_format(image_ci.format), m_name(std::move(name)) {
+    : m_device(device), m_format(image_ci.format), m_name(name) {
 
     assert(device.device());
     assert(device.physical_device());
@@ -147,7 +140,8 @@ Image::Image(const Device &device, const VkImageCreateFlags image_create_flags, 
     : Image(device, image_create_flags, VK_IMAGE_TYPE_2D, format, width, height, miplevel_count, array_layer_count,
             VK_SAMPLE_COUNT_1_BIT, image_usage_flags, VK_IMAGE_VIEW_TYPE_CUBE, {}, VK_IMAGE_ASPECT_COLOR_BIT, name) {}
 
-void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout) {
+void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
+                                    const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
 
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = m_image_layout;
@@ -156,10 +150,12 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = m_image;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    // TODO: Expose this as parameter if needed
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = miplevel_count;
+    // TODO: Expose this as parameter if needed
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.layerCount = layer_count;
 
     VkPipelineStageFlags source_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     VkPipelineStageFlags destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
@@ -195,69 +191,6 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
     }
 
     vkCmdPipelineBarrier(cmd_buf, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-    m_image_layout = new_layout;
-}
-
-void Image::transition_image_layout(const VkImageLayout new_layout) {
-
-    OnceCommandBuffer image_transition_change(m_device, m_device.graphics_queue(),
-                                              m_device.graphics_queue_family_index());
-
-    image_transition_change.create_command_buffer();
-    image_transition_change.start_recording();
-
-    transition_image_layout(image_transition_change.command_buffer(), new_layout);
-
-    image_transition_change.end_recording_and_submit_command();
-}
-
-void Image::place_pipeline_barrier(const VkImageLayout new_layout, const VkAccessFlags src_access_mask,
-                                   const VkAccessFlags dest_access_mask,
-                                   const VkImageSubresourceRange subresource_range) {
-
-    wrapper::OnceCommandBuffer cmd_buf(m_device);
-
-    cmd_buf.create_command_buffer();
-    cmd_buf.start_recording();
-
-    assert(m_image);
-    assert(src_access_mask != dest_access_mask);
-
-    auto mem_barrier = make_info<VkImageMemoryBarrier>();
-    mem_barrier.image = m_image;
-    mem_barrier.oldLayout = m_image_layout;
-    mem_barrier.newLayout = new_layout;
-    mem_barrier.srcAccessMask = src_access_mask;
-    mem_barrier.dstAccessMask = dest_access_mask;
-    mem_barrier.subresourceRange = subresource_range;
-
-    vkCmdPipelineBarrier(cmd_buf.command_buffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
-
-    cmd_buf.end_recording_and_submit_command();
-
-    m_image_layout = new_layout;
-}
-
-void Image::place_pipeline_barrier(const VkCommandBuffer command_buffer, const VkImageLayout new_layout,
-                                   const VkAccessFlags src_access_mask, const VkAccessFlags dest_access_mask,
-                                   const VkImageSubresourceRange subresource_range) {
-
-    assert(m_image);
-    assert(command_buffer);
-    assert(src_access_mask != dest_access_mask);
-
-    auto mem_barrier = make_info<VkImageMemoryBarrier>();
-    mem_barrier.image = m_image;
-    mem_barrier.oldLayout = m_image_layout;
-    mem_barrier.newLayout = new_layout;
-    mem_barrier.srcAccessMask = src_access_mask;
-    mem_barrier.dstAccessMask = dest_access_mask;
-    mem_barrier.subresourceRange = subresource_range;
-
-    vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0,
-                         nullptr, 0, nullptr, 1, &mem_barrier);
 
     m_image_layout = new_layout;
 }

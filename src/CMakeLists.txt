@@ -11,6 +11,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/cubemap/cubemap_generator.cpp
+    vulkan-renderer/cubemap/cpu_cubemap.cpp
+    vulkan-renderer/cubemap/gpu_cubemap.cpp
 
     vulkan-renderer/gltf/gltf_bbox.cpp
     vulkan-renderer/gltf/gltf_gpu_data.cpp
@@ -66,6 +68,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/staging_buffer.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/texture_attributes.cpp
+    vulkan-renderer/wrapper/texture_base.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp

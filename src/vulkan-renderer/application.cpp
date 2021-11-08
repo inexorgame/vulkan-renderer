@@ -267,16 +267,14 @@ void Application::setup_descriptors() {
             writeDescriptorSets[2].descriptorCount = 1;
             writeDescriptorSets[2].dstSet = descriptorSets[i].scene;
             writeDescriptorSets[2].dstBinding = 2;
-            // TODO: FIX THIS!
-            // writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->descriptor();
+            writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->descriptor();
 
             writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             writeDescriptorSets[3].descriptorCount = 1;
             writeDescriptorSets[3].dstSet = descriptorSets[i].scene;
             writeDescriptorSets[3].dstBinding = 3;
-            // TODO: FIX THIS!
-            // writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->descriptor();
+            writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->descriptor();
 
             writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -414,8 +412,7 @@ void Application::setup_descriptors() {
         writeDescriptorSets[2].descriptorCount = 1;
         writeDescriptorSets[2].dstSet = descriptorSets[i].skybox;
         writeDescriptorSets[2].dstBinding = 2;
-        // TODO: Fix this!
-        // writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->descriptor();
+        writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->descriptor();
 
         vkUpdateDescriptorSets(m_device->device(), static_cast<uint32_t>(writeDescriptorSets.size()),
                                writeDescriptorSets.data(), 0, nullptr);
@@ -742,7 +739,7 @@ Application::Application(int argc, char **argv) {
 
     m_pbr_brdf_lut = std::make_unique<pbr::BRDFLUTGenerator>(*m_device);
 
-    // m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device);
+    m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device);
 
     setup_descriptors();
 
