@@ -93,10 +93,12 @@ public:
     /// @brief Call vkCmdEndRenderPass.
     void end_render_pass() const;
 
+    // TODO: Refactor: unified get syntax!
     [[nodiscard]] VkCommandBuffer get() const {
         return m_cmd_buf;
     }
 
+    // TODO: Refactor: unified get syntax!
     [[nodiscard]] const VkCommandBuffer *ptr() const {
         return &m_cmd_buf;
     }

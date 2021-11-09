@@ -18,9 +18,23 @@ void VulkanRenderer::setup_render_graph() {
     m_depth_buffer = m_render_graph->add<TextureResource>("depth buffer", VK_FORMAT_D32_SFLOAT_S8_UINT,
                                                           TextureUsage::DEPTH_STENCIL_BUFFER);
 
+    // Skybox rendering
+    m_skybox_renderer.reset();
+    m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device);
+
+    glm::mat4 view = m_camera->view_matrix();
+    glm::mat4 proj = m_camera->perspective_matrix();
+
+    gltf::ModelGpuData m_skybox_data(*m_device, m_render_graph.get(), *m_skybox_model, view, proj);
+
+    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_skybox_data);
+
     // Octree rendering
     m_octree_renderer.reset();
     m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
+
+    // TODO: We don't have to do this!
+    m_octree_gpu_data.clear();
 
     m_octree_gpu_data.reserve(m_worlds.size());
 
@@ -36,16 +50,18 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_model_renderer.reset();
     m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(*m_device);
 
+    // TODO: We don't have to do this!
+    m_gltf_models.clear();
+
     for (const auto &model_file : m_gltf_model_files) {
-        glm::mat4 view = m_camera->view_matrix();
-        glm::mat4 proj = m_camera->perspective_matrix();
         m_gltf_models.emplace_back(*m_device, m_render_graph.get(), model_file, view, proj);
     }
 
     for (const auto &model : m_gltf_models) {
-        // m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
+        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
     }
 
+    // ImGUI user interface overlay
     m_imgui_overlay.reset();
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
 }

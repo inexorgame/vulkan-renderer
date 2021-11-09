@@ -34,7 +34,6 @@ void ModelRenderer::draw_node(const ModelGpuData &model, const ModelNode &node, 
     }
 }
 
-// TODO: The shaders should be hard coded into the corresponding rendering component. They should not be parameters!
 void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer,
                                 const TextureResource *depth_buffer, const ModelGpuData &model) {
     assert(render_graph);

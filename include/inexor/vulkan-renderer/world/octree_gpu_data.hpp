@@ -155,6 +155,7 @@ public:
     /// @brief Update the otree uniform buffer.
     /// @param data The new uniform buffer data of template type UniformBufferObjectType
     void update_ubo(const UniformBufferObjectType *data) {
+        // TODO: Make uniform buffer wrapper class entirely a template, not just this method!
         m_uniform_buffer->update<UniformBufferObjectType>(data);
     }
 

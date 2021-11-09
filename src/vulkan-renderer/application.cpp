@@ -136,6 +136,7 @@ void Application::load_gltf_models() {
     m_gltf_models.reserve(m_gltf_model_file_names.size());
 
     // TODO: Do not load duplicate entries twice! Use an unordered_map to store file names...
+    // TODO: Implement gltf model manager?
     for (const auto &file_name : m_gltf_model_file_names) {
         try {
             m_gltf_model_files.emplace_back(file_name, "example glTF model");
@@ -143,6 +144,9 @@ void Application::load_gltf_models() {
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
         // Loading continues if one model could not be loaded.
     }
+
+    // Load skybox gltf model
+    m_skybox_model = std::make_unique<gltf::ModelFile>("assets/models/Box/glTF-Embedded/Box.gltf", "skybox model");
 }
 
 void Application::setup_uniform_buffers() {
@@ -433,19 +437,18 @@ void Application::check_application_specific_features() {
     // Check if anisotropic filtering is available
     if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
         spdlog::warn("The selected graphics card does not support anisotropic filtering!");
+        // We need to take the missing anisotropic filtering into account when creating texture samplers!
+
     } else {
         spdlog::debug("The selected graphics card does support anisotropic filtering.");
     }
 
-    // Add more checks here if necessary
+    // Add more engine requirement checks here if necessary
 }
 
 void Application::setup_window_and_input_callbacks() {
-    spdlog::debug("Storing GLFW window user pointer.");
 
     m_window->set_user_ptr(this);
-
-    spdlog::debug("Setting up framebuffer resize callback.");
 
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -455,16 +458,12 @@ void Application::setup_window_and_input_callbacks() {
 
     m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
 
-    spdlog::debug("Setting up keyboard button callback.");
-
     auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         app->key_callback(window, key, scancode, action, mods);
     };
 
     m_window->set_keyboard_button_callback(lambda_key_callback);
-
-    spdlog::debug("Setting up cursor position callback.");
 
     auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -473,16 +472,12 @@ void Application::setup_window_and_input_callbacks() {
 
     m_window->set_cursor_position_callback(lambda_cursor_position_callback);
 
-    spdlog::debug("Setting up mouse button callback.");
-
     auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         app->mouse_button_callback(window, button, action, mods);
     };
 
     m_window->set_mouse_button_callback(lambda_mouse_button_callback);
-
-    spdlog::debug("Setting up mouse wheel scroll callback.");
 
     auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));

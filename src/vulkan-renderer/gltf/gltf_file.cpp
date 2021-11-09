@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
 
+#include "inexor/vulkan-renderer/tools/file.hpp"
+
 #define TINYGLTF_IMPLEMENTATION
 #include "tiny_gltf.h"
 
@@ -15,11 +17,10 @@ ModelFile::ModelFile(const std::string &file_name, const std::string &model_name
     assert(!file_name.empty());
     assert(!model_name.empty());
 
-    // Get the file extension from the file name.
-    const std::string file_extension = file_name.substr(file_name.find_last_of('.') + 1);
+    const auto file_extension = tools::get_file_extension_lowercase(file_name);
 
     if (file_extension.empty()) {
-        throw InexorException("Error: Could not determine file extension from " + file_name);
+        throw std::runtime_error("Error: Could not determine file extension!");
     }
 
     bool loading_succeeded = false;

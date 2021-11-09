@@ -299,6 +299,7 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
         }
     }
 
+    // TODO: Store these in an unordered_map!
     if (node.name == "Light") {
         spdlog::trace("Loading lights from glTF2 models is not supported yet.");
     } else if (node.name == "Camera") {
@@ -313,7 +314,6 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
         const auto &buffers = model.buffers;
         const auto &buffer_views = model.bufferViews;
 
-        // ?
         std::unique_ptr<ModelMesh> new_mesh = std::make_unique<ModelMesh>(device_wrapper, new_node.matrix);
 
         for (const auto &primitive : mesh.primitives) {

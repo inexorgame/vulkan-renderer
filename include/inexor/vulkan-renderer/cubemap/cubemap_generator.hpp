@@ -1,16 +1,15 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/offscreen_framebuffer.hpp"
 
 #include <memory>
 
 namespace inexor::vulkan_renderer::cubemap {
 
+// TODO: Abstract this so any stuff can be rendered into a cubemap?
 class CubemapGenerator {
 private:
     std::unique_ptr<GpuCubemap> m_cubemap_texture;

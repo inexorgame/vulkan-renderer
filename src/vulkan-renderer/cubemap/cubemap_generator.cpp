@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/offscreen_framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
@@ -309,7 +310,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < cube_face_count; face++) {
 
-                // TODO: Can these once command buffers be grouped outside of the for loops?
                 wrapper::OnceCommandBuffer cmd_buf(device);
 
                 cmd_buf.create_command_buffer();
@@ -334,6 +334,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                     break;
                 case PREFILTEREDENV:
                     pushBlockPrefilterEnv.mvp =
+                        // TODO: Use static cast
                         glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
                     pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
 

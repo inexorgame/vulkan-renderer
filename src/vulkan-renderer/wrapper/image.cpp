@@ -144,9 +144,6 @@ Image::Image(const Device &device, const VkImageCreateFlags image_create_flags, 
 void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
                                     const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
 
-    spdlog::trace("Image transition from {} to {}", vk_tools::as_string(m_image_layout),
-                  vk_tools::as_string(new_layout));
-
     assert(new_layout != m_image_layout);
 
     auto barrier = make_info<VkImageMemoryBarrier>();
@@ -212,14 +209,12 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, Image &image, 
 
     image.transition_image_layout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-    // TODO: Support mip levels!
     VkImageSubresourceRange subres_range{};
     subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subres_range.baseMipLevel = 0;
     subres_range.levelCount = miplevel_count;
     subres_range.layerCount = layer_count;
 
-    // TODO: Support mip levels!
     VkImageCopy copy_region{};
     copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     copy_region.srcSubresource.baseArrayLayer = 0;
@@ -235,7 +230,6 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, Image &image, 
     copy_region.extent.height = height;
     copy_region.extent.depth = 1;
 
-    // TODO: Support mip levels!
     vkCmdCopyImage(command_buffer, image.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
