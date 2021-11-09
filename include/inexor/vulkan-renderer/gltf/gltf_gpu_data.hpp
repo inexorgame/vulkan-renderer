@@ -49,7 +49,6 @@ struct ModelShaderParams {
 class ModelGpuData {
 public:
     ModelMatrices m_scene;
-    ModelMatrices m_skybox;
     ModelShaderParams m_shader_values;
 
 private:

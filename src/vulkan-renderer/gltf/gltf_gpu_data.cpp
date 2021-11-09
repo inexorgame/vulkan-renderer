@@ -36,7 +36,6 @@ ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
     m_default_scene_index = other.m_default_scene_index;
     m_shader_values = other.m_shader_values;
     m_scene = other.m_scene;
-    m_skybox = other.m_skybox;
     m_textures = std::move(other.m_textures);
     m_texture_samplers = std::move(other.m_texture_samplers);
     m_texture_indices = std::move(other.m_texture_indices);
@@ -295,7 +294,8 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
 
     if (!node.children.empty()) {
         for (std::size_t child_index = 0; child_index < node.children.size(); child_index++) {
-            load_node(device_wrapper, model, &new_node, node, scene_index, node.children[child_index]);
+            load_node(device_wrapper, model, &new_node, model.nodes.at(node.children.at(child_index)), scene_index,
+                      node.children.at(child_index));
         }
     }
 

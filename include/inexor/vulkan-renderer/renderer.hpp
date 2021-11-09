@@ -12,7 +12,7 @@
 #include "inexor/vulkan-renderer/pbr/brdf_lut.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-#include "inexor/vulkan-renderer/skybox/skybox.hpp"
+#include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/octree_gpu_data.hpp"
@@ -83,8 +83,6 @@ protected:
     std::vector<gltf::ModelGpuData> m_gltf_models;
     std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
 
-    std::unique_ptr<gltf::ModelFile> m_skybox_model;
-
     std::unique_ptr<pbr::BRDFLUTGenerator> m_pbr_brdf_lut;
     std::unique_ptr<cubemap::CubemapGenerator> m_cubemap;
 
@@ -97,6 +95,8 @@ protected:
     std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex, std::uint32_t>> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
 
+    std::unique_ptr<gltf::ModelFile> m_skybox_model;
+    std::unique_ptr<gltf::ModelGpuData> m_skybox_data;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;
 
     TextureResource *m_back_buffer{nullptr};
@@ -114,14 +114,6 @@ protected:
     };
 
     std::vector<DescriptorSets> descriptorSets;
-
-    struct UniformBufferSet {
-        std::unique_ptr<wrapper::UniformBuffer> scene;
-        std::unique_ptr<wrapper::UniformBuffer> skybox;
-        std::unique_ptr<wrapper::UniformBuffer> params;
-    };
-
-    std::vector<UniformBufferSet> uniformBuffers;
 
     struct Textures {
         std::unique_ptr<wrapper::GpuTexture> environmentCube;

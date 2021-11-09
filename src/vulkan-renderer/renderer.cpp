@@ -25,9 +25,10 @@ void VulkanRenderer::setup_render_graph() {
     glm::mat4 view = m_camera->view_matrix();
     glm::mat4 proj = m_camera->perspective_matrix();
 
-    gltf::ModelGpuData m_skybox_data(*m_device, m_render_graph.get(), *m_skybox_model, view, proj);
+    m_skybox_data.reset();
+    m_skybox_data = std::make_unique<gltf::ModelGpuData>(*m_device, m_render_graph.get(), *m_skybox_model, view, proj);
 
-    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, m_skybox_data);
+    // m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_data);
 
     // Octree rendering
     m_octree_renderer.reset();
@@ -58,7 +59,7 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &model : m_gltf_models) {
-        m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
+        // m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
     }
 
     // ImGUI user interface overlay

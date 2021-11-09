@@ -14,7 +14,7 @@ namespace inexor::vulkan_renderer::gltf {
 
 class ModelRenderer {
 private:
-    void draw_node(const ModelGpuData &model, const ModelNode &node, const wrapper::CommandBuffer &cmd_buf,
+    void draw_node(const ModelGpuData &model, const ModelNode *node, const wrapper::CommandBuffer &cmd_buf,
                    VkPipelineLayout layout);
 
     const std::vector<wrapper::ShaderLoaderJob> m_shader_files{

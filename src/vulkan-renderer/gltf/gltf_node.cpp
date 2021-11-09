@@ -24,20 +24,25 @@ void ModelNode::update() {
         glm::mat4 m = get_matrix();
         if (skin) {
             mesh->uniformBlock.matrix = m;
-            // Update join matrices
+
+            // Update joint matrices
             glm::mat4 inverseTransform = glm::inverse(m);
-            size_t numJoints = std::min(static_cast<std::uint32_t>(skin->joints.size()), MAX_NUM_JOINTS);
-            for (size_t i = 0; i < numJoints; i++) {
+
+            std::size_t numJoints = std::min(static_cast<std::uint32_t>(skin->joints.size()), MAX_NUM_JOINTS);
+
+            for (std::size_t i = 0; i < numJoints; i++) {
                 auto *jointNode = skin->joints[i];
                 glm::mat4 jointMat = jointNode->get_matrix() * skin->inverse_bind_matrices[i];
                 jointMat = inverseTransform * jointMat;
                 mesh->uniformBlock.jointMatrix[i] = jointMat;
             }
-            mesh->uniformBlock.jointcount = (float)numJoints;
+
+            mesh->uniformBlock.jointcount = static_cast<float>(numJoints);
 
             mesh->ubo->update(&mesh->uniformBlock);
         } else {
-            mesh->ubo->update(&m);
+            // TODO: FIX ME!
+            // mesh->ubo->update(&m);
         }
     }
 

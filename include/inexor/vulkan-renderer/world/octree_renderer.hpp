@@ -49,7 +49,7 @@ public:
             ->bind_buffer(octree_data.vertex_buffer(), 0)
             ->bind_buffer(octree_data.index_buffer(), 0)
             ->uses_shaders(m_shader_loader.shaders())
-            ->set_clears_screen(false)
+            ->set_clears_screen(true)
             ->writes_to(back_buffer)
             ->writes_to(depth_buffer)
             ->reads_from(octree_data.vertex_buffer())
