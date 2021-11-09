@@ -54,7 +54,7 @@ public:
 
 private:
     std::string m_name;
-    const float m_model_scale{1.0f};
+    float m_model_scale{1.0f};
 
     std::vector<std::uint32_t> m_texture_indices;
     std::vector<std::uint32_t> m_indices;
@@ -83,8 +83,8 @@ private:
     std::optional<std::uint32_t> m_default_scene_index{};
 
     // In case the model contains textures but no default texture sampler, use this one.
-    const TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                                   VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
+    TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                             VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
 
     /// @brief Find a node by parent and index in the parent node's children.
     /// @param parent The node's parent
@@ -121,10 +121,13 @@ public:
                  glm::mat4 model_matrix, glm::mat4 proj);
 
     ModelGpuData(const ModelGpuData &) = delete;
+
     ModelGpuData(ModelGpuData &&) noexcept;
+
     ~ModelGpuData() = default;
 
     ModelGpuData &operator=(const ModelGpuData &) = delete;
+
     ModelGpuData &operator=(ModelGpuData &&) = default;
 
     [[nodiscard]] std::size_t texture_count() const {

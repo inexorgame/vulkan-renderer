@@ -30,7 +30,7 @@ private:
 
     UBOMatrices m_skybox_data;
 
-    void SkyboxRenderer::draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode &node);
+    void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode &node);
 
 public:
     /// Initialize skybox renderer by loading the skybox shaders
