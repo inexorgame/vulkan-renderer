@@ -19,18 +19,20 @@ struct ModelMesh {
 
     void set_bounding_box(glm::vec3 min, glm::vec3 max);
 
-    std::unique_ptr<wrapper::UniformBuffer> ubo;
+    struct UniformBlock {
+        glm::mat4 matrix;
+        glm::mat4 jointMatrix[128]{};
+        float jointcount{0};
+    };
+
+    UniformBlock uniformBlock;
+
+    std::unique_ptr<wrapper::UniformBuffer<UniformBlock>> ubo;
 
     std::vector<ModelPrimitive> primitives;
 
     BoundingBox bb;
     BoundingBox aabb;
-
-    struct UniformBlock {
-        glm::mat4 matrix;
-        glm::mat4 jointMatrix[128]{};
-        float jointcount{0};
-    } uniformBlock;
 };
 
 } // namespace inexor::vulkan_renderer::gltf

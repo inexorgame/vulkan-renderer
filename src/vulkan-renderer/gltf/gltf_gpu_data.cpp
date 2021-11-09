@@ -794,16 +794,14 @@ void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, Rend
 
     wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
-    m_uniform_buffer =
-        std::make_unique<wrapper::UniformBuffer>(device, "gltf uniform buffer", sizeof(UniformBufferObject));
+    m_uniform_buffer = std::make_unique<wrapper::UniformBuffer<ModelShaderParams>>(device, "gltf uniform buffer");
 
     ModelShaderParams shader_data;
 
     m_scene.model = model_matrix;
     m_scene.projection = proj_matrix;
 
-    // TOOD: Move templating to the entire class, not just to update method!
-    m_uniform_buffer->update<ModelShaderParams>(&shader_data);
+    m_uniform_buffer->update(&shader_data);
 
     m_descriptor =
         builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("gltf uniform buffer object");

@@ -8,6 +8,7 @@
 #include "inexor/vulkan-renderer/gltf/gltf_texture_sampler.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_vertex.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
@@ -73,7 +74,8 @@ private:
 
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-    std::unique_ptr<wrapper::UniformBuffer> m_uniform_buffer;
+
+    std::unique_ptr<wrapper::UniformBuffer<ModelShaderParams>> m_uniform_buffer;
 
     BufferResource *m_vertex_buffer{nullptr};
     BufferResource *m_index_buffer{nullptr};
@@ -192,11 +194,6 @@ public:
     // TODO: Do not return const reference to unique_ptr!
     [[nodiscard]] const auto &vertex_buffer() const {
         return m_vertex_buffer;
-    }
-
-    // TODO: Do not return const reference to unique_ptr!
-    [[nodiscard]] const auto &ubo() const {
-        return m_uniform_buffer;
     }
 
     [[nodiscard]] const auto &descriptor_layout() const {

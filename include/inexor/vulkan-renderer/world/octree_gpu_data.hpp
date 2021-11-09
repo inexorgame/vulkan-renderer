@@ -27,7 +27,7 @@ private:
 
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-    std::unique_ptr<wrapper::UniformBuffer> m_uniform_buffer;
+    std::unique_ptr<wrapper::UniformBuffer<UniformBufferObjectType>> m_uniform_buffer;
 
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
@@ -101,9 +101,8 @@ private:
         wrapper::DescriptorBuilder descriptor_builder(render_graph->device_wrapper(),
                                                       m_descriptor_pool->descriptor_pool());
 
-        // TODO: Make UniformBuffer a templated type!
-        m_uniform_buffer = std::make_unique<wrapper::UniformBuffer>(render_graph->device_wrapper(), "octree",
-                                                                    sizeof(UniformBufferObjectType));
+        m_uniform_buffer =
+            std::make_unique<wrapper::UniformBuffer<UniformBufferObjectType>>(render_graph->device_wrapper(), "octree");
 
         m_descriptor =
             descriptor_builder.add_uniform_buffer<UniformBufferObjectType>(m_uniform_buffer->buffer()).build("octree");
@@ -152,11 +151,8 @@ public:
         m_index_buffer->upload_data(m_indices);
     }
 
-    /// @brief Update the otree uniform buffer.
-    /// @param data The new uniform buffer data of template type UniformBufferObjectType
     void update_ubo(const UniformBufferObjectType *data) {
-        // TODO: Make uniform buffer wrapper class entirely a template, not just this method!
-        m_uniform_buffer->update<UniformBufferObjectType>(data);
+        m_uniform_buffer->update(data);
     }
 
     /// @note This might return an empty vector.
