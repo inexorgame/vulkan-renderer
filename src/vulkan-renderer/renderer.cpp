@@ -8,6 +8,7 @@
 
 #include <array>
 #include <fstream>
+#include <inexor/vulkan-renderer/meta.hpp>
 
 namespace inexor::vulkan_renderer {
 
@@ -18,16 +19,17 @@ void VulkanRenderer::setup_render_graph() {
     m_depth_buffer = m_render_graph->add<TextureResource>("depth buffer", VK_FORMAT_D32_SFLOAT_S8_UINT,
                                                           TextureUsage::DEPTH_STENCIL_BUFFER);
 
-    // Skybox rendering
-    m_skybox_renderer.reset();
-    m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device);
-
     glm::mat4 view = m_camera->view_matrix();
     glm::mat4 proj = m_camera->perspective_matrix();
 
+    // Skybox rendering
     m_skybox_data.reset();
-    m_skybox_data = std::make_unique<gltf::ModelGpuData>(*m_device, m_render_graph.get(), *m_skybox_model, view, proj);
+    m_skybox_data =
+        std::make_unique<skybox::SkyboxGpuData>(*m_device, m_render_graph.get(), *m_skybox_model, view, proj);
 
+    m_skybox_renderer.reset();
+
+    // m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device, m_render_graph.get());
     // m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_data);
 
     // Octree rendering
@@ -36,11 +38,17 @@ void VulkanRenderer::setup_render_graph() {
 
     // TODO: We don't have to do this!
     m_octree_gpu_data.clear();
+    m_octree_cpu_data.clear();
 
+    m_octree_cpu_data.reserve(m_worlds.size());
     m_octree_gpu_data.reserve(m_worlds.size());
 
     for (const auto &world : m_worlds) {
-        m_octree_gpu_data.emplace_back(m_render_graph.get(), world);
+        m_octree_cpu_data.emplace_back(*world);
+    }
+
+    for (const auto &octree : m_octree_cpu_data) {
+        m_octree_gpu_data.emplace_back(m_render_graph.get(), octree);
     }
 
     for (const auto &data : m_octree_gpu_data) {

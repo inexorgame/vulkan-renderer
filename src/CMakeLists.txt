@@ -37,7 +37,7 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/pbr/brdf_lut.cpp
 
-    vulkan-renderer/skybox/skybox.cpp
+    vulkan-renderer/skybox/skybox_gpu_data.cpp
     vulkan-renderer/skybox/skybox_renderer.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
@@ -77,6 +77,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/world/collision_query.cpp
     vulkan-renderer/world/cube.cpp
     vulkan-renderer/world/indentation.cpp
+    vulkan-renderer/world/octree_cpu_data.cpp
     vulkan-renderer/world/octree_gpu_data.cpp
     vulkan-renderer/world/octree_renderer.cpp)
 

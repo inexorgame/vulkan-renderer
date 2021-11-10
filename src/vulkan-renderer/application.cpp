@@ -8,6 +8,7 @@
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/world/octree_cpu_data.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -571,7 +572,8 @@ void Application::run() {
             load_octree_geometry(false);
 
             for (std::size_t i = 0; i < m_worlds.size(); i++) {
-                m_octree_gpu_data[i].update_octree(m_worlds[i]);
+                world::OctreeCPUData<OctreeGpuVertex> new_octree(*m_worlds[i]);
+                m_octree_gpu_data[i].update_octree(new_octree);
             }
         }
         m_camera->update(m_time_passed);

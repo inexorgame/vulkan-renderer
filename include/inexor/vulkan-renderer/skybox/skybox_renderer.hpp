@@ -1,8 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
@@ -32,9 +32,11 @@ private:
 
     void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode *node);
 
+    void setup_rendering_resources(RenderGraph *render_graph);
+
 public:
     /// Initialize skybox renderer by loading the skybox shaders
-    SkyboxRenderer(const wrapper::Device &device);
+    SkyboxRenderer(const wrapper::Device &device, RenderGraph *render_graph);
 
     ///
     ///
@@ -42,7 +44,7 @@ public:
     ///
     ///
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                     const gltf::ModelGpuData &model);
+                     const SkyboxGpuData &skybox);
 };
 
 } // namespace inexor::vulkan_renderer::skybox

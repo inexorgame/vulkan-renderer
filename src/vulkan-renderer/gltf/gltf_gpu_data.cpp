@@ -775,8 +775,12 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
 void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, RenderGraph *render_graph,
                                              const glm::mat4 model_matrix, const glm::mat4 proj_matrix) {
 
+    // TODO: Make this into a template so the upcoming calls are easier?
+    // m_vertex_buffer = render_graph->add<BufferResource, gltf::ModelVertex>("gltf vertex buffer",
+    // BufferUsage::VERTEX_BUFFER);
     m_vertex_buffer = render_graph->add<BufferResource>("gltf vertex buffer", BufferUsage::VERTEX_BUFFER);
 
+    // TODO: Can we turn this into a template or some container format?
     m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, pos))
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, normal))
         ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(gltf::ModelVertex, uv0))
@@ -790,10 +794,12 @@ void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, Rend
     // TODO: Update for glTF2 PBR rendering!
     const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 
+    // TODO: Move this into rendergraph!
     m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "gltf descriptor pool");
 
     wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
+    // TODO: Move this into rendergraph!
     m_uniform_buffer = std::make_unique<wrapper::UniformBuffer<ModelShaderParams>>(device, "gltf uniform buffer");
 
     ModelShaderParams shader_data;
@@ -801,10 +807,11 @@ void ModelGpuData::setup_rendering_resources(const wrapper::Device &device, Rend
     m_scene.model = model_matrix;
     m_scene.projection = proj_matrix;
 
+    // TODO: This data is still empty at this point!!
     m_uniform_buffer->update(&shader_data);
 
     m_descriptor =
-        builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffer->buffer()).build("gltf uniform buffer object");
+        builder.add_uniform_buffer<ModelShaderParams>(m_uniform_buffer->buffer()).build("gltf uniform buffer object");
 }
 
 } // namespace inexor::vulkan_renderer::gltf

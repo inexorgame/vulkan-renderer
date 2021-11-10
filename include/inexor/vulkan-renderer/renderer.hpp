@@ -15,6 +15,7 @@
 #include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
+#include "inexor/vulkan-renderer/world/octree_cpu_data.hpp"
 #include "inexor/vulkan-renderer/world/octree_gpu_data.hpp"
 #include "inexor/vulkan-renderer/world/octree_renderer.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
@@ -91,12 +92,14 @@ protected:
     std::vector<wrapper::Shader> m_octree_shaders;
 
     std::vector<std::shared_ptr<world::Cube>> m_worlds;
+    std::vector<world::OctreeCPUData<OctreeGpuVertex, std::uint32_t>> m_octree_cpu_data;
     std::vector<world::OctreeGPUData<OctreeGpuVertex, std::uint32_t, UniformBufferObject>> m_octree_gpu_data;
+
     std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex, std::uint32_t>> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
 
     std::unique_ptr<gltf::ModelFile> m_skybox_model;
-    std::unique_ptr<gltf::ModelGpuData> m_skybox_data;
+    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_data;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;
 
     TextureResource *m_back_buffer{nullptr};
