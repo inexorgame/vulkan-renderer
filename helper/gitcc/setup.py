@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="GIT Commit Check",
-    version="1.0.0",
+    version="1.1.0",
     description="Check the commit summary",
     long_description="",
     long_description_content_type='text/x-rst',

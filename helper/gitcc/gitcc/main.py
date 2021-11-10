@@ -1,7 +1,10 @@
 import sys
 from argparse import ArgumentParser
+from pathlib import Path
 
 from git import Repo, InvalidGitRepositoryError
+
+from gitcc.git_hook import install_summary_git_hook, uninstall_summary_git_hook, cmd_git_hook
 from gitcc.utility import check_branch, check_history, check_summary, check_commit
 
 
@@ -12,6 +15,15 @@ def cmd_parser():
 
     parser_summary = subparsers.add_parser('summary', help='check the given summary text')
     parser_summary.add_argument(dest='summary_text', metavar='text', help="text to check")
+
+    parser_git_hook = subparsers.add_parser('git-hook', help='install or uninstall a git hook')
+    parser_git_hook.add_argument(dest='git_hook_action', metavar='action', choices=['install', 'uninstall'],
+                                 help="Install or uninstall a gitcc git hook.")
+    parser_git_hook.add_argument(dest='git_hook_hooks', metavar='hooks', type=str, choices=['summary'], nargs='+',
+                                 help="Install or uninstall a gitcc git hook.")
+    parser_git_hook.add_argument(dest='repository', type=str, help='path to the repository')
+    parser_git_hook.add_argument('--force', dest='git_hook_force', action='store_true', default=False,
+                                 help="Force install or uninstall, this might override existing files!")
 
     parser_commit = subparsers.add_parser('commit', help='check current commit')
     parser_commit.add_argument(dest='repository', type=str, help='path to the repository')
@@ -42,6 +54,8 @@ def main():
         else:
             print("Commit summary has the correct format!")
             exit(0)
+    elif args.command == 'git-hook':
+        exit(cmd_git_hook(Path(args.repository), args.git_hook_action, args.git_hook_hooks, args.git_hook_force))
 
     repo = None
     success = False
