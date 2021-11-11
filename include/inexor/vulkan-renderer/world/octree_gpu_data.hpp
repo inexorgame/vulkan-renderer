@@ -19,19 +19,17 @@ class OctreeGpuData : public GpuDataBase<VertexType, IndexType> {
 private:
     std::unique_ptr<wrapper::UniformBuffer<UniformBufferObjectType>> m_uniform_buffer;
 
-    const OctreeCpuData<VertexType, IndexType> &m_cpu_data;
-
-    void setup_rendering_resources(RenderGraph *render_graph) override {
+    void setup_rendering_resources(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data) {
         this->m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER);
 
         // TODO: This vertex attribute layout must be somehow determined by the template parameter?
         this->m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, position))
             ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, color))
             ->template set_element_size<VertexType>()
-            ->upload_data(m_cpu_data.vertices());
+            ->upload_data(cpu_data.vertices());
 
         this->m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)
-                             ->upload_data(m_cpu_data.indices());
+                                   ->upload_data(cpu_data.indices());
 
         const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
 
@@ -53,17 +51,14 @@ private:
 public:
     OctreeGpuData(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data)
         : GpuDataBase<VertexType, IndexType>(static_cast<std::uint32_t>(cpu_data.vertices().size()),
-                                             static_cast<std::uint32_t>(cpu_data.indices().size())),
-          m_cpu_data(cpu_data) {
-
-        setup_rendering_resources(render_graph);
+                                             static_cast<std::uint32_t>(cpu_data.indices().size())) {
+        setup_rendering_resources(render_graph, cpu_data);
     }
 
     OctreeGpuData() = delete;
     OctreeGpuData(const OctreeGpuData &) = delete;
 
-    OctreeGpuData(OctreeGpuData &&other) noexcept
-        : m_cpu_data(other.m_cpu_data), GpuDataBase<VertexType, IndexType>(std::move(other)) {
+    OctreeGpuData(OctreeGpuData &&other) noexcept : GpuDataBase<VertexType, IndexType>(std::move(other)) {
         m_uniform_buffer = std::exchange(other.m_uniform_buffer, nullptr);
     }
 

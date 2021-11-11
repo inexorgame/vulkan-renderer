@@ -21,8 +21,6 @@ protected:
     std::uint32_t m_vertex_count{0};
     std::uint32_t m_index_count{0};
 
-    virtual void setup_rendering_resources(RenderGraph *render_graph) = 0;
-
     GpuDataBase(const std::uint32_t vertex_count, const std::uint32_t index_count)
         : m_vertex_count(vertex_count), m_index_count(index_count) {}
 

@@ -64,15 +64,12 @@ private:
     // Some glTF2 model files with multiple scenes have a default scene index.
     std::optional<std::uint32_t> m_default_scene_index{};
 
-    const ModelCpuData &m_model_cpu_data;
-    glm::mat4 m_model_matrix;
-    glm::mat4 m_proj_matrix;
-
     // In case the model contains textures but no default texture sampler, use this one.
     TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                                              VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
 
-    void setup_rendering_resources(RenderGraph *render_graph);
+    void setup_rendering_resources(RenderGraph *render_graph, const ModelCpuData &model_cpu_data,
+                                   const glm::mat4 &model_matrix, const glm::mat4 &proj_matrix);
 
 public:
     ModelGpuData(RenderGraph *render_graph, const ModelCpuData &model_cpu_data, const glm::mat4 &model_matrix,

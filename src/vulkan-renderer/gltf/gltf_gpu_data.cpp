@@ -14,12 +14,11 @@
 namespace inexor::vulkan_renderer::gltf {
 
 ModelGpuData::ModelGpuData(RenderGraph *render_graph, const ModelCpuData &model_cpu_data, const glm::mat4 &model_matrix,
-                           const glm::mat4 &proj_matrix)
-    : m_model_cpu_data(model_cpu_data), m_model_matrix(model_matrix), m_proj_matrix(proj_matrix) {
-    setup_rendering_resources(render_graph);
+                           const glm::mat4 &proj_matrix) {
+    setup_rendering_resources(render_graph, model_cpu_data, model_matrix, proj_matrix);
 }
 
-ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept : m_model_cpu_data(other.m_model_cpu_data) {
+ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept {
     m_name = std::move(other.m_name);
     m_model_scale = other.m_model_scale;
     m_texture_indices = std::move(other.m_texture_indices);
@@ -36,7 +35,8 @@ ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept : m_model_cpu_data(oth
     m_default_scene_index = other.m_default_scene_index;
 }
 
-void ModelGpuData::setup_rendering_resources(RenderGraph *render_graph) {
+void ModelGpuData::setup_rendering_resources(RenderGraph *render_graph, const ModelCpuData &model_cpu_data,
+                                             const glm::mat4 &model_matrix, const glm::mat4 &proj_matrix) {
 
 #if 0
     // TODO: Make this into a template so the upcoming calls are easier?
