@@ -569,10 +569,13 @@ void Application::run() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
 
+            m_octree_cpu_data.clear();
+            m_octree_cpu_data.reserve(m_worlds.size());
+
             for (std::size_t i = 0; i < m_worlds.size(); i++) {
-                world::OctreeCpuData<OctreeGpuVertex> new_octree(*m_worlds[i]);
-                m_octree_gpu_data[i].update_vertices(new_octree.vertices());
-                m_octree_gpu_data[i].update_indices(new_octree.indices());
+                m_octree_cpu_data.emplace_back(*m_worlds[i]);
+                m_octree_gpu_data[i].update_vertices(m_octree_cpu_data.back().vertices());
+                m_octree_gpu_data[i].update_indices(m_octree_cpu_data.back().indices());
             }
         }
         m_camera->update(m_time_passed);
