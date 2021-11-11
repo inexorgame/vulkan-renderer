@@ -36,7 +36,7 @@ public:
     /// @param shaders The shaders which are used for rendering
     /// @param octree_data The octree gpu data for rendering
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                     const world::OctreeGPUData<VertexType, IndexType, UniformBufferObject> &octree_data) {
+                     const world::OctreeGpuData<UniformBufferObject, VertexType, IndexType> &octree_data) {
 
         assert(render_graph);
         assert(back_buffer);

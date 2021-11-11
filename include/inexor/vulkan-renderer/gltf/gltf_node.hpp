@@ -13,6 +13,7 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
+// forward declaration
 struct ModelNode;
 
 // TODO: This should be in the animation file, but circular deps when including make this tricky

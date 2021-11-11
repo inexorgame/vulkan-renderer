@@ -134,7 +134,6 @@ void Application::load_textures() {
 
 void Application::load_gltf_models() {
     m_gltf_model_files.reserve(m_gltf_model_file_names.size());
-    m_gltf_models.reserve(m_gltf_model_file_names.size());
 
     // TODO: Do not load duplicate entries twice! Use an unordered_map to store file names...
     // TODO: Implement gltf model manager?
@@ -476,8 +475,7 @@ void Application::update_uniform_buffers() {
     ubo.proj[1][1] *= -1;
 
     for (auto &octree_data : m_octree_gpu_data) {
-        // TODO: Change to update_matrices()?
-        octree_data.update_ubo(&ubo);
+        octree_data.update_uniform_buffer(&ubo);
     }
 }
 
@@ -572,8 +570,9 @@ void Application::run() {
             load_octree_geometry(false);
 
             for (std::size_t i = 0; i < m_worlds.size(); i++) {
-                world::OctreeCPUData<OctreeGpuVertex> new_octree(*m_worlds[i]);
-                m_octree_gpu_data[i].update_octree(new_octree);
+                world::OctreeCpuData<OctreeGpuVertex> new_octree(*m_worlds[i]);
+                m_octree_gpu_data[i].update_vertices(new_octree.vertices());
+                m_octree_gpu_data[i].update_indices(new_octree.indices());
             }
         }
         m_camera->update(m_time_passed);

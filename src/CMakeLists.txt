@@ -2,8 +2,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
+    vulkan-renderer/cpu_data_base.cpp
     vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
+    vulkan-renderer/gpu_data_base.cpp
     vulkan-renderer/imgui.cpp
     vulkan-renderer/render_graph.cpp
     vulkan-renderer/renderer.cpp
@@ -15,6 +17,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/cubemap/gpu_cubemap.cpp
 
     vulkan-renderer/gltf/gltf_bbox.cpp
+    vulkan-renderer/gltf/gltf_cpu_data.cpp
     vulkan-renderer/gltf/gltf_gpu_data.cpp
     vulkan-renderer/gltf/gltf_animation.cpp
     vulkan-renderer/gltf/gltf_file.cpp
@@ -37,6 +40,7 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/pbr/brdf_lut.cpp
 
+    vulkan-renderer/skybox/skybox_cpu_data.cpp
     vulkan-renderer/skybox/skybox_gpu_data.cpp
     vulkan-renderer/skybox/skybox_renderer.cpp
 

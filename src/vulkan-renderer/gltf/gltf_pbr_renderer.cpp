@@ -55,10 +55,12 @@ void ModelRenderer::setup_stage(RenderGraph *render_graph, const TextureResource
         ->add_push_constant_range<glm::mat4>()
         ->add_descriptor_layout(model.descriptor_layout())
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+#if 0
             // Recursively render all nodes of the model
             for (const auto &node : model.nodes()) {
                 draw_node(model, &node, cmd_buf, physical.pipeline_layout());
             }
+#endif
         });
 }
 

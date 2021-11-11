@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
@@ -20,19 +21,7 @@ private:
 
     wrapper::ShaderLoader m_shader_loader;
 
-    // TODO: Put this into its own wrapper file
-    struct UBOMatrices {
-        glm::mat4 projection;
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::vec3 camPos;
-    };
-
-    UBOMatrices m_skybox_data;
-
     void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode *node);
-
-    void setup_rendering_resources(RenderGraph *render_graph);
 
 public:
     /// Initialize skybox renderer by loading the skybox shaders

@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/cubemap/cubemap_generator.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_cpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_pbr_renderer.hpp"
@@ -12,6 +13,8 @@
 #include "inexor/vulkan-renderer/pbr/brdf_lut.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/skybox/skybox_cpu_data.hpp"
+#include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
@@ -81,7 +84,8 @@ protected:
 
     std::vector<std::string> m_gltf_model_file_names;
     std::vector<gltf::ModelFile> m_gltf_model_files;
-    std::vector<gltf::ModelGpuData> m_gltf_models;
+    std::vector<gltf::ModelCpuData> m_gltf_cpu_data;
+    std::vector<gltf::ModelGpuData> m_gltf_gpu_data;
     std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
 
     std::unique_ptr<pbr::BRDFLUTGenerator> m_pbr_brdf_lut;
@@ -92,14 +96,15 @@ protected:
     std::vector<wrapper::Shader> m_octree_shaders;
 
     std::vector<std::shared_ptr<world::Cube>> m_worlds;
-    std::vector<world::OctreeCPUData<OctreeGpuVertex, std::uint32_t>> m_octree_cpu_data;
-    std::vector<world::OctreeGPUData<OctreeGpuVertex, std::uint32_t, UniformBufferObject>> m_octree_gpu_data;
+    std::vector<world::OctreeCpuData<OctreeGpuVertex>> m_octree_cpu_data;
+    std::vector<world::OctreeGpuData<UniformBufferObject, OctreeGpuVertex>> m_octree_gpu_data;
 
-    std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex, std::uint32_t>> m_octree_renderer;
+    std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex>> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
 
     std::unique_ptr<gltf::ModelFile> m_skybox_model;
-    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_data;
+    std::unique_ptr<skybox::SkyboxCpuData> m_skybox_cpu_data;
+    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;
 
     TextureResource *m_back_buffer{nullptr};

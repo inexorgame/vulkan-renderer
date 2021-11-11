@@ -25,12 +25,6 @@ private:
 
 public:
     ModelRenderer(const wrapper::Device &device);
-    ModelRenderer(const ModelRenderer &) = delete;
-    ModelRenderer(ModelRenderer &&) = delete;
-    ~ModelRenderer() = default;
-
-    ModelRenderer &operator=(const ModelRenderer &) = delete;
-    ModelRenderer &operator=(ModelRenderer &&) = delete;
 
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
                      const ModelGpuData &model);

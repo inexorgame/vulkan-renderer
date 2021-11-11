@@ -2,11 +2,12 @@
 
 namespace inexor::vulkan_renderer::skybox {
 
-void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph) {}
+void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph) {
+    // TODO: Implement
+}
 
 SkyboxGpuData::SkyboxGpuData(const wrapper::Device &device_wrapper, RenderGraph *render_graph,
-                             const gltf::ModelFile &model_file, glm::mat4 model_matrix, glm::mat4 proj_matrix)
-    : ModelGpuData(device_wrapper, render_graph, model_file, model_matrix, proj_matrix) {
+                             const SkyboxCpuData &model_data) {
 
     setup_rendering_resources(render_graph);
 }
