@@ -2,7 +2,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
-    vulkan-renderer/cpu_data_base.cpp
     vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/gpu_data_base.cpp
@@ -20,7 +19,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/gltf/gltf_cpu_data.cpp
     vulkan-renderer/gltf/gltf_gpu_data.cpp
     vulkan-renderer/gltf/gltf_animation.cpp
-    vulkan-renderer/gltf/gltf_file.cpp
     vulkan-renderer/gltf/gltf_material.cpp
     vulkan-renderer/gltf/gltf_mesh.cpp
     vulkan-renderer/gltf/gltf_node.cpp

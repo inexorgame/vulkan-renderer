@@ -36,12 +36,7 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
         ->writes_to(back_buffer)
         ->writes_to(depth_buffer)
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-#if 0
-            // TODO: Fix this!
-            for (const auto &node : skybox.nodes()) {
-                draw_node(cmd_buf.get(), &node);
-            }
-#endif
+            // TODO: Implement!
         });
 }
 

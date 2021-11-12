@@ -4,7 +4,6 @@
 #include "inexor/vulkan-renderer/cubemap/cubemap_generator.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_cpu_data.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_pbr_renderer.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
@@ -83,7 +82,6 @@ protected:
     std::unique_ptr<RenderGraph> m_render_graph;
 
     std::vector<std::string> m_gltf_model_file_names;
-    std::vector<gltf::ModelFile> m_gltf_model_files;
     std::vector<gltf::ModelCpuData> m_gltf_cpu_data;
     std::vector<gltf::ModelGpuData> m_gltf_gpu_data;
     std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
@@ -102,7 +100,6 @@ protected:
     std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex>> m_octree_renderer;
     std::vector<wrapper::GpuTexture> m_textures;
 
-    std::unique_ptr<gltf::ModelFile> m_skybox_model;
     std::unique_ptr<skybox::SkyboxCpuData> m_skybox_cpu_data;
     std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 #include <cassert>
@@ -9,20 +10,39 @@
 
 namespace inexor::vulkan_renderer {
 
+/// A template base class for gpu data of rendering
+/// This class was created to encapsulate everything that is required to set up the rendering of data using the
+/// rendergraph.
+///
 template <typename VertexType, typename IndexType = std::uint32_t>
 class GpuDataBase {
 protected:
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
+    // TODO: Add more resources here?
 
-    BufferResource *m_index_buffer{nullptr};
+    /// The rendergraph buffer resource of the vertices
     BufferResource *m_vertex_buffer{nullptr};
 
+    /// The rendergraph buffer resource of the indices
+    BufferResource *m_index_buffer{nullptr};
+
+    /// The number of vertices in the vertex buffer
     std::uint32_t m_vertex_count{0};
+
+    /// The number of indices in the index buffer
     std::uint32_t m_index_count{0};
 
+    /// Default constructor
+    ///
+    ///
     GpuDataBase(const std::uint32_t vertex_count, const std::uint32_t index_count)
         : m_vertex_count(vertex_count), m_index_count(index_count) {}
+
+    /// Overloaded constructor
+    /// @note Sometimes we don't know the number of vertices and indices at the beginning,
+    /// which is why this overloaded constructor exists.
+    GpuDataBase() : GpuDataBase(0, 0) {}
 
 public:
     GpuDataBase(GpuDataBase &&other) noexcept {
@@ -60,11 +80,11 @@ public:
         return m_index_count;
     }
 
-    [[nodiscard]] VkDescriptorSet descriptor_set() const {
+    [[nodiscard]] const VkDescriptorSet descriptor_set() const {
         return m_descriptor->descriptor_set();
     }
 
-    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
+    [[nodiscard]] const VkDescriptorSetLayout descriptor_set_layout() const {
         return m_descriptor->descriptor_set_layout();
     }
 };

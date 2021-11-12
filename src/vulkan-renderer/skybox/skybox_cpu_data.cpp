@@ -2,6 +2,6 @@
 
 namespace inexor::vulkan_renderer::skybox {
 
-SkyboxCpuData::SkyboxCpuData(const gltf::ModelFile &skybox_model) {}
+SkyboxCpuData::SkyboxCpuData(const std::string &file_name, const std::string &model_name) {}
 
 } // namespace inexor::vulkan_renderer::skybox

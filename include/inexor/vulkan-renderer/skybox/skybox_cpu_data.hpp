@@ -1,9 +1,9 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
-
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+
+#include <string>
 
 namespace inexor::vulkan_renderer::skybox {
 
@@ -20,7 +20,8 @@ private:
     UBOMatrices m_skybox_data;
 
 public:
-    SkyboxCpuData(const gltf::ModelFile &skybox_model);
+    // TODO: Implement!
+    SkyboxCpuData(const std::string &file_name, const std::string &model_name);
 };
 
 } // namespace inexor::vulkan_renderer::skybox

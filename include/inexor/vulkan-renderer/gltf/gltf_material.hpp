@@ -22,6 +22,7 @@ struct ModelMaterial {
     glm::vec4 base_color_factor = glm::vec4(1.0f);
     glm::vec4 emissive_factor = glm::vec4(1.0f);
 
+    // TODO: Make this const?
     wrapper::GpuTexture *base_color_texture;
     wrapper::GpuTexture *metallic_roughness_texture;
     wrapper::GpuTexture *normal_texture;

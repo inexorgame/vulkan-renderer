@@ -20,8 +20,8 @@ struct ModelVertex {
     glm::vec3 pos{};
     glm::vec3 color{};
     glm::vec3 normal{};
-    glm::vec2 uv0;
-    glm::vec2 uv1;
+    glm::vec2 uv0{};
+    glm::vec2 uv1{};
     // TODO: use std::array here and use offsetof() for vertex attribute layout?
     glm::vec4 joint{};
     glm::vec4 weight{};

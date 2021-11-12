@@ -133,20 +133,21 @@ void Application::load_textures() {
 }
 
 void Application::load_gltf_models() {
-    m_gltf_model_files.reserve(m_gltf_model_file_names.size());
+    m_gltf_cpu_data.reserve(m_gltf_model_file_names.size());
 
-    // TODO: Do not load duplicate entries twice! Use an unordered_map to store file names...
+    // TODO: Do not load duplicate entries twice!
     // TODO: Implement gltf model manager?
     for (const auto &file_name : m_gltf_model_file_names) {
         try {
-            m_gltf_model_files.emplace_back(file_name, "example glTF model");
+            m_gltf_cpu_data.emplace_back(file_name, "example glTF model");
 
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
         // Loading continues if one model could not be loaded.
     }
 
     // Load skybox gltf model
-    m_skybox_model = std::make_unique<gltf::ModelFile>("assets/models/Box/glTF-Embedded/Box.gltf", "skybox model");
+    m_skybox_cpu_data =
+        std::make_unique<skybox::SkyboxCpuData>("assets/models/Box/glTF-Embedded/Box.gltf", "skybox model");
 }
 
 void Application::load_octree_geometry(bool initialize) {

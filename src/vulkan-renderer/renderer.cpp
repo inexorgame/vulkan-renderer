@@ -23,11 +23,8 @@ void VulkanRenderer::setup_render_graph() {
     glm::mat4 proj = m_camera->perspective_matrix();
 
     // Skybox rendering
-    m_skybox_cpu_data.reset();
-    m_skybox_cpu_data = std::make_unique<skybox::SkyboxCpuData>(*m_skybox_model);
-
     m_skybox_gpu_data.reset();
-    m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(*m_device, m_render_graph.get(), *m_skybox_model);
+    m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(*m_device, m_render_graph.get(), *m_skybox_cpu_data);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device, m_render_graph.get());
@@ -62,15 +59,8 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(*m_device);
 
     // TODO: We don't have to do this!
-    m_gltf_cpu_data.clear();
     m_gltf_gpu_data.clear();
-
-    m_gltf_gpu_data.reserve(m_gltf_model_files.size());
-    m_gltf_gpu_data.reserve(m_gltf_model_files.size());
-
-    for (const auto &model_file : m_gltf_model_files) {
-        m_gltf_cpu_data.emplace_back(*m_device, model_file);
-    }
+    m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
         m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, view, proj);

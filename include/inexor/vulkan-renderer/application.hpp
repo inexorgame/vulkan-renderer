@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_file.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"

@@ -13,7 +13,7 @@ std::string get_file_extension_lowercase(std::string file_name) {
     std::string file_extension = file_name.substr(file_name.find_last_of('.') + 1);
 
     if (file_extension.empty()) {
-        return "";
+        throw std::runtime_error("Error: Could not determine file extension!");
     }
 
     // Convert every letter to lowercase
