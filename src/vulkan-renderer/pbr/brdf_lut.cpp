@@ -14,7 +14,11 @@
 namespace inexor::vulkan_renderer::pbr {
 
 BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(device) {
-    spdlog::trace("BRDF LUT generation started");
+
+    VkDescriptorSetLayout m_desc_set_layout;
+    VkPipelineLayout m_pipeline_layout;
+    VkRenderPass m_renderpass;
+    VkPipeline m_pipeline;
 
     const auto format = VK_FORMAT_R16G16_SFLOAT;
     const VkExtent2D image_extent{512, 512};
@@ -197,9 +201,8 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     cmd_buf.end_recording_and_submit_command();
 
     spdlog::trace("Generating BRDF look-up table finished.");
-}
 
-BRDFLUTGenerator::~BRDFLUTGenerator() {
+    // TODO: Put into RAII wrappers!
     vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
     vkDestroyRenderPass(m_device.device(), m_renderpass, nullptr);
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);

@@ -46,6 +46,9 @@ public:
     /// @param first_set The first set to use
     void bind_descriptor(VkDescriptorSet descriptor_set, VkPipelineLayout layout, std::uint32_t first_set = 0) const;
 
+    void bind_descriptors(const std::vector<VkDescriptorSet> &descriptor_sets, const VkPipelineLayout layout,
+                          const std::uint32_t first_set = 0) const;
+
     /// @brief Update push constant data.
     /// @param layout The pipeline layout
     /// @param stage The shader stage that will be accepting the push constants
@@ -56,6 +59,12 @@ public:
                         VkShaderStageFlags stage = VK_SHADER_STAGE_VERTEX_BIT) const {
         assert(data);
         vkCmdPushConstants(m_cmd_buf, layout, stage, 0, sizeof(T), data);
+    }
+
+    template <typename T>
+    void push_constants(const T &data, VkPipelineLayout pipeline_layout,
+                        VkShaderStageFlags stage = VK_SHADER_STAGE_VERTEX_BIT) const {
+        vkCmdPushConstants(m_cmd_buf, pipeline_layout, stage, 0, sizeof(T), &data);
     }
 
     /// @brief Call vkEndCommandBuffer.s

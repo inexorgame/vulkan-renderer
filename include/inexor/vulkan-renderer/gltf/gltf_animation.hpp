@@ -13,16 +13,18 @@ namespace inexor::vulkan_renderer::gltf {
 
 struct ModelNode;
 
+enum class AnimationPathType { TRANSLATION, ROTATION, SCALE };
+
+enum class AnimationInterpolationType { LINEAR, STEP, CUBICSPLINE };
+
 struct ModelAnimationChannel {
-    enum class PathType { TRANSLATION, ROTATION, SCALE };
-    PathType path;
-    ModelNode *node;
+    AnimationPathType path;
+    ModelNode *node{nullptr};
     std::uint32_t sampler_index;
 };
 
 struct ModelAnimationSampler {
-    enum class InterpolationType { LINEAR, STEP, CUBICSPLINE };
-    InterpolationType interpolation;
+    AnimationInterpolationType interpolation;
     std::vector<float> inputs;
     std::vector<glm::vec4> outputs;
 };

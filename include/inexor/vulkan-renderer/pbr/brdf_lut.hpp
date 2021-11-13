@@ -11,24 +11,17 @@
 
 namespace inexor::vulkan_renderer::pbr {
 
-/// @brief A wrapper class for bidirectional reflectance distribution (BRDF) look up table (LUT) generator.
+/// A wrapper class for bidirectional reflectance distribution (BRDF) look up table (LUT) generator
 class BRDFLUTGenerator {
 private:
     const wrapper::Device &m_device;
     std::unique_ptr<wrapper::Image> m_brdf_lut_image;
     std::unique_ptr<wrapper::Framebuffer> m_framebuffer;
 
-    VkPipelineLayout m_pipeline_layout;
-    VkRenderPass m_renderpass;
-    VkPipeline m_pipeline;
-    VkDescriptorSetLayout m_desc_set_layout;
-
 public:
-    /// @brief Default constructor.
-    /// @param device The Vulkan device
+    /// Default constructor
+    /// @param device A const reference to the Vulkan device wrapper
     BRDFLUTGenerator(const wrapper::Device &device);
-
-    ~BRDFLUTGenerator();
 
     [[nodiscard]] const auto &descriptor() const {
         return m_brdf_lut_image->descriptor();

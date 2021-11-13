@@ -16,7 +16,7 @@ struct BoundingBox {
     ///
     ///
     ///
-    BoundingBox(const glm::vec3 min, const glm::vec3 max) : min(min), max(max){};
+    BoundingBox(const glm::vec3 min_value, const glm::vec3 max_value) : min(min_value), max(max_value){};
 
     ///
     ///

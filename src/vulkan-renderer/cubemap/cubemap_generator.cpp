@@ -26,8 +26,10 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
+// TODO: Separate into class methods!
 CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
+    // TODO: Rename to CubemapTarget!
     enum Target { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
@@ -35,6 +37,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         VkFormat format;
         std::uint32_t dim;
 
+        // TODO: Check if these formats are even supported!
         switch (target) {
         case IRRADIANCE:
             format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -116,6 +119,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
+        // TODO: I get the feeling this is wrong!
         m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("octree");
 
         struct PushBlockIrradiance {

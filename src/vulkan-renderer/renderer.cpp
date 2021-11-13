@@ -62,12 +62,22 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_gpu_data.clear();
     m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 
+    // TODO: Fill me out!
+    const VkDescriptorImageInfo enviroment_cube_texture;
+    const VkDescriptorImageInfo irradiance_cube_texture;
+    const VkDescriptorImageInfo prefiltered_cube_texture;
+
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
-        m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, view, proj);
+        m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, m_pbr_brdf_lut->descriptor(),
+                                     enviroment_cube_texture, irradiance_cube_texture, prefiltered_cube_texture, view,
+                                     proj);
     }
 
+    // TODO: Fill me out!
+    VkDescriptorSet scene;
+
     for (const auto &model : m_gltf_gpu_data) {
-        // m_gltf_model_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, model);
+        m_gltf_model_renderer->setup_stage(m_render_graph.get(), scene, m_back_buffer, m_depth_buffer, model);
     }
 
     // ImGUI user interface overlay

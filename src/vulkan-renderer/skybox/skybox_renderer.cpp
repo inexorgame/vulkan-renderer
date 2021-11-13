@@ -10,7 +10,7 @@ SkyboxRenderer::SkyboxRenderer(const wrapper::Device &device, RenderGraph *rende
 void SkyboxRenderer::draw_node(const VkCommandBuffer cmd_buf, const gltf::ModelNode *node) {
     if (node->mesh) {
         for (const auto &primitive : node->mesh->primitives) {
-            vkCmdDrawIndexed(cmd_buf, primitive.index_count(), 1, primitive.first_index(), 0, 0);
+            vkCmdDrawIndexed(cmd_buf, primitive.index_count, 1, primitive.first_index, 0, 0);
         }
     }
     for (auto &child : node->children) {

@@ -13,20 +13,42 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-ModelGpuData::ModelGpuData(RenderGraph *render_graph, const ModelCpuData &model_cpu_data, const glm::mat4 &model_matrix,
-                           const glm::mat4 &proj_matrix) {
+ModelGpuData::ModelGpuData(RenderGraph *render_graph, const ModelCpuData &model_cpu_data,
+                           VkDescriptorImageInfo brdf_lut_texture, VkDescriptorImageInfo enviroment_cube_texture,
+                           VkDescriptorImageInfo irradiance_cube_texture,
+                           VkDescriptorImageInfo prefiltered_cube_texture, const glm::mat4 &model_matrix,
+                           const glm::mat4 &proj_matrix)
 
-    const auto &model = model_cpu_data.model();
-    load_textures(render_graph->device_wrapper(), model);
-    load_materials(model);
-    load_nodes(render_graph->device_wrapper(), model);
-    load_animations(model);
-    load_skins(model);
+    : m_device(render_graph->device_wrapper()), m_brdf_lut_texture(brdf_lut_texture),
+      m_enviroment_cube_texture(enviroment_cube_texture), m_irradiance_cube_texture(irradiance_cube_texture),
+      m_prefiltered_cube_texture(prefiltered_cube_texture) {
+
+    load_textures(model_cpu_data.model());
+    load_materials(model_cpu_data.model());
+    load_nodes(model_cpu_data.model());
+    load_animations(model_cpu_data.model());
+    load_skins(model_cpu_data.model());
 
     setup_rendering_resources(render_graph);
+
+    const std::uint32_t scene_index = 0;
+
+    // TODO: Expose a parameter to specify the scene index or load all scenes into one ModelGpuData instance?
+    const auto &scene = model_cpu_data.model().scenes[scene_index];
+
+    for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {
+        const auto &node = m_nodes[scene.nodes[node_index]];
+        setup_node_descriptor_sets(node);
+    }
 }
 
-ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept {
+ModelGpuData::~ModelGpuData() {
+    vkDestroyDescriptorSetLayout(m_device.device(), m_scene_descriptor_set_layout, nullptr);
+    vkDestroyDescriptorSetLayout(m_device.device(), m_material_descriptor_set_layout, nullptr);
+    vkDestroyDescriptorSetLayout(m_device.device(), m_node_descriptor_set_layout, nullptr);
+}
+
+ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept : m_device(other.m_device) {
     m_unsupported_node_types = std::move(other.m_unsupported_node_types);
     m_texture_indices = std::move(other.m_texture_indices);
     m_materials = std::move(other.m_materials);
@@ -38,11 +60,12 @@ ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept {
     m_texture_samplers = std::move(other.m_texture_samplers);
     m_scene = std::move(other.m_scene);
     m_shader_values = std::move(other.m_shader_values);
-    m_uniform_buffer = std::exchange(other.m_uniform_buffer, nullptr);
+    m_scene_matrices = std::exchange(other.m_scene_matrices, nullptr);
+    m_shader_params = std::exchange(other.m_shader_params, nullptr);
     m_default_texture_sampler = std::move(other.m_default_texture_sampler);
 }
 
-void ModelGpuData::load_textures(const wrapper::Device &device, const tinygltf::Model &model) {
+void ModelGpuData::load_textures(const tinygltf::Model &model) {
     spdlog::trace("Loading {} glTF2 model texture indices", model.textures.size());
 
     m_texture_indices.reserve(model.textures.size());
@@ -94,7 +117,7 @@ void ModelGpuData::load_textures(const wrapper::Device &device, const tinygltf::
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using the data which was converted to RGBA
-            m_textures.emplace_back(device, new_sampler, rgba_target.data(), texture_size, texture_image.width,
+            m_textures.emplace_back(m_device, new_sampler, rgba_target.data(), texture_size, texture_image.width,
                                     texture_image.height, texture_image.component, 1, texture_name);
             break;
         }
@@ -102,8 +125,9 @@ void ModelGpuData::load_textures(const wrapper::Device &device, const tinygltf::
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using RGBA data
-            m_textures.emplace_back(device, new_sampler, texture_image.image.data(), texture_size, texture_image.width,
-                                    texture_image.height, texture_image.component, 1, texture_name);
+            m_textures.emplace_back(m_device, new_sampler, texture_image.image.data(), texture_size,
+                                    texture_image.width, texture_image.height, texture_image.component, 1,
+                                    texture_name);
             break;
         }
         default: {
@@ -111,10 +135,14 @@ void ModelGpuData::load_textures(const wrapper::Device &device, const tinygltf::
             spdlog::error("Generating error texture as a replacement.");
 
             // Generate an error texture (chessboard pattern)
-            m_textures.emplace_back(device, m_default_texture_sampler, wrapper::CpuTexture());
+            m_textures.emplace_back(m_device, m_default_texture_sampler, wrapper::CpuTexture());
             break;
         }
         }
+
+        // Generate an error texture (chessboard pattern) as empty texture
+        m_empty_texture =
+            std::make_unique<wrapper::GpuTexture>(m_device, m_default_texture_sampler, wrapper::CpuTexture());
 
         // TODO: Generate mipmaps!
     }
@@ -163,11 +191,11 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
                 new_material.texture_coordinate_set.occlusion = value.TextureTexCoord();
             } else if (name == "alphaMode") {
                 if (value.string_value == "BLEND") {
-                    new_material.alpha_mode = ModelMaterial::AlphaMode::ALPHAMODE_BLEND;
+                    new_material.alpha_mode = AlphaMode::ALPHAMODE_BLEND;
                 }
                 if (value.string_value == "MASK") {
                     new_material.alpha_cutoff = 0.5f;
-                    new_material.alpha_mode = ModelMaterial::AlphaMode::ALPHAMODE_MASK;
+                    new_material.alpha_mode = AlphaMode::ALPHAMODE_MASK;
                 }
             } else if (name == "alphaCutoff") {
                 new_material.alpha_cutoff = static_cast<float>(value.Factor());
@@ -189,7 +217,7 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
                     const auto &texture_coordinate_set =
                         extension->second.Get("specularGlossinessTexture").Get("texCoord");
                     new_material.texture_coordinate_set.specular_glossiness = texture_coordinate_set.Get<int>();
-                    new_material.pbr_workflows.specular_glossiness = true;
+                    new_material.specular_glossiness = true;
                 }
 
                 if (extension->second.Has("diffuseTexture")) {
@@ -254,9 +282,8 @@ ModelNode *ModelGpuData::node_from_index(const std::uint32_t index) {
     return node_found;
 }
 
-void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygltf::Model &model, ModelNode *parent,
-                             const tinygltf::Node &node, const std::uint32_t scene_index,
-                             const std::uint32_t node_index) {
+void ModelGpuData::load_node(const tinygltf::Model &model, ModelNode *parent, const tinygltf::Node &node,
+                             const std::uint32_t scene_index, const std::uint32_t node_index) {
     ModelNode new_node;
     new_node.name = node.name;
     new_node.parent = parent;
@@ -284,7 +311,7 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
 
     if (!node.children.empty()) {
         for (std::size_t child_index = 0; child_index < node.children.size(); child_index++) {
-            load_node(device_wrapper, model, &new_node, model.nodes.at(node.children.at(child_index)), scene_index,
+            load_node(model, &new_node, model.nodes.at(node.children.at(child_index)), scene_index,
                       node.children.at(child_index));
         }
     }
@@ -302,7 +329,7 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
         const auto &buffers = model.buffers;
         const auto &buffer_views = model.bufferViews;
 
-        std::unique_ptr<ModelMesh> new_mesh = std::make_unique<ModelMesh>(device_wrapper, new_node.matrix);
+        std::unique_ptr<ModelMesh> new_mesh = std::make_unique<ModelMesh>(m_device, new_node.matrix);
 
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
@@ -435,7 +462,7 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
                     vert.normal =
                         glm::normalize(glm::vec3(glm::make_vec3(&buffer_normals[v * normal_byte_stride]))); // NOLINT
                 } else {
-                    vert.normal = glm::normalize(glm::vec3(glm::vec3(0.0f)));
+                    vert.normal = glm::normalize(glm::vec3(0.0f));
                 }
 
                 if (buffer_texture_coord_set_0 != nullptr) {
@@ -533,12 +560,12 @@ void ModelGpuData::load_node(const wrapper::Device &device_wrapper, const tinygl
         // TODO: Is this technically correct?
         // Mesh BB from BBs of primitives
         for (auto p : new_mesh->primitives) {
-            if (p.bbox().valid && !new_mesh->bb.valid) {
-                new_mesh->bb = p.bbox();
+            if (p.bbox.valid && !new_mesh->bb.valid) {
+                new_mesh->bb = p.bbox;
                 new_mesh->bb.valid = true;
             }
-            new_mesh->bb.min = glm::min(new_mesh->bb.min, p.bbox().min);
-            new_mesh->bb.max = glm::max(new_mesh->bb.max, p.bbox().max);
+            new_mesh->bb.min = glm::min(new_mesh->bb.min, p.bbox.min);
+            new_mesh->bb.max = glm::max(new_mesh->bb.max, p.bbox.max);
         }
 
         new_node.mesh = std::move(new_mesh);
@@ -610,7 +637,7 @@ void ModelGpuData::load_skins(const tinygltf::Model &model) {
     }
 }
 
-void ModelGpuData::load_nodes(const wrapper::Device &device_wrapper, const tinygltf::Model &model) {
+void ModelGpuData::load_nodes(const tinygltf::Model &model) {
     if (model.scenes.empty()) {
         spdlog::trace("The glTF2 model does not contain nodes.");
         return;
@@ -624,14 +651,14 @@ void ModelGpuData::load_nodes(const wrapper::Device &device_wrapper, const tinyg
         spdlog::trace("No default scene index specified.");
     }
 
-    for (std::size_t scene_index = 0; scene_index < model.scenes.size(); scene_index++) {
-        const auto &scene = model.scenes[scene_index];
+    std::size_t scene_index = 0;
 
-        for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {
-            const auto &node = model.nodes[scene.nodes[node_index]];
-            load_node(device_wrapper, model, nullptr, node, scene.nodes[node_index],
-                      static_cast<std::uint32_t>(scene_index));
-        }
+    // TODO: Expose a parameter to specify the scene index or load all scenes into one ModelGpuData instance?
+    const auto &scene = model.scenes[scene_index];
+
+    for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {
+        const auto &node = model.nodes[scene.nodes[node_index]];
+        load_node(model, nullptr, node, scene.nodes[node_index], static_cast<std::uint32_t>(scene_index));
     }
 }
 
@@ -655,13 +682,14 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
             ModelAnimationSampler new_sampler{};
 
             if (sampler.interpolation == "LINEAR") {
-                new_sampler.interpolation = ModelAnimationSampler::InterpolationType::LINEAR;
-            }
-            if (sampler.interpolation == "STEP") {
-                new_sampler.interpolation = ModelAnimationSampler::InterpolationType::STEP;
-            }
-            if (sampler.interpolation == "CUBICSPLINE") {
-                new_sampler.interpolation = ModelAnimationSampler::InterpolationType::CUBICSPLINE;
+                new_sampler.interpolation = AnimationInterpolationType::LINEAR;
+            } else if (sampler.interpolation == "STEP") {
+                new_sampler.interpolation = AnimationInterpolationType::STEP;
+            } else if (sampler.interpolation == "CUBICSPLINE") {
+                new_sampler.interpolation = AnimationInterpolationType::CUBICSPLINE;
+            } else {
+                spdlog::error("Unknown model animation interpolation type {}", sampler.interpolation);
+                continue;
             }
 
             // Read sampler input time values
@@ -690,14 +718,15 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
                 }
             }
 
-            // Read sampler output translation, rotation, scale (T/R/S) values
+            // Read sampler output translation, rotation, and scale values
             {
                 const auto &accessor = model.accessors[sampler.output];
                 const auto &buffer_view = model.bufferViews[accessor.bufferView];
                 const auto &buffer = model.buffers[buffer_view.buffer];
 
-                // TODO: Change to an exception!
-                assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
+                if (accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                    throw std::runtime_error("Error: Unsupported component type!");
+                }
 
                 const void *data_pointer = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
 
@@ -723,7 +752,7 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
                 }
             }
 
-            new_animation.samplers.push_back(new_sampler);
+            new_animation.samplers.push_back(std::move(new_sampler));
         }
 
         // Channels
@@ -731,13 +760,11 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
             ModelAnimationChannel new_channel{};
 
             if (source.target_path == "rotation") {
-                new_channel.path = ModelAnimationChannel::PathType::ROTATION;
-            }
-            if (source.target_path == "translation") {
-                new_channel.path = ModelAnimationChannel::PathType::TRANSLATION;
-            }
-            if (source.target_path == "scale") {
-                new_channel.path = ModelAnimationChannel::PathType::SCALE;
+                new_channel.path = AnimationPathType::ROTATION;
+            } else if (source.target_path == "translation") {
+                new_channel.path = AnimationPathType::TRANSLATION;
+            } else if (source.target_path == "scale") {
+                new_channel.path = AnimationPathType::SCALE;
             }
             if (source.target_path == "weights") {
                 spdlog::warn("Weights in animations are not yet supported, skipping animation channel.");
@@ -756,10 +783,6 @@ void ModelGpuData::load_animations(const tinygltf::Model &model) {
 
         animations.push_back(std::move(new_animation));
     }
-}
-
-void ModelGpuData::setup_rendering_resources(RenderGraph *render_graph) {
-    // TODO: Implement!
 }
 
 } // namespace inexor::vulkan_renderer::gltf
