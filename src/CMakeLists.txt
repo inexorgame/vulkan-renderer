@@ -42,6 +42,11 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/skybox/skybox_gpu_data.cpp
     vulkan-renderer/skybox/skybox_renderer.cpp
 
+    vulkan-renderer/texture/cpu_texture_base.cpp
+    vulkan-renderer/texture/cpu_texture.cpp
+    vulkan-renderer/texture/cpu_texture_array.cpp
+    vulkan-renderer/texture/cpu_texture_cubemap.cpp
+
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 

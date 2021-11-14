@@ -48,7 +48,11 @@ ModelGpuData::~ModelGpuData() {
     vkDestroyDescriptorSetLayout(m_device.device(), m_node_descriptor_set_layout, nullptr);
 }
 
-ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept : m_device(other.m_device) {
+ModelGpuData::ModelGpuData(ModelGpuData &&other) noexcept
+    : m_device(other.m_device), m_brdf_lut_texture(other.m_brdf_lut_texture),
+      m_enviroment_cube_texture(other.m_enviroment_cube_texture),
+      m_irradiance_cube_texture(other.m_irradiance_cube_texture),
+      m_prefiltered_cube_texture(other.m_prefiltered_cube_texture) {
     m_unsupported_node_types = std::move(other.m_unsupported_node_types);
     m_texture_indices = std::move(other.m_texture_indices);
     m_materials = std::move(other.m_materials);
@@ -74,7 +78,7 @@ void ModelGpuData::load_textures(const tinygltf::Model &model) {
         m_texture_indices.emplace_back(texture.source);
     }
 
-    spdlog::trace("Loading {} texture samplers.", model.samplers.size());
+    spdlog::trace("Loading {} texture samplers", model.samplers.size());
 
     m_texture_samplers.reserve(model.samplers.size());
 
@@ -82,7 +86,7 @@ void ModelGpuData::load_textures(const tinygltf::Model &model) {
         m_texture_samplers.emplace_back(sampler.minFilter, sampler.magFilter, sampler.wrapS, sampler.wrapT);
     }
 
-    spdlog::trace("Loading {} textures from glTF2 model.", model.images.size());
+    spdlog::trace("Loading {} textures from glTF2 model", model.images.size());
 
     m_textures.reserve(model.images.size());
 
@@ -131,8 +135,8 @@ void ModelGpuData::load_textures(const tinygltf::Model &model) {
             break;
         }
         default: {
-            spdlog::error("Can't load texture with {} channels!", texture_image.component);
-            spdlog::error("Generating error texture as a replacement.");
+            spdlog::error("Can't load texture with {} channels! Generating error texture as a replacement!",
+                          texture_image.component);
 
             // Generate an error texture (chessboard pattern)
             m_textures.emplace_back(m_device, m_default_texture_sampler, wrapper::CpuTexture());
@@ -192,8 +196,7 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
             } else if (name == "alphaMode") {
                 if (value.string_value == "BLEND") {
                     new_material.alpha_mode = AlphaMode::ALPHAMODE_BLEND;
-                }
-                if (value.string_value == "MASK") {
+                } else if (value.string_value == "MASK") {
                     new_material.alpha_cutoff = 0.5f;
                     new_material.alpha_mode = AlphaMode::ALPHAMODE_MASK;
                 }
@@ -248,6 +251,7 @@ void ModelGpuData::load_materials(const tinygltf::Model &model) {
         m_materials.push_back(new_material);
     }
 
+    // Print out all unsupported features we came across during data extraction
     for (const auto &[name, value] : unsupported_material_features) {
         spdlog::warn("Material feature {} not supported!", name);
     }
@@ -639,7 +643,7 @@ void ModelGpuData::load_skins(const tinygltf::Model &model) {
 
 void ModelGpuData::load_nodes(const tinygltf::Model &model) {
     if (model.scenes.empty()) {
-        spdlog::trace("The glTF2 model does not contain nodes.");
+        spdlog::trace("The glTF2 model does not contain nodes");
         return;
     }
 
@@ -648,7 +652,7 @@ void ModelGpuData::load_nodes(const tinygltf::Model &model) {
     if (model.defaultScene > -1) {
         spdlog::trace("Default scene index: {}", model.defaultScene);
     } else {
-        spdlog::trace("No default scene index specified.");
+        spdlog::trace("No default scene index specified");
     }
 
     std::size_t scene_index = 0;

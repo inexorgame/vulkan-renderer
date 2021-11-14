@@ -134,7 +134,7 @@ private:
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.dstSet = node.mesh->ubo->descriptor_set;
             writeDescriptorSet.dstBinding = 0;
-            writeDescriptorSet.pBufferInfo = &node.mesh->ubo->descriptor();
+            writeDescriptorSet.pBufferInfo = &node.mesh->ubo->descriptor;
 
             vkUpdateDescriptorSets(m_device.device(), 1, &writeDescriptorSet, 0, nullptr);
         }
@@ -206,14 +206,14 @@ private:
             writeDescriptorSets[0].descriptorCount = 1;
             writeDescriptorSets[0].dstSet = m_scene_descriptor_set;
             writeDescriptorSets[0].dstBinding = 0;
-            writeDescriptorSets[0].pBufferInfo = &m_shader_params->descriptor();
+            writeDescriptorSets[0].pBufferInfo = &m_shader_params->descriptor;
 
             writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             writeDescriptorSets[1].descriptorCount = 1;
             writeDescriptorSets[1].dstSet = m_scene_descriptor_set;
             writeDescriptorSets[1].dstBinding = 1;
-            writeDescriptorSets[1].pBufferInfo = &m_scene_matrices->descriptor();
+            writeDescriptorSets[1].pBufferInfo = &m_scene_matrices->descriptor;
 
             writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

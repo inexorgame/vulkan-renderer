@@ -22,11 +22,9 @@ private:
     void setup_rendering_resources(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data) {
         this->m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER);
 
-        // TODO: This vertex attribute layout must be somehow determined by the template parameter?
-        this->m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, position))
-            ->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexType, color))
-            ->template set_element_size<VertexType>()
-            ->upload_data(cpu_data.vertices());
+        this->m_vertex_buffer->template set_vertex_attribute_layout<VertexType>(VertexType::vertex_attribute_layout());
+
+        this->m_vertex_buffer->upload_data(cpu_data.vertices());
 
         this->m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)
                                    ->upload_data(cpu_data.indices());
@@ -52,6 +50,7 @@ public:
     OctreeGpuData(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data)
         : GpuDataBase<VertexType, IndexType>(static_cast<std::uint32_t>(cpu_data.vertices().size()),
                                              static_cast<std::uint32_t>(cpu_data.indices().size())) {
+
         setup_rendering_resources(render_graph, cpu_data);
     }
 

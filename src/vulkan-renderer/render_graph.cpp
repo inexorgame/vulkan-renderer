@@ -21,6 +21,7 @@ BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint3
     vertex_attribute.format = format;
     vertex_attribute.location = static_cast<std::uint32_t>(m_vertex_attributes.size());
     vertex_attribute.offset = offset;
+    // TODO: Consider emplace_back?
     m_vertex_attributes.push_back(vertex_attribute);
     return this;
 }

@@ -81,6 +81,19 @@ enum class BufferUsage {
     VERTEX_BUFFER,
 };
 
+// TODO: Where to put this? I don't want to include render_graph.hpp just for this struct!
+struct VertexAttributeLayout {
+    VkFormat format;
+    std::size_t size;
+    std::uint32_t offset;
+
+    VertexAttributeLayout(const VkFormat format, const std::size_t size, const std::uint32_t offset) {
+        this->format = format;
+        this->size = size;
+        this->offset = offset;
+    }
+};
+
 class BufferResource : public RenderResource {
     friend RenderGraph;
 
@@ -94,9 +107,6 @@ private:
     bool m_data_upload_needed{false};
     std::size_t m_element_size{0};
 
-public:
-    BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
-
     /// @brief Specifies that element `offset` of this vertex buffer is of format `format`.
     /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER.
     BufferResource *add_vertex_attribute(VkFormat format, std::uint32_t offset);
@@ -106,6 +116,24 @@ public:
     BufferResource *set_element_size() {
         // TODO: Check if the sum of all elements matches the size of T!
         m_element_size = sizeof(T);
+        return this;
+    }
+
+public:
+    BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
+
+    template <typename VertexType>
+    BufferResource *set_vertex_attribute_layout(const std::vector<VertexAttributeLayout> &attributes) {
+        std::size_t total_size = 0;
+
+        for (const auto &attribute : attributes) {
+            add_vertex_attribute(attribute.format, attribute.offset);
+            total_size += attribute.size;
+        }
+
+        // TODO: Compare the size of VertexType with the sum of the size of all members?
+
+        set_element_size<VertexType>();
         return this;
     }
 

@@ -16,18 +16,13 @@ void render_node(const ModelNode &node, const VkDescriptorSet scene_descriptor_s
     if (node.mesh) {
         for (const auto &primitive : node.mesh->primitives) {
 
-            const auto &material = primitive.material;
+            if (primitive.material.alpha_mode == alpha_mode) {
 
-            if (material.alpha_mode == alpha_mode) {
-
-                const std::vector<VkDescriptorSet> descriptorsets = {scene_descriptor_set, material.descriptor_set,
-                                                                     node.mesh->ubo->descriptor_set};
+                const std::vector<VkDescriptorSet> descriptorsets = {
+                    scene_descriptor_set, primitive.material.descriptor_set, node.mesh->ubo->descriptor_set};
 
                 cmd_buf.bind_descriptors(descriptorsets, pipeline_layout);
-
-                MaterialPushConstBlock block(material);
-
-                cmd_buf.push_constants(block, pipeline_layout);
+                cmd_buf.push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout);
 
                 if (primitive.index_count > 0) {
                     cmd_buf.draw_indexed(primitive.index_count, primitive.first_index);

@@ -25,10 +25,14 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
 
     m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER);
 
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos))
-        ->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv))
-        ->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col))
-        ->set_element_size<ImDrawVert>();
+    const std::vector<VertexAttributeLayout> vertex_attribute_layout{
+        {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::pos), offsetof(ImDrawVert, pos)},
+        {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::uv), offsetof(ImDrawVert, uv)},
+        {VK_FORMAT_R8G8B8A8_UNORM, sizeof(ImDrawVert::col), offsetof(ImDrawVert, col)},
+
+    };
+
+    m_vertex_buffer->set_vertex_attribute_layout<ImDrawVert>(vertex_attribute_layout);
 
     m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/render_graph.hpp"
+
 #include <glm/gtx/hash.hpp>
 #include <glm/vec3.hpp>
 
@@ -8,6 +10,12 @@ namespace inexor::vulkan_renderer {
 struct OctreeGpuVertex {
     glm::vec3 position;
     glm::vec3 color;
+
+    static std::vector<VertexAttributeLayout> vertex_attribute_layout() {
+        return std::vector{
+            VertexAttributeLayout{VK_FORMAT_R32G32B32_SFLOAT, sizeof(position), offsetof(OctreeGpuVertex, position)},
+            VertexAttributeLayout{VK_FORMAT_R32G32B32_SFLOAT, sizeof(color), offsetof(OctreeGpuVertex, color)}};
+    }
 
     OctreeGpuVertex(glm::vec3 position, glm::vec3 color) : position(position), color(color) {}
 };

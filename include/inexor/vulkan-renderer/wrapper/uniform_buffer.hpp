@@ -15,11 +15,9 @@ class Device;
 
 template <typename BufferDataType>
 class UniformBuffer : public GPUMemoryBuffer {
-private:
-    VkDescriptorBufferInfo m_descriptor{VK_NULL_HANDLE};
-
 public:
     VkDescriptorSet descriptor_set{VK_NULL_HANDLE};
+    VkDescriptorBufferInfo descriptor{VK_NULL_HANDLE};
 
     ///
     ///
@@ -28,9 +26,9 @@ public:
         : GPUMemoryBuffer(device, name, sizeof(BufferDataType), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                           VMA_MEMORY_USAGE_CPU_TO_GPU) {
 
-        m_descriptor.buffer = m_buffer;
-        m_descriptor.offset = 0;
-        m_descriptor.range = sizeof(BufferDataType);
+        descriptor.buffer = m_buffer;
+        descriptor.offset = 0;
+        descriptor.range = sizeof(BufferDataType);
     }
 
     ///
@@ -45,8 +43,8 @@ public:
     UniformBuffer(const UniformBuffer &) = delete;
 
     UniformBuffer(UniformBuffer &&other) noexcept : GPUMemoryBuffer(std::move(other)) {
-        m_descriptor = std::exchange(other.m_descriptor, nullptr);
-        m_descriptor_set = std::exchange(other.m_descriptor_set, nullptr);
+        descriptor = std::exchange(other.descriptor, nullptr);
+        descriptor_set = std::exchange(other.descriptor_set, nullptr);
     }
 
     ~UniformBuffer() override = default;
@@ -58,10 +56,6 @@ public:
         assert(data);
         assert(m_allocation_info.pMappedData);
         std::memcpy(m_allocation_info.pMappedData, data, sizeof(BufferDataType));
-    }
-
-    [[nodiscard]] auto descriptor() const {
-        return m_descriptor;
     }
 };
 
