@@ -15,6 +15,8 @@ if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
         inexor-vulkan-renderer-example
         PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
+    # Ignore MSVC linker warning LNK4099
+    set_target_properties(inexor-vulkan-renderer-example PROPERTIES LINK_FLAGS "/ignore:4099")
 endif()
 
 # enable exceptions when using MSVC toolchain, makes Clang on windows possible
