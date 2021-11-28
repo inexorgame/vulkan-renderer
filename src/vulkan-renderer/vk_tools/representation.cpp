@@ -546,7 +546,7 @@ std::string_view as_string(const VkFormat format) {
 /// @param format The VkResult to convert.
 /// @return A std::string_view which contains the VkResult.
 template <>
-std::string_view as_string<VkResult>(const VkResult result) {
+std::string_view as_string(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "VK_SUCCESS";
@@ -726,10 +726,10 @@ std::string_view as_string(const VkQueueFlagBits queue_flag_bit) {
     return "Unknown";
 }
 
-/// @brief Convert a VkMemoryPropertyFlags value into the corresponding value as std::string.
+/// @brief Convert a VkMemoryPropertyFlagBits value into the corresponding value as std::string.
 /// @param bit The memory property flag bit.
 template <>
-std::string_view as_string(const VkMemoryPropertyFlags mem_prop_flag_bit) {
+std::string_view as_string(const VkMemoryPropertyFlagBits mem_prop_flag_bit) {
     switch (mem_prop_flag_bit) {
     case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT:
         return "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
