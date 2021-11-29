@@ -340,7 +340,10 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     vma_allocator_ci.physicalDevice = m_graphics_card;
     vma_allocator_ci.instance = instance.instance();
     vma_allocator_ci.device = m_device;
-    vma_allocator_ci.vulkanApiVersion = instance.vulkan_api_version();
+
+    // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
+    // This might need to be changed in the future
+    vma_allocator_ci.vulkanApiVersion = VK_API_VERSION_1_1;
 #if VMA_RECORDING_ENABLED
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif
