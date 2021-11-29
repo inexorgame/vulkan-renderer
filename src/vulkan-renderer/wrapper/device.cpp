@@ -326,13 +326,13 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     replay_file_test.close();
 
-    // VMA allows to record memory allocations to a .csv file.
+    // VMA allows recording memory allocations to a .csv file.
     // This .csv file can be replayed using tools from the repository.
     // This is very useful every time there is a bug in memory management.
     VmaRecordSettings vma_record_settings;
 
-    // We flush the stream after every write operation because we are expecting unforeseen program crashes.
-    // This might has a negative effect on the application's performance but it's worth it for now.
+    // We flush the stream after every write operation because we are expecting unforeseen program crashes
+    // This might have a negative effect on the application's performance
     vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
     vma_record_settings.pFilePath = vma_replay_file.c_str();
 
