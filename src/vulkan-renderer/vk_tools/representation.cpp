@@ -690,11 +690,6 @@ std::string_view as_string(const VkResult result) {
     return "Unknown VkResult";
 }
 
-/// @brief Convert a VkResult value into the corresponding error description as std::string_view
-/// @param result The VkResult to convert
-/// @return A std::string_view which contains an error description text of the VkResult
-/// @note This function converts the VkResult into the corresponding error description text
-/// If you want to convert it into an std::string_view, see the matching ```as_string``` template
 std::string_view result_to_description(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
