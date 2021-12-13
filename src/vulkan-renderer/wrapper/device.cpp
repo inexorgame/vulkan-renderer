@@ -326,13 +326,13 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     replay_file_test.close();
 
-    // VMA allows to record memory allocations to a .csv file.
+    // VMA allows recording memory allocations to a .csv file.
     // This .csv file can be replayed using tools from the repository.
     // This is very useful every time there is a bug in memory management.
     VmaRecordSettings vma_record_settings;
 
-    // We flush the stream after every write operation because we are expecting unforeseen program crashes.
-    // This might has a negative effect on the application's performance but it's worth it for now.
+    // We flush the stream after every write operation because we are expecting unforeseen program crashes
+    // This might have a negative effect on the application's performance
     vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
     vma_record_settings.pFilePath = vma_replay_file.c_str();
 
@@ -340,7 +340,10 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     vma_allocator_ci.physicalDevice = m_graphics_card;
     vma_allocator_ci.instance = instance.instance();
     vma_allocator_ci.device = m_device;
-    vma_allocator_ci.vulkanApiVersion = instance.vulkan_api_version();
+
+    // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
+    // This might need to be changed in the future
+    vma_allocator_ci.vulkanApiVersion = VK_API_VERSION_1_1;
 #if VMA_RECORDING_ENABLED
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif
