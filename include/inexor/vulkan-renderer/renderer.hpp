@@ -15,6 +15,7 @@
 #include "inexor/vulkan-renderer/skybox/skybox_cpu_data.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/octree_cpu_data.hpp"
@@ -27,7 +28,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/mesh_buffer.hpp"
@@ -89,6 +89,9 @@ protected:
     std::unique_ptr<pbr::BRDFLUTGenerator> m_pbr_brdf_lut;
     std::unique_ptr<cubemap::CubemapGenerator> m_cubemap;
 
+    std::unique_ptr<texture::CpuTexture> m_env_cube;
+    std::unique_ptr<texture::GpuTexture> m_env_cube_texture;
+
     std::vector<std::string> m_octree_vertex_shader_files;
     std::vector<std::string> m_octree_fragment_shader_files;
     std::vector<wrapper::Shader> m_octree_shaders;
@@ -98,7 +101,7 @@ protected:
     std::vector<world::OctreeGpuData<UniformBufferObject, OctreeGpuVertex>> m_octree_gpu_data;
 
     std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex>> m_octree_renderer;
-    std::vector<wrapper::GpuTexture> m_textures;
+    std::vector<texture::GpuTexture> m_textures;
 
     std::unique_ptr<skybox::SkyboxCpuData> m_skybox_cpu_data;
     std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data;
@@ -121,11 +124,11 @@ protected:
     std::vector<DescriptorSets> descriptorSets;
 
     struct Textures {
-        std::unique_ptr<wrapper::GpuTexture> environmentCube;
-        std::unique_ptr<wrapper::GpuTexture> empty;
+        std::unique_ptr<texture::GpuTexture> environmentCube;
+        std::unique_ptr<texture::GpuTexture> empty;
+        std::unique_ptr<texture::GpuTexture> irradianceCube;
+        std::unique_ptr<texture::GpuTexture> prefilteredCube;
         std::unique_ptr<pbr::BRDFLUTGenerator> lutBrdf;
-        std::unique_ptr<wrapper::GpuTexture> irradianceCube;
-        std::unique_ptr<wrapper::GpuTexture> prefilteredCube;
     } textures;
 
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;

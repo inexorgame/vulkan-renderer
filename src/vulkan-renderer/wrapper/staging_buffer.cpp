@@ -15,6 +15,9 @@ StagingBuffer::StagingBuffer(const Device &device, const std::string &name, cons
       m_command_buffer_for_copying(device, device.transfer_queue(), device.transfer_queue_family_index()),
       m_device(device) {}
 
+StagingBuffer::StagingBuffer(const Device &device, VkDeviceSize buffer_size, const void *data, const std::string &name)
+    : StagingBuffer(device, name, buffer_size, data, buffer_size) {}
+
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
     : m_command_buffer_for_copying(std::move(other.m_command_buffer_for_copying)), GPUMemoryBuffer(std::move(other)),
       m_device(other.m_device) {}

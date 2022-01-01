@@ -2,32 +2,33 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/texture_attributes.hpp"
+#include <ktxvulkan.h>
+#include <stb_image.h>
+#include <vulkan/vulkan.h>
 
 #include <cassert>
 #include <string>
 #include <vector>
 
-#include <stb_image.h>
-
-#include <vulkan/vulkan.h>
-
-#include <ktxvulkan.h>
-
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::texture {
 
 /// @brief RAII wrapper class for texture data.
 /// TODO: Scan asset directory automatically.
 class CpuTexture {
 private:
-    TextureAttributes m_attributes;
-
+    // The stb_image texture data
     stbi_uc *m_texture_data{nullptr};
 
     // Khronos texture format library (ktx)
     ktxTexture *m_ktx_texture{nullptr};
     ktx_uint8_t *m_ktx_texture_data{nullptr};
     ktx_size_t m_ktx_texture_data_size{0};
+
+    std::uint32_t m_width{0};
+    std::uint32_t m_height{0};
+    std::uint32_t m_channels{4};
+    std::uint32_t m_mip_levels{1};
+    std::string m_name;
 
     void load_texture(const std::string &file_name);
 
@@ -43,7 +44,7 @@ public:
     /// @brief Read a texture from a file.
     /// @param file_name The file name of the texture.
     /// @param name The internal debug marker name of the texture (must not be empty).
-    CpuTexture(const std::string &file_name, std::string name);
+    CpuTexture(std::string file_name, std::string name);
 
     CpuTexture(const CpuTexture &) = delete;
     CpuTexture(CpuTexture &&) noexcept;
@@ -52,30 +53,6 @@ public:
 
     CpuTexture &operator=(const CpuTexture &) = delete;
     CpuTexture &operator=(CpuTexture &&) = default;
-
-    [[nodiscard]] const std::string &name() const {
-        return m_attributes.name;
-    }
-
-    [[nodiscard]] std::uint32_t width() const {
-        return m_attributes.width;
-    }
-
-    [[nodiscard]] std::uint32_t height() const {
-        return m_attributes.height;
-    }
-
-    [[nodiscard]] std::uint32_t channels() const {
-        return m_attributes.channels;
-    }
-
-    [[nodiscard]] std::uint32_t mip_levels() const {
-        return m_attributes.mip_levels;
-    }
-
-    [[nodiscard]] TextureAttributes attributes() const {
-        return m_attributes;
-    }
 
     [[nodiscard]] const void *data() const {
         // The texture data is either stored in stb_image or ktx wrapper
@@ -88,8 +65,8 @@ public:
         // TODO: Is this correct now with mip level support?
 
         if (m_texture_data) {
-            data_size = static_cast<std::size_t>(m_attributes.width) * static_cast<std::size_t>(m_attributes.height) *
-                        static_cast<std::size_t>(m_attributes.channels);
+            data_size = static_cast<std::size_t>(m_width) * static_cast<std::size_t>(m_height) *
+                        static_cast<std::size_t>(m_channels);
         } else if (m_ktx_texture_data) {
             data_size = m_ktx_texture_data_size;
         } else {
@@ -99,9 +76,37 @@ public:
         return data_size;
     }
 
+    [[nodiscard]] std::uint32_t width() const {
+        return m_width;
+    }
+
+    [[nodiscard]] std::uint32_t height() const {
+        return m_height;
+    }
+
+    [[nodiscard]] std::uint32_t channels() const {
+        return m_channels;
+    }
+
+    [[nodiscard]] std::uint32_t mip_levels() const {
+        return m_mip_levels;
+    }
+
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
+    }
+
     [[nodiscard]] const auto ktx_wrapper() const {
         return m_ktx_texture;
     }
+
+    [[nodiscard]] const auto ktx_texture_data_size() const {
+        return m_ktx_texture_data_size;
+    }
+
+    [[nodiscard]] const auto ktx_texture_data() const {
+        return m_ktx_texture_data;
+    }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::texture

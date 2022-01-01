@@ -7,14 +7,18 @@
 #include <spdlog/spdlog.h>
 
 #include <array>
-#include <utility>
+#include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
 
 Framebuffer::Framebuffer(const wrapper::Device &device, VkRenderPass render_pass,
                          const std::vector<VkImageView> &attachments, const std::uint32_t width,
-                         const std::uint32_t height, std::string name)
-    : m_device(device), m_name(std::move(name)) {
+                         const std::uint32_t height, const std::string name)
+    : m_device(device), m_name(name) {
+
+    assert(!attachments.empty());
+    assert(width > 0);
+    assert(height > 0);
 
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
     framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());

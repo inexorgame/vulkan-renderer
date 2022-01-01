@@ -1,7 +1,5 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <vulkan/vulkan_core.h>
-
 namespace inexor::vulkan_renderer::wrapper {
 
 template <>
@@ -123,6 +121,46 @@ VkGraphicsPipelineCreateInfo make_info() {
     return ret;
 }
 
+VkGraphicsPipelineCreateInfo make_info(const VkPipelineLayout pipeline_layout, const VkRenderPass renderpass,
+                                       const std::vector<VkPipelineShaderStageCreateInfo> &stages,
+                                       const VkPipelineVertexInputStateCreateInfo *vertex_input_state,
+                                       const VkPipelineInputAssemblyStateCreateInfo *input_assembly_state,
+                                       const VkPipelineViewportStateCreateInfo *viewport_state,
+                                       const VkPipelineRasterizationStateCreateInfo *rasterization_state,
+                                       const VkPipelineMultisampleStateCreateInfo *multisample_state,
+                                       const VkPipelineDepthStencilStateCreateInfo *depth_stencil_state,
+                                       const VkPipelineColorBlendStateCreateInfo *color_blend_state,
+                                       const VkPipelineDynamicStateCreateInfo *dynamic_state) {
+
+    assert(!stages.empty());
+    assert(vertex_input_state);
+    assert(input_assembly_state);
+    assert(viewport_state);
+    assert(rasterization_state);
+    assert(multisample_state);
+    assert(depth_stencil_state);
+    assert(color_blend_state);
+    assert(dynamic_state);
+
+    VkGraphicsPipelineCreateInfo ret{};
+
+    ret.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    ret.layout = pipeline_layout;
+    ret.renderPass = renderpass;
+    ret.stageCount = static_cast<std::uint32_t>(stages.size());
+    ret.pStages = stages.data();
+    ret.pVertexInputState = vertex_input_state;
+    ret.pInputAssemblyState = input_assembly_state;
+    ret.pViewportState = viewport_state;
+    ret.pRasterizationState = rasterization_state;
+    ret.pMultisampleState = multisample_state;
+    ret.pDepthStencilState = depth_stencil_state;
+    ret.pColorBlendState = color_blend_state;
+    ret.pDynamicState = dynamic_state;
+
+    return ret;
+}
+
 template <>
 VkImageCreateInfo make_info() {
     VkImageCreateInfo ret{};
@@ -172,10 +210,20 @@ VkPipelineDynamicStateCreateInfo make_info() {
     return ret;
 }
 
+VkPipelineDynamicStateCreateInfo make_info(const std::vector<VkDynamicState> &dynamic_states) {
+    VkPipelineDynamicStateCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    ret.dynamicStateCount = static_cast<std::uint32_t>(dynamic_states.size());
+    ret.pDynamicStates = dynamic_states.data();
+    return ret;
+}
+
 template <>
 VkPipelineInputAssemblyStateCreateInfo make_info() {
     VkPipelineInputAssemblyStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    ret.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    ret.primitiveRestartEnable = VK_FALSE;
     return ret;
 }
 
@@ -183,6 +231,23 @@ template <>
 VkPipelineLayoutCreateInfo make_info() {
     VkPipelineLayoutCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    return ret;
+}
+
+VkPipelineLayoutCreateInfo make_info(const std::vector<VkDescriptorSetLayout> &set_layouts,
+                                     const std::vector<VkPushConstantRange> &push_constant_ranges) {
+
+    assert(!set_layouts.empty());
+    // Note that push_constant_ranges is allowed to be empty
+
+    VkPipelineLayoutCreateInfo ret{};
+
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    ret.pushConstantRangeCount = static_cast<std::uint32_t>(push_constant_ranges.size());
+    ret.pPushConstantRanges = push_constant_ranges.data();
+    ret.setLayoutCount = static_cast<std::uint32_t>(set_layouts.size());
+    ret.pSetLayouts = set_layouts.data();
+
     return ret;
 }
 
@@ -197,6 +262,10 @@ template <>
 VkPipelineRasterizationStateCreateInfo make_info() {
     VkPipelineRasterizationStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    ret.polygonMode = VK_POLYGON_MODE_FILL;
+    ret.cullMode = VK_CULL_MODE_NONE;
+    ret.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    ret.lineWidth = 1.0f;
     return ret;
 }
 
@@ -211,6 +280,24 @@ template <>
 VkPipelineVertexInputStateCreateInfo make_info() {
     VkPipelineVertexInputStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    return ret;
+}
+
+VkPipelineVertexInputStateCreateInfo
+make_info(const std::vector<VkVertexInputBindingDescription> &vertex_input_binding_descriptions,
+          const std::vector<VkVertexInputAttributeDescription> &vertex_input_attribute_descriptions) {
+
+    assert(!vertex_input_binding_descriptions.empty());
+    assert(!vertex_input_attribute_descriptions.empty());
+
+    VkPipelineVertexInputStateCreateInfo ret{};
+
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    ret.vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_input_binding_descriptions.size());
+    ret.pVertexBindingDescriptions = vertex_input_binding_descriptions.data();
+    ret.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(vertex_input_attribute_descriptions.size());
+    ret.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();
+
     return ret;
 }
 
@@ -239,6 +326,27 @@ template <>
 VkRenderPassCreateInfo make_info() {
     VkRenderPassCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    return ret;
+}
+
+VkRenderPassCreateInfo make_info(const std::vector<VkAttachmentDescription> &attachments,
+                                 const std::vector<VkSubpassDescription> &subpasses,
+                                 const std::vector<VkSubpassDependency> &dependencies) {
+
+    assert(!attachments.empty());
+    assert(!subpasses.empty());
+    assert(!dependencies.empty());
+
+    VkRenderPassCreateInfo ret{};
+
+    ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    ret.attachmentCount = static_cast<std::uint32_t>(attachments.size());
+    ret.pAttachments = attachments.data();
+    ret.subpassCount = static_cast<std::uint32_t>(subpasses.size());
+    ret.pSubpasses = subpasses.data();
+    ret.dependencyCount = static_cast<std::uint32_t>(dependencies.size());
+    ret.pDependencies = dependencies.data();
+
     return ret;
 }
 

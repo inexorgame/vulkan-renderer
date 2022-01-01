@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
 #include <glm/vec2.hpp>
@@ -31,7 +31,7 @@ private:
     BufferResource *m_vertex_buffer{nullptr};
     GraphicsStage *m_stage{nullptr};
 
-    std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
+    std::unique_ptr<texture::GpuTexture> m_imgui_texture;
     std::unique_ptr<wrapper::Shader> m_vertex_shader;
     std::unique_ptr<wrapper::Shader> m_fragment_shader;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;

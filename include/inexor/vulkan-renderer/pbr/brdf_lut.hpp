@@ -1,8 +1,8 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "vulkan/vulkan_core.h"
 
@@ -15,7 +15,7 @@ namespace inexor::vulkan_renderer::pbr {
 class BRDFLUTGenerator {
 private:
     const wrapper::Device &m_device;
-    std::unique_ptr<wrapper::Image> m_brdf_lut_image;
+    std::unique_ptr<texture::GpuTexture> m_brdf_texture;
     std::unique_ptr<wrapper::Framebuffer> m_framebuffer;
 
 public:
@@ -23,8 +23,8 @@ public:
     /// @param device A const reference to the Vulkan device wrapper
     BRDFLUTGenerator(const wrapper::Device &device);
 
-    [[nodiscard]] const auto &descriptor() const {
-        return m_brdf_lut_image->descriptor();
+    [[nodiscard]] VkDescriptorImageInfo descriptor() {
+        return m_brdf_texture->descriptor();
     }
 };
 

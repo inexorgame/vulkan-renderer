@@ -5,13 +5,14 @@
 #include "inexor/vulkan-renderer/gltf/gltf_material.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_primitive.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_texture_sampler.hpp"
 #include "inexor/vulkan-renderer/gltf/gltf_vertex.hpp"
 #include "inexor/vulkan-renderer/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
@@ -53,7 +54,6 @@ struct ModelShaderParams {
 /// vertices. so it's better to keep it in the gpu data class.
 class ModelGpuData : public GpuDataBase<ModelVertex, std::uint32_t> {
 private:
-    // TODO: Move this to GltfDataParserBase
     ModelNode *find_node(ModelNode *parent, std::uint32_t index);
 
     ModelNode *node_from_index(std::uint32_t index);
@@ -88,7 +88,7 @@ private:
     std::vector<ModelAnimation> animations;
     std::vector<ModelSkin> m_skins;
 
-    std::vector<wrapper::GpuTexture> m_textures;
+    std::vector<texture::GpuTexture> m_textures;
     std::vector<TextureSampler> m_texture_samplers;
 
     VkDescriptorSet m_scene_descriptor_set{VK_NULL_HANDLE};
@@ -104,13 +104,14 @@ private:
     std::unique_ptr<wrapper::UniformBuffer<ModelShaderParams>> m_shader_params;
     std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_scene_matrices;
 
-    std::unique_ptr<wrapper::GpuTexture> m_empty_texture;
+    std::unique_ptr<texture::GpuTexture> m_empty_texture;
 
-    const VkDescriptorImageInfo m_brdf_lut_texture;
-    const VkDescriptorImageInfo m_enviroment_cube_texture;
-    const VkDescriptorImageInfo m_irradiance_cube_texture;
-    const VkDescriptorImageInfo m_prefiltered_cube_texture;
+    VkDescriptorImageInfo m_brdf_lut_texture;
+    VkDescriptorImageInfo m_enviroment_cube_texture;
+    VkDescriptorImageInfo m_irradiance_cube_texture;
+    VkDescriptorImageInfo m_prefiltered_cube_texture;
 
+    // TODO: Remove this!
     // In case the model contains textures but no default texture sampler, use this one.
     TextureSampler m_default_texture_sampler{VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                                              VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT};
@@ -120,23 +121,24 @@ private:
     ///
     void setup_node_descriptor_sets(const ModelNode &node) {
         if (node.mesh) {
-            VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-            descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            descriptorSetAllocInfo.descriptorPool = m_descriptor_pool->descriptor_pool();
-            descriptorSetAllocInfo.pSetLayouts = &m_node_descriptor_set_layout;
-            descriptorSetAllocInfo.descriptorSetCount = 1;
+            // TODO: Move arguments into make_info<> template
+            VkDescriptorSetAllocateInfo desc_set_ai{};
+            desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            desc_set_ai.descriptorPool = m_descriptor_pool->descriptor_pool();
+            desc_set_ai.pSetLayouts = &m_node_descriptor_set_layout;
+            desc_set_ai.descriptorSetCount = 1;
 
-            vkAllocateDescriptorSets(m_device.device(), &descriptorSetAllocInfo, &node.mesh->ubo->descriptor_set);
+            vkAllocateDescriptorSets(m_device.device(), &desc_set_ai, &node.mesh->ubo->descriptor_set);
 
-            VkWriteDescriptorSet writeDescriptorSet{};
-            writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            writeDescriptorSet.descriptorCount = 1;
-            writeDescriptorSet.dstSet = node.mesh->ubo->descriptor_set;
-            writeDescriptorSet.dstBinding = 0;
-            writeDescriptorSet.pBufferInfo = &node.mesh->ubo->descriptor;
+            VkWriteDescriptorSet write_desc_set{};
+            write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            write_desc_set.descriptorCount = 1;
+            write_desc_set.dstSet = node.mesh->ubo->descriptor_set;
+            write_desc_set.dstBinding = 0;
+            write_desc_set.pBufferInfo = &node.mesh->ubo->descriptor;
 
-            vkUpdateDescriptorSets(m_device.device(), 1, &writeDescriptorSet, 0, nullptr);
+            vkUpdateDescriptorSets(m_device.device(), 1, &write_desc_set, 0, nullptr);
         }
 
         for (const auto &child : node.children) {
@@ -191,53 +193,53 @@ private:
             vkCreateDescriptorSetLayout(render_graph->device(), &descriptorSetLayoutCI, nullptr,
                                         &m_scene_descriptor_set_layout);
 
-            VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-            descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            descriptorSetAllocInfo.descriptorPool = m_descriptor_pool->descriptor_pool();
-            descriptorSetAllocInfo.pSetLayouts = &m_scene_descriptor_set_layout;
-            descriptorSetAllocInfo.descriptorSetCount = 1;
+            VkDescriptorSetAllocateInfo desc_set_ai{};
+            desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            desc_set_ai.descriptorPool = m_descriptor_pool->descriptor_pool();
+            desc_set_ai.pSetLayouts = &m_scene_descriptor_set_layout;
+            desc_set_ai.descriptorSetCount = 1;
 
-            vkAllocateDescriptorSets(render_graph->device(), &descriptorSetAllocInfo, &m_scene_descriptor_set);
+            vkAllocateDescriptorSets(render_graph->device(), &desc_set_ai, &m_scene_descriptor_set);
 
-            std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
+            std::array<VkWriteDescriptorSet, 5> write_desc_sets{};
 
-            writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            writeDescriptorSets[0].descriptorCount = 1;
-            writeDescriptorSets[0].dstSet = m_scene_descriptor_set;
-            writeDescriptorSets[0].dstBinding = 0;
-            writeDescriptorSets[0].pBufferInfo = &m_shader_params->descriptor;
+            write_desc_sets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_sets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            write_desc_sets[0].descriptorCount = 1;
+            write_desc_sets[0].dstSet = m_scene_descriptor_set;
+            write_desc_sets[0].dstBinding = 0;
+            write_desc_sets[0].pBufferInfo = &m_shader_params->descriptor;
 
-            writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            writeDescriptorSets[1].descriptorCount = 1;
-            writeDescriptorSets[1].dstSet = m_scene_descriptor_set;
-            writeDescriptorSets[1].dstBinding = 1;
-            writeDescriptorSets[1].pBufferInfo = &m_scene_matrices->descriptor;
+            write_desc_sets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_sets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            write_desc_sets[1].descriptorCount = 1;
+            write_desc_sets[1].dstSet = m_scene_descriptor_set;
+            write_desc_sets[1].dstBinding = 1;
+            write_desc_sets[1].pBufferInfo = &m_scene_matrices->descriptor;
 
-            writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            writeDescriptorSets[2].descriptorCount = 1;
-            writeDescriptorSets[2].dstSet = m_scene_descriptor_set;
-            writeDescriptorSets[2].dstBinding = 2;
-            writeDescriptorSets[2].pImageInfo = &m_irradiance_cube_texture;
+            write_desc_sets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_sets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            write_desc_sets[2].descriptorCount = 1;
+            write_desc_sets[2].dstSet = m_scene_descriptor_set;
+            write_desc_sets[2].dstBinding = 2;
+            write_desc_sets[2].pImageInfo = &m_irradiance_cube_texture;
 
-            writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            writeDescriptorSets[3].descriptorCount = 1;
-            writeDescriptorSets[3].dstSet = m_scene_descriptor_set;
-            writeDescriptorSets[3].dstBinding = 3;
-            writeDescriptorSets[3].pImageInfo = &m_prefiltered_cube_texture;
+            write_desc_sets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_sets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            write_desc_sets[3].descriptorCount = 1;
+            write_desc_sets[3].dstSet = m_scene_descriptor_set;
+            write_desc_sets[3].dstBinding = 3;
+            write_desc_sets[3].pImageInfo = &m_prefiltered_cube_texture;
 
-            writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            writeDescriptorSets[4].descriptorCount = 1;
-            writeDescriptorSets[4].dstSet = m_scene_descriptor_set;
-            writeDescriptorSets[4].dstBinding = 4;
-            writeDescriptorSets[4].pImageInfo = &m_brdf_lut_texture;
+            write_desc_sets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_desc_sets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            write_desc_sets[4].descriptorCount = 1;
+            write_desc_sets[4].dstSet = m_scene_descriptor_set;
+            write_desc_sets[4].dstBinding = 4;
+            write_desc_sets[4].pImageInfo = &m_brdf_lut_texture;
 
-            vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(writeDescriptorSets.size()),
-                                   writeDescriptorSets.data(), 0, nullptr);
+            vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(write_desc_sets.size()),
+                                   write_desc_sets.data(), 0, nullptr);
         }
 
         // Material (samplers)
@@ -298,33 +300,34 @@ private:
                     }
                 }
 
-                std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
+                std::array<VkWriteDescriptorSet, 5> write_desc_set{};
 
                 for (size_t i = 0; i < imageDescriptors.size(); i++) {
-                    writeDescriptorSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    writeDescriptorSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    writeDescriptorSets[i].descriptorCount = 1;
-                    writeDescriptorSets[i].dstSet = m_material_descriptor_set;
-                    writeDescriptorSets[i].dstBinding = static_cast<uint32_t>(i);
-                    writeDescriptorSets[i].pImageInfo = &imageDescriptors[i];
+                    write_desc_set[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                    write_desc_set[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    write_desc_set[i].descriptorCount = 1;
+                    write_desc_set[i].dstSet = m_material_descriptor_set;
+                    write_desc_set[i].dstBinding = static_cast<uint32_t>(i);
+                    write_desc_set[i].pImageInfo = &imageDescriptors[i];
                 }
 
-                vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(writeDescriptorSets.size()),
-                                       writeDescriptorSets.data(), 0, nullptr);
+                vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(write_desc_set.size()),
+                                       write_desc_set.data(), 0, nullptr);
             }
 
             // Model node (matrices)
             {
-                std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+                std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
                 };
 
-                VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-                descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-                descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-                descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+                // TODO: Move into make_info<> template!
+                VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
+                desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                desc_set_layout_ci.pBindings = setLayoutBindings.data();
+                desc_set_layout_ci.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 
-                vkCreateDescriptorSetLayout(render_graph->device(), &descriptorSetLayoutCI, nullptr,
+                vkCreateDescriptorSetLayout(render_graph->device(), &desc_set_layout_ci, nullptr,
                                             &m_node_descriptor_set_layout);
 
                 // Per-node descriptor set
@@ -347,10 +350,10 @@ public:
                  VkDescriptorImageInfo prefiltered_cube_texture, const glm::mat4 &model_matrix,
                  const glm::mat4 &proj_matrix);
 
-    ~ModelGpuData();
-
     ModelGpuData(const ModelGpuData &) = delete;
     ModelGpuData(ModelGpuData &&) noexcept;
+
+    ~ModelGpuData();
 
     ModelGpuData &operator=(const ModelGpuData &) = delete;
     ModelGpuData &operator=(ModelGpuData &&) noexcept = default;
@@ -363,11 +366,11 @@ public:
         return m_indices;
     };
 
-    [[nodiscard]] auto vertex_count() const {
+    [[nodiscard]] std::size_t vertex_count() const {
         return m_vertices.size();
     }
 
-    [[nodiscard]] auto index_count() const {
+    [[nodiscard]] std::size_t index_count() const {
         return m_indices.size();
     }
 

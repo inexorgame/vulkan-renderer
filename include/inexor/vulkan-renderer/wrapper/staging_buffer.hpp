@@ -25,6 +25,14 @@ public:
     /// @param data_size The size of the memory buffer to copy.
     StagingBuffer(const Device &device, const std::string &name, VkDeviceSize buffer_size, const void *data,
                   std::size_t data_size);
+
+    /// Create a staging buffer which has buffer size equal to data size
+    ///
+    ///
+    ///
+    ///
+    StagingBuffer(const Device &device, VkDeviceSize buffer_size, const void *data, const std::string &name);
+
     StagingBuffer(const StagingBuffer &) = delete;
     StagingBuffer(StagingBuffer &&) noexcept;
     ~StagingBuffer() override = default;

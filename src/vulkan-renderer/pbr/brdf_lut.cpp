@@ -20,33 +20,33 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     VkRenderPass m_renderpass;
     VkPipeline m_pipeline;
 
-    const auto format = VK_FORMAT_R16G16_SFLOAT;
+    const auto format{VK_FORMAT_R16G16_SFLOAT};
     const VkExtent2D image_extent{512, 512};
 
     spdlog::trace("Generating BRDFLUT texture of size {} x {} pixels", image_extent.width, image_extent.height);
 
-    m_brdf_lut_image = std::make_unique<wrapper::Image>(
-        device, format, image_extent.width, image_extent.height,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, "texture");
+    m_brdf_texture = std::make_unique<texture::GpuTexture>(device, wrapper::make_info<VkImageCreateInfo>(),
+                                                           wrapper::make_info<VkImageViewCreateInfo>(),
+                                                           wrapper::make_info<VkSamplerCreateInfo>(), "brdf lut");
 
-    VkAttachmentDescription att_desc{};
-    att_desc.format = format;
-    att_desc.samples = VK_SAMPLE_COUNT_1_BIT;
-    att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    att_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    att_desc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    std::vector<VkAttachmentDescription> att_desc(1);
+    att_desc[0].format = format;
+    att_desc[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    att_desc[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    att_desc[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    att_desc[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    att_desc[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    att_desc[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    att_desc[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkAttachmentReference color_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
-    VkSubpassDescription subpass_desc{};
-    subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass_desc.colorAttachmentCount = 1;
-    subpass_desc.pColorAttachments = &color_ref;
+    std::vector<VkSubpassDescription> subpass_desc(1);
+    subpass_desc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_desc[0].colorAttachmentCount = 1;
+    subpass_desc[0].pColorAttachments = &color_ref;
 
-    std::array<VkSubpassDependency, 2> deps;
+    std::vector<VkSubpassDependency> deps(2);
 
     deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
     deps[0].dstSubpass = 0;
@@ -64,25 +64,19 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    auto renderpass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
-    renderpass_ci.attachmentCount = 1;
-    renderpass_ci.pAttachments = &att_desc;
-    renderpass_ci.subpassCount = 1;
-    renderpass_ci.pSubpasses = &subpass_desc;
-    renderpass_ci.dependencyCount = static_cast<std::uint32_t>(deps.size());
-    renderpass_ci.pDependencies = deps.data();
+    auto renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
     if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &m_renderpass);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create renderpass (vkCreateRenderPass)!", result);
     }
 
-    const std::vector<VkImageView> attachments = {m_brdf_lut_image->image_view()};
+    const std::vector<VkImageView> attachments = {m_brdf_texture->image_view()};
 
     m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, m_renderpass, attachments, image_extent.width,
                                                            image_extent.height, "framebuffer");
 
-    VkDescriptorSetLayoutCreateInfo desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
+    auto desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
 
     if (const auto result =
             vkCreateDescriptorSetLayout(device.device(), &desc_set_layout_ci, nullptr, &m_desc_set_layout);
@@ -90,9 +84,9 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
         throw VulkanException("Failed to create descriptor set layout (vkCreateDescriptorSetLayout)!", result);
     }
 
-    auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
-    pipeline_layout_ci.setLayoutCount = 1;
-    pipeline_layout_ci.pSetLayouts = &m_desc_set_layout;
+    const std::vector<VkDescriptorSetLayout> desc_set{m_desc_set_layout};
+
+    const auto pipeline_layout_ci = wrapper::make_info(desc_set);
 
     if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
         result != VK_SUCCESS) {
@@ -101,13 +95,8 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     }
 
     auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
-    input_assembly_sci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     auto rasterization_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
-    rasterization_sci.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterization_sci.cullMode = VK_CULL_MODE_NONE;
-    rasterization_sci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rasterization_sci.lineWidth = 1.0f;
 
     VkPipelineColorBlendAttachmentState blend_att_state{};
     blend_att_state.colorWriteMask =
@@ -132,11 +121,9 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
     multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-    auto dynamic_state_ci = wrapper::make_info<VkPipelineDynamicStateCreateInfo>();
-    dynamic_state_ci.pDynamicStates = dynamic_state_enables.data();
-    dynamic_state_ci.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size());
+    const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
 
     auto empty_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
 

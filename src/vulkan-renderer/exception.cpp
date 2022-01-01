@@ -11,4 +11,11 @@ VulkanException::VulkanException(std::string message, const VkResult result)
                           .append(vk_tools::result_to_description(result))
                           .append(")")) {}
 
+KtxException::KtxException(std::string message, const ktx_error_code_e result)
+    : InexorException(message.append(" (")
+                          .append(vk_tools::as_string(result))
+                          .append(": ")
+                          .append(vk_tools::result_to_description(result))
+                          .append(")")) {}
+
 } // namespace inexor::vulkan_renderer

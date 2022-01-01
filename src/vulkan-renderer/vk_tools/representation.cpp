@@ -614,7 +614,102 @@ std::string_view as_string<VkResult>(const VkResult result) {
     return "Unknown";
 }
 
-std::string_view result_to_description(const VkResult result) {
+template <>
+std::string_view as_string<ktx_error_code_e>(const ktx_error_code_e result) {
+    switch (result) {
+    case KTX_SUCCESS:
+        return "KTX_SUCCESS";
+    case KTX_FILE_DATA_ERROR:
+        return "KTX_FILE_DATA_ERROR";
+    case KTX_FILE_ISPIPE:
+        return "KTX_FILE_ISPIPE";
+    case KTX_FILE_OPEN_FAILED:
+        return "KTX_FILE_OPEN_FAILED";
+    case KTX_FILE_OVERFLOW:
+        return "KTX_FILE_OVERFLOW";
+    case KTX_FILE_READ_ERROR:
+        return "KTX_FILE_READ_ERROR";
+    case KTX_FILE_SEEK_ERROR:
+        return "KTX_FILE_SEEK_ERROR";
+    case KTX_FILE_UNEXPECTED_EOF:
+        return "KTX_FILE_UNEXPECTED_EOF";
+    case KTX_FILE_WRITE_ERROR:
+        return "KTX_FILE_WRITE_ERROR";
+    case KTX_GL_ERROR:
+        return "KTX_GL_ERROR";
+    case KTX_INVALID_OPERATION:
+        return "KTX_INVALID_OPERATION";
+    case KTX_INVALID_VALUE:
+        return "KTX_INVALID_VALUE";
+    case KTX_NOT_FOUND:
+        return "KTX_NOT_FOUND";
+    case KTX_OUT_OF_MEMORY:
+        return "KTX_OUT_OF_MEMORY";
+    case KTX_TRANSCODE_FAILED:
+        return "KTX_TRANSCODE_FAILED";
+    case KTX_UNKNOWN_FILE_FORMAT:
+        return "KTX_UNKNOWN_FILE_FORMAT";
+    case KTX_UNSUPPORTED_TEXTURE_TYPE:
+        return "KTX_UNSUPPORTED_TEXTURE_TYPE";
+    case KTX_UNSUPPORTED_FEATURE:
+        return "KTX_UNSUPPORTED_FEATURE";
+    case KTX_LIBRARY_NOT_LINKED:
+        return "KTX_LIBRARY_NOT_LINKED";
+    default:
+        break;
+    }
+    return "Unknown";
+}
+
+template <>
+std::string_view result_to_description<ktx_error_code_e>(const ktx_error_code_e result) {
+    switch (result) {
+    case KTX_SUCCESS:
+        return "Operation was successful";
+    case KTX_FILE_DATA_ERROR:
+        return "The data in the file is inconsistent with the spec.";
+    case KTX_FILE_ISPIPE:
+        return "The file is a pipe or named pipe.";
+    case KTX_FILE_OPEN_FAILED:
+        return "The target file could not be opened.";
+    case KTX_FILE_OVERFLOW:
+        return "The operation would exceed the max file size.";
+    case KTX_FILE_READ_ERROR:
+        return "An error occurred while reading from the file.";
+    case KTX_FILE_SEEK_ERROR:
+        return "An error occurred while seeking in the file.";
+    case KTX_FILE_UNEXPECTED_EOF:
+        return "File does not have enough data to satisfy request.";
+    case KTX_FILE_WRITE_ERROR:
+        return "An error occurred while writing to the file.";
+    case KTX_GL_ERROR:
+        return "GL operations resulted in an error.";
+    case KTX_INVALID_OPERATION:
+        return "The operation is not allowed in the current state.";
+    case KTX_INVALID_VALUE:
+        return "A parameter value was not valid.";
+    case KTX_NOT_FOUND:
+        return "Requested key was not found.";
+    case KTX_OUT_OF_MEMORY:
+        return "Not enough memory to complete the operation.";
+    case KTX_TRANSCODE_FAILED:
+        return "Transcoding of block compressed texture failed.";
+    case KTX_UNKNOWN_FILE_FORMAT:
+        return "The file not a KTX file.";
+    case KTX_UNSUPPORTED_TEXTURE_TYPE:
+        return "The KTX file specifies an unsupported texture type.";
+    case KTX_UNSUPPORTED_FEATURE:
+        return "Feature not included in in - use library or not yet implemented.";
+    case KTX_LIBRARY_NOT_LINKED:
+        return "Library dependency (OpenGL or Vulkan) not linked into application.";
+    default:
+        break;
+    }
+    return "Unknown";
+}
+
+template <>
+std::string_view result_to_description<VkResult>(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "Command successfully completed";

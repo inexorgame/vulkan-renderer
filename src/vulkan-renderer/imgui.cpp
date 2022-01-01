@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
@@ -104,7 +104,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     if (font == nullptr || font_texture_data == nullptr) {
         spdlog::error("Unable to load font {}. Using error texture as fallback.", FONT_FILE_PATH);
-        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
+        m_imgui_texture = std::make_unique<texture::GpuTexture>(
+            m_device, texture::CpuTexture(), wrapper::make_info<VkImageCreateInfo>(),
+            wrapper::make_info<VkImageViewCreateInfo>(), wrapper::make_info<VkSamplerCreateInfo>());
     } else {
         spdlog::debug("Creating ImGUI font texture");
 
@@ -116,9 +118,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                                    static_cast<VkDeviceSize>(font_texture_height) *
                                    static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
 
-        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
-            m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
-            FONT_MIP_LEVELS, "ImGUI font texture");
+        m_imgui_texture = std::make_unique<texture::GpuTexture>(
+            m_device, font_texture_data, upload_size, wrapper::make_info<VkImageCreateInfo>(),
+            wrapper::make_info<VkImageViewCreateInfo>(), wrapper::make_info<VkSamplerCreateInfo>(),
+            "ImGUI font texture");
     }
 
     setup_rendering_resources(render_graph, back_buffer);

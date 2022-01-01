@@ -78,11 +78,15 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     return *this;
 }
 
-DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const wrapper::TextureBase &texture) {
+DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const texture::GpuTexture &texture) {
     return add_combined_image_sampler(texture.sampler(), texture.image_view());
 }
 
-DescriptorBuilder &DescriptorBuilder::add_combined_image_samplers(const std::vector<wrapper::TextureBase> &textures) {
+DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const cubemap::GpuCubemap &cubemap) {
+    return add_combined_image_sampler(cubemap.sampler(), cubemap.image_view());
+}
+
+DescriptorBuilder &DescriptorBuilder::add_combined_image_samplers(const std::vector<texture::GpuTexture> &textures) {
     for (const auto &texture : textures) {
         const auto &result = add_combined_image_sampler(texture.sampler(), texture.image_view());
     }

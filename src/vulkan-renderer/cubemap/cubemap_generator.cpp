@@ -29,15 +29,15 @@ namespace inexor::vulkan_renderer::cubemap {
 // TODO: Separate into class methods!
 CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
-    // TODO: Rename to CubemapTarget!
-    enum Target { IRRADIANCE = 0, PREFILTEREDENV = 1 };
+    // TODO: Can we make this a scoped enum?
+    enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
 
         VkFormat format;
         std::uint32_t dim;
 
-        // TODO: Check if these formats are even supported!
+        // TODO: Check if these formats are even supported by the current gpu!
         switch (target) {
         case IRRADIANCE:
             format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -57,28 +57,29 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         constexpr std::uint32_t cube_face_count = 6;
 
-        m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, miplevel_count, "cubemap");
+        m_cubemap_texture =
+            std::make_unique<cubemap::GpuCubemap>(device, wrapper::make_info<VkImageCreateInfo>(), "cubemap");
 
-        VkAttachmentDescription att_desc{};
-        att_desc.format = format;
-        att_desc.samples = VK_SAMPLE_COUNT_1_BIT;
-        att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        att_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        std::vector<VkAttachmentDescription> att_desc(1);
+        att_desc[0].format = format;
+        att_desc[0].samples = VK_SAMPLE_COUNT_1_BIT;
+        att_desc[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        att_desc[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        att_desc[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        att_desc[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        att_desc[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        att_desc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentReference color_ref;
         color_ref.attachment = 0;
         color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        VkSubpassDescription subpass_desc{};
-        subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass_desc.colorAttachmentCount = 1;
-        subpass_desc.pColorAttachments = &color_ref;
+        std::vector<VkSubpassDescription> subpass_desc(1);
+        subpass_desc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass_desc[0].colorAttachmentCount = 1;
+        subpass_desc[0].pColorAttachments = &color_ref;
 
-        std::array<VkSubpassDependency, 2> deps;
+        std::vector<VkSubpassDependency> deps(2);
         deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
         deps[0].dstSubpass = 0;
         deps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -95,13 +96,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
         deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-        auto renderpass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
-        renderpass_ci.attachmentCount = 1;
-        renderpass_ci.pAttachments = &att_desc;
-        renderpass_ci.subpassCount = 1;
-        renderpass_ci.pSubpasses = &subpass_desc;
-        renderpass_ci.dependencyCount = static_cast<std::uint32_t>(deps.size());
-        renderpass_ci.pDependencies = deps.data();
+        VkRenderPassCreateInfo renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
         VkRenderPass renderpass;
 
@@ -115,12 +110,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
 
-        m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "gltf");
+        m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "cubemap generator");
 
         wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
-        // TODO: I get the feeling this is wrong!
-        m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("octree");
+        // In case of doubt, check this code again!
+        m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("cubemap generator");
 
         struct PushBlockIrradiance {
             glm::mat4 mvp;
@@ -135,39 +130,32 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
             uint32_t numSamples = 32u;
         } pushBlockPrefilterEnv;
 
-        VkPipelineLayout pipelinelayout;
+        VkPipelineLayout pipeline_layout;
 
-        VkPushConstantRange pushConstantRange{};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        std::vector<VkPushConstantRange> push_constant_range(1);
+        push_constant_range[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
         switch (target) {
         case IRRADIANCE:
-            pushConstantRange.size = sizeof(PushBlockIrradiance);
+            push_constant_range[0].size = sizeof(PushBlockIrradiance);
             break;
         case PREFILTEREDENV:
-            pushConstantRange.size = sizeof(PushBlockPrefilterEnv);
+            push_constant_range[0].size = sizeof(PushBlockPrefilterEnv);
             break;
         };
 
-        auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
-        pipeline_layout_ci.setLayoutCount = 1;
-        pipeline_layout_ci.pSetLayouts = &m_descriptor->descriptor_set_layout();
-        pipeline_layout_ci.pushConstantRangeCount = 1;
-        pipeline_layout_ci.pPushConstantRanges = &pushConstantRange;
+        const std::vector<VkDescriptorSetLayout> desc_set_layouts{m_descriptor->descriptor_set_layout()};
 
-        if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipelinelayout);
+        const VkPipelineLayoutCreateInfo pipeline_layout_ci = wrapper::make_info(desc_set_layouts, push_constant_range);
+
+        if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipeline_layout);
             result != VK_SUCCESS) {
             throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
         }
 
         auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
-        input_assembly_sci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-        auto pipeline_rast_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
-        pipeline_rast_sci.polygonMode = VK_POLYGON_MODE_FILL;
-        pipeline_rast_sci.cullMode = VK_CULL_MODE_NONE;
-        pipeline_rast_sci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-        pipeline_rast_sci.lineWidth = 1.0f;
+        auto rast_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
 
         VkPipelineColorBlendAttachmentState blend_att_state{};
         blend_att_state.colorWriteMask =
@@ -194,13 +182,11 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
         multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-        std::vector<VkDynamicState> dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        const std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-        auto dynamic_state_ci = wrapper::make_info<VkPipelineDynamicStateCreateInfo>();
-        dynamic_state_ci.pDynamicStates = dynamicStateEnables.data();
-        dynamic_state_ci.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
+        auto dynamic_state_ci = wrapper::make_info(dynamic_states);
 
-        // TODO: Use vertex structure from other code part
+        // TODO: Use vertex structure from other code part!
         struct CubemapVertex {
             glm::vec3 pos;
             glm::vec3 normal;
@@ -210,18 +196,16 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
             glm::vec4 weight0;
         };
 
-        VkVertexInputBindingDescription vertexInputBinding = {0, sizeof(CubemapVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+        const std::vector<VkVertexInputBindingDescription> vertex_input_binding{
+            {0, sizeof(CubemapVertex), VK_VERTEX_INPUT_RATE_VERTEX}};
 
-        VkVertexInputAttributeDescription vertexInputAttribute = {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
+        const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes{
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0}};
 
-        // Move into make_info? builder pattern?
-        auto vertexInputStateCI = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
-        vertexInputStateCI.vertexBindingDescriptionCount = 1;
-        vertexInputStateCI.pVertexBindingDescriptions = &vertexInputBinding;
-        vertexInputStateCI.vertexAttributeDescriptionCount = 1;
-        vertexInputStateCI.pVertexAttributeDescriptions = &vertexInputAttribute;
+        const VkPipelineVertexInputStateCreateInfo vertex_input_state_ci =
+            wrapper::make_info(vertex_input_binding, vertex_input_attributes);
 
-        std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+        std::vector<VkPipelineShaderStageCreateInfo> shader_stages(2);
 
         // TODO: Use ShaderLoader here as well?
         wrapper::Shader filtercube(device, VK_SHADER_STAGE_VERTEX_BIT, "shaders/cubemap/filtercube.vert.spv",
@@ -254,19 +238,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
             break;
         };
 
-        auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
-        pipeline_ci.layout = pipelinelayout;
-        pipeline_ci.renderPass = renderpass;
-        pipeline_ci.pInputAssemblyState = &input_assembly_sci;
-        pipeline_ci.pVertexInputState = &vertexInputStateCI;
-        pipeline_ci.pRasterizationState = &pipeline_rast_sci;
-        pipeline_ci.pColorBlendState = &color_blend_sci;
-        pipeline_ci.pMultisampleState = &multisample_sci;
-        pipeline_ci.pViewportState = &viewport_sci;
-        pipeline_ci.pDepthStencilState = &depth_stencil_sci;
-        pipeline_ci.pDynamicState = &dynamic_state_ci;
-        pipeline_ci.stageCount = static_cast<std::uint32_t>(shader_stages.size());
-        pipeline_ci.pStages = shader_stages.data();
+        const auto pipeline_ci = wrapper::make_info(pipeline_layout, renderpass, shader_stages, &vertex_input_state_ci,
+                                                    &input_assembly_sci, &viewport_sci, &rast_sci, &multisample_sci,
+                                                    &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
         // TODO: Create builder patter? no?
         VkPipeline pipeline;
@@ -324,6 +298,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
                 vkCmdSetViewport(cmd_buf.command_buffer(), 0, 1, &viewport);
                 vkCmdSetScissor(cmd_buf.command_buffer(), 0, 1, &scissor);
+
                 vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
                 switch (target) {
@@ -332,7 +307,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                         // TODO: Use static cast
                         glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
-                    vkCmdPushConstants(cmd_buf.command_buffer(), pipelinelayout,
+                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout,
                                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                        sizeof(PushBlockIrradiance), &pushBlockIrradiance);
                     break;
@@ -342,7 +317,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                         glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
                     pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
 
-                    vkCmdPushConstants(cmd_buf.command_buffer(), pipelinelayout,
+                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout,
                                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                        sizeof(PushBlockPrefilterEnv), &pushBlockPrefilterEnv);
                     break;
@@ -350,12 +325,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
                 vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-                vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelinelayout, 0, 1,
-                                        &m_descriptor->descriptor_set(), 0, nullptr);
+                vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
+                                        1, &m_descriptor->descriptor_set(), 0, nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 
                 // TODO: draw skybox!
+                // TODO: How to make this part a parameter? Meaning we can control what's in the skybox? rendergraph?
 
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
@@ -388,7 +364,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         // TODO: Create RAII wrappers for these
         vkDestroyRenderPass(device.device(), renderpass, nullptr);
         vkDestroyPipeline(device.device(), pipeline, nullptr);
-        vkDestroyPipelineLayout(device.device(), pipelinelayout, nullptr);
+        vkDestroyPipelineLayout(device.device(), pipeline_layout, nullptr);
 
         spdlog::trace("Cubemap generation finished");
     }

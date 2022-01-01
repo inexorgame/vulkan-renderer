@@ -8,11 +8,12 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-void Image::create_image(const VkImageCreateInfo image_ci) {
+void Image::create_image() {
     VmaAllocationCreateInfo vma_allocation_ci{};
     vma_allocation_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
@@ -23,22 +24,22 @@ void Image::create_image(const VkImageCreateInfo image_ci) {
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
 
-    if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
-                                           &m_allocation_info);
+    if (const auto result = vmaCreateImage(m_device.allocator(), &m_image_ci, &vma_allocation_ci, &m_image,
+                                           &m_allocation, &m_allocation_info);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
 
-    m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
-
     // Keep track of image layouts for image transitioning
-    m_image_layout = image_ci.initialLayout;
+    m_image_layout = m_image_ci.initialLayout;
+
+    m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name.c_str());
 }
 
-void Image::create_image_view(VkImageViewCreateInfo image_view_ci) {
-    image_view_ci.image = m_image;
+void Image::create_image_view() {
+    m_image_view_ci.image = m_image;
 
-    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &m_image_view);
+    if (const auto result = vkCreateImageView(m_device.device(), &m_image_view_ci, nullptr, &m_image_view);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
@@ -46,100 +47,31 @@ void Image::create_image_view(VkImageViewCreateInfo image_view_ci) {
     m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
-Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkImageViewCreateInfo image_view_ci,
-             std::string name)
+void Image::create_sampler() {
+    if (const auto result = vkCreateSampler(m_device.device(), &m_sampler_ci, nullptr, &m_sampler);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateSampler failed for texture " + m_name + " !", result);
+    }
 
-    : m_device(device), m_format(image_ci.format), m_name(name) {
-
-    assert(device.device());
-    assert(device.physical_device());
-    assert(device.allocator());
-    assert(!name.empty());
-
-    create_image(image_ci);
-    create_image_view(image_view_ci);
+    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
 }
 
-Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImageType image_type, const VkFormat format,
-             const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
-             const std::uint32_t array_layer_count, const VkSampleCountFlagBits sample_count_flags,
-             const VkImageUsageFlags image_usage_flags, const VkImageViewType image_view_type,
-             const VkComponentMapping view_components, const VkImageAspectFlags image_aspect_flags, std::string name)
+void Image::update_descriptor() {
+    // TODO: Implement
+}
 
-    : m_device(device), m_format(format), m_name(std::move(name)) {
+Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkImageViewCreateInfo image_view_ci,
+             const VkSamplerCreateInfo sampler_ci, const std::string name)
 
-    assert(device.device());
-    assert(device.physical_device());
-    assert(device.allocator());
-    assert(array_layer_count > 0);
-    assert(miplevel_count > 0);
-    assert(width > 0);
-    assert(height > 0);
+    : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_sampler_ci(sampler_ci), m_name(name) {
+
     assert(!m_name.empty());
 
-    auto image_ci = make_info<VkImageCreateInfo>();
-    image_ci.flags = flags;
-    image_ci.imageType = image_type;
-    image_ci.format = format;
-    image_ci.extent.width = width;
-    image_ci.extent.height = height;
-    image_ci.extent.depth = 1;
-    image_ci.mipLevels = miplevel_count;
-    image_ci.arrayLayers = array_layer_count;
-    image_ci.samples = sample_count_flags;
-    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.usage = image_usage_flags;
-    image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-    create_image(image_ci);
-
-    auto image_view_ci = make_info<VkImageViewCreateInfo>();
-    image_view_ci.image = m_image;
-    image_view_ci.viewType = image_view_type;
-    image_view_ci.format = format;
-    image_view_ci.components = view_components;
-    image_view_ci.subresourceRange.aspectMask = image_aspect_flags;
-    image_view_ci.subresourceRange.baseMipLevel = 0;
-    image_view_ci.subresourceRange.levelCount = miplevel_count;
-    image_view_ci.subresourceRange.baseArrayLayer = 0;
-    image_view_ci.subresourceRange.layerCount = array_layer_count;
-
-    create_image_view(image_view_ci);
-
-    device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name.c_str());
+    create_image();
+    create_image_view();
+    create_sampler();
+    update_descriptor();
 }
-
-Image::Image(const Device &device, const VkImageCreateFlags flags, const VkImageType image_type, const VkFormat format,
-             const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
-             const std::uint32_t layer_count, const VkSampleCountFlagBits sample_count,
-             const VkImageUsageFlags image_usage_flags, const VkImageViewType image_view_type,
-             const VkImageAspectFlags aspect_mask, std::string name)
-
-    : Image(device, flags, image_type, format, width, height, miplevel_count, layer_count, sample_count,
-            image_usage_flags, image_view_type, {}, aspect_mask, name) {}
-
-Image::Image(const Device &device, const VkImageType image_type, const VkFormat format, const std::uint32_t width,
-             const std::uint32_t height, const std::uint32_t miplevel_count, const std::uint32_t layer_count,
-             const VkSampleCountFlagBits sample_count_flags, const VkImageUsageFlags image_usage_flags,
-             const VkImageViewType image_view_type, const VkImageAspectFlags image_aspect_flags, std::string name)
-
-    : Image(device, {}, image_type, format, width, height, miplevel_count, layer_count, sample_count_flags,
-            image_usage_flags, image_view_type, {}, image_aspect_flags, name) {}
-
-Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
-             const VkImageUsageFlags image_usage_flags, const VkImageAspectFlags image_aspect_flags, std::string name)
-
-    : Image(device, {}, VK_IMAGE_TYPE_2D, format, width, height, 1, 1, VK_SAMPLE_COUNT_1_BIT, image_usage_flags,
-            VK_IMAGE_VIEW_TYPE_2D, {}, image_aspect_flags, name) {}
-
-Image::Image(const Device &device, const VkImageCreateFlags image_create_flags, const VkFormat format,
-             const std::uint32_t width, const std::uint32_t height, const std::uint32_t miplevel_count,
-             const std::uint32_t array_layer_count, const VkSampleCountFlagBits sample_count_flags,
-             const VkImageUsageFlags image_usage_flags, std::string name)
-
-    : Image(device, image_create_flags, VK_IMAGE_TYPE_2D, format, width, height, miplevel_count, array_layer_count,
-            VK_SAMPLE_COUNT_1_BIT, image_usage_flags, VK_IMAGE_VIEW_TYPE_CUBE, {}, VK_IMAGE_ASPECT_COLOR_BIT, name) {}
 
 void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
                                     const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
@@ -165,6 +97,7 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
     VkPipelineStageFlags source_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     VkPipelineStageFlags destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
+    // TODO: Validate this code block here!
     if (m_image_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -258,17 +191,23 @@ void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffe
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
-    m_allocation = other.m_allocation;
+    m_allocation = std::exchange(other.m_allocation, nullptr);
     m_allocation_info = other.m_allocation_info;
-    m_image = other.m_image;
-    m_format = other.m_format;
-    m_image_view = other.m_image_view;
+    m_image = std::exchange(other.m_image, nullptr);
+    m_image_view = std::exchange(other.m_image_view, nullptr);
+    m_sampler = std::exchange(other.m_sampler, nullptr);
+    m_image_layout = other.m_image_layout;
+    m_image_ci = std::move(other.m_image_ci);
+    m_image_view_ci = std::move(other.m_image_view_ci);
+    m_sampler_ci = std::move(other.m_sampler_ci);
+    m_descriptor = std::move(other.m_descriptor);
     m_name = std::move(other.m_name);
 }
 
 Image::~Image() {
     vkDestroyImageView(m_device.device(), m_image_view, nullptr);
     vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
+    vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

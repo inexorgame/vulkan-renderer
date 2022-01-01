@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -23,8 +23,8 @@ struct TextureCoordinateSet {
 };
 
 struct Extension {
-    wrapper::GpuTexture *specular_glossiness_texture{nullptr};
-    wrapper::GpuTexture *diffuse_texture{nullptr};
+    texture::GpuTexture *specular_glossiness_texture{nullptr};
+    texture::GpuTexture *diffuse_texture{nullptr};
     glm::vec4 diffuse_factor = glm::vec4(1.0f);
     glm::vec3 specular_factor = glm::vec3(0.0f);
 };
@@ -42,11 +42,11 @@ struct ModelMaterial {
     glm::vec4 emissive_factor = glm::vec4(1.0f);
 
     // TODO: Make this const?
-    wrapper::GpuTexture *base_color_texture{nullptr};
-    wrapper::GpuTexture *metallic_roughness_texture{nullptr};
-    wrapper::GpuTexture *normal_texture{nullptr};
-    wrapper::GpuTexture *occlusion_texture{nullptr};
-    wrapper::GpuTexture *emissive_texture{nullptr};
+    texture::GpuTexture *base_color_texture{nullptr};
+    texture::GpuTexture *metallic_roughness_texture{nullptr};
+    texture::GpuTexture *normal_texture{nullptr};
+    texture::GpuTexture *occlusion_texture{nullptr};
+    texture::GpuTexture *emissive_texture{nullptr};
 
     TextureCoordinateSet texture_coordinate_set;
 

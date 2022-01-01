@@ -5,11 +5,11 @@
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/texture/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/world/octree_cpu_data.hpp"
-#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -125,8 +125,10 @@ void Application::load_textures() {
     // TODO: Do not load duplicate entries twice! Use an unordered_map to store file names...
     for (const auto &texture_file : m_texture_files) {
         try {
-            wrapper::CpuTexture cpu_texture(texture_file, "unnamed texture");
-            m_textures.emplace_back(*m_device, cpu_texture);
+            texture::CpuTexture cpu_texture(texture_file, "unnamed texture");
+            m_textures.emplace_back(*m_device, cpu_texture, wrapper::make_info<VkImageCreateInfo>(),
+                                    wrapper::make_info<VkImageViewCreateInfo>(),
+                                    wrapper::make_info<VkSamplerCreateInfo>());
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
         // Loading continues if one texture could not be loaded.
     }
@@ -462,6 +464,13 @@ Application::Application(int argc, char **argv) {
     m_pbr_brdf_lut = std::make_unique<pbr::BRDFLUTGenerator>(*m_device);
 
     m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device);
+
+    m_env_cube = std::make_unique<texture::CpuTexture>("assets/environments/papermill.ktx", "env-cube");
+
+    // TODO: Create with VK_FORMAT_R16G16B16A16_SFLOAT
+    m_env_cube_texture = std::make_unique<texture::GpuTexture>(
+        *m_device, *m_env_cube, wrapper::make_info<VkImageCreateInfo>(), wrapper::make_info<VkImageViewCreateInfo>(),
+        wrapper::make_info<VkSamplerCreateInfo>());
 
     m_window->show();
     recreate_swapchain();

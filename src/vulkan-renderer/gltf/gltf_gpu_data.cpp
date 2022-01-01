@@ -121,17 +121,18 @@ void ModelGpuData::load_textures(const tinygltf::Model &model) {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using the data which was converted to RGBA
-            m_textures.emplace_back(m_device, new_sampler, rgba_target.data(), texture_size, texture_image.width,
-                                    texture_image.height, texture_image.component, 1, texture_name);
+            m_textures.emplace_back(m_device, wrapper::make_info<VkImageCreateInfo>(),
+                                    wrapper::make_info<VkImageViewCreateInfo>(),
+                                    wrapper::make_info<VkSamplerCreateInfo>(), texture_name);
             break;
         }
         case 4: {
             std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             // Create a texture using RGBA data
-            m_textures.emplace_back(m_device, new_sampler, texture_image.image.data(), texture_size,
-                                    texture_image.width, texture_image.height, texture_image.component, 1,
-                                    texture_name);
+            m_textures.emplace_back(
+                m_device, texture_image.image.data(), texture_size, wrapper::make_info<VkImageCreateInfo>(),
+                wrapper::make_info<VkImageViewCreateInfo>(), wrapper::make_info<VkSamplerCreateInfo>(), texture_name);
             break;
         }
         default: {
@@ -139,14 +140,17 @@ void ModelGpuData::load_textures(const tinygltf::Model &model) {
                           texture_image.component);
 
             // Generate an error texture (chessboard pattern)
-            m_textures.emplace_back(m_device, m_default_texture_sampler, wrapper::CpuTexture());
+            m_textures.emplace_back(m_device, texture::CpuTexture(), wrapper::make_info<VkImageCreateInfo>(),
+                                    wrapper::make_info<VkImageViewCreateInfo>(),
+                                    wrapper::make_info<VkSamplerCreateInfo>());
             break;
         }
         }
 
         // Generate an error texture (chessboard pattern) as empty texture
-        m_empty_texture =
-            std::make_unique<wrapper::GpuTexture>(m_device, m_default_texture_sampler, wrapper::CpuTexture());
+        m_empty_texture = std::make_unique<texture::GpuTexture>(
+            m_device, texture::CpuTexture(), wrapper::make_info<VkImageCreateInfo>(),
+            wrapper::make_info<VkImageViewCreateInfo>(), wrapper::make_info<VkSamplerCreateInfo>());
 
         // TODO: Generate mipmaps!
     }

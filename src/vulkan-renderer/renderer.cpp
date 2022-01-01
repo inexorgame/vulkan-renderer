@@ -22,16 +22,13 @@ void VulkanRenderer::setup_render_graph() {
     glm::mat4 view = m_camera->view_matrix();
     glm::mat4 proj = m_camera->perspective_matrix();
 
-    // Skybox rendering
     m_skybox_gpu_data.reset();
     m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(*m_device, m_render_graph.get(), *m_skybox_cpu_data);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device, m_render_graph.get());
-
     m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_gpu_data);
 
-    // Octree rendering
     m_octree_renderer.reset();
     m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
 
@@ -54,7 +51,6 @@ void VulkanRenderer::setup_render_graph() {
         m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, data);
     }
 
-    // glTF2 model rendering
     m_gltf_model_renderer.reset();
     m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(*m_device);
 
@@ -62,25 +58,18 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_gpu_data.clear();
     m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 
-    // TODO: Fill me out!
-    //const VkDescriptorImageInfo enviroment_cube_texture;
-    //const VkDescriptorImageInfo irradiance_cube_texture;
-    //const VkDescriptorImageInfo prefiltered_cube_texture;
-
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
-        // m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, m_pbr_brdf_lut->descriptor(),
-        //                             enviroment_cube_texture, irradiance_cube_texture, prefiltered_cube_texture, view,
-        //                             proj);
+        m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, m_pbr_brdf_lut->descriptor(),
+                                     m_env_cube_texture->descriptor(), m_cubemap->descriptor(), m_cubemap->descriptor(),
+                                     view, proj);
     }
 
-    // TODO: Fill me out!
-    VkDescriptorSet scene;
-
+#if 0
     for (const auto &model : m_gltf_gpu_data) {
-        // m_gltf_model_renderer->setup_stage(m_render_graph.get(), scene, m_back_buffer, m_depth_buffer, model);
+        m_gltf_model_renderer->setup_stage(m_render_graph.get(), scene, m_back_buffer, m_depth_buffer, model);
     }
+#endif
 
-    // ImGUI user interface overlay
     m_imgui_overlay.reset();
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
 }

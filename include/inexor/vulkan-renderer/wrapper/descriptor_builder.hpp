@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/texture_base.hpp"
+#include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -63,12 +63,14 @@ public:
     /// @brief Adds a combined image sampler to the descriptor container.
     /// @param image_sampler The pointer to the combined image sampler
     /// @return A const reference to this DescriptorBuilder instance
-    [[nodiscard]] DescriptorBuilder &add_combined_image_sampler(const wrapper::TextureBase &texture);
+    [[nodiscard]] DescriptorBuilder &add_combined_image_sampler(const texture::GpuTexture &texture);
+
+    DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const cubemap::GpuCubemap &cubemap);
 
     /// @brief Add combined image samplers for every given texture
     /// @param textures The textures
     /// @return A const reference to this DescriptorBuilder instance
-    [[nodiscard]] DescriptorBuilder &add_combined_image_samplers(const std::vector<wrapper::TextureBase> &textures);
+    [[nodiscard]] DescriptorBuilder &add_combined_image_samplers(const std::vector<texture::GpuTexture> &textures);
 
     /// @brief Builds the resource descriptor.
     /// @param name The internal name of the resource descriptor.

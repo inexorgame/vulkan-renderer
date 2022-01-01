@@ -12,7 +12,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/cubemap/cubemap_generator.cpp
-    vulkan-renderer/cubemap/cpu_cubemap.cpp
     vulkan-renderer/cubemap/gpu_cubemap.cpp
 
     vulkan-renderer/gltf/gltf_bbox.cpp
@@ -42,10 +41,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/skybox/skybox_gpu_data.cpp
     vulkan-renderer/skybox/skybox_renderer.cpp
 
-    vulkan-renderer/texture/cpu_texture_base.cpp
     vulkan-renderer/texture/cpu_texture.cpp
-    vulkan-renderer/texture/cpu_texture_array.cpp
-    vulkan-renderer/texture/cpu_texture_cubemap.cpp
+    vulkan-renderer/texture/gpu_texture.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
@@ -55,7 +52,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
-    vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/descriptor_pool.cpp
@@ -63,7 +59,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
-    vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
@@ -74,8 +69,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/shader_loader.cpp
     vulkan-renderer/wrapper/staging_buffer.cpp
     vulkan-renderer/wrapper/swapchain.cpp
-    vulkan-renderer/wrapper/texture_attributes.cpp
-    vulkan-renderer/wrapper/texture_base.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
