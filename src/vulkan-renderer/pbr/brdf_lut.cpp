@@ -21,13 +21,42 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     VkPipeline m_pipeline;
 
     const auto format{VK_FORMAT_R16G16_SFLOAT};
-    const VkExtent2D image_extent{512, 512};
+    const VkExtent3D image_extent{512, 512, 1};
 
     spdlog::trace("Generating BRDFLUT texture of size {} x {} pixels", image_extent.width, image_extent.height);
 
-    m_brdf_texture = std::make_unique<texture::GpuTexture>(device, wrapper::make_info<VkImageCreateInfo>(),
-                                                           wrapper::make_info<VkImageViewCreateInfo>(),
-                                                           wrapper::make_info<VkSamplerCreateInfo>(), "brdf lut");
+    auto image_ci = wrapper::make_info<VkImageCreateInfo>();
+    image_ci.imageType = VK_IMAGE_TYPE_2D;
+    image_ci.format = format;
+    image_ci.extent = image_extent;
+    image_ci.mipLevels = 1;
+    image_ci.arrayLayers = 1;
+    image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_ci.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
+    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_ci.format = format;
+    image_view_ci.subresourceRange = {};
+    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_ci.subresourceRange.levelCount = 1;
+    image_view_ci.subresourceRange.layerCount = 1;
+
+    auto sampler_ci = wrapper::make_info<VkSamplerCreateInfo>();
+    sampler_ci.magFilter = VK_FILTER_LINEAR;
+    sampler_ci.minFilter = VK_FILTER_LINEAR;
+    sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.minLod = 0.0f;
+    sampler_ci.maxLod = 1.0f;
+    sampler_ci.maxAnisotropy = 1.0f;
+    sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+    m_brdf_texture = std::make_unique<texture::GpuTexture>(device, image_ci, image_view_ci, sampler_ci, "brdf lut");
 
     std::vector<VkAttachmentDescription> att_desc(1);
     att_desc[0].format = format;
@@ -64,7 +93,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    auto renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
+    const auto renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
     if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &m_renderpass);
         result != VK_SUCCESS) {
@@ -76,7 +105,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, m_renderpass, attachments, image_extent.width,
                                                            image_extent.height, "framebuffer");
 
-    auto desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
+    const auto desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
 
     if (const auto result =
             vkCreateDescriptorSetLayout(device.device(), &desc_set_layout_ci, nullptr, &m_desc_set_layout);
@@ -94,9 +123,8 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
         return;
     }
 
-    auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
-
-    auto rasterization_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
+    const auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
+    const auto rasterization_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
 
     VkPipelineColorBlendAttachmentState blend_att_state{};
     blend_att_state.colorWriteMask =
@@ -124,8 +152,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
     const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
-
-    auto empty_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
+    const auto empty_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
 
     const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
         {"shaders/brdflut/genbrdflut.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "BRDFLUT vertex shader"},
@@ -133,19 +160,9 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
 
     wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files);
 
-    auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
-    pipeline_ci.layout = m_pipeline_layout;
-    pipeline_ci.renderPass = m_renderpass;
-    pipeline_ci.pInputAssemblyState = &input_assembly_sci;
-    pipeline_ci.pVertexInputState = &empty_input_sci;
-    pipeline_ci.pRasterizationState = &rasterization_sci;
-    pipeline_ci.pColorBlendState = &color_blend_sci;
-    pipeline_ci.pMultisampleState = &multisample_sci;
-    pipeline_ci.pViewportState = &viewport_sci;
-    pipeline_ci.pDepthStencilState = &depth_stencil_sci;
-    pipeline_ci.pDynamicState = &dynamic_state_ci;
-    pipeline_ci.stageCount = m_shader_loader.shader_stage_count();
-    pipeline_ci.pStages = m_shader_loader.shader_stages().data();
+    const auto pipeline_ci = wrapper::make_info(
+        m_pipeline_layout, m_renderpass, m_shader_loader.shader_stages(), &empty_input_sci, &input_assembly_sci,
+        &viewport_sci, &rasterization_sci, &multisample_sci, &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
     if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
         result != VK_SUCCESS) {
@@ -157,7 +174,8 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
 
     auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
     renderpass_bi.renderPass = m_renderpass;
-    renderpass_bi.renderArea.extent = image_extent;
+    renderpass_bi.renderArea.extent.width = image_extent.width;
+    renderpass_bi.renderArea.extent.height = image_extent.height;
     renderpass_bi.clearValueCount = 1;
     renderpass_bi.pClearValues = clear_values;
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();

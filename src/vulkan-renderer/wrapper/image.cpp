@@ -1,7 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
@@ -47,30 +46,15 @@ void Image::create_image_view() {
     m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
-void Image::create_sampler() {
-    if (const auto result = vkCreateSampler(m_device.device(), &m_sampler_ci, nullptr, &m_sampler);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSampler failed for texture " + m_name + " !", result);
-    }
-
-    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
-}
-
-void Image::update_descriptor() {
-    // TODO: Implement
-}
-
 Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkImageViewCreateInfo image_view_ci,
-             const VkSamplerCreateInfo sampler_ci, const std::string name)
+             const std::string name)
 
-    : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_sampler_ci(sampler_ci), m_name(name) {
+    : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_name(name) {
 
     assert(!m_name.empty());
 
     create_image();
     create_image_view();
-    create_sampler();
-    update_descriptor();
 }
 
 void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
@@ -193,21 +177,18 @@ void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffe
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
     m_allocation = std::exchange(other.m_allocation, nullptr);
     m_allocation_info = other.m_allocation_info;
-    m_image = std::exchange(other.m_image, nullptr);
-    m_image_view = std::exchange(other.m_image_view, nullptr);
-    m_sampler = std::exchange(other.m_sampler, nullptr);
+    m_image = std::exchange(other.m_image, VK_NULL_HANDLE);
+    m_image_view = std::exchange(other.m_image_view, VK_NULL_HANDLE);
     m_image_layout = other.m_image_layout;
-    m_image_ci = std::move(other.m_image_ci);
-    m_image_view_ci = std::move(other.m_image_view_ci);
-    m_sampler_ci = std::move(other.m_sampler_ci);
-    m_descriptor = std::move(other.m_descriptor);
+    m_image_ci = other.m_image_ci;
+    m_image_view_ci = other.m_image_view_ci;
+    m_descriptor = other.m_descriptor;
     m_name = std::move(other.m_name);
 }
 
 Image::~Image() {
     vkDestroyImageView(m_device.device(), m_image_view, nullptr);
     vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
-    vkDestroySampler(m_device.device(), m_sampler, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

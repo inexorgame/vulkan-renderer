@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Framebuffer::Framebuffer(const wrapper::Device &device, VkRenderPass render_pass,
+Framebuffer::Framebuffer(const wrapper::Device &device, const VkRenderPass render_pass,
                          const std::vector<VkImageView> &attachments, const std::uint32_t width,
                          const std::uint32_t height, const std::string name)
     : m_device(device), m_name(name) {
@@ -21,6 +21,7 @@ Framebuffer::Framebuffer(const wrapper::Device &device, VkRenderPass render_pass
     assert(height > 0);
 
     auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
+
     framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
     framebuffer_ci.pAttachments = attachments.data();
     framebuffer_ci.width = width;
@@ -33,7 +34,6 @@ Framebuffer::Framebuffer(const wrapper::Device &device, VkRenderPass render_pass
         throw VulkanException("Failed to create framebuffer " + m_name + "!", result);
     }
 
-    // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
 }
 

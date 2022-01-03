@@ -18,70 +18,20 @@ private:
 
     VkImage m_image{VK_NULL_HANDLE};
     VkImageView m_image_view{VK_NULL_HANDLE};
-    VkSampler m_sampler{VK_NULL_HANDLE};
 
     VkImageLayout m_image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
 
     VkImageCreateInfo m_image_ci;
     VkImageViewCreateInfo m_image_view_ci;
-    VkSamplerCreateInfo m_sampler_ci;
     VkDescriptorImageInfo m_descriptor;
 
     std::string m_name;
 
     void create_image();
     void create_image_view();
-    void create_sampler();
-    void update_descriptor();
-
-    /*
-    VkSamplerCreateInfo default_texture_sampler(const wrapper::Device &device) {
-    auto sampler_ci = wrapper::make_info<VkSamplerCreateInfo>();
-
-    sampler_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_ci.magFilter = VK_FILTER_LINEAR;
-    sampler_ci.minFilter = VK_FILTER_LINEAR;
-    sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_ci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_ci.unnormalizedCoordinates = VK_FALSE;
-    sampler_ci.compareEnable = VK_FALSE;
-    sampler_ci.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_ci.mipLodBias = 0.0f;
-    sampler_ci.minLod = 0.0f;
-    sampler_ci.maxLod = 0.0f;
-
-    // Check if anisotropic filtering is available before we enable its use
-
-    VkPhysicalDeviceFeatures device_features;
-    vkGetPhysicalDeviceFeatures(device.physical_device(), &device_features);
-
-    VkPhysicalDeviceProperties graphics_card_properties;
-    vkGetPhysicalDeviceProperties(device.physical_device(), &graphics_card_properties);
-
-    if (device_features.samplerAnisotropy) {
-        sampler_ci.maxAnisotropy = graphics_card_properties.limits.maxSamplerAnisotropy;
-        sampler_ci.anisotropyEnable = VK_TRUE;
-    } else {
-        sampler_ci.maxAnisotropy = 1.0;
-        sampler_ci.anisotropyEnable = VK_FALSE;
-    }
-
-    return sampler_ci;
-}
-    */
 
 public:
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci,
-          VkSamplerCreateInfo sampler_ci, std::string name);
+    Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, std::string name);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
@@ -112,10 +62,6 @@ public:
 
     [[nodiscard]] VkFormat format() const {
         return m_image_ci.format;
-    }
-
-    [[nodiscard]] VkSampler sampler() const {
-        return m_sampler;
     }
 
     // TODO: Add get methods for all members of m_image_ci.

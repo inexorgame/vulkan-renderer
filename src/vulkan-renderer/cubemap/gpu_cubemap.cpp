@@ -14,13 +14,61 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
-GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci, std::string name) : m_device(device) {
-    // TODO: Implement
+VkImageCreateInfo GpuCubemap::make_image_ci(const VkFormat format, const std::uint32_t width,
+                                            const std::uint32_t height, const std::uint32_t miplevel_count) {
+    assert(width > 0);
+    assert(height > 0);
+    assert(miplevel_count > 0);
+
+    auto image_ci = wrapper::make_info<VkImageCreateInfo>();
+    image_ci.imageType = VK_IMAGE_TYPE_2D;
+    image_ci.format = format;
+    image_ci.extent.width = width;
+    image_ci.extent.height = height;
+    image_ci.extent.depth = 1;
+    image_ci.mipLevels = miplevel_count;
+    image_ci.arrayLayers = FACE_COUNT;
+    image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    image_ci.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+    return image_ci;
 }
 
-GpuCubemap::GpuCubemap(const wrapper::Device &device, const texture::CpuTexture &cpu_cubemap,
-                       const VkImageCreateInfo image_ci)
+VkImageViewCreateInfo GpuCubemap::make_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
+    assert(miplevel_count > 0);
 
+    auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
+    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    image_view_ci.format = format;
+    image_view_ci.subresourceRange = {};
+    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_ci.subresourceRange.levelCount = miplevel_count;
+    image_view_ci.subresourceRange.layerCount = FACE_COUNT;
+    // Note hat the image will be filled out later
+    return image_view_ci;
+}
+
+VkSamplerCreateInfo GpuCubemap::make_sampler_ci(const std::uint32_t miplevel_count) {
+    assert(miplevel_count > 0);
+
+    auto sampler_ci = wrapper::make_info<VkSamplerCreateInfo>();
+    sampler_ci.magFilter = VK_FILTER_LINEAR;
+    sampler_ci.minFilter = VK_FILTER_LINEAR;
+    sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_ci.minLod = 0.0f;
+    sampler_ci.maxLod = static_cast<float>(miplevel_count);
+    sampler_ci.maxAnisotropy = 1.0f;
+    sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    return sampler_ci;
+}
+
+#if 0
+GpuCubemap::GpuCubemap(const wrapper::Device &device, const texture::CpuTexture &cpu_cubemap)
     : m_device(device), m_name(cpu_cubemap.name()) {
 
     assert(cpu_cubemap.ktx_wrapper() != nullptr);
@@ -56,8 +104,26 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const texture::CpuTexture 
         }
     }
 
-    // TODO: go on...
+    // TODO: Continue...
 }
+#endif
+
+GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci,
+                       VkSamplerCreateInfo sampler_ci, std::string name)
+    : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_sampler_ci(sampler_ci),
+      m_name(name), wrapper::Image(device, image_ci, image_view_ci, name) {
+
+    m_sampler = std::make_unique<texture::Sampler>(device, m_sampler_ci, m_name);
+}
+
+GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, const std::uint32_t width,
+                       const std::uint32_t height, const std::uint32_t miplevel_count, const std::string name)
+    : GpuCubemap(device, make_image_ci(format, width, height, miplevel_count),
+                 make_image_view_ci(format, miplevel_count), make_sampler_ci(miplevel_count), name) {}
+
+GpuCubemap::GpuCubemap(const wrapper::Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
+                       std::string name)
+    : GpuCubemap(device, format, width, height, 1, name) {}
 
 void GpuCubemap::copy_from_image(const VkCommandBuffer cmd_buf, const VkImage source_image, const std::uint32_t face,
                                  const std::uint32_t mip_level, const std::uint32_t width, const std::uint32_t height) {
@@ -79,7 +145,7 @@ void GpuCubemap::copy_from_image(const VkCommandBuffer cmd_buf, const VkImage so
     region.extent.height = height;
     region.extent.depth = 1;
 
-    vkCmdCopyImage(cmd_buf, source_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image->image(),
+    vkCmdCopyImage(cmd_buf, source_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image(),
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
 

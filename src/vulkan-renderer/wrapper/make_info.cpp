@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+
 namespace inexor::vulkan_renderer::wrapper {
 
 template <>
@@ -273,6 +275,15 @@ template <>
 VkPipelineShaderStageCreateInfo make_info() {
     VkPipelineShaderStageCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    return ret;
+}
+
+VkPipelineShaderStageCreateInfo make_info(const wrapper::Shader &shader) {
+    VkPipelineShaderStageCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    ret.module = shader.module();
+    ret.stage = shader.type();
+    ret.pName = shader.entry_point().c_str();
     return ret;
 }
 

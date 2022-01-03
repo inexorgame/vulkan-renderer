@@ -22,12 +22,11 @@ private:
     void setup_pipeline();
     void render_cubemap();
 
+    // Each cube has 6 faces
+    static constexpr std::uint32_t CUBE_FACE_COUNT{6};
+
 public:
     CubemapGenerator(const wrapper::Device &device);
-
-    [[nodiscard]] const auto &image_wrapper() const {
-        return m_cubemap_texture->image_wrapper();
-    }
 
     [[nodiscard]] VkDescriptorImageInfo descriptor() const {
         return m_cubemap_texture->descriptor();

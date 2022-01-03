@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <spdlog/spdlog.h>

@@ -7,6 +7,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
+class Shader;
+
 /// @brief A small helper function that return vulkan create infos with sType already set
 /// @code{.cpp}
 /// auto render_pass_ci = make_info<VkRenderPassCreateInfo>();
@@ -55,6 +58,15 @@ make_info(const std::vector<VkVertexInputBindingDescription> &vertex_input_bindi
 ///
 [[nodiscard]] VkPipelineLayoutCreateInfo make_info(const std::vector<VkDescriptorSetLayout> &set_layouts,
                                                    const std::vector<VkPushConstantRange> &push_constant_ranges = {});
+
+///
+///
+///
+[[nodiscard]] VkPipelineShaderStageCreateInfo make_info(const wrapper::Shader &shader);
+
+///
+///
+[[nodiscard]] VkImageCreateInfo make_info(VkFormat format);
 
 ///
 ///

@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
+#include "inexor/vulkan-renderer/vk_tools/fill_vk_struct.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
@@ -29,7 +30,6 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
         {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::pos), offsetof(ImDrawVert, pos)},
         {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::uv), offsetof(ImDrawVert, uv)},
         {VK_FORMAT_R8G8B8A8_UNORM, sizeof(ImDrawVert::col), offsetof(ImDrawVert, col)},
-
     };
 
     m_vertex_buffer->set_vertex_attribute_layout<ImDrawVert>(vertex_attribute_layout);
@@ -100,13 +100,21 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     unsigned char *font_texture_data{};
     int font_texture_width{0};
     int font_texture_height{0};
+    const VkFormat font_texture_format = VK_FORMAT_R8G8B8A8_UNORM;
+
     io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
+
+    const auto image_ci = vk_tools::fill_image_ci(font_texture_format, font_texture_width, font_texture_height, 1,
+                                                  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    const auto image_view_ci = vk_tools::fill_image_view_ci(font_texture_format);
+    const auto sampler_ci = vk_tools::fill_sampler_ci();
 
     if (font == nullptr || font_texture_data == nullptr) {
         spdlog::error("Unable to load font {}. Using error texture as fallback.", FONT_FILE_PATH);
-        m_imgui_texture = std::make_unique<texture::GpuTexture>(
-            m_device, texture::CpuTexture(), wrapper::make_info<VkImageCreateInfo>(),
-            wrapper::make_info<VkImageViewCreateInfo>(), wrapper::make_info<VkSamplerCreateInfo>());
+
+        m_imgui_texture =
+            std::make_unique<texture::GpuTexture>(m_device, texture::CpuTexture(), image_ci, image_view_ci, sampler_ci);
     } else {
         spdlog::debug("Creating ImGUI font texture");
 
@@ -118,10 +126,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                                    static_cast<VkDeviceSize>(font_texture_height) *
                                    static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
 
-        m_imgui_texture = std::make_unique<texture::GpuTexture>(
-            m_device, font_texture_data, upload_size, wrapper::make_info<VkImageCreateInfo>(),
-            wrapper::make_info<VkImageViewCreateInfo>(), wrapper::make_info<VkSamplerCreateInfo>(),
-            "ImGUI font texture");
+        m_imgui_texture = std::make_unique<texture::GpuTexture>(m_device, font_texture_data, upload_size, image_ci,
+                                                                image_view_ci, sampler_ci, "ImGUI font texture");
     }
 
     setup_rendering_resources(render_graph, back_buffer);

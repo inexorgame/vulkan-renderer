@@ -29,7 +29,6 @@ namespace inexor::vulkan_renderer::cubemap {
 // TODO: Separate into class methods!
 CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
-    // TODO: Can we make this a scoped enum?
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
@@ -37,7 +36,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         VkFormat format;
         std::uint32_t dim;
 
-        // TODO: Check if these formats are even supported by the current gpu!
         switch (target) {
         case IRRADIANCE:
             format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -53,12 +51,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         const std::uint32_t miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
 
-        constexpr std::uint32_t array_layer_count = 6;
-
-        constexpr std::uint32_t cube_face_count = 6;
-
-        m_cubemap_texture =
-            std::make_unique<cubemap::GpuCubemap>(device, wrapper::make_info<VkImageCreateInfo>(), "cubemap");
+        m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, dim, miplevel_count, "cubemap");
 
         std::vector<VkAttachmentDescription> att_desc(1);
         att_desc[0].format = format;
@@ -96,7 +89,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
         deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-        VkRenderPassCreateInfo renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
+        const VkRenderPassCreateInfo renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
         VkRenderPass renderpass;
 
@@ -114,9 +107,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
 
-        // In case of doubt, check this code again!
         m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("cubemap generator");
 
+        // TODO: Move this code block to ...?
         struct PushBlockIrradiance {
             glm::mat4 mvp;
             // TODO: Use static_cast here!
@@ -124,13 +117,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
             float deltaTheta = (0.5f * float(M_PI)) / 64.0f;
         } pushBlockIrradiance;
 
+        // TODO: Move this code block to ...?
         struct PushBlockPrefilterEnv {
             glm::mat4 mvp;
             float roughness;
             uint32_t numSamples = 32u;
         } pushBlockPrefilterEnv;
-
-        VkPipelineLayout pipeline_layout;
 
         std::vector<VkPushConstantRange> push_constant_range(1);
         push_constant_range[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -148,14 +140,16 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         const VkPipelineLayoutCreateInfo pipeline_layout_ci = wrapper::make_info(desc_set_layouts, push_constant_range);
 
+        VkPipelineLayout pipeline_layout;
+
         if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipeline_layout);
             result != VK_SUCCESS) {
             throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
         }
 
-        auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
+        const auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
 
-        auto rast_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
+        const auto rast_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
 
         VkPipelineColorBlendAttachmentState blend_att_state{};
         blend_att_state.colorWriteMask =
@@ -184,9 +178,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
         const std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-        auto dynamic_state_ci = wrapper::make_info(dynamic_states);
+        const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
 
-        // TODO: Use vertex structure from other code part!
+        // TODO: Move this code block to ...?
         struct CubemapVertex {
             glm::vec3 pos;
             glm::vec3 normal;
@@ -217,24 +211,14 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         wrapper::Shader prefilterenvmap(device, VK_SHADER_STAGE_FRAGMENT_BIT,
                                         "shaders/cubemap/prefilterenvmap.frag.spv", "prefilterenvmap");
 
-        shader_stages[0] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
-        shader_stages[0].module = filtercube.module();
-        shader_stages[0].stage = filtercube.type();
-        shader_stages[0].pName = filtercube.entry_point().c_str();
-
-        shader_stages[1] = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
-
-        // Both irradiancecube and prefilterenvmap are fragment shaders!
-        shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        shader_stages[0] = wrapper::make_info(filtercube);
 
         switch (target) {
         case IRRADIANCE:
-            shader_stages[1].module = irradiancecube.module();
-            shader_stages[1].pName = irradiancecube.entry_point().c_str();
+            shader_stages[1] = wrapper::make_info(irradiancecube);
             break;
         case PREFILTEREDENV:
-            shader_stages[1].module = prefilterenvmap.module();
-            shader_stages[1].pName = prefilterenvmap.entry_point().c_str();
+            shader_stages[1] = wrapper::make_info(prefilterenvmap);
             break;
         };
 
@@ -242,7 +226,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                                                     &input_assembly_sci, &viewport_sci, &rast_sci, &multisample_sci,
                                                     &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
-        // TODO: Create builder patter? no?
         VkPipeline pipeline;
         if (const auto result =
                 vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &pipeline);
@@ -253,7 +236,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         VkClearValue clearValues[1];
         clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
 
-        // builder pattern?
         auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
         renderpass_bi.renderPass = renderpass;
         renderpass_bi.framebuffer = m_offscreen_framebuffer->framebuffer();
@@ -283,10 +265,21 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         scissor.extent.width = dim;
         scissor.extent.height = dim;
 
+        {
+            wrapper::OnceCommandBuffer single_command(device);
+            single_command.create_command_buffer();
+            single_command.start_recording();
+
+            m_cubemap_texture->transition_image_layout(
+                single_command.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count, CUBE_FACE_COUNT);
+
+            single_command.end_recording_and_submit_command();
+        }
+
         // TODO: Implement graphics pipeline builder
         // TODO: Split up in setup of pipeline and rendering of cubemaps
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
-            for (std::uint32_t face = 0; face < cube_face_count; face++) {
+            for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
                 wrapper::OnceCommandBuffer cmd_buf(device);
 
@@ -299,6 +292,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                 vkCmdSetViewport(cmd_buf.command_buffer(), 0, 1, &viewport);
                 vkCmdSetScissor(cmd_buf.command_buffer(), 0, 1, &scissor);
 
+                // Render scene from cube face's point of view
                 vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
                 switch (target) {
@@ -354,9 +348,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
             single_command.create_command_buffer();
             single_command.start_recording();
 
-            m_cubemap_texture->image_wrapper()->transition_image_layout(single_command.command_buffer(),
-                                                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                                                        miplevel_count, cube_face_count);
+            m_cubemap_texture->transition_image_layout(single_command.command_buffer(),
+                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
+                                                       CUBE_FACE_COUNT);
 
             single_command.end_recording_and_submit_command();
         }
@@ -365,8 +359,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         vkDestroyRenderPass(device.device(), renderpass, nullptr);
         vkDestroyPipeline(device.device(), pipeline, nullptr);
         vkDestroyPipelineLayout(device.device(), pipeline_layout, nullptr);
-
-        spdlog::trace("Cubemap generation finished");
     }
 }
 

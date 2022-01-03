@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/texture/cpu_texture.hpp"
+#include "inexor/vulkan-renderer/texture/sampler.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -18,6 +19,7 @@ private:
     const wrapper::Device &m_device;
 
     std::unique_ptr<wrapper::Image> m_image;
+    std::unique_ptr<Sampler> m_sampler;
 
     VkImageCreateInfo m_image_ci;
     VkImageViewCreateInfo m_image_view_ci;
@@ -25,13 +27,23 @@ private:
 
     std::string m_name;
 
+    static constexpr VkFormat DEFAULT_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
+
+    ///
+    ///
+    ///
+    ///
+    [[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height);
+
+    [[nodiscard]] VkImageViewCreateInfo make_image_view_ci(VkFormat format);
+
+    [[nodiscard]] VkSamplerCreateInfo make_sampler_ci(const wrapper::Device &device);
+
     void upload_texture_data(const void *texture_data, std::size_t texture_size);
 
     // TODO: Check if a given format is supported!!!
 
 public:
-    // TODO: Apply default arguments as needed
-
     GpuTexture(const wrapper::Device &device, const void *texture_data, std::size_t texture_size,
                VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, VkSamplerCreateInfo sampler_ci,
                std::string name);
@@ -42,6 +54,10 @@ public:
     GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture, VkImageCreateInfo image_ci,
                VkImageViewCreateInfo image_view_ci, VkSamplerCreateInfo sampler_ci);
 
+    GpuTexture(const wrapper::Device &device, VkFormat format, const CpuTexture &cpu_texture);
+
+    GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
+
     GpuTexture(const GpuTexture &) = delete;
     GpuTexture(GpuTexture &&other) noexcept;
 
@@ -49,7 +65,7 @@ public:
     GpuTexture &operator=(GpuTexture &&) noexcept = default;
 
     [[nodiscard]] VkSampler sampler() const {
-        return m_image->sampler();
+        return m_sampler->sampler();
     }
 
     [[nodiscard]] VkDescriptorImageInfo descriptor() const {

@@ -58,13 +58,13 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_gpu_data.clear();
     m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 
+#if 0
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
         m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, m_pbr_brdf_lut->descriptor(),
                                      m_env_cube_texture->descriptor(), m_cubemap->descriptor(), m_cubemap->descriptor(),
                                      view, proj);
     }
 
-#if 0
     for (const auto &model : m_gltf_gpu_data) {
         m_gltf_model_renderer->setup_stage(m_render_graph.get(), scene, m_back_buffer, m_depth_buffer, model);
     }

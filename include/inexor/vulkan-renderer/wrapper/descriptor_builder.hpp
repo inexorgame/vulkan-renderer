@@ -65,7 +65,7 @@ public:
     /// @return A const reference to this DescriptorBuilder instance
     [[nodiscard]] DescriptorBuilder &add_combined_image_sampler(const texture::GpuTexture &texture);
 
-    DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const cubemap::GpuCubemap &cubemap);
+    DescriptorBuilder &add_combined_image_sampler(const cubemap::GpuCubemap &cubemap);
 
     /// @brief Add combined image samplers for every given texture
     /// @param textures The textures

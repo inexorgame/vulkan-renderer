@@ -126,9 +126,7 @@ void Application::load_textures() {
     for (const auto &texture_file : m_texture_files) {
         try {
             texture::CpuTexture cpu_texture(texture_file, "unnamed texture");
-            m_textures.emplace_back(*m_device, cpu_texture, wrapper::make_info<VkImageCreateInfo>(),
-                                    wrapper::make_info<VkImageViewCreateInfo>(),
-                                    wrapper::make_info<VkSamplerCreateInfo>());
+            m_textures.emplace_back(*m_device, cpu_texture);
         } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
         // Loading continues if one texture could not be loaded.
     }
@@ -467,10 +465,7 @@ Application::Application(int argc, char **argv) {
 
     m_env_cube = std::make_unique<texture::CpuTexture>("assets/environments/papermill.ktx", "env-cube");
 
-    // TODO: Create with VK_FORMAT_R16G16B16A16_SFLOAT
-    m_env_cube_texture = std::make_unique<texture::GpuTexture>(
-        *m_device, *m_env_cube, wrapper::make_info<VkImageCreateInfo>(), wrapper::make_info<VkImageViewCreateInfo>(),
-        wrapper::make_info<VkSamplerCreateInfo>());
+    m_env_cube_texture = std::make_unique<texture::GpuTexture>(*m_device, VK_FORMAT_R16G16B16A16_SFLOAT, *m_env_cube);
 
     m_window->show();
     recreate_swapchain();
