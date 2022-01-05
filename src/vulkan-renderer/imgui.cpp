@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/vk_tools/fill_vk_struct.hpp"
+#include "inexor/vulkan-renderer/vk_tools/vert_attr_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
@@ -24,15 +25,14 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
 
-    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER);
-
-    const std::vector<VertexAttributeLayout> vertex_attribute_layout{
+    const std::vector<vk_tools::VertexAttributeLayout> vertex_attribute_layout{
         {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::pos), offsetof(ImDrawVert, pos)},
         {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::uv), offsetof(ImDrawVert, uv)},
         {VK_FORMAT_R8G8B8A8_UNORM, sizeof(ImDrawVert::col), offsetof(ImDrawVert, col)},
     };
 
-    m_vertex_buffer->set_vertex_attribute_layout<ImDrawVert>(vertex_attribute_layout);
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER)
+                          ->set_vertex_attribute_layout<ImDrawVert>(vertex_attribute_layout);
 
     m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
 

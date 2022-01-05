@@ -8,11 +8,11 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-ModelRenderer::ModelRenderer(const wrapper::Device &device) : m_shader_loader(device, m_shader_files) {}
+ModelPbrRenderer::ModelPbrRenderer(const wrapper::Device &device) : m_shader_loader(device, m_shader_files) {}
 
-void render_node(const ModelNode &node, const VkDescriptorSet scene_descriptor_set,
-                 const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout &pipeline_layout,
-                 const AlphaMode &alpha_mode) {
+void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet scene_descriptor_set,
+                                   const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout pipeline_layout,
+                                   const AlphaMode &alpha_mode) {
     if (node.mesh) {
         for (const auto &primitive : node.mesh->primitives) {
 
@@ -39,8 +39,8 @@ void render_node(const ModelNode &node, const VkDescriptorSet scene_descriptor_s
     }
 }
 
-void render_model(const std::vector<ModelNode> &nodes, const VkDescriptorSet scene_descriptor_set,
-                  const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout &pipeline_layout) {
+void ModelPbrRenderer::render_model(const std::vector<ModelNode> &nodes, const VkDescriptorSet scene_descriptor_set,
+                                    const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout pipeline_layout) {
 
     for (const auto &node : nodes) {
         render_node(node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_OPAQUE);
@@ -53,9 +53,9 @@ void render_model(const std::vector<ModelNode> &nodes, const VkDescriptorSet sce
     // TODO: Render transparent primitives using AlphaMode::ALPHAMODE_BLEND!
 }
 
-void ModelRenderer::setup_stage(RenderGraph *render_graph, const VkDescriptorSet scene,
-                                const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                                const ModelGpuData &model) {
+void ModelPbrRenderer::setup_stage(RenderGraph *render_graph, const VkDescriptorSet scene,
+                                   const TextureResource *back_buffer, const TextureResource *depth_buffer,
+                                   const ModelGpuPbrData &model) {
     assert(render_graph);
     assert(back_buffer);
     assert(depth_buffer);
@@ -79,7 +79,7 @@ void ModelRenderer::setup_stage(RenderGraph *render_graph, const VkDescriptorSet
         ->add_descriptor_layout(model.descriptor_set_layout())
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
             cmd_buf.bind_descriptor(model.descriptor_set(), physical.pipeline_layout());
-            render_model(model.nodes(), model.scene_descriptor_set, cmd_buf, physical.pipeline_layout());
+            render_model(model.nodes(), model.descriptor_set(), cmd_buf, physical.pipeline_layout());
         });
 }
 

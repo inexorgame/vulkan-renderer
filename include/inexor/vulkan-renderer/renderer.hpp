@@ -12,7 +12,6 @@
 #include "inexor/vulkan-renderer/pbr/brdf_lut.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
-#include "inexor/vulkan-renderer/skybox/skybox_cpu_data.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
@@ -83,8 +82,8 @@ protected:
 
     std::vector<std::string> m_gltf_model_file_names;
     std::vector<gltf::ModelCpuData> m_gltf_cpu_data;
-    std::vector<gltf::ModelGpuData> m_gltf_gpu_data;
-    std::unique_ptr<gltf::ModelRenderer> m_gltf_model_renderer;
+    std::vector<gltf::ModelGpuPbrData> m_gltf_gpu_data;
+    std::unique_ptr<gltf::ModelPbrRenderer> m_gltf_model_renderer;
 
     std::unique_ptr<pbr::BRDFLUTGenerator> m_pbr_brdf_lut;
     std::unique_ptr<cubemap::CubemapGenerator> m_cubemap;
@@ -103,8 +102,10 @@ protected:
     std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex>> m_octree_renderer;
     std::vector<texture::GpuTexture> m_textures;
 
-    std::unique_ptr<skybox::SkyboxCpuData> m_skybox_cpu_data;
-    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data;
+    std::unique_ptr<gltf::ModelCpuData> m_skybox_cpu_data;
+    std::unique_ptr<gltf::ModelGpuPbrData> m_skybox_model;
+
+    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data2;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;
 
     TextureResource *m_back_buffer{nullptr};

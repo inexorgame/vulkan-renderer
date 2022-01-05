@@ -17,6 +17,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/gltf/gltf_bbox.cpp
     vulkan-renderer/gltf/gltf_cpu_data.cpp
     vulkan-renderer/gltf/gltf_gpu_data.cpp
+    vulkan-renderer/gltf/gltf_gpu_data_base.cpp
     vulkan-renderer/gltf/gltf_animation.cpp
     vulkan-renderer/gltf/gltf_material.cpp
     vulkan-renderer/gltf/gltf_mesh.cpp
@@ -37,7 +38,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/pbr/brdf_lut.cpp
 
-    vulkan-renderer/skybox/skybox_cpu_data.cpp
     vulkan-renderer/skybox/skybox_gpu_data.cpp
     vulkan-renderer/skybox/skybox_renderer.cpp
 
@@ -51,6 +51,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/vk_tools/fill_vk_struct.cpp
     vulkan-renderer/vk_tools/gpu_info.cpp
     vulkan-renderer/vk_tools/representation.cpp
+    vulkan-renderer/vk_tools/vert_attr_layout.cpp
 
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp

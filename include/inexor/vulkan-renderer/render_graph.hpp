@@ -1,6 +1,7 @@
 #pragma once
 
 // TODO: Forward declare.
+#include "inexor/vulkan-renderer/vk_tools/vert_attr_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -81,19 +82,6 @@ enum class BufferUsage {
     VERTEX_BUFFER,
 };
 
-// TODO: Where to put this? I don't want to include render_graph.hpp just for this struct!
-struct VertexAttributeLayout {
-    VkFormat format;
-    std::size_t size;
-    std::uint32_t offset;
-
-    VertexAttributeLayout(const VkFormat format, const std::size_t size, const std::uint32_t offset) {
-        this->format = format;
-        this->size = size;
-        this->offset = offset;
-    }
-};
-
 class BufferResource : public RenderResource {
     friend RenderGraph;
 
@@ -123,15 +111,13 @@ public:
     BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
 
     template <typename VertexType>
-    BufferResource *set_vertex_attribute_layout(const std::vector<VertexAttributeLayout> &attributes) {
+    BufferResource *set_vertex_attribute_layout(const std::vector<vk_tools::VertexAttributeLayout> &attributes) {
         std::size_t total_size = 0;
 
         for (const auto &attribute : attributes) {
             add_vertex_attribute(attribute.format, attribute.offset);
             total_size += attribute.size;
         }
-
-        // TODO: Compare the size of VertexType with the sum of the size of all members?
 
         set_element_size<VertexType>();
         return this;

@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
 
+#include "inexor/vulkan-renderer/gltf/gltf_vertex.hpp"
+
 #include <cassert>
 
 namespace inexor::vulkan_renderer::skybox {
@@ -24,7 +26,7 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
     assert(back_buffer);
     assert(depth_buffer);
 
-    auto *skybox_stage = render_graph->add<GraphicsStage>("skybox stage");
+    auto *skybox_stage = render_graph->add<GraphicsStage>("skybox");
 
     skybox_stage->set_depth_options(true, true)
         ->uses_shaders(m_shader_loader.shaders())
@@ -36,6 +38,8 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
         ->writes_to(back_buffer)
         ->writes_to(depth_buffer)
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+            cmd_buf.bind_descriptor(skybox.descriptor_set(), physical.pipeline_layout());
+
             // TODO: Implement!
         });
 }

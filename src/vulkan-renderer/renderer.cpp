@@ -1,5 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
+#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -22,17 +23,18 @@ void VulkanRenderer::setup_render_graph() {
     glm::mat4 view = m_camera->view_matrix();
     glm::mat4 proj = m_camera->perspective_matrix();
 
-    m_skybox_gpu_data.reset();
-    m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(*m_device, m_render_graph.get(), *m_skybox_cpu_data);
+#if 0
+    m_skybox_model.reset();
+    m_skybox_model = std::make_unique<gltf::ModelGpuPbrData>(*m_device, m_render_graph.get(), *m_skybox_cpu_data);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device, m_render_graph.get());
-    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_gpu_data);
+    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_model);
+#endif
 
     m_octree_renderer.reset();
     m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
 
-    // TODO: We don't have to do this!
     m_octree_gpu_data.clear();
     m_octree_cpu_data.clear();
 
@@ -47,14 +49,13 @@ void VulkanRenderer::setup_render_graph() {
         m_octree_gpu_data.emplace_back(m_render_graph.get(), octree);
     }
 
-    for (const auto &data : m_octree_gpu_data) {
-        m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, data);
+    for (const auto &octree_data : m_octree_gpu_data) {
+        m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, octree_data);
     }
 
     m_gltf_model_renderer.reset();
-    m_gltf_model_renderer = std::make_unique<gltf::ModelRenderer>(*m_device);
+    m_gltf_model_renderer = std::make_unique<gltf::ModelPbrRenderer>(*m_device);
 
-    // TODO: We don't have to do this!
     m_gltf_gpu_data.clear();
     m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 

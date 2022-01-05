@@ -6,54 +6,59 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-/// @brief A wrapper for texture samplers for rendering glTF2 models.
-class TextureSampler {
-private:
-    VkFilter m_min_filter;
-    VkFilter m_mag_filter;
-    VkSamplerAddressMode m_address_mode_u;
-    VkSamplerAddressMode m_address_mode_v;
-    VkSamplerAddressMode m_address_mode_w;
+const auto get_filter_mode = [](const std::uint32_t filter_mode) {
+    switch (filter_mode) {
+    case 9728:
+    case 9985:
+    case 9984:
+        return VK_FILTER_NEAREST;
+    case 9729:
+    case 9986:
+    case 9987:
+        return VK_FILTER_LINEAR;
+    }
+    return VK_FILTER_NEAREST;
+};
 
-public:
+const auto get_wrap_mode = [](const std::uint32_t wrap_mode) {
+    switch (wrap_mode) {
+    case 10497:
+        return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    case 33071:
+        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    case 33648:
+        return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    }
+    return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+};
+
+struct TextureSampler {
+
     TextureSampler() = default;
 
-    /// @brief
-    /// @param filter_mag
-    /// @param filter_min
-    /// @param mode_u
-    /// @param mode_v
-    /// @param mode_w
-    TextureSampler(VkFilter filter_mag, VkFilter filter_min, VkSamplerAddressMode mode_u, VkSamplerAddressMode mode_v,
-                   VkSamplerAddressMode mode_w);
-
-    /// @brief Overloaded constructor.
-    /// @param filter_min
-    /// @param filter_mag
-    /// @param mode_s
-    /// @param mode_t
-    /// @param mode_t
-    TextureSampler(std::uint32_t filter_min, std::uint32_t filter_mag, std::uint32_t mode_s, std::uint32_t mode_t);
-
-    [[nodiscard]] VkFilter min_filter() const {
-        return m_min_filter;
+    TextureSampler(const std::uint32_t filter_min, const std::uint32_t filter_mag, const std::uint32_t mode_s,
+                   const std::uint32_t mode_t) {
+        min_filter = get_filter_mode(filter_min);
+        mag_filter = get_filter_mode(filter_mag);
+        address_mode_u = get_wrap_mode(mode_s);
+        address_mode_v = get_wrap_mode(mode_t);
+        address_mode_w = address_mode_v;
     }
 
-    [[nodiscard]] VkFilter mag_filter() const {
-        return m_mag_filter;
-    }
-
-    [[nodiscard]] VkSamplerAddressMode address_mode_u() const {
-        return m_address_mode_u;
-    }
-
-    [[nodiscard]] VkSamplerAddressMode address_mode_v() const {
-        return m_address_mode_v;
-    }
-
-    [[nodiscard]] VkSamplerAddressMode address_mode_w() const {
-        return m_address_mode_w;
-    }
+    VkFilter mag_filter{VK_FILTER_LINEAR};
+    VkFilter min_filter{VK_FILTER_LINEAR};
+    VkSamplerAddressMode address_mode_u{VK_SAMPLER_ADDRESS_MODE_REPEAT};
+    VkSamplerAddressMode address_mode_v{VK_SAMPLER_ADDRESS_MODE_REPEAT};
+    VkSamplerAddressMode address_mode_w{VK_SAMPLER_ADDRESS_MODE_REPEAT};
 };
+
+[[nodiscard]] VkSamplerCreateInfo make_sampler_ci(VkFilter min_filter, VkFilter mag_filter,
+                                                  VkSamplerAddressMode address_mode_u,
+                                                  VkSamplerAddressMode address_mode_v,
+                                                  VkSamplerAddressMode address_mode_w, std::uint32_t miplevel_count);
+
+[[nodiscard]] VkSamplerCreateInfo make_sampler_ci(TextureSampler sampler);
+
+[[nodiscard]] VkSamplerCreateInfo make_sampler_ci(std::uint32_t miplevel_count);
 
 } // namespace inexor::vulkan_renderer::gltf

@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
 #include <glm/vec2.hpp>

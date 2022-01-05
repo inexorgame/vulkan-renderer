@@ -97,13 +97,15 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_text
     : GpuTexture(device, cpu_texture.data(), cpu_texture.data_size(), image_ci, image_view_ci, sampler_ci,
                  cpu_texture.name()) {}
 
+GpuTexture::GpuTexture(const wrapper::Device &device, const VkFormat format, const CpuTexture &cpu_texture)
+    : GpuTexture(device, cpu_texture, make_image_ci(format, cpu_texture.width(), cpu_texture.height()),
+                 make_image_view_ci(format), make_sampler_ci(device)) {}
+
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
     : GpuTexture(device, cpu_texture, make_image_ci(DEFAULT_FORMAT, cpu_texture.width(), cpu_texture.height()),
                  make_image_view_ci(DEFAULT_FORMAT), make_sampler_ci(device)) {}
 
-GpuTexture::GpuTexture(const wrapper::Device &device, const VkFormat format, const CpuTexture &cpu_texture)
-    : GpuTexture(device, cpu_texture, make_image_ci(format, cpu_texture.width(), cpu_texture.height()),
-                 make_image_view_ci(format), make_sampler_ci(device)) {}
+GpuTexture::GpuTexture(const wrapper::Device &device) : GpuTexture(device, CpuTexture()) {}
 
 void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t texture_size) {
     assert(texture_data);

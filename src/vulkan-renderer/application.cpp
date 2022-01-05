@@ -140,14 +140,13 @@ void Application::load_gltf_models() {
     for (const auto &file_name : m_gltf_model_file_names) {
         try {
             m_gltf_cpu_data.emplace_back(file_name, "example glTF model");
-
-        } catch (InexorException &exception) { spdlog::critical("{}", exception.what()); }
-        // Loading continues if one model could not be loaded.
+        } catch (InexorException &exception) {
+            // Loading continues if one model could not be loaded
+            spdlog::critical("{}", exception.what());
+        }
     }
 
-    // Load skybox gltf model
-    m_skybox_cpu_data =
-        std::make_unique<skybox::SkyboxCpuData>("assets/models/Box/glTF-Embedded/Box.gltf", "skybox model");
+    m_skybox_cpu_data = std::make_unique<gltf::ModelCpuData>("assets/models/Box/glTF-Embedded/Box.gltf", "skybox");
 }
 
 void Application::load_octree_geometry(bool initialize) {

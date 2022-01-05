@@ -1,0 +1,131 @@
+#pragma once
+
+#include "inexor/vulkan-renderer/gltf/gltf_animation.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_texture_sampler.hpp"
+#include "inexor/vulkan-renderer/gltf/gltf_vertex.hpp"
+#include "inexor/vulkan-renderer/gpu_data_base.hpp"
+#include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+
+#include <tiny_gltf.h>
+
+#include <unordered_map>
+#include <vector>
+
+namespace inexor::vulkan_renderer::gltf {
+
+[[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
+                                              std::uint32_t miplevel_count);
+
+[[nodiscard]] VkImageViewCreateInfo make_image_view_ci(VkImage image, VkFormat format, std::uint32_t miplevel_count);
+
+struct ModelMatrices {
+    glm::mat4 projection;
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::vec3 camera_pos;
+};
+
+class ModelGpuPbrDataBase : public GpuDataBase<gltf::ModelVertex, std::uint32_t> {
+private:
+    const wrapper::Device &m_device;
+    const tinygltf::Model &m_model;
+
+    // A glTF2 model file can contain arbitrary node types such as cameras and lights
+    // We do not support all possible node types (yet)
+    std::unordered_map<std::string, bool> m_unsupported_node_types{};
+
+    std::vector<std::uint32_t> m_texture_indices;
+    std::vector<ModelMaterial> m_materials;
+    std::vector<ModelNode> m_nodes;
+    std::vector<ModelNode> m_linear_nodes;
+    std::vector<ModelAnimation> animations;
+    std::vector<ModelSkin> m_skins;
+
+    // The glTF2 file could contain embedded textures
+    std::vector<texture::GpuTexture> m_textures;
+    std::vector<TextureSampler> m_texture_samplers;
+
+    const TextureSampler m_default_texture_sampler{};
+
+    static constexpr VkFormat DEFAULT_TEXTURE_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
+
+    ModelMatrices m_scene;
+
+    std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_scene_matrices;
+
+protected:
+    std::unique_ptr<texture::GpuTexture> m_empty_texture;
+
+    ModelNode *find_node(ModelNode *parent, std::uint32_t index);
+
+    ModelNode *node_from_index(std::uint32_t index);
+
+    void load_node(ModelNode *parent, const tinygltf::Node &start_node, std::uint32_t scene_index,
+                   std::uint32_t node_index);
+
+    void load_materials();
+
+    void load_animations();
+
+    void load_textures();
+
+    void load_skins();
+
+    void load_nodes();
+
+    // Every class which inherits from ModelGpuPbrDataBase must implement this!
+    virtual void setup_node_descriptor_sets(const ModelNode &node) = 0;
+
+    /// Call ``setup_node_descriptor_sets`` for each node
+    void setup_node_descriptors();
+
+public:
+    /// Default constructor
+    /// @param device The Vulkan device
+    ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model);
+
+    virtual ~ModelGpuPbrDataBase();
+
+    ModelGpuPbrDataBase(const ModelGpuPbrDataBase &) = delete;
+    ModelGpuPbrDataBase(ModelGpuPbrDataBase &&) noexcept;
+
+    ModelGpuPbrDataBase &operator=(const ModelGpuPbrDataBase &) = delete;
+    ModelGpuPbrDataBase &operator=(ModelGpuPbrDataBase &&) noexcept = default;
+
+    void update_indices(const std::vector<std::uint32_t> &indices);
+
+    void update_vertices(const std::vector<ModelVertex> &vertices);
+
+    [[nodiscard]] const auto &materials() const {
+        return m_materials;
+    }
+
+    [[nodiscard]] const auto &nodes() const {
+        return m_nodes;
+    }
+
+    [[nodiscard]] const auto &linear_nodes() const {
+        return m_linear_nodes;
+    }
+
+    [[nodiscard]] VkDescriptorPool descriptor_pool() const {
+        return m_descriptor_pool->descriptor_pool();
+    }
+
+    [[nodiscard]] const VkDescriptorBufferInfo *scene_matrices_descriptor() const {
+        return &m_scene_matrices->descriptor;
+    }
+
+    [[nodiscard]] VkDescriptorSet descriptor_set() const {
+        return m_descriptor->descriptor_set();
+    }
+
+    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
+        return m_descriptor->descriptor_set_layout();
+    }
+};
+
+} // namespace inexor::vulkan_renderer::gltf

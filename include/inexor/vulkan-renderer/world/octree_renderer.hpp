@@ -43,7 +43,7 @@ public:
         assert(depth_buffer);
 
         // TODO: Render multiple octrees in ONE stage!
-        auto *octree_stage = render_graph->add<GraphicsStage>("octree stage");
+        auto *octree_stage = render_graph->add<GraphicsStage>("octree");
 
         octree_stage->set_depth_options(true, true)
             ->bind_buffer(octree_data.vertex_buffer(), 0)

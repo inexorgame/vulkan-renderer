@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/tools/file.hpp"
 
 #define TINYGLTF_IMPLEMENTATION
-#include "tiny_gltf.h"
+#include <tiny_gltf.h>
 
 #include <spdlog/spdlog.h>
 

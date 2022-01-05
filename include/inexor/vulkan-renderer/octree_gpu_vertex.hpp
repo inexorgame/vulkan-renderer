@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/vk_tools/vert_attr_layout.hpp"
 
 #include <glm/gtx/hash.hpp>
 #include <glm/vec3.hpp>
@@ -11,10 +11,10 @@ struct OctreeGpuVertex {
     glm::vec3 position;
     glm::vec3 color;
 
-    static std::vector<VertexAttributeLayout> vertex_attribute_layout() {
-        return std::vector{
-            VertexAttributeLayout{VK_FORMAT_R32G32B32_SFLOAT, sizeof(position), offsetof(OctreeGpuVertex, position)},
-            VertexAttributeLayout{VK_FORMAT_R32G32B32_SFLOAT, sizeof(color), offsetof(OctreeGpuVertex, color)}};
+    static auto vertex_attribute_layout() {
+        return std::vector<vk_tools::VertexAttributeLayout>{
+            {VK_FORMAT_R32G32B32_SFLOAT, sizeof(position), offsetof(OctreeGpuVertex, position)},
+            {VK_FORMAT_R32G32B32_SFLOAT, sizeof(color), offsetof(OctreeGpuVertex, color)}};
     }
 
     OctreeGpuVertex(glm::vec3 position, glm::vec3 color) : position(position), color(color) {}

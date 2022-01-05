@@ -12,10 +12,14 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-class ModelRenderer {
+class ModelPbrRenderer {
 private:
-    void render_node(const ModelNode &node, const VkDescriptorSet scene, const wrapper::CommandBuffer &cmd_buf,
-                     const VkPipelineLayout &pipeline_layout, const AlphaMode &alpha_mode);
+    ///
+    ///
+    ///
+    ///
+    void render_node(const ModelNode &node, VkDescriptorSet scene_descriptor_set, const wrapper::CommandBuffer &cmd_buf,
+                     VkPipelineLayout pipeline_layout, const AlphaMode &alpha_mode);
 
     const std::vector<wrapper::ShaderLoaderJob> m_shader_files{
         {"shaders/gltf/pbr.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "gltf vertex shader"},
@@ -24,10 +28,22 @@ private:
     wrapper::ShaderLoader m_shader_loader;
 
 public:
-    ModelRenderer(const wrapper::Device &device);
+    ///
+    ///
+    ModelPbrRenderer(const wrapper::Device &device);
 
-    void setup_stage(RenderGraph *render_graph, const VkDescriptorSet scene, const TextureResource *back_buffer,
-                     const TextureResource *depth_buffer, const ModelGpuData &model);
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    void setup_stage(RenderGraph *render_graph, VkDescriptorSet scene, const TextureResource *back_buffer,
+                     const TextureResource *depth_buffer, const ModelGpuPbrData &model);
+
+    void render_model(const std::vector<ModelNode> &nodes, VkDescriptorSet scene_descriptor_set,
+                      const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout pipeline_layout);
 };
 
 } // namespace inexor::vulkan_renderer::gltf

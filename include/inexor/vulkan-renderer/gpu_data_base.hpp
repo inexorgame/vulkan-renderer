@@ -19,7 +19,6 @@ class GpuDataBase {
 protected:
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-    // TODO: Add more resources here?
 
     /// The rendergraph buffer resource of the vertices
     BufferResource *m_vertex_buffer{nullptr};
@@ -32,6 +31,9 @@ protected:
 
     /// The number of indices in the index buffer
     std::uint32_t m_index_count{0};
+
+    std::vector<VertexType> m_vertices;
+    std::vector<IndexType> m_indices;
 
     /// Default constructor
     ///
@@ -72,12 +74,20 @@ public:
         return m_index_buffer;
     }
 
-    [[nodiscard]] auto vertex_count() const {
+    [[nodiscard]] std::uint32_t vertex_count() const {
         return m_vertex_count;
     }
 
-    [[nodiscard]] auto index_count() const {
+    [[nodiscard]] std::uint32_t index_count() const {
         return m_index_count;
+    }
+
+    [[nodiscard]] const auto &vertices() const {
+        return m_vertices;
+    }
+
+    [[nodiscard]] const auto &indices() const {
+        return m_indices;
     }
 
     [[nodiscard]] const VkDescriptorSet descriptor_set() const {
