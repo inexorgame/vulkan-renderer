@@ -6,7 +6,7 @@ namespace inexor::vulkan_renderer {
 
 VulkanException::VulkanException(std::string message, const VkResult result)
     : InexorException(message.append(" (")
-                          .append(vk_tools::as_string<VkResult>(result))
+                          .append(vk_tools::as_string(result))
                           .append(": ")
                           .append(vk_tools::result_to_description(result))
                           .append(")")) {}

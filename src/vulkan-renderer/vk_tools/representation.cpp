@@ -2,55 +2,11 @@
 
 namespace inexor::vulkan_renderer::vk_tools {
 
-/// @brief Convert a VkPresentModeKHR value into a corresponding std::string_view.
-/// @param present_mode The present mode.
-/// @return A std::string_view which contains the presentation mode.
-template <>
-std::string_view as_string(const VkPresentModeKHR present_mode) {
-    switch (present_mode) {
-    case VK_PRESENT_MODE_IMMEDIATE_KHR:
-        return "VK_PRESENT_MODE_IMMEDIATE_KHR";
-    case VK_PRESENT_MODE_MAILBOX_KHR:
-        return "VK_PRESENT_MODE_MAILBOX_KHR";
-    case VK_PRESENT_MODE_FIFO_KHR:
-        return "VK_PRESENT_MODE_FIFO_KHR";
-    case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
-        return "VK_PRESENT_MODE_FIFO_RELAXED_KHR";
-    case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR:
-        return "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR";
-    case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
-        return "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR";
-    default:
-        break;
-    }
-    return "Unknown";
-}
+// Please keep the functions in here in alphabetical order (sort by function names, then by parameter types)
 
-/// @brief Convert a VkPhysicalDeviceType value into a corresponding std::string_view.
-/// @param gpu_type The type of the physical device.
-/// @return A std::string_view which contains the physical device type.
-template <>
-std::string_view as_string(const VkPhysicalDeviceType gpu_type) {
-    switch (gpu_type) {
-    case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-        return "VK_PHYSICAL_DEVICE_TYPE_OTHER";
-    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-        return "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
-    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-        return "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
-    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-        return "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
-    case VK_PHYSICAL_DEVICE_TYPE_CPU:
-        return "VK_PHYSICAL_DEVICE_TYPE_CPU";
-    default:
-        break;
-    }
-    return "Unknown";
-}
-
-/// @brief Convert a VkFormat value into the corresponding value as std::string_view.
-/// @param format The VkFormat to convert.
-/// @return A std::string_view which contains the VkFormat.
+/// @brief Convert a VkFormat value into the corresponding std::string_view
+/// @param format The VkFormat to convert
+/// @return A std::string_view which contains the format
 template <>
 std::string_view as_string(const VkFormat format) {
     switch (format) {
@@ -539,14 +495,134 @@ std::string_view as_string(const VkFormat format) {
     default:
         break;
     }
-    return "Unknown";
+    return "Unknown VkFormat";
 }
 
-/// @brief Convert a VkResult value into the corresponding value as std::string_view.
-/// @param format The VkResult to convert.
-/// @return A std::string_view which contains the VkResult.
+/// @brief Convert a VkMemoryPropertyFlagBits value into the corresponding std::string_view
+/// @param mem_prop_flag_bit The VkMemoryPropertyFlagBits to convert
+/// @return A std::string_view which contains the memory property flag bit
 template <>
-std::string_view as_string<VkResult>(const VkResult result) {
+std::string_view as_string(const VkMemoryPropertyFlagBits mem_prop_flag_bit) {
+    switch (mem_prop_flag_bit) {
+    case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT:
+        return "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
+    case VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT:
+        return "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT";
+    case VK_MEMORY_PROPERTY_HOST_COHERENT_BIT:
+        return "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT";
+    case VK_MEMORY_PROPERTY_HOST_CACHED_BIT:
+        return "VK_MEMORY_PROPERTY_HOST_CACHED_BIT";
+    case VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT:
+        return "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT";
+    case VK_MEMORY_PROPERTY_PROTECTED_BIT:
+        return "VK_MEMORY_PROPERTY_PROTECTED_BIT";
+    case VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD:
+        return "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD";
+    case VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD:
+        return "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD";
+    case VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM:
+        return "VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM";
+    default:
+        break;
+    }
+    return "Unknown VkMemoryPropertyFlagBits";
+}
+
+/// @brief Convert a VkMemoryHeapFlagBits value into the corresponding std::string_view
+/// @param mem_heap_flag_bit The VkMemoryHeapFlagBits to convert
+/// @return A std::string_view which contains the memory heap flag bit
+template <>
+std::string_view as_string(const VkMemoryHeapFlagBits mem_heap_flag_bit) {
+    switch (mem_heap_flag_bit) {
+    case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT:
+        return "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT";
+    case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT: // same as VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR
+        return "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT";
+    case VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM:
+        return "VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM";
+    default:
+        break;
+    }
+    return "Unknown VkMemoryHeapFlagBits";
+}
+
+/// @brief Convert a VkPhysicalDeviceType value into the corresponding std::string_view
+/// @param gpu_type The VkPhysicalDeviceType to convert
+/// @return A std::string_view which contains the physical device type
+template <>
+std::string_view as_string(const VkPhysicalDeviceType gpu_type) {
+    switch (gpu_type) {
+    case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+        return "VK_PHYSICAL_DEVICE_TYPE_OTHER";
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        return "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        return "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+        return "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
+    case VK_PHYSICAL_DEVICE_TYPE_CPU:
+        return "VK_PHYSICAL_DEVICE_TYPE_CPU";
+    default:
+        break;
+    }
+    return "Unknown VkPhysicalDeviceType";
+}
+
+/// @brief Convert a VkPresentModeKHR value into the corresponding std::string_view
+/// @param present_mode The VkPresentModeKHR to convert
+/// @return A std::string_view which contains the presentation mode
+template <>
+std::string_view as_string(const VkPresentModeKHR present_mode) {
+    switch (present_mode) {
+    case VK_PRESENT_MODE_IMMEDIATE_KHR:
+        return "VK_PRESENT_MODE_IMMEDIATE_KHR";
+    case VK_PRESENT_MODE_MAILBOX_KHR:
+        return "VK_PRESENT_MODE_MAILBOX_KHR";
+    case VK_PRESENT_MODE_FIFO_KHR:
+        return "VK_PRESENT_MODE_FIFO_KHR";
+    case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
+        return "VK_PRESENT_MODE_FIFO_RELAXED_KHR";
+    case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR:
+        return "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR";
+    case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
+        return "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR";
+    default:
+        break;
+    }
+    return "Unknown VkPresentModeKHR";
+}
+
+/// @brief Convert a VkQueueFlagBits value into the corresponding std::string_view
+/// @param queue_flag_bit The VkQueueFlagBits to convert
+/// @return A std::string_view which contains the queue flag bit
+template <>
+std::string_view as_string(const VkQueueFlagBits queue_flag_bit) {
+    switch (queue_flag_bit) {
+    case VK_QUEUE_GRAPHICS_BIT:
+        return "VK_QUEUE_GRAPHICS_BIT";
+    case VK_QUEUE_COMPUTE_BIT:
+        return "VK_QUEUE_COMPUTE_BIT";
+    case VK_QUEUE_TRANSFER_BIT:
+        return "VK_QUEUE_TRANSFER_BIT";
+    case VK_QUEUE_SPARSE_BINDING_BIT:
+        return "VK_QUEUE_SPARSE_BINDING_BIT";
+    case VK_QUEUE_PROTECTED_BIT:
+        return "VK_QUEUE_PROTECTED_BIT";
+    case VK_QUEUE_FLAG_BITS_MAX_ENUM:
+        return "VK_QUEUE_FLAG_BITS_MAX_ENUM";
+    default:
+        break;
+    }
+    return "Unknown VkQueueFlagBits";
+}
+
+/// @brief Convert a VkResult value into the corresponding std::string_view
+/// @param result The VkResult to convert
+/// @return A std::string_view which contains the result
+/// @note This function converts the VkResult into the corresponding std::string_view
+/// If you want to convert it into an error description text, see ```result_to_description```
+template <>
+std::string_view as_string(const VkResult result) {
     switch (result) {
     case VK_SUCCESS:
         return "VK_SUCCESS";
@@ -611,7 +687,7 @@ std::string_view as_string<VkResult>(const VkResult result) {
     default:
         break;
     }
-    return "Unknown";
+    return "Unknown VkResult";
 }
 
 std::string_view result_to_description(const VkResult result) {
@@ -694,82 +770,7 @@ std::string_view result_to_description(const VkResult result) {
     default:
         break;
     }
-    return "Unknown";
-}
-
-/// @brief Convert a VkQueueFlagBits value into the corresponding value as std::string_view.
-/// @param bit The queue flag bit.
-template <>
-std::string_view as_string(const VkQueueFlagBits queue_flag_bit) {
-    switch (queue_flag_bit) {
-    case VK_QUEUE_GRAPHICS_BIT:
-        return "VK_QUEUE_GRAPHICS_BIT";
-        break;
-    case VK_QUEUE_COMPUTE_BIT:
-        return "VK_QUEUE_COMPUTE_BIT";
-        break;
-    case VK_QUEUE_TRANSFER_BIT:
-        return "VK_QUEUE_TRANSFER_BIT";
-        break;
-    case VK_QUEUE_SPARSE_BINDING_BIT:
-        return "VK_QUEUE_SPARSE_BINDING_BIT";
-        break;
-    case VK_QUEUE_PROTECTED_BIT:
-        return "VK_QUEUE_PROTECTED_BIT";
-        break;
-    case VK_QUEUE_FLAG_BITS_MAX_ENUM:
-        return "VK_QUEUE_FLAG_BITS_MAX_ENUM";
-        break;
-    default:
-        break;
-    }
-    return "Unknown";
-}
-
-/// @brief Convert a VkMemoryPropertyFlags value into the corresponding value as std::string.
-/// @param bit The memory property flag bit.
-template <>
-std::string_view as_string(const VkMemoryPropertyFlags mem_prop_flag_bit) {
-    switch (mem_prop_flag_bit) {
-    case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT:
-        return "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
-    case VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT:
-        return "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT";
-    case VK_MEMORY_PROPERTY_HOST_COHERENT_BIT:
-        return "VK_MEMORY_PROPERTY_HOST_COHERENT_BIT";
-    case VK_MEMORY_PROPERTY_HOST_CACHED_BIT:
-        return "VK_MEMORY_PROPERTY_HOST_CACHED_BIT";
-    case VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT:
-        return "VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT";
-    case VK_MEMORY_PROPERTY_PROTECTED_BIT:
-        return "VK_MEMORY_PROPERTY_PROTECTED_BIT";
-    case VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD:
-        return "VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD";
-    case VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD:
-        return "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD";
-    case VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM:
-        return "VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM";
-    default:
-        break;
-    }
-    return "Unknown";
-}
-
-/// @brief Convert a VkMemoryHeapFlagBits value into the corresponding value as std::string.
-/// @param bit The memory heap flag bit.
-template <>
-std::string_view as_string(const VkMemoryHeapFlagBits heap_flag_bit) {
-    switch (heap_flag_bit) {
-    case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT:
-        return "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT";
-    case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT: // same as VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR
-        return "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT";
-    case VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM:
-        return "VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM";
-    default:
-        break;
-    }
-    return "Unknown";
+    return "Unknown VkResult";
 }
 
 } // namespace inexor::vulkan_renderer::vk_tools
