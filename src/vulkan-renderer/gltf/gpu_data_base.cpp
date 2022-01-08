@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data_base.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data_base.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <spdlog/spdlog.h>
@@ -12,6 +12,7 @@ VkImageCreateInfo make_image_ci(const VkFormat format, const std::uint32_t width
                                 const std::uint32_t miplevel_count) {
     assert(width > 0);
     assert(height > 0);
+    assert(miplevel_count > 0);
 
     VkImageCreateInfo image_ci{};
     image_ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -34,6 +35,7 @@ VkImageViewCreateInfo make_image_view_ci(const VkFormat format, const std::uint3
 
     VkImageViewCreateInfo image_view_ci{};
     image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    // This will be filled out later
     // image_view_ci.image = image;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = format;
@@ -511,7 +513,7 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
         const auto &buffers = m_model.buffers;
         const auto &buffer_views = m_model.bufferViews;
 
-        std::unique_ptr<ModelMesh> new_mesh = std::make_unique<ModelMesh>(m_device, new_node.matrix);
+        auto new_mesh = std::make_unique<ModelMesh>(m_device, new_node.matrix);
 
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
@@ -791,17 +793,6 @@ ModelNode *ModelGpuPbrDataBase::node_from_index(const std::uint32_t index) {
         }
     }
     return node_found;
-}
-
-void ModelGpuPbrDataBase::setup_node_descriptors() {
-    // TODO: Expose a parameter to specify the scene index or load all scenes into one ModelGpuData instance?
-    const std::uint32_t scene_index = 0;
-    const auto &scene = m_model.scenes[scene_index];
-
-    for (std::size_t node_index = 0; node_index < scene.nodes.size(); node_index++) {
-        const auto &node = m_nodes[scene.nodes[node_index]];
-        setup_node_descriptor_sets(node);
-    }
 }
 
 ModelGpuPbrDataBase::~ModelGpuPbrDataBase() {

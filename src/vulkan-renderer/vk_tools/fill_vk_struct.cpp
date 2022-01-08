@@ -50,4 +50,14 @@ VkSamplerCreateInfo fill_sampler_ci() {
     return ret;
 }
 
+VkPipelineShaderStageCreateInfo fill_pipeline_shader_stage_ci(const VkShaderModule shader_module,
+                                                              const VkShaderStageFlagBits stage, const char *name) {
+    VkPipelineShaderStageCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    ret.module = shader_module;
+    ret.pName = name;
+    ret.stage = stage;
+    return ret;
+}
+
 } // namespace inexor::vulkan_renderer::vk_tools

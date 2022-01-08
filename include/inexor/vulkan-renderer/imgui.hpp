@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
@@ -15,6 +16,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 class Swapchain;
 
@@ -22,23 +24,17 @@ class Swapchain;
 
 namespace inexor::vulkan_renderer {
 
-class ImGUIOverlay {
+class ImGUIOverlay : public GpuDataBase<ImDrawVert, std::uint32_t> {
 private:
     const wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
     float m_scale{1.0f};
 
-    BufferResource *m_index_buffer{nullptr};
-    BufferResource *m_vertex_buffer{nullptr};
     GraphicsStage *m_stage{nullptr};
 
     std::unique_ptr<texture::GpuTexture> m_imgui_texture;
     std::unique_ptr<wrapper::Shader> m_vertex_shader;
     std::unique_ptr<wrapper::Shader> m_fragment_shader;
-    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-    std::vector<std::uint32_t> m_index_data;
-    std::vector<ImDrawVert> m_vertex_data;
-    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
 
     struct PushConstBlock {
         glm::vec2 scale;

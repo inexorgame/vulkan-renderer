@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf/gltf_primitive.hpp"
+#include "inexor/vulkan-renderer/gltf/primitive.hpp"
 
 namespace inexor::vulkan_renderer::gltf {
 

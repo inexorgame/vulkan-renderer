@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf/gltf_cpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/cpu_data.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/tools/file.hpp"

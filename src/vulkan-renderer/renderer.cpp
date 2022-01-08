@@ -1,6 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -24,12 +24,12 @@ void VulkanRenderer::setup_render_graph() {
     glm::mat4 proj = m_camera->perspective_matrix();
 
 #if 0
-    m_skybox_model.reset();
-    m_skybox_model = std::make_unique<gltf::ModelGpuPbrData>(*m_device, m_render_graph.get(), *m_skybox_cpu_data);
+    m_skybox_gpu_data =
+        std::make_unique<skybox::SkyboxGpuData>(m_render_graph.get(), *m_skybox_cpu_data, *m_env_cube_texture);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device, m_render_graph.get());
-    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_model);
+    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_gpu_data);
 #endif
 
     m_octree_renderer.reset();

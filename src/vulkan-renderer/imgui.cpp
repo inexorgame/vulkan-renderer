@@ -10,17 +10,14 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <utility>
 
 namespace inexor::vulkan_renderer {
 
 void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureResource *back_buffer) {
-    const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
-
-    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(m_device, pool_sizes, "ImGui");
-
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(m_device, m_descriptor_pool->descriptor_pool());
+    wrapper::DescriptorBuilder descriptor_builder(m_device);
 
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = descriptor_builder.add_combined_image_sampler(*m_imgui_texture).build("ImGUI");
@@ -62,7 +59,7 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
                            RenderGraph *render_graph, TextureResource *back_buffer)
 
-    : m_device(device), m_swapchain(swapchain), m_shader_loader(m_device, m_shader_files) {
+    : m_device(device), m_swapchain(swapchain), m_shader_loader(m_device, m_shader_files, "imgui") {
 
     spdlog::debug("Creating ImGUI context");
     ImGui::CreateContext();
@@ -148,27 +145,27 @@ void ImGUIOverlay::update() {
     }
 
     bool should_update = false;
-    if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
-        m_index_data.clear();
+    if (m_indices.size() != imgui_draw_data->TotalIdxCount) {
+        m_indices.clear();
         for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
             const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
             for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
-                m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
+                m_indices.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
             }
         }
-        m_index_buffer->upload_data(m_index_data);
+        m_index_buffer->upload_data(m_indices);
         should_update = true;
     }
 
-    if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
-        m_vertex_data.clear();
+    if (m_vertices.size() != imgui_draw_data->TotalVtxCount) {
+        m_vertices.clear();
         for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
             const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
             for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
-                m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
+                m_vertices.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
             }
         }
-        m_vertex_buffer->upload_data(m_vertex_data);
+        m_vertex_buffer->upload_data(m_vertices);
         should_update = true;
     }
 

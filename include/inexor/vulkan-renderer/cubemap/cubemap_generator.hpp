@@ -15,7 +15,6 @@ class CubemapGenerator {
 private:
     std::unique_ptr<GpuCubemap> m_cubemap_texture;
     std::unique_ptr<wrapper::OffscreenFramebuffer> m_offscreen_framebuffer;
-    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
 
     // TODO: Implement!

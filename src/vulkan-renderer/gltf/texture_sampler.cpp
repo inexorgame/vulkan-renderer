@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf/gltf_texture_sampler.hpp"
+#include "inexor/vulkan-renderer/gltf/texture_sampler.hpp"
 
 #include <cassert>
 

@@ -17,9 +17,6 @@ namespace inexor::vulkan_renderer {
 template <typename VertexType, typename IndexType = std::uint32_t>
 class GpuDataBase {
 protected:
-    std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
-    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-
     /// The rendergraph buffer resource of the vertices
     BufferResource *m_vertex_buffer{nullptr};
 
@@ -35,6 +32,8 @@ protected:
     std::vector<VertexType> m_vertices;
     std::vector<IndexType> m_indices;
 
+    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
+
     /// Default constructor
     ///
     ///
@@ -48,8 +47,7 @@ protected:
 
 public:
     GpuDataBase(GpuDataBase &&other) noexcept {
-        m_descriptor_pool = std::exchange(other.m_descriptor_pool, nullptr);
-        m_descriptor = std::exchange(other.m_descriptor, nullptr);
+        m_descriptor = std::move(other.m_descriptor);
         m_index_buffer = std::exchange(other.m_index_buffer, nullptr);
         m_vertex_buffer = std::exchange(other.m_vertex_buffer, nullptr);
         m_vertex_count = other.m_vertex_count;
@@ -90,11 +88,11 @@ public:
         return m_indices;
     }
 
-    [[nodiscard]] const VkDescriptorSet descriptor_set() const {
+    [[nodiscard]] const auto descriptor_set() const {
         return m_descriptor->descriptor_set();
     }
 
-    [[nodiscard]] const VkDescriptorSetLayout descriptor_set_layout() const {
+    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
         return m_descriptor->descriptor_set_layout();
     }
 };

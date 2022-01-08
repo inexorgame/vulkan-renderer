@@ -18,4 +18,10 @@ namespace inexor::vulkan_renderer::vk_tools {
 ///
 ///
 [[nodiscard]] VkSamplerCreateInfo fill_sampler_ci();
+
+///
+///
+[[nodiscard]] VkPipelineShaderStageCreateInfo
+fill_pipeline_shader_stage_ci(VkShaderModule shader_module, VkShaderStageFlagBits stage, const char *name);
+
 } // namespace inexor::vulkan_renderer::vk_tools

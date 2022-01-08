@@ -1,11 +1,14 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
+#include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+// Forward declaration
+class Device;
 
 struct ShaderLoaderJob {
     std::string file_name;
@@ -15,23 +18,25 @@ struct ShaderLoaderJob {
 
 class ShaderLoader {
 private:
-    const std::vector<ShaderLoaderJob> m_shader_files;
     std::vector<Shader> m_shaders;
-    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
+    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_cis;
 
 public:
-    ShaderLoader(const Device &device, const std::vector<ShaderLoaderJob> &jobs);
+    ///
+    /// @param device A const reference to the device wrapper
+    /// @param jobs The shader loader jobs
+    ShaderLoader(const Device &device, const std::vector<ShaderLoaderJob> &jobs, std::string job_name);
 
     [[nodiscard]] const auto &shaders() const {
         return m_shaders;
     }
 
-    [[nodiscard]] const auto &shader_stages() const {
-        return m_shader_stages;
+    [[nodiscard]] const auto &shader_stage_create_infos() const {
+        return m_shader_stage_cis;
     }
 
-    [[nodiscard]] auto shader_stage_count() const {
-        return static_cast<std::uint32_t>(m_shader_stages.size());
+    [[nodiscard]] std::uint32_t shader_stage_count() const {
+        return static_cast<std::uint32_t>(m_shader_stage_cis.size());
     }
 };
 

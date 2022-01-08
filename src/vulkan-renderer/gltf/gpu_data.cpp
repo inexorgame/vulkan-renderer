@@ -1,4 +1,6 @@
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
+
+#include "inexor/vulkan-renderer/exception.hpp"
 
 #include <cassert>
 #include <utility>
@@ -23,7 +25,6 @@ ModelGpuPbrData::ModelGpuPbrData(RenderGraph *render_graph, const ModelCpuData &
     load_animations();
     load_skins();
     setup_rendering_resources(render_graph);
-    setup_node_descriptors();
 }
 
 ModelGpuPbrData::ModelGpuPbrData(ModelGpuPbrData &&other) noexcept
@@ -58,7 +59,7 @@ void ModelGpuPbrData::setup_node_descriptor_sets(const ModelNode &node) {
         // TODO: Move arguments into make_info<> template
         VkDescriptorSetAllocateInfo desc_set_ai{};
         desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        desc_set_ai.descriptorPool = descriptor_pool();
+        desc_set_ai.descriptorPool = m_descriptor->descriptor_pool();
         desc_set_ai.pSetLayouts = &m_node_descriptor_set_layout; // TODO: Is this correct?
         desc_set_ai.descriptorSetCount = 1;
 
@@ -98,13 +99,6 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         }
     }
 
-    const std::vector<VkDescriptorPoolSize> pool_sizes = {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + mesh_count)},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, image_sampler_count}};
-
-    m_descriptor_pool =
-        std::make_unique<wrapper::DescriptorPool>(render_graph->device_wrapper(), pool_sizes, "gltf pool");
-
     // Scene (matrices and environment maps)
     {
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
@@ -126,7 +120,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
         VkDescriptorSetAllocateInfo desc_set_ai{};
         desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        desc_set_ai.descriptorPool = descriptor_pool();
+        desc_set_ai.descriptorPool = m_descriptor->descriptor_pool();
         desc_set_ai.pSetLayouts = &m_scene_descriptor_set_layout;
         desc_set_ai.descriptorSetCount = 1;
 
@@ -146,7 +140,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         write_desc_sets[1].descriptorCount = 1;
         write_desc_sets[1].dstSet = m_scene_descriptor_set;
         write_desc_sets[1].dstBinding = 1;
-        write_desc_sets[1].pBufferInfo = scene_matrices_descriptor();
+        // write_desc_sets[1].pBufferInfo = &scene_matrices_descriptor->descriptor();
 
         write_desc_sets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write_desc_sets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -195,7 +189,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
             VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
             descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            descriptorSetAllocInfo.descriptorPool = descriptor_pool();
+            descriptorSetAllocInfo.descriptorPool = m_descriptor->descriptor_pool();
             descriptorSetAllocInfo.pSetLayouts = &m_material_descriptor_set_layout;
             descriptorSetAllocInfo.descriptorSetCount = 1;
 
@@ -254,8 +248,11 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         desc_set_layout_ci.pBindings = setLayoutBindings.data();
         desc_set_layout_ci.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 
-        vkCreateDescriptorSetLayout(render_graph->device(), &desc_set_layout_ci, nullptr,
-                                    &m_node_descriptor_set_layout);
+        if (const auto result = vkCreateDescriptorSetLayout(render_graph->device(), &desc_set_layout_ci, nullptr,
+                                                            &m_node_descriptor_set_layout);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vkCreateDescriptorSetLayout failed!", result);
+        }
 
         for (const auto &node : nodes()) {
             setup_node_descriptor_sets(node);

@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
+#include "inexor/vulkan-renderer/gltf/node.hpp"
 
 #include <algorithm>
 

@@ -158,11 +158,12 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
         {"shaders/brdflut/genbrdflut.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "BRDFLUT vertex shader"},
         {"shaders/brdflut/genbrdflut.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "BRDFLUT fragment shader"}};
 
-    wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files);
+    wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files, "brdf");
 
-    const auto pipeline_ci = wrapper::make_info(
-        m_pipeline_layout, m_renderpass, m_shader_loader.shader_stages(), &empty_input_sci, &input_assembly_sci,
-        &viewport_sci, &rasterization_sci, &multisample_sci, &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
+    const auto pipeline_ci =
+        wrapper::make_info(m_pipeline_layout, m_renderpass, m_shader_loader.shader_stage_create_infos(),
+                           &empty_input_sci, &input_assembly_sci, &viewport_sci, &rasterization_sci, &multisample_sci,
+                           &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
     if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
         result != VK_SUCCESS) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
+#include "inexor/vulkan-renderer/gltf/node.hpp"
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>

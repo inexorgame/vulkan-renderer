@@ -101,11 +101,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
             device, format, image_extent.width, image_extent.height, renderpass, "offscreen framebuffer");
 
-        const std::vector<VkDescriptorPoolSize> pool_sizes{{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
-
-        m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(device, pool_sizes, "cubemap generator");
-
-        wrapper::DescriptorBuilder builder(device, m_descriptor_pool->descriptor_pool());
+        wrapper::DescriptorBuilder builder(device);
 
         m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("cubemap generator");
 
@@ -320,7 +316,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                 vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
                 vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
-                                        1, &m_descriptor->descriptor_set(), 0, nullptr);
+                                        m_descriptor->descriptor_set_count(), m_descriptor->descriptor_set(), 0,
+                                        nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 

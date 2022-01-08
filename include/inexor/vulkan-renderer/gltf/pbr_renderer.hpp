@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"

@@ -14,18 +14,18 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/cubemap/cubemap_generator.cpp
     vulkan-renderer/cubemap/gpu_cubemap.cpp
 
-    vulkan-renderer/gltf/gltf_bbox.cpp
-    vulkan-renderer/gltf/gltf_cpu_data.cpp
-    vulkan-renderer/gltf/gltf_gpu_data.cpp
-    vulkan-renderer/gltf/gltf_gpu_data_base.cpp
-    vulkan-renderer/gltf/gltf_animation.cpp
-    vulkan-renderer/gltf/gltf_material.cpp
-    vulkan-renderer/gltf/gltf_mesh.cpp
-    vulkan-renderer/gltf/gltf_node.cpp
-    vulkan-renderer/gltf/gltf_primitive.cpp
-    vulkan-renderer/gltf/gltf_pbr_renderer.cpp
-    vulkan-renderer/gltf/gltf_vertex.cpp
-    vulkan-renderer/gltf/gltf_texture_sampler.cpp
+    vulkan-renderer/gltf/bbox.cpp
+    vulkan-renderer/gltf/cpu_data.cpp
+    vulkan-renderer/gltf/gpu_data.cpp
+    vulkan-renderer/gltf/gpu_data_base.cpp
+    vulkan-renderer/gltf/animation.cpp
+    vulkan-renderer/gltf/material.cpp
+    vulkan-renderer/gltf/mesh.cpp
+    vulkan-renderer/gltf/node.cpp
+    vulkan-renderer/gltf/primitive.cpp
+    vulkan-renderer/gltf/pbr_renderer.cpp
+    vulkan-renderer/gltf/texture_sampler.cpp
+    vulkan-renderer/gltf/vertex.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_bbox.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_material.hpp"
+#include "inexor/vulkan-renderer/gltf/bbox.hpp"
+#include "inexor/vulkan-renderer/gltf/material.hpp"
 
 namespace inexor::vulkan_renderer::gltf {
 

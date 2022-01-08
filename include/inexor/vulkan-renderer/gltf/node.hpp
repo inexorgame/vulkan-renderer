@@ -1,8 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_animation.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_mesh.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_primitive.hpp"
+#include "inexor/vulkan-renderer/gltf/animation.hpp"
+#include "inexor/vulkan-renderer/gltf/mesh.hpp"
+#include "inexor/vulkan-renderer/gltf/primitive.hpp"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/mat4x4.hpp>

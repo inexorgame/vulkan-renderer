@@ -1,9 +1,9 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_animation.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_texture_sampler.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_vertex.hpp"
+#include "inexor/vulkan-renderer/gltf/animation.hpp"
+#include "inexor/vulkan-renderer/gltf/node.hpp"
+#include "inexor/vulkan-renderer/gltf/texture_sampler.hpp"
+#include "inexor/vulkan-renderer/gltf/vertex.hpp"
 #include "inexor/vulkan-renderer/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
@@ -30,7 +30,6 @@ struct ModelMatrices {
 
 class ModelGpuPbrDataBase : public GpuDataBase<gltf::ModelVertex, std::uint32_t> {
 private:
-    const wrapper::Device &m_device;
     const tinygltf::Model &m_model;
 
     // A glTF2 model file can contain arbitrary node types such as cameras and lights
@@ -54,10 +53,10 @@ private:
 
     ModelMatrices m_scene;
 
-    std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_scene_matrices;
-
 protected:
+    const wrapper::Device &m_device;
     std::unique_ptr<texture::GpuTexture> m_empty_texture;
+    std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_scene_matrices;
 
     ModelNode *find_node(ModelNode *parent, std::uint32_t index);
 
@@ -75,12 +74,6 @@ protected:
     void load_skins();
 
     void load_nodes();
-
-    // Every class which inherits from ModelGpuPbrDataBase must implement this!
-    virtual void setup_node_descriptor_sets(const ModelNode &node) = 0;
-
-    /// Call ``setup_node_descriptor_sets`` for each node
-    void setup_node_descriptors();
 
 public:
     /// Default constructor
@@ -107,24 +100,12 @@ public:
         return m_nodes;
     }
 
+    [[nodiscard]] const auto &model() const {
+        return m_model;
+    }
+
     [[nodiscard]] const auto &linear_nodes() const {
         return m_linear_nodes;
-    }
-
-    [[nodiscard]] VkDescriptorPool descriptor_pool() const {
-        return m_descriptor_pool->descriptor_pool();
-    }
-
-    [[nodiscard]] const VkDescriptorBufferInfo *scene_matrices_descriptor() const {
-        return &m_scene_matrices->descriptor;
-    }
-
-    [[nodiscard]] VkDescriptorSet descriptor_set() const {
-        return m_descriptor->descriptor_set();
-    }
-
-    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
-        return m_descriptor->descriptor_set_layout();
     }
 };
 

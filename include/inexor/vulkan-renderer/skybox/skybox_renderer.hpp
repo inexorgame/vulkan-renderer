@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/node.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"

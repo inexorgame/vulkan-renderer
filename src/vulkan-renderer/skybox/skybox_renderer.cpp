@@ -1,13 +1,13 @@
 #include "inexor/vulkan-renderer/skybox/skybox_renderer.hpp"
 
-#include "inexor/vulkan-renderer/gltf/gltf_vertex.hpp"
+#include "inexor/vulkan-renderer/gltf/vertex.hpp"
 
 #include <cassert>
 
 namespace inexor::vulkan_renderer::skybox {
 
 SkyboxRenderer::SkyboxRenderer(const wrapper::Device &device, RenderGraph *render_graph)
-    : m_shader_loader(device, m_shader_files) {}
+    : m_shader_loader(device, m_shader_files, "skybox") {}
 
 void SkyboxRenderer::draw_node(const VkCommandBuffer cmd_buf, const gltf::ModelNode *node) {
     if (node->mesh) {
@@ -38,9 +38,10 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
         ->writes_to(back_buffer)
         ->writes_to(depth_buffer)
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-            cmd_buf.bind_descriptor(skybox.descriptor_set(), physical.pipeline_layout());
-
-            // TODO: Implement!
+            cmd_buf.bind_descriptor(skybox.m_descriptor->descriptor_set, physical.pipeline_layout());
+            for (const auto &node : skybox.nodes()) {
+                draw_node(cmd_buf.get(), &node);
+            }
         });
 }
 

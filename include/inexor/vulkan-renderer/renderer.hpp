@@ -3,9 +3,9 @@
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/cubemap/cubemap_generator.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_cpu_data.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_pbr_renderer.hpp"
+#include "inexor/vulkan-renderer/gltf/cpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/pbr_renderer.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -103,9 +103,7 @@ protected:
     std::vector<texture::GpuTexture> m_textures;
 
     std::unique_ptr<gltf::ModelCpuData> m_skybox_cpu_data;
-    std::unique_ptr<gltf::ModelGpuPbrData> m_skybox_model;
-
-    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data2;
+    std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;
 
     TextureResource *m_back_buffer{nullptr};

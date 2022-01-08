@@ -1,8 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_cpu_data.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data_base.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_node.hpp"
+#include "inexor/vulkan-renderer/gltf/cpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data_base.hpp"
+#include "inexor/vulkan-renderer/gltf/node.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
@@ -37,6 +37,8 @@ private:
     VkDescriptorImageInfo m_enviroment_cube_texture;
     VkDescriptorImageInfo m_irradiance_cube_texture;
     VkDescriptorImageInfo m_prefiltered_cube_texture;
+
+    // TODO: What other stuff can be part of ModelGpuPbrDataBase?
     VkDescriptorSetLayout m_node_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_material_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_scene_descriptor_set_layout{VK_NULL_HANDLE};

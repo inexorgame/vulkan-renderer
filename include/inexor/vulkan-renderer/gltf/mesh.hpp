@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/gltf/gltf_primitive.hpp"
+#include "inexor/vulkan-renderer/gltf/primitive.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 

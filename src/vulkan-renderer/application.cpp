@@ -1,7 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/gltf/gltf_gpu_data.hpp"
+#include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
@@ -107,7 +107,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("Textures:");
 
     for (const auto &texture_file : m_texture_files) {
-        spdlog::debug("{}", texture_file);
+        spdlog::debug("    {}", texture_file);
     }
 
     m_gltf_model_file_names = toml::find<std::vector<std::string>>(renderer_configuration, "gltfmodels", "files");
@@ -115,7 +115,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::debug("glTF models:");
 
     for (const auto &file_name : m_gltf_model_file_names) {
-        spdlog::debug("{}", file_name);
+        spdlog::debug("    {}", file_name);
     }
 }
 

@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/gltf/gltf_mesh.hpp"
+#include "inexor/vulkan-renderer/gltf/mesh.hpp"
 
 namespace inexor::vulkan_renderer::gltf {
 

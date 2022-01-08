@@ -20,7 +20,7 @@ private:
     wrapper::ShaderLoader m_shader_loader;
 
 public:
-    OctreeRenderer(const wrapper::Device &device) : m_shader_loader(device, m_shader_files) {}
+    OctreeRenderer(const wrapper::Device &device) : m_shader_loader(device, m_shader_files, "octree") {}
 
     OctreeRenderer(const OctreeRenderer &) = delete;
     OctreeRenderer(OctreeRenderer &&) = delete;
@@ -36,7 +36,7 @@ public:
     /// @param shaders The shaders which are used for rendering
     /// @param octree_data The octree gpu data for rendering
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
-                     const world::OctreeGpuData<UniformBufferObject, VertexType, IndexType> &octree_data) {
+                     const OctreeGpuData<UniformBufferObject, VertexType, IndexType> &octree_data) {
 
         assert(render_graph);
         assert(back_buffer);

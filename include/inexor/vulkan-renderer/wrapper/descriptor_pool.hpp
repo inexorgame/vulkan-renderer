@@ -12,36 +12,22 @@ namespace inexor::vulkan_renderer::wrapper {
 class DescriptorPool {
 private:
     const Device &m_device;
-    const std::string m_name;
+    std::string m_name;
+
+    VkDescriptorPool m_descriptor_pool;
     std::vector<VkDescriptorPoolSize> m_pool_sizes;
-    VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
 
 public:
-    // TODO: Let those 2 call one private constructor to avoid code duplication!
-
-    ///
-    ///
-    ///
-    ///
-    ///
     DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::string name);
 
-    ///
-    ///
-    ///
-    ///
-    ///
-    DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::uint32_t max_sets,
-                   std::string name);
-
     DescriptorPool(const DescriptorPool &) = delete;
-    DescriptorPool(DescriptorPool &&) = delete;
+    DescriptorPool(DescriptorPool &&) noexcept;
     ~DescriptorPool();
 
     DescriptorPool &operator=(const DescriptorPool &) = delete;
-    DescriptorPool &operator=(DescriptorPool &&) = delete;
+    DescriptorPool &operator=(DescriptorPool &&) noexcept = default;
 
-    [[nodiscard]] const VkDescriptorPool &descriptor_pool() const {
+    [[nodiscard]] VkDescriptorPool descriptor_pool() const {
         return m_descriptor_pool;
     }
 };

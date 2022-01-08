@@ -1,6 +1,6 @@
-#include "inexor/vulkan-renderer/gltf/gltf_pbr_renderer.hpp"
+#include "inexor/vulkan-renderer/gltf/pbr_renderer.hpp"
 
-#include "inexor/vulkan-renderer/gltf/gltf_material.hpp"
+#include "inexor/vulkan-renderer/gltf/material.hpp"
 
 #include "glm/vec4.hpp"
 
@@ -8,7 +8,8 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-ModelPbrRenderer::ModelPbrRenderer(const wrapper::Device &device) : m_shader_loader(device, m_shader_files) {}
+ModelPbrRenderer::ModelPbrRenderer(const wrapper::Device &device)
+    : m_shader_loader(device, m_shader_files, "gltf pbr") {}
 
 void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet scene_descriptor_set,
                                    const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout pipeline_layout,
@@ -21,7 +22,7 @@ void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet 
                 const std::vector<VkDescriptorSet> descriptorsets = {
                     scene_descriptor_set, primitive.material.descriptor_set, node.mesh->ubo->descriptor_set};
 
-                cmd_buf.bind_descriptors(descriptorsets, pipeline_layout);
+                // cmd_buf.bind_descriptors(descriptorsets, pipeline_layout);
                 cmd_buf.push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout);
 
                 if (primitive.index_count > 0) {
@@ -33,7 +34,6 @@ void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet 
         }
     }
 
-    // render child nodes recursively
     for (const auto &child : node.children) {
         render_node(child, scene_descriptor_set, cmd_buf, pipeline_layout, alpha_mode);
     }
@@ -67,6 +67,7 @@ void ModelPbrRenderer::setup_stage(RenderGraph *render_graph, const VkDescriptor
         gltf_stage->reads_from(model.index_buffer());
     }
 
+#if 0
     // TODO: This crashes during swapchain recreation!
     gltf_stage->set_depth_options(true, true)
         ->uses_shaders(m_shader_loader.shaders())
@@ -76,11 +77,12 @@ void ModelPbrRenderer::setup_stage(RenderGraph *render_graph, const VkDescriptor
         ->writes_to(depth_buffer)
         ->reads_from(model.vertex_buffer())
         ->add_push_constant_range<glm::mat4>()
-        ->add_descriptor_layout(model.descriptor_set_layout())
+        ->add_descriptor_layout(model.descriptor_set_layout)
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-            cmd_buf.bind_descriptor(model.descriptor_set(), physical.pipeline_layout());
-            render_model(model.nodes(), model.descriptor_set(), cmd_buf, physical.pipeline_layout());
+            cmd_buf.bind_descriptor(model.descriptor_set, physical.pipeline_layout());
+            render_model(model.nodes(), model.descriptor_set, cmd_buf, physical.pipeline_layout());
         });
+#endif
 }
 
 } // namespace inexor::vulkan_renderer::gltf
