@@ -21,12 +21,12 @@ private:
 
     void setup_rendering_resources(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data) {
 
-        m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER)
-                              ->set_vertex_attribute_layout<VertexType>(VertexType::vertex_attribute_layout())
-                              ->upload_data(cpu_data.vertices());
+        this->m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER)
+                                    ->set_vertex_attribute_layout<VertexType>(VertexType::vertex_attribute_layout())
+                                    ->upload_data(cpu_data.vertices());
 
-        m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)
-                             ->upload_data(cpu_data.indices());
+        this->m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)
+                                   ->upload_data(cpu_data.indices());
 
         // Create an instance of the resource descriptor builder.
         // This allows us to make resource descriptors with the help of a builder pattern.
@@ -35,7 +35,7 @@ private:
         m_uniform_buffer =
             std::make_unique<wrapper::UniformBuffer<UniformBufferObjectType>>(render_graph->device_wrapper(), "octree");
 
-        m_descriptor =
+        this->m_descriptor =
             descriptor_builder.add_uniform_buffer<UniformBufferObjectType>(m_uniform_buffer->buffer()).build("octree");
     }
 

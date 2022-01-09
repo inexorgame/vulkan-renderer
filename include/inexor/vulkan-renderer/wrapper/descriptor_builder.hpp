@@ -18,7 +18,6 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 class ResourceDescriptor;
 
-///
 /// TODO: Implement more descriptor types than just uniform buffers and combined image samplers.
 /// TODO: Support uniform buffer offset in VkDescriptorBufferInfo.
 class DescriptorBuilder {
@@ -103,7 +102,7 @@ public:
         m_descriptor_buffer_infos.push_back(std::move(ub_info));
 
         auto descriptor_write = make_info<VkWriteDescriptorSet>();
-        // dstSet will be filled out by the build method!
+        // dstSet will be filled out later!
         descriptor_write.dstBinding = m_binding;
         descriptor_write.dstArrayElement = 0;
         descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

@@ -20,8 +20,8 @@ void VulkanRenderer::setup_render_graph() {
     m_depth_buffer = m_render_graph->add<TextureResource>("depth buffer", VK_FORMAT_D32_SFLOAT_S8_UINT,
                                                           TextureUsage::DEPTH_STENCIL_BUFFER);
 
-    glm::mat4 view = m_camera->view_matrix();
-    glm::mat4 proj = m_camera->perspective_matrix();
+    const glm::mat4 view = m_camera->view_matrix();
+    const glm::mat4 proj = m_camera->perspective_matrix();
 
 #if 0
     m_skybox_gpu_data =

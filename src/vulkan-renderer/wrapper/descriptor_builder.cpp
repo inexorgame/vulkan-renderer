@@ -35,6 +35,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     layout_binding.descriptorCount = 1;
     layout_binding.stageFlags = shader_stage;
+    layout_binding.pImmutableSamplers = nullptr;
 
     m_layout_bindings.push_back(std::move(layout_binding));
 
