@@ -66,7 +66,7 @@ private:
 public:
     /// Default constructor
     /// @param cube A const reference to the cube from which the vertices and indices will be copied
-    OctreeCpuData(const Cube &cube) {
+    explicit OctreeCpuData(const Cube &cube) {
         generate_vertices(cube);
         generate_indices();
     }
@@ -77,7 +77,7 @@ public:
 
     [[nodiscard]] const auto &indices() const {
         return m_indices;
-    };
+    }
 
     [[nodiscard]] auto vertex_count() const {
         return m_vertices.size();

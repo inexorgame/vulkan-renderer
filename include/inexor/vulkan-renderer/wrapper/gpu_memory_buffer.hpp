@@ -23,6 +23,8 @@ protected:
     VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
+    VkDescriptorBufferInfo m_desc_buffer_info{};
+
     /// @brief Construct the GPU memory buffer without specifying the actual data to fill in, only the memory size.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the GPU memory buffer.

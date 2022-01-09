@@ -54,9 +54,9 @@ public:
             ->writes_to(depth_buffer)
             ->reads_from(octree_data.vertex_buffer())
             ->reads_from(octree_data.index_buffer())
-            ->add_descriptor_layout(octree_data.descriptor_set_layout())
+            ->add_descriptor_layout(octree_data.m_descriptor_set_layout)
             ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-                cmd_buf.bind_descriptor(octree_data.descriptor_set(), physical.pipeline_layout());
+                cmd_buf.bind_descriptor(octree_data.m_descriptor_set, physical.pipeline_layout());
                 cmd_buf.draw_indexed(octree_data.index_count());
             });
     }

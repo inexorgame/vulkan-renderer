@@ -40,10 +40,11 @@ private:
     VkDescriptorSetLayout m_material_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSetLayout m_scene_descriptor_set_layout{VK_NULL_HANDLE};
 
-    void setup_rendering_resources(RenderGraph *render_graph, const gltf::ModelCpuData &model,
-                                   const texture::GpuTexture &skybox_texture);
+    void setup_rendering_resources(RenderGraph *render_graph, const texture::GpuTexture &skybox_texture);
 
 public:
+    VkDescriptorSet m_descriptor_set;
+
     SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &model,
                   const texture::GpuTexture &skybox_texture);
 };

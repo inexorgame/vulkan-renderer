@@ -291,6 +291,8 @@ void Application::setup_vulkan_debug_callback() {
                             // std::abort();
                         }
                     }
+                    spdlog::shutdown();
+                    std::abort();
 
                     return VK_FALSE;
                 });
@@ -484,6 +486,7 @@ void Application::update_uniform_buffers() {
 }
 
 void Application::update_imgui_overlay() {
+#if 0
     const auto &cursor_pos = m_input_data->get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
@@ -523,6 +526,7 @@ void Application::update_imgui_overlay() {
     ImGui::Render();
 
     m_imgui_overlay->update();
+#endif
 }
 
 void Application::process_mouse_input() {

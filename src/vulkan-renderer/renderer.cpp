@@ -71,8 +71,8 @@ void VulkanRenderer::setup_render_graph() {
     }
 #endif
 
-    m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
+    // m_imgui_overlay.reset();
+    // m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
 }
 
 void VulkanRenderer::recreate_swapchain() {

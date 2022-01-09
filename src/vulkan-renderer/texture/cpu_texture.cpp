@@ -72,7 +72,7 @@ void CpuTexture::load_texture(const std::string &file_name) {
         // TODO: We are currently only supporting 1 mip level.
         m_mip_levels = 1;
 
-        spdlog::debug("Texture dimensions: width: {}, height: {}, channels: {} mip levels: {}.", m_width, m_height,
+        spdlog::debug("Texture dimensions: width: {}, height: {}, channels: {}, mip levels: {}.", m_width, m_height,
                       m_channels, m_mip_levels);
     }
 }

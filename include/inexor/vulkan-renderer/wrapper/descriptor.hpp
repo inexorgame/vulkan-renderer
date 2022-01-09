@@ -24,8 +24,8 @@ class ResourceDescriptor {
 
 public:
     ResourceDescriptor(const Device &device, VkDescriptorPool descriptor_pool,
-                       std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
-                       std::vector<VkWriteDescriptorSet> &descriptor_writes, std::string name);
+                       std::vector<VkDescriptorSetLayoutBinding> layout_bindings,
+                       std::vector<VkWriteDescriptorSet> descriptor_writes, std::string name);
 
     ResourceDescriptor(const ResourceDescriptor &) = default;
     ResourceDescriptor(ResourceDescriptor &&) noexcept;
@@ -42,8 +42,8 @@ public:
         return m_descriptor_set_layout;
     }
 
-    [[nodiscard]] const VkDescriptorSet *descriptor_set() const {
-        return &m_descriptor_set;
+    [[nodiscard]] VkDescriptorSet descriptor_set() const {
+        return m_descriptor_set;
     }
 
     [[nodiscard]] std::uint32_t descriptor_set_count() const {

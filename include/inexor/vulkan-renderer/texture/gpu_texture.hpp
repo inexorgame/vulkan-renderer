@@ -18,7 +18,6 @@ class GpuTexture {
 private:
     const wrapper::Device &m_device;
 
-    std::unique_ptr<wrapper::Image> m_image;
     std::unique_ptr<Sampler> m_sampler;
 
     VkImageCreateInfo m_image_ci;
@@ -38,6 +37,8 @@ private:
     void upload_texture_data(const void *texture_data, std::size_t texture_size);
 
 public:
+    std::unique_ptr<wrapper::Image> m_image;
+
     GpuTexture(const wrapper::Device &device, const void *texture_data, std::size_t texture_size,
                VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, VkSamplerCreateInfo sampler_ci,
                std::string name);
@@ -62,10 +63,6 @@ public:
 
     [[nodiscard]] VkSampler sampler() const {
         return m_sampler->sampler();
-    }
-
-    [[nodiscard]] VkDescriptorImageInfo descriptor() const {
-        return m_image->descriptor();
     }
 
     [[nodiscard]] VkImageView image_view() const {

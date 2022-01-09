@@ -26,10 +26,6 @@ private:
 
 public:
     CubemapGenerator(const wrapper::Device &device);
-
-    [[nodiscard]] VkDescriptorImageInfo descriptor() const {
-        return m_cubemap_texture->descriptor();
-    }
 };
 
 } // namespace inexor::vulkan_renderer::cubemap

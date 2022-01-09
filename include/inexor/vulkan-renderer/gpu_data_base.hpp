@@ -1,7 +1,6 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render_graph.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 #include <cassert>
@@ -32,11 +31,6 @@ protected:
     std::vector<VertexType> m_vertices;
     std::vector<IndexType> m_indices;
 
-    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
-
-    /// Default constructor
-    ///
-    ///
     GpuDataBase(const std::uint32_t vertex_count, const std::uint32_t index_count)
         : m_vertex_count(vertex_count), m_index_count(index_count) {}
 
@@ -47,7 +41,6 @@ protected:
 
 public:
     GpuDataBase(GpuDataBase &&other) noexcept {
-        m_descriptor = std::move(other.m_descriptor);
         m_index_buffer = std::exchange(other.m_index_buffer, nullptr);
         m_vertex_buffer = std::exchange(other.m_vertex_buffer, nullptr);
         m_vertex_count = other.m_vertex_count;
@@ -86,14 +79,6 @@ public:
 
     [[nodiscard]] const auto &indices() const {
         return m_indices;
-    }
-
-    [[nodiscard]] const auto descriptor_set() const {
-        return m_descriptor->descriptor_set();
-    }
-
-    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
-        return m_descriptor->descriptor_set_layout();
     }
 };
 

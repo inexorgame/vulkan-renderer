@@ -44,7 +44,7 @@ public:
     /// @param descriptor_set The const reference to the resource descriptor RAII wrapper instance
     /// @param layout The pipeline layout which will be used to bind the resource descriptor
     /// @param first_set The first set to use
-    void bind_descriptor(const VkDescriptorSet *descriptor_set, VkPipelineLayout layout) const;
+    void bind_descriptor(VkDescriptorSet descriptor_set, VkPipelineLayout layout) const;
 
     /// @brief Update push constant data.
     /// @param layout The pipeline layout

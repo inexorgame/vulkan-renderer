@@ -55,6 +55,9 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
 
     create_image();
     create_image_view();
+
+    descriptor_image_info.imageView = m_image_view;
+    descriptor_image_info.imageLayout = m_image_layout;
 }
 
 void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
@@ -182,7 +185,6 @@ Image::Image(Image &&other) noexcept : m_device(other.m_device) {
     m_image_layout = other.m_image_layout;
     m_image_ci = other.m_image_ci;
     m_image_view_ci = other.m_image_view_ci;
-    m_descriptor = other.m_descriptor;
     m_name = std::move(other.m_name);
 }
 

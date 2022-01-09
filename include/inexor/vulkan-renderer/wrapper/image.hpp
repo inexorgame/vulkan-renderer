@@ -23,7 +23,6 @@ private:
 
     VkImageCreateInfo m_image_ci;
     VkImageViewCreateInfo m_image_view_ci;
-    VkDescriptorImageInfo m_descriptor;
 
     std::string m_name;
 
@@ -31,6 +30,8 @@ private:
     void create_image_view();
 
 public:
+    VkDescriptorImageInfo descriptor_image_info;
+
     Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, std::string name);
 
     Image(const Image &) = delete;
@@ -76,10 +77,6 @@ public:
 
     [[nodiscard]] VkImageLayout image_layout() const {
         return m_image_layout;
-    }
-
-    [[nodiscard]] VkDescriptorImageInfo descriptor() const {
-        return m_descriptor;
     }
 };
 

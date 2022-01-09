@@ -22,7 +22,6 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool comman
         throw VulkanException("Failed to allocate command buffer!", result);
     }
 
-    // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_cmd_buf, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
 }
 
@@ -37,8 +36,10 @@ void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
     vkBeginCommandBuffer(m_cmd_buf, &begin_info);
 }
 
-void CommandBuffer::bind_descriptor(const VkDescriptorSet *descriptor_set, const VkPipelineLayout layout) const {
-    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, descriptor_set, 0, nullptr);
+void CommandBuffer::bind_descriptor(const VkDescriptorSet descriptor_set, const VkPipelineLayout layout) const {
+    assert(descriptor_set);
+    assert(layout);
+    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &descriptor_set, 0, nullptr);
 }
 
 void CommandBuffer::end() const {

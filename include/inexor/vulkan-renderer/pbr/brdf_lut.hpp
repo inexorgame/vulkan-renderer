@@ -22,10 +22,6 @@ public:
     /// Default constructor
     /// @param device A const reference to the Vulkan device wrapper
     BRDFLUTGenerator(const wrapper::Device &device);
-
-    [[nodiscard]] VkDescriptorImageInfo descriptor() {
-        return m_brdf_texture->descriptor();
-    }
 };
 
 } // namespace inexor::vulkan_renderer::pbr

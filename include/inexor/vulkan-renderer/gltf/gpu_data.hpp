@@ -31,6 +31,8 @@ private:
     std::string m_name;
     float m_model_scale{1.0f};
 
+    VkDescriptorPool m_descriptor_pool;
+
     VkDescriptorSet m_scene_descriptor_set{VK_NULL_HANDLE};
     VkDescriptorSet m_material_descriptor_set{VK_NULL_HANDLE};
     VkDescriptorImageInfo m_brdf_lut_texture;

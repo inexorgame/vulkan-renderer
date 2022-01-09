@@ -12,13 +12,13 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, const VkDescriptorPool pool,
-                                       std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
-                                       std::vector<VkWriteDescriptorSet> &descriptor_writes, const std::string name)
+                                       std::vector<VkDescriptorSetLayoutBinding> layout_bindings,
+                                       std::vector<VkWriteDescriptorSet> descriptor_writes, const std::string name)
     : m_device(device), m_name(name), m_descriptor_pool(pool) {
 
     assert(!m_name.empty());
-    assert(layout_bindings.size() > 0);
-    assert(descriptor_writes.size() > 0);
+    assert(!layout_bindings.empty());
+    assert(!descriptor_writes.empty());
     assert(layout_bindings.size() == descriptor_writes.size());
 
     auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>();

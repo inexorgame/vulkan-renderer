@@ -315,9 +315,10 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
 
                 vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
+                const auto descriptor_set = m_descriptor->descriptor_set();
+
                 vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
-                                        m_descriptor->descriptor_set_count(), m_descriptor->descriptor_set(), 0,
-                                        nullptr);
+                                        m_descriptor->descriptor_set_count(), &descriptor_set, 0, nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 

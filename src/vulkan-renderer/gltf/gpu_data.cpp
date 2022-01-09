@@ -56,24 +56,7 @@ ModelGpuPbrData::~ModelGpuPbrData() {
 
 void ModelGpuPbrData::setup_node_descriptor_sets(const ModelNode &node) {
     if (node.mesh) {
-        // TODO: Move arguments into make_info<> template
-        VkDescriptorSetAllocateInfo desc_set_ai{};
-        desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        desc_set_ai.descriptorPool = m_descriptor->descriptor_pool();
-        desc_set_ai.pSetLayouts = &m_node_descriptor_set_layout; // TODO: Is this correct?
-        desc_set_ai.descriptorSetCount = 1;
-
-        vkAllocateDescriptorSets(m_device.device(), &desc_set_ai, &node.mesh->ubo->descriptor_set);
-
-        VkWriteDescriptorSet write_desc_set{};
-        write_desc_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_desc_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write_desc_set.descriptorCount = 1;
-        write_desc_set.dstSet = node.mesh->ubo->descriptor_set;
-        write_desc_set.dstBinding = 0;
-        write_desc_set.pBufferInfo = &node.mesh->ubo->descriptor;
-
-        vkUpdateDescriptorSets(m_device.device(), 1, &write_desc_set, 0, nullptr);
+        // TODO: Implement!
     }
 
     for (const auto &child : node.children) {
@@ -120,7 +103,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
         VkDescriptorSetAllocateInfo desc_set_ai{};
         desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        desc_set_ai.descriptorPool = m_descriptor->descriptor_pool();
+        desc_set_ai.descriptorPool = m_descriptor_pool;
         desc_set_ai.pSetLayouts = &m_scene_descriptor_set_layout;
         desc_set_ai.descriptorSetCount = 1;
 
@@ -133,7 +116,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         write_desc_sets[0].descriptorCount = 1;
         write_desc_sets[0].dstSet = m_scene_descriptor_set;
         write_desc_sets[0].dstBinding = 0;
-        write_desc_sets[0].pBufferInfo = &m_shader_params->descriptor;
+        // write_desc_sets[0].pBufferInfo = &m_shader_params->descriptor;
 
         write_desc_sets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write_desc_sets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -189,12 +172,13 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
             VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
             descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            descriptorSetAllocInfo.descriptorPool = m_descriptor->descriptor_pool();
+            descriptorSetAllocInfo.descriptorPool = m_descriptor_pool;
             descriptorSetAllocInfo.pSetLayouts = &m_material_descriptor_set_layout;
             descriptorSetAllocInfo.descriptorSetCount = 1;
 
             vkAllocateDescriptorSets(render_graph->device(), &descriptorSetAllocInfo, &m_material_descriptor_set);
 
+#if 0
             std::vector<VkDescriptorImageInfo> imageDescriptors = {
                 m_empty_texture->descriptor(), m_empty_texture->descriptor(),
                 material.normal_texture ? material.normal_texture->descriptor() : m_empty_texture->descriptor(),
@@ -222,6 +206,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
                 }
             }
 
+
             std::array<VkWriteDescriptorSet, 5> write_desc_set{};
 
             for (size_t i = 0; i < imageDescriptors.size(); i++) {
@@ -235,6 +220,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
             vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(write_desc_set.size()),
                                    write_desc_set.data(), 0, nullptr);
+#endif
         }
 
         // Model node (matrices)

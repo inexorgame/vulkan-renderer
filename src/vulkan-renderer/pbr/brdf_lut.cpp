@@ -120,7 +120,6 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
-        return;
     }
 
     const auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();

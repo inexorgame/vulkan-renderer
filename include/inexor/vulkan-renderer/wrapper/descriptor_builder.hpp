@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -78,10 +79,10 @@ public:
     /// @return A const reference to this DescriptorBuilder instance.
     template <typename UniformBufferType>
     [[nodiscard]] DescriptorBuilder &
-    add_uniform_buffer(const VkBuffer uniform_buffer,
+    add_uniform_buffer(const UniformBuffer<UniformBufferType> &uniform_buffer,
                        const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT) {
 
-        assert(uniform_buffer);
+        assert(uniform_buffer.buffer());
 
         const VkDescriptorPoolSize pool_size = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1};
         m_pool_sizes.push_back(pool_size);
@@ -95,7 +96,7 @@ public:
         m_layout_bindings.push_back(std::move(layout_binding));
 
         auto ub_info = std::make_unique<VkDescriptorBufferInfo>();
-        ub_info->buffer = uniform_buffer;
+        ub_info->buffer = uniform_buffer.buffer();
         ub_info->offset = 0;
         ub_info->range = static_cast<VkDeviceSize>(sizeof(UniformBufferType));
 

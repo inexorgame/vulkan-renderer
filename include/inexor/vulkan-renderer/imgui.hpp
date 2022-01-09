@@ -32,9 +32,12 @@ private:
 
     GraphicsStage *m_stage{nullptr};
 
-    std::unique_ptr<texture::GpuTexture> m_imgui_texture;
     std::unique_ptr<wrapper::Shader> m_vertex_shader;
     std::unique_ptr<wrapper::Shader> m_fragment_shader;
+
+    VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
+    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
     struct PushConstBlock {
         glm::vec2 scale;
@@ -50,6 +53,9 @@ private:
     void setup_rendering_resources(RenderGraph *render_graph, TextureResource *back_buffer);
 
 public:
+    // TODO: Make protected again
+    std::unique_ptr<texture::GpuTexture> m_imgui_texture;
+
     /// @brief Construct a new ImGUI overlay.
     /// @param device A reference to the device wrapper
     /// @param swapchain A reference to the swapchain

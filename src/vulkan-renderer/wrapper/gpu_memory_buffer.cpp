@@ -44,7 +44,10 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
         throw VulkanException("Error: GPU memory buffer allocation for " + name + " failed!", result);
     }
 
-    // Assign an internal debug marker name to this buffer.
+    m_desc_buffer_info.buffer = m_buffer;
+    m_desc_buffer_info.offset = 0;
+    m_desc_buffer_info.range = size;
+
     m_device.set_debug_marker_name(m_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, name);
 }
 
@@ -69,6 +72,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept : m_device(ot
     m_allocation = std::exchange(other.m_allocation, nullptr);
     m_allocation_info = other.m_allocation_info;
     m_allocation_ci = other.m_allocation_ci;
+    m_desc_buffer_info = other.m_desc_buffer_info;
 }
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {
