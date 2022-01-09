@@ -77,18 +77,13 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_samplers(const std::vec
 }
 
 std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(const std::string name) {
+    assert(!m_pool_sizes.empty());
     assert(!m_layout_bindings.empty());
     assert(!m_write_sets.empty());
-    assert(m_write_sets.size() == m_layout_bindings.size());
-    assert(m_write_sets.size() == m_pool_sizes.size());
     assert(!name.empty());
 
-    // TODO: Collapse descriptor pool sizes!
-    // TODO: At this point, when collapsing the descriptor pool, we could even validate again.
-    m_descriptor_pool = std::make_unique<wrapper::DescriptorPool>(m_device, m_pool_sizes, name);
-
-    auto new_descriptor = std::make_unique<ResourceDescriptor>(m_device, m_descriptor_pool->descriptor_pool(),
-                                                               m_layout_bindings, m_write_sets, name);
+    auto generated_descriptor =
+        std::make_unique<ResourceDescriptor>(m_device, m_pool_sizes, m_layout_bindings, m_write_sets, name);
 
     // Reset the builder's members for the next use
     m_layout_bindings.clear();
@@ -97,7 +92,7 @@ std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(const std::string n
     m_descriptor_image_infos.clear();
     m_binding = 0;
 
-    return std::move(new_descriptor);
+    return std::move(generated_descriptor);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

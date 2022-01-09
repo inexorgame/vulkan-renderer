@@ -102,15 +102,15 @@ public:
 
         m_descriptor_buffer_infos.push_back(std::move(ub_info));
 
-        auto descriptor_write = make_info<VkWriteDescriptorSet>();
-        // dstSet will be filled out later!
-        descriptor_write.dstBinding = m_binding;
-        descriptor_write.dstArrayElement = 0;
-        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_write.descriptorCount = 1;
-        descriptor_write.pBufferInfo = m_descriptor_buffer_infos.back().get();
+        auto desc_write = make_info<VkWriteDescriptorSet>();
+        // dstSet will be filled out by the constructor of ResourceDescriptor
+        desc_write.dstBinding = m_binding;
+        desc_write.dstArrayElement = 0;
+        desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        desc_write.descriptorCount = 1;
+        desc_write.pBufferInfo = m_descriptor_buffer_infos.back().get();
 
-        m_write_sets.push_back(std::move(descriptor_write));
+        m_write_sets.push_back(std::move(desc_write));
 
         m_binding++;
 
