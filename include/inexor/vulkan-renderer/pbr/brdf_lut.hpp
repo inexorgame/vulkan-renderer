@@ -21,7 +21,7 @@ private:
 public:
     /// Default constructor
     /// @param device A const reference to the Vulkan device wrapper
-    BRDFLUTGenerator(const wrapper::Device &device);
+    BRDFLUTGenerator(wrapper::Device &device);
 };
 
 } // namespace inexor::vulkan_renderer::pbr

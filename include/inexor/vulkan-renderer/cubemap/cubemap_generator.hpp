@@ -26,7 +26,7 @@ private:
 public:
     std::unique_ptr<GpuCubemap> m_cubemap_texture;
 
-    CubemapGenerator(const wrapper::Device &device);
+    CubemapGenerator(wrapper::Device &device);
 };
 
 } // namespace inexor::vulkan_renderer::cubemap

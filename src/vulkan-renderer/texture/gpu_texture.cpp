@@ -113,20 +113,14 @@ void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t
 
     wrapper::StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
-    wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(),
-                                            m_device.graphics_queue_family_index());
-
-    copy_command.create_command_buffer();
-    copy_command.start_recording();
-    {
-        m_image->transition_image_layout(copy_command.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-        m_image->copy_from_buffer(copy_command.command_buffer(), texture_staging_buffer.buffer(),
-                                  m_image_ci.extent.width, m_image_ci.extent.height);
-
-        m_image->transition_image_layout(copy_command.command_buffer(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    }
-    copy_command.end_recording_and_submit_command();
+    wrapper::OnceCommandBuffer copy_command(
+        m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(),
+        [&](const VkCommandBuffer cmd_buf) {
+            m_image->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            m_image->copy_from_buffer(cmd_buf, texture_staging_buffer.buffer(), m_image_ci.extent.width,
+                                      m_image_ci.extent.height);
+            m_image->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        });
 }
 
 GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device) {

@@ -27,7 +27,7 @@
 namespace inexor::vulkan_renderer::cubemap {
 
 // TODO: Separate into class methods!
-CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
+CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
 
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
@@ -223,11 +223,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
                                                     &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
         VkPipeline pipeline;
-        if (const auto result =
-                vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &pipeline);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to create graphics pipeline (vkCreateGraphicsPipelines)!", result);
-        }
+        device.create_graphics_pipeline(&pipeline_ci, &pipeline);
 
         VkClearValue clearValues[1];
         clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
@@ -261,16 +257,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
         scissor.extent.width = dim;
         scissor.extent.height = dim;
 
-        {
-            wrapper::OnceCommandBuffer single_command(device);
-            single_command.create_command_buffer();
-            single_command.start_recording();
-
-            m_cubemap_texture->transition_image_layout(
-                single_command.command_buffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count, CUBE_FACE_COUNT);
-
-            single_command.end_recording_and_submit_command();
-        }
+        m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
+                                                   CUBE_FACE_COUNT);
 
         // TODO: Implement graphics pipeline builder
         // TODO: Split up in setup of pipeline and rendering of cubemaps
@@ -341,17 +329,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device) {
             }
         }
 
-        {
-            wrapper::OnceCommandBuffer single_command(device);
-            single_command.create_command_buffer();
-            single_command.start_recording();
-
-            m_cubemap_texture->transition_image_layout(single_command.command_buffer(),
-                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
-                                                       CUBE_FACE_COUNT);
-
-            single_command.end_recording_and_submit_command();
-        }
+        m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
+                                                   CUBE_FACE_COUNT);
 
         // TODO: Create RAII wrappers for these
         vkDestroyRenderPass(device.device(), renderpass, nullptr);

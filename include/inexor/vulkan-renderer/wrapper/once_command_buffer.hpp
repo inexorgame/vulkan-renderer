@@ -17,6 +17,7 @@ class Device;
 /// and wait with returning from the function until the copy operation has finished executing. It's good practice to
 /// tell the driver about our intent using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 class OnceCommandBuffer {
+private:
     const Device &m_device;
     // We must store the VkQueue separately since we don't know from
     // the context of the use of this OnceCommandBuffer which queue to use!
@@ -40,6 +41,23 @@ public:
     /// The queue and queue family index for data transfer will be determined using the device wrapper's methods.
     /// @param device The const reference to a device RAII wrapper instance.
     OnceCommandBuffer(const Device &device);
+
+    OnceCommandBuffer(const Device &device, std::function<void(const VkCommandBuffer &)> command_lambda)
+        : OnceCommandBuffer(device) {
+        create_command_buffer();
+        start_recording();
+        command_lambda(m_command_buffer->get());
+        end_recording_and_submit_command();
+    }
+
+    OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index,
+                      std::function<void(const VkCommandBuffer &)> command_lambda)
+        : OnceCommandBuffer(device, queue, queue_family_index) {
+        create_command_buffer();
+        start_recording();
+        command_lambda(m_command_buffer->get());
+        end_recording_and_submit_command();
+    }
 
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;

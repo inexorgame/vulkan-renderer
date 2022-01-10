@@ -48,6 +48,9 @@ public:
     void transition_image_layout(VkCommandBuffer cmd_buf, VkImageLayout new_layout, std::uint32_t miplevel_count = 1,
                                  std::uint32_t layer_count = 1);
 
+    void transition_image_layout(VkImageLayout new_layout, std::uint32_t miplevel_count = 1,
+                                 std::uint32_t layer_count = 1);
+
     ///
     ///
     ///

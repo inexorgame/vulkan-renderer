@@ -3,6 +3,8 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
+#include "inexor/vulkan-renderer/exception.hpp"
+
 #include <array>
 #include <cassert>
 #include <optional>
@@ -164,6 +166,19 @@ public:
     /// @brief End the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
     /// @param command_buffer The command buffer which is associated to the debug marker.
     void end_debug_region(VkCommandBuffer command_buffer) const;
+
+    ///
+    ///
+    ///
+    void create_graphics_pipeline(const VkGraphicsPipelineCreateInfo *pipeline_ci, VkPipeline *pipeline) const {
+        assert(pipeline_ci);
+        assert(pipeline);
+
+        if (const auto result = vkCreateGraphicsPipelines(m_device, nullptr, 1, pipeline_ci, nullptr, pipeline);
+            result != VK_SUCCESS) {
+            throw VulkanException("Failed to create graphics pipeline (vkCreateGraphicsPipelines)!", result);
+        }
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

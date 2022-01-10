@@ -13,7 +13,7 @@
 
 namespace inexor::vulkan_renderer::pbr {
 
-BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(device) {
+BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     VkDescriptorSetLayout m_desc_set_layout;
     VkPipelineLayout m_pipeline_layout;
@@ -164,10 +164,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
                            &empty_input_sci, &input_assembly_sci, &viewport_sci, &rasterization_sci, &multisample_sci,
                            &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
-    if (const auto result = vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
-    }
+    device.create_graphics_pipeline(&pipeline_ci, &m_pipeline);
 
     VkClearValue clear_values[1];
     clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
@@ -180,30 +177,25 @@ BRDFLUTGenerator::BRDFLUTGenerator(const wrapper::Device &device) : m_device(dev
     renderpass_bi.pClearValues = clear_values;
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
-    wrapper::OnceCommandBuffer cmd_buf(device);
+    wrapper::OnceCommandBuffer single_command(device, [&](const VkCommandBuffer cmd_buf) {
+        vkCmdBeginRenderPass(cmd_buf, &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
-    cmd_buf.create_command_buffer();
-    cmd_buf.start_recording();
+        VkViewport viewport{};
+        viewport.width = static_cast<float>(image_extent.width);
+        viewport.height = static_cast<float>(image_extent.height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
 
-    vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
+        VkRect2D scissor{};
+        scissor.extent.width = image_extent.width;
+        scissor.extent.height = image_extent.height;
 
-    VkViewport viewport{};
-    viewport.width = static_cast<float>(image_extent.width);
-    viewport.height = static_cast<float>(image_extent.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor{};
-    scissor.extent.width = image_extent.width;
-    scissor.extent.height = image_extent.height;
-
-    vkCmdSetViewport(cmd_buf.command_buffer(), 0, 1, &viewport);
-    vkCmdSetScissor(cmd_buf.command_buffer(), 0, 1, &scissor);
-    vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-    vkCmdDraw(cmd_buf.command_buffer(), 3, 1, 0, 0);
-    vkCmdEndRenderPass(cmd_buf.command_buffer());
-
-    cmd_buf.end_recording_and_submit_command();
+        vkCmdSetViewport(cmd_buf, 0, 1, &viewport);
+        vkCmdSetScissor(cmd_buf, 0, 1, &scissor);
+        vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+        vkCmdDraw(cmd_buf, 3, 1, 0, 0);
+        vkCmdEndRenderPass(cmd_buf);
+    });
 
     spdlog::trace("Generating BRDF look-up table finished.");
 
