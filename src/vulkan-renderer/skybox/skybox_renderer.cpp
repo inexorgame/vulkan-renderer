@@ -6,8 +6,8 @@
 
 namespace inexor::vulkan_renderer::skybox {
 
-SkyboxRenderer::SkyboxRenderer(const wrapper::Device &device, RenderGraph *render_graph)
-    : m_shader_loader(device, m_shader_files, "skybox") {}
+SkyboxRenderer::SkyboxRenderer(RenderGraph *render_graph)
+    : m_shader_loader(render_graph->device_wrapper(), m_shader_files, "skybox") {}
 
 void SkyboxRenderer::draw_node(const VkCommandBuffer cmd_buf, const gltf::ModelNode *node) {
     if (node->mesh) {

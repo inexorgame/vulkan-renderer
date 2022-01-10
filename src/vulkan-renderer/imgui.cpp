@@ -54,10 +54,10 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
     m_stage->set_blend_attachment(blend_attachment);
 }
 
-ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
-                           RenderGraph *render_graph, TextureResource *back_buffer)
+ImGUIOverlay::ImGUIOverlay(RenderGraph *render_graph, const wrapper::Swapchain &swapchain, TextureResource *back_buffer)
 
-    : m_device(device), m_swapchain(swapchain), m_shader_loader(m_device, m_shader_files, "imgui") {
+    : m_device(render_graph->device_wrapper()), m_swapchain(swapchain),
+      m_shader_loader(m_device, m_shader_files, "imgui") {
 
     spdlog::debug("Creating ImGUI context");
     ImGui::CreateContext();
@@ -117,9 +117,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         constexpr int FONT_TEXTURE_CHANNELS{4};
         constexpr int FONT_MIP_LEVELS{1};
 
-        VkDeviceSize upload_size = static_cast<VkDeviceSize>(font_texture_width) *
-                                   static_cast<VkDeviceSize>(font_texture_height) *
-                                   static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
+        const VkDeviceSize upload_size = static_cast<VkDeviceSize>(font_texture_width) *
+                                         static_cast<VkDeviceSize>(font_texture_height) *
+                                         static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
 
         m_imgui_texture = std::make_unique<texture::GpuTexture>(m_device, font_texture_data, upload_size, image_ci,
                                                                 image_view_ci, sampler_ci, "ImGUI font texture");

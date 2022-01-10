@@ -32,9 +32,6 @@ private:
 
     GraphicsStage *m_stage{nullptr};
 
-    std::unique_ptr<wrapper::Shader> m_vertex_shader;
-    std::unique_ptr<wrapper::Shader> m_fragment_shader;
-
     std::unique_ptr<texture::GpuTexture> m_imgui_texture;
 
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
@@ -53,13 +50,7 @@ private:
     void setup_rendering_resources(RenderGraph *render_graph, TextureResource *back_buffer);
 
 public:
-    /// @brief Construct a new ImGUI overlay.
-    /// @param device A reference to the device wrapper
-    /// @param swapchain A reference to the swapchain
-    /// @param render_graph A pointer to the render graph
-    /// @param back_buffer A pointer to the target of the ImGUI rendering
-    ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain, RenderGraph *render_graph,
-                 TextureResource *back_buffer);
+    ImGUIOverlay(RenderGraph *render_graph, const wrapper::Swapchain &swapchain, TextureResource *back_buffer);
 
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;

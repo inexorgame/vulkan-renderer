@@ -24,7 +24,7 @@ private:
     void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode *node);
 
 public:
-    SkyboxRenderer(const wrapper::Device &device, RenderGraph *render_graph);
+    SkyboxRenderer(RenderGraph *render_graph);
 
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
                      const SkyboxGpuData &skybox);

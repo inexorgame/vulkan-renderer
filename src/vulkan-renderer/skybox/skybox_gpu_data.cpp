@@ -5,7 +5,7 @@
 namespace inexor::vulkan_renderer::skybox {
 
 SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &model,
-                             const texture::GpuTexture &skybox_texture)
+                             const cubemap::GpuCubemap &skybox_texture)
     : ModelGpuPbrDataBase(render_graph->device_wrapper(), model.model()) {
 
     // Use the methods from the base class ModelGpuPbrDataBase to load the skybox data
@@ -15,10 +15,11 @@ SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData
     load_animations();
     load_skins();
 
+    // Set up the rendering resources of the skybox in a different way than you would for a pbr model
     setup_rendering_resources(render_graph, skybox_texture);
 }
 
-void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph, const texture::GpuTexture &skybox_texture) {
+void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph, const cubemap::GpuCubemap &skybox_texture) {
 
     m_vertex_buffer = render_graph->add<BufferResource>("skybox vertices", BufferUsage::VERTEX_BUFFER)
                           ->set_vertex_attribute_layout<gltf::ModelVertex>(gltf::ModelVertex::vertex_attribute_layout())

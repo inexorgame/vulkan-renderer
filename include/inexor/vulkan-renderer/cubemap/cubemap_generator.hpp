@@ -13,7 +13,6 @@ namespace inexor::vulkan_renderer::cubemap {
 // TODO: Abstract this so any stuff can be rendered into a cubemap?
 class CubemapGenerator {
 private:
-    std::unique_ptr<GpuCubemap> m_cubemap_texture;
     std::unique_ptr<wrapper::OffscreenFramebuffer> m_offscreen_framebuffer;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
 
@@ -25,6 +24,8 @@ private:
     static constexpr std::uint32_t CUBE_FACE_COUNT{6};
 
 public:
+    std::unique_ptr<GpuCubemap> m_cubemap_texture;
+
     CubemapGenerator(const wrapper::Device &device);
 };
 

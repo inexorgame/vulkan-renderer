@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 #include "inexor/vulkan-renderer/gltf/cpu_data.hpp"
 #include "inexor/vulkan-renderer/gltf/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/gltf/node.hpp"
@@ -38,11 +39,11 @@ private:
 
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
 
-    void setup_rendering_resources(RenderGraph *render_graph, const texture::GpuTexture &skybox_texture);
+    void setup_rendering_resources(RenderGraph *render_graph, const cubemap::GpuCubemap &skybox_texture);
 
 public:
     SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &model,
-                  const texture::GpuTexture &skybox_texture);
+                  const cubemap::GpuCubemap &skybox_texture);
 
     [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
         return m_descriptor->descriptor_set_layout();
