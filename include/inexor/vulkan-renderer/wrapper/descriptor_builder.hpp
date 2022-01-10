@@ -32,7 +32,6 @@ private:
     std::vector<std::unique_ptr<VkDescriptorBufferInfo>> m_descriptor_buffer_infos;
     std::vector<std::unique_ptr<VkDescriptorImageInfo>> m_descriptor_image_infos;
 
-    // TODO: Summarize pool sizes!
     std::vector<VkDescriptorPoolSize> m_pool_sizes;
     std::unique_ptr<DescriptorPool> m_descriptor_pool;
 
@@ -51,10 +50,11 @@ public:
     /// @brief Adds a combined image sampler to the descriptor container.
     /// @param image_sampler The pointer to the combined image sampler
     /// @param image_view The pointer to the image view
+    /// @param image_layout The layout of the image
     /// @param shader_stage The shader stage the uniform buffer will be used in, most likely the fragment shader
     /// @return A const reference to this DescriptorBuilder instance.
     [[nodiscard]] DescriptorBuilder &
-    add_combined_image_sampler(VkSampler image_sampler, VkImageView image_view,
+    add_combined_image_sampler(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout,
                                VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT);
 
     /// Adds a combined image sampler to the descriptor container
@@ -80,7 +80,7 @@ public:
     template <typename UniformBufferType>
     [[nodiscard]] DescriptorBuilder &
     add_uniform_buffer(const UniformBuffer<UniformBufferType> &uniform_buffer,
-                       const VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT) {
+                       const VkShaderStageFlags shader_stage = VK_SHADER_STAGE_VERTEX_BIT) {
 
         assert(uniform_buffer.buffer());
 

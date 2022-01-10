@@ -23,14 +23,12 @@ void VulkanRenderer::setup_render_graph() {
     const glm::mat4 view = m_camera->view_matrix();
     const glm::mat4 proj = m_camera->perspective_matrix();
 
-#if 0
     m_skybox_gpu_data =
         std::make_unique<skybox::SkyboxGpuData>(m_render_graph.get(), *m_skybox_cpu_data, *m_env_cube_texture);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(*m_device, m_render_graph.get());
     m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_gpu_data);
-#endif
 
     m_octree_renderer.reset();
     m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
@@ -71,8 +69,8 @@ void VulkanRenderer::setup_render_graph() {
     }
 #endif
 
-    // m_imgui_overlay.reset();
-    // m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
+    m_imgui_overlay.reset();
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
 }
 
 void VulkanRenderer::recreate_swapchain() {

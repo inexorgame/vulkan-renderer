@@ -23,6 +23,7 @@ DescriptorBuilder::DescriptorBuilder(const Device &device) : m_device(device) {}
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler image_sampler,
                                                                  const VkImageView image_view,
+                                                                 const VkImageLayout image_layout,
                                                                  const VkShaderStageFlagBits shader_stage) {
     assert(image_sampler);
     assert(image_view);
@@ -42,7 +43,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     auto image_info = std::make_unique<VkDescriptorImageInfo>();
     image_info->sampler = image_sampler;
     image_info->imageView = image_view;
-    // TODO: Is the image layout really this one? How can we ensure?
+    // TODO: Account for image_layout parameter?
     image_info->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     m_descriptor_image_infos.push_back(std::move(image_info));
@@ -62,16 +63,17 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
 }
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const texture::GpuTexture &texture) {
-    return add_combined_image_sampler(texture.sampler(), texture.image_view());
+    return add_combined_image_sampler(texture.sampler(), texture.image_view(), texture.image_layout());
 }
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const cubemap::GpuCubemap &cubemap) {
-    return add_combined_image_sampler(cubemap.sampler(), cubemap.image_view());
+    return add_combined_image_sampler(cubemap.sampler(), cubemap.image_view(), cubemap.image_layout());
 }
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_samplers(const std::vector<texture::GpuTexture> &textures) {
     for (const auto &texture : textures) {
-        const auto &result = add_combined_image_sampler(texture.sampler(), texture.image_view());
+        const auto &result =
+            add_combined_image_sampler(texture.sampler(), texture.image_view(), texture.image_layout());
     }
     return *this;
 }

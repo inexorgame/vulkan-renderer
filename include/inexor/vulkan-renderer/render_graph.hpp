@@ -102,7 +102,6 @@ private:
     /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
     template <typename T>
     BufferResource *set_element_size() {
-        // TODO: Check if the sum of all elements matches the size of T!
         m_element_size = sizeof(T);
         return this;
     }

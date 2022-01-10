@@ -24,14 +24,8 @@ private:
     void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode *node);
 
 public:
-    /// Initialize skybox renderer by loading the skybox shaders
     SkyboxRenderer(const wrapper::Device &device, RenderGraph *render_graph);
 
-    ///
-    ///
-    ///
-    ///
-    ///
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
                      const SkyboxGpuData &skybox);
 };

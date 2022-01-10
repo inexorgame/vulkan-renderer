@@ -27,16 +27,12 @@ public:
     }
 
     UniformBuffer(const UniformBuffer &) = delete;
-
-    UniformBuffer(UniformBuffer &&other) noexcept : GPUMemoryBuffer(std::move(other)) {
-        descriptor = std::exchange(other.descriptor, nullptr);
-        descriptor_set = std::exchange(other.descriptor_set, nullptr);
-    }
+    UniformBuffer(UniformBuffer &&other) noexcept : GPUMemoryBuffer(std::move(other)) {}
 
     ~UniformBuffer() override = default;
 
     UniformBuffer &operator=(const UniformBuffer &) = delete;
-    UniformBuffer &operator=(UniformBuffer &&) = delete;
+    UniformBuffer &operator=(UniformBuffer &&) noexcept = default;
 
     void update(const BufferDataType *data) {
         assert(data);

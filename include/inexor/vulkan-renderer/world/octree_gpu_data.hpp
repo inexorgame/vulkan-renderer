@@ -21,8 +21,6 @@ private:
 
     void setup_rendering_resources(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data) {
         assert(render_graph);
-        assert(!cpu_data.vertices().empty());
-        assert(!cpu_data.indices().empty());
 
         // TODO: Unify into ->add_vertex_buffer(), ->add_index_buffer()...
         this->m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER)
@@ -51,6 +49,7 @@ public:
 
     OctreeGpuData(OctreeGpuData &&other) noexcept : GpuDataBase<VertexType, IndexType>(std::move(other)) {
         m_uniform_buffer = std::exchange(other.m_uniform_buffer, nullptr);
+        m_descriptor = std::exchange(other.m_descriptor, nullptr);
     }
 
     OctreeGpuData &operator=(const OctreeGpuData &) = delete;

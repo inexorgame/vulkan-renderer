@@ -14,8 +14,8 @@ private:
     const Device &m_device;
     std::string m_name;
 
+protected:
     VkDescriptorPool m_descriptor_pool;
-    std::vector<VkDescriptorPoolSize> m_pool_sizes;
 
 public:
     DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::string name);
@@ -26,10 +26,6 @@ public:
 
     DescriptorPool &operator=(const DescriptorPool &) = delete;
     DescriptorPool &operator=(DescriptorPool &&) noexcept = default;
-
-    [[nodiscard]] VkDescriptorPool descriptor_pool() const {
-        return m_descriptor_pool;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

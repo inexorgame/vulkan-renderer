@@ -31,7 +31,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, const std::vector<V
     // TODO: Apply make_info!
     VkDescriptorSetAllocateInfo desc_set_ai{};
     desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    desc_set_ai.descriptorPool = descriptor_pool();
+    desc_set_ai.descriptorPool = m_descriptor_pool;
     desc_set_ai.pSetLayouts = &m_descriptor_set_layout;
     desc_set_ai.descriptorSetCount = 1;
 

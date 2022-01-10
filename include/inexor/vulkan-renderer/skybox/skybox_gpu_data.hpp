@@ -25,7 +25,7 @@ private:
         float debugViewEquation = 0;
     };
 
-    std::unique_ptr<wrapper::UniformBuffer<ShaderValuesParams>> m_params_uniform_buffer;
+    std::unique_ptr<wrapper::UniformBuffer<ShaderValuesParams>> m_params_ubo;
 
     struct ModelMatrices {
         glm::mat4 projection;
@@ -34,19 +34,23 @@ private:
         glm::vec3 camera_pos;
     };
 
-    std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_skybox_uniform_buffer;
+    std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_skybox_ubo;
 
-    VkDescriptorSetLayout m_node_descriptor_set_layout{VK_NULL_HANDLE};
-    VkDescriptorSetLayout m_material_descriptor_set_layout{VK_NULL_HANDLE};
-    VkDescriptorSetLayout m_scene_descriptor_set_layout{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
 
     void setup_rendering_resources(RenderGraph *render_graph, const texture::GpuTexture &skybox_texture);
 
 public:
-    VkDescriptorSet m_descriptor_set;
-
     SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &model,
                   const texture::GpuTexture &skybox_texture);
+
+    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
+        return m_descriptor->descriptor_set_layout();
+    }
+
+    [[nodiscard]] VkDescriptorSet descriptor_set() const {
+        return m_descriptor->descriptor_set();
+    }
 };
 
 } // namespace inexor::vulkan_renderer::skybox

@@ -1,11 +1,14 @@
 #include "inexor/vulkan-renderer/skybox/skybox_gpu_data.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+
 namespace inexor::vulkan_renderer::skybox {
 
 SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &model,
                              const texture::GpuTexture &skybox_texture)
     : ModelGpuPbrDataBase(render_graph->device_wrapper(), model.model()) {
 
+    // Use the methods from the base class ModelGpuPbrDataBase to load the skybox data
     load_textures();
     load_materials();
     load_nodes();
@@ -24,11 +27,17 @@ void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph, const t
     m_index_buffer =
         render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)->upload_data(indices());
 
-    m_skybox_uniform_buffer =
-        std::make_unique<wrapper::UniformBuffer<ModelMatrices>>(render_graph->device_wrapper(), "skybox");
+    m_skybox_ubo = std::make_unique<wrapper::UniformBuffer<ModelMatrices>>(render_graph->device_wrapper(), "skybox");
 
-    m_params_uniform_buffer =
+    m_params_ubo =
         std::make_unique<wrapper::UniformBuffer<ShaderValuesParams>>(render_graph->device_wrapper(), "skybox");
+
+    auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
+
+    m_descriptor = builder.add_uniform_buffer(*m_skybox_ubo, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+                       .add_uniform_buffer(*m_params_ubo, VK_SHADER_STAGE_FRAGMENT_BIT)
+                       .add_combined_image_sampler(skybox_texture)
+                       .build("skybox");
 }
 
 } // namespace inexor::vulkan_renderer::skybox

@@ -37,8 +37,9 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
         ->reads_from(skybox.index_buffer())
         ->writes_to(back_buffer)
         ->writes_to(depth_buffer)
+        ->add_descriptor_layout(skybox.descriptor_set_layout())
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-            cmd_buf.bind_descriptor(skybox.m_descriptor_set, physical.pipeline_layout());
+            cmd_buf.bind_descriptor(skybox.descriptor_set(), physical.pipeline_layout());
             for (const auto &node : skybox.nodes()) {
                 draw_node(cmd_buf.get(), &node);
             }
