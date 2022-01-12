@@ -108,7 +108,7 @@ If you have `Ninja build system <https://ninja-build.org/>`__ installed, you can
 - CMake will now set up dependencies automatically for you using conan package manager. This might take a while. If this fails, you really should open a ticket!
 - Click "Generate". You can now open the Visual Studio project file in your ``build`` folder.
 - For debugging, please check that the root directory of the repository is set as working directory in Visual Studio. Usually, CMake should take care of this already.
-- You are now ready to start debugging! Our master branch must be stable at all cost.
+- You are now ready to start debugging! Our main branch must be stable at all cost.
 
 .. _BUILDING linux:
 
@@ -219,7 +219,7 @@ Install dependencies and tools:
 |        | distributions.`__                    |
 +--------+--------------------------------------+
 
-__ https://github.com/inexorgame/vulkan-renderer/blob/master/documentation/source/development/building.rst
+__ https://github.com/inexorgame/vulkan-renderer/blob/main/documentation/source/development/building.rst
 
 .. _Install the SDK: https://vulkan.lunarg.com/doc/view/latest/linux/getting_started_ubuntu.html#user-content-install-the-sdk
 

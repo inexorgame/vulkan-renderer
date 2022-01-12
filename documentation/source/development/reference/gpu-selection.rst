@@ -15,7 +15,7 @@ Automatic GPU selection rules
 -----------------------------
 
 - Automatic gpu selection is part of the so called **settings decision maker**.
-- The method which ultimately selects the gpu is ``decide_which_graphics_card_to_use`` in `settings_decision_maker.cpp <https://github.com/inexorgame/vulkan-renderer/blob/master/src/vulkan-renderer/settings_decision_maker.cpp>`__.
+- The method which ultimately selects the gpu is ``decide_which_graphics_card_to_use`` in `settings_decision_maker.cpp <https://github.com/inexorgame/vulkan-renderer/blob/main/src/vulkan-renderer/settings_decision_maker.cpp>`__.
 - Note that we are using a C++17 feature which is called `std::optional <https://en.cppreference.com/w/cpp/utility/optional>`__.
 - This means if no gpu could be found after all, ``std::nullopt`` will be returned.
 - The automated GPU selection mechanism will prefer the discrete GPU over the integrated GPU when exactly 2 GPUs are available.
