@@ -6,15 +6,6 @@ import sphinx_rtd_theme
 sys.path.insert(0, str(Path('../../').resolve()))
 sys.path.insert(0, str(Path('../').resolve()))
 
-# TODO(#394): Remove this when this PR is merged:
-# https://github.com/mgaitan/sphinxcontrib-mermaid/pull/71
-# Needed for sphinxcontrib-mermaid compatibility with sphinx 4.0.0.
-import sphinx
-if sphinx.version_info[0] >= 4:
-    import errno
-    import sphinx.util.osutil
-    sphinx.util.osutil.ENOENT = errno.ENOENT
-
 from helper import generate_radar
 # generate additional source stuff
 generate_radar.generate(Path("./auto-generated/"))
