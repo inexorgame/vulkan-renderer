@@ -29,7 +29,7 @@ Our current main objective is the development of a new 3d octree game engine.
 
 `Click here <https://inexor-vulkan-renderer.readthedocs.io/en/latest/>`__ to read our faq and documentation.
 
-Inexor is licensed under the `MIT license <https://github.com/inexorgame/vulkan-renderer/blob/master/LICENSE>`__.
+Inexor is licensed under the `MIT license <https://github.com/inexorgame/vulkan-renderer/blob/main/LICENSE>`__.
 
 
 Sponsors
