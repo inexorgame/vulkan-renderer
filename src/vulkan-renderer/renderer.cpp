@@ -24,8 +24,8 @@ void VulkanRenderer::setup_render_graph() {
     const glm::mat4 view = m_camera->view_matrix();
     const glm::mat4 proj = m_camera->perspective_matrix();
 
-    m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(m_render_graph.get(), *m_skybox_cpu_data,
-                                                                *m_cubemap->m_cubemap_texture);
+    m_skybox_gpu_data =
+        std::make_unique<skybox::SkyboxGpuData>(m_render_graph.get(), *m_skybox_cpu_data, *m_skybox_cubemap);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(m_render_graph.get());

@@ -28,9 +28,10 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
 
     auto *skybox_stage = render_graph->add<GraphicsStage>("skybox");
 
-    skybox_stage->set_depth_options(true, true)
+    skybox_stage->set_depth_options(false, false)
         ->uses_shaders(m_shader_loader.shaders())
         ->set_clears_screen(true)
+        ->set_cull_mode(VK_CULL_MODE_FRONT_BIT)
         ->bind_buffer(skybox.vertex_buffer(), 0)
         ->bind_buffer(skybox.index_buffer(), 0)
         ->reads_from(skybox.vertex_buffer())
@@ -40,6 +41,7 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
         ->add_descriptor_layout(skybox.descriptor_set_layout())
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
             cmd_buf.bind_descriptor(skybox.descriptor_set(), physical.pipeline_layout());
+
             for (const auto &node : skybox.nodes()) {
                 draw_node(cmd_buf.get(), &node);
             }

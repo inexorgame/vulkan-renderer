@@ -30,8 +30,12 @@ void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph, const c
 
     m_skybox_ubo = std::make_unique<wrapper::UniformBuffer<ModelMatrices>>(render_graph->device_wrapper(), "skybox");
 
+    // TODO: Setup model matrices... can't this be part of rendergraph?
+
     m_params_ubo =
         std::make_unique<wrapper::UniformBuffer<ShaderValuesParams>>(render_graph->device_wrapper(), "skybox");
+
+    m_params_ubo->update(&m_default_shader_params);
 
     auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
 

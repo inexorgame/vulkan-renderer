@@ -30,6 +30,7 @@ private:
     void create_image_view();
 
 public:
+    // TODO: Make private member and add get methods!
     VkDescriptorImageInfo descriptor_image_info;
 
     Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, std::string name);

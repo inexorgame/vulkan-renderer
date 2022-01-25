@@ -30,12 +30,12 @@ public:
 
     ~Sampler();
 
+    Sampler &operator=(const Sampler &) = delete;
+    Sampler &operator=(Sampler &&) noexcept = default;
+
     [[nodiscard]] VkSampler sampler() const {
         return m_sampler;
     }
-
-    Sampler &operator=(const Sampler &) = delete;
-    Sampler &operator=(Sampler &&) noexcept = default;
 };
 
 } // namespace inexor::vulkan_renderer::texture

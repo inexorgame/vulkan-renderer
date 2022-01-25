@@ -31,8 +31,11 @@ private:
     /// @param height The height of the cubemap texture
     /// @param miplevel_count The number of mip levels
     ///
+    ///
     [[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
                                                   std::uint32_t miplevel_count);
+
+    [[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, const texture::CpuTexture &cpu_cubemap);
 
     /// Fill out a ``VkImageViewCreateInfo`` for creating a cubemap texture
     /// @param format The image format if the cubemap
@@ -45,11 +48,12 @@ private:
     ///
     [[nodiscard]] VkSamplerCreateInfo make_sampler_ci(std::uint32_t miplevel_count);
 
-    // TODO: Check if the format is supported!
-
 public:
     GpuCubemap(const wrapper::Device &device, VkImageCreateInfo m_image_ci, VkImageViewCreateInfo m_image_view_ci,
                VkSamplerCreateInfo m_sampler_ci, std::string name);
+
+    GpuCubemap(const wrapper::Device &device, VkFormat format, const texture::CpuTexture &cpu_cubemap,
+               std::string name);
 
     GpuCubemap(const wrapper::Device &device, const texture::CpuTexture &cpu_cubemap);
 

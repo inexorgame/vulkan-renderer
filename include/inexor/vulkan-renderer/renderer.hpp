@@ -89,7 +89,7 @@ protected:
     std::unique_ptr<cubemap::CubemapGenerator> m_cubemap;
 
     std::unique_ptr<texture::CpuTexture> m_env_cube;
-    std::unique_ptr<texture::GpuTexture> m_env_cube_texture;
+    std::unique_ptr<cubemap::GpuCubemap> m_skybox_cubemap;
 
     std::vector<std::string> m_octree_vertex_shader_files;
     std::vector<std::string> m_octree_fragment_shader_files;

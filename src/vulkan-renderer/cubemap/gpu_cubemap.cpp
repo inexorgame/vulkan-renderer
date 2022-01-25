@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/texture/sampler.hpp"
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -36,14 +37,21 @@ VkImageCreateInfo GpuCubemap::make_image_ci(const VkFormat format, const std::ui
     return image_ci;
 }
 
+VkImageCreateInfo GpuCubemap::make_image_ci(const VkFormat format, const texture::CpuTexture &cpu_cubemap) {
+    return make_image_ci(format, cpu_cubemap.width(), cpu_cubemap.height(), cpu_cubemap.miplevel_count());
+}
+
 VkImageViewCreateInfo GpuCubemap::make_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
     assert(miplevel_count > 0);
 
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
+
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
     image_view_ci.format = format;
+    image_view_ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
+                                VK_COMPONENT_SWIZZLE_A};
     image_view_ci.subresourceRange = {};
-    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_ci.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     image_view_ci.subresourceRange.levelCount = miplevel_count;
     image_view_ci.subresourceRange.layerCount = FACE_COUNT;
     // Note hat the image will be filled out later
@@ -61,16 +69,21 @@ VkSamplerCreateInfo GpuCubemap::make_sampler_ci(const std::uint32_t miplevel_cou
     sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     sampler_ci.minLod = 0.0f;
-    sampler_ci.maxLod = static_cast<float>(miplevel_count);
-    sampler_ci.maxAnisotropy = 1.0f;
+    sampler_ci.maxLod = 10.0f;
+    sampler_ci.anisotropyEnable = true;
+    sampler_ci.maxAnisotropy = 16.0f;
     sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     return sampler_ci;
 }
 
-#if 0
-GpuCubemap::GpuCubemap(const wrapper::Device &device, const texture::CpuTexture &cpu_cubemap)
-    : m_device(device), m_name(cpu_cubemap.name()) {
+GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, const texture::CpuTexture &cpu_cubemap,
+                       std::string name)
+    : m_device(device), m_name(cpu_cubemap.name()),
+      Image(device, make_image_ci(format, cpu_cubemap), make_image_view_ci(format, cpu_cubemap.miplevel_count()),
+            name) {
 
+    // Make sure the cpu texture which is passed in is a ktx texture
+    // TODO: Do not use assertions, generate an error cubemap instead!
     assert(cpu_cubemap.ktx_wrapper() != nullptr);
 
     wrapper::StagingBuffer texture_staging_buffer(m_device, cpu_cubemap.ktx_texture_data_size(),
@@ -79,13 +92,13 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const texture::CpuTexture 
     // Setup buffer copy regions for each face including all of its mip levels
     std::vector<VkBufferImageCopy> copy_regions;
 
-    copy_regions.reserve(cpu_cubemap.mip_levels() * FACE_COUNT);
+    copy_regions.reserve(cpu_cubemap.miplevel_count() * FACE_COUNT);
 
     for (std::uint32_t face = 0; face < FACE_COUNT; face++) {
-        for (std::uint32_t mip_level = 0; mip_level < cpu_cubemap.mip_levels(); mip_level++) {
+        for (std::uint32_t mip_level = 0; mip_level < cpu_cubemap.miplevel_count(); mip_level++) {
             ktx_size_t offset = 0;
 
-            if (const auto result = ktxTexture_GetImageOffset(cpu_cubemap.ktx_wrapper(), mip_level, 0, 0, &offset);
+            if (const auto result = ktxTexture_GetImageOffset(cpu_cubemap.ktx_wrapper(), mip_level, 0, face, &offset);
                 result != KTX_SUCCESS) {
                 throw KtxException("Error: ktxTexture_GetImageOffset failed!", result);
             }
@@ -104,9 +117,27 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const texture::CpuTexture 
         }
     }
 
-    // TODO: Continue...
+    // Image barrier for optimal image (target)
+    // Set initial layout for all array layers (faces) of the optimal (target) tiled texture
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = cpu_cubemap.miplevel_count();
+    subresourceRange.layerCount = FACE_COUNT;
+
+    wrapper::OnceCommandBuffer copy_command(m_device, [&](const VkCommandBuffer cmd_buf) {
+        transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cpu_cubemap.miplevel_count(),
+                                FACE_COUNT);
+
+        vkCmdCopyBufferToImage(cmd_buf, texture_staging_buffer.buffer(), image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                               static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
+
+        transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cpu_cubemap.miplevel_count(),
+                                FACE_COUNT);
+    });
+
+    m_sampler = std::make_unique<texture::Sampler>(m_device, make_sampler_ci(cpu_cubemap.miplevel_count()), m_name);
 }
-#endif
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci,
                        VkSamplerCreateInfo sampler_ci, std::string name)

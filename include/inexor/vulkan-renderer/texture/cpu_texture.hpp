@@ -88,7 +88,7 @@ public:
         return m_channels;
     }
 
-    [[nodiscard]] std::uint32_t mip_levels() const {
+    [[nodiscard]] std::uint32_t miplevel_count() const {
         return m_mip_levels;
     }
 

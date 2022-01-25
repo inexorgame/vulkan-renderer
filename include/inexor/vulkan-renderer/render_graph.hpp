@@ -265,6 +265,8 @@ private:
     bool m_depth_test{false};
     bool m_depth_write{false};
     VkPipelineColorBlendAttachmentState m_blend_attachment{};
+    VkCullModeFlags m_cull_mode{VK_CULL_MODE_BACK_BIT};
+    VkFrontFace m_front_face{VK_FRONT_FACE_CLOCKWISE};
     std::unordered_map<const BufferResource *, std::uint32_t> m_buffer_bindings;
     std::vector<VkPipelineShaderStageCreateInfo> m_shaders;
 
@@ -296,6 +298,20 @@ public:
     /// @param blend_attachment The blend attachment
     GraphicsStage *set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
         m_blend_attachment = blend_attachment;
+        return this;
+    }
+
+    /// @brief Set the cull mode for the primitives of this stage.
+    /// @param cull_mode The cull mode.
+    GraphicsStage *set_cull_mode(const VkCullModeFlags cull_mode) {
+        m_cull_mode = cull_mode;
+        return this;
+    }
+
+    /// @brief Set the front face (order of vertices for the rasterizer).
+    /// @param front_face The front face.
+    GraphicsStage *set_front_face(const VkFrontFace front_face) {
+        m_front_face = front_face;
         return this;
     }
 

@@ -15,6 +15,8 @@ class Device;
 
 class ResourceDescriptor : public DescriptorPool {
     const Device &m_device;
+
+    // TODO: Should we make those mutable, and set them up in a const method?
     VkDescriptorSetLayout m_descriptor_set_layout;
     VkDescriptorSet m_descriptor_set;
     std::string m_name;

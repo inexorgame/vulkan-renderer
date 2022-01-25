@@ -19,7 +19,7 @@ private:
         {"shaders/skybox/skybox.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, "skybox vertex shader"},
         {"shaders/skybox/skybox.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, "skybox fragment shader"}};
 
-    wrapper::ShaderLoader m_shader_loader;
+    const wrapper::ShaderLoader m_shader_loader;
 
     void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode *node);
 

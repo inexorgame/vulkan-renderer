@@ -333,6 +333,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     // corresponding attribute binding and vertex binding description.
     std::vector<VkVertexInputAttributeDescription> attribute_bindings;
     std::vector<VkVertexInputBindingDescription> vertex_bindings;
+
     for (const auto *resource : stage->m_reads) {
         const auto *buffer_resource = resource->as<BufferResource>();
         if (buffer_resource == nullptr) {
@@ -378,8 +379,8 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     // TODO: Allow culling to be disabled.
     // TODO: Wireframe rendering.
     auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
-    rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterization_state.cullMode = stage->m_cull_mode;
+    rasterization_state.frontFace = stage->m_front_face;
     rasterization_state.lineWidth = 1.0f;
     rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
 
@@ -411,6 +412,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     viewport_state.pScissors = &scissor;
     viewport_state.pViewports = &viewport;
 
+    // TODO: Expose all parameters to builder pattern.
     auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
     pipeline_ci.pVertexInputState = &vertex_input;
     pipeline_ci.pInputAssemblyState = &input_assembly;

@@ -462,9 +462,10 @@ Application::Application(int argc, char **argv) {
 
     m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device);
 
-    m_env_cube = std::make_unique<texture::CpuTexture>("assets/environments/papermill.ktx", "env-cube");
+    m_env_cube = std::make_unique<texture::CpuTexture>("assets/environments/papermill.ktx", "skybox");
 
-    m_env_cube_texture = std::make_unique<texture::GpuTexture>(*m_device, VK_FORMAT_R16G16B16A16_SFLOAT, *m_env_cube);
+    m_skybox_cubemap =
+        std::make_unique<cubemap::GpuCubemap>(*m_device, VK_FORMAT_R16G16B16A16_SFLOAT, *m_env_cube, "skybox");
 
     m_window->show();
     recreate_swapchain();
@@ -481,6 +482,11 @@ void Application::update_uniform_buffers() {
     for (auto &octree_data : m_octree_gpu_data) {
         octree_data.update_uniform_buffer(&ubo);
     }
+
+    skybox::ModelMatrices skybox_mat{};
+    skybox_mat.model = ubo.model;
+    skybox_mat.projection = m_camera->perspective_matrix();
+    m_skybox_gpu_data->update_uniform_buffer(&skybox_mat);
 }
 
 void Application::update_imgui_overlay() {
