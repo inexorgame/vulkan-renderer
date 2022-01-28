@@ -27,7 +27,8 @@ struct ModelMesh {
 
     UniformBlock uniformBlock;
 
-    std::unique_ptr<wrapper::UniformBuffer<UniformBlock>> ubo;
+    std::unique_ptr<wrapper::UniformBuffer<UniformBlock>> uniform_buffer;
+    VkDescriptorSet descriptor_set;
 
     std::vector<ModelPrimitive> primitives;
 

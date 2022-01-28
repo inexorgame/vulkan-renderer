@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-VkImageCreateInfo make_image_ci(const VkFormat format, const std::uint32_t width, const std::uint32_t height,
+VkImageCreateInfo fill_image_ci(const VkFormat format, const std::uint32_t width, const std::uint32_t height,
                                 const std::uint32_t miplevel_count) {
     assert(width > 0);
     assert(height > 0);
@@ -30,13 +30,12 @@ VkImageCreateInfo make_image_ci(const VkFormat format, const std::uint32_t width
     return image_ci;
 }
 
-VkImageViewCreateInfo make_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
+VkImageViewCreateInfo fill_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
     assert(miplevel_count > 0);
 
     VkImageViewCreateInfo image_view_ci{};
     image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    // This will be filled out later
-    // image_view_ci.image = image;
+    // The image will be filled out later
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = format;
     image_view_ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
@@ -125,8 +124,8 @@ void ModelGpuPbrDataBase::load_textures() {
             // Create a texture using the data which was converted to RGBA
             m_textures.emplace_back(
                 m_device, rgba_target.data(), rgba_target.size(),
-                make_image_ci(DEFAULT_TEXTURE_FORMAT, texture_image.width, texture_image.height, miplevel_count),
-                make_image_view_ci(DEFAULT_TEXTURE_FORMAT, miplevel_count), make_sampler_ci(miplevel_count),
+                fill_image_ci(DEFAULT_TEXTURE_FORMAT, texture_image.width, texture_image.height, miplevel_count),
+                fill_image_view_ci(DEFAULT_TEXTURE_FORMAT, miplevel_count), make_sampler_ci(miplevel_count),
                 texture_name);
 
             break;
@@ -140,8 +139,8 @@ void ModelGpuPbrDataBase::load_textures() {
             // Create a texture using RGBA data
             m_textures.emplace_back(
                 m_device, texture_image.image.data(), texture_size,
-                make_image_ci(DEFAULT_TEXTURE_FORMAT, texture_image.width, texture_image.height, miplevel_count),
-                make_image_view_ci(DEFAULT_TEXTURE_FORMAT, miplevel_count), make_sampler_ci(miplevel_count),
+                fill_image_ci(DEFAULT_TEXTURE_FORMAT, texture_image.width, texture_image.height, miplevel_count),
+                fill_image_view_ci(DEFAULT_TEXTURE_FORMAT, miplevel_count), make_sampler_ci(miplevel_count),
                 texture_name);
             break;
         }

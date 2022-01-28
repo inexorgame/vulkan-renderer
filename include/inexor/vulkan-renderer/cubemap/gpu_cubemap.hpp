@@ -25,28 +25,14 @@ private:
 
     std::string m_name;
 
-    /// Fill out a ``VkImageCreateInfo`` for creating a cubemap texture
-    /// @param format The image format if the cubemap
-    /// @param width The height of the cubemap texture
-    /// @param height The height of the cubemap texture
-    /// @param miplevel_count The number of mip levels
-    ///
-    ///
-    [[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
+    [[nodiscard]] VkImageCreateInfo fill_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
                                                   std::uint32_t miplevel_count);
 
-    [[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, const texture::CpuTexture &cpu_cubemap);
+    [[nodiscard]] VkImageCreateInfo fill_image_ci(VkFormat format, const texture::CpuTexture &cpu_cubemap);
 
-    /// Fill out a ``VkImageViewCreateInfo`` for creating a cubemap texture
-    /// @param format The image format if the cubemap
-    /// @param miplevel_count The number of mip levels
-    ///
-    [[nodiscard]] VkImageViewCreateInfo make_image_view_ci(VkFormat format, std::uint32_t miplevel_count);
+    [[nodiscard]] VkImageViewCreateInfo fill_image_view_ci(VkFormat format, std::uint32_t miplevel_count);
 
-    /// Fill out a ``VkSamplerCreateInfo`` for creating a cubemap texture
-    /// @param miplevel_count The number of mip levels
-    ///
-    [[nodiscard]] VkSamplerCreateInfo make_sampler_ci(std::uint32_t miplevel_count);
+    [[nodiscard]] VkSamplerCreateInfo fill_sampler_ci(std::uint32_t miplevel_count);
 
 public:
     GpuCubemap(const wrapper::Device &device, VkImageCreateInfo m_image_ci, VkImageViewCreateInfo m_image_view_ci,

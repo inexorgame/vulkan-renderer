@@ -15,6 +15,7 @@ class CubemapGenerator {
 private:
     std::unique_ptr<wrapper::OffscreenFramebuffer> m_offscreen_framebuffer;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
+    std::unique_ptr<GpuCubemap> m_cubemap_texture;
 
     // TODO: Implement!
     void setup_pipeline();
@@ -24,8 +25,6 @@ private:
     static constexpr std::uint32_t CUBE_FACE_COUNT{6};
 
 public:
-    std::unique_ptr<GpuCubemap> m_cubemap_texture;
-
     CubemapGenerator(wrapper::Device &device);
 };
 

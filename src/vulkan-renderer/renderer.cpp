@@ -20,23 +20,38 @@ void VulkanRenderer::setup_render_graph() {
     m_depth_buffer = m_render_graph->add<TextureResource>("depth buffer", VK_FORMAT_D32_SFLOAT_S8_UINT,
                                                           TextureUsage::DEPTH_STENCIL_BUFFER);
 
-    // TODO: incorporate his directly into rendergraph?
-    const glm::mat4 view = m_camera->view_matrix();
-    const glm::mat4 proj = m_camera->perspective_matrix();
+    const auto &device = m_render_graph->device_wrapper();
+    const auto render_graph = m_render_graph.get();
 
-    m_skybox_gpu_data =
-        std::make_unique<skybox::SkyboxGpuData>(m_render_graph.get(), *m_skybox_cpu_data, *m_skybox_cubemap);
+    // TODO: We do not need to reset any of the unique pointers every time!
+
+    m_shader_data_model.reset();
+    m_shader_data_skybox.reset();
+    m_shader_data_pbr.reset();
+
+    // TOOD: We do not initialize the uniform bufers with the correct data right away, but rather update them next frame
+    m_shader_data_model = std::make_unique<wrapper::UniformBuffer<DefaultUBO>>(device, "scene matrices");
+    m_shader_data_skybox = std::make_unique<wrapper::UniformBuffer<SkyboxUBO>>(device, "skybox matrices");
+
+    // Initialize with default shader parameters because we don't really need to update them
+    m_shader_data_pbr = std::make_unique<wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO>>(device, "pbr settings");
+
+    const pbr::ModelPbrShaderParamsUBO default_pbr_settings{};
+    m_shader_data_pbr->update(&default_pbr_settings);
+
+    m_skybox_gpu_data.reset();
+    m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(render_graph, *m_skybox_cpu_data, *m_skybox_cubemap,
+                                                                *m_shader_data_skybox, *m_shader_data_pbr);
 
     m_skybox_renderer.reset();
-    m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(m_render_graph.get());
-    m_skybox_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, *m_skybox_gpu_data);
+    m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(render_graph);
+    m_skybox_renderer->setup_stage(render_graph, m_back_buffer, m_depth_buffer, *m_skybox_gpu_data);
 
     m_octree_renderer.reset();
     m_octree_renderer = std::make_unique<world::OctreeRenderer<OctreeGpuVertex>>(*m_device);
 
     m_octree_gpu_data.clear();
     m_octree_cpu_data.clear();
-
     m_octree_cpu_data.reserve(m_worlds.size());
     m_octree_gpu_data.reserve(m_worlds.size());
 
@@ -45,11 +60,11 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &octree : m_octree_cpu_data) {
-        m_octree_gpu_data.emplace_back(m_render_graph.get(), octree);
+        m_octree_gpu_data.emplace_back(render_graph, octree);
     }
 
     for (const auto &octree_data : m_octree_gpu_data) {
-        m_octree_renderer->setup_stage(m_render_graph.get(), m_back_buffer, m_depth_buffer, octree_data);
+        m_octree_renderer->setup_stage(render_graph, m_back_buffer, m_depth_buffer, octree_data);
     }
 
     m_gltf_model_renderer.reset();
@@ -60,18 +75,19 @@ void VulkanRenderer::setup_render_graph() {
 
 #if 0
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
-        m_gltf_gpu_data.emplace_back(m_render_graph.get(), model_gpu_data, m_pbr_brdf_lut->descriptor(),
-                                     m_env_cube_texture->descriptor(), m_cubemap->descriptor(), m_cubemap->descriptor(),
-                                     view, proj);
+        m_gltf_gpu_data.emplace_back(render_graph, model_gpu_data, *m_shader_data_model, *m_shader_data_pbr,
+                                     m_pbr_brdf_lut->descriptor_image_info());
     }
 
     for (const auto &model : m_gltf_gpu_data) {
-        m_gltf_model_renderer->setup_stage(m_render_graph.get(), scene, m_back_buffer, m_depth_buffer, model);
+        m_gltf_model_renderer->setup_stage(render_graph, m_back_buffer, m_depth_buffer, model);
     }
 #endif
 
     m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(m_render_graph.get(), *m_swapchain, m_back_buffer);
+    // TODO: Call setup_stage here as well?
+    // TODO: This could be the reason the UI is not updating properly!
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(render_graph, *m_swapchain, m_back_buffer);
 }
 
 void VulkanRenderer::recreate_swapchain() {

@@ -30,16 +30,27 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
     m_name = std::move(other.m_name);
 }
 
-void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
+void CommandBuffer::begin(const VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();
     begin_info.flags = flags;
     vkBeginCommandBuffer(m_cmd_buf, &begin_info);
 }
 
-void CommandBuffer::bind_descriptor(const VkDescriptorSet descriptor_set, const VkPipelineLayout layout) const {
+void CommandBuffer::bind_descriptor(const VkDescriptorSet descriptor_set, const VkPipelineLayout layout,
+                                    const VkPipelineBindPoint bind_point) const {
     assert(descriptor_set);
     assert(layout);
-    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &descriptor_set, 0, nullptr);
+
+    vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, 0, 1, &descriptor_set, 0, nullptr);
+}
+
+void CommandBuffer::bind_descriptors(const std::vector<VkDescriptorSet> &descriptor_sets, const VkPipelineLayout layout,
+                                     const VkPipelineBindPoint bind_point) const {
+    assert(!descriptor_sets.empty());
+    assert(layout);
+
+    vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, 0, static_cast<std::uint32_t>(descriptor_sets.size()),
+                            descriptor_sets.data(), 0, nullptr);
 }
 
 void CommandBuffer::end() const {

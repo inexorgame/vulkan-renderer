@@ -15,7 +15,7 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
-VkImageCreateInfo GpuCubemap::make_image_ci(const VkFormat format, const std::uint32_t width,
+VkImageCreateInfo GpuCubemap::fill_image_ci(const VkFormat format, const std::uint32_t width,
                                             const std::uint32_t height, const std::uint32_t miplevel_count) {
     assert(width > 0);
     assert(height > 0);
@@ -37,11 +37,11 @@ VkImageCreateInfo GpuCubemap::make_image_ci(const VkFormat format, const std::ui
     return image_ci;
 }
 
-VkImageCreateInfo GpuCubemap::make_image_ci(const VkFormat format, const texture::CpuTexture &cpu_cubemap) {
-    return make_image_ci(format, cpu_cubemap.width(), cpu_cubemap.height(), cpu_cubemap.miplevel_count());
+VkImageCreateInfo GpuCubemap::fill_image_ci(const VkFormat format, const texture::CpuTexture &cpu_cubemap) {
+    return fill_image_ci(format, cpu_cubemap.width(), cpu_cubemap.height(), cpu_cubemap.miplevel_count());
 }
 
-VkImageViewCreateInfo GpuCubemap::make_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
+VkImageViewCreateInfo GpuCubemap::fill_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
     assert(miplevel_count > 0);
 
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
@@ -58,7 +58,7 @@ VkImageViewCreateInfo GpuCubemap::make_image_view_ci(const VkFormat format, cons
     return image_view_ci;
 }
 
-VkSamplerCreateInfo GpuCubemap::make_sampler_ci(const std::uint32_t miplevel_count) {
+VkSamplerCreateInfo GpuCubemap::fill_sampler_ci(const std::uint32_t miplevel_count) {
     assert(miplevel_count > 0);
 
     auto sampler_ci = wrapper::make_info<VkSamplerCreateInfo>();
@@ -79,7 +79,7 @@ VkSamplerCreateInfo GpuCubemap::make_sampler_ci(const std::uint32_t miplevel_cou
 GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, const texture::CpuTexture &cpu_cubemap,
                        std::string name)
     : m_device(device), m_name(cpu_cubemap.name()),
-      Image(device, make_image_ci(format, cpu_cubemap), make_image_view_ci(format, cpu_cubemap.miplevel_count()),
+      Image(device, fill_image_ci(format, cpu_cubemap), fill_image_view_ci(format, cpu_cubemap.miplevel_count()),
             name) {
 
     // Make sure the cpu texture which is passed in is a ktx texture
@@ -136,7 +136,7 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
                                 FACE_COUNT);
     });
 
-    m_sampler = std::make_unique<texture::Sampler>(m_device, make_sampler_ci(cpu_cubemap.miplevel_count()), m_name);
+    m_sampler = std::make_unique<texture::Sampler>(m_device, fill_sampler_ci(cpu_cubemap.miplevel_count()), m_name);
 }
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci,
@@ -149,8 +149,8 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, const std::uint32_t width,
                        const std::uint32_t height, const std::uint32_t miplevel_count, const std::string name)
-    : GpuCubemap(device, make_image_ci(format, width, height, miplevel_count),
-                 make_image_view_ci(format, miplevel_count), make_sampler_ci(miplevel_count), name) {}
+    : GpuCubemap(device, fill_image_ci(format, width, height, miplevel_count),
+                 fill_image_view_ci(format, miplevel_count), fill_sampler_ci(miplevel_count), name) {}
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
                        std::string name)

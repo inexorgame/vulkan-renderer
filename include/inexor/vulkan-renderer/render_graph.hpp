@@ -206,7 +206,7 @@ public:
     /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
     /// deal with descriptors at all.
     // TODO: Refactor descriptor management in the render graph
-    RenderStage *add_descriptor_layout(const VkDescriptorSetLayout layout) {
+    RenderStage *add_descriptor_set_layout(const VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
         return this;
     }
@@ -264,7 +264,9 @@ private:
     bool m_clears_screen{false};
     bool m_depth_test{false};
     bool m_depth_write{false};
-    VkPipelineColorBlendAttachmentState m_blend_attachment{};
+
+    // TODO: Expose all parameters for pipeline creation here and call methods to specify settings as needed.
+    VkPipelineColorBlendAttachmentState m_blend_attachment_state{};
     VkCullModeFlags m_cull_mode{VK_CULL_MODE_BACK_BIT};
     VkFrontFace m_front_face{VK_FRONT_FACE_CLOCKWISE};
     std::unordered_map<const BufferResource *, std::uint32_t> m_buffer_bindings;
@@ -296,8 +298,8 @@ public:
 
     /// @brief Set the blend attachment for this stage.
     /// @param blend_attachment The blend attachment
-    GraphicsStage *set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
-        m_blend_attachment = blend_attachment;
+    GraphicsStage *set_blend_attachment(const VkPipelineColorBlendAttachmentState state) {
+        m_blend_attachment_state = state;
         return this;
     }
 

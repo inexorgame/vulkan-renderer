@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/gltf/node.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 
 namespace inexor::vulkan_renderer::gltf {
@@ -39,10 +41,11 @@ void ModelNode::update() {
 
             mesh->uniformBlock.jointcount = static_cast<float>(numJoints);
 
-            mesh->ubo->update(&mesh->uniformBlock);
+            mesh->uniform_buffer->update(&mesh->uniformBlock);
         } else {
-            // TODO: FIX ME!
-            // mesh->ubo->update(&m);
+            // TODO: FIX ME
+            spdlog::warn("FIX ME");
+            // mesh->uniform_buffer->update(m);
         }
     }
 

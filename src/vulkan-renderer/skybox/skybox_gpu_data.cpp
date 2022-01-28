@@ -2,47 +2,37 @@
 
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 
+#include <cassert>
+
 namespace inexor::vulkan_renderer::skybox {
 
-SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &model,
-                             const cubemap::GpuCubemap &skybox_texture)
-    : ModelGpuPbrDataBase(render_graph->device_wrapper(), model.model()) {
+SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &skybox_model,
+                             const cubemap::GpuCubemap &skybox_texture,
+                             const wrapper::UniformBuffer<SkyboxUBO> &skybox_matrices,
+                             const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &pbr_parameters)
+    : ModelGpuPbrDataBase(render_graph->device_wrapper(), skybox_model.model()) {
 
-    // Use the methods from the base class ModelGpuPbrDataBase to load the skybox data
+    assert(render_graph);
+
+    // Use the base class methods to laod the essential data from the gltf model. However we do not load animations or
+    // skins for the skybox and we set up the rendering resources in a different way compared with a gltf pbr model.
     load_textures();
     load_materials();
     load_nodes();
-    load_animations();
-    load_skins();
 
-    // Set up the rendering resources of the skybox in a different way than you would for a pbr model
-    setup_rendering_resources(render_graph, skybox_texture);
-}
-
-void SkyboxGpuData::setup_rendering_resources(RenderGraph *render_graph, const cubemap::GpuCubemap &skybox_texture) {
-
-    m_vertex_buffer = render_graph->add<BufferResource>("skybox vertices", BufferUsage::VERTEX_BUFFER)
+    m_vertex_buffer = render_graph->add<BufferResource>("skybox", BufferUsage::VERTEX_BUFFER)
                           ->set_vertex_attribute_layout<gltf::ModelVertex>(gltf::ModelVertex::vertex_attribute_layout())
                           ->upload_data(vertices());
 
-    m_index_buffer =
-        render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)->upload_data(indices());
-
-    m_skybox_ubo = std::make_unique<wrapper::UniformBuffer<ModelMatrices>>(render_graph->device_wrapper(), "skybox");
-
-    // TODO: Setup model matrices... can't this be part of rendergraph?
-
-    m_params_ubo =
-        std::make_unique<wrapper::UniformBuffer<ShaderValuesParams>>(render_graph->device_wrapper(), "skybox");
-
-    m_params_ubo->update(&m_default_shader_params);
+    m_index_buffer = render_graph->add<BufferResource>("skybox", BufferUsage::INDEX_BUFFER)->upload_data(indices());
 
     auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
 
-    m_descriptor = builder.add_uniform_buffer(*m_skybox_ubo, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-                       .add_uniform_buffer(*m_params_ubo, VK_SHADER_STAGE_FRAGMENT_BIT)
-                       .add_combined_image_sampler(skybox_texture)
-                       .build("skybox");
+    m_descriptor =
+        builder.add_uniform_buffer(skybox_matrices, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+            .add_uniform_buffer(pbr_parameters, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .add_combined_image_sampler(skybox_texture)
+            .build("skybox");
 }
 
 } // namespace inexor::vulkan_renderer::skybox

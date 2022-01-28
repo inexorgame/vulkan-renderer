@@ -6,8 +6,7 @@
 
 namespace inexor::vulkan_renderer::texture {
 
-// TODO: Replace with fill:
-VkImageCreateInfo GpuTexture::make_image_ci(const VkFormat format, const std::uint32_t width,
+VkImageCreateInfo GpuTexture::fill_image_ci(const VkFormat format, const std::uint32_t width,
                                             const std::uint32_t height) {
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
     image_ci.imageType = VK_IMAGE_TYPE_2D;
@@ -25,8 +24,7 @@ VkImageCreateInfo GpuTexture::make_image_ci(const VkFormat format, const std::ui
     return image_ci;
 }
 
-// TODO: Replace with fill_...
-VkImageViewCreateInfo GpuTexture::make_image_view_ci(const VkFormat format) {
+VkImageViewCreateInfo GpuTexture::fill_image_view_ci(const VkFormat format) {
     auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = format;
@@ -38,8 +36,7 @@ VkImageViewCreateInfo GpuTexture::make_image_view_ci(const VkFormat format) {
     return image_view_ci;
 }
 
-// TODO: Replace with fill_sampler_ci
-VkSamplerCreateInfo GpuTexture::make_sampler_ci(const wrapper::Device &device) {
+VkSamplerCreateInfo GpuTexture::fill_sampler_ci(const wrapper::Device &device) {
     auto sampler_ci = wrapper::make_info<VkSamplerCreateInfo>();
     sampler_ci.magFilter = VK_FILTER_LINEAR;
     sampler_ci.minFilter = VK_FILTER_LINEAR;
@@ -90,6 +87,10 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const VkImageCreateInfo im
     m_image = std::make_unique<wrapper::Image>(m_device, image_ci, image_view_ci, m_name);
 
     m_sampler = std::make_unique<Sampler>(m_device, m_sampler_ci, m_name);
+
+    m_descriptor.sampler = m_sampler->sampler();
+    m_descriptor.imageView = m_image->image_view();
+    m_descriptor.imageLayout = m_image->image_layout();
 }
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture, const VkImageCreateInfo image_ci,
@@ -98,12 +99,12 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_text
                  cpu_texture.name()) {}
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const VkFormat format, const CpuTexture &cpu_texture)
-    : GpuTexture(device, cpu_texture, make_image_ci(format, cpu_texture.width(), cpu_texture.height()),
-                 make_image_view_ci(format), make_sampler_ci(device)) {}
+    : GpuTexture(device, cpu_texture, fill_image_ci(format, cpu_texture.width(), cpu_texture.height()),
+                 fill_image_view_ci(format), fill_sampler_ci(device)) {}
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
-    : GpuTexture(device, cpu_texture, make_image_ci(DEFAULT_FORMAT, cpu_texture.width(), cpu_texture.height()),
-                 make_image_view_ci(DEFAULT_FORMAT), make_sampler_ci(device)) {}
+    : GpuTexture(device, cpu_texture, fill_image_ci(DEFAULT_FORMAT, cpu_texture.width(), cpu_texture.height()),
+                 fill_image_view_ci(DEFAULT_FORMAT), fill_sampler_ci(device)) {}
 
 GpuTexture::GpuTexture(const wrapper::Device &device) : GpuTexture(device, CpuTexture()) {}
 

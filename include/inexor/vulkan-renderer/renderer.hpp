@@ -97,7 +97,7 @@ protected:
 
     std::vector<std::shared_ptr<world::Cube>> m_worlds;
     std::vector<world::OctreeCpuData<OctreeGpuVertex>> m_octree_cpu_data;
-    std::vector<world::OctreeGpuData<UniformBufferObject, OctreeGpuVertex>> m_octree_gpu_data;
+    std::vector<world::OctreeGpuData<DefaultUBO, OctreeGpuVertex>> m_octree_gpu_data;
 
     std::unique_ptr<world::OctreeRenderer<OctreeGpuVertex>> m_octree_renderer;
     std::vector<texture::GpuTexture> m_textures;
@@ -105,6 +105,10 @@ protected:
     std::unique_ptr<gltf::ModelCpuData> m_skybox_cpu_data;
     std::unique_ptr<skybox::SkyboxGpuData> m_skybox_gpu_data;
     std::unique_ptr<skybox::SkyboxRenderer> m_skybox_renderer;
+
+    std::unique_ptr<wrapper::UniformBuffer<DefaultUBO>> m_shader_data_model;
+    std::unique_ptr<wrapper::UniformBuffer<SkyboxUBO>> m_shader_data_skybox;
+    std::unique_ptr<wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO>> m_shader_data_pbr;
 
     TextureResource *m_back_buffer{nullptr};
     TextureResource *m_depth_buffer{nullptr};
@@ -122,6 +126,7 @@ protected:
 
     std::vector<DescriptorSets> descriptorSets;
 
+    // TODO: Do we still need this?
     struct Textures {
         std::unique_ptr<texture::GpuTexture> environmentCube;
         std::unique_ptr<texture::GpuTexture> empty;

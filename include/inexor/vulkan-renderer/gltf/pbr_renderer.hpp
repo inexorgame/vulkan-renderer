@@ -14,10 +14,7 @@ namespace inexor::vulkan_renderer::gltf {
 
 class ModelPbrRenderer {
 private:
-    ///
-    ///
-    ///
-    ///
+    // TODO: Refactor so it's not using alpha_mode as parameter so it must no longer be called twice?
     void render_node(const ModelNode &node, VkDescriptorSet scene_descriptor_set, const wrapper::CommandBuffer &cmd_buf,
                      VkPipelineLayout pipeline_layout, const AlphaMode &alpha_mode);
 
@@ -28,19 +25,10 @@ private:
     wrapper::ShaderLoader m_shader_loader;
 
 public:
-    ///
-    ///
     ModelPbrRenderer(const wrapper::Device &device);
 
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    void setup_stage(RenderGraph *render_graph, VkDescriptorSet scene, const TextureResource *back_buffer,
-                     const TextureResource *depth_buffer, const ModelGpuPbrData &model);
+    void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
+                     const ModelGpuPbrData &model);
 
     void render_model(const std::vector<ModelNode> &nodes, VkDescriptorSet scene_descriptor_set,
                       const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout pipeline_layout);

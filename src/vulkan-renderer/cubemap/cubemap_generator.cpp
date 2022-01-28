@@ -132,7 +132,7 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
             break;
         };
 
-        const std::vector<VkDescriptorSetLayout> desc_set_layouts{m_descriptor->descriptor_set_layout()};
+        const std::vector<VkDescriptorSetLayout> desc_set_layouts{m_descriptor->descriptor_set_layout};
 
         const VkPipelineLayoutCreateInfo pipeline_layout_ci = wrapper::make_info(desc_set_layouts, push_constant_range);
 
@@ -303,10 +303,8 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
 
                 vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-                const auto descriptor_set = m_descriptor->descriptor_set();
-
                 vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
-                                        1, &descriptor_set, 0, nullptr);
+                                        1, &m_descriptor->descriptor_set, 0, nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 

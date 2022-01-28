@@ -37,6 +37,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/managers/texture_manager.cpp
 
     vulkan-renderer/pbr/brdf_lut.cpp
+    vulkan-renderer/pbr/pbr_shader_params.cpp
 
     vulkan-renderer/skybox/skybox_gpu_data.cpp
     vulkan-renderer/skybox/skybox_renderer.cpp

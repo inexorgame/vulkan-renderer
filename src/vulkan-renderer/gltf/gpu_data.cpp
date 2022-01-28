@@ -8,16 +8,17 @@
 namespace inexor::vulkan_renderer::gltf {
 
 ModelGpuPbrData::ModelGpuPbrData(RenderGraph *render_graph, const ModelCpuData &model_cpu_data,
-                                 const VkDescriptorImageInfo brdf_lut_texture,
-                                 const VkDescriptorImageInfo enviroment_cube_texture,
-                                 const VkDescriptorImageInfo irradiance_cube_texture,
-                                 const VkDescriptorImageInfo prefiltered_cube_texture, const glm::mat4 &model_matrix,
-                                 const glm::mat4 &proj_matrix)
-
+                                 const wrapper::UniformBuffer<DefaultUBO> &shader_data_model,
+                                 const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &shader_data_pbr,
+                                 VkDescriptorImageInfo brdf_lut_texture)
     : m_device(render_graph->device_wrapper()), m_brdf_lut_texture(brdf_lut_texture),
-      m_enviroment_cube_texture(enviroment_cube_texture), m_irradiance_cube_texture(irradiance_cube_texture),
-      m_prefiltered_cube_texture(prefiltered_cube_texture),
       ModelGpuPbrDataBase(render_graph->device_wrapper(), model_cpu_data.model()) {
+
+    m_shader_params = std::make_unique<wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO>>(
+        render_graph->device_wrapper(), "skybox");
+
+    m_shader_values_scene =
+        std::make_unique<wrapper::UniformBuffer<DefaultUBO>>(render_graph->device_wrapper(), "skybox");
 
     load_textures();
     load_materials();
@@ -29,13 +30,10 @@ ModelGpuPbrData::ModelGpuPbrData(RenderGraph *render_graph, const ModelCpuData &
 
 ModelGpuPbrData::ModelGpuPbrData(ModelGpuPbrData &&other) noexcept
     : m_device(other.m_device), ModelGpuPbrDataBase(std::move(other)) {
-
     m_name = std::move(other.m_name);
     m_model_scale = other.m_model_scale;
-
     m_scene_descriptor_set = other.m_scene_descriptor_set;
     m_material_descriptor_set = other.m_material_descriptor_set;
-
     m_brdf_lut_texture = other.m_brdf_lut_texture;
     m_enviroment_cube_texture = other.m_enviroment_cube_texture;
     m_irradiance_cube_texture = other.m_irradiance_cube_texture;
@@ -43,9 +41,8 @@ ModelGpuPbrData::ModelGpuPbrData(ModelGpuPbrData &&other) noexcept
     m_node_descriptor_set_layout = other.m_node_descriptor_set_layout;
     m_material_descriptor_set_layout = other.m_material_descriptor_set_layout;
     m_scene_descriptor_set_layout = other.m_scene_descriptor_set_layout;
-
-    m_shader_values = std::move(other.m_shader_values);
     m_shader_params = std::exchange(other.m_shader_params, nullptr);
+    m_shader_values_scene = std::exchange(other.m_shader_values_scene, nullptr);
 }
 
 ModelGpuPbrData::~ModelGpuPbrData() {
@@ -54,13 +51,30 @@ ModelGpuPbrData::~ModelGpuPbrData() {
     vkDestroyDescriptorSetLayout(m_device.device(), m_node_descriptor_set_layout, nullptr);
 }
 
-void ModelGpuPbrData::setup_node_descriptor_sets(const ModelNode &node) {
+void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const ModelNode &node) {
     if (node.mesh) {
-        // TODO: Implement!
+        // TODO: Use descriptor builder!
+        VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+        descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        descriptorSetAllocInfo.descriptorPool = m_descriptor_pool;
+        descriptorSetAllocInfo.pSetLayouts = &m_node_descriptor_set_layout;
+        descriptorSetAllocInfo.descriptorSetCount = 1;
+
+        vkAllocateDescriptorSets(device, &descriptorSetAllocInfo, &node.mesh->descriptor_set);
+
+        VkWriteDescriptorSet writeDescriptorSet{};
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.dstSet = node.mesh->descriptor_set;
+        writeDescriptorSet.dstBinding = 0;
+        writeDescriptorSet.pBufferInfo = &node.mesh->uniform_buffer->descriptor_buffer_info;
+
+        vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
     }
 
     for (const auto &child : node.children) {
-        setup_node_descriptor_sets(child);
+        setup_node_descriptor_sets(device, child);
     }
 }
 
@@ -82,9 +96,22 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         }
     }
 
+    const std::vector<VkDescriptorPoolSize> poolSizes = {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + mesh_count)},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, image_sampler_count}};
+
+    VkDescriptorPoolCreateInfo descriptorPoolCI{};
+    descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptorPoolCI.poolSizeCount = 2;
+    descriptorPoolCI.pPoolSizes = poolSizes.data();
+    descriptorPoolCI.maxSets = (2 + material_count + mesh_count);
+
+    // TODO: Error checks!
+    vkCreateDescriptorPool(render_graph->device(), &descriptorPoolCI, nullptr, &m_descriptor_pool);
+
     // Scene (matrices and environment maps)
     {
-        std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+        std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
              nullptr},
             {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
@@ -95,8 +122,8 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
         descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-        descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+        descriptorSetLayoutCI.pBindings = set_layout_bindings.data();
+        descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 
         vkCreateDescriptorSetLayout(render_graph->device(), &descriptorSetLayoutCI, nullptr,
                                     &m_scene_descriptor_set_layout);
@@ -116,14 +143,14 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         write_desc_sets[0].descriptorCount = 1;
         write_desc_sets[0].dstSet = m_scene_descriptor_set;
         write_desc_sets[0].dstBinding = 0;
-        // write_desc_sets[0].pBufferInfo = &m_shader_params->descriptor;
+        write_desc_sets[0].pBufferInfo = &m_shader_values_scene->descriptor_buffer_info;
 
         write_desc_sets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write_desc_sets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         write_desc_sets[1].descriptorCount = 1;
         write_desc_sets[1].dstSet = m_scene_descriptor_set;
         write_desc_sets[1].dstBinding = 1;
-        // write_desc_sets[1].pBufferInfo = &scene_matrices_descriptor->descriptor();
+        write_desc_sets[1].pBufferInfo = &m_shader_params->descriptor_buffer_info;
 
         write_desc_sets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write_desc_sets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -178,34 +205,35 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
             vkAllocateDescriptorSets(render_graph->device(), &descriptorSetAllocInfo, &m_material_descriptor_set);
 
-#if 0
             std::vector<VkDescriptorImageInfo> imageDescriptors = {
-                m_empty_texture->descriptor(), m_empty_texture->descriptor(),
-                material.normal_texture ? material.normal_texture->descriptor() : m_empty_texture->descriptor(),
-                material.occlusion_texture ? material.occlusion_texture->descriptor() : m_empty_texture->descriptor(),
-                material.emissive_texture ? material.emissive_texture->descriptor() : m_empty_texture->descriptor()};
+                m_empty_texture->descriptor_image_info(), m_empty_texture->descriptor_image_info(),
+                material.normal_texture ? material.normal_texture->descriptor_image_info()
+                                        : m_empty_texture->descriptor_image_info(),
+                material.occlusion_texture ? material.occlusion_texture->descriptor_image_info()
+                                           : m_empty_texture->descriptor_image_info(),
+                material.emissive_texture ? material.emissive_texture->descriptor_image_info()
+                                          : m_empty_texture->descriptor_image_info()};
 
             // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is
             // present
 
             if (material.metallic_roughness) {
                 if (material.base_color_texture) {
-                    imageDescriptors[0] = material.base_color_texture->descriptor();
+                    imageDescriptors[0] = material.base_color_texture->descriptor_image_info();
                 }
                 if (material.metallic_roughness_texture) {
-                    imageDescriptors[1] = material.metallic_roughness_texture->descriptor();
+                    imageDescriptors[1] = material.metallic_roughness_texture->descriptor_image_info();
                 }
             }
 
             if (material.specular_glossiness) {
                 if (material.extension.diffuse_texture) {
-                    imageDescriptors[0] = material.extension.diffuse_texture->descriptor();
+                    imageDescriptors[0] = material.extension.diffuse_texture->descriptor_image_info();
                 }
                 if (material.extension.specular_glossiness_texture) {
-                    imageDescriptors[1] = material.extension.specular_glossiness_texture->descriptor();
+                    imageDescriptors[1] = material.extension.specular_glossiness_texture->descriptor_image_info();
                 }
             }
-
 
             std::array<VkWriteDescriptorSet, 5> write_desc_set{};
 
@@ -220,7 +248,6 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
 
             vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(write_desc_set.size()),
                                    write_desc_set.data(), 0, nullptr);
-#endif
         }
 
         // Model node (matrices)
@@ -241,7 +268,7 @@ void ModelGpuPbrData::setup_rendering_resources(RenderGraph *render_graph) {
         }
 
         for (const auto &node : nodes()) {
-            setup_node_descriptor_sets(node);
+            setup_node_descriptor_sets(render_graph->device(), node);
         }
     }
 }

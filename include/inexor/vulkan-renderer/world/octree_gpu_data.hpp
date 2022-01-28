@@ -22,10 +22,12 @@ private:
     void setup_rendering_resources(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data) {
         assert(render_graph);
 
-        // TODO: Unify into ->add_vertex_buffer(), ->add_index_buffer()...
-        this->m_vertex_buffer = render_graph->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER)
-                                    ->set_vertex_attribute_layout<VertexType>(VertexType::vertex_attribute_layout())
-                                    ->upload_data(cpu_data.vertices());
+        this->m_vertex_buffer =
+            render_graph
+                ->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER)
+                // The vertex attribute layout must be specified and it must be consistent with VertexType!
+                ->set_vertex_attribute_layout<VertexType>(VertexType::vertex_attribute_layout())
+                ->upload_data(cpu_data.vertices());
 
         this->m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)
                                    ->upload_data(cpu_data.indices());
@@ -56,16 +58,15 @@ public:
     OctreeGpuData &operator=(OctreeGpuData &&) noexcept = default;
 
     void update_uniform_buffer(const UniformBufferType *data) {
-        assert(data);
         m_uniform_buffer->update(data);
     }
 
     [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
-        return m_descriptor->descriptor_set_layout();
+        return m_descriptor->descriptor_set_layout;
     }
 
     [[nodiscard]] VkDescriptorSet descriptor_set() const {
-        return m_descriptor->descriptor_set();
+        return m_descriptor->descriptor_set;
     }
 };
 

@@ -14,14 +14,17 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 
 class ResourceDescriptor : public DescriptorPool {
+private:
     const Device &m_device;
-
-    // TODO: Should we make those mutable, and set them up in a const method?
-    VkDescriptorSetLayout m_descriptor_set_layout;
-    VkDescriptorSet m_descriptor_set;
     std::string m_name;
 
+    void create_descriptor_set_layout(const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings) const;
+    void allocate_descriptor_set(std::vector<VkWriteDescriptorSet> &desc_writes) const;
+
 public:
+    mutable VkDescriptorSetLayout descriptor_set_layout;
+    mutable VkDescriptorSet descriptor_set;
+
     ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                        std::vector<VkWriteDescriptorSet> &desc_writes, std::string name);
@@ -32,14 +35,6 @@ public:
 
     ResourceDescriptor &operator=(const ResourceDescriptor &) = default;
     ResourceDescriptor &operator=(ResourceDescriptor &&) noexcept = default;
-
-    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
-        return m_descriptor_set_layout;
-    }
-
-    [[nodiscard]] VkDescriptorSet descriptor_set() const {
-        return m_descriptor_set;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -389,7 +389,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     multisample_state.minSampleShading = 1.0f;
     multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    VkPipelineColorBlendAttachmentState blend_attachment = stage->m_blend_attachment;
+    VkPipelineColorBlendAttachmentState blend_attachment = stage->m_blend_attachment_state;
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 

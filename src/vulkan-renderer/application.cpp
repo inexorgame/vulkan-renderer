@@ -472,21 +472,21 @@ Application::Application(int argc, char **argv) {
 }
 
 void Application::update_uniform_buffers() {
-    UniformBufferObject ubo{};
-
+    DefaultUBO ubo{};
     ubo.model = glm::mat4(1.0f);
     ubo.view = m_camera->view_matrix();
-    ubo.proj = m_camera->perspective_matrix();
-    ubo.proj[1][1] *= -1;
+    ubo.projection = m_camera->perspective_matrix();
+    ubo.projection[1][1] *= -1;
+    ubo.camera_pos = m_camera->position();
 
     for (auto &octree_data : m_octree_gpu_data) {
         octree_data.update_uniform_buffer(&ubo);
     }
 
-    skybox::ModelMatrices skybox_mat{};
-    skybox_mat.model = ubo.model;
-    skybox_mat.projection = m_camera->perspective_matrix();
-    m_skybox_gpu_data->update_uniform_buffer(&skybox_mat);
+    SkyboxUBO skybox_ubo{};
+    skybox_ubo.model = glm::mat4(glm::mat3(m_camera->view_matrix()));
+    skybox_ubo.projection = m_camera->perspective_matrix();
+    m_shader_data_skybox->update(&skybox_ubo);
 }
 
 void Application::update_imgui_overlay() {

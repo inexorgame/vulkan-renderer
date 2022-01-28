@@ -16,10 +16,10 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-[[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
+[[nodiscard]] VkImageCreateInfo fill_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
                                               std::uint32_t miplevel_count);
 
-[[nodiscard]] VkImageViewCreateInfo make_image_view_ci(VkImage image, VkFormat format, std::uint32_t miplevel_count);
+[[nodiscard]] VkImageViewCreateInfo fill_image_view_ci(VkImage image, VkFormat format, std::uint32_t miplevel_count);
 
 struct ModelMatrices {
     glm::mat4 projection;

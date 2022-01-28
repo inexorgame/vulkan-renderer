@@ -19,9 +19,15 @@ private:
     std::unique_ptr<wrapper::Framebuffer> m_framebuffer;
 
 public:
+    // TODO: Should we change this so it returns the texture? I think so.
+
     /// Default constructor
     /// @param device A const reference to the Vulkan device wrapper
     BRDFLUTGenerator(wrapper::Device &device);
+
+    [[nodiscard]] VkDescriptorImageInfo descriptor_image_info() const {
+        return m_brdf_texture->descriptor_image_info();
+    }
 };
 
 } // namespace inexor::vulkan_renderer::pbr

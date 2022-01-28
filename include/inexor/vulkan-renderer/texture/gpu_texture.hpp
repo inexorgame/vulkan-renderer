@@ -25,15 +25,17 @@ private:
     VkImageViewCreateInfo m_image_view_ci;
     VkSamplerCreateInfo m_sampler_ci;
 
+    VkDescriptorImageInfo m_descriptor;
+
     std::string m_name;
 
     static constexpr VkFormat DEFAULT_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
 
-    [[nodiscard]] VkImageCreateInfo make_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height);
+    [[nodiscard]] VkImageCreateInfo fill_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height);
 
-    [[nodiscard]] VkImageViewCreateInfo make_image_view_ci(VkFormat format);
+    [[nodiscard]] VkImageViewCreateInfo fill_image_view_ci(VkFormat format);
 
-    [[nodiscard]] VkSamplerCreateInfo make_sampler_ci(const wrapper::Device &device);
+    [[nodiscard]] VkSamplerCreateInfo fill_sampler_ci(const wrapper::Device &device);
 
     void upload_texture_data(const void *texture_data, std::size_t texture_size);
 
@@ -74,6 +76,10 @@ public:
 
     [[nodiscard]] VkImageLayout image_layout() const {
         return m_image->image_layout();
+    }
+
+    [[nodiscard]] VkDescriptorImageInfo descriptor_image_info() const {
+        return m_descriptor;
     }
 };
 
