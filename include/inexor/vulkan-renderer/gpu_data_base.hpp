@@ -9,23 +9,13 @@
 
 namespace inexor::vulkan_renderer {
 
-/// A template base class for gpu data of rendering
-/// This class was created to encapsulate everything that is required to set up the rendering of data using the
-/// rendergraph.
-///
 template <typename VertexType, typename IndexType = std::uint32_t>
 class GpuDataBase {
 protected:
-    /// The rendergraph buffer resource of the vertices
     BufferResource *m_vertex_buffer{nullptr};
-
-    /// The rendergraph buffer resource of the indices
     BufferResource *m_index_buffer{nullptr};
 
-    /// The number of vertices in the vertex buffer
     std::uint32_t m_vertex_count{0};
-
-    /// The number of indices in the index buffer
     std::uint32_t m_index_count{0};
 
     std::vector<VertexType> m_vertices;

@@ -61,7 +61,6 @@ ModelGpuPbrDataBase::ModelGpuPbrDataBase(ModelGpuPbrDataBase &&other) noexcept
     m_skins = std::move(other.m_skins);
     m_textures = std::move(other.m_textures);
     m_texture_samplers = std::move(other.m_texture_samplers);
-    m_scene = std::move(other.m_scene);
     m_scene_matrices = std::exchange(other.m_scene_matrices, nullptr);
     m_empty_texture = std::exchange(other.m_empty_texture, nullptr);
 }

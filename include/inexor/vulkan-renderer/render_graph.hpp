@@ -215,6 +215,8 @@ public:
     /// @param range The push constant range
     RenderStage *add_push_constant_range(const VkPushConstantRange range) {
         assert(range.size > 0);
+
+        // TODO: Check if max push constant size is exceeded!
         m_push_constant_ranges.push_back(range);
         return this;
     }
@@ -223,13 +225,15 @@ public:
     /// @param size The size of the push constant range
     /// @param offset The offset
     /// @param The shader stage flags
-    RenderStage *add_push_constant_range(const std::uint32_t size, const std::uint32_t offset = 0,
-                                         const VkShaderStageFlags shader_stage_flags = VK_SHADER_STAGE_VERTEX_BIT) {
+    RenderStage *add_push_constant_range(const std::uint32_t size, const VkShaderStageFlags shader_stage_flags,
+                                         const std::uint32_t offset = 0) {
         assert(size > 0);
         VkPushConstantRange push_constant_range{};
         push_constant_range.offset = offset;
         push_constant_range.size = size;
         push_constant_range.stageFlags = shader_stage_flags;
+
+        // TODO: Check if max push constant size is exceeded!
         m_push_constant_ranges.push_back(push_constant_range);
         return this;
     }
@@ -238,12 +242,13 @@ public:
     /// @param offset The offset
     /// @param The shader stage flags
     template <typename T>
-    RenderStage *add_push_constant_range(const VkShaderStageFlags shader_stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
-                                         const std::uint32_t offset = 0) {
+    RenderStage *add_push_constant_range(const VkShaderStageFlags shader_stage_flags, const std::uint32_t offset = 0) {
         VkPushConstantRange push_constant_range{};
         push_constant_range.offset = offset;
         push_constant_range.size = sizeof(T);
         push_constant_range.stageFlags = shader_stage_flags;
+
+        // TODO: Check if max push constant size is exceeded!
         m_push_constant_ranges.push_back(push_constant_range);
         return this;
     }

@@ -39,7 +39,7 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
         ->writes_to(back_buffer)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)
-        ->add_push_constant_range<PushConstBlock>()
+        ->add_push_constant_range<PushConstBlock>(VK_SHADER_STAGE_VERTEX_BIT)
         ->add_descriptor_set_layout(m_descriptor->descriptor_set_layout);
 
     VkPipelineColorBlendAttachmentState blend_attachment;
@@ -180,8 +180,10 @@ void ImGUIOverlay::update() {
         const ImGuiIO &io = ImGui::GetIO();
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
         m_push_const_block.translate = glm::vec2(-1.0f);
-        cmd_buf.bind_descriptor(m_descriptor->descriptor_set, physical.pipeline_layout());
-        cmd_buf.push_constants<PushConstBlock>(&m_push_const_block, physical.pipeline_layout());
+
+        cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, physical.pipeline_layout());
+        cmd_buf.push_constants<PushConstBlock>(&m_push_const_block, physical.pipeline_layout(),
+                                               VK_SHADER_STAGE_VERTEX_BIT);
 
         std::uint32_t index_offset = 0;
         std::int32_t vertex_offset = 0;

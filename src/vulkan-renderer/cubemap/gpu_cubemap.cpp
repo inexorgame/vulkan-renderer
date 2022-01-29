@@ -145,6 +145,7 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci
       m_name(name), wrapper::Image(device, image_ci, image_view_ci, name) {
 
     m_sampler = std::make_unique<texture::Sampler>(device, m_sampler_ci, m_name);
+    descriptor_image_info.sampler = m_sampler->sampler();
 }
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, const std::uint32_t width,

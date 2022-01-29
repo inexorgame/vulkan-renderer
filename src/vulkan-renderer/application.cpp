@@ -287,8 +287,8 @@ void Application::setup_vulkan_debug_callback() {
 
                         // Wait for spdlog to shut down before aborting.
                         if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-                            // spdlog::shutdown();
-                            // std::abort();
+                            spdlog::shutdown();
+                            std::abort();
                         }
                     }
 

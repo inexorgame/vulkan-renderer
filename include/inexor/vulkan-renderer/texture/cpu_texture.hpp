@@ -60,20 +60,16 @@ public:
     }
 
     [[nodiscard]] std::size_t data_size() const {
-        std::size_t data_size = 0;
-
-        // TODO: Is this correct now with mip level support?
-
         if (m_texture_data) {
-            data_size = static_cast<std::size_t>(m_width) * static_cast<std::size_t>(m_height) *
-                        static_cast<std::size_t>(m_channels);
+            return static_cast<std::size_t>(m_width) * static_cast<std::size_t>(m_height) *
+                   static_cast<std::size_t>(m_channels);
         } else if (m_ktx_texture_data) {
-            data_size = m_ktx_texture_data_size;
+            return m_ktx_texture_data_size;
         } else {
-            throw std::runtime_error("Error: texture data size invalid!");
+            return static_cast<std::size_t>(m_width) * static_cast<std::size_t>(m_height) *
+                   static_cast<std::size_t>(m_channels);
         }
-
-        return data_size;
+        return 0;
     }
 
     [[nodiscard]] std::uint32_t width() const {

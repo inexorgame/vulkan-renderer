@@ -30,7 +30,7 @@ void Image::create_image() {
     }
 
     // Keep track of image layouts for image transitioning
-    m_image_layout = m_image_ci.initialLayout;
+    descriptor_image_info.imageLayout = m_image_ci.initialLayout;
 
     m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name.c_str());
 }
@@ -44,6 +44,8 @@ void Image::create_image_view() {
     }
 
     m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+
+    descriptor_image_info.imageView = m_image_view;
 }
 
 Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkImageViewCreateInfo image_view_ci,
@@ -55,18 +57,15 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
 
     create_image();
     create_image_view();
-
-    descriptor_image_info.imageView = m_image_view;
-    descriptor_image_info.imageLayout = m_image_layout;
 }
 
 void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
                                     const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
 
-    assert(new_layout != m_image_layout);
+    assert(descriptor_image_info.imageLayout != new_layout);
 
     auto barrier = make_info<VkImageMemoryBarrier>();
-    barrier.oldLayout = m_image_layout;
+    barrier.oldLayout = descriptor_image_info.imageLayout;
     barrier.newLayout = new_layout;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -85,29 +84,31 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
     VkPipelineStageFlags destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
     // TODO: Validate this code block here!
-    if (m_image_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    if (descriptor_image_info.imageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    } else if (m_image_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+    } else if (descriptor_image_info.imageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
                new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    } else if (m_image_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+    } else if (descriptor_image_info.imageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+               new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         source_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
         destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-    } else if (m_image_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL &&
+    } else if (descriptor_image_info.imageLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL &&
                new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         source_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
         destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-    } else if (m_image_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL &&
+    } else if (descriptor_image_info.imageLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL &&
                new_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -117,7 +118,7 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
 
     vkCmdPipelineBarrier(cmd_buf, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-    m_image_layout = new_layout;
+    descriptor_image_info.imageLayout = new_layout;
 }
 
 void Image::transition_image_layout(const VkImageLayout new_layout, const std::uint32_t miplevel_count,
@@ -189,7 +190,7 @@ Image::Image(Image &&other) noexcept : m_device(other.m_device) {
     m_allocation_info = other.m_allocation_info;
     m_image = std::exchange(other.m_image, VK_NULL_HANDLE);
     m_image_view = std::exchange(other.m_image_view, VK_NULL_HANDLE);
-    m_image_layout = other.m_image_layout;
+    descriptor_image_info = other.descriptor_image_info;
     m_image_ci = other.m_image_ci;
     m_image_view_ci = other.m_image_view_ci;
     m_name = std::move(other.m_name);

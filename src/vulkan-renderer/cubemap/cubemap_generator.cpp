@@ -29,6 +29,7 @@ namespace inexor::vulkan_renderer::cubemap {
 // TODO: Separate into class methods!
 CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
 
+    // TODO: Can we make this a scoped enum?
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
@@ -329,6 +330,17 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
 
         m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
                                                    CUBE_FACE_COUNT);
+
+        switch (target) {
+        case IRRADIANCE:
+            m_irradiance_cube_texture = std::move(m_cubemap_texture);
+            break;
+        case PREFILTEREDENV:
+            m_prefiltered_cube_texture = std::move(m_cubemap_texture);
+            // TODO: Fix me!
+            // shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(numMips);
+            break;
+        };
 
         // TODO: Create RAII wrappers for these
         vkDestroyRenderPass(device.device(), renderpass, nullptr);

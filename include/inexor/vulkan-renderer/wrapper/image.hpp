@@ -18,9 +18,6 @@ private:
 
     VkImage m_image{VK_NULL_HANDLE};
     VkImageView m_image_view{VK_NULL_HANDLE};
-
-    VkImageLayout m_image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
-
     VkImageCreateInfo m_image_ci;
     VkImageViewCreateInfo m_image_view_ci;
 
@@ -80,7 +77,7 @@ public:
     }
 
     [[nodiscard]] VkImageLayout image_layout() const {
-        return m_image_layout;
+        return descriptor_image_info.imageLayout;
     }
 };
 

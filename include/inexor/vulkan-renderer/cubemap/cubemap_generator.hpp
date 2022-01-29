@@ -16,6 +16,8 @@ private:
     std::unique_ptr<wrapper::OffscreenFramebuffer> m_offscreen_framebuffer;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
     std::unique_ptr<GpuCubemap> m_cubemap_texture;
+    std::unique_ptr<GpuCubemap> m_irradiance_cube_texture;
+    std::unique_ptr<GpuCubemap> m_prefiltered_cube_texture;
 
     // TODO: Implement!
     void setup_pipeline();
@@ -26,6 +28,18 @@ private:
 
 public:
     CubemapGenerator(wrapper::Device &device);
+
+    [[nodiscard]] VkDescriptorImageInfo cubemap_descriptor_image_info() const {
+        return m_cubemap_texture->descriptor_image_info;
+    }
+
+    [[nodiscard]] VkDescriptorImageInfo irradiance_descriptor_image_info() const {
+        return m_irradiance_cube_texture->descriptor_image_info;
+    }
+
+    [[nodiscard]] VkDescriptorImageInfo prefiltered_descriptor_image_info() const {
+        return m_prefiltered_cube_texture->descriptor_image_info;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::cubemap

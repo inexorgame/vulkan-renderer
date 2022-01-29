@@ -26,7 +26,7 @@ public:
     BRDFLUTGenerator(wrapper::Device &device);
 
     [[nodiscard]] VkDescriptorImageInfo descriptor_image_info() const {
-        return m_brdf_texture->descriptor_image_info();
+        return m_brdf_texture->descriptor_image_info;
     }
 };
 

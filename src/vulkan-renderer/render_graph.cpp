@@ -16,7 +16,7 @@
 
 namespace inexor::vulkan_renderer {
 
-BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
+BufferResource *BufferResource::add_vertex_attribute(const VkFormat format, const std::uint32_t offset) {
     VkVertexInputAttributeDescription vertex_attribute{};
     vertex_attribute.format = format;
     vertex_attribute.location = static_cast<std::uint32_t>(m_vertex_attributes.size());
@@ -27,16 +27,19 @@ BufferResource *BufferResource::add_vertex_attribute(VkFormat format, std::uint3
 }
 
 RenderStage *RenderStage::writes_to(const RenderResource *resource) {
+    assert(resource);
     m_writes.push_back(resource);
     return this;
 }
 
 RenderStage *RenderStage::reads_from(const RenderResource *resource) {
+    assert(resource);
     m_reads.push_back(resource);
     return this;
 }
 
 GraphicsStage *GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
+    assert(buffer);
     m_buffer_bindings.emplace(buffer, binding);
     return this;
 }
@@ -51,6 +54,7 @@ GraphicsStage *GraphicsStage::uses_shader(const wrapper::Shader &shader) {
 }
 
 GraphicsStage *GraphicsStage::uses_shaders(const std::vector<wrapper::Shader> &shaders) {
+    assert(!shaders.empty());
     for (const auto &shader : shaders) {
         uses_shader(shader);
     }
@@ -63,6 +67,7 @@ GraphicsStage *GraphicsStage::uses_shader(const VkPipelineShaderStageCreateInfo 
 }
 
 GraphicsStage *GraphicsStage::uses_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shaders) {
+    assert(!shaders.empty());
     for (const auto &shader : shaders) {
         uses_shader(shader);
     }

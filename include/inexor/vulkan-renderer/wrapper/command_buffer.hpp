@@ -44,14 +44,15 @@ public:
     /// @param descriptor_set The const reference to the resource descriptor RAII wrapper instance
     /// @param layout The pipeline layout which will be used to bind the resource descriptor
     /// @param first_set The first set to use
-    void bind_descriptor(VkDescriptorSet descriptor_set, VkPipelineLayout layout,
-                         VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+    void bind_descriptor_set(VkDescriptorSet descriptor_set, VkPipelineLayout layout,
+                             VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// @brief Call vkCmdBindDescriptorSets.
-    ///
-    ///
-    void bind_descriptors(const std::vector<VkDescriptorSet> &descriptor_sets, VkPipelineLayout layout,
-                          VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+    /// @param descriptor_sets
+    /// @param layout
+    /// @param bind_point
+    void bind_descriptor_sets(const std::vector<VkDescriptorSet> &descriptor_sets, VkPipelineLayout layout,
+                              VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// @brief Update push constant data
     /// @param layout The pipeline layout
@@ -59,20 +60,16 @@ public:
     /// @param size The size of the push constant data in bytes
     /// @param data A pointer to the push constant data
     template <typename T>
-    void push_constants(const T *data, const VkPipelineLayout layout,
-                        const VkShaderStageFlags stage = VK_SHADER_STAGE_VERTEX_BIT) const {
+    void push_constants(const T *data, const VkPipelineLayout layout, const VkShaderStageFlags stage) const {
         assert(data);
         assert(layout);
-
         vkCmdPushConstants(m_cmd_buf, layout, stage, 0, sizeof(T), data);
     }
 
     // TODO: Do we really need this?
     template <typename T>
-    void push_constants(const T &data, const VkPipelineLayout layout,
-                        const VkShaderStageFlags stage = VK_SHADER_STAGE_VERTEX_BIT) const {
+    void push_constants(const T &data, const VkPipelineLayout layout, const VkShaderStageFlags stage) const {
         assert(layout);
-
         vkCmdPushConstants(m_cmd_buf, layout, stage, 0, sizeof(T), &data);
     }
 

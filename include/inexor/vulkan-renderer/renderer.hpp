@@ -126,15 +126,6 @@ protected:
 
     std::vector<DescriptorSets> descriptorSets;
 
-    // TODO: Do we still need this?
-    struct Textures {
-        std::unique_ptr<texture::GpuTexture> environmentCube;
-        std::unique_ptr<texture::GpuTexture> empty;
-        std::unique_ptr<texture::GpuTexture> irradianceCube;
-        std::unique_ptr<texture::GpuTexture> prefilteredCube;
-        std::unique_ptr<pbr::BRDFLUTGenerator> lutBrdf;
-    } textures;
-
     std::unique_ptr<wrapper::DescriptorPool> m_descriptor_pool;
 
     void setup_render_graph();

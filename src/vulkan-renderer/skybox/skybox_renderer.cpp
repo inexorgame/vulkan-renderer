@@ -29,7 +29,6 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
     auto skybox_stage = render_graph->add<GraphicsStage>("skybox")
                             ->set_depth_options(false, false)
                             ->uses_shaders(m_shader_loader.shaders())
-                            // TODO: Just call it "clear_screen" and call (or not call) it.
                             ->set_clears_screen(true) // TODO: yeetari told me we don't need to do this anymore now
                             ->set_cull_mode(VK_CULL_MODE_FRONT_BIT)
                             ->bind_buffer(skybox.vertex_buffer(), 0)
@@ -40,7 +39,7 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
                             ->writes_to(depth_buffer)
                             ->add_descriptor_set_layout(skybox.descriptor_set_layout())
                             ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-                                cmd_buf.bind_descriptor(skybox.descriptor_set(), physical.pipeline_layout());
+                                cmd_buf.bind_descriptor_set(skybox.descriptor_set(), physical.pipeline_layout());
                                 for (const auto &node : skybox.nodes()) {
                                     draw_node(cmd_buf.get(), &node);
                                 }

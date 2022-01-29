@@ -82,15 +82,12 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const void *texture_data, 
 GpuTexture::GpuTexture(const wrapper::Device &device, const VkImageCreateInfo image_ci,
                        const VkImageViewCreateInfo image_view_ci, const VkSamplerCreateInfo sampler_ci,
                        const std::string name)
-    : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_sampler_ci(sampler_ci), m_name(name) {
-
-    m_image = std::make_unique<wrapper::Image>(m_device, image_ci, image_view_ci, m_name);
+    : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_sampler_ci(sampler_ci),
+      m_name(name), wrapper::Image(device, image_ci, image_view_ci, name) {
 
     m_sampler = std::make_unique<Sampler>(m_device, m_sampler_ci, m_name);
 
-    m_descriptor.sampler = m_sampler->sampler();
-    m_descriptor.imageView = m_image->image_view();
-    m_descriptor.imageLayout = m_image->image_layout();
+    descriptor_image_info.sampler = m_sampler->sampler();
 }
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture, const VkImageCreateInfo image_ci,
@@ -114,18 +111,16 @@ void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t
 
     wrapper::StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
-    wrapper::OnceCommandBuffer copy_command(
-        m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(),
-        [&](const VkCommandBuffer cmd_buf) {
-            m_image->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-            m_image->copy_from_buffer(cmd_buf, texture_staging_buffer.buffer(), m_image_ci.extent.width,
-                                      m_image_ci.extent.height);
-            m_image->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        });
+    wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(),
+                                            [&](const VkCommandBuffer cmd_buf) {
+                                                transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                                                copy_from_buffer(cmd_buf, texture_staging_buffer.buffer(),
+                                                                 m_image_ci.extent.width, m_image_ci.extent.height);
+                                                transition_image_layout(cmd_buf,
+                                                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                                            });
 }
 
-GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device) {
-    m_image = std::exchange(other.m_image, nullptr);
-}
+GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device), wrapper::Image(std::move(other)) {}
 
 } // namespace inexor::vulkan_renderer::texture

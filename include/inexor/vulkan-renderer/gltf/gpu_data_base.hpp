@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/gltf/vertex.hpp"
 #include "inexor/vulkan-renderer/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
@@ -20,13 +21,6 @@ namespace inexor::vulkan_renderer::gltf {
                                               std::uint32_t miplevel_count);
 
 [[nodiscard]] VkImageViewCreateInfo fill_image_view_ci(VkImage image, VkFormat format, std::uint32_t miplevel_count);
-
-struct ModelMatrices {
-    glm::mat4 projection;
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::vec3 camera_pos;
-};
 
 class ModelGpuPbrDataBase : public GpuDataBase<gltf::ModelVertex, std::uint32_t> {
 private:
@@ -51,12 +45,10 @@ private:
 
     static constexpr VkFormat DEFAULT_TEXTURE_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
 
-    ModelMatrices m_scene;
-
 protected:
     const wrapper::Device &m_device;
     std::unique_ptr<texture::GpuTexture> m_empty_texture;
-    std::unique_ptr<wrapper::UniformBuffer<ModelMatrices>> m_scene_matrices;
+    std::unique_ptr<wrapper::UniformBuffer<DefaultUBO>> m_scene_matrices;
 
     ModelNode *find_node(ModelNode *parent, std::uint32_t index);
 
@@ -92,7 +84,8 @@ public:
 
     void update_vertices(const std::vector<ModelVertex> &vertices);
 
-    [[nodiscard]] const auto &materials() const {
+    // TODO: Make this const again and move descriptor set allocation to gpu_data_base?
+    [[nodiscard]] auto &materials() {
         return m_materials;
     }
 

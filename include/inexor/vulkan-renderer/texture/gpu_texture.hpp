@@ -14,18 +14,15 @@
 
 namespace inexor::vulkan_renderer::texture {
 
-class GpuTexture {
+class GpuTexture : public wrapper::Image {
 private:
     const wrapper::Device &m_device;
 
-    std::unique_ptr<wrapper::Image> m_image;
     std::unique_ptr<Sampler> m_sampler;
 
     VkImageCreateInfo m_image_ci;
     VkImageViewCreateInfo m_image_view_ci;
     VkSamplerCreateInfo m_sampler_ci;
-
-    VkDescriptorImageInfo m_descriptor;
 
     std::string m_name;
 
@@ -64,22 +61,6 @@ public:
 
     [[nodiscard]] VkSampler sampler() const {
         return m_sampler->sampler();
-    }
-
-    [[nodiscard]] VkImageView image_view() const {
-        return m_image->image_view();
-    }
-
-    [[nodiscard]] VkFormat format() const {
-        return m_image->format();
-    }
-
-    [[nodiscard]] VkImageLayout image_layout() const {
-        return m_image->image_layout();
-    }
-
-    [[nodiscard]] VkDescriptorImageInfo descriptor_image_info() const {
-        return m_descriptor;
     }
 };
 
