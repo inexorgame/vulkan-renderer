@@ -30,12 +30,14 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
     m_name = std::move(other.m_name);
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::begin(const VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();
     begin_info.flags = flags;
     vkBeginCommandBuffer(m_cmd_buf, &begin_info);
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set, const VkPipelineLayout layout,
                                         const VkPipelineBindPoint bind_point) const {
     assert(descriptor_set);
@@ -44,6 +46,7 @@ void CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set, co
     vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, 0, 1, &descriptor_set, 0, nullptr);
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::bind_descriptor_sets(const std::vector<VkDescriptorSet> &descriptor_sets,
                                          const VkPipelineLayout layout, const VkPipelineBindPoint bind_point) const {
     assert(!descriptor_sets.empty());
@@ -56,28 +59,35 @@ void CommandBuffer::end() const {
     vkEndCommandBuffer(m_cmd_buf);
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const {
     vkCmdBeginRenderPass(m_cmd_buf, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void CommandBuffer::bind_graphics_pipeline(const VkPipeline pipeline) const {
-    vkCmdBindPipeline(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+void CommandBuffer::bind_graphics_pipeline(const VkPipeline pipeline, const VkPipelineBindPoint bind_point) const {
+    assert(pipeline);
+    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline);
 }
 
-void CommandBuffer::bind_index_buffer(const VkBuffer buffer) const {
-    vkCmdBindIndexBuffer(m_cmd_buf, buffer, 0, VK_INDEX_TYPE_UINT32);
+void CommandBuffer::bind_index_buffer(const VkBuffer buffer, const VkIndexType index_type,
+                                      const std::uint32_t offset) const {
+    assert(buffer);
+    vkCmdBindIndexBuffer(m_cmd_buf, buffer, offset, index_type);
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {
     assert(!buffers.empty());
     std::vector<VkDeviceSize> offsets(buffers.size(), 0);
     vkCmdBindVertexBuffers(m_cmd_buf, 0, static_cast<std::uint32_t>(buffers.size()), buffers.data(), offsets.data());
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::draw(const std::size_t vertex_count) const {
     vkCmdDraw(m_cmd_buf, static_cast<std::uint32_t>(vertex_count), 1, 0, 0);
 }
 
+// TODO: Expose more parameters
 void CommandBuffer::draw_indexed(const std::size_t index_count, const std::uint32_t first_index) const {
     vkCmdDrawIndexed(m_cmd_buf, static_cast<std::uint32_t>(index_count), 1, first_index, 0, 0);
 }

@@ -21,7 +21,7 @@ private:
 
     const wrapper::ShaderLoader m_shader_loader;
 
-    void draw_node(VkCommandBuffer cmd_buf, const gltf::ModelNode *node);
+    void draw_node(const wrapper::CommandBuffer &cmd_buf, const gltf::ModelNode *node);
 
 public:
     SkyboxRenderer(RenderGraph *render_graph);

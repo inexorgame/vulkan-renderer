@@ -19,7 +19,7 @@ struct ShaderLoaderJob {
 class ShaderLoader {
 private:
     std::vector<Shader> m_shaders;
-    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_cis;
+    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_ci;
 
 public:
     ///
@@ -32,11 +32,11 @@ public:
     }
 
     [[nodiscard]] const auto &shader_stage_create_infos() const {
-        return m_shader_stage_cis;
+        return m_shader_stage_ci;
     }
 
     [[nodiscard]] std::uint32_t shader_stage_count() const {
-        return static_cast<std::uint32_t>(m_shader_stage_cis.size());
+        return static_cast<std::uint32_t>(m_shader_stage_ci.size());
     }
 };
 

@@ -41,7 +41,7 @@ void VulkanRenderer::setup_render_graph() {
 
     m_skybox_gpu_data.reset();
     m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(render_graph, *m_skybox_cpu_data, *m_skybox_cubemap,
-                                                                *m_shader_data_skybox, *m_shader_data_pbr);
+                                                                *m_shader_data_skybox, *m_shader_data_pbr, "skybox");
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(render_graph);
@@ -67,13 +67,13 @@ void VulkanRenderer::setup_render_graph() {
         m_octree_renderer->setup_stage(render_graph, m_back_buffer, m_depth_buffer, octree_data);
     }
 
+#if 0
     m_gltf_model_renderer.reset();
     m_gltf_model_renderer = std::make_unique<gltf::ModelPbrRenderer>(*m_device);
 
     m_gltf_gpu_data.clear();
     m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 
-#if 0
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
         m_gltf_gpu_data.emplace_back(render_graph, model_gpu_data, *m_shader_data_model, *m_shader_data_pbr,
                                      m_cubemap->irradiance_descriptor_image_info(),

@@ -45,7 +45,7 @@ public:
                     const wrapper::UniformBuffer<DefaultUBO> &shader_data_model,
                     const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &shader_data_pbr,
                     VkDescriptorImageInfo irradiance_cube_texture, VkDescriptorImageInfo prefiltered_cube_texture,
-                    VkDescriptorImageInfo brdf_lut_texture);
+                    VkDescriptorImageInfo brdf_lut_texture, std::string name);
 
     ModelGpuPbrData(const ModelGpuPbrData &) = delete;
     ModelGpuPbrData(ModelGpuPbrData &&) noexcept;

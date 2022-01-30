@@ -18,7 +18,7 @@ ShaderLoader::ShaderLoader(const Device &device, const std::vector<ShaderLoaderJ
     std::size_t current_shader = 1;
 
     m_shaders.reserve(shader_count);
-    m_shader_stage_cis.reserve(shader_count);
+    m_shader_stage_ci.reserve(shader_count);
 
     spdlog::trace("Loading {} {} shaders", shader_count, job_name);
 
@@ -31,7 +31,7 @@ ShaderLoader::ShaderLoader(const Device &device, const std::vector<ShaderLoaderJ
         const auto shader_stage_ci = vk_tools::fill_pipeline_shader_stage_ci(m_shaders.back().module(), job.shader_type,
                                                                              m_shaders.back().entry_point().c_str());
 
-        m_shader_stage_cis.push_back(std::move(shader_stage_ci));
+        m_shader_stage_ci.push_back(std::move(shader_stage_ci));
 
         current_shader++;
     }

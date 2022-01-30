@@ -46,12 +46,12 @@ VkImageViewCreateInfo fill_image_view_ci(const VkFormat format, const std::uint3
     return image_view_ci;
 }
 
-ModelGpuPbrDataBase::ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model)
-    : m_device(device), m_model(model), GpuDataBase("gltf2 model") {}
+ModelGpuPbrDataBase::ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model, std::string name)
+    : m_device(device), m_model(model), GpuDataBase(name) {}
 
 ModelGpuPbrDataBase::ModelGpuPbrDataBase(ModelGpuPbrDataBase &&other) noexcept
     : m_device(other.m_device), m_model(other.m_model), m_default_texture_sampler(other.m_default_texture_sampler),
-      GpuDataBase("gltf2 model") {
+      GpuDataBase(std::move(other)) {
 
     m_unsupported_node_types = std::move(other.m_unsupported_node_types);
     m_texture_indices = std::move(other.m_texture_indices);

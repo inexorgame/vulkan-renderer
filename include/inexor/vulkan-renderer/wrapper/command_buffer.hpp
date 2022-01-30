@@ -83,14 +83,18 @@ public:
     /// @param render_pass_bi The const reference to the VkRenderPassBeginInfo which is used.
     void begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const;
 
-    /// @brief Call vkCmdBindPipeline.
-    /// @param pipeline The graphics pipeline to bind.
-    void bind_graphics_pipeline(VkPipeline pipeline) const;
+    /// @brief Call vkCmdBindPipeline
+    /// @param pipeline The graphics pipeline to bind
+    /// @param bind_point The pipeline bind point, ``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default
+    void bind_graphics_pipeline(VkPipeline pipeline,
+                                VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
-    /// @brief Call vkCmdBindIndexBuffer.
-    /// @todo Don't hardcode 16 for index bit width here.
-    /// @param buffer The index buffer to bind.
-    void bind_index_buffer(VkBuffer buffer) const;
+    /// @brief Call vkCmdBindIndexBuffer
+    /// @param buffer The index buffer to bind
+    /// @param index_type The index type, ``VK_INDEX_TYPE_UINT32`` by default
+    /// @param offset The buffer offset, ``0`` by default
+    void bind_index_buffer(VkBuffer buffer, VkIndexType index_type = VK_INDEX_TYPE_UINT32,
+                           std::uint32_t offset = 0) const;
 
     /// @brief Call vkCmdBindVertexBuffers.
     /// @param buffers A std::vector of vertex buffers to bind.

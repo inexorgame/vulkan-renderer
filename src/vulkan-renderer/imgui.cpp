@@ -32,12 +32,12 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
     // TODO: Unify into one call of the builder pattern
     m_stage = render_graph->add<GraphicsStage>("ImGui");
 
-    // TODO: Why no index buffer bound???
     m_stage->bind_buffer(vertex_buffer(), 0)
+        ->bind_buffer(index_buffer(), 0)
         ->uses_shaders(m_shader_loader.shaders())
         ->writes_to(back_buffer)
-        ->reads_from(index_buffer())
         ->reads_from(vertex_buffer())
+        ->reads_from(index_buffer())
         ->add_push_constant_range<PushConstBlock>(VK_SHADER_STAGE_VERTEX_BIT)
         ->add_descriptor_set_layout(m_descriptor->descriptor_set_layout);
 
@@ -189,6 +189,7 @@ void ImGUIOverlay::update() {
             const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
             for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                 const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                // TODO: replace with cmd_buf.draw_indexed!
                 vkCmdDrawIndexed(cmd_buf.get(), draw_cmd.ElemCount, 1, index_offset, vertex_offset, 0);
                 index_offset += draw_cmd.ElemCount;
             }

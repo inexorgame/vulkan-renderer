@@ -23,7 +23,7 @@ private:
 public:
     SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &skybox_model,
                   const cubemap::GpuCubemap &skybox_texture, const wrapper::UniformBuffer<SkyboxUBO> &skybox_matrices,
-                  const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &pbr_parameters);
+                  const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &pbr_parameters, std::string name);
 
     [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const {
         return m_descriptor->descriptor_set_layout;

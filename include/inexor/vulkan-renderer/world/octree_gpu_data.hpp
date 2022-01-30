@@ -25,6 +25,9 @@ private:
         this->create_vertex_buffer(render_graph);
         this->create_index_buffer(render_graph);
 
+        this->update_vertices(cpu_data.vertices());
+        this->update_indices(cpu_data.indices());
+
         m_uniform_buffer =
             std::make_unique<wrapper::UniformBuffer<UniformBufferType>>(render_graph->device_wrapper(), "octree");
 

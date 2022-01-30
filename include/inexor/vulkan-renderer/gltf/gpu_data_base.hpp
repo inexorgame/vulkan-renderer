@@ -68,9 +68,7 @@ protected:
     void load_nodes();
 
 public:
-    /// Default constructor
-    /// @param device The Vulkan device
-    ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model);
+    ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model, std::string name);
 
     virtual ~ModelGpuPbrDataBase();
 

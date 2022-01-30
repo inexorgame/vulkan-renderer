@@ -9,8 +9,9 @@ namespace inexor::vulkan_renderer::skybox {
 SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData &skybox_model,
                              const cubemap::GpuCubemap &skybox_texture,
                              const wrapper::UniformBuffer<SkyboxUBO> &skybox_matrices,
-                             const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &pbr_parameters)
-    : ModelGpuPbrDataBase(render_graph->device_wrapper(), skybox_model.model()) {
+                             const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &pbr_parameters,
+                             std::string name)
+    : ModelGpuPbrDataBase(render_graph->device_wrapper(), skybox_model.model(), name) {
 
     assert(render_graph);
 

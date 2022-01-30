@@ -24,8 +24,7 @@ protected:
     std::vector<VertexType> m_vertices;
     std::vector<IndexType> m_indices;
 
-    // TODO: Add overloaded constructor which takes a vector of vertices/indices
-
+    // TODO: Add overloaded constructor which takes a std::vector of vertices/indices
     GpuDataBase(const std::uint32_t vertex_count, const std::uint32_t index_count, std::string name)
         : m_vertex_count(vertex_count), m_index_count(index_count), m_name(name) {}
 
@@ -34,11 +33,13 @@ protected:
     /// which is why this overloaded constructor exists.
     GpuDataBase(std::string name) : GpuDataBase(0, 0, name) {}
 
-    void create_vertex_buffer(RenderGraph *render_graph,
-                              const std::vector<vk_tools::VertexAttributeLayout> &vertex_attribute_layout) {
+    void create_vertex_buffer(RenderGraph *render_graph, const std::vector<vk_tools::VertexAttributeLayout> &layout) {
         m_vertex_buffer = render_graph->add<BufferResource>(m_name, BufferUsage::VERTEX_BUFFER)
-                              ->set_vertex_attribute_layout<VertexType>(vertex_attribute_layout)
-                              ->upload_data(m_vertices);
+                              ->set_vertex_attribute_layout<VertexType>(layout);
+
+        if (!m_vertices.empty()) {
+            update_vertices(m_vertices);
+        }
     }
 
     void create_vertex_buffer(RenderGraph *render_graph) {
@@ -46,32 +47,45 @@ protected:
     }
 
     void create_index_buffer(RenderGraph *render_graph) {
-        m_index_buffer = render_graph->add<BufferResource>(m_name, BufferUsage::INDEX_BUFFER)->upload_data(m_indices);
+        m_index_buffer = render_graph->add<BufferResource>(m_name, BufferUsage::INDEX_BUFFER);
+
+        if (!m_indices.empty()) {
+            update_indices(m_indices);
+        }
     }
 
 public:
     GpuDataBase(GpuDataBase &&other) noexcept {
-        m_index_buffer = std::exchange(other.m_index_buffer, nullptr);
         m_vertex_buffer = std::exchange(other.m_vertex_buffer, nullptr);
+        m_index_buffer = std::exchange(other.m_index_buffer, nullptr);
         m_vertex_count = other.m_vertex_count;
         m_index_count = other.m_index_count;
+        m_vertices = std::move(other.m_vertices);
+        m_indices = std::move(other.m_indices);
+        m_name = std::move(other.m_name);
+    }
+
+    // TODO: rule of 5!
+
+    void update_vertices(const std::vector<VertexType> &vertices) {
+        m_vertex_buffer->upload_data<VertexType>(vertices);
+        m_vertex_count = static_cast<std::uint32_t>(vertices.size());
+        m_vertices = vertices;
     }
 
     void update_indices(const std::vector<IndexType> &indices) {
         m_index_buffer->upload_data<IndexType>(indices);
         m_index_count = static_cast<std::uint32_t>(indices.size());
-    }
-
-    void update_vertices(const std::vector<VertexType> &vertices) {
-        m_vertex_buffer->upload_data<VertexType>(vertices);
-        m_vertex_count = static_cast<std::uint32_t>(vertices.size());
+        m_indices = indices;
     }
 
     [[nodiscard]] const auto *vertex_buffer() const {
+        assert(m_vertex_buffer);
         return m_vertex_buffer;
     }
 
     [[nodiscard]] const auto *index_buffer() const {
+        assert(m_index_buffer);
         return m_index_buffer;
     }
 
