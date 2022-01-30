@@ -22,8 +22,8 @@ ModelGpuPbrData::ModelGpuPbrData(RenderGraph *render_graph, const ModelCpuData &
     load_animations();
     load_skins();
 
-    this->create_vertex_buffer(render_graph);
-    this->create_index_buffer(render_graph);
+    create_vertex_buffer(render_graph);
+    create_index_buffer(render_graph);
 
     setup_rendering_resources(render_graph, shader_data_model, shader_data_pbr, irradiance_cube_texture,
                               prefiltered_cube_texture, brdf_lut_texture);

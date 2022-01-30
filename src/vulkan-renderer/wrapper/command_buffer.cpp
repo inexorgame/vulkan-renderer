@@ -11,8 +11,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, std::string name)
+CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool command_pool, std::string name)
     : m_device(device), m_name(std::move(name)) {
+
     auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
     alloc_info.commandBufferCount = 1;
     alloc_info.commandPool = command_pool;
@@ -30,7 +31,6 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
     m_name = std::move(other.m_name);
 }
 
-// TODO: Expose more parameters
 void CommandBuffer::begin(const VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();
     begin_info.flags = flags;
@@ -82,14 +82,16 @@ void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) co
     vkCmdBindVertexBuffers(m_cmd_buf, 0, static_cast<std::uint32_t>(buffers.size()), buffers.data(), offsets.data());
 }
 
-// TODO: Expose more parameters
-void CommandBuffer::draw(const std::size_t vertex_count) const {
-    vkCmdDraw(m_cmd_buf, static_cast<std::uint32_t>(vertex_count), 1, 0, 0);
+void CommandBuffer::draw(const std::size_t vertex_count, const std::uint32_t first_vertex,
+                         const std::uint32_t instance_count, const std::uint32_t first_instance) const {
+    vkCmdDraw(m_cmd_buf, static_cast<std::uint32_t>(vertex_count), instance_count, first_vertex, first_instance);
 }
 
-// TODO: Expose more parameters
-void CommandBuffer::draw_indexed(const std::size_t index_count, const std::uint32_t first_index) const {
-    vkCmdDrawIndexed(m_cmd_buf, static_cast<std::uint32_t>(index_count), 1, first_index, 0, 0);
+void CommandBuffer::draw_indexed(const std::size_t index_count, const std::uint32_t first_index,
+                                 const std::uint32_t vertex_offset, const std::uint32_t instance_count,
+                                 const std::uint32_t first_instance) const {
+    vkCmdDrawIndexed(m_cmd_buf, static_cast<std::uint32_t>(index_count), instance_count, first_index, vertex_offset,
+                     first_instance);
 }
 
 void CommandBuffer::end_render_pass() const {
