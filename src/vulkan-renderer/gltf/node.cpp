@@ -6,12 +6,12 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-glm::mat4 ModelNode::local_matrix() {
+[[nodiscard]] glm::mat4 ModelNode::local_matrix() {
     return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.0f), scale) *
            matrix;
 }
 
-glm::mat4 ModelNode::get_matrix() {
+[[nodiscard]] glm::mat4 ModelNode::get_matrix() {
     glm::mat4 m = local_matrix();
     auto *p = parent;
     while (p) {
@@ -24,8 +24,9 @@ glm::mat4 ModelNode::get_matrix() {
 void ModelNode::update() {
     if (mesh) {
         glm::mat4 m = get_matrix();
+
         if (skin) {
-            mesh->uniformBlock.matrix = m;
+            mesh->uniform_block.matrix = m;
 
             // Update joint matrices
             glm::mat4 inverseTransform = glm::inverse(m);
@@ -33,19 +34,16 @@ void ModelNode::update() {
             std::size_t numJoints = std::min(static_cast<std::uint32_t>(skin->joints.size()), MAX_NUM_JOINTS);
 
             for (std::size_t i = 0; i < numJoints; i++) {
-                auto *jointNode = skin->joints[i];
-                glm::mat4 jointMat = jointNode->get_matrix() * skin->inverse_bind_matrices[i];
+                auto *joint_node = skin->joints[i];
+                glm::mat4 jointMat = joint_node->get_matrix() * skin->inverse_bind_matrices[i];
                 jointMat = inverseTransform * jointMat;
-                mesh->uniformBlock.jointMatrix[i] = jointMat;
+                mesh->uniform_block.jointMatrix[i] = jointMat;
             }
 
-            mesh->uniformBlock.jointcount = static_cast<float>(numJoints);
-
-            mesh->uniform_buffer->update(&mesh->uniformBlock);
+            mesh->uniform_block.jointcount = static_cast<float>(numJoints);
+            mesh->uniform_buffer->update(&mesh->uniform_block);
         } else {
-            // TODO: FIX ME
-            spdlog::warn("FIX ME");
-            // mesh->uniform_buffer->update(m);
+            mesh->uniform_buffer->update(&m);
         }
     }
 

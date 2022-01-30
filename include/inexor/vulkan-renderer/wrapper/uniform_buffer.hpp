@@ -39,6 +39,15 @@ public:
         assert(m_allocation_info.pMappedData);
         std::memcpy(m_allocation_info.pMappedData, data, sizeof(BufferDataType));
     }
+
+    // Sometimes we only need to update a part of the structure!
+    template <typename T>
+    void update(const T *data) {
+        static_assert(sizeof(T) < sizeof(BufferDataType));
+        assert(data);
+        assert(m_allocation_info.pMappedData);
+        std::memcpy(m_allocation_info.pMappedData, data, sizeof(T));
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

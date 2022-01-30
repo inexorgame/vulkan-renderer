@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-const std::uint32_t MAX_NUM_JOINTS{128u};
+constexpr std::uint32_t MAX_NUM_JOINTS{128u};
 
 struct ModelMesh {
 
@@ -25,7 +25,7 @@ struct ModelMesh {
         float jointcount{0};
     };
 
-    UniformBlock uniformBlock;
+    UniformBlock uniform_block;
 
     std::unique_ptr<wrapper::UniformBuffer<UniformBlock>> uniform_buffer;
     VkDescriptorSet descriptor_set;

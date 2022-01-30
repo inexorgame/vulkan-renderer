@@ -9,10 +9,11 @@
 #include <cassert>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
+/// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice, VmaAllocator, and VkQueues.
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_graphics_card{VK_NULL_HANDLE};
@@ -166,6 +167,15 @@ public:
     /// @brief End the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
     /// @param command_buffer The command buffer which is associated to the debug marker.
     void end_debug_region(VkCommandBuffer command_buffer) const;
+
+    ///
+    ///
+    /// TODO: Support both std::vector and std::array? Use std::span with C++20!
+    void update_descriptor_sets(const std::vector<VkWriteDescriptorSet> &write_descriptor_sets) const {
+        // TODO: Support descriptor copies
+        vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(write_descriptor_sets.size()),
+                               write_descriptor_sets.data(), 0, nullptr);
+    }
 
     ///
     ///

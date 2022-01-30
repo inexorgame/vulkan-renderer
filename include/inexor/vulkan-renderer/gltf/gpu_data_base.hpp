@@ -70,10 +70,10 @@ protected:
 public:
     ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model, std::string name);
 
-    virtual ~ModelGpuPbrDataBase();
-
     ModelGpuPbrDataBase(const ModelGpuPbrDataBase &) = delete;
     ModelGpuPbrDataBase(ModelGpuPbrDataBase &&) noexcept;
+
+    virtual ~ModelGpuPbrDataBase();
 
     ModelGpuPbrDataBase &operator=(const ModelGpuPbrDataBase &) = delete;
     ModelGpuPbrDataBase &operator=(ModelGpuPbrDataBase &&) noexcept = default;

@@ -12,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace inexor::vulkan_renderer::gltf {
 
@@ -20,6 +21,8 @@ private:
     const wrapper::Device &m_device;
 
     std::string m_name;
+
+    // TODO: Is this even taken into account?
     float m_model_scale{1.0f};
 
     // Start of possible garbage

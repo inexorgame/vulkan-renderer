@@ -43,7 +43,7 @@ void ResourceDescriptor::allocate_descriptor_set(std::vector<VkWriteDescriptorSe
         write.dstSet = descriptor_set;
     }
 
-    vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(desc_writes.size()), desc_writes.data(), 0, 0);
+    m_device.update_descriptor_sets(desc_writes);
 }
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,

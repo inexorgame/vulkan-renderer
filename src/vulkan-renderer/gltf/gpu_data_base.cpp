@@ -162,8 +162,12 @@ void ModelGpuPbrDataBase::load_textures() {
 void ModelGpuPbrDataBase::load_materials() {
     spdlog::trace("Loading {} glTF2 model materials", m_model.materials.size());
 
+    // Reserve 1 more than the number of materials in the glTF2 file for a default material
     m_materials.resize(1 + m_model.materials.size());
 
+    // This is the map or unsupported material features which will be printed to console later
+    // We use an unordered map since each unsupported feature is only stored once
+    // We also do not distinguish between glTF standard values and additional values
     std::unordered_map<std::string, bool> unsupported_material_features{};
 
     for (const auto &material : m_model.materials) {
@@ -184,7 +188,7 @@ void ModelGpuPbrDataBase::load_materials() {
             } else if (name == "baseColorFactor") {
                 new_material.base_color_factor = glm::make_vec4(value.ColorFactor().data());
             } else {
-                // Remember this unsupported feature
+                // Store this unsupported feature
                 unsupported_material_features[name] = true;
             }
         }
@@ -213,44 +217,40 @@ void ModelGpuPbrDataBase::load_materials() {
                 new_material.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
                 new_material.emissive_factor = glm::vec4(0.0f);
             } else {
-                // Remember this unsupported feature
+                // Store this unsupported feature
                 unsupported_material_features[name] = true;
             }
+        }
 
-            // Load materials from extensions
-            if (material.extensions.find("KHR_materials_pbrSpecularGlossiness") != material.extensions.end()) {
-                const auto &extension = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
+        if (material.extensions.find("KHR_materials_pbrSpecularGlossiness") != material.extensions.end()) {
+            const auto &extension = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
 
-                if (extension->second.Has("specularGlossinessTexture")) {
-                    const auto &index = extension->second.Get("specularGlossinessTexture").Get("index");
-                    new_material.extension.specular_glossiness_texture = &m_textures[index.Get<int>()];
-                    const auto &texture_coordinate_set =
-                        extension->second.Get("specularGlossinessTexture").Get("texCoord");
-                    new_material.texture_coordinate_set.specular_glossiness = texture_coordinate_set.Get<int>();
-                    new_material.specular_glossiness = true;
+            if (extension->second.Has("specularGlossinessTexture")) {
+                const auto &index = extension->second.Get("specularGlossinessTexture").Get("index");
+                new_material.extension.specular_glossiness_texture = &m_textures[index.Get<int>()];
+
+                const auto &texture_coordinate_set = extension->second.Get("specularGlossinessTexture").Get("texCoord");
+                new_material.texture_coordinate_set.specular_glossiness = texture_coordinate_set.Get<int>();
+                new_material.specular_glossiness = true;
+            }
+            if (extension->second.Has("diffuseTexture")) {
+                const auto &index = extension->second.Get("diffuseTexture").Get("index");
+                new_material.extension.diffuse_texture = &m_textures[index.Get<int>()];
+            }
+            if (extension->second.Has("diffuseFactor")) {
+                const auto &factor = extension->second.Get("diffuseFactor");
+                for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
+                    const auto &val = factor.Get(i);
+                    new_material.extension.diffuse_factor[i] =
+                        val.IsNumber() ? static_cast<float>(val.Get<double>()) : static_cast<float>(val.Get<int>());
                 }
-
-                if (extension->second.Has("diffuseTexture")) {
-                    const auto &index = extension->second.Get("diffuseTexture").Get("index");
-                    new_material.extension.diffuse_texture = &m_textures[index.Get<int>()];
-                }
-
-                if (extension->second.Has("diffuseFactor")) {
-                    const auto &factor = extension->second.Get("diffuseFactor");
-                    for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
-                        const auto &val = factor.Get(i);
-                        new_material.extension.diffuse_factor[i] =
-                            val.IsNumber() ? static_cast<float>(val.Get<double>()) : static_cast<float>(val.Get<int>());
-                    }
-                }
-
-                if (extension->second.Has("specularFactor")) {
-                    const auto &factor = extension->second.Get("specularFactor");
-                    for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
-                        const auto val = factor.Get(i);
-                        new_material.extension.specular_factor[i] =
-                            val.IsNumber() ? (float)val.Get<double>() : (float)val.Get<int>();
-                    }
+            }
+            if (extension->second.Has("specularFactor")) {
+                const auto &factor = extension->second.Get("specularFactor");
+                for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
+                    const auto &val = factor.Get(i);
+                    new_material.extension.specular_factor[i] =
+                        val.IsNumber() ? static_cast<float>(val.Get<double>()) : static_cast<float>(val.Get<int>());
                 }
             }
         }
@@ -258,12 +258,11 @@ void ModelGpuPbrDataBase::load_materials() {
         m_materials.push_back(new_material);
     }
 
-    // Print out all unsupported features we came across during data extraction
+    // Print out all unsupported material features we came across
     for (const auto &[name, value] : unsupported_material_features) {
         spdlog::warn("Material feature {} not supported!", name);
     }
 
-    // TODO: Check during loading of the mesh if we really need this!
     // Add a default material at the end of the list for meshes with no material assigned
     m_materials.emplace_back();
 }
@@ -273,7 +272,6 @@ void ModelGpuPbrDataBase::load_skins() {
 
     for (const auto &source : m_model.skins) {
         ModelSkin new_skin;
-
         new_skin.name = source.name;
 
         // Find skeleton root node
@@ -283,7 +281,7 @@ void ModelGpuPbrDataBase::load_skins() {
 
         // Find joint nodes
         for (const auto &joint_index : source.joints) {
-            auto *node = node_from_index(joint_index);
+            const auto *node = node_from_index(joint_index);
             if (node != nullptr) {
                 new_skin.joints.push_back(node_from_index(joint_index));
             }

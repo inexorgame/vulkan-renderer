@@ -126,9 +126,11 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     subresourceRange.layerCount = FACE_COUNT;
 
     wrapper::OnceCommandBuffer copy_command(m_device, [&](const VkCommandBuffer cmd_buf) {
+        // TODO: Move transition_image_layout into vkCmdCopyBufferToImage as well
         transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cpu_cubemap.miplevel_count(),
                                 FACE_COUNT);
 
+        // TODO: Move into cmd_buf wrapper
         vkCmdCopyBufferToImage(cmd_buf, texture_staging_buffer.buffer(), image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
 
@@ -177,6 +179,7 @@ void GpuCubemap::copy_from_image(const VkCommandBuffer cmd_buf, const VkImage so
     region.extent.height = height;
     region.extent.depth = 1;
 
+    // TODO: move into cmd_buf wrapper!
     vkCmdCopyImage(cmd_buf, source_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image(),
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }

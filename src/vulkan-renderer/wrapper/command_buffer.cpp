@@ -42,7 +42,6 @@ void CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set, co
                                         const VkPipelineBindPoint bind_point) const {
     assert(descriptor_set);
     assert(layout);
-
     vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, 0, 1, &descriptor_set, 0, nullptr);
 }
 
@@ -51,7 +50,6 @@ void CommandBuffer::bind_descriptor_sets(const std::vector<VkDescriptorSet> &des
                                          const VkPipelineLayout layout, const VkPipelineBindPoint bind_point) const {
     assert(!descriptor_sets.empty());
     assert(layout);
-
     vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, 0, static_cast<std::uint32_t>(descriptor_sets.size()),
                             descriptor_sets.data(), 0, nullptr);
 }

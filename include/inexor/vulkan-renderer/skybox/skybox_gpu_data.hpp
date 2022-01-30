@@ -12,8 +12,6 @@
 #include "inexor/vulkan-renderer/wrapper/descriptor_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
-#include <glm/mat4x4.hpp>
-
 namespace inexor::vulkan_renderer::skybox {
 
 class SkyboxGpuData : public gltf::ModelGpuPbrDataBase {

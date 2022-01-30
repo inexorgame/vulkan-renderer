@@ -40,9 +40,11 @@ ModelGpuPbrData::ModelGpuPbrData(ModelGpuPbrData &&other) noexcept
 }
 
 ModelGpuPbrData::~ModelGpuPbrData() {
+    // TODO: Move to RAII wrappers and use builder pattern!
     vkDestroyDescriptorSetLayout(m_device.device(), m_scene_descriptor_set_layout, nullptr);
     vkDestroyDescriptorSetLayout(m_device.device(), m_material_descriptor_set_layout, nullptr);
     vkDestroyDescriptorSetLayout(m_device.device(), m_node_descriptor_set_layout, nullptr);
+    vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
 }
 
 void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const ModelNode &node) {
@@ -62,6 +64,8 @@ void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const Mo
         writeDescriptorSet.dstSet = node.mesh->descriptor_set;
         writeDescriptorSet.dstBinding = 0;
         writeDescriptorSet.pBufferInfo = &node.mesh->uniform_buffer->descriptor_buffer_info;
+
+        // TODO: Use wrapper!
         vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
     }
 
@@ -75,8 +79,6 @@ void ModelGpuPbrData::setup_rendering_resources(
     const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &shader_data_pbr,
     const VkDescriptorImageInfo irradiance_cube_texture, const VkDescriptorImageInfo prefiltered_cube_texture,
     const VkDescriptorImageInfo brdf_lut_texture) {
-
-    m_empty_texture = std::make_unique<texture::GpuTexture>(render_graph->device_wrapper());
 
     // Environment samplers (radiance, irradiance, brdf lookup table)
     std::uint32_t image_sampler_count = 3;
@@ -142,7 +144,7 @@ void ModelGpuPbrData::setup_rendering_resources(
 
         vkAllocateDescriptorSets(render_graph->device(), &desc_set_ai, &m_scene_descriptor_set);
 
-        std::array<VkWriteDescriptorSet, 5> write_desc_sets{};
+        std::vector<VkWriteDescriptorSet> write_desc_sets(5);
 
         write_desc_sets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write_desc_sets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -179,8 +181,7 @@ void ModelGpuPbrData::setup_rendering_resources(
         write_desc_sets[4].dstBinding = 4;
         write_desc_sets[4].pImageInfo = &brdf_lut_texture;
 
-        vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(write_desc_sets.size()), write_desc_sets.data(),
-                               0, nullptr);
+        m_device.update_descriptor_sets(write_desc_sets);
     }
 
     // Material (samplers)
@@ -213,48 +214,49 @@ void ModelGpuPbrData::setup_rendering_resources(
 
             vkAllocateDescriptorSets(render_graph->device(), &descriptorSetAllocInfo, &material.descriptor_set);
 
-            std::vector<VkDescriptorImageInfo> imageDescriptors = {
-                m_empty_texture->descriptor_image_info, m_empty_texture->descriptor_image_info,
-                material.normal_texture ? material.normal_texture->descriptor_image_info
-                                        : m_empty_texture->descriptor_image_info,
-                material.occlusion_texture ? material.occlusion_texture->descriptor_image_info
-                                           : m_empty_texture->descriptor_image_info,
-                material.emissive_texture ? material.emissive_texture->descriptor_image_info
-                                          : m_empty_texture->descriptor_image_info};
+            auto use_texture_if_available = [&](const texture::GpuTexture *texture) {
+                return texture ? texture->descriptor_image_info : m_empty_texture->descriptor_image_info;
+            };
+
+            std::vector<VkDescriptorImageInfo> descriptor_image_infos = {
+                m_empty_texture->descriptor_image_info,               //
+                m_empty_texture->descriptor_image_info,               //
+                use_texture_if_available(material.normal_texture),    //
+                use_texture_if_available(material.occlusion_texture), //
+                use_texture_if_available(material.emissive_texture)};
 
             // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is
             // present
 
             if (material.metallic_roughness) {
                 if (material.base_color_texture) {
-                    imageDescriptors[0] = material.base_color_texture->descriptor_image_info;
+                    descriptor_image_infos[0] = material.base_color_texture->descriptor_image_info;
                 }
                 if (material.metallic_roughness_texture) {
-                    imageDescriptors[1] = material.metallic_roughness_texture->descriptor_image_info;
+                    descriptor_image_infos[1] = material.metallic_roughness_texture->descriptor_image_info;
                 }
             }
             if (material.specular_glossiness) {
                 if (material.extension.diffuse_texture) {
-                    imageDescriptors[0] = material.extension.diffuse_texture->descriptor_image_info;
+                    descriptor_image_infos[0] = material.extension.diffuse_texture->descriptor_image_info;
                 }
                 if (material.extension.specular_glossiness_texture) {
-                    imageDescriptors[1] = material.extension.specular_glossiness_texture->descriptor_image_info;
+                    descriptor_image_infos[1] = material.extension.specular_glossiness_texture->descriptor_image_info;
                 }
             }
 
-            std::array<VkWriteDescriptorSet, 5> write_desc_set{};
+            std::vector<VkWriteDescriptorSet> write_desc_set(5);
 
-            for (size_t i = 0; i < imageDescriptors.size(); i++) {
+            for (size_t i = 0; i < descriptor_image_infos.size(); i++) {
                 write_desc_set[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 write_desc_set[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                 write_desc_set[i].descriptorCount = 1;
                 write_desc_set[i].dstSet = material.descriptor_set;
                 write_desc_set[i].dstBinding = static_cast<uint32_t>(i);
-                write_desc_set[i].pImageInfo = &imageDescriptors[i];
+                write_desc_set[i].pImageInfo = &descriptor_image_infos[i];
             }
 
-            vkUpdateDescriptorSets(m_device.device(), static_cast<uint32_t>(write_desc_set.size()),
-                                   write_desc_set.data(), 0, nullptr);
+            m_device.update_descriptor_sets(write_desc_set);
         }
     }
 
