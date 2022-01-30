@@ -60,7 +60,7 @@ void VulkanRenderer::setup_render_graph() {
     }
 
     for (const auto &octree : m_octree_cpu_data) {
-        m_octree_gpu_data.emplace_back(render_graph, octree);
+        m_octree_gpu_data.emplace_back(render_graph, octree, "octree");
     }
 
     for (const auto &octree_data : m_octree_gpu_data) {
@@ -73,6 +73,7 @@ void VulkanRenderer::setup_render_graph() {
     m_gltf_gpu_data.clear();
     m_gltf_gpu_data.reserve(m_gltf_cpu_data.size());
 
+#if 0
     for (const auto &model_gpu_data : m_gltf_cpu_data) {
         m_gltf_gpu_data.emplace_back(render_graph, model_gpu_data, *m_shader_data_model, *m_shader_data_pbr,
                                      m_cubemap->irradiance_descriptor_image_info(),
@@ -83,6 +84,7 @@ void VulkanRenderer::setup_render_graph() {
     for (const auto &model : m_gltf_gpu_data) {
         m_gltf_model_renderer->setup_stage(render_graph, m_back_buffer, m_depth_buffer, model);
     }
+#endif
 
     m_imgui_overlay.reset();
     // TODO: Call setup_stage here as well?

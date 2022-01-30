@@ -22,15 +22,8 @@ private:
     void setup_rendering_resources(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data) {
         assert(render_graph);
 
-        this->m_vertex_buffer =
-            render_graph
-                ->add<BufferResource>("octree vertices", BufferUsage::VERTEX_BUFFER)
-                // The vertex attribute layout must be specified and it must be consistent with VertexType!
-                ->set_vertex_attribute_layout<VertexType>(VertexType::vertex_attribute_layout())
-                ->upload_data(cpu_data.vertices());
-
-        this->m_index_buffer = render_graph->add<BufferResource>("octree indices", BufferUsage::INDEX_BUFFER)
-                                   ->upload_data(cpu_data.indices());
+        this->create_vertex_buffer(render_graph);
+        this->create_index_buffer(render_graph);
 
         m_uniform_buffer =
             std::make_unique<wrapper::UniformBuffer<UniformBufferType>>(render_graph->device_wrapper(), "octree");
@@ -41,9 +34,9 @@ private:
     }
 
 public:
-    OctreeGpuData(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data)
+    OctreeGpuData(RenderGraph *render_graph, const OctreeCpuData<VertexType, IndexType> &cpu_data, std::string name)
         : GpuDataBase<VertexType, IndexType>(static_cast<std::uint32_t>(cpu_data.vertices().size()),
-                                             static_cast<std::uint32_t>(cpu_data.indices().size())) {
+                                             static_cast<std::uint32_t>(cpu_data.indices().size()), name) {
         setup_rendering_resources(render_graph, cpu_data);
     }
 

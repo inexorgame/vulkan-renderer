@@ -22,10 +22,8 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
         {VK_FORMAT_R8G8B8A8_UNORM, sizeof(ImDrawVert::col), offsetof(ImDrawVert, col)},
     };
 
-    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertices", BufferUsage::VERTEX_BUFFER)
-                          ->set_vertex_attribute_layout<ImDrawVert>(vertex_attribute_layout);
-
-    m_index_buffer = render_graph->add<BufferResource>("ImGui indices", BufferUsage::INDEX_BUFFER);
+    create_vertex_buffer(render_graph, vertex_attribute_layout);
+    create_index_buffer(render_graph);
 
     auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
 
@@ -34,11 +32,12 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
     // TODO: Unify into one call of the builder pattern
     m_stage = render_graph->add<GraphicsStage>("ImGui");
 
-    m_stage->bind_buffer(m_vertex_buffer, 0)
+    // TODO: Why no index buffer bound???
+    m_stage->bind_buffer(vertex_buffer(), 0)
         ->uses_shaders(m_shader_loader.shaders())
         ->writes_to(back_buffer)
-        ->reads_from(m_index_buffer)
-        ->reads_from(m_vertex_buffer)
+        ->reads_from(index_buffer())
+        ->reads_from(vertex_buffer())
         ->add_push_constant_range<PushConstBlock>(VK_SHADER_STAGE_VERTEX_BIT)
         ->add_descriptor_set_layout(m_descriptor->descriptor_set_layout);
 
@@ -55,9 +54,8 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
 }
 
 ImGUIOverlay::ImGUIOverlay(RenderGraph *render_graph, const wrapper::Swapchain &swapchain, TextureResource *back_buffer)
-
     : m_device(render_graph->device_wrapper()), m_swapchain(swapchain),
-      m_shader_loader(m_device, m_shader_files, "imgui") {
+      m_shader_loader(m_device, m_shader_files, "imgui"), GpuDataBase("imgui") {
 
     spdlog::debug("Creating ImGUI context");
     ImGui::CreateContext();
@@ -151,7 +149,7 @@ void ImGUIOverlay::update() {
                 m_indices.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
             }
         }
-        m_index_buffer->upload_data(m_indices);
+        update_indices(m_indices);
         should_update = true;
     }
 
@@ -163,7 +161,7 @@ void ImGUIOverlay::update() {
                 m_vertices.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
             }
         }
-        m_vertex_buffer->upload_data(m_vertices);
+        update_vertices(m_vertices);
         should_update = true;
     }
 

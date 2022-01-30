@@ -22,6 +22,9 @@ ModelGpuPbrData::ModelGpuPbrData(RenderGraph *render_graph, const ModelCpuData &
     load_animations();
     load_skins();
 
+    create_vertex_buffer(render_graph);
+    create_index_buffer(render_graph);
+
     setup_rendering_resources(render_graph, shader_data_model, shader_data_pbr, irradiance_cube_texture,
                               prefiltered_cube_texture, brdf_lut_texture);
 }
@@ -72,12 +75,6 @@ void ModelGpuPbrData::setup_rendering_resources(
     const wrapper::UniformBuffer<pbr::ModelPbrShaderParamsUBO> &shader_data_pbr,
     const VkDescriptorImageInfo irradiance_cube_texture, const VkDescriptorImageInfo prefiltered_cube_texture,
     const VkDescriptorImageInfo brdf_lut_texture) {
-
-    m_vertex_buffer = render_graph->add<BufferResource>("gltf", BufferUsage::VERTEX_BUFFER)
-                          ->set_vertex_attribute_layout<gltf::ModelVertex>(gltf::ModelVertex::vertex_attribute_layout())
-                          ->upload_data(indices());
-
-    m_index_buffer = render_graph->add<BufferResource>("gltf", BufferUsage::INDEX_BUFFER)->upload_data(vertices());
 
     m_empty_texture = std::make_unique<texture::GpuTexture>(render_graph->device_wrapper());
 

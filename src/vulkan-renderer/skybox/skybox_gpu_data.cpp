@@ -20,11 +20,8 @@ SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData
     load_materials();
     load_nodes();
 
-    m_vertex_buffer = render_graph->add<BufferResource>("skybox", BufferUsage::VERTEX_BUFFER)
-                          ->set_vertex_attribute_layout<gltf::ModelVertex>(gltf::ModelVertex::vertex_attribute_layout())
-                          ->upload_data(vertices());
-
-    m_index_buffer = render_graph->add<BufferResource>("skybox", BufferUsage::INDEX_BUFFER)->upload_data(indices());
+    create_vertex_buffer(render_graph, gltf::ModelVertex::vertex_attribute_layout());
+    create_index_buffer(render_graph);
 
     auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
 

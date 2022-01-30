@@ -107,7 +107,7 @@ private:
     }
 
 public:
-    BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
+    BufferResource(std::string name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
 
     template <typename VertexType>
     BufferResource *set_vertex_attribute_layout(const std::vector<vk_tools::VertexAttributeLayout> &attributes) {

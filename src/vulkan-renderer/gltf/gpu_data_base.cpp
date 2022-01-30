@@ -47,10 +47,11 @@ VkImageViewCreateInfo fill_image_view_ci(const VkFormat format, const std::uint3
 }
 
 ModelGpuPbrDataBase::ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model)
-    : m_device(device), m_model(model) {}
+    : m_device(device), m_model(model), GpuDataBase("gltf2 model") {}
 
 ModelGpuPbrDataBase::ModelGpuPbrDataBase(ModelGpuPbrDataBase &&other) noexcept
-    : m_device(other.m_device), m_model(other.m_model), m_default_texture_sampler(other.m_default_texture_sampler) {
+    : m_device(other.m_device), m_model(other.m_model), m_default_texture_sampler(other.m_default_texture_sampler),
+      GpuDataBase("gltf2 model") {
 
     m_unsupported_node_types = std::move(other.m_unsupported_node_types);
     m_texture_indices = std::move(other.m_texture_indices);
@@ -795,16 +796,6 @@ ModelNode *ModelGpuPbrDataBase::node_from_index(const std::uint32_t index) {
 
 ModelGpuPbrDataBase::~ModelGpuPbrDataBase() {
     // TODO: Implement!
-}
-
-void ModelGpuPbrDataBase::update_indices(const std::vector<std::uint32_t> &indices) {
-    m_index_buffer->upload_data<std::uint32_t>(indices);
-    m_index_count = static_cast<std::uint32_t>(indices.size());
-}
-
-void ModelGpuPbrDataBase::update_vertices(const std::vector<ModelVertex> &vertices) {
-    m_vertex_buffer->upload_data<ModelVertex>(vertices);
-    m_vertex_count = static_cast<std::uint32_t>(vertices.size());
 }
 
 } // namespace inexor::vulkan_renderer::gltf

@@ -80,10 +80,6 @@ public:
     ModelGpuPbrDataBase &operator=(const ModelGpuPbrDataBase &) = delete;
     ModelGpuPbrDataBase &operator=(ModelGpuPbrDataBase &&) noexcept = default;
 
-    void update_indices(const std::vector<std::uint32_t> &indices);
-
-    void update_vertices(const std::vector<ModelVertex> &vertices);
-
     // TODO: Make this const again and move descriptor set allocation to gpu_data_base?
     [[nodiscard]] auto &materials() {
         return m_materials;
