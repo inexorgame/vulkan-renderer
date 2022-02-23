@@ -28,6 +28,8 @@ include(conan)
 
 conan_check(VERSION 1.35.2 REQUIRED)
 
+# TODO: cmake-conan v0.17.0 can automatically set the compiler.cppstd propety based on CMAKE_CXX_STANDARD.
+#       We could set this variable globally but it goes against current conventions where the CXX standard is set per target.
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 # if a specific build type is set ignore the multi config generator
 if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
@@ -42,7 +44,7 @@ if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
             OPTIONS build_benchmarks=${benchmark_option}
             OPTIONS build_tests=${tests_option}
             SETTINGS ${conan_settings}
-            SETTINGS compiler.cppstd=17
+            SETTINGS compiler.cppstd=20
             ${compiler_libcxx}
         )
     endforeach()
@@ -57,7 +59,7 @@ else()
         OPTIONS build_benchmarks=${benchmark_option}
         OPTIONS build_tests=${tests_option}
         SETTINGS ${conan_settings}
-        SETTINGS compiler.cppstd=17
+        SETTINGS compiler.cppstd=20
         ${compiler_libcxx}
     )
     include(conanbuildinfo)
