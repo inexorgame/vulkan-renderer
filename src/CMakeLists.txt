@@ -91,8 +91,10 @@ if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
 endif()
 
 # enable exceptions when using MSVC toolchain, makes Clang on windows possible
+# enable correct reporting of the __cplusplus macro so correct code paths are selected
 if(MSVC)
     target_compile_options(inexor-vulkan-renderer PRIVATE "-EHs")
+    target_compile_options(inexor-vulkan-renderer PRIVATE "/Zc:__cplusplus")
 endif()
 
 # Replace variables in header file with CMake values
