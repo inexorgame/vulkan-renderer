@@ -134,8 +134,8 @@ jobs:
             artifact: "windows-msvc.zip",
             cc: "cl", cxx: "cl",
             cmake_build_options: "--config Release",
-            cmake_configure_options: '-G "Visual Studio 16 2019" -A x64',
-            conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=16 default',
+            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
+            conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=17 default',
           }
 
     steps:
