@@ -1,0 +1,17 @@
+name: Add Labels
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  add_labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add labels
+        uses: andymckay/labeler@master
+        with:
+          add-labels: "org:triage"
+          ignore-if-labeled: true
