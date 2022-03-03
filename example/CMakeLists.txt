@@ -4,7 +4,7 @@ set_target_properties(
     inexor-vulkan-renderer-example PROPERTIES
 
     CXX_EXTENSIONS OFF
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )
 
