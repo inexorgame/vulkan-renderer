@@ -23,4 +23,6 @@ foreach(SHADER ${SHADERS})
     list(APPEND SPIRV_FILES ${SPIRV})
 endforeach()
 
-add_custom_target(inexor-shaders DEPENDS ${SPIRV_FILES})
+source_group("Shader Files" FILES ${SHADERS})
+
+add_custom_target(inexor-shaders DEPENDS ${SPIRV_FILES} SOURCES ${SHADERS})
