@@ -1,0 +1,74 @@
+name: Bug Report
+description: File a bug report
+labels: ["cat:bug", "org:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe The Bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expectation
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: code-link
+    attributes:
+      label: Affected Code
+      description: Please link the code where it happens, if available.
+      placeholder: |
+        https://github.com/inexorgame/vulkan-renderer/blob/main/src/CMakeLists.txt#L1-L6
+        https://github.com/inexorgame/vulkan-renderer/blob/main/src/CMakeLists.txt#L25
+  - type: textarea
+    id: os-information
+    attributes:
+      label: Operating System
+      description: Which operating system is affected?
+      placeholder: |
+        Windows 10 (21H2)
+        Archlinux 2022.03.01
+    validations:
+      required: true
+  - type: input
+    id: app-information
+    attributes:
+      label: Application Version
+      description: Which application version/ commmit SHA is affected?
+      placeholder: |
+        1.2.3 (c1e2d69)
+    validations:
+      required: true
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem or screenshots.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output
+      description: |
+        Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+        Make sure to remove any personal information before!
+      render: shell
