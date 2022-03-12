@@ -35,18 +35,19 @@ void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet 
     }
 
     for (const auto &child : node.children) {
-        render_node(child, scene_descriptor_set, cmd_buf, pipeline_layout, alpha_mode);
+        render_node(*child, scene_descriptor_set, cmd_buf, pipeline_layout, alpha_mode);
     }
 }
 
-void ModelPbrRenderer::render_model(const std::vector<ModelNode> &nodes, const VkDescriptorSet scene_descriptor_set,
-                                    const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout pipeline_layout) {
+void ModelPbrRenderer::render_model(const std::vector<std::shared_ptr<ModelNode>> &nodes,
+                                    const VkDescriptorSet scene_descriptor_set, const wrapper::CommandBuffer &cmd_buf,
+                                    const VkPipelineLayout pipeline_layout) {
     // TODO: Isn't it possible to pre-assign the model nodes into vectors so we don't iterate unnecessarily?
     for (const auto &node : nodes) {
-        render_node(node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_OPAQUE);
+        render_node(*node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_OPAQUE);
     }
     for (const auto &node : nodes) {
-        render_node(node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_MASK);
+        render_node(*node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_MASK);
     }
 
     // TODO: Render transparent primitives using AlphaMode::ALPHAMODE_BLEND!

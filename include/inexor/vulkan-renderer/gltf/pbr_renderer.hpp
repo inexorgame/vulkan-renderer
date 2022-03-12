@@ -30,7 +30,7 @@ public:
     void setup_stage(RenderGraph *render_graph, const TextureResource *back_buffer, const TextureResource *depth_buffer,
                      const ModelGpuPbrData &model);
 
-    void render_model(const std::vector<ModelNode> &nodes, VkDescriptorSet scene_descriptor_set,
+    void render_model(const std::vector<std::shared_ptr<ModelNode>> &nodes, VkDescriptorSet scene_descriptor_set,
                       const wrapper::CommandBuffer &cmd_buf, VkPipelineLayout pipeline_layout);
 };
 

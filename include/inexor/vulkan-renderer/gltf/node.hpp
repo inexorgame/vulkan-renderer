@@ -33,8 +33,8 @@ struct ModelNode {
     std::uint32_t index;
     ModelSkin *skin{nullptr};
     std::uint32_t skin_index;
-    std::vector<ModelNode> children;
-    std::unique_ptr<ModelMesh> mesh;
+    std::vector<std::shared_ptr<ModelNode>> children;
+    std::shared_ptr<ModelMesh> mesh{nullptr};
     glm::vec3 translation{};
     glm::vec3 scale{1.0f};
     glm::quat rotation{};

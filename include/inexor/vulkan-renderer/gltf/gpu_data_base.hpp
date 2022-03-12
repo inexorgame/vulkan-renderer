@@ -32,8 +32,8 @@ private:
 
     std::vector<std::uint32_t> m_texture_indices;
     std::vector<ModelMaterial> m_materials;
-    std::vector<ModelNode> m_nodes;
-    std::vector<ModelNode> m_linear_nodes;
+    std::vector<std::shared_ptr<ModelNode>> m_nodes;
+    std::vector<std::shared_ptr<ModelNode>> m_linear_nodes;
     std::vector<ModelAnimation> animations;
     std::vector<ModelSkin> m_skins;
 
@@ -81,6 +81,10 @@ public:
     // TODO: Make this const again and move descriptor set allocation to gpu_data_base?
     [[nodiscard]] auto &materials() {
         return m_materials;
+    }
+
+    [[nodiscard]] std::size_t material_count() const {
+        return m_materials.size();
     }
 
     [[nodiscard]] const auto &nodes() const {

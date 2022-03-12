@@ -9,14 +9,14 @@ namespace inexor::vulkan_renderer::skybox {
 SkyboxRenderer::SkyboxRenderer(RenderGraph *render_graph)
     : m_shader_loader(render_graph->device_wrapper(), m_shader_files, "skybox") {}
 
-void SkyboxRenderer::draw_node(const wrapper::CommandBuffer &cmd_buf, const gltf::ModelNode *node) {
-    if (node->mesh) {
-        for (const auto &primitive : node->mesh->primitives) {
+void SkyboxRenderer::draw_node(const wrapper::CommandBuffer &cmd_buf, const gltf::ModelNode &node) {
+    if (node.mesh) {
+        for (const auto &primitive : node.mesh->primitives) {
             cmd_buf.draw_indexed(primitive.index_count, primitive.first_index);
         }
     }
-    for (auto &child : node->children) {
-        draw_node(cmd_buf, &child);
+    for (const auto &child : node.children) {
+        draw_node(cmd_buf, *child);
     }
 }
 
@@ -41,7 +41,7 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
                             ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
                                 cmd_buf.bind_descriptor_set(skybox.descriptor_set(), physical.pipeline_layout());
                                 for (const auto &node : skybox.nodes()) {
-                                    draw_node(cmd_buf, &node);
+                                    draw_node(cmd_buf, *node);
                                 }
                             });
 }

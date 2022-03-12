@@ -55,7 +55,11 @@ void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const Mo
         descriptorSetAllocInfo.descriptorPool = m_descriptor_pool;
         descriptorSetAllocInfo.pSetLayouts = &m_node_descriptor_set_layout;
         descriptorSetAllocInfo.descriptorSetCount = 1;
-        vkAllocateDescriptorSets(device, &descriptorSetAllocInfo, &node.mesh->descriptor_set);
+
+        if (const auto result = vkAllocateDescriptorSets(device, &descriptorSetAllocInfo, &node.mesh->descriptor_set);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vkAllocateDescriptorSets failed!", result);
+        }
 
         VkWriteDescriptorSet writeDescriptorSet{};
         writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -66,11 +70,12 @@ void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const Mo
         writeDescriptorSet.pBufferInfo = &node.mesh->uniform_buffer->descriptor_buffer_info;
 
         // TODO: Use wrapper!
+        // TODO: Unify into one call!
         vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
     }
 
     for (const auto &child : node.children) {
-        setup_node_descriptor_sets(device, child);
+        setup_node_descriptor_sets(device, *child);
     }
 }
 
@@ -81,23 +86,16 @@ void ModelGpuPbrData::setup_rendering_resources(
     const VkDescriptorImageInfo brdf_lut_texture) {
 
     // Environment samplers (radiance, irradiance, brdf lookup table)
-    std::uint32_t image_sampler_count = 3;
-    std::uint32_t material_count = 0;
+    std::uint32_t image_sampler_count = 3 + static_cast<std::uint32_t>(material_count());
     std::uint32_t mesh_count = 0;
 
-    // TODO: material_count = 3 + materials().size();
-    for (const auto &material : materials()) {
-        image_sampler_count += 5;
-        material_count++;
-    }
     for (const auto &node : linear_nodes()) {
-        if (node.mesh) {
+        if (node->mesh) {
             mesh_count++;
         }
     }
 
-    // TODO: DESCRIPTOR BUILDER ALL OVER THIS HERE
-
+    // TODO: Apply descriptor builder everywhere
     const std::vector<VkDescriptorPoolSize> pool_sizes{
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + mesh_count)},
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, image_sampler_count}};
@@ -106,7 +104,9 @@ void ModelGpuPbrData::setup_rendering_resources(
     descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCI.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
     descriptorPoolCI.pPoolSizes = pool_sizes.data();
-    descriptorPoolCI.maxSets = (2 + material_count + mesh_count);
+
+    // TODO: Why the 4 + 2 ???
+    descriptorPoolCI.maxSets = 4 + 2 + static_cast<std::uint32_t>(material_count() + mesh_count);
 
     if (const auto result =
             vkCreateDescriptorPool(render_graph->device(), &descriptorPoolCI, nullptr, &m_descriptor_pool);
@@ -279,7 +279,7 @@ void ModelGpuPbrData::setup_rendering_resources(
         }
 
         for (const auto &node : nodes()) {
-            setup_node_descriptor_sets(render_graph->device(), node);
+            setup_node_descriptor_sets(render_graph->device(), *node);
         }
     }
 }

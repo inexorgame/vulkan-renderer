@@ -48,7 +48,7 @@ void ModelNode::update() {
     }
 
     for (auto &child : children) {
-        child.update();
+        child->update();
     }
 }
 

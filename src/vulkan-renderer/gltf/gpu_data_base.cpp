@@ -153,10 +153,10 @@ void ModelGpuPbrDataBase::load_textures() {
             break;
         }
         }
-
-        // Generate an error texture (chessboard pattern) as empty texture
-        m_empty_texture = std::make_unique<texture::GpuTexture>(m_device, texture::CpuTexture());
     }
+
+    // Generate an error texture (chessboard pattern) as empty texture
+    m_empty_texture = std::make_unique<texture::GpuTexture>(m_device, texture::CpuTexture());
 }
 
 void ModelGpuPbrDataBase::load_materials() {
@@ -306,11 +306,11 @@ void ModelGpuPbrDataBase::load_skins() {
     }
 
     for (auto &node : m_linear_nodes) {
-        if (node.skin_index > -1) {
-            node.skin = &m_skins[node.skin_index];
+        if (node->skin_index > -1) {
+            node->skin = &m_skins[node->skin_index];
         }
-        if (node.mesh) {
-            node.update();
+        if (node->mesh) {
+            node->update();
         }
     }
 }
@@ -465,34 +465,35 @@ void ModelGpuPbrDataBase::load_nodes() {
 
 void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &node, const std::uint32_t scene_index,
                                     const std::uint32_t node_index) {
-    ModelNode new_node;
-    new_node.name = node.name;
-    new_node.parent = parent;
-    new_node.index = node_index;
-    new_node.skin_index = node.skin;
-    new_node.matrix = glm::mat4(1.0f);
+
+    auto new_node = std::make_shared<ModelNode>();
+    new_node->name = node.name;
+    new_node->parent = parent;
+    new_node->index = node_index;
+    new_node->skin_index = node.skin;
+    new_node->matrix = glm::mat4(1.0f);
 
     // The local node matrix is either made up from translation, rotation, scale or a 4x4 matrix
     if (node.translation.size() == 3) {
-        new_node.translation = glm::make_vec3(node.translation.data());
+        new_node->translation = glm::make_vec3(node.translation.data());
     }
 
     if (node.rotation.size() == 4) {
         glm::quat rotation_quaternion = glm::make_quat(node.rotation.data());
-        new_node.rotation = glm::mat4(rotation_quaternion);
+        new_node->rotation = glm::mat4(rotation_quaternion);
     }
 
     if (node.scale.size() == 3) {
-        new_node.scale = glm::make_vec3(node.scale.data());
+        new_node->scale = glm::make_vec3(node.scale.data());
     }
 
     if (node.matrix.size() == 16) {
-        new_node.matrix = glm::make_mat4x4(node.matrix.data());
+        new_node->matrix = glm::make_mat4x4(node.matrix.data());
     }
 
     if (!node.children.empty()) {
         for (std::size_t child_index = 0; child_index < node.children.size(); child_index++) {
-            load_node(&new_node, m_model.nodes.at(node.children.at(child_index)), scene_index,
+            load_node(new_node.get(), m_model.nodes.at(node.children.at(child_index)), scene_index,
                       node.children.at(child_index));
         }
     }
@@ -510,7 +511,7 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
         const auto &buffers = m_model.buffers;
         const auto &buffer_views = m_model.bufferViews;
 
-        auto new_mesh = std::make_unique<ModelMesh>(m_device, new_node.matrix);
+        auto new_mesh = std::make_unique<ModelMesh>(m_device, new_node->matrix);
 
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
@@ -749,7 +750,7 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
             new_mesh->bb.max = glm::max(new_mesh->bb.max, p.bbox.max);
         }
 
-        new_node.mesh = std::move(new_mesh);
+        new_node->mesh = std::move(new_mesh);
     } else {
         // Remember this unsupported glTF2 model node type
         m_unsupported_node_types[node.name] = true;
@@ -757,23 +758,29 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
 
     if (parent) {
         // TODO: Should we consider using emplace_back here?
-        parent->children.push_back(std::move(new_node));
+        parent->children.push_back(new_node);
     } else {
         // TODO: Should we consider using emplace_back here?
-        m_nodes.push_back(std::move(new_node));
+        m_nodes.push_back(new_node);
     }
 
     // TODO: Should we consider using emplace_back here?
-    m_linear_nodes.push_back(std::move(new_node));
+    m_linear_nodes.push_back(new_node);
 }
 
 ModelNode *ModelGpuPbrDataBase::find_node(ModelNode *parent, const std::uint32_t index) {
     ModelNode *node_found = nullptr;
+
+    if (!parent) {
+        return node_found;
+    }
+
     if (parent->index == index) {
         return parent;
     }
+
     for (auto &child : parent->children) {
-        node_found = find_node(&child, index);
+        node_found = find_node(child.get(), index);
         if (node_found != nullptr) {
             break;
         }
@@ -783,8 +790,9 @@ ModelNode *ModelGpuPbrDataBase::find_node(ModelNode *parent, const std::uint32_t
 
 ModelNode *ModelGpuPbrDataBase::node_from_index(const std::uint32_t index) {
     ModelNode *node_found = nullptr;
+
     for (auto &node : m_nodes) {
-        node_found = find_node(&node, index);
+        node_found = find_node(node.get(), index);
         if (node_found != nullptr) {
             break;
         }

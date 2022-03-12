@@ -487,6 +487,15 @@ void Application::update_uniform_buffers() {
     skybox_ubo.model = glm::mat4(glm::mat3(m_camera->view_matrix()));
     skybox_ubo.projection = m_camera->perspective_matrix();
     m_shader_data_skybox->update(&skybox_ubo);
+
+    DefaultUBO default_ubo{};
+    default_ubo.camera_pos = m_camera->position();
+    default_ubo.model = glm::mat4(0.1f);
+    default_ubo.projection = m_camera->perspective_matrix();
+    default_ubo.projection[1][1] *= -1;
+    default_ubo.view = m_camera->view_matrix();
+
+    m_shader_data_model->update(&default_ubo);
 }
 
 void Application::update_imgui_overlay() {
