@@ -116,10 +116,10 @@ void ModelGpuPbrDataBase::load_textures() {
                                return std::array<std::uint32_t, 4>{rgb_values[0], rgb_values[1], rgb_values[2], 1};
                            });
 
-            std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
+            const std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             const std::uint32_t miplevel_count =
-                static_cast<uint32_t>(floor(log2(std::max(texture_image.width, texture_image.height))) + 1.0);
+                static_cast<std::uint32_t>(floor(log2(std::max(texture_image.width, texture_image.height))) + 1.0);
 
             // Create a texture using the data which was converted to RGBA
             m_textures.emplace_back(
@@ -131,10 +131,10 @@ void ModelGpuPbrDataBase::load_textures() {
             break;
         }
         case 4: {
-            std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
+            const std::string texture_name = texture.name.empty() ? "glTF2 model texture" : texture.name;
 
             const std::uint32_t miplevel_count =
-                static_cast<uint32_t>(floor(log2(std::max(texture_image.width, texture_image.height))) + 1.0);
+                static_cast<std::uint32_t>(floor(log2(std::max(texture_image.width, texture_image.height))) + 1.0);
 
             // Create a texture using RGBA data
             m_textures.emplace_back(
@@ -142,6 +142,7 @@ void ModelGpuPbrDataBase::load_textures() {
                 fill_image_ci(DEFAULT_TEXTURE_FORMAT, texture_image.width, texture_image.height, miplevel_count),
                 fill_image_view_ci(DEFAULT_TEXTURE_FORMAT, miplevel_count), make_sampler_ci(miplevel_count),
                 texture_name);
+
             break;
         }
         default: {
@@ -171,22 +172,22 @@ void ModelGpuPbrDataBase::load_materials() {
     std::unordered_map<std::string, bool> unsupported_material_features{};
 
     for (const auto &material : m_model.materials) {
-        ModelMaterial new_material{};
+        ModelMaterial new_mat{};
 
         // Load physically based rendering (pbr) material values
         for (const auto &[name, value] : material.values) {
             if (name == "baseColorTexture") {
-                new_material.base_color_texture = &m_textures[value.TextureIndex()];
-                new_material.texture_coordinate_set.base_color = value.TextureTexCoord();
+                new_mat.base_color_texture = &m_textures[value.TextureIndex()];
+                new_mat.texture_coordinate_set.base_color = value.TextureTexCoord();
             } else if (name == "metallicRoughnessTexture") {
-                new_material.metallic_roughness_texture = &m_textures[value.TextureIndex()];
-                new_material.texture_coordinate_set.metallic_roughness = value.TextureTexCoord();
+                new_mat.metallic_roughness_texture = &m_textures[value.TextureIndex()];
+                new_mat.texture_coordinate_set.metallic_roughness = value.TextureTexCoord();
             } else if (name == "roughnessFactor") {
-                new_material.roughness_factor = static_cast<float>(value.Factor());
+                new_mat.roughness_factor = static_cast<float>(value.Factor());
             } else if (name == "metallicFactor") {
-                new_material.metallic_factor = static_cast<float>(value.Factor());
+                new_mat.metallic_factor = static_cast<float>(value.Factor());
             } else if (name == "baseColorFactor") {
-                new_material.base_color_factor = glm::make_vec4(value.ColorFactor().data());
+                new_mat.base_color_factor = glm::make_vec4(value.ColorFactor().data());
             } else {
                 // Store this unsupported feature
                 unsupported_material_features[name] = true;
@@ -196,26 +197,26 @@ void ModelGpuPbrDataBase::load_materials() {
         // Load additional material values
         for (const auto &[name, value] : material.additionalValues) {
             if (name == "normalTexture") {
-                new_material.normal_texture = &m_textures[value.TextureIndex()];
-                new_material.texture_coordinate_set.normal = value.TextureTexCoord();
+                new_mat.normal_texture = &m_textures[value.TextureIndex()];
+                new_mat.texture_coordinate_set.normal = value.TextureTexCoord();
             } else if (name == "emissiveTexture") {
-                new_material.emissive_texture = &m_textures[value.TextureIndex()];
-                new_material.texture_coordinate_set.emissive = value.TextureTexCoord();
+                new_mat.emissive_texture = &m_textures[value.TextureIndex()];
+                new_mat.texture_coordinate_set.emissive = value.TextureTexCoord();
             } else if (name == "occlusionTexture") {
-                new_material.occlusion_texture = &m_textures[value.TextureIndex()];
-                new_material.texture_coordinate_set.occlusion = value.TextureTexCoord();
+                new_mat.occlusion_texture = &m_textures[value.TextureIndex()];
+                new_mat.texture_coordinate_set.occlusion = value.TextureTexCoord();
             } else if (name == "alphaMode") {
                 if (value.string_value == "BLEND") {
-                    new_material.alpha_mode = AlphaMode::ALPHAMODE_BLEND;
+                    new_mat.alpha_mode = AlphaMode::ALPHAMODE_BLEND;
                 } else if (value.string_value == "MASK") {
-                    new_material.alpha_cutoff = 0.5f;
-                    new_material.alpha_mode = AlphaMode::ALPHAMODE_MASK;
+                    new_mat.alpha_cutoff = 0.5f;
+                    new_mat.alpha_mode = AlphaMode::ALPHAMODE_MASK;
                 }
             } else if (name == "alphaCutoff") {
-                new_material.alpha_cutoff = static_cast<float>(value.Factor());
+                new_mat.alpha_cutoff = static_cast<float>(value.Factor());
             } else if (name == "emissiveFactor") {
-                new_material.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
-                new_material.emissive_factor = glm::vec4(0.0f);
+                new_mat.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
+                new_mat.emissive_factor = glm::vec4(0.0f);
             } else {
                 // Store this unsupported feature
                 unsupported_material_features[name] = true;
@@ -227,21 +228,21 @@ void ModelGpuPbrDataBase::load_materials() {
 
             if (extension->second.Has("specularGlossinessTexture")) {
                 const auto &index = extension->second.Get("specularGlossinessTexture").Get("index");
-                new_material.extension.specular_glossiness_texture = &m_textures[index.Get<int>()];
+                new_mat.extension.specular_glossiness_texture = &m_textures[index.Get<int>()];
 
                 const auto &texture_coordinate_set = extension->second.Get("specularGlossinessTexture").Get("texCoord");
-                new_material.texture_coordinate_set.specular_glossiness = texture_coordinate_set.Get<int>();
-                new_material.specular_glossiness = true;
+                new_mat.texture_coordinate_set.specular_glossiness = texture_coordinate_set.Get<int>();
+                new_mat.specular_glossiness = true;
             }
             if (extension->second.Has("diffuseTexture")) {
                 const auto &index = extension->second.Get("diffuseTexture").Get("index");
-                new_material.extension.diffuse_texture = &m_textures[index.Get<int>()];
+                new_mat.extension.diffuse_texture = &m_textures[index.Get<int>()];
             }
             if (extension->second.Has("diffuseFactor")) {
                 const auto &factor = extension->second.Get("diffuseFactor");
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     const auto &val = factor.Get(i);
-                    new_material.extension.diffuse_factor[i] =
+                    new_mat.extension.diffuse_factor[i] =
                         val.IsNumber() ? static_cast<float>(val.Get<double>()) : static_cast<float>(val.Get<int>());
                 }
             }
@@ -249,13 +250,13 @@ void ModelGpuPbrDataBase::load_materials() {
                 const auto &factor = extension->second.Get("specularFactor");
                 for (std::uint32_t i = 0; i < factor.ArrayLen(); i++) {
                     const auto &val = factor.Get(i);
-                    new_material.extension.specular_factor[i] =
+                    new_mat.extension.specular_factor[i] =
                         val.IsNumber() ? static_cast<float>(val.Get<double>()) : static_cast<float>(val.Get<int>());
                 }
             }
         }
 
-        m_materials.push_back(new_material);
+        m_materials.push_back(new_mat);
     }
 
     // Print out all unsupported material features we came across
@@ -351,8 +352,9 @@ void ModelGpuPbrDataBase::load_animations() {
                 const auto &buffer_view = m_model.bufferViews[accessor.bufferView];
                 const auto &buffer = m_model.buffers[buffer_view.buffer];
 
-                // TODO: Change to an exception!
-                assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
+                if (accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                    throw std::runtime_error("Error: Unsupported sampler input time value type!");
+                }
 
                 const void *data_pointer = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
                 const auto *buf = static_cast<const float *>(data_pointer);
@@ -408,7 +410,6 @@ void ModelGpuPbrDataBase::load_animations() {
             new_animation.samplers.push_back(std::move(new_sampler));
         }
 
-        // Channels
         for (const auto &source : animation.channels) {
             ModelAnimationChannel new_channel{};
 
@@ -516,11 +517,8 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
 
-            auto vertex_start = static_cast<uint32_t>(m_vertices.size());
-            auto index_start = static_cast<uint32_t>(m_indices.size());
-
-            std::uint32_t vertex_count = 0;
-            std::uint32_t index_count = 0;
+            auto vertex_start = static_cast<std::uint32_t>(m_vertices.size());
+            auto index_start = static_cast<std::uint32_t>(m_indices.size());
 
             glm::vec3 pos_min{};
             glm::vec3 pos_max{};
@@ -554,7 +552,7 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
             pos_min = glm::vec3(pos_accessor.minValues[0], pos_accessor.minValues[1], pos_accessor.minValues[2]);
             pos_max = glm::vec3(pos_accessor.maxValues[0], pos_accessor.maxValues[1], pos_accessor.maxValues[2]);
 
-            vertex_count = static_cast<uint32_t>(pos_accessor.count);
+            std::uint32_t vertex_count = static_cast<std::uint32_t>(pos_accessor.count);
 
             if (pos_accessor.ByteStride(pos_view)) {
                 position_byte_stride = (pos_accessor.ByteStride(pos_view) / sizeof(float));
@@ -693,6 +691,8 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
                 m_vertices.push_back(vert);
             }
 
+            std::uint32_t index_count = 0;
+
             if (has_indices) {
                 const auto &accessor = accessors[primitive.indices > -1 ? primitive.indices : 0];
                 const auto &buffer_view = buffer_views[accessor.bufferView];
@@ -757,14 +757,11 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
     }
 
     if (parent) {
-        // TODO: Should we consider using emplace_back here?
         parent->children.push_back(new_node);
     } else {
-        // TODO: Should we consider using emplace_back here?
         m_nodes.push_back(new_node);
     }
 
-    // TODO: Should we consider using emplace_back here?
     m_linear_nodes.push_back(new_node);
 }
 
@@ -798,10 +795,6 @@ ModelNode *ModelGpuPbrDataBase::node_from_index(const std::uint32_t index) {
         }
     }
     return node_found;
-}
-
-ModelGpuPbrDataBase::~ModelGpuPbrDataBase() {
-    // TODO: Implement!
 }
 
 } // namespace inexor::vulkan_renderer::gltf

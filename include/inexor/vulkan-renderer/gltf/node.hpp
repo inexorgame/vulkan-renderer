@@ -24,25 +24,27 @@ struct ModelSkin {
     std::vector<ModelNode *> joints;
 };
 
-/// @brief A struct for glTF2 model nodes.
-/// @warning Since glTF2 models can be very huge, we could run into out of stack problems when calling the
-/// destructors of the tree's nodes.
+/// A struct for glTF2 model nodes
 struct ModelNode {
     ModelNode *parent{nullptr};
     std::string name;
     std::uint32_t index;
     ModelSkin *skin{nullptr};
     std::uint32_t skin_index;
+    // TODO: Only take a vector of raw pointers?
     std::vector<std::shared_ptr<ModelNode>> children;
     std::shared_ptr<ModelMesh> mesh{nullptr};
+    bool visible{true};
     glm::vec3 translation{};
     glm::vec3 scale{1.0f};
     glm::quat rotation{};
     glm::mat4 matrix{};
     BoundingBox bvh;
     BoundingBox aabb;
-    glm::mat4 local_matrix();
-    glm::mat4 get_matrix();
+
+    [[nodiscard]] glm::mat4 local_matrix() const;
+    [[nodiscard]] glm::mat4 get_matrix() const;
+
     void update();
 };
 

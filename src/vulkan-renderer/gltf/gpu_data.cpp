@@ -47,7 +47,7 @@ ModelGpuPbrData::~ModelGpuPbrData() {
     vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
 }
 
-void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const ModelNode &node) {
+void ModelGpuPbrData::setup_node_descriptor_sets(const ModelNode &node) {
     if (node.mesh) {
         // TODO: Use descriptor builder!
         VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
@@ -56,7 +56,8 @@ void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const Mo
         descriptorSetAllocInfo.pSetLayouts = &m_node_descriptor_set_layout;
         descriptorSetAllocInfo.descriptorSetCount = 1;
 
-        if (const auto result = vkAllocateDescriptorSets(device, &descriptorSetAllocInfo, &node.mesh->descriptor_set);
+        if (const auto result =
+                vkAllocateDescriptorSets(m_device.device(), &descriptorSetAllocInfo, &node.mesh->descriptor_set);
             result != VK_SUCCESS) {
             throw VulkanException("Error: vkAllocateDescriptorSets failed!", result);
         }
@@ -71,11 +72,11 @@ void ModelGpuPbrData::setup_node_descriptor_sets(const VkDevice device, const Mo
 
         // TODO: Use wrapper!
         // TODO: Unify into one call!
-        vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+        vkUpdateDescriptorSets(m_device.device(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
     for (const auto &child : node.children) {
-        setup_node_descriptor_sets(device, *child);
+        setup_node_descriptor_sets(*child);
     }
 }
 
@@ -223,7 +224,8 @@ void ModelGpuPbrData::setup_rendering_resources(
                 m_empty_texture->descriptor_image_info,               //
                 use_texture_if_available(material.normal_texture),    //
                 use_texture_if_available(material.occlusion_texture), //
-                use_texture_if_available(material.emissive_texture)};
+                use_texture_if_available(material.emissive_texture)   //
+            };
 
             // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is
             // present
@@ -279,7 +281,7 @@ void ModelGpuPbrData::setup_rendering_resources(
         }
 
         for (const auto &node : nodes()) {
-            setup_node_descriptor_sets(render_graph->device(), *node);
+            setup_node_descriptor_sets(*node);
         }
     }
 }

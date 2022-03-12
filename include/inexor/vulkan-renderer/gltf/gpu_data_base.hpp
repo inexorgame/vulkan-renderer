@@ -73,7 +73,7 @@ public:
     ModelGpuPbrDataBase(const ModelGpuPbrDataBase &) = delete;
     ModelGpuPbrDataBase(ModelGpuPbrDataBase &&) noexcept;
 
-    virtual ~ModelGpuPbrDataBase();
+    virtual ~ModelGpuPbrDataBase() = default;
 
     ModelGpuPbrDataBase &operator=(const ModelGpuPbrDataBase &) = delete;
     ModelGpuPbrDataBase &operator=(ModelGpuPbrDataBase &&) noexcept = default;

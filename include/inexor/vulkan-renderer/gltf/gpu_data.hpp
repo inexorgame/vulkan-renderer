@@ -25,12 +25,10 @@ private:
     // TODO: Is this even taken into account?
     float m_model_scale{1.0f};
 
-    // Start of possible garbage
     VkDescriptorPool m_descriptor_pool;
     VkDescriptorSet m_scene_descriptor_set{VK_NULL_HANDLE};
-    // End of possible garbage: Do we really need those members?
 
-    void setup_node_descriptor_sets(VkDevice device, const ModelNode &node);
+    void setup_node_descriptor_sets(const ModelNode &node);
 
     void setup_rendering_resources(RenderGraph *render_graph,
                                    const wrapper::UniformBuffer<DefaultUBO> &shader_data_model,

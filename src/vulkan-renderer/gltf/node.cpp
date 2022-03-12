@@ -6,12 +6,12 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-[[nodiscard]] glm::mat4 ModelNode::local_matrix() {
+glm::mat4 ModelNode::local_matrix() const {
     return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.0f), scale) *
            matrix;
 }
 
-[[nodiscard]] glm::mat4 ModelNode::get_matrix() {
+glm::mat4 ModelNode::get_matrix() const {
     glm::mat4 m = local_matrix();
     auto *p = parent;
     while (p) {
@@ -28,7 +28,6 @@ void ModelNode::update() {
         if (skin) {
             mesh->uniform_block.matrix = m;
 
-            // Update joint matrices
             glm::mat4 inverseTransform = glm::inverse(m);
 
             std::size_t numJoints = std::min(static_cast<std::uint32_t>(skin->joints.size()), MAX_NUM_JOINTS);

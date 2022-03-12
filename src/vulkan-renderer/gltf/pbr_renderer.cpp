@@ -14,38 +14,42 @@ ModelPbrRenderer::ModelPbrRenderer(const wrapper::Device &device)
 void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet scene_descriptor_set,
                                    const wrapper::CommandBuffer &cmd_buf, const VkPipelineLayout pipeline_layout,
                                    const AlphaMode &alpha_mode) {
-    if (node.mesh) {
-        for (const auto &primitive : node.mesh->primitives) {
-            if (primitive.material.alpha_mode == alpha_mode) {
+    if (node.visible) {
+        if (node.mesh) {
+            for (const auto &primitive : node.mesh->primitives) {
+                if (primitive.material.alpha_mode == alpha_mode) {
 
-                const std::vector<VkDescriptorSet> descriptor_set{
-                    scene_descriptor_set, primitive.material.descriptor_set, node.mesh->descriptor_set};
+                    const std::vector<VkDescriptorSet> descriptor_set{
+                        scene_descriptor_set, primitive.material.descriptor_set, node.mesh->descriptor_set};
 
-                cmd_buf.bind_descriptor_sets(descriptor_set, pipeline_layout);
-                cmd_buf.push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout,
-                                       VK_SHADER_STAGE_FRAGMENT_BIT);
+                    cmd_buf.bind_descriptor_sets(descriptor_set, pipeline_layout);
+                    cmd_buf.push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout,
+                                           VK_SHADER_STAGE_FRAGMENT_BIT);
 
-                if (primitive.index_count > 0) {
-                    cmd_buf.draw_indexed(primitive.index_count, primitive.first_index);
-                } else {
-                    cmd_buf.draw(primitive.vertex_count);
+                    if (primitive.index_count > 0) {
+                        cmd_buf.draw_indexed(primitive.index_count, primitive.first_index);
+                    } else {
+                        cmd_buf.draw(primitive.vertex_count);
+                    }
                 }
             }
         }
-    }
 
-    for (const auto &child : node.children) {
-        render_node(*child, scene_descriptor_set, cmd_buf, pipeline_layout, alpha_mode);
+        for (const auto &child : node.children) {
+            render_node(*child, scene_descriptor_set, cmd_buf, pipeline_layout, alpha_mode);
+        }
     }
 }
 
 void ModelPbrRenderer::render_model(const std::vector<std::shared_ptr<ModelNode>> &nodes,
                                     const VkDescriptorSet scene_descriptor_set, const wrapper::CommandBuffer &cmd_buf,
                                     const VkPipelineLayout pipeline_layout) {
+
     // TODO: Isn't it possible to pre-assign the model nodes into vectors so we don't iterate unnecessarily?
     for (const auto &node : nodes) {
         render_node(*node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_OPAQUE);
     }
+
     for (const auto &node : nodes) {
         render_node(*node, scene_descriptor_set, cmd_buf, pipeline_layout, AlphaMode::ALPHAMODE_MASK);
     }
@@ -77,7 +81,7 @@ void ModelPbrRenderer::setup_stage(RenderGraph *render_graph, const TextureResou
             });
 
     // Only bind an index buffer if available
-    if (model.index_buffer() != nullptr) {
+    if (model.index_buffer()) {
         gltf_stage->reads_from(model.index_buffer());
     }
 }

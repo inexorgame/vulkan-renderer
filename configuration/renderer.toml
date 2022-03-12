@@ -30,5 +30,5 @@ files = [
 
 [gltfmodels]
 files = [
-	"assets/models/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf"
+	"assets/models/inexor/5_objects.gltf"
 ]
