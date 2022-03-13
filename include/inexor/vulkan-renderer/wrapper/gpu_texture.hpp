@@ -74,7 +74,7 @@ public:
     GpuTexture &operator=(const GpuTexture &) = delete;
     GpuTexture &operator=(GpuTexture &&) = delete;
 
-    [[nodiscard]] std::string name() const {
+    [[nodiscard]] const std::string &name() const {
         return m_name;
     }
 
