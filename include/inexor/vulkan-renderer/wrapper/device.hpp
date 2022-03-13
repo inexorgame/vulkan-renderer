@@ -236,6 +236,13 @@ public:
     /// @param name The internal debug marker name which will be assigned to this shader module
     void create_shader_module(const VkShaderModuleCreateInfo &shader_module_ci, VkShaderModule *shader_module,
                               const std::string &name) const;
+
+    /// @brief Call vkCreateSwapchainKHR
+    /// @param swapchain_ci The swapchain_ci create info structure
+    /// @param swapchain The swapchain to create
+    /// @param name The internal debug marker name which will be assigned to this swapchain
+    void create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSwapchainKHR *swapchain,
+                          const std::string &name) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

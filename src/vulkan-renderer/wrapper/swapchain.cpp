@@ -103,10 +103,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         swapchain_ci.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 
-    if (const auto result = vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
-    }
+    m_device.create_swapchain(swapchain_ci, &m_swapchain, m_name);
 
     if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count, nullptr);
         result != VK_SUCCESS) {

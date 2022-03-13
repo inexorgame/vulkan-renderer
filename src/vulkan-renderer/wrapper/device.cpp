@@ -572,4 +572,13 @@ void Device::create_shader_module(const VkShaderModuleCreateInfo &shader_module_
     set_debug_marker_name(&shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
 }
 
+void Device::create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSwapchainKHR *swapchain,
+                              const std::string &name) const {
+    if (const auto result = vkCreateSwapchainKHR(m_device, &swapchain_ci, nullptr, swapchain); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateSwapchainKHR failed for swapchain " + name + "!", result);
+    }
+
+    set_debug_marker_name(&swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, name);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper
