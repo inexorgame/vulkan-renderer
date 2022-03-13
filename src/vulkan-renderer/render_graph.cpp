@@ -130,10 +130,7 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create image view!", result);
-    }
+    m_device.create_image_view(image_view_ci, &physical.m_image_view, texture_resource.m_name);
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
@@ -142,14 +139,8 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
     pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
     pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
-    if (const auto result =
-            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create pipeline layout!", result);
-    }
 
-    m_device.set_debug_marker_name(physical.m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
-                                   stage->m_name + " pipeline layout");
+    m_device.create_pipeline_layout(pipeline_layout_ci, &physical.m_pipeline_layout, stage->name());
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical,
@@ -275,10 +266,8 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
     render_pass_ci.pAttachments = attachments.data();
     render_pass_ci.pDependencies = &subpass_dependency;
     render_pass_ci.pSubpasses = &subpass_description;
-    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create render pass!", result);
-    }
+
+    m_device.create_render_pass(render_pass_ci, &physical.m_render_pass, stage->name());
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -378,11 +367,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     pipeline_ci.pStages = stage->m_shaders.data();
 
     // TODO: Pipeline caching (basically load the render graph from a file)
-    if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create pipeline!", result);
-    }
+    m_device.create_graphics_pipeline(pipeline_ci, &physical.m_pipeline, stage->name());
 }
 
 void RenderGraph::compile(const RenderResource *target) {

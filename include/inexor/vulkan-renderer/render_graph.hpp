@@ -70,6 +70,10 @@ public:
 
     RenderResource &operator=(const RenderResource &) = delete;
     RenderResource &operator=(RenderResource &&) = delete;
+
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
+    }
 };
 
 enum class BufferUsage {
@@ -195,6 +199,10 @@ public:
     /// @param range The push constant range
     void add_push_constant_range(VkPushConstantRange range) {
         m_push_constant_ranges.push_back(range);
+    }
+
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
     }
 
     /// @brief Specifies a function that will be called during command buffer recording for this stage

@@ -103,10 +103,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         swapchain_ci.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
 
-    if (const auto result = vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
-    }
+    m_device.create_swapchain(swapchain_ci, &m_swapchain, m_name);
 
     if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count, nullptr);
         result != VK_SUCCESS) {
@@ -143,15 +140,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     for (std::size_t i = 0; i < m_swapchain_image_count; i++) {
         image_view_ci.image = m_swapchain_images[i];
-
-        if (const auto result =
-                vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &m_swapchain_image_views[i]);
-            result != VK_SUCCESS) {
-            throw VulkanException("Error: vkCreateImageView failed!", result);
-        }
-
-        // Assign an internal name using Vulkan debug markers.
-        m_device.set_debug_marker_name(m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+        m_device.create_image_view(image_view_ci, &m_swapchain_image_views[i], m_name);
     }
 }
 

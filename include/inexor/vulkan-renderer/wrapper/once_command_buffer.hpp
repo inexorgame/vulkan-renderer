@@ -19,6 +19,7 @@ class Device;
 /// tell the driver about our intent using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
 class OnceCommandBuffer {
     const Device &m_device;
+    std::string m_name;
     // We must store the VkQueue separately since we don't know from
     // the context of the use of this OnceCommandBuffer which queue to use!
     VkQueue m_queue{VK_NULL_HANDLE};
@@ -32,10 +33,11 @@ public:
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param queue The Vulkan queue to use.
     /// @param queue_family_index The Vulkan queue family index to use.
+    /// @param name The internal debug marker name which will be assigned to this command buffer
     /// @warn We can't determine the queue and queue family index to use automatically using the device wrapper
     /// reference because we might choose a queue which is unsuitable for the requested purpose!
     /// This is the reason we must specify the queue and queue family index in the constructor.
-    OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index);
+    OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index, const std::string &name);
 
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;

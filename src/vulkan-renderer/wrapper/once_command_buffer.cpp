@@ -12,8 +12,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index)
-    : m_device(device), m_queue(queue), m_command_pool(device, queue_family_index) {
+OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index,
+                                     const std::string &name)
+    : m_device(device), m_queue(queue), m_name(name), m_command_pool(device, queue_family_index, name) {
     assert(device.device());
     m_recording_started = false;
 }
@@ -23,6 +24,7 @@ OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
     m_queue = other.m_queue;
     m_command_buffer = std::exchange(other.m_command_buffer, nullptr);
     m_recording_started = other.m_recording_started;
+    m_name = std::move(other.m_name);
 }
 
 OnceCommandBuffer::~OnceCommandBuffer() {

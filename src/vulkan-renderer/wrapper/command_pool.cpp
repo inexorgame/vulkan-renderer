@@ -6,19 +6,14 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_index) : m_device(device) {
+CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_index, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     assert(device.device());
 
     auto command_pool_ci = make_info<VkCommandPoolCreateInfo>();
     command_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     command_pool_ci.queueFamilyIndex = queue_family_index;
-
-    if (const auto result = vkCreateCommandPool(m_device.device(), &command_pool_ci, nullptr, &m_command_pool);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateCommandPool failed!", result);
-    }
-
-    // TODO: Assign an internal name to this command pool using Vulkan debug markers.
+    device.create_command_pool(command_pool_ci, &m_command_pool, m_name);
 }
 
 CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device) {
