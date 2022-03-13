@@ -58,15 +58,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size());
     descriptor_set_layout_ci.pBindings = m_descriptor_set_layout_bindings.data();
 
-    if (const auto result =
-            vkCreateDescriptorSetLayout(device.device(), &descriptor_set_layout_ci, nullptr, &m_descriptor_set_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + m_name + " !", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
-                                   m_name);
+    m_device.create_descriptor_set_layout(descriptor_set_layout_ci, &m_descriptor_set_layout, m_name);
 
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(swapchain_image_count, m_descriptor_set_layout);
 

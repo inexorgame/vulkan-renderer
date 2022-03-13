@@ -486,6 +486,17 @@ void Device::create_descriptor_pool(const VkDescriptorPoolCreateInfo &descriptor
     set_debug_marker_name(&descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, name);
 }
 
+void Device::create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo &descriptor_set_layout_ci,
+                                          VkDescriptorSetLayout *descriptor_set_layout, const std::string &name) const {
+    if (const auto result =
+            vkCreateDescriptorSetLayout(m_device, &descriptor_set_layout_ci, nullptr, descriptor_set_layout);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + name + " !", result);
+    }
+
+    set_debug_marker_name(&descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, name);
+}
+
 void Device::create_framebuffer(const VkFramebufferCreateInfo &framebuffer_ci, VkFramebuffer *framebuffer,
                                 const std::string &name) const {
     if (const auto result = vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, framebuffer);

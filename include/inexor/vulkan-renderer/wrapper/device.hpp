@@ -172,6 +172,13 @@ public:
     void create_descriptor_pool(const VkDescriptorPoolCreateInfo &descriptor_pool_ci, VkDescriptorPool *descriptor_pool,
                                 const std::string &name) const;
 
+    /// @brief Call vkCreateDescriptorSetLayout
+    /// @param descriptor_set_layout_ci The descriptor set layout create info structure
+    /// @param descriptor_set_layout The descriptor set layout to create
+    /// @param name The internal debug marker name which will be assigned to this descriptor set layout
+    void create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo &descriptor_set_layout_ci,
+                               VkDescriptorSetLayout *descriptor_set_layout, const std::string &name) const;
+
     /// @brief Call vkCreateFramebuffer
     /// @param framebuffer_ci The framebuffer create info structure
     /// @param framebuffer The Vulkan framebuffer to create
