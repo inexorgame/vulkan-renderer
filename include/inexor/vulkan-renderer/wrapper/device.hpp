@@ -177,7 +177,7 @@ public:
     /// @param descriptor_set_layout The descriptor set layout to create
     /// @param name The internal debug marker name which will be assigned to this descriptor set layout
     void create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo &descriptor_set_layout_ci,
-                               VkDescriptorSetLayout *descriptor_set_layout, const std::string &name) const;
+                                      VkDescriptorSetLayout *descriptor_set_layout, const std::string &name) const;
 
     /// @brief Call vkCreateFramebuffer
     /// @param framebuffer_ci The framebuffer create info structure
@@ -203,6 +203,12 @@ public:
     void create_image_view(const VkImageViewCreateInfo &image_view_ci, VkImageView *image_view,
                            const std::string &name) const;
 
+    /// @brief Call vkCreatePipelineLayout
+    /// @param pipeline_layout_ci The pipeline layout create info structure
+    /// @param pipeline_layout The pipeline layout to create
+    /// @param name The internal debug marker name which will be assigned to this pipeline layout
+    void create_pipeline_layout(const VkPipelineLayoutCreateInfo &pipeline_layout_ci, VkPipelineLayout *pipeline_layout,
+                                const std::string &name) const;
     /// @brief Call vkCreateSemaphore
     /// @param semaphore_ci The semaphore create info structure
     /// @param semaphore The semaphore to create

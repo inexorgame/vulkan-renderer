@@ -526,6 +526,16 @@ void Device::create_image_view(const VkImageViewCreateInfo &image_view_ci, VkIma
     set_debug_marker_name(&image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, name);
 }
 
+void Device::create_pipeline_layout(const VkPipelineLayoutCreateInfo &pipeline_layout_ci,
+                                    VkPipelineLayout *pipeline_layout, const std::string &name) const {
+    if (const auto result = vkCreatePipelineLayout(m_device, &pipeline_layout_ci, nullptr, pipeline_layout);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + name + "!", result);
+    }
+
+    set_debug_marker_name(&pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, name);
+}
+
 void Device::create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemaphore *semaphore,
                               const std::string &name) const {
     if (const auto result = vkCreateSemaphore(m_device, &semaphore_ci, nullptr, semaphore); result != VK_SUCCESS) {

@@ -139,14 +139,8 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
     pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
     pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
     pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
-    if (const auto result =
-            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create pipeline layout!", result);
-    }
 
-    m_device.set_debug_marker_name(physical.m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
-                                   stage->m_name + " pipeline layout");
+    m_device.create_pipeline_layout(pipeline_layout_ci, &physical.m_pipeline_layout, stage->name());
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical,
