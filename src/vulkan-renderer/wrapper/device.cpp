@@ -466,6 +466,16 @@ void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
 #endif
 }
 
+void Device::create_framebuffer(const VkFramebufferCreateInfo &framebuffer_ci, VkFramebuffer *framebuffer,
+                                const std::string &name) const {
+    if (const auto result = vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, framebuffer);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateFramebuffer failed for framebuffer " + name + "!", result);
+    }
+
+    set_debug_marker_name(&framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, name);
+}
+
 void Device::create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeline_ci, VkPipeline *pipeline,
                                       const std::string &name) const {
     if (const auto result = vkCreateGraphicsPipelines(m_device, nullptr, 1, &pipeline_ci, nullptr, pipeline);

@@ -158,6 +158,13 @@ public:
     /// @param command_buffer The command buffer which is associated to the debug marker
     void end_debug_region(VkCommandBuffer command_buffer) const;
 
+    /// @brief Call vkCreateFramebuffer
+    /// @param framebuffer_ci The framebuffer create info structure
+    /// @param framebuffer The Vulkan framebuffer to create
+    /// @param name The internal debug marker name which will be assigned to this framebuffer
+    void create_framebuffer(const VkFramebufferCreateInfo &framebuffer_ci, VkFramebuffer *framebuffer,
+                            const std::string &name) const;
+
     /// @brief Call vkCreateGraphicsPipelines
     /// @param pipeline_ci The graphics pipeline create info structure
     /// @param pipeline The graphics pipeline to create

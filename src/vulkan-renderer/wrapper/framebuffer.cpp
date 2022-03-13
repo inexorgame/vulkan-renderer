@@ -24,13 +24,7 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
     framebuffer_ci.layers = 1;
     framebuffer_ci.renderPass = render_pass;
 
-    if (const auto result = vkCreateFramebuffer(m_device.device(), &framebuffer_ci, nullptr, &m_framebuffer);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create framebuffer " + m_name + "!", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
+    m_device.create_framebuffer(framebuffer_ci, &m_framebuffer, m_name);
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {
