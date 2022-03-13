@@ -22,14 +22,25 @@ void Camera::update_vectors() {
         m_front = glm::normalize(front);
         m_right = glm::normalize(glm::cross(m_front, m_world_up));
         m_up = glm::normalize(glm::cross(m_right, m_front));
+
+        m_update_view_matrix = true;
     }
 }
 
 void Camera::update_matrices() {
     if (m_type == CameraType::LOOK_AT) {
-        const float vertical_fov = 2.0f * glm::atan(glm::tan(glm::radians(m_fov) / 2.0f) / m_aspect_ratio);
-        m_view_matrix = glm::lookAt(m_position, m_position + m_front, m_up);
-        m_perspective_matrix = glm::perspective(vertical_fov, m_aspect_ratio, m_near_plane, m_far_plane);
+        if (m_update_vertical_fov) {
+            m_vertical_fov = 2.0f * glm::atan(glm::tan(glm::radians(m_fov) / 2.0f) / m_aspect_ratio);
+            m_update_vertical_fov = false;
+        }
+        if (m_update_view_matrix) {
+            m_view_matrix = glm::lookAt(m_position, m_position + m_front, m_up);
+            m_update_view_matrix = false;
+        }
+        if (m_update_perspective_matrix) {
+            m_perspective_matrix = glm::perspective(m_vertical_fov, m_aspect_ratio, m_near_plane, m_far_plane);
+            m_update_perspective_matrix = false;
+        }
     }
 }
 
@@ -60,10 +71,13 @@ void Camera::set_movement_state(const CameraMovement key, const bool pressed) {
 
 void Camera::set_position(const glm::vec3 position) {
     m_position = position;
+    m_update_view_matrix = true;
 }
 
 void Camera::set_aspect_ratio(const float width, const float height) {
     m_aspect_ratio = width / height;
+    m_update_perspective_matrix = true;
+    m_update_vertical_fov = true;
 }
 
 void Camera::set_movement_speed(const float speed) {
@@ -91,10 +105,12 @@ void Camera::set_rotation(const float yaw, const float pitch, const float roll) 
 
 void Camera::set_near_plane(const float near_plane) {
     m_near_plane = near_plane;
+    m_update_perspective_matrix = true;
 }
 
 void Camera::set_far_plane(const float far_plane) {
     m_far_plane = far_plane;
+    m_update_perspective_matrix = true;
 }
 
 void Camera::change_zoom(const float offset) {
@@ -102,6 +118,9 @@ void Camera::change_zoom(const float offset) {
 
     // Make sure field of view is in range between specified minimum and maximum value.
     m_fov = std::clamp(m_fov, m_fov_min, m_fov_max);
+
+    m_update_vertical_fov = true;
+    m_update_perspective_matrix = true;
 }
 
 void Camera::update(const float delta_time) {
@@ -120,6 +139,8 @@ void Camera::update(const float delta_time) {
         if (m_keys[3] && !m_keys[1]) {
             m_position += m_right * move_speed;
         }
+
+        m_update_view_matrix = true;
     }
 }
 

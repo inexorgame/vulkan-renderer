@@ -77,6 +77,12 @@ private:
     /// The keys for the movement FORWARD, BACKWARD, LEFT, RIGHT.
     std::array<bool, 4> m_keys{false, false, false, false};
 
+    float m_vertical_fov{0.0f};
+
+    bool m_update_vertical_fov{false};
+    bool m_update_view_matrix{false};
+    bool m_update_perspective_matrix{false};
+
     void update_vectors();
 
     void update_matrices();
