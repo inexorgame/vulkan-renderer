@@ -378,11 +378,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     pipeline_ci.pStages = stage->m_shaders.data();
 
     // TODO: Pipeline caching (basically load the render graph from a file)
-    if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create pipeline!", result);
-    }
+    m_device.create_graphics_pipeline(pipeline_ci, &physical.m_pipeline, stage->name());
 }
 
 void RenderGraph::compile(const RenderResource *target) {

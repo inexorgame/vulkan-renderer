@@ -466,4 +466,14 @@ void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
 #endif
 }
 
+void Device::create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeline_ci, VkPipeline *pipeline,
+                                      const std::string &name) const {
+    if (const auto result = vkCreateGraphicsPipelines(m_device, nullptr, 1, &pipeline_ci, nullptr, pipeline);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + name + " !", result);
+    }
+
+    set_debug_marker_name(&pipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, name);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

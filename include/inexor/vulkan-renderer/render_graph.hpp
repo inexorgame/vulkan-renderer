@@ -197,6 +197,10 @@ public:
         m_push_constant_ranges.push_back(range);
     }
 
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
+    }
+
     /// @brief Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
     /// common use for this is for draw commands.

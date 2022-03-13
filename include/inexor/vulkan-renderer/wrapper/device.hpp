@@ -157,6 +157,16 @@ public:
     /// @brief End the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
     /// @param command_buffer The command buffer which is associated to the debug marker
     void end_debug_region(VkCommandBuffer command_buffer) const;
+
+    /// @brief Call vkCreateGraphicsPipelines
+    /// @param pipeline_ci The graphics pipeline create info structure
+    /// @param pipeline The graphics pipeline to create
+    /// @param name The internal debug marker name which will be assigned to this pipeline
+    // TODO: Offer parameter for Vulkan pipeline caches!
+    // TODO: Use std::span to offer a more general method (creating multiple pipelines with one call)
+    // TODO: We might want to use std::span<std::pair<VkGraphicsPipelineCreateInfo, VkPipeline *>>
+    void create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeline_ci, VkPipeline *pipeline,
+                                  const std::string &name) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
