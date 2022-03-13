@@ -266,10 +266,8 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
     render_pass_ci.pAttachments = attachments.data();
     render_pass_ci.pDependencies = &subpass_dependency;
     render_pass_ci.pSubpasses = &subpass_description;
-    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create render pass!", result);
-    }
+
+    m_device.create_render_pass(render_pass_ci, &physical.m_render_pass, stage->name());
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {

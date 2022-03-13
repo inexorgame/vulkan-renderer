@@ -216,6 +216,13 @@ public:
     void create_pipeline_layout(const VkPipelineLayoutCreateInfo &pipeline_layout_ci, VkPipelineLayout *pipeline_layout,
                                 const std::string &name) const;
 
+    /// @brief Call vkCreateRenderPass
+    /// @param render_pass_ci The render pass create info structure
+    /// @param render_pass The render pass to create
+    /// @param name The internal debug marker name which will be assigned to this render pass
+    void create_render_pass(const VkRenderPassCreateInfo &render_pass_ci, VkRenderPass *render_pass,
+                            const std::string &name) const;
+
     /// @brief Call vkCreateSemaphore
     /// @param semaphore_ci The semaphore create info structure
     /// @param semaphore The semaphore to create
