@@ -179,6 +179,12 @@ public:
     void create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo &descriptor_set_layout_ci,
                                       VkDescriptorSetLayout *descriptor_set_layout, const std::string &name) const;
 
+    /// @brief Call vkCreateFence
+    /// @param fence_ci The fence create info structure
+    /// @param fence The fence to create
+    /// @param name The internal debug marker name which will be assigned to this fence
+    void create_fence(const VkFenceCreateInfo &fence_ci, VkFence *fence, const std::string &name) const;
+
     /// @brief Call vkCreateFramebuffer
     /// @param framebuffer_ci The framebuffer create info structure
     /// @param framebuffer The Vulkan framebuffer to create
