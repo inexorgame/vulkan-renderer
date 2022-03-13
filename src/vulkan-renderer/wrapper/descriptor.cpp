@@ -52,13 +52,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device, std::uint32_t swapc
     descriptor_pool_ci.pPoolSizes = pool_sizes.data();
     descriptor_pool_ci.maxSets = static_cast<std::uint32_t>(swapchain_image_count);
 
-    if (const auto result = vkCreateDescriptorPool(device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor " + m_name + " !", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
+    m_device.create_descriptor_pool(descriptor_pool_ci, &m_descriptor_pool, m_name);
 
     auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>();
     descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size());

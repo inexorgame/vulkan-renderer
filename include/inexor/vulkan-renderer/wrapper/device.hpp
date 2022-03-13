@@ -165,6 +165,13 @@ public:
     void create_command_pool(const VkCommandPoolCreateInfo &command_pool_ci, VkCommandPool *command_pool,
                              const std::string &name) const;
 
+    /// @brief Call vkCreateDescriptorPool
+    /// @param descriptor_pool_ci The descriptor pool create info structure
+    /// @param descriptor_pool The descriptor pool to create
+    /// @param name The internal debug marker name which will be assigned to this command pool
+    void create_descriptor_pool(const VkDescriptorPoolCreateInfo &descriptor_pool_ci, VkDescriptorPool *descriptor_pool,
+                                const std::string &name) const;
+
     /// @brief Call vkCreateFramebuffer
     /// @param framebuffer_ci The framebuffer create info structure
     /// @param framebuffer The Vulkan framebuffer to create

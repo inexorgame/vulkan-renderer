@@ -476,6 +476,16 @@ void Device::create_command_pool(const VkCommandPoolCreateInfo &command_pool_ci,
     set_debug_marker_name(&command_pool, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, name);
 }
 
+void Device::create_descriptor_pool(const VkDescriptorPoolCreateInfo &descriptor_pool_ci,
+                                    VkDescriptorPool *descriptor_pool, const std::string &name) const {
+    if (const auto result = vkCreateDescriptorPool(m_device, &descriptor_pool_ci, nullptr, descriptor_pool);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + name + " !", result);
+    }
+
+    set_debug_marker_name(&descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, name);
+}
+
 void Device::create_framebuffer(const VkFramebufferCreateInfo &framebuffer_ci, VkFramebuffer *framebuffer,
                                 const std::string &name) const {
     if (const auto result = vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, framebuffer);
