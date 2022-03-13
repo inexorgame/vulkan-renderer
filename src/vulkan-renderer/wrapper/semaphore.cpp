@@ -16,13 +16,7 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
     assert(!name.empty());
 
     auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
-    if (const auto result = vkCreateSemaphore(device.device(), &semaphore_ci, nullptr, &m_semaphore);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSemaphore failed for " + name + " !", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
+    device.create_semaphore(semaphore_ci, &m_semaphore, m_name);
 }
 
 Semaphore::Semaphore(Semaphore &&other) noexcept : m_device(other.m_device) {

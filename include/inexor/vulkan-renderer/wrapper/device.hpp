@@ -181,6 +181,13 @@ public:
     /// @param name The internal debug marker name which will be assigned to this image view
     void create_image_view(const VkImageViewCreateInfo &image_view_ci, VkImageView *image_view,
                            const std::string &name) const;
+
+    /// @brief Call vkCreateSemaphore
+    /// @param semaphore_ci The semaphore create info structure
+    /// @param semaphore The semaphore to create
+    /// @param name The internal debug marker name which will be assigned to this semaphore
+    void create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemaphore *semaphore,
+                          const std::string &name) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -495,4 +495,13 @@ void Device::create_image_view(const VkImageViewCreateInfo &image_view_ci, VkIma
     set_debug_marker_name(&image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, name);
 }
 
+void Device::create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemaphore *semaphore,
+                              const std::string &name) const {
+    if (const auto result = vkCreateSemaphore(m_device, &semaphore_ci, nullptr, semaphore); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateSemaphore failed for " + name + " !", result);
+    }
+
+    set_debug_marker_name(&semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper
