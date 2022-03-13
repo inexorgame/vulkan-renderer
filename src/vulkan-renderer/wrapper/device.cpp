@@ -486,4 +486,13 @@ void Device::create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeli
     set_debug_marker_name(&pipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, name);
 }
 
+void Device::create_image_view(const VkImageViewCreateInfo &image_view_ci, VkImageView *image_view,
+                               const std::string &name) const {
+    if (const auto result = vkCreateImageView(m_device, &image_view_ci, nullptr, image_view); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateImageView failed for image view " + name + "!", result);
+    }
+
+    set_debug_marker_name(&image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, name);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

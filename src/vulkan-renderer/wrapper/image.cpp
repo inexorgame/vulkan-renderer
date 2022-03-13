@@ -64,13 +64,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = 1;
 
-    if (const auto result = vkCreateImageView(device.device(), &image_view_ci, nullptr, &m_image_view);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+    m_device.create_image_view(image_view_ci, &m_image_view, m_name);
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {

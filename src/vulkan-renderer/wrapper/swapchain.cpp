@@ -143,15 +143,7 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     for (std::size_t i = 0; i < m_swapchain_image_count; i++) {
         image_view_ci.image = m_swapchain_images[i];
-
-        if (const auto result =
-                vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &m_swapchain_image_views[i]);
-            result != VK_SUCCESS) {
-            throw VulkanException("Error: vkCreateImageView failed!", result);
-        }
-
-        // Assign an internal name using Vulkan debug markers.
-        m_device.set_debug_marker_name(m_swapchain_image_views[i], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+        m_device.create_image_view(image_view_ci, &m_swapchain_image_views[i], m_name);
     }
 }
 

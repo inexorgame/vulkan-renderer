@@ -130,10 +130,7 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create image view!", result);
-    }
+    m_device.create_image_view(image_view_ci, &physical.m_image_view, texture_resource.m_name);
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {

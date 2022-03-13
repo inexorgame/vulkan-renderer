@@ -174,6 +174,13 @@ public:
     // TODO: We might want to use std::span<std::pair<VkGraphicsPipelineCreateInfo, VkPipeline *>>
     void create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeline_ci, VkPipeline *pipeline,
                                   const std::string &name) const;
+
+    /// @brief Call vkCreateImageView
+    /// @param image_view_ci The image view create info structure
+    /// @param image_view The image view to create
+    /// @param name The internal debug marker name which will be assigned to this image view
+    void create_image_view(const VkImageViewCreateInfo &image_view_ci, VkImageView *image_view,
+                           const std::string &name) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

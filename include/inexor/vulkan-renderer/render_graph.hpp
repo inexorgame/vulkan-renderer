@@ -70,6 +70,10 @@ public:
 
     RenderResource &operator=(const RenderResource &) = delete;
     RenderResource &operator=(RenderResource &&) = delete;
+
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
+    }
 };
 
 enum class BufferUsage {
