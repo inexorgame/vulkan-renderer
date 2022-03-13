@@ -158,6 +158,13 @@ public:
     /// @param command_buffer The command buffer which is associated to the debug marker
     void end_debug_region(VkCommandBuffer command_buffer) const;
 
+    /// @brief Call vkCreateCommandPool
+    /// @param command_pool_ci The command pool create info structure
+    /// @param command_pool The command pool to create
+    /// @param name The internal debug marker name which will be assigned to this command pool
+    void create_command_pool(const VkCommandPoolCreateInfo &command_pool_ci, VkCommandPool *command_pool,
+                             const std::string &name) const;
+
     /// @brief Call vkCreateFramebuffer
     /// @param framebuffer_ci The framebuffer create info structure
     /// @param framebuffer The Vulkan framebuffer to create

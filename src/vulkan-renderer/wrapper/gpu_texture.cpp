@@ -15,7 +15,8 @@ namespace inexor::vulkan_renderer::wrapper {
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
     : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
       m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
+      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index(),
+                            "Once command buffer") {
     create_texture(cpu_texture.data(), cpu_texture.data_size());
 }
 
@@ -23,7 +24,8 @@ GpuTexture::GpuTexture(const wrapper::Device &device, void *data, const std::siz
                        const int texture_height, const int texture_channels, const int mip_levels, std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)),
-      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {
+      m_copy_command_buffer(device, device.graphics_queue(), device.graphics_queue_family_index(),
+                            "Once command buffer") {
     create_texture(data, data_size);
 }
 
@@ -118,7 +120,7 @@ void GpuTexture::transition_image_layout(VkImage image, VkImageLayout old_layout
     }
 
     OnceCommandBuffer image_transition_change(m_device, m_device.graphics_queue(),
-                                              m_device.graphics_queue_family_index());
+                                              m_device.graphics_queue_family_index(), "Once command buffer");
 
     image_transition_change.create_command_buffer();
     image_transition_change.start_recording();
