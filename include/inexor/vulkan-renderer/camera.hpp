@@ -76,8 +76,6 @@ private:
 
     /// The keys for the movement FORWARD, BACKWARD, LEFT, RIGHT.
     std::array<bool, 4> m_keys{false, false, false, false};
-    /// Will be set to ``true`` if the matrices need to be recalculated.
-    bool m_update_needed{true};
 
     void update_vectors();
 
@@ -212,16 +210,12 @@ public:
     void update(float delta_time);
 
     [[nodiscard]] const glm::mat4 &view_matrix() {
-        if (m_update_needed) {
-            update_matrices();
-        }
+        update_matrices();
         return m_view_matrix;
     }
 
     [[nodiscard]] const glm::mat4 &perspective_matrix() {
-        if (m_update_needed) {
-            update_matrices();
-        }
+        update_matrices();
         return m_perspective_matrix;
     }
 };
