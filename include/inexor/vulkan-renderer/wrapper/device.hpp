@@ -223,6 +223,12 @@ public:
     void create_render_pass(const VkRenderPassCreateInfo &render_pass_ci, VkRenderPass *render_pass,
                             const std::string &name) const;
 
+    /// @brief Call vkCreateSampler
+    /// @param sampler_ci The sampler create info structure
+    /// @param sampler The sampler to create
+    /// @param name The internal debug marker name which will be assigned to this sampler
+    void create_sampler(const VkSamplerCreateInfo &sampler_ci, VkSampler *sampler, const std::string &name) const;
+
     /// @brief Call vkCreateSemaphore
     /// @param semaphore_ci The semaphore create info structure
     /// @param semaphore The semaphore to create

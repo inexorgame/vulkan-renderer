@@ -185,13 +185,7 @@ void GpuTexture::create_texture_sampler() {
         sampler_ci.anisotropyEnable = VK_FALSE;
     }
 
-    if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSampler failed for texture " + m_name + " !", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
+    m_device.create_sampler(sampler_ci, &m_sampler, m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
