@@ -545,4 +545,14 @@ void Device::create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemap
     set_debug_marker_name(&semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
 }
 
+void Device::create_shader_module(const VkShaderModuleCreateInfo &shader_module_ci, VkShaderModule *shader_module,
+                                  const std::string &name) const {
+    if (const auto result = vkCreateShaderModule(m_device, &shader_module_ci, nullptr, shader_module);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateShaderModule failed for shader module " + name + "!", result);
+    }
+
+    set_debug_marker_name(&shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

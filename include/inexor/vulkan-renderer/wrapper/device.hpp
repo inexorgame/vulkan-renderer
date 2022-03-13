@@ -209,12 +209,20 @@ public:
     /// @param name The internal debug marker name which will be assigned to this pipeline layout
     void create_pipeline_layout(const VkPipelineLayoutCreateInfo &pipeline_layout_ci, VkPipelineLayout *pipeline_layout,
                                 const std::string &name) const;
+
     /// @brief Call vkCreateSemaphore
     /// @param semaphore_ci The semaphore create info structure
     /// @param semaphore The semaphore to create
     /// @param name The internal debug marker name which will be assigned to this semaphore
     void create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemaphore *semaphore,
                           const std::string &name) const;
+
+    /// @brief Call vkCreateShaderModule
+    /// @param shader_module_ci The shader module create info structure
+    /// @param shader_module The shader module to create
+    /// @param name The internal debug marker name which will be assigned to this shader module
+    void create_shader_module(const VkShaderModuleCreateInfo &shader_module_ci, VkShaderModule *shader_module,
+                              const std::string &name) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
