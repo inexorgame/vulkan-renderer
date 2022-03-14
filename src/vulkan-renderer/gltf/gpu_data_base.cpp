@@ -8,6 +8,7 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
+// TODO: Make a lambda!
 VkImageCreateInfo fill_image_ci(const VkFormat format, const std::uint32_t width, const std::uint32_t height,
                                 const std::uint32_t miplevel_count) {
     assert(width > 0);
@@ -27,9 +28,11 @@ VkImageCreateInfo fill_image_ci(const VkFormat format, const std::uint32_t width
     image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     image_ci.extent = {width, height, 1};
     image_ci.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
     return image_ci;
 }
 
+// TODO: Make a lambda!
 VkImageViewCreateInfo fill_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
     assert(miplevel_count > 0);
 
@@ -43,6 +46,7 @@ VkImageViewCreateInfo fill_image_view_ci(const VkFormat format, const std::uint3
     image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     image_view_ci.subresourceRange.layerCount = 1;
     image_view_ci.subresourceRange.levelCount = miplevel_count;
+
     return image_view_ci;
 }
 
@@ -259,12 +263,12 @@ void ModelGpuPbrDataBase::load_materials() {
         m_materials.push_back(new_mat);
     }
 
-    // Print out all unsupported material features we came across
     for (const auto &[name, value] : unsupported_material_features) {
         spdlog::warn("Material feature {} not supported!", name);
     }
 
-    // Add a default material at the end of the list for meshes with no material assigned
+    // Add a default material at the end for meshes with no material assigned
+    // TODO: Is this correct? What does the material constructor do in that case?
     m_materials.emplace_back();
 }
 
@@ -462,6 +466,10 @@ void ModelGpuPbrDataBase::load_nodes() {
         const auto &node = m_model.nodes[scene.nodes[node_index]];
         load_node(nullptr, node, scene.nodes[node_index], static_cast<std::uint32_t>(scene_index));
     }
+
+    for (const auto &[name, value] : m_unsupported_node_types) {
+        spdlog::warn("Node type {} not supported!", name);
+    }
 }
 
 void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &node, const std::uint32_t scene_index,
@@ -501,9 +509,11 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
 
     // Those will be supported in the future, so we don't add them to the unordered set of unsupported features
     if (node.name == "Light") {
-        spdlog::trace("Loading lights from glTF2 models is not supported yet.");
+        // TODO: Support lights
+        spdlog::trace("Loading lights from glTF2 models is not supported yet");
     } else if (node.name == "Camera") {
-        spdlog::trace("Loading cameras from glTF2 models is not supported yet.");
+        // TODO: Support cameras
+        spdlog::trace("Loading cameras from glTF2 models is not supported yet");
     }
 
     if (node.mesh > -1) {
@@ -600,6 +610,8 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
                     uv1_byte_stride = 2;
                 }
             }
+
+            // TODO: Support more than 2 texture coordinate sets
 
             if (primitive.attributes.find("JOINTS_0") != primitive.attributes.end()) {
                 const auto &joint_accessor = accessors[primitive.attributes.find("JOINTS_0")->second];
@@ -753,6 +765,7 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
         new_node->mesh = std::move(new_mesh);
     } else {
         // Remember this unsupported glTF2 model node type
+        // A list of all unsupported node types will be printed at the end
         m_unsupported_node_types[node.name] = true;
     }
 
