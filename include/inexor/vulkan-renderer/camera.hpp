@@ -53,7 +53,7 @@ private:
     /// The camera's maximum pitch angle.
     /// Looking straight upwards is the maximum pitch angle.
     float m_pitch_max{+89.0f};
-    /// The camera's field of view.
+    /// The camera's horizontal field of view.
     float m_fov{90.0f};
     /// The camera's maximum field of view.
     float m_fov_max{90.0f};
@@ -76,8 +76,12 @@ private:
 
     /// The keys for the movement FORWARD, BACKWARD, LEFT, RIGHT.
     std::array<bool, 4> m_keys{false, false, false, false};
-    /// Will be set to ``true`` if the matrices need to be recalculated.
-    bool m_update_needed{true};
+
+    float m_vertical_fov{0.0f};
+
+    bool m_update_vertical_fov{false};
+    bool m_update_view_matrix{false};
+    bool m_update_perspective_matrix{false};
 
     void update_vectors();
 
@@ -212,16 +216,12 @@ public:
     void update(float delta_time);
 
     [[nodiscard]] const glm::mat4 &view_matrix() {
-        if (m_update_needed) {
-            update_matrices();
-        }
+        update_matrices();
         return m_view_matrix;
     }
 
     [[nodiscard]] const glm::mat4 &perspective_matrix() {
-        if (m_update_needed) {
-            update_matrices();
-        }
+        update_matrices();
         return m_perspective_matrix;
     }
 };
