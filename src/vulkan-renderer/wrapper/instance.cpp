@@ -185,7 +185,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         } else {
 #ifdef NDEBUG
             if (std::string(current_layer) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME) {
-                spdlog::error("You can't use command line argument -renderdoc in release mode.");
+                spdlog::error("You can't use command line argument --renderdoc in release mode.");
             }
 #else
             spdlog::error("Requested instance layer '{}' is not available on this system!", current_layer);

@@ -19,8 +19,11 @@ void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet 
             for (const auto &primitive : node.mesh->primitives) {
                 if (primitive.material.alpha_mode == alpha_mode) {
 
-                    const std::vector<VkDescriptorSet> descriptor_set{
-                        scene_descriptor_set, primitive.material.descriptor_set, node.mesh->descriptor_set};
+                    const std::vector descriptor_set{
+                        scene_descriptor_set,              //
+                        primitive.material.descriptor_set, //
+                        node.mesh->descriptor_set          //
+                    };
 
                     cmd_buf.bind_descriptor_sets(descriptor_set, pipeline_layout);
                     cmd_buf.push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout,

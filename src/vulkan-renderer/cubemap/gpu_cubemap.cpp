@@ -22,6 +22,7 @@ VkImageCreateInfo GpuCubemap::fill_image_ci(const VkFormat format, const std::ui
     assert(miplevel_count > 0);
 
     auto image_ci = wrapper::make_info<VkImageCreateInfo>();
+
     image_ci.imageType = VK_IMAGE_TYPE_2D;
     image_ci.format = format;
     image_ci.extent.width = width;
@@ -34,6 +35,7 @@ VkImageCreateInfo GpuCubemap::fill_image_ci(const VkFormat format, const std::ui
     image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     image_ci.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
     return image_ci;
 }
 
@@ -48,13 +50,16 @@ VkImageViewCreateInfo GpuCubemap::fill_image_view_ci(const VkFormat format, cons
 
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
     image_view_ci.format = format;
-    image_view_ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
-                                VK_COMPONENT_SWIZZLE_A};
-    image_view_ci.subresourceRange = {};
-    image_view_ci.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    image_view_ci.components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
+                                VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
+    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.levelCount = miplevel_count;
+    image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = FACE_COUNT;
+
     // Note hat the image will be filled out later
+
     return image_view_ci;
 }
 
@@ -62,6 +67,7 @@ VkSamplerCreateInfo GpuCubemap::fill_sampler_ci(const std::uint32_t miplevel_cou
     assert(miplevel_count > 0);
 
     auto sampler_ci = wrapper::make_info<VkSamplerCreateInfo>();
+
     sampler_ci.magFilter = VK_FILTER_LINEAR;
     sampler_ci.minFilter = VK_FILTER_LINEAR;
     sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -69,10 +75,11 @@ VkSamplerCreateInfo GpuCubemap::fill_sampler_ci(const std::uint32_t miplevel_cou
     sampler_ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     sampler_ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     sampler_ci.minLod = 0.0f;
-    sampler_ci.maxLod = 10.0f;
-    sampler_ci.anisotropyEnable = true;
-    sampler_ci.maxAnisotropy = 16.0f;
+    sampler_ci.maxLod = static_cast<float>(miplevel_count);
+    sampler_ci.anisotropyEnable = false;
+    sampler_ci.maxAnisotropy = 1.0f;
     sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
     return sampler_ci;
 }
 
@@ -119,10 +126,11 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
 
     // Image barrier for optimal image (target)
     // Set initial layout for all array layers (faces) of the optimal (target) tiled texture
-    VkImageSubresourceRange subresourceRange = {};
+    VkImageSubresourceRange subresourceRange;
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = cpu_cubemap.miplevel_count();
+    subresourceRange.baseArrayLayer = 0;
     subresourceRange.layerCount = FACE_COUNT;
 
     wrapper::OnceCommandBuffer copy_command(m_device, [&](const VkCommandBuffer cmd_buf) {

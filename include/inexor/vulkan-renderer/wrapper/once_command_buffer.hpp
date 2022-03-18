@@ -42,22 +42,10 @@ public:
     /// @param device The const reference to a device RAII wrapper instance.
     OnceCommandBuffer(const Device &device);
 
-    OnceCommandBuffer(const Device &device, std::function<void(const VkCommandBuffer &)> command_lambda)
-        : OnceCommandBuffer(device) {
-        create_command_buffer();
-        start_recording();
-        command_lambda(m_command_buffer->get());
-        end_recording_and_submit_command();
-    }
+    OnceCommandBuffer(const Device &device, std::function<void(const VkCommandBuffer &)> command_lambda);
 
     OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index,
-                      std::function<void(const VkCommandBuffer &)> command_lambda)
-        : OnceCommandBuffer(device, queue, queue_family_index) {
-        create_command_buffer();
-        start_recording();
-        command_lambda(m_command_buffer->get());
-        end_recording_and_submit_command();
-    }
+                      std::function<void(const VkCommandBuffer &)> command_lambda);
 
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;

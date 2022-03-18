@@ -23,6 +23,8 @@ enum class CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
 // TODO: Implement more camera types.
 enum class CameraType { LOOK_AT };
 
+// TODO: Offer an overloaded constructor which accepts the window as parameter
+
 /// @warning Not thread safe!
 class Camera {
 private:

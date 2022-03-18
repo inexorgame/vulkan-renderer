@@ -37,12 +37,12 @@ VkImageViewCreateInfo OffscreenFramebuffer::make_image_view_create_info(const Vk
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_ci.format = format;
     image_view_ci.flags = 0;
-    image_view_ci.subresourceRange = {};
     image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     image_view_ci.subresourceRange.baseMipLevel = 0;
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = 1;
+
     // Note that the image member will be filled out later!
 
     return image_view_ci;
@@ -53,9 +53,14 @@ OffscreenFramebuffer::OffscreenFramebuffer(const wrapper::Device &device, const 
                                            const VkRenderPass renderpass, std::string name)
 
     : Image(device, make_image_create_info(format, width, height), make_image_view_create_info(format), name),
-      Framebuffer(device, renderpass, std::vector<VkImageView>{image_view()}, width, height, name) {
+      Framebuffer(device, renderpass, std::vector{image_view()}, width, height, name) {
 
     transition_image_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
+
+OffscreenFramebuffer::OffscreenFramebuffer(const wrapper::Device &device, VkFormat format, std::uint32_t width,
+                                           std::uint32_t height, const wrapper::RenderPass &renderpass,
+                                           std::string name)
+    : OffscreenFramebuffer(device, format, width, height, renderpass.renderpass(), std::move(name)) {}
 
 } // namespace inexor::vulkan_renderer::wrapper

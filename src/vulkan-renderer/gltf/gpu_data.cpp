@@ -216,10 +216,11 @@ void ModelGpuPbrData::setup_rendering_resources(
             vkAllocateDescriptorSets(render_graph->device(), &descriptorSetAllocInfo, &material.descriptor_set);
 
             auto use_texture_if_available = [&](const texture::GpuTexture *texture) {
+                // If pointer to texture is valid, return it. Otherwise, return the pointer to the empty texture.
                 return texture ? texture->descriptor_image_info : m_empty_texture->descriptor_image_info;
             };
 
-            std::vector<VkDescriptorImageInfo> descriptor_image_infos = {
+            std::vector descriptor_image_infos = {
                 m_empty_texture->descriptor_image_info,               //
                 m_empty_texture->descriptor_image_info,               //
                 use_texture_if_available(material.normal_texture),    //

@@ -1,8 +1,10 @@
 #include "inexor/vulkan-renderer/pbr/brdf_lut.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
 #include "vulkan/vulkan_core.h"
@@ -17,8 +19,6 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     VkDescriptorSetLayout m_desc_set_layout;
     VkPipelineLayout m_pipeline_layout;
-    VkRenderPass m_renderpass;
-    VkPipeline m_pipeline;
 
     const auto format{VK_FORMAT_R16G16_SFLOAT};
     const VkExtent3D image_extent{512, 512, 1};
@@ -95,14 +95,11 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     const auto renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
-    if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &m_renderpass);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create renderpass (vkCreateRenderPass)!", result);
-    }
-
     const std::vector<VkImageView> attachments = {m_brdf_texture->image_view()};
 
-    m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, m_renderpass, attachments, image_extent.width,
+    wrapper::RenderPass renderpass(device, renderpass_ci, "bdrf renderpass");
+
+    m_framebuffer = std::make_unique<wrapper::Framebuffer>(device, renderpass, attachments, image_extent.width,
                                                            image_extent.height, "framebuffer");
 
     const auto desc_set_layout_ci = wrapper::make_info<VkDescriptorSetLayoutCreateInfo>();
@@ -113,7 +110,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
         throw VulkanException("Failed to create descriptor set layout (vkCreateDescriptorSetLayout)!", result);
     }
 
-    const std::vector<VkDescriptorSetLayout> desc_set{m_desc_set_layout};
+    const std::vector desc_set{m_desc_set_layout};
 
     const auto pipeline_layout_ci = wrapper::make_info(desc_set);
 
@@ -148,8 +145,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
     multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-
+    const std::vector dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
     const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
     const auto empty_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
 
@@ -160,17 +156,17 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files, "brdf");
 
     const auto pipeline_ci =
-        wrapper::make_info(m_pipeline_layout, m_renderpass, m_shader_loader.shader_stage_create_infos(),
+        wrapper::make_info(m_pipeline_layout, renderpass.renderpass(), m_shader_loader.shader_stage_create_infos(),
                            &empty_input_sci, &input_assembly_sci, &viewport_sci, &rasterization_sci, &multisample_sci,
                            &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
-    device.create_graphics_pipeline(&pipeline_ci, &m_pipeline);
+    wrapper::GraphicsPipeline pipeline(device, pipeline_ci, "pipeline");
 
     VkClearValue clear_values[1];
     clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
     auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
-    renderpass_bi.renderPass = m_renderpass;
+    renderpass_bi.renderPass = renderpass.renderpass();
     renderpass_bi.renderArea.extent.width = image_extent.width;
     renderpass_bi.renderArea.extent.height = image_extent.height;
     renderpass_bi.clearValueCount = 1;
@@ -178,6 +174,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
     wrapper::OnceCommandBuffer single_command(device, [&](const VkCommandBuffer cmd_buf) {
+        // TODO: Can we add an overloaded lambda which exposes the CommandBuffer wrapper?
         vkCmdBeginRenderPass(cmd_buf, &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
         VkViewport viewport{};
@@ -192,7 +189,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
         vkCmdSetViewport(cmd_buf, 0, 1, &viewport);
         vkCmdSetScissor(cmd_buf, 0, 1, &scissor);
-        vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+        vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline());
         vkCmdDraw(cmd_buf, 3, 1, 0, 0);
         vkCmdEndRenderPass(cmd_buf);
     });
@@ -203,8 +200,6 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     // TODO: Put into RAII wrappers!
     vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
-    vkDestroyRenderPass(m_device.device(), m_renderpass, nullptr);
-    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
     vkDestroyDescriptorSetLayout(m_device.device(), m_desc_set_layout, nullptr);
 }
 

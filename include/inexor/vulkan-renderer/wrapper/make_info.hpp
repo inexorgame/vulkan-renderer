@@ -10,6 +10,8 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Shader;
 
+// TODO: Use C++209 std::span for all make_infos which accept a std::vector!
+
 /// @brief A small helper function that return vulkan create infos with sType already set
 /// @code{.cpp}
 /// auto render_pass_ci = make_info<VkRenderPassCreateInfo>();

@@ -8,10 +8,11 @@
 
 #include <array>
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Framebuffer::Framebuffer(const wrapper::Device &device, const VkRenderPass render_pass,
+Framebuffer::Framebuffer(const wrapper::Device &device, const VkRenderPass renderpass,
                          const std::vector<VkImageView> &attachments, const std::uint32_t width,
                          const std::uint32_t height, const std::string name)
     : m_device(device), m_name(name) {
@@ -26,8 +27,8 @@ Framebuffer::Framebuffer(const wrapper::Device &device, const VkRenderPass rende
     framebuffer_ci.pAttachments = attachments.data();
     framebuffer_ci.width = width;
     framebuffer_ci.height = height;
-    framebuffer_ci.layers = 1;
-    framebuffer_ci.renderPass = render_pass;
+    framebuffer_ci.layers = 1; // TODO: Expose layers as parameter?
+    framebuffer_ci.renderPass = renderpass;
 
     if (const auto result = vkCreateFramebuffer(m_device.device(), &framebuffer_ci, nullptr, &m_framebuffer);
         result != VK_SUCCESS) {
@@ -36,6 +37,11 @@ Framebuffer::Framebuffer(const wrapper::Device &device, const VkRenderPass rende
 
     m_device.set_debug_marker_name(m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_name);
 }
+
+Framebuffer::Framebuffer(const Device &device, const wrapper::RenderPass &renderpass,
+                         const std::vector<VkImageView> &attachments, std::uint32_t width, std::uint32_t height,
+                         std::string name)
+    : Framebuffer(device, renderpass.renderpass(), attachments, width, height, std::move(name)) {}
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {
     m_framebuffer = std::exchange(other.m_framebuffer, nullptr);

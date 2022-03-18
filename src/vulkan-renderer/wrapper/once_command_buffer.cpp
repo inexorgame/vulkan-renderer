@@ -18,6 +18,23 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
     m_recording_started = false;
 }
 
+OnceCommandBuffer::OnceCommandBuffer(const Device &device, std::function<void(const VkCommandBuffer &)> command_lambda)
+    : OnceCommandBuffer(device) {
+    create_command_buffer();
+    start_recording();
+    command_lambda(m_command_buffer->get());
+    end_recording_and_submit_command();
+}
+
+OnceCommandBuffer::OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index,
+                                     std::function<void(const VkCommandBuffer &)> command_lambda)
+    : OnceCommandBuffer(device, queue, queue_family_index) {
+    create_command_buffer();
+    start_recording();
+    command_lambda(m_command_buffer->get());
+    end_recording_and_submit_command();
+}
+
 OnceCommandBuffer::OnceCommandBuffer(const Device &device)
     : OnceCommandBuffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {}
 
@@ -64,8 +81,8 @@ void OnceCommandBuffer::end_recording_and_submit_command() {
     assert(m_command_buffer);
     assert(m_recording_started);
 
-    if (vkEndCommandBuffer(m_command_buffer->get()) != VK_SUCCESS) {
-        throw std::runtime_error("Error: VkEndCommandBuffer failed for once command buffer!");
+    if (const auto result = vkEndCommandBuffer(m_command_buffer->get()); result != VK_SUCCESS) {
+        throw VulkanException("Error: VkEndCommandBuffer failed for once command buffer!", result);
     }
 
     auto submit_info = make_info<VkSubmitInfo>();

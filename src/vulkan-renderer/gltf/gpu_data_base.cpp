@@ -8,48 +8,6 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
-// TODO: Make a lambda!
-VkImageCreateInfo fill_image_ci(const VkFormat format, const std::uint32_t width, const std::uint32_t height,
-                                const std::uint32_t miplevel_count) {
-    assert(width > 0);
-    assert(height > 0);
-    assert(miplevel_count > 0);
-
-    VkImageCreateInfo image_ci{};
-    image_ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_ci.imageType = VK_IMAGE_TYPE_2D;
-    image_ci.format = format;
-    image_ci.mipLevels = miplevel_count;
-    image_ci.arrayLayers = 1;
-    image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-    image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_ci.extent = {width, height, 1};
-    image_ci.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-    return image_ci;
-}
-
-// TODO: Make a lambda!
-VkImageViewCreateInfo fill_image_view_ci(const VkFormat format, const std::uint32_t miplevel_count) {
-    assert(miplevel_count > 0);
-
-    VkImageViewCreateInfo image_view_ci{};
-    image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    // The image will be filled out later
-    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_ci.format = format;
-    image_view_ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
-                                VK_COMPONENT_SWIZZLE_A};
-    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_ci.subresourceRange.layerCount = 1;
-    image_view_ci.subresourceRange.levelCount = miplevel_count;
-
-    return image_view_ci;
-}
-
 ModelGpuPbrDataBase::ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model, std::string name)
     : m_device(device), m_model(model), GpuDataBase(name) {}
 
@@ -101,6 +59,47 @@ void ModelGpuPbrDataBase::load_textures() {
         // The size of the texture if it had 4 channels (RGBA)
         const std::size_t texture_size =
             static_cast<std::size_t>(texture_image.width) * static_cast<std::size_t>(texture_image.height) * 4;
+
+        auto fill_image_ci = [](const VkFormat format, const std::uint32_t width, const std::uint32_t height,
+                                const std::uint32_t miplevel_count) {
+            assert(width > 0);
+            assert(height > 0);
+            assert(miplevel_count > 0);
+
+            VkImageCreateInfo image_ci{};
+            image_ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            image_ci.imageType = VK_IMAGE_TYPE_2D;
+            image_ci.format = format;
+            image_ci.mipLevels = miplevel_count;
+            image_ci.arrayLayers = 1;
+            image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
+            image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
+            image_ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+            image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            image_ci.extent = {width, height, 1};
+            image_ci.usage =
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+            return image_ci;
+        };
+
+        auto fill_image_view_ci = [](const VkFormat format, const std::uint32_t miplevel_count) {
+            assert(miplevel_count > 0);
+
+            VkImageViewCreateInfo image_view_ci{};
+            image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            // The image will be filled out later
+            image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            image_view_ci.format = format;
+            image_view_ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
+                                        VK_COMPONENT_SWIZZLE_A};
+            image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            image_view_ci.subresourceRange.layerCount = 1;
+            image_view_ci.subresourceRange.levelCount = miplevel_count;
+
+            return image_view_ci;
+        };
 
         // We need to convert RGB-only images to RGBA format (most devices don't support RGB-formats in Vulkan)
         switch (texture_image.component) {
@@ -193,7 +192,6 @@ void ModelGpuPbrDataBase::load_materials() {
             } else if (name == "baseColorFactor") {
                 new_mat.base_color_factor = glm::make_vec4(value.ColorFactor().data());
             } else {
-                // Store this unsupported feature
                 unsupported_material_features[name] = true;
             }
         }
@@ -222,7 +220,6 @@ void ModelGpuPbrDataBase::load_materials() {
                 new_mat.emissive_factor = glm::vec4(glm::make_vec3(value.ColorFactor().data()), 1.0);
                 new_mat.emissive_factor = glm::vec4(0.0f);
             } else {
-                // Store this unsupported feature
                 unsupported_material_features[name] = true;
             }
         }

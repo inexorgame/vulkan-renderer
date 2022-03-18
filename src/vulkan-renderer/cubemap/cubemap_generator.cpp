@@ -3,9 +3,11 @@
 #include "inexor/vulkan-renderer/cubemap/gpu_cubemap.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/offscreen_framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <glm/glm.hpp>
@@ -27,7 +29,9 @@
 namespace inexor::vulkan_renderer::cubemap {
 
 // TODO: Separate into class methods!
-CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
+CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<void()> rendering_lambda) {
+
+    // TODO: Measure time it takes to generate it?
 
     // TODO: Can we make this a scoped enum?
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
@@ -92,15 +96,10 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
 
         const VkRenderPassCreateInfo renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
-        VkRenderPass renderpass;
-
-        if (const auto result = vkCreateRenderPass(device.device(), &renderpass_ci, nullptr, &renderpass);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to create renderpass for cubemap generation (vkCreateRenderPass)!", result);
-        }
+        wrapper::RenderPass renderpass(device, renderpass_ci, "cubemap renderpass");
 
         m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
-            device, format, image_extent.width, image_extent.height, renderpass, "offscreen framebuffer");
+            device, format, image_extent.width, image_extent.height, renderpass.renderpass(), "offscreen framebuffer");
 
         wrapper::DescriptorBuilder builder(device);
 
@@ -110,6 +109,7 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
         struct PushBlockIrradiance {
             glm::mat4 mvp;
             // TODO: Use static_cast here!
+            // TODO: Use C++20 math constants here
             float deltaPhi = (2.0f * float(M_PI)) / 180.0f;
             float deltaTheta = (0.5f * float(M_PI)) / 64.0f;
         } pushBlockIrradiance;
@@ -118,7 +118,7 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
         struct PushBlockPrefilterEnv {
             glm::mat4 mvp;
             float roughness;
-            uint32_t numSamples = 32u;
+            std::uint32_t numSamples = 32;
         } pushBlockPrefilterEnv;
 
         std::vector<VkPushConstantRange> push_constant_range(1);
@@ -133,7 +133,7 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
             break;
         };
 
-        const std::vector<VkDescriptorSetLayout> desc_set_layouts{m_descriptor->descriptor_set_layout};
+        const std::vector desc_set_layouts{m_descriptor->descriptor_set_layout};
 
         const VkPipelineLayoutCreateInfo pipeline_layout_ci = wrapper::make_info(desc_set_layouts, push_constant_range);
 
@@ -154,6 +154,7 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
         blend_att_state.blendEnable = VK_FALSE;
 
         // TODO: Move this into make_info wrapper function?
+        // TODO: Use C++20 std::span!
         auto color_blend_sci = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
         color_blend_sci.attachmentCount = 1;
         color_blend_sci.pAttachments = &blend_att_state;
@@ -173,7 +174,7 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
         auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
         multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-        const std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        const std::vector dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
         const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
 
@@ -219,25 +220,24 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
             break;
         };
 
-        const auto pipeline_ci = wrapper::make_info(pipeline_layout, renderpass, shader_stages, &vertex_input_state_ci,
-                                                    &input_assembly_sci, &viewport_sci, &rast_sci, &multisample_sci,
-                                                    &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
+        const auto pipeline_ci = wrapper::make_info(
+            pipeline_layout, renderpass.renderpass(), shader_stages, &vertex_input_state_ci, &input_assembly_sci,
+            &viewport_sci, &rast_sci, &multisample_sci, &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
-        VkPipeline pipeline;
-        device.create_graphics_pipeline(&pipeline_ci, &pipeline);
+        wrapper::GraphicsPipeline pipeline(device, pipeline_ci, "pipeline");
 
         VkClearValue clearValues[1];
         clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
 
         auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
-        renderpass_bi.renderPass = renderpass;
+        renderpass_bi.renderPass = renderpass.renderpass();
         renderpass_bi.framebuffer = m_offscreen_framebuffer->framebuffer();
         renderpass_bi.renderArea.extent.width = dim;
         renderpass_bi.renderArea.extent.height = dim;
         renderpass_bi.clearValueCount = 1;
         renderpass_bi.pClearValues = clearValues;
 
-        const std::vector<glm::mat4> matrices = {
+        const std::vector matrices{
             glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
                         glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
             glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
@@ -302,15 +302,16 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
                     break;
                 };
 
-                vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+                vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline());
 
                 vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
                                         1, &m_descriptor->descriptor_set, 0, nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 
-                // TODO: draw skybox!
-                // TODO: How to make this part a parameter? Meaning we can control what's in the skybox? rendergraph?
+                // TODO: draw skybox
+                // Call lambda which renders...
+                rendering_lambda();
 
                 vkCmdEndRenderPass(cmd_buf.command_buffer());
 
@@ -343,8 +344,6 @@ CubemapGenerator::CubemapGenerator(wrapper::Device &device) {
         };
 
         // TODO: Create RAII wrappers for these
-        vkDestroyRenderPass(device.device(), renderpass, nullptr);
-        vkDestroyPipeline(device.device(), pipeline, nullptr);
         vkDestroyPipelineLayout(device.device(), pipeline_layout, nullptr);
     }
 }
