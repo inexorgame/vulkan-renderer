@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader_loader.hpp"
 
@@ -18,7 +19,6 @@ namespace inexor::vulkan_renderer::pbr {
 BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     VkDescriptorSetLayout m_desc_set_layout;
-    VkPipelineLayout m_pipeline_layout;
 
     const auto format{VK_FORMAT_R16G16_SFLOAT};
     const VkExtent3D image_extent{512, 512, 1};
@@ -112,12 +112,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     const std::vector desc_set{m_desc_set_layout};
 
-    const auto pipeline_layout_ci = wrapper::make_info(desc_set);
-
-    if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
-    }
+    wrapper::PipelineLayout pipeline_layout(device, wrapper::make_info(desc_set), "pipeline layout");
 
     const auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
     const auto rasterization_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
@@ -155,10 +150,10 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
 
     wrapper::ShaderLoader m_shader_loader(m_device, m_shader_files, "brdf");
 
-    const auto pipeline_ci =
-        wrapper::make_info(m_pipeline_layout, renderpass.renderpass(), m_shader_loader.shader_stage_create_infos(),
-                           &empty_input_sci, &input_assembly_sci, &viewport_sci, &rasterization_sci, &multisample_sci,
-                           &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
+    const auto pipeline_ci = wrapper::make_info(
+        pipeline_layout.pipeline_layout(), renderpass.renderpass(), m_shader_loader.shader_stage_create_infos(),
+        &empty_input_sci, &input_assembly_sci, &viewport_sci, &rasterization_sci, &multisample_sci, &depth_stencil_sci,
+        &color_blend_sci, &dynamic_state_ci);
 
     wrapper::GraphicsPipeline pipeline(device, pipeline_ci, "pipeline");
 
@@ -199,7 +194,6 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     m_brdf_texture->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // TODO: Put into RAII wrappers!
-    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
     vkDestroyDescriptorSetLayout(m_device.device(), m_desc_set_layout, nullptr);
 }
 

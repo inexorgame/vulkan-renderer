@@ -7,6 +7,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/offscreen_framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
@@ -135,14 +136,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
 
         const std::vector desc_set_layouts{m_descriptor->descriptor_set_layout};
 
-        const VkPipelineLayoutCreateInfo pipeline_layout_ci = wrapper::make_info(desc_set_layouts, push_constant_range);
-
-        VkPipelineLayout pipeline_layout;
-
-        if (const auto result = vkCreatePipelineLayout(device.device(), &pipeline_layout_ci, nullptr, &pipeline_layout);
-            result != VK_SUCCESS) {
-            throw VulkanException("Failed to create pipeline layout (vkCreatePipelineLayout)!", result);
-        }
+        wrapper::PipelineLayout pipeline_layout(device, wrapper::make_info(desc_set_layouts, push_constant_range),
+                                                "pipeline layout");
 
         const auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
 
@@ -220,9 +215,10 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
             break;
         };
 
-        const auto pipeline_ci = wrapper::make_info(
-            pipeline_layout, renderpass.renderpass(), shader_stages, &vertex_input_state_ci, &input_assembly_sci,
-            &viewport_sci, &rast_sci, &multisample_sci, &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
+        const auto pipeline_ci =
+            wrapper::make_info(pipeline_layout.pipeline_layout(), renderpass.renderpass(), shader_stages,
+                               &vertex_input_state_ci, &input_assembly_sci, &viewport_sci, &rast_sci, &multisample_sci,
+                               &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
 
         wrapper::GraphicsPipeline pipeline(device, pipeline_ci, "pipeline");
 
@@ -286,7 +282,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
                         // TODO: Use static cast
                         glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
-                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout,
+                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout.pipeline_layout(),
                                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                        sizeof(PushBlockIrradiance), &pushBlockIrradiance);
                     break;
@@ -296,7 +292,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
                         glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
                     pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
 
-                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout,
+                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout.pipeline_layout(),
                                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                        sizeof(PushBlockPrefilterEnv), &pushBlockPrefilterEnv);
                     break;
@@ -304,8 +300,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
 
                 vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline());
 
-                vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
-                                        1, &m_descriptor->descriptor_set, 0, nullptr);
+                vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        pipeline_layout.pipeline_layout(), 0, 1, &m_descriptor->descriptor_set, 0,
+                                        nullptr);
 
                 VkDeviceSize offsets[1] = {0};
 
@@ -342,9 +339,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
             // shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(numMips);
             break;
         };
-
-        // TODO: Create RAII wrappers for these
-        vkDestroyPipelineLayout(device.device(), pipeline_layout, nullptr);
     }
 }
 

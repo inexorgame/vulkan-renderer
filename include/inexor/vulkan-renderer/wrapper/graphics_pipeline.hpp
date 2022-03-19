@@ -8,6 +8,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// TODO: Add a wrapper for Vulkan compute pipelines
+
 class GraphicsPipeline {
 private:
     const Device &m_device;

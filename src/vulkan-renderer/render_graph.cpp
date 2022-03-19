@@ -187,6 +187,7 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
         pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
     }
 
+    // TODO: Use pipeline layout wrapper!
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
         result != VK_SUCCESS) {
