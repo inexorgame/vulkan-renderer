@@ -59,7 +59,7 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
     create_image_view();
 }
 
-void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImageLayout new_layout,
+void Image::transition_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkImageLayout new_layout,
                                     const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
 
     assert(descriptor_image_info.imageLayout != new_layout);
@@ -116,26 +116,24 @@ void Image::transition_image_layout(const VkCommandBuffer cmd_buf, const VkImage
         destination_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     }
 
-    vkCmdPipelineBarrier(cmd_buf, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    cmd_buf.pipeline_barrier(source_stage, destination_stage, barrier);
 
     descriptor_image_info.imageLayout = new_layout;
 }
 
 void Image::transition_image_layout(const VkImageLayout new_layout, const std::uint32_t miplevel_count,
                                     const std::uint32_t layer_count) {
-    OnceCommandBuffer single_command(m_device, [&](const VkCommandBuffer cmd_buf) {
+    OnceCommandBuffer single_command(m_device, [&](const CommandBuffer &cmd_buf) {
         transition_image_layout(cmd_buf, new_layout, miplevel_count, layer_count);
     });
 }
 
-void Image::copy_from_image(const VkCommandBuffer command_buffer, Image &image, const std::uint32_t width,
+void Image::copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image, const std::uint32_t width,
                             const std::uint32_t height, const std::uint32_t miplevel_count,
                             const std::uint32_t layer_count, const std::uint32_t base_array_layer,
                             const std::uint32_t mip_level) {
 
-    assert(command_buffer);
-
-    image.transition_image_layout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    image.transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
     VkImageSubresourceRange subres_range{};
     subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -158,31 +156,30 @@ void Image::copy_from_image(const VkCommandBuffer command_buffer, Image &image, 
     copy_region.extent.height = height;
     copy_region.extent.depth = 1;
 
-    vkCmdCopyImage(command_buffer, image.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image,
-                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+    cmd_buf.copy_image(image.image(), m_image, copy_region);
 
-    image.transition_image_layout(command_buffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    image.transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
-void Image::copy_from_buffer(const VkCommandBuffer command_buffer, const VkBuffer src_buffer, const std::uint32_t width,
-                             const std::uint32_t height) {
-    assert(command_buffer);
+void Image::copy_from_buffer(const wrapper::CommandBuffer &cmd_buf, const VkBuffer src_buffer,
+                             const std::uint32_t width, const std::uint32_t height) {
     assert(src_buffer);
+    assert(width > 0);
+    assert(height > 0);
 
     // TODO: Support mip levels!
-    VkBufferImageCopy image_copy{};
-    image_copy.bufferOffset = 0;
-    image_copy.bufferRowLength = 0;
-    image_copy.bufferImageHeight = 0;
-    image_copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_copy.imageSubresource.mipLevel = 0;
-    image_copy.imageSubresource.baseArrayLayer = 0;
-    image_copy.imageSubresource.layerCount = 1;
-    image_copy.imageOffset = {0, 0, 0};
-    image_copy.imageExtent = {width, height, 1};
+    VkBufferImageCopy copy_region{};
+    copy_region.bufferOffset = 0;
+    copy_region.bufferRowLength = 0;
+    copy_region.bufferImageHeight = 0;
+    copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copy_region.imageSubresource.mipLevel = 0;
+    copy_region.imageSubresource.baseArrayLayer = 0;
+    copy_region.imageSubresource.layerCount = 1;
+    copy_region.imageOffset = {0, 0, 0};
+    copy_region.imageExtent = {width, height, 1};
 
-    // TODO: Support mip levels!
-    vkCmdCopyBufferToImage(command_buffer, src_buffer, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
+    cmd_buf.copy_buffer_to_image(src_buffer, m_image, copy_region);
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {

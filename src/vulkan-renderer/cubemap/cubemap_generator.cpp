@@ -55,7 +55,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
 
         const VkExtent2D image_extent{dim, dim};
 
-        const std::uint32_t miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
+        const auto miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
 
         m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, dim, miplevel_count, "cubemap");
 
@@ -169,6 +169,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
         auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
         multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+        // TODO: Move this into rendergraph and enable dynamic states as you call the specific methods which set them!
         const std::vector dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
         const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
@@ -262,67 +263,59 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
-                wrapper::OnceCommandBuffer cmd_buf(device);
+                wrapper::OnceCommandBuffer cmd_buf(device, [&](const wrapper::CommandBuffer &cmd_buf) {
+                    viewport.width = static_cast<float>(dim * std::pow(0.5f, mip_level));
+                    viewport.height = static_cast<float>(dim * std::pow(0.5f, mip_level));
 
-                cmd_buf.create_command_buffer();
-                cmd_buf.start_recording();
+                    cmd_buf.set_viewport(viewport);
+                    cmd_buf.set_scissor(scissor);
+                    cmd_buf.begin_render_pass(renderpass_bi);
 
-                viewport.width = static_cast<float>(dim * std::pow(0.5f, mip_level));
-                viewport.height = static_cast<float>(dim * std::pow(0.5f, mip_level));
+                    switch (target) {
+                    case IRRADIANCE:
+                        pushBlockIrradiance.mvp =
+                            // TODO: Use static cast
+                            glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
-                vkCmdSetViewport(cmd_buf.command_buffer(), 0, 1, &viewport);
-                vkCmdSetScissor(cmd_buf.command_buffer(), 0, 1, &scissor);
+                        cmd_buf.push_constants<PushBlockIrradiance>(
+                            pushBlockIrradiance, pipeline_layout.pipeline_layout(),
+                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
-                // Render scene from cube face's point of view
-                vkCmdBeginRenderPass(cmd_buf.command_buffer(), &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
+                        break;
+                    case PREFILTEREDENV:
+                        pushBlockPrefilterEnv.mvp =
+                            // TODO: Use static cast
+                            glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                        pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
 
-                switch (target) {
-                case IRRADIANCE:
-                    pushBlockIrradiance.mvp =
-                        // TODO: Use static cast
-                        glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                        cmd_buf.push_constants<PushBlockPrefilterEnv>(
+                            pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
+                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
-                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout.pipeline_layout(),
-                                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                                       sizeof(PushBlockIrradiance), &pushBlockIrradiance);
-                    break;
-                case PREFILTEREDENV:
-                    pushBlockPrefilterEnv.mvp =
-                        // TODO: Use static cast
-                        glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
-                    pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
+                        break;
+                    };
 
-                    vkCmdPushConstants(cmd_buf.command_buffer(), pipeline_layout.pipeline_layout(),
-                                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                                       sizeof(PushBlockPrefilterEnv), &pushBlockPrefilterEnv);
-                    break;
-                };
+                    cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
+                    cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout());
 
-                vkCmdBindPipeline(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline());
+                    VkDeviceSize offsets[1] = {0};
 
-                vkCmdBindDescriptorSets(cmd_buf.command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                        pipeline_layout.pipeline_layout(), 0, 1, &m_descriptor->descriptor_set, 0,
-                                        nullptr);
+                    // TODO: draw skybox
+                    // Call lambda which renders...
+                    rendering_lambda();
 
-                VkDeviceSize offsets[1] = {0};
+                    cmd_buf.end_render_pass();
 
-                // TODO: draw skybox
-                // Call lambda which renders...
-                rendering_lambda();
+                    m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-                vkCmdEndRenderPass(cmd_buf.command_buffer());
+                    m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
+                                                       static_cast<std::uint32_t>(viewport.width),
+                                                       static_cast<std::uint32_t>(viewport.height));
 
-                m_offscreen_framebuffer->transition_image_layout(cmd_buf.command_buffer(),
-                                                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                    m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-                m_cubemap_texture->copy_from_image(cmd_buf.command_buffer(), m_offscreen_framebuffer->image(), face,
-                                                   mip_level, static_cast<std::uint32_t>(viewport.width),
-                                                   static_cast<std::uint32_t>(viewport.height));
-
-                m_offscreen_framebuffer->transition_image_layout(cmd_buf.command_buffer(),
-                                                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-                cmd_buf.end_recording_and_submit_command();
+                    // End of the lambda of the once command buffer
+                });
             }
         }
 

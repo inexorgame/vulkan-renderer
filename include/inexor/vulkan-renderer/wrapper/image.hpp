@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+
 #include <vk_mem_alloc.h>
 
 #include <string>
@@ -43,8 +45,8 @@ public:
     ///
     ///
     ///
-    void transition_image_layout(VkCommandBuffer cmd_buf, VkImageLayout new_layout, std::uint32_t miplevel_count = 1,
-                                 std::uint32_t layer_count = 1);
+    void transition_image_layout(const wrapper::CommandBuffer &cmd_buf, VkImageLayout new_layout,
+                                 std::uint32_t miplevel_count = 1, std::uint32_t layer_count = 1);
 
     void transition_image_layout(VkImageLayout new_layout, std::uint32_t miplevel_count = 1,
                                  std::uint32_t layer_count = 1);
@@ -52,13 +54,13 @@ public:
     ///
     ///
     ///
-    void copy_from_buffer(VkCommandBuffer command_buffer, VkBuffer src_buffer, std::uint32_t width,
+    void copy_from_buffer(const wrapper::CommandBuffer &cmd_buf, VkBuffer src_buffer, std::uint32_t width,
                           std::uint32_t height);
 
     ///
     ///
     ///
-    void copy_from_image(VkCommandBuffer command_buffer, Image &image, std::uint32_t width, std::uint32_t height,
+    void copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image, std::uint32_t width, std::uint32_t height,
                          std::uint32_t miplevel_count, std::uint32_t layer_count, std::uint32_t base_array_layer,
                          std::uint32_t mip_level);
 

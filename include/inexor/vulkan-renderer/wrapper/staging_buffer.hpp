@@ -14,7 +14,6 @@ class Device;
 /// Using a staging buffer is the most efficient way to copy memory from RAM to GPU.
 class StagingBuffer final : public GPUMemoryBuffer {
     const Device &m_device;
-    OnceCommandBuffer m_command_buffer_for_copying;
 
 public:
     /// @brief Default constructor.

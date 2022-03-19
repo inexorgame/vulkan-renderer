@@ -49,8 +49,8 @@ public:
     GpuCubemap(const wrapper::Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
                std::string name);
 
-    void copy_from_image(VkCommandBuffer cmd_buf, VkImage source_image, std::uint32_t face, std::uint32_t mip_level,
-                         std::uint32_t width, std::uint32_t height);
+    void copy_from_image(const wrapper::CommandBuffer &cmd_buf, VkImage source_image, std::uint32_t face,
+                         std::uint32_t mip_level, std::uint32_t width, std::uint32_t height);
 
     [[nodiscard]] std::uint32_t width() const {
         return m_image_ci.extent.width;

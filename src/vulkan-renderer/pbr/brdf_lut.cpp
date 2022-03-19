@@ -168,25 +168,13 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     renderpass_bi.pClearValues = clear_values;
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
-    wrapper::OnceCommandBuffer single_command(device, [&](const VkCommandBuffer cmd_buf) {
-        // TODO: Can we add an overloaded lambda which exposes the CommandBuffer wrapper?
-        vkCmdBeginRenderPass(cmd_buf, &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
-
-        VkViewport viewport{};
-        viewport.width = static_cast<float>(image_extent.width);
-        viewport.height = static_cast<float>(image_extent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        VkRect2D scissor{};
-        scissor.extent.width = image_extent.width;
-        scissor.extent.height = image_extent.height;
-
-        vkCmdSetViewport(cmd_buf, 0, 1, &viewport);
-        vkCmdSetScissor(cmd_buf, 0, 1, &scissor);
-        vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline());
-        vkCmdDraw(cmd_buf, 3, 1, 0, 0);
-        vkCmdEndRenderPass(cmd_buf);
+    wrapper::OnceCommandBuffer single_command(device, [&](const wrapper::CommandBuffer &cmd_buf) {
+        cmd_buf.begin_render_pass(renderpass_bi);
+        cmd_buf.set_viewport(image_extent.width, image_extent.height);
+        cmd_buf.set_scissor(image_extent.width, image_extent.height);
+        cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
+        cmd_buf.draw(3, 0, 1, 0);
+        cmd_buf.end_render_pass();
     });
 
     spdlog::trace("Generating BRDF look-up table finished.");

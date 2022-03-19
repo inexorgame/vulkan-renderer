@@ -16,24 +16,27 @@ class ResourceDescriptor;
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
-private:
-    VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
-    const wrapper::Device &m_device;
+protected:
+    const Device &m_device;
+    VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     std::string m_name;
+
+    CommandBuffer(const Device &device);
+    void create_command_buffer(const VkCommandPool command_pool);
 
 public:
     /// @brief Default constructor
     /// @param device The const reference to the device RAII wrapper class
     /// @param command_pool The command pool from which the command buffer will be allocated
     /// @param name The internal debug marker name of the command buffer. This must not be an empty string
-    CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, std::string name);
+    CommandBuffer(const Device &device, VkCommandPool command_pool, std::string name);
 
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
     ~CommandBuffer() = default;
 
     CommandBuffer &operator=(const CommandBuffer &) noexcept = default;
-    CommandBuffer &operator=(CommandBuffer &&) = delete;
+    CommandBuffer &operator=(CommandBuffer &&) noexcept = default;
 
     /// @brief Call vkBeginCommandBuffer
     /// @note Sometimes it's useful to pass VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT to specify that a command
@@ -67,7 +70,7 @@ public:
                         const std::uint32_t offset = 0) const {
         assert(data);
         assert(layout);
-        vkCmdPushConstants(m_cmd_buf, layout, stage_flags, offset, sizeof(T), data);
+        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(T), data);
     }
 
     /// @brief Update push constant data
@@ -80,7 +83,7 @@ public:
     void push_constants(const T &data, const VkPipelineLayout layout, const VkShaderStageFlags stage_flags,
                         const std::uint32_t offset = 0) const {
         assert(layout);
-        vkCmdPushConstants(m_cmd_buf, layout, stage_flags, offset, sizeof(T), &data);
+        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(T), &data);
     }
 
     /// @brief Call vkEndCommandBuffer
@@ -88,6 +91,28 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
+
+    void copy_buffer(VkBuffer source_buffer, VkBuffer target_buffer, const VkBufferCopy &copy_region) const;
+
+    void copy_buffer(VkBuffer source_buffer, VkBuffer target_buffer, VkDeviceSize source_buffer_size) const;
+
+    void copy_buffer_to_image(VkBuffer src_buffer, VkImage target_image, const VkBufferImageCopy &regions) const;
+
+    void copy_buffer_to_image(VkBuffer src_buffer, VkImage target_image,
+                              const std::vector<VkBufferImageCopy> &regions) const;
+
+    void copy_image(VkImage source_image, VkImage target_image, const VkImageCopy &copy_region) const;
+
+    void set_scissor(const VkRect2D &scissor) const;
+
+    void set_scissor(std::uint32_t width, std::uint32_t height) const;
+
+    void set_viewport(const VkViewport &viewport) const;
+
+    void set_viewport(std::uint32_t width, std::uint32_t height, float min_depth = 0.0f, float max_depth = 1.0f) const;
+
+    void pipeline_barrier(VkPipelineStageFlags source_stage_flags, VkPipelineStageFlags destination_stage_flags,
+                          const VkImageMemoryBarrier &barrier) const;
 
     /// @brief Call vkCmdBeginRenderPass
     /// @param render_pass_bi The const reference to the VkRenderPassBeginInfo which is used
@@ -132,13 +157,8 @@ public:
     void end_render_pass() const;
 
     // TODO: Refactor: unified get syntax!
-    [[nodiscard]] VkCommandBuffer get() const {
-        return m_cmd_buf;
-    }
-
-    // TODO: Refactor: unified get syntax!
     [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_cmd_buf;
+        return &m_command_buffer;
     }
 };
 

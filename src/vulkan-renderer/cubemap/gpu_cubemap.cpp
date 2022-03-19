@@ -133,14 +133,12 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     subresourceRange.baseArrayLayer = 0;
     subresourceRange.layerCount = FACE_COUNT;
 
-    wrapper::OnceCommandBuffer copy_command(m_device, [&](const VkCommandBuffer cmd_buf) {
+    wrapper::OnceCommandBuffer copy_command(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
         // TODO: Move transition_image_layout into vkCmdCopyBufferToImage as well
         transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cpu_cubemap.miplevel_count(),
                                 FACE_COUNT);
 
-        // TODO: Move into cmd_buf wrapper
-        vkCmdCopyBufferToImage(cmd_buf, texture_staging_buffer.buffer(), image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                               static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
+        cmd_buf.copy_buffer_to_image(texture_staging_buffer.buffer(), image(), copy_regions);
 
         transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cpu_cubemap.miplevel_count(),
                                 FACE_COUNT);
@@ -167,8 +165,9 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, VkFormat format, std::uint
                        std::string name)
     : GpuCubemap(device, format, width, height, 1, name) {}
 
-void GpuCubemap::copy_from_image(const VkCommandBuffer cmd_buf, const VkImage source_image, const std::uint32_t face,
-                                 const std::uint32_t mip_level, const std::uint32_t width, const std::uint32_t height) {
+void GpuCubemap::copy_from_image(const wrapper::CommandBuffer &cmd_buf, const VkImage source_image,
+                                 const std::uint32_t face, const std::uint32_t mip_level, const std::uint32_t width,
+                                 const std::uint32_t height) {
     VkImageCopy region{};
 
     region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -187,9 +186,7 @@ void GpuCubemap::copy_from_image(const VkCommandBuffer cmd_buf, const VkImage so
     region.extent.height = height;
     region.extent.depth = 1;
 
-    // TODO: move into cmd_buf wrapper!
-    vkCmdCopyImage(cmd_buf, source_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image(),
-                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    cmd_buf.copy_image(source_image, image(), region);
 }
 
 } // namespace inexor::vulkan_renderer::cubemap

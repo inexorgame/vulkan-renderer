@@ -6,102 +6,47 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cassert>
 #include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index)
-    : m_device(device), m_queue(queue), m_command_pool(device, queue_family_index) {
-    assert(device.device());
-    m_recording_started = false;
-}
+OnceCommandBuffer::OnceCommandBuffer(const Device &device,
+                                     std::function<void(const CommandBuffer &cmd_buf)> command_lambda)
+    : OnceCommandBuffer(device, device.graphics_queue(), device.graphics_queue_family_index(), command_lambda) {}
 
-OnceCommandBuffer::OnceCommandBuffer(const Device &device, std::function<void(const VkCommandBuffer &)> command_lambda)
-    : OnceCommandBuffer(device) {
-    create_command_buffer();
-    start_recording();
-    command_lambda(m_command_buffer->get());
-    end_recording_and_submit_command();
-}
+OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index,
+                                     std::function<void(const CommandBuffer &cmd_buf)> command_lambda)
+    : m_command_pool(device, device.graphics_queue_family_index()), CommandBuffer(device) {
 
-OnceCommandBuffer::OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index,
-                                     std::function<void(const VkCommandBuffer &)> command_lambda)
-    : OnceCommandBuffer(device, queue, queue_family_index) {
-    create_command_buffer();
-    start_recording();
-    command_lambda(m_command_buffer->get());
-    end_recording_and_submit_command();
-}
+    CommandBuffer::create_command_buffer(m_command_pool.get());
+    CommandBuffer::begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-OnceCommandBuffer::OnceCommandBuffer(const Device &device)
-    : OnceCommandBuffer(device, device.graphics_queue(), device.graphics_queue_family_index()) {}
+    // We need to create a temporary value so we can create a const reference
+    const CommandBuffer &cmd_buf = *this;
+    command_lambda(cmd_buf);
 
-OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
-    : m_device(other.m_device), m_command_pool(std::move(other.m_command_pool)) {
-    m_queue = other.m_queue;
-    m_command_buffer = std::exchange(other.m_command_buffer, nullptr);
-    m_recording_started = other.m_recording_started;
-}
-
-OnceCommandBuffer::~OnceCommandBuffer() {
-    m_command_buffer.reset();
-    m_recording_started = false;
-}
-
-void OnceCommandBuffer::create_command_buffer() {
-    assert(m_command_pool.get());
-    assert(!m_recording_started);
-    assert(!m_command_buffer);
-
-    m_command_buffer = std::make_unique<wrapper::CommandBuffer>(m_device, m_command_pool.get(), "Once command buffer");
-}
-
-void OnceCommandBuffer::start_recording() {
-    assert(m_command_pool.get());
-    assert(!m_recording_started);
-
-    auto command_buffer_bi = make_info<VkCommandBufferBeginInfo>();
-
-    // We're only going to use the command buffer once and wait with returning from the function until the copy
-    // operation has finished executing. It's good practice to tell the driver about our intent using
-    // VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
-    command_buffer_bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    if (const auto result = vkBeginCommandBuffer(m_command_buffer->get(), &command_buffer_bi); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkBeginCommandBuffer failed for once command buffer!", result);
-    }
-
-    m_recording_started = true;
-}
-
-void OnceCommandBuffer::end_recording_and_submit_command() {
-    assert(m_command_pool.get());
-    assert(m_command_buffer);
-    assert(m_recording_started);
-
-    if (const auto result = vkEndCommandBuffer(m_command_buffer->get()); result != VK_SUCCESS) {
-        throw VulkanException("Error: VkEndCommandBuffer failed for once command buffer!", result);
-    }
+    CommandBuffer::end();
 
     auto submit_info = make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = m_command_buffer->ptr();
+    submit_info.pCommandBuffers = &m_command_buffer;
 
-    if (const auto result = vkQueueSubmit(m_queue, 1, &submit_info, VK_NULL_HANDLE); result != VK_SUCCESS) {
+    // TODO: Implement wrapper for queues!
+    if (const auto result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueueSubmit failed for once command buffer!", result);
     }
 
     // TODO: Refactor! Introduce proper synchronisation using VkFence!
-    if (const auto result = vkQueueWaitIdle(m_queue); result != VK_SUCCESS) {
+    if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueueWaitIdle failed for once command buffer!", result);
     }
 
     // Because we destroy the command buffer after submission, we have to allocate it every time.
-    vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, m_command_buffer->ptr());
-
-    m_recording_started = false;
+    vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, &m_command_buffer);
 }
+
+OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept
+    : CommandBuffer(std::move(other)), m_command_pool(std::move(other.m_command_pool)) {}
 
 } // namespace inexor::vulkan_renderer::wrapper
