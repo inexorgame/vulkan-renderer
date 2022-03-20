@@ -584,6 +584,7 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
     // want to generate these in parallel.
     vkResetCommandPool(m_device.device(), m_command_pool, 0);
     for (const auto *stage : m_stage_stack) {
+        // TODO: Use taskflow library for task-based parallelized command buffer recording
         record_command_buffer(stage, *stage->m_physical, image_index);
     }
 

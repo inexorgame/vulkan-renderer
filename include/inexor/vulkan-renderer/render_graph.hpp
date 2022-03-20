@@ -60,9 +60,10 @@ class RenderResource : public RenderGraphObject {
 
 private:
     const std::string m_name;
-    std::shared_ptr<PhysicalResource> m_physical;
 
 protected:
+    std::shared_ptr<PhysicalResource> m_physical;
+
     explicit RenderResource(std::string name) : m_name(std::move(name)) {}
 
 public:
@@ -80,6 +81,14 @@ enum class BufferUsage {
 
     /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader.
     VERTEX_BUFFER,
+
+    /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader.
+    /// The buffer itself will be stored externally, and not inside of the rendergraph.
+    EXTERNAL_VERTEX_BUFFER,
+
+    /// @brief Specifies that the buffer will be used to input index data.
+    /// The buffer itself will be stored externally, and not inside of the rendergraph.
+    EXTERNAL_INDEX_BUFFER
 };
 
 class BufferResource : public RenderResource {

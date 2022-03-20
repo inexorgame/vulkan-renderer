@@ -29,8 +29,20 @@
 
 namespace inexor::vulkan_renderer::cubemap {
 
+void CubemapGenerator::draw_node(const wrapper::CommandBuffer &cmd_buf, const gltf::ModelNode &node) {
+    if (node.mesh) {
+        for (const auto &primitive : node.mesh->primitives) {
+            cmd_buf.draw_indexed(primitive.index_count, primitive.first_index);
+        }
+    }
+
+    for (const auto &child : node.children) {
+        draw_node(cmd_buf, *child);
+    }
+}
+
 // TODO: Separate into class methods!
-CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<void()> rendering_lambda) {
+CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::SkyboxGpuData &skybox) {
 
     // TODO: Measure time it takes to generate it?
 
@@ -245,16 +257,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
             glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         };
 
-        VkViewport viewport{};
-        viewport.width = static_cast<float>(dim);
-        viewport.height = static_cast<float>(dim);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        VkRect2D scissor{};
-        scissor.extent.width = dim;
-        scissor.extent.height = dim;
-
         m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
                                                    CUBE_FACE_COUNT);
 
@@ -263,19 +265,18 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
-                wrapper::OnceCommandBuffer cmd_buf(device, [&](const wrapper::CommandBuffer &cmd_buf) {
-                    viewport.width = static_cast<float>(dim * std::pow(0.5f, mip_level));
-                    viewport.height = static_cast<float>(dim * std::pow(0.5f, mip_level));
+                const std::uint32_t mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
 
-                    cmd_buf.set_viewport(viewport);
-                    cmd_buf.set_scissor(scissor);
+                // TODO: Shouldn't this really be one big OnceCommandBuffer with the loops inside of it?
+                wrapper::OnceCommandBuffer cmd_buf(device, [&](const wrapper::CommandBuffer &cmd_buf) {
+                    cmd_buf.set_viewport(mip_level_dim, mip_level_dim);
+                    cmd_buf.set_scissor(dim, dim);
                     cmd_buf.begin_render_pass(renderpass_bi);
 
                     switch (target) {
                     case IRRADIANCE:
                         pushBlockIrradiance.mvp =
-                            // TODO: Use static cast
-                            glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                            glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
                         cmd_buf.push_constants<PushBlockIrradiance>(
                             pushBlockIrradiance, pipeline_layout.pipeline_layout(),
@@ -284,9 +285,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
                         break;
                     case PREFILTEREDENV:
                         pushBlockPrefilterEnv.mvp =
-                            // TODO: Use static cast
-                            glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
-                        pushBlockPrefilterEnv.roughness = (float)mip_level / (float)(miplevel_count - 1);
+                            glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                        pushBlockPrefilterEnv.roughness =
+                            static_cast<float>(mip_level) / static_cast<float>(miplevel_count - 1);
 
                         cmd_buf.push_constants<PushBlockPrefilterEnv>(
                             pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
@@ -298,23 +299,24 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, std::function<
                     cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
                     cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout());
 
-                    VkDeviceSize offsets[1] = {0};
+                    // TODO: How to solve this?
+                    // cmd_buf.bind_vertex_buffer(skybox);
+                    // cmd_buf.bind_index_buffer(skybox);
 
-                    // TODO: draw skybox
-                    // Call lambda which renders...
-                    rendering_lambda();
+                    for (auto &node : skybox.nodes()) {
+                        draw_node(cmd_buf, *node);
+                    }
 
                     cmd_buf.end_render_pass();
 
                     m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
                     m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
-                                                       static_cast<std::uint32_t>(viewport.width),
-                                                       static_cast<std::uint32_t>(viewport.height));
+                                                       mip_level_dim, mip_level_dim);
 
                     m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-                    // End of the lambda of the once command buffer
+                    // End of the lambda of the OnceCommandBuffer
                 });
             }
         }

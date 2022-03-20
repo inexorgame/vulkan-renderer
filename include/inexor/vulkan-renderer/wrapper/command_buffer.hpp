@@ -134,6 +134,11 @@ public:
     /// @brief Call vkCmdBindVertexBuffers
     /// @param buffers A std::vector of vertex buffers to bind
     /// @todo Expose more parameters from vkCmdBindVertexBuffers as method arguments
+    void bind_vertex_buffer(VkBuffer buffers) const;
+
+    /// @brief Call vkCmdBindVertexBuffers
+    /// @param buffers A std::vector of vertex buffers to bind
+    /// @todo Expose more parameters from vkCmdBindVertexBuffers as method arguments
     void bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const;
 
     /// @brief Call vkCmdDraw

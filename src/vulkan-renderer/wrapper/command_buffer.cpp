@@ -172,7 +172,12 @@ void CommandBuffer::bind_index_buffer(const VkBuffer buffer, const VkIndexType i
     vkCmdBindIndexBuffer(m_command_buffer, buffer, offset, index_type);
 }
 
-// TODO: Expose more parameters
+void CommandBuffer::bind_vertex_buffer(const VkBuffer buffer) const {
+    assert(buffer);
+    VkDeviceSize offsets[1] = {0};
+    vkCmdBindVertexBuffers(m_command_buffer, 0, 1, &buffer, offsets);
+}
+
 void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {
     assert(!buffers.empty());
     std::vector<VkDeviceSize> offsets(buffers.size(), 0);

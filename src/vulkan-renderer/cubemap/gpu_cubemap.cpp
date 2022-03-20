@@ -133,8 +133,8 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     subresourceRange.baseArrayLayer = 0;
     subresourceRange.layerCount = FACE_COUNT;
 
+    // TODO: Move this into a wrapper method!
     wrapper::OnceCommandBuffer copy_command(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
-        // TODO: Move transition_image_layout into vkCmdCopyBufferToImage as well
         transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cpu_cubemap.miplevel_count(),
                                 FACE_COUNT);
 

@@ -60,7 +60,8 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
 }
 
 void Image::transition_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkImageLayout new_layout,
-                                    const std::uint32_t miplevel_count, const std::uint32_t layer_count) {
+                                    const std::uint32_t miplevel_count, const std::uint32_t layer_count,
+                                    const std::uint32_t base_mip_level, const std::uint32_t base_array_layer) {
 
     assert(descriptor_image_info.imageLayout != new_layout);
 
@@ -71,13 +72,9 @@ void Image::transition_image_layout(const wrapper::CommandBuffer &cmd_buf, const
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = m_image;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-
-    // TODO: Expose this as parameter if needed
-    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.baseMipLevel = base_mip_level;
     barrier.subresourceRange.levelCount = miplevel_count;
-
-    // TODO: Expose this as parameter if needed
-    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.baseArrayLayer = base_array_layer;
     barrier.subresourceRange.layerCount = layer_count;
 
     VkPipelineStageFlags source_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
@@ -122,9 +119,11 @@ void Image::transition_image_layout(const wrapper::CommandBuffer &cmd_buf, const
 }
 
 void Image::transition_image_layout(const VkImageLayout new_layout, const std::uint32_t miplevel_count,
-                                    const std::uint32_t layer_count) {
+                                    const std::uint32_t layer_count, const std::uint32_t base_mip_level,
+                                    const std::uint32_t base_array_layer) {
+
     OnceCommandBuffer single_command(m_device, [&](const CommandBuffer &cmd_buf) {
-        transition_image_layout(cmd_buf, new_layout, miplevel_count, layer_count);
+        transition_image_layout(cmd_buf, new_layout, miplevel_count, layer_count, base_mip_level, base_array_layer);
     });
 }
 
@@ -134,6 +133,8 @@ void Image::copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image,
                             const std::uint32_t mip_level) {
 
     image.transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+    // TOOD: Expose more parameters!
 
     VkImageSubresourceRange subres_range{};
     subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

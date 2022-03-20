@@ -42,14 +42,15 @@ public:
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) noexcept = default;
 
-    ///
-    ///
-    ///
+    // Execute the image layout transition by taking an external command buffer
     void transition_image_layout(const wrapper::CommandBuffer &cmd_buf, VkImageLayout new_layout,
-                                 std::uint32_t miplevel_count = 1, std::uint32_t layer_count = 1);
+                                 std::uint32_t miplevel_count = 1, std::uint32_t layer_count = 1,
+                                 std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0);
 
+    // Execute the image layout transition by creating a OnceCommandBuffer
     void transition_image_layout(VkImageLayout new_layout, std::uint32_t miplevel_count = 1,
-                                 std::uint32_t layer_count = 1);
+                                 std::uint32_t layer_count = 1, std::uint32_t base_mip_level = 0,
+                                 std::uint32_t base_array_layer = 0);
 
     ///
     ///
