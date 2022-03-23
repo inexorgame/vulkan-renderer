@@ -38,9 +38,21 @@ RenderStage *RenderStage::reads_from(const RenderResource *resource) {
     return this;
 }
 
+RenderStage *RenderStage::reads_from(const VkBuffer resource) {
+    assert(resource);
+    assert(false && "TODO: implement!");
+    return this;
+}
+
 GraphicsStage *GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
     assert(buffer);
     m_buffer_bindings.emplace(buffer, binding);
+    return this;
+}
+
+GraphicsStage *GraphicsStage::bind_buffer(const VkBuffer buffer, std::uint32_t binding) {
+    assert(buffer);
+    assert(false && "TODO: implement!");
     return this;
 }
 
@@ -109,9 +121,11 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
         buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         break;
     default:
+        // TODO: Throw exception instead!
         assert(false);
     }
 
+    // TODO: Use create_buffer wrapper method!
     VmaAllocationInfo &alloc_info = physical.m_alloc_info;
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
                                             &physical.m_allocation, &alloc_info);
@@ -230,14 +244,20 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
             continue;
         }
 
-        auto *physical_buffer = buffer_resource->m_physical->as<PhysicalBuffer>();
-        if (physical_buffer->m_buffer == nullptr) {
-            continue;
-        }
-        if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
-            cmd_buf.bind_index_buffer(physical_buffer->m_buffer);
-        } else if (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) {
-            vertex_buffers.push_back(physical_buffer->m_buffer);
+        const auto *physical_buffer = buffer_resource->m_physical->as<PhysicalBuffer>();
+        if (physical_buffer->m_buffer) {
+            switch (buffer_resource->m_usage) {
+            case BufferUsage::VERTEX_BUFFER:
+            case BufferUsage::EXTERNAL_VERTEX_BUFFER: {
+                vertex_buffers.push_back(physical_buffer->m_buffer);
+                break;
+            }
+            case BufferUsage::INDEX_BUFFER:
+            case BufferUsage::EXTERNAL_INDEX_BUFFER: {
+                cmd_buf.bind_index_buffer(physical_buffer->m_buffer);
+                break;
+            }
+            }
         }
     }
 

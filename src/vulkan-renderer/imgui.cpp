@@ -16,15 +16,6 @@ namespace inexor::vulkan_renderer {
 
 void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureResource *back_buffer) {
 
-    const std::vector<vk_tools::VertexAttributeLayout> vertex_attribute_layout{
-        {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::pos), offsetof(ImDrawVert, pos)},
-        {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::uv), offsetof(ImDrawVert, uv)},
-        {VK_FORMAT_R8G8B8A8_UNORM, sizeof(ImDrawVert::col), offsetof(ImDrawVert, col)},
-    };
-
-    create_vertex_buffer(render_graph, vertex_attribute_layout);
-    create_index_buffer(render_graph);
-
     auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
 
     m_descriptor = builder.add_combined_image_sampler(*m_imgui_texture).build("imgui");
@@ -32,8 +23,8 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
     // TODO: Unify into one call of the builder pattern
     m_stage = render_graph->add<GraphicsStage>("ImGui");
 
-    m_stage->bind_buffer(vertex_buffer(), 0)
-        ->bind_buffer(index_buffer(), 0)
+    m_stage->bind_buffer(vertex_buffer())
+        ->bind_buffer(index_buffer())
         ->uses_shaders(m_shader_loader.shaders())
         ->writes_to(back_buffer)
         ->reads_from(vertex_buffer())
@@ -55,7 +46,8 @@ void ImGUIOverlay::setup_rendering_resources(RenderGraph *render_graph, TextureR
 
 ImGUIOverlay::ImGUIOverlay(RenderGraph *render_graph, const wrapper::Swapchain &swapchain, TextureResource *back_buffer)
     : m_device(render_graph->device_wrapper()), m_swapchain(swapchain),
-      m_shader_loader(m_device, m_shader_files, "imgui"), GpuDataBase("imgui") {
+      m_shader_loader(m_device, m_shader_files, "imgui"),
+      GpuDataBase(render_graph->device_wrapper(), m_vertex_attribute_layout, "imgui") {
 
     spdlog::debug("Creating ImGUI context");
     ImGui::CreateContext();
@@ -141,27 +133,42 @@ void ImGUIOverlay::update() {
     }
 
     bool should_update = false;
-    if (m_indices.size() != imgui_draw_data->TotalIdxCount) {
-        m_indices.clear();
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
-                m_indices.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
+
+    if (vertex_count() != imgui_draw_data->TotalVtxCount) {
+        auto collect_new_vertices = [&]() {
+            std::vector<ImDrawVert> vertices;
+            vertices.reserve(imgui_draw_data->TotalVtxCount);
+
+            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
+                    vertices.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
+                }
             }
-        }
-        update_indices(m_indices);
+
+            return std::move(vertices);
+        };
+
+        update_vertices(collect_new_vertices());
         should_update = true;
     }
 
-    if (m_vertices.size() != imgui_draw_data->TotalVtxCount) {
-        m_vertices.clear();
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
-                m_vertices.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
+    if (index_count() != imgui_draw_data->TotalIdxCount) {
+        auto collect_new_indices = [&]() {
+            std::vector<std::uint32_t> indices;
+            indices.reserve(imgui_draw_data->TotalIdxCount);
+
+            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
+                    indices.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
+                }
             }
-        }
-        update_vertices(m_vertices);
+
+            return std::move(indices);
+        };
+
+        update_indices(collect_new_indices());
         should_update = true;
     }
 

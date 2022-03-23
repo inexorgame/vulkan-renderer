@@ -21,8 +21,8 @@ SkyboxGpuData::SkyboxGpuData(RenderGraph *render_graph, const gltf::ModelCpuData
     load_materials();
     load_nodes();
 
-    create_vertex_buffer(render_graph, gltf::ModelVertex::vertex_attribute_layout());
-    create_index_buffer(render_graph);
+    create_vertex_buffer();
+    create_index_buffer();
 
     auto builder = wrapper::DescriptorBuilder(render_graph->device_wrapper());
 

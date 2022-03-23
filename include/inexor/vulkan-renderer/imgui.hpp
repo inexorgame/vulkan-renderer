@@ -24,11 +24,17 @@ class Swapchain;
 
 namespace inexor::vulkan_renderer {
 
-class ImGUIOverlay : public GpuDataBase<ImDrawVert, std::uint32_t> {
+class ImGUIOverlay : public GpuDataBase<ImDrawVert> {
 private:
     const wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
     float m_scale{1.0f};
+
+    std::vector<vk_tools::VertexAttributeLayout> m_vertex_attribute_layout{
+        {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::pos), offsetof(ImDrawVert, pos)},
+        {VK_FORMAT_R32G32_SFLOAT, sizeof(ImDrawVert::uv), offsetof(ImDrawVert, uv)},
+        {VK_FORMAT_R8G8B8A8_UNORM, sizeof(ImDrawVert::col), offsetof(ImDrawVert, col)},
+    };
 
     GraphicsStage *m_stage{nullptr};
 

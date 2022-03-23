@@ -177,9 +177,23 @@ public:
                                write_descriptor_sets.data(), 0, nullptr);
     }
 
-    ///
-    ///
-    ///
+    [[nodiscard]] VkBuffer create_buffer(const VkBufferCreateInfo &buffer_ci, const VmaAllocationCreateInfo &alloc_ci,
+                                         VmaAllocation *allocation, VmaAllocationInfo *alloc_info) const {
+        VkBuffer buffer;
+        if (const auto result = vmaCreateBuffer(m_allocator, &buffer_ci, &alloc_ci, &buffer, allocation, alloc_info);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vmaCreateBuffer failed!", result);
+        }
+
+        return std::move(buffer);
+    }
+
+    /// This wrapper method it not really needed, but as we have a ``create_buffer`` method it is nice to have a
+    /// matching ``destroy_buffer`` method in the API to avoid confusion.
+    void destroy_buffer(const VkBuffer buffer, const VmaAllocation allocation) const {
+        vmaDestroyBuffer(m_allocator, buffer, allocation);
+    }
+
     void create_graphics_pipeline(const VkGraphicsPipelineCreateInfo *pipeline_ci, VkPipeline *pipeline) const {
         assert(pipeline_ci);
         assert(pipeline);

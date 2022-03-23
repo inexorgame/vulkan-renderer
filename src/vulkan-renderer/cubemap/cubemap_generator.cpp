@@ -260,15 +260,11 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
                                                    CUBE_FACE_COUNT);
 
-        // TODO: Implement graphics pipeline builder
-        // TODO: Split up in setup of pipeline and rendering of cubemaps
-        for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
-            for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
+        auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
+            for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
+                for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
-                const std::uint32_t mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
-
-                // TODO: Shouldn't this really be one big OnceCommandBuffer with the loops inside of it?
-                wrapper::OnceCommandBuffer cmd_buf(device, [&](const wrapper::CommandBuffer &cmd_buf) {
+                    const std::uint32_t mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
                     cmd_buf.set_viewport(mip_level_dim, mip_level_dim);
                     cmd_buf.set_scissor(dim, dim);
                     cmd_buf.begin_render_pass(renderpass_bi);
@@ -298,10 +294,11 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                     cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
                     cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout());
+                    cmd_buf.bind_vertex_buffer(skybox.vertex_buffer());
 
-                    // TODO: How to solve this?
-                    // cmd_buf.bind_vertex_buffer(skybox);
-                    // cmd_buf.bind_index_buffer(skybox);
+                    if (skybox.has_index_buffer()) {
+                        cmd_buf.bind_index_buffer(skybox.index_buffer());
+                    }
 
                     for (auto &node : skybox.nodes()) {
                         draw_node(cmd_buf, *node);
@@ -311,15 +308,16 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                     m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-                    m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
-                                                       mip_level_dim, mip_level_dim);
+                    // m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
+                    //                                   mip_level_dim, mip_level_dim);
 
                     m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-                    // End of the lambda of the OnceCommandBuffer
-                });
+                }
             }
-        }
+        };
+
+        // Submit all commands in one OnceCommandBuffer
+        wrapper::OnceCommandBuffer cmd_buf(device, render_cubemaps);
 
         m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
                                                    CUBE_FACE_COUNT);

@@ -31,8 +31,8 @@ void SkyboxRenderer::setup_stage(RenderGraph *render_graph, const TextureResourc
                             ->uses_shaders(m_shader_loader.shaders())
                             ->set_clears_screen(true) // TODO: yeetari told me we don't need to do this anymore now
                             ->set_cull_mode(VK_CULL_MODE_FRONT_BIT)
-                            ->bind_buffer(skybox.vertex_buffer(), 0) // TODO: Unify bind with reads_from?
-                            ->bind_buffer(skybox.index_buffer(), 0)
+                            ->bind_buffer(skybox.vertex_buffer()) // TODO: Unify bind with reads_from?
+                            ->bind_buffer(skybox.index_buffer())
                             ->reads_from(skybox.vertex_buffer())
                             ->reads_from(skybox.index_buffer())
                             ->writes_to(back_buffer)

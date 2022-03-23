@@ -17,9 +17,11 @@
 
 namespace inexor::vulkan_renderer::gltf {
 
+// TODO: Turn into a lambda?
 [[nodiscard]] VkImageCreateInfo fill_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height,
                                               std::uint32_t miplevel_count);
 
+// TODO: Turn into a lambda?
 [[nodiscard]] VkImageViewCreateInfo fill_image_view_ci(VkImage image, VkFormat format, std::uint32_t miplevel_count);
 
 class ModelGpuPbrDataBase : public GpuDataBase<gltf::ModelVertex, std::uint32_t> {
@@ -46,7 +48,6 @@ private:
     static constexpr VkFormat DEFAULT_TEXTURE_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
 
 protected:
-    const wrapper::Device &m_device;
     std::unique_ptr<texture::GpuTexture> m_empty_texture;
     std::unique_ptr<wrapper::UniformBuffer<DefaultUBO>> m_scene_matrices;
 

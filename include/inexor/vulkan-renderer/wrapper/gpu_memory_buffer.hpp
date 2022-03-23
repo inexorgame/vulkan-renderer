@@ -51,7 +51,7 @@ public:
     virtual ~GPUMemoryBuffer();
 
     GPUMemoryBuffer &operator=(const GPUMemoryBuffer &) = delete;
-    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) = delete;
+    GPUMemoryBuffer &operator=(GPUMemoryBuffer &&) noexcept = default;
 
     [[nodiscard]] const std::string &name() const {
         return m_name;

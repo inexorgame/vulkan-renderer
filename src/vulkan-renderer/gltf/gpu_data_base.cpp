@@ -9,10 +9,10 @@
 namespace inexor::vulkan_renderer::gltf {
 
 ModelGpuPbrDataBase::ModelGpuPbrDataBase(const wrapper::Device &device, const tinygltf::Model &model, std::string name)
-    : m_device(device), m_model(model), GpuDataBase(name) {}
+    : m_model(model), GpuDataBase(device, gltf::ModelVertex::vertex_attribute_layout(), name) {}
 
 ModelGpuPbrDataBase::ModelGpuPbrDataBase(ModelGpuPbrDataBase &&other) noexcept
-    : m_device(other.m_device), m_model(other.m_model), m_default_texture_sampler(other.m_default_texture_sampler),
+    : m_model(other.m_model), m_default_texture_sampler(other.m_default_texture_sampler),
       GpuDataBase(std::move(other)) {
 
     m_unsupported_node_types = std::move(other.m_unsupported_node_types);
@@ -524,8 +524,8 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
         for (const auto &primitive : mesh.primitives) {
             const auto attr = primitive.attributes;
 
-            auto vertex_start = static_cast<std::uint32_t>(m_vertices.size());
-            auto index_start = static_cast<std::uint32_t>(m_indices.size());
+            auto vertex_start = static_cast<std::uint32_t>(vertex_count());
+            auto index_start = static_cast<std::uint32_t>(index_count());
 
             glm::vec3 pos_min{};
             glm::vec3 pos_max{};

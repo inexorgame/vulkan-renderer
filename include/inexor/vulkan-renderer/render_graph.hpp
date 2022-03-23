@@ -75,6 +75,7 @@ public:
     RenderResource &operator=(RenderResource &&) = delete;
 };
 
+// TODO: Use a bitmask and introduce flags
 enum class BufferUsage {
     /// @brief Specifies that the buffer will be used to input index data.
     INDEX_BUFFER,
@@ -96,6 +97,10 @@ class BufferResource : public RenderResource {
 
 private:
     const BufferUsage m_usage;
+
+    // Only used for EXTERNAL_VERTEX_BUFFER and EXTERNAL_INDEX_BUFFER.
+    VkBuffer m_buffer{VK_NULL_HANDLE};
+
     std::vector<VkVertexInputAttributeDescription> m_vertex_attributes;
 
     // Data to upload during render graph compilation.
@@ -118,13 +123,13 @@ private:
 public:
     BufferResource(std::string name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
 
+    BufferResource(VkBuffer buffer, BufferUsage usage, std::string name)
+        : m_buffer(buffer), RenderResource(name), m_usage(usage) {}
+
     template <typename VertexType>
     BufferResource *set_vertex_attribute_layout(const std::vector<vk_tools::VertexAttributeLayout> &attributes) {
-        std::size_t total_size = 0;
-
         for (const auto &attribute : attributes) {
             add_vertex_attribute(attribute.format, attribute.offset);
-            total_size += attribute.size;
         }
 
         set_element_size<VertexType>();
@@ -211,6 +216,8 @@ public:
     /// @brief Specifies that this stage reads from `resource`.
     RenderStage *reads_from(const RenderResource *resource);
 
+    RenderStage *reads_from(VkBuffer resource);
+
     /// @brief Binds a descriptor set layout to this render stage.
     /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
     /// deal with descriptors at all.
@@ -295,6 +302,8 @@ public:
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
+    // TODO: Move stuff to cpp files!
+
     /// @brief Specifies that this stage should clear the screen before rendering.
     GraphicsStage *set_clears_screen(bool clears_screen) {
         m_clears_screen = clears_screen;
@@ -332,7 +341,10 @@ public:
     }
 
     /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage.
-    GraphicsStage *bind_buffer(const BufferResource *buffer, std::uint32_t binding);
+    GraphicsStage *bind_buffer(const BufferResource *buffer, std::uint32_t binding = 0);
+
+    /// @brief Binding of externally stored buffers.
+    GraphicsStage *bind_buffer(VkBuffer buffer, std::uint32_t binding = 0);
 
     /// @brief Specifies that `shader` should be used during the pipeline of this stage.
     /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour.
@@ -376,6 +388,9 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
+    PhysicalBuffer(VmaAllocator allocator, VkDevice device, VkBuffer buffer, VmaAllocationInfo alloc_info)
+        : PhysicalResource(allocator, device), m_buffer(buffer), m_alloc_info(alloc_info) {}
+
     PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;

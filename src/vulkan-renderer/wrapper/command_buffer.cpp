@@ -114,7 +114,7 @@ void CommandBuffer::copy_buffer_to_image(const VkBuffer src_buffer, const VkImag
                            static_cast<std::uint32_t>(regions.size()), regions.data());
 }
 
-// TODO: Support multiple copies!
+// TODO: Support multiple copy regions!
 void CommandBuffer::copy_image(const VkImage source_image, const VkImage target_image,
                                const VkImageCopy &copy_region) const {
     vkCmdCopyImage(m_command_buffer, source_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, target_image,
