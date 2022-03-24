@@ -53,10 +53,7 @@ OffscreenFramebuffer::OffscreenFramebuffer(const wrapper::Device &device, const 
                                            const VkRenderPass renderpass, std::string name)
 
     : Image(device, make_image_create_info(format, width, height), make_image_view_create_info(format), name),
-      Framebuffer(device, renderpass, std::vector{image_view()}, width, height, name) {
-
-    transition_image_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-}
+      Framebuffer(device, renderpass, std::vector{image_view()}, width, height, name) {}
 
 OffscreenFramebuffer::OffscreenFramebuffer(const wrapper::Device &device, VkFormat format, std::uint32_t width,
                                            std::uint32_t height, const wrapper::RenderPass &renderpass,

@@ -175,11 +175,11 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
         cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
         cmd_buf.draw(3, 0, 1, 0);
         cmd_buf.end_render_pass();
+
+        m_brdf_texture->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
     spdlog::trace("Generating BRDF look-up table finished.");
-
-    m_brdf_texture->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // TODO: Put into RAII wrappers!
     vkDestroyDescriptorSetLayout(m_device.device(), m_desc_set_layout, nullptr);

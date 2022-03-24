@@ -257,10 +257,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         };
 
-        m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
-                                                   CUBE_FACE_COUNT);
-
         auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
+            m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+            m_cubemap_texture->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
+                                                       CUBE_FACE_COUNT);
+
             for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
                 for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
@@ -308,19 +310,18 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                     m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-                    // m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
-                    //                                   mip_level_dim, mip_level_dim);
+                    m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
+                                                       mip_level_dim, mip_level_dim);
 
                     m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
                 }
             }
+
+            m_cubemap_texture->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                       miplevel_count, CUBE_FACE_COUNT);
         };
 
-        // Submit all commands in one OnceCommandBuffer
         wrapper::OnceCommandBuffer cmd_buf(device, render_cubemaps);
-
-        m_cubemap_texture->transition_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
-                                                   CUBE_FACE_COUNT);
 
         switch (target) {
         case IRRADIANCE:

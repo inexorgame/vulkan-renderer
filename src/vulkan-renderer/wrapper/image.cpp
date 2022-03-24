@@ -118,15 +118,6 @@ void Image::transition_image_layout(const wrapper::CommandBuffer &cmd_buf, const
     descriptor_image_info.imageLayout = new_layout;
 }
 
-void Image::transition_image_layout(const VkImageLayout new_layout, const std::uint32_t miplevel_count,
-                                    const std::uint32_t layer_count, const std::uint32_t base_mip_level,
-                                    const std::uint32_t base_array_layer) {
-
-    OnceCommandBuffer single_command(m_device, [&](const CommandBuffer &cmd_buf) {
-        transition_image_layout(cmd_buf, new_layout, miplevel_count, layer_count, base_mip_level, base_array_layer);
-    });
-}
-
 void Image::copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image, const std::uint32_t width,
                             const std::uint32_t height, const std::uint32_t miplevel_count,
                             const std::uint32_t layer_count, const std::uint32_t base_array_layer,
