@@ -113,11 +113,10 @@ void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t
 
     wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(),
                                             [&](const wrapper::CommandBuffer &cmd_buf) {
-                                                transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
                                                 copy_from_buffer(cmd_buf, texture_staging_buffer.buffer(),
                                                                  m_image_ci.extent.width, m_image_ci.extent.height);
-                                                transition_image_layout(cmd_buf,
-                                                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                                             });
 }
 

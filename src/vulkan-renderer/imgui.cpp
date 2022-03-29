@@ -186,9 +186,8 @@ void ImGUIOverlay::update() {
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
         m_push_const_block.translate = glm::vec2(-1.0f);
 
-        cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, physical.pipeline_layout());
-        cmd_buf.push_constants<PushConstBlock>(&m_push_const_block, physical.pipeline_layout(),
-                                               VK_SHADER_STAGE_VERTEX_BIT);
+        cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, physical.pipeline_layout())
+            .push_constants(&m_push_const_block, physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT);
 
         std::uint32_t index_offset = 0;
         std::int32_t vertex_offset = 0;

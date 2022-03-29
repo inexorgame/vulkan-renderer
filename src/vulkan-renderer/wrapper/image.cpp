@@ -59,11 +59,9 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
     create_image_view();
 }
 
-void Image::transition_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkImageLayout new_layout,
-                                    const std::uint32_t miplevel_count, const std::uint32_t layer_count,
-                                    const std::uint32_t base_mip_level, const std::uint32_t base_array_layer) {
-
-    assert(descriptor_image_info.imageLayout != new_layout);
+void Image::change_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkImageLayout new_layout,
+                                const std::uint32_t miplevel_count, const std::uint32_t layer_count,
+                                const std::uint32_t base_mip_level, const std::uint32_t base_array_layer) {
 
     auto barrier = make_info<VkImageMemoryBarrier>();
     barrier.oldLayout = descriptor_image_info.imageLayout;
@@ -123,7 +121,7 @@ void Image::copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image,
                             const std::uint32_t layer_count, const std::uint32_t base_array_layer,
                             const std::uint32_t mip_level) {
 
-    image.transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    image.change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
     // TOOD: Expose more parameters!
 
@@ -150,7 +148,7 @@ void Image::copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image,
 
     cmd_buf.copy_image(image.image(), m_image, copy_region);
 
-    image.transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    image.change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 void Image::copy_from_buffer(const wrapper::CommandBuffer &cmd_buf, const VkBuffer src_buffer,

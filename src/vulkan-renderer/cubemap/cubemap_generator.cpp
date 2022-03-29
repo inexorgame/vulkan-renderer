@@ -115,7 +115,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             device, format, image_extent.width, image_extent.height, renderpass.renderpass(), "offscreen framebuffer");
 
         wrapper::DescriptorBuilder builder(device);
-
         m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("cubemap generator");
 
         // TODO: Move this code block to ...?
@@ -257,28 +256,23 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         };
 
-        auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
-            m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-            m_cubemap_texture->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
-                                                       CUBE_FACE_COUNT);
-
+        const auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
             for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
                 for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
-                    const std::uint32_t mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
-                    cmd_buf.set_viewport(mip_level_dim, mip_level_dim);
-                    cmd_buf.set_scissor(dim, dim);
-                    cmd_buf.begin_render_pass(renderpass_bi);
+                    const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
+
+                    cmd_buf.set_viewport(mip_level_dim, mip_level_dim)
+                        .set_scissor(dim, dim)
+                        .begin_render_pass(renderpass_bi);
 
                     switch (target) {
                     case IRRADIANCE:
                         pushBlockIrradiance.mvp =
                             glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
-                        cmd_buf.push_constants<PushBlockIrradiance>(
-                            pushBlockIrradiance, pipeline_layout.pipeline_layout(),
-                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+                        cmd_buf.push_constants(pushBlockIrradiance, pipeline_layout.pipeline_layout(),
+                                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
                         break;
                     case PREFILTEREDENV:
@@ -287,16 +281,15 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                         pushBlockPrefilterEnv.roughness =
                             static_cast<float>(mip_level) / static_cast<float>(miplevel_count - 1);
 
-                        cmd_buf.push_constants<PushBlockPrefilterEnv>(
-                            pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
-                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+                        cmd_buf.push_constants(pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
+                                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
                         break;
                     };
 
-                    cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
-                    cmd_buf.bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout());
-                    cmd_buf.bind_vertex_buffer(skybox.vertex_buffer());
+                    cmd_buf.bind_graphics_pipeline(pipeline.pipeline())
+                        .bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout())
+                        .bind_vertex_buffer(skybox.vertex_buffer());
 
                     if (skybox.has_index_buffer()) {
                         cmd_buf.bind_index_buffer(skybox.index_buffer());
@@ -308,20 +301,26 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                     cmd_buf.end_render_pass();
 
-                    m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                    m_offscreen_framebuffer->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+                    m_cubemap_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                                           miplevel_count, CUBE_FACE_COUNT);
 
                     m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
                                                        mip_level_dim, mip_level_dim);
 
-                    m_offscreen_framebuffer->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                    // We need to change the image layout of the offscreen framebuffer and the cubemap texture again
+                    // because we want to use them for rendering in the next loop iteration.
+
+                    m_offscreen_framebuffer->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+                    m_cubemap_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                           miplevel_count, CUBE_FACE_COUNT);
                 }
             }
-
-            m_cubemap_texture->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                                       miplevel_count, CUBE_FACE_COUNT);
         };
 
-        wrapper::OnceCommandBuffer cmd_buf(device, render_cubemaps);
+        wrapper::OnceCommandBuffer cmd_buf2(device, render_cubemaps);
 
         switch (target) {
         case IRRADIANCE:
@@ -329,7 +328,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             break;
         case PREFILTEREDENV:
             m_prefiltered_cube_texture = std::move(m_cubemap_texture);
-            // TODO: Fix me!
             // shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(numMips);
             break;
         };

@@ -20,6 +20,7 @@ class Device;
 class OnceCommandBuffer : public CommandBuffer {
 private:
     // TODO: Expose the command pool as argument in the constructor?
+    // TODO: What's good practice when it comes to command pool creation? group by task? like graphics, copy operations?
     CommandPool m_command_pool;
 
 public:

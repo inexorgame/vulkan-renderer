@@ -25,9 +25,9 @@ void ModelPbrRenderer::render_node(const ModelNode &node, const VkDescriptorSet 
                         node.mesh->descriptor_set          //
                     };
 
-                    cmd_buf.bind_descriptor_sets(descriptor_set, pipeline_layout);
-                    cmd_buf.push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout,
-                                           VK_SHADER_STAGE_FRAGMENT_BIT);
+                    cmd_buf.bind_descriptor_sets(descriptor_set, pipeline_layout)
+                        .push_constants(MaterialPushConstBlock(primitive.material), pipeline_layout,
+                                        VK_SHADER_STAGE_FRAGMENT_BIT);
 
                     if (primitive.index_count > 0) {
                         cmd_buf.draw_indexed(primitive.index_count, primitive.first_index);

@@ -29,7 +29,7 @@ public:
     ~CommandPool();
 
     CommandPool &operator=(const CommandPool &) = delete;
-    CommandPool &operator=(CommandPool &&) = delete;
+    CommandPool &operator=(CommandPool &&) noexcept = default;
 
     [[nodiscard]] VkCommandPool get() const {
         return m_command_pool;

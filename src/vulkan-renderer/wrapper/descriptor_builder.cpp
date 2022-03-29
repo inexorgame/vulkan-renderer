@@ -43,8 +43,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     auto image_info = std::make_unique<VkDescriptorImageInfo>();
     image_info->sampler = image_sampler;
     image_info->imageView = image_view;
-    // TODO: Account for image_layout parameter?
-    image_info->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info->imageLayout = image_layout;
 
     m_descriptor_image_infos.push_back(std::move(image_info));
 

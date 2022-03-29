@@ -169,14 +169,14 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
     wrapper::OnceCommandBuffer single_command(device, [&](const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.begin_render_pass(renderpass_bi);
-        cmd_buf.set_viewport(image_extent.width, image_extent.height);
-        cmd_buf.set_scissor(image_extent.width, image_extent.height);
-        cmd_buf.bind_graphics_pipeline(pipeline.pipeline());
-        cmd_buf.draw(3, 0, 1, 0);
-        cmd_buf.end_render_pass();
+        cmd_buf.begin_render_pass(renderpass_bi)
+            .set_viewport(image_extent.width, image_extent.height)
+            .set_scissor(image_extent.width, image_extent.height)
+            .bind_graphics_pipeline(pipeline.pipeline())
+            .draw(3, 0, 1, 0)
+            .end_render_pass();
 
-        m_brdf_texture->transition_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        m_brdf_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
     spdlog::trace("Generating BRDF look-up table finished.");
