@@ -44,7 +44,7 @@ Special thanks to `JetBrains <https://www.jetbrains.com/?from=github.com/inexorg
 
 .. Badges.
 
-.. |language| image:: https://img.shields.io/badge/language-C%2B%2B17-brightgreen
+.. |language| image:: https://img.shields.io/badge/language-C%2B%2B20-brightgreen
 
 .. |platforms| image:: https://img.shields.io/badge/platforms-Linux%20%26%20Windows-brightgreen
 
