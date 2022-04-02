@@ -2,7 +2,9 @@
 
 #include "inexor/vulkan-renderer/vk_tools/vert_attr_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
+#include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
@@ -74,16 +76,15 @@ protected:
     std::vector<VertexType> m_vertices{};
     std::vector<IndexType> m_indices{};
 
-    /// Set the vertex attribute layout, but do not provide vertices or indices yet
-    GpuDataBase(const wrapper::Device &device,
-                const std::vector<vk_tools::VertexAttributeLayout> &vertex_attribute_layout, std::string name)
-        : m_device(device), m_name(std::move(name)), m_vertex_attribute_layout(vertex_attribute_layout) {}
-
-    /// Set the vertex attribute layout and the vertices and indices
     GpuDataBase(const wrapper::Device &device,
                 const std::vector<vk_tools::VertexAttributeLayout> &vertex_attribute_layout,
                 const std::vector<VertexType> &vertices, const std::vector<IndexType> &indices, std::string name)
-        : GpuDataBase(device, vertex_attribute_layout, name), m_vertices(vertices), m_indices(indices) {}
+        : m_device(device), m_name(std::move(name)), m_vertex_attribute_layout(vertex_attribute_layout),
+          m_vertices(vertices), m_indices(indices) {}
+
+    GpuDataBase(const wrapper::Device &device,
+                const std::vector<vk_tools::VertexAttributeLayout> &vertex_attribute_layout, std::string name)
+        : GpuDataBase(device, vertex_attribute_layout, {}, {}, std::move(name)) {}
 
     GpuDataBase(GpuDataBase &&other) noexcept : m_device(other.m_device) {
         m_name = std::move(other.m_name);
