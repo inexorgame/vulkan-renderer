@@ -26,7 +26,7 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
 }
 
 Semaphore::Semaphore(Semaphore &&other) noexcept : m_device(other.m_device) {
-    m_semaphore = std::exchange(other.m_semaphore, nullptr);
+    m_semaphore = std::exchange(other.m_semaphore, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
 }
 

@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
@@ -28,22 +29,37 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
 
     CommandBuffer::end();
 
+    // TODO: Move into wrapper!
+    VkFence wait_fence;
+    VkFenceCreateInfo fenceCI{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr};
+
+    if (const auto result = vkCreateFence(device.device(), &fenceCI, nullptr, &wait_fence); result != VK_SUCCESS) {
+        throw VulkanException("Error: VkCreateFence failed!!", result);
+    }
+
     auto submit_info = make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &m_command_buffer;
 
     // TODO: Implement wrapper for queues!
-    if (const auto result = vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE); result != VK_SUCCESS) {
+    if (const auto result = vkQueueSubmit(queue, 1, &submit_info, wait_fence); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueueSubmit failed for once command buffer!", result);
     }
 
     // TODO: Refactor! Introduce proper synchronisation using VkFence!
-    if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
+    /* if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueueWaitIdle failed for once command buffer!", result);
     }
+    */
 
-    // Because we destroy the command buffer after submission, we have to allocate it every time.
-    vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, &m_command_buffer);
+    if (const auto result = vkWaitForFences(device.device(), 1, &wait_fence, VK_TRUE, UINT64_MAX);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkWaitForFences failed!!", result);
+    }
+
+    vkDestroyFence(device.device(), wait_fence, nullptr);
+
+    // TODO: vkFreeCommandBuffers?
 }
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept

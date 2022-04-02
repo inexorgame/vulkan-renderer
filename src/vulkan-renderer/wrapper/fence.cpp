@@ -17,6 +17,7 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
     assert(device.device());
 
     auto fence_ci = make_info<VkFenceCreateInfo>();
+    // TODO: Move into make_info
     fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
     spdlog::trace("Creating Vulkan synchronisation fence {}.", m_name);
@@ -30,7 +31,7 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
 }
 
 Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {
-    m_fence = std::exchange(other.m_fence, nullptr);
+    m_fence = std::exchange(other.m_fence, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
 }
 
@@ -38,7 +39,7 @@ Fence::~Fence() {
     vkDestroyFence(m_device.device(), m_fence, nullptr);
 }
 
-void Fence::block(std::uint64_t timeout_limit) const {
+void Fence::wait(const std::uint64_t timeout_limit) const {
     vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
 }
 

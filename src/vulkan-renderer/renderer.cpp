@@ -124,7 +124,7 @@ void VulkanRenderer::render_frame() {
     }
 
     // Wait for last frame to finish rendering.
-    m_frame_finished_fence->block();
+    m_frame_finished_fence->wait();
     m_frame_finished_fence->reset();
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);

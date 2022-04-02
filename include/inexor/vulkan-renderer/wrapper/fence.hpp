@@ -8,9 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
-/// @brief A RAII wrapper for VkFences.
+/// A RAII wrapper for VkFence
 class Fence {
     const wrapper::Device &m_device;
     std::string m_name;
@@ -22,7 +23,7 @@ public:
     /// @param name The internal debug marker name of the VkFence.
     /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
-    Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state);
+    Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state = false);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
@@ -30,7 +31,7 @@ public:
     ~Fence();
 
     Fence &operator=(const Fence &) = delete;
-    Fence &operator=(Fence &&) = delete;
+    Fence &operator=(Fence &&) noexcept = default;
 
     [[nodiscard]] VkFence get() const {
         return m_fence;
@@ -39,7 +40,7 @@ public:
     /// @brief Block fence by calling vkWaitForFences and wait until fence condition is fulfilled.
     /// @param timeout_limit The time to wait in milliseconds. If no time is specified, the numeric maximum value
     /// is used.
-    void block(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
+    void wait(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
 
     /// @brief Call vkResetFences.
     void reset() const;

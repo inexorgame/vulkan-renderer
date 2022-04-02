@@ -256,10 +256,10 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         };
 
-        const auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
-            for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
-                for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
+        for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
+            for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
+                const auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
                     const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
 
                     cmd_buf.set_viewport(mip_level_dim, mip_level_dim)
@@ -273,8 +273,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                         cmd_buf.push_constants(pushBlockIrradiance, pipeline_layout.pipeline_layout(),
                                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-
                         break;
+
                     case PREFILTEREDENV:
                         pushBlockPrefilterEnv.mvp =
                             glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
@@ -283,7 +283,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                         cmd_buf.push_constants(pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
                                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-
                         break;
                     };
 
@@ -316,11 +315,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                     m_cubemap_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                                            miplevel_count, CUBE_FACE_COUNT);
-                }
-            }
-        };
+                };
 
-        wrapper::OnceCommandBuffer cmd_buf2(device, render_cubemaps);
+                // TODO: Move outside of nested for loops!
+                wrapper::OnceCommandBuffer cmd_buf2(device, render_cubemaps);
+            }
+        }
 
         switch (target) {
         case IRRADIANCE:

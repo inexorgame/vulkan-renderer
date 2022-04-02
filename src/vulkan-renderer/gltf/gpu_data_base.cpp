@@ -761,9 +761,9 @@ void ModelGpuPbrDataBase::load_node(ModelNode *parent, const tinygltf::Node &nod
 
         new_node->mesh = std::move(new_mesh);
     } else {
-        // Remember this unsupported glTF2 model node type
-        // A list of all unsupported node types will be printed at the end
-        m_unsupported_node_types[node.name] = true;
+        if (!node.name.empty()) {
+            m_unsupported_node_types[node.name] = true;
+        }
     }
 
     if (parent) {

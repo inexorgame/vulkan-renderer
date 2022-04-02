@@ -22,7 +22,7 @@ CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_
 }
 
 CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device) {
-    m_command_pool = std::exchange(other.m_command_pool, nullptr);
+    m_command_pool = std::exchange(other.m_command_pool, VK_NULL_HANDLE);
 }
 
 CommandPool::~CommandPool() {
