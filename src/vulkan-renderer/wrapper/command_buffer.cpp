@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
+#include <limits>
 #include <stdexcept>
 #include <utility>
 
@@ -38,13 +39,21 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
     m_name = std::move(other.m_name);
 }
 
-const CommandBuffer &CommandBuffer::begin(const VkCommandBufferUsageFlags flags) const {
+const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();
     begin_info.flags = flags;
 
     if (const auto result = vkBeginCommandBuffer(m_command_buffer, &begin_info); result != VK_SUCCESS) {
         throw VulkanException("Error: vkBeginCommandBuffer failed!", result);
     }
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::end_command_buffer() const {
+    if (const auto result = vkEndCommandBuffer(m_command_buffer); result != VK_SUCCESS) {
+        throw VulkanException("Error: VkEndCommandBuffer failed!", result);
+    }
+
     return *this;
 }
 
@@ -68,13 +77,6 @@ const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::vector<VkDes
 
     vkCmdBindDescriptorSets(m_command_buffer, bind_point, layout, 0, static_cast<std::uint32_t>(descriptor_sets.size()),
                             descriptor_sets.data(), 0, nullptr);
-    return *this;
-}
-
-const CommandBuffer &CommandBuffer::end() const {
-    if (const auto result = vkEndCommandBuffer(m_command_buffer); result != VK_SUCCESS) {
-        throw VulkanException("Error: VkEndCommandBuffer failed!", result);
-    }
     return *this;
 }
 
@@ -173,6 +175,10 @@ const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags 
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::pipeline_barrier(const VkImageMemoryBarrier &barrier) const {
+    return pipeline_barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, barrier);
+}
+
 // TODO: Expose more parameters
 const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const {
     vkCmdBeginRenderPass(m_command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
@@ -227,6 +233,38 @@ const CommandBuffer &CommandBuffer::draw_indexed(const std::size_t index_count, 
 
 const CommandBuffer &CommandBuffer::end_render_pass() const {
     vkCmdEndRenderPass(m_command_buffer);
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait() const {
+    end_command_buffer();
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &m_command_buffer;
+
+    // Create fence to ensure that the command buffer has finished executing
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    VkFence fence;
+
+    if (const auto result = vkCreateFence(m_device.device(), &fenceInfo, nullptr, &fence); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateFence failed!", result);
+    }
+
+    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submitInfo, fence); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkQueueSubmit failed!", result);
+    }
+
+    if (const auto result =
+            vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE, std::numeric_limits<std::uint64_t>::max());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkWaitForFences failed!", result);
+    }
+
+    vkDestroyFence(m_device.device(), fence, nullptr);
+
     return *this;
 }
 

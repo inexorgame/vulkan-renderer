@@ -31,7 +31,8 @@ private:
     void draw_node(const wrapper::CommandBuffer &cmd_buf, const gltf::ModelNode &node);
 
 public:
-    CubemapGenerator(const wrapper::Device &device, const skybox::SkyboxGpuData &skybox);
+    CubemapGenerator(const wrapper::Device &device, const skybox::SkyboxGpuData &skybox,
+                     const cubemap::GpuCubemap &skybox_gpu_cubemap);
 
     [[nodiscard]] VkDescriptorImageInfo cubemap_descriptor_image_info() const {
         return m_cubemap_texture->descriptor_image_info;

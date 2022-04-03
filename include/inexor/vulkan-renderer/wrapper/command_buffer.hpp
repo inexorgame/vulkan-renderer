@@ -43,7 +43,7 @@ public:
     /// buffer can be resubmitted to a queue while it is in the pending state, and recorded into multiple primary
     /// command buffers. Otherwise, synchronization must be done using a VkFence
     /// @param flags The command buffer usage flags, 0 by default
-    const CommandBuffer &begin(VkCommandBufferUsageFlags flags = 0) const;
+    const CommandBuffer &begin_command_buffer(VkCommandBufferUsageFlags flags = 0) const;
 
     /// @brief Call vkCmdBindDescriptorSets
     /// @param descriptor_set The const reference to the resource descriptor RAII wrapper instance
@@ -89,9 +89,6 @@ public:
         return *this;
     }
 
-    /// @brief Call vkEndCommandBuffer
-    const CommandBuffer &end() const;
-
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
 
@@ -121,6 +118,8 @@ public:
     const CommandBuffer &pipeline_barrier(VkPipelineStageFlags source_stage_flags,
                                           VkPipelineStageFlags destination_stage_flags,
                                           const VkImageMemoryBarrier &barrier) const;
+
+    const CommandBuffer &pipeline_barrier(const VkImageMemoryBarrier &barrier) const;
 
     /// @brief Call vkCmdBeginRenderPass
     /// @param render_pass_bi The const reference to the VkRenderPassBeginInfo which is used
@@ -169,6 +168,10 @@ public:
 
     /// @brief Call vkCmdEndRenderPass
     const CommandBuffer &end_render_pass() const;
+
+    const CommandBuffer &end_command_buffer() const;
+
+    const CommandBuffer &flush_command_buffer_and_wait() const;
 
     // TODO: Refactor: unified get syntax!
     [[nodiscard]] const VkCommandBuffer *ptr() const {

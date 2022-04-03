@@ -21,37 +21,11 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
     : m_command_pool(device, device.graphics_queue_family_index()), CommandBuffer(device) {
 
     CommandBuffer::create_command_buffer(m_command_pool.get());
-    CommandBuffer::begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    CommandBuffer::begin_command_buffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     command_lambda(*this);
 
-    CommandBuffer::end();
-
-    // TODO: Move into wrapper!
-    VkFence wait_fence;
-    VkFenceCreateInfo fenceCI{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr};
-
-    if (const auto result = vkCreateFence(device.device(), &fenceCI, nullptr, &wait_fence); result != VK_SUCCESS) {
-        throw VulkanException("Error: VkCreateFence failed!!", result);
-    }
-
-    auto submit_info = make_info<VkSubmitInfo>();
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &m_command_buffer;
-
-    // TODO: Implement wrapper for queues!
-    if (const auto result = vkQueueSubmit(queue, 1, &submit_info, wait_fence); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkQueueSubmit failed for once command buffer!", result);
-    }
-
-    if (const auto result = vkWaitForFences(device.device(), 1, &wait_fence, VK_TRUE, UINT64_MAX);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkWaitForFences failed!!", result);
-    }
-
-    vkDestroyFence(device.device(), wait_fence, nullptr);
-
-    vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, &m_command_buffer);
+    CommandBuffer::flush_command_buffer_and_wait();
 }
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept

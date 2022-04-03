@@ -43,7 +43,7 @@ void VulkanRenderer::setup_render_graph() {
     m_skybox_gpu_data = std::make_unique<skybox::SkyboxGpuData>(render_graph, *m_skybox_cpu_data, *m_skybox_cubemap,
                                                                 *m_shader_data_skybox, *m_shader_data_pbr, "skybox");
 
-    m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device, *m_skybox_gpu_data);
+    m_cubemap = std::make_unique<cubemap::CubemapGenerator>(*m_device, *m_skybox_gpu_data, *m_skybox_cubemap);
 
     m_skybox_renderer.reset();
     m_skybox_renderer = std::make_unique<skybox::SkyboxRenderer>(render_graph);
