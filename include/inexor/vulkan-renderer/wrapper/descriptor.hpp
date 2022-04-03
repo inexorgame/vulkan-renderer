@@ -26,6 +26,10 @@ public:
     mutable VkDescriptorSet descriptor_set;
 
     ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                       std::uint32_t max_sets, const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
+                       std::vector<VkWriteDescriptorSet> &desc_writes, std::string name);
+
+    ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                        std::vector<VkWriteDescriptorSet> &desc_writes, std::string name);
 

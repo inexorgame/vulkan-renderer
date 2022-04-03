@@ -344,6 +344,7 @@ VkRenderPassCreateInfo make_info(const std::vector<VkAttachmentDescription> &att
                                  const std::vector<VkSubpassDescription> &subpasses,
                                  const std::vector<VkSubpassDependency> &dependencies) {
 
+    // TODO: Does this make sense? Some of these values could be empty in a valid use case!
     assert(!attachments.empty());
     assert(!subpasses.empty());
     assert(!dependencies.empty());

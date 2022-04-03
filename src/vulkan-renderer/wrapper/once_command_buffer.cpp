@@ -23,9 +23,7 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
     CommandBuffer::create_command_buffer(m_command_pool.get());
     CommandBuffer::begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-    // We need to create a temporary value so we can create a const reference
-    const CommandBuffer &cmd_buf = *this;
-    command_lambda(cmd_buf);
+    command_lambda(*this);
 
     CommandBuffer::end();
 
@@ -46,12 +44,6 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
         throw VulkanException("Error: vkQueueSubmit failed for once command buffer!", result);
     }
 
-    // TODO: Refactor! Introduce proper synchronisation using VkFence!
-    /* if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkQueueWaitIdle failed for once command buffer!", result);
-    }
-    */
-
     if (const auto result = vkWaitForFences(device.device(), 1, &wait_fence, VK_TRUE, UINT64_MAX);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkWaitForFences failed!!", result);
@@ -59,7 +51,7 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
 
     vkDestroyFence(device.device(), wait_fence, nullptr);
 
-    // TODO: vkFreeCommandBuffers?
+    vkFreeCommandBuffers(m_device.device(), m_command_pool.get(), 1, &m_command_buffer);
 }
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept

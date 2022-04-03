@@ -47,10 +47,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
     // TODO: Measure time it takes to generate it?
 
     // TODO: Can we make this a scoped enum?
+    // ok
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
+    // ok
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
 
+        // ok
         VkFormat format;
         std::uint32_t dim;
 
@@ -67,10 +70,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
         const VkExtent2D image_extent{dim, dim};
 
+        // ok
         const auto miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
 
         m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, dim, miplevel_count, "cubemap");
 
+        // ok
         std::vector<VkAttachmentDescription> att_desc(1);
         att_desc[0].format = format;
         att_desc[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -81,15 +86,18 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         att_desc[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         att_desc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        // ok
         VkAttachmentReference color_ref;
         color_ref.attachment = 0;
         color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        // ok
         std::vector<VkSubpassDescription> subpass_desc(1);
         subpass_desc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass_desc[0].colorAttachmentCount = 1;
         subpass_desc[0].pColorAttachments = &color_ref;
 
+        // ok
         std::vector<VkSubpassDependency> deps(2);
         deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
         deps[0].dstSubpass = 0;
@@ -99,6 +107,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         deps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         deps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+        // ok
         deps[1].srcSubpass = 0;
         deps[1].dstSubpass = VK_SUBPASS_EXTERNAL;
         deps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -107,15 +116,21 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         deps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
         deps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+        // ok
         const VkRenderPassCreateInfo renderpass_ci = wrapper::make_info(att_desc, subpass_desc, deps);
 
+        // ok
         wrapper::RenderPass renderpass(device, renderpass_ci, "cubemap renderpass");
 
         m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
             device, format, image_extent.width, image_extent.height, renderpass.renderpass(), "offscreen framebuffer");
 
+        wrapper::CommandPool cmd_pool(device);
+        wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
+
         wrapper::DescriptorBuilder builder(device);
-        m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("cubemap generator");
+
+        m_descriptor = builder.add_combined_image_sampler(*m_cubemap_texture).build("cubemap generator", 2);
 
         // TODO: Move this code block to ...?
         struct PushBlockIrradiance {
@@ -259,68 +274,126 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
-                const auto render_cubemaps = [&](const wrapper::CommandBuffer &cmd_buf) {
-                    const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
+                const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
 
-                    cmd_buf.set_viewport(mip_level_dim, mip_level_dim)
-                        .set_scissor(dim, dim)
-                        .begin_render_pass(renderpass_bi);
+                cmd_buf2.begin();
 
-                    switch (target) {
-                    case IRRADIANCE:
-                        pushBlockIrradiance.mvp =
-                            glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                spdlog::warn("m_cubemap_texture nach VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL");
+                m_cubemap_texture->change_image_layout(cmd_buf2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                       miplevel_count, CUBE_FACE_COUNT, 0);
 
-                        cmd_buf.push_constants(pushBlockIrradiance, pipeline_layout.pipeline_layout(),
-                                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-                        break;
+                cmd_buf2.set_viewport(mip_level_dim, mip_level_dim)
+                    .set_scissor(dim, dim)
+                    .begin_render_pass(renderpass_bi);
 
-                    case PREFILTEREDENV:
-                        pushBlockPrefilterEnv.mvp =
-                            glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
-                        pushBlockPrefilterEnv.roughness =
-                            static_cast<float>(mip_level) / static_cast<float>(miplevel_count - 1);
+                switch (target) {
+                case IRRADIANCE:
+                    pushBlockIrradiance.mvp =
+                        glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
-                        cmd_buf.push_constants(pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
-                                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-                        break;
-                    };
+                    cmd_buf2.push_constants(pushBlockIrradiance, pipeline_layout.pipeline_layout(),
+                                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+                    break;
 
-                    cmd_buf.bind_graphics_pipeline(pipeline.pipeline())
-                        .bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout())
-                        .bind_vertex_buffer(skybox.vertex_buffer());
+                case PREFILTEREDENV:
+                    pushBlockPrefilterEnv.mvp =
+                        glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
+                    pushBlockPrefilterEnv.roughness =
+                        static_cast<float>(mip_level) / static_cast<float>(miplevel_count - 1);
 
-                    if (skybox.has_index_buffer()) {
-                        cmd_buf.bind_index_buffer(skybox.index_buffer());
-                    }
-
-                    for (auto &node : skybox.nodes()) {
-                        draw_node(cmd_buf, *node);
-                    }
-
-                    cmd_buf.end_render_pass();
-
-                    m_offscreen_framebuffer->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-                    m_cubemap_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                                           miplevel_count, CUBE_FACE_COUNT);
-
-                    m_cubemap_texture->copy_from_image(cmd_buf, m_offscreen_framebuffer->image(), face, mip_level,
-                                                       mip_level_dim, mip_level_dim);
-
-                    // We need to change the image layout of the offscreen framebuffer and the cubemap texture again
-                    // because we want to use them for rendering in the next loop iteration.
-
-                    m_offscreen_framebuffer->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-                    m_cubemap_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                                           miplevel_count, CUBE_FACE_COUNT);
+                    cmd_buf2.push_constants(pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
+                                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+                    break;
                 };
 
-                // TODO: Move outside of nested for loops!
-                wrapper::OnceCommandBuffer cmd_buf2(device, render_cubemaps);
+                cmd_buf2.bind_graphics_pipeline(pipeline.pipeline())
+                    .bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout())
+                    .bind_vertex_buffer(skybox.vertex_buffer());
+
+                if (skybox.has_index_buffer()) {
+                    cmd_buf2.bind_index_buffer(skybox.index_buffer());
+                }
+
+                for (auto &node : skybox.nodes()) {
+                    draw_node(cmd_buf2, *node);
+                }
+
+                cmd_buf2.end_render_pass();
+
+                m_cubemap_texture->change_image_layout(cmd_buf2, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, miplevel_count,
+                                                       CUBE_FACE_COUNT, 0);
+
+                m_offscreen_framebuffer->change_image_layout(cmd_buf2, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+                spdlog::warn("m_cubemap_texture von VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL nach "
+                             "VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL");
+                m_cubemap_texture->copy_from_image(cmd_buf2, m_offscreen_framebuffer->image(), face, mip_level,
+                                                   mip_level_dim, mip_level_dim);
+
+                // We need to change the image layout of the offscreen framebuffer and the cubemap texture again
+                // because we want to use them for rendering in the next loop iteration.
+
+                spdlog::warn("m_offscreen_framebuffer von VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL nach "
+                             "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL");
+                m_offscreen_framebuffer->change_image_layout(cmd_buf2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+                cmd_buf2.end();
+
+                VkSubmitInfo submitInfo{};
+                submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                submitInfo.commandBufferCount = 1;
+                submitInfo.pCommandBuffers = cmd_buf2.ptr();
+
+                // Create fence to ensure that the command buffer has finished executing
+                VkFenceCreateInfo fenceInfo{};
+                fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+                VkFence fence;
+
+                assert(VK_SUCCESS == vkCreateFence(device.device(), &fenceInfo, nullptr, &fence));
+
+                const auto result = vkQueueSubmit(device.graphics_queue(), 1, &submitInfo, fence);
+
+                if (result != VK_SUCCESS) {
+                    assert(-1);
+                }
+
+                auto result2 = vkWaitForFences(device.device(), 1, &fence, VK_TRUE, 100000000000);
+
+                if (result2 != VK_SUCCESS) {
+                    assert(-1);
+                }
+
+                spdlog::warn("Destroy the fence!");
+
+                const auto result3 = vkGetFenceStatus(device.device(), fence);
+
+                switch (result3) {
+                case VK_SUCCESS:
+                    spdlog::warn("Fence success!");
+                    break;
+                case VK_NOT_READY:
+                    spdlog::warn("not ready!");
+                    break;
+                case VK_ERROR_DEVICE_LOST:
+                    spdlog::warn("device lost!");
+                    break;
+                }
+
+                auto result4 = vkGetFenceStatus(device.device(), fence);
+                while (result4 == VK_NOT_READY) {
+                    result4 = vkGetFenceStatus(device.device(), fence);
+                }
+
+                vkDestroyFence(device.device(), fence, nullptr);
             }
         }
+
+        cmd_buf2.begin();
+
+        m_cubemap_texture->change_image_layout(cmd_buf2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
+                                               CUBE_FACE_COUNT);
+
+        cmd_buf2.end();
 
         switch (target) {
         case IRRADIANCE:
@@ -328,9 +401,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             break;
         case PREFILTEREDENV:
             m_prefiltered_cube_texture = std::move(m_cubemap_texture);
+            // TODO: FIX ME!
             // shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(numMips);
             break;
         };
+
+        // TODO: REMOVE ME AND FIX DEVICE LOST ERROR!
+        break;
     }
 }
 

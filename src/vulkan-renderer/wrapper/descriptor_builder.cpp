@@ -11,7 +11,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 DescriptorBuilder::DescriptorBuilder(DescriptorBuilder &&other) noexcept : m_device(other.m_device) {
-    m_descriptor_pool = std::exchange(other.m_descriptor_pool, nullptr);
+    m_descriptor_pool = std::exchange(other.m_descriptor_pool, VK_NULL_HANDLE);
     m_binding = other.m_binding;
     m_layout_bindings = std::move(other.m_layout_bindings);
     m_write_sets = std::move(other.m_write_sets);
@@ -77,14 +77,14 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_samplers(const std::vec
     return *this;
 }
 
-std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(const std::string name) {
+std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(const std::string name, const std::uint32_t max_sets) {
     assert(!m_pool_sizes.empty());
     assert(!m_layout_bindings.empty());
     assert(!m_write_sets.empty());
     assert(!name.empty());
 
     auto generated_descriptor =
-        std::make_unique<ResourceDescriptor>(m_device, m_pool_sizes, m_layout_bindings, m_write_sets, name);
+        std::make_unique<ResourceDescriptor>(m_device, m_pool_sizes, max_sets, m_layout_bindings, m_write_sets, name);
 
     // Reset the builder's members for the next use
     m_layout_bindings.clear();
@@ -94,6 +94,10 @@ std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(const std::string n
     m_binding = 0;
 
     return std::move(generated_descriptor);
+}
+
+std::unique_ptr<ResourceDescriptor> DescriptorBuilder::build(const std::string name) {
+    return std::move(build(name, static_cast<std::uint32_t>(m_pool_sizes.size())));
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

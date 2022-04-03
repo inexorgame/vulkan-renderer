@@ -47,13 +47,19 @@ void ResourceDescriptor::allocate_descriptor_set(std::vector<VkWriteDescriptorSe
 }
 
 ResourceDescriptor::ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                                       const std::uint32_t max_sets,
                                        const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
                                        std::vector<VkWriteDescriptorSet> &desc_writes, std::string name)
-    : m_device(device), DescriptorPool(device, pool_sizes, name) {
+    : m_device(device), DescriptorPool(device, pool_sizes, max_sets, name) {
 
     create_descriptor_set_layout(layout_bindings);
     allocate_descriptor_set(desc_writes);
 }
+
+ResourceDescriptor::ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
+                                       const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,
+                                       std::vector<VkWriteDescriptorSet> &desc_writes, std::string name)
+    : m_device(device), DescriptorPool(device, pool_sizes, static_cast<std::uint32_t>(pool_sizes.size()), name) {}
 
 ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept
     : m_device(other.m_device), DescriptorPool(std::move(other)) {

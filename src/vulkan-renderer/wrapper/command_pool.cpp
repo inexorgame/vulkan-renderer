@@ -21,6 +21,8 @@ CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_
     // TODO: Assign an internal name to this command pool using Vulkan debug markers.
 }
 
+CommandPool::CommandPool(const Device &device) : CommandPool(device, device.graphics_queue_family_index()) {}
+
 CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device) {
     m_command_pool = std::exchange(other.m_command_pool, VK_NULL_HANDLE);
 }

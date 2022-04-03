@@ -24,6 +24,8 @@ public:
     /// @param queue_family_index The queue family index which is used by this command pool.
     CommandPool(const Device &device, std::uint32_t queue_family_index);
 
+    CommandPool(const Device &device);
+
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;
 

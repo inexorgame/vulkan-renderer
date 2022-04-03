@@ -15,7 +15,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-// forward declarations
+// Forward declarations
 class Device;
 class ResourceDescriptor;
 
@@ -120,6 +120,8 @@ public:
     /// Build the resource descriptor
     /// @param name The internal name of the resource descriptor.
     /// @return The resource descriptor which was build.
+    [[nodiscard]] std::unique_ptr<ResourceDescriptor> build(std::string name, std::uint32_t max_sets);
+
     [[nodiscard]] std::unique_ptr<ResourceDescriptor> build(std::string name);
 };
 
