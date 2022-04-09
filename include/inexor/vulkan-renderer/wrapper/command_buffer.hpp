@@ -173,9 +173,15 @@ public:
 
     const CommandBuffer &flush_command_buffer_and_wait() const;
 
+    const CommandBuffer &free_command_buffer(const VkCommandPool cmd_pool) const;
+
     // TODO: Refactor: unified get syntax!
     [[nodiscard]] const VkCommandBuffer *ptr() const {
         return &m_command_buffer;
+    }
+
+    [[nodiscard]] VkCommandBuffer get() const {
+        return m_command_buffer;
     }
 };
 

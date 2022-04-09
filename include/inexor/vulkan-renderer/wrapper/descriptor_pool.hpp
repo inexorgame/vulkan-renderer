@@ -15,12 +15,13 @@ private:
     std::string m_name;
 
 protected:
-    VkDescriptorPool m_descriptor_pool;
+    VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
 
 public:
     DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::uint32_t max_sets,
                    std::string name);
 
+    /// This constructor sets the max number of sets to the number of pool sizes.
     DescriptorPool(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes, std::string name);
 
     DescriptorPool(const DescriptorPool &) = delete;

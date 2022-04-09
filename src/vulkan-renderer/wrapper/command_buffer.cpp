@@ -268,4 +268,9 @@ const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait() const {
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::free_command_buffer(const VkCommandPool cmd_pool) const {
+    vkFreeCommandBuffers(m_device.device(), cmd_pool, 1, &m_command_buffer);
+    return *this;
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

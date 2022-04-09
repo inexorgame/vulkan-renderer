@@ -350,7 +350,6 @@ VkRenderPassCreateInfo make_info(const std::vector<VkAttachmentDescription> &att
     assert(!dependencies.empty());
 
     VkRenderPassCreateInfo ret{};
-
     ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     ret.attachmentCount = static_cast<std::uint32_t>(attachments.size());
     ret.pAttachments = attachments.data();

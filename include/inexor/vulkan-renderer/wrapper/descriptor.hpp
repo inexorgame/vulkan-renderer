@@ -22,8 +22,8 @@ private:
     void allocate_descriptor_set(std::vector<VkWriteDescriptorSet> &desc_writes) const;
 
 public:
-    mutable VkDescriptorSetLayout descriptor_set_layout;
-    mutable VkDescriptorSet descriptor_set;
+    mutable VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
+    mutable VkDescriptorSet descriptor_set{VK_NULL_HANDLE};
 
     ResourceDescriptor(const Device &device, const std::vector<VkDescriptorPoolSize> &pool_sizes,
                        std::uint32_t max_sets, const std::vector<VkDescriptorSetLayoutBinding> &layout_bindings,

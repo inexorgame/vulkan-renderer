@@ -44,14 +44,18 @@ void CubemapGenerator::draw_node(const wrapper::CommandBuffer &cmd_buf, const gl
 // TODO: Separate into class methods!
 CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::SkyboxGpuData &skybox,
                                    const cubemap::GpuCubemap &skybox_gpu_cubemap) {
+
     // TODO: Can we make this a scoped enum?
+    // ok
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
+    // ok
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
 
         VkFormat format;
         std::uint32_t dim;
 
+        // ok
         switch (target) {
         case IRRADIANCE:
             format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -65,10 +69,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
         const VkExtent2D image_extent{dim, dim};
 
+        // ok
         const auto miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
 
+        // ???
         m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, dim, miplevel_count, "cubemap");
 
+        // ok
         std::vector<VkAttachmentDescription> att_desc(1);
         att_desc[0].format = format;
         att_desc[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -79,15 +86,18 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         att_desc[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         att_desc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        // ok
         VkAttachmentReference color_ref;
         color_ref.attachment = 0;
         color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        // TODO: Don't call constructor twice!
         std::vector<VkSubpassDescription> subpass_desc(1);
         subpass_desc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass_desc[0].colorAttachmentCount = 1;
         subpass_desc[0].pColorAttachments = &color_ref;
 
+        // TODO: Don't call constructor twice!
         std::vector<VkSubpassDependency> deps(2);
         deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
         deps[0].dstSubpass = 0;
@@ -113,11 +123,11 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             device, format, image_extent.width, image_extent.height, renderpass.renderpass(), "offscreen framebuffer");
 
         wrapper::CommandPool cmd_pool(device);
-        wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
-
-        cmd_buf2.begin_command_buffer();
 
         {
+            wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
+            cmd_buf2.begin_command_buffer();
+
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             barrier.image = m_offscreen_framebuffer->image();
@@ -126,10 +136,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-            cmd_buf2.pipeline_barrier(barrier);
-        }
 
-        cmd_buf2.flush_command_buffer_and_wait();
+            // TODO: Use change_image_layout();
+            cmd_buf2.pipeline_barrier(barrier);
+
+            cmd_buf2.flush_command_buffer_and_wait();
+            cmd_buf2.free_command_buffer(cmd_pool.get());
+        }
 
         wrapper::DescriptorBuilder builder(device);
 
@@ -274,11 +287,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         };
 
-        VkImageSubresourceRange subres_range{};
-        subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subres_range.baseMipLevel = 0;
-        subres_range.levelCount = miplevel_count;
-        subres_range.layerCount = 6;
+        VkImageSubresourceRange subresource_range{};
+        subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresource_range.baseMipLevel = 0;
+        subresource_range.levelCount = miplevel_count;
+        subresource_range.layerCount = 6;
+
+        wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
 
         cmd_buf2.begin_command_buffer();
 
@@ -290,7 +305,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.subresourceRange = subres_range;
+            barrier.subresourceRange = subresource_range;
             cmd_buf2.pipeline_barrier(barrier);
         }
 
@@ -301,9 +316,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
                 const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
 
-                cmd_buf2.begin_command_buffer();
-
-                cmd_buf2.set_viewport(mip_level_dim, mip_level_dim)
+                cmd_buf2.begin_command_buffer()
+                    .set_viewport(mip_level_dim, mip_level_dim)
                     .set_scissor(dim, dim)
                     .begin_render_pass(renderpass_bi);
 
@@ -327,6 +341,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     break;
                 };
 
+                // TODO: Add overloads
                 cmd_buf2.bind_graphics_pipeline(pipeline.pipeline())
                     .bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout())
                     .bind_vertex_buffer(skybox.vertex_buffer());
@@ -353,8 +368,27 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     cmd_buf2.pipeline_barrier(barrier);
                 }
 
-                m_cubemap_texture->copy_from_image(cmd_buf2, m_offscreen_framebuffer->image(), face, mip_level,
-                                                   mip_level_dim, mip_level_dim);
+                // Copy region for transfer from framebuffer to cube face
+                VkImageCopy copyRegion{};
+
+                copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                copyRegion.srcSubresource.baseArrayLayer = 0;
+                copyRegion.srcSubresource.mipLevel = 0;
+                copyRegion.srcSubresource.layerCount = 1;
+                copyRegion.srcOffset = {0, 0, 0};
+
+                copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                copyRegion.dstSubresource.baseArrayLayer = face;
+                copyRegion.dstSubresource.mipLevel = mip_level;
+                copyRegion.dstSubresource.layerCount = 1;
+                copyRegion.dstOffset = {0, 0, 0};
+
+                copyRegion.extent.width = static_cast<uint32_t>(mip_level_dim);
+                copyRegion.extent.height = static_cast<uint32_t>(mip_level_dim);
+                copyRegion.extent.depth = 1;
+
+                vkCmdCopyImage(cmd_buf2.get(), m_offscreen_framebuffer->image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               m_cubemap_texture->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
                 {
                     VkImageMemoryBarrier barrier{};
@@ -378,17 +412,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             barrier.image = m_cubemap_texture->image();
-            barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.subresourceRange = subresource_range;
             cmd_buf2.pipeline_barrier(barrier);
         }
-
-        // TODO: Fix me!
-        // m_cubemap_texture->change_image_layout(cmd_buf2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, miplevel_count,
-        //                                       CUBE_FACE_COUNT);
 
         cmd_buf2.flush_command_buffer_and_wait();
 
