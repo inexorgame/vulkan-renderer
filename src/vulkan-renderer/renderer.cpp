@@ -131,7 +131,7 @@ void VulkanRenderer::render_frame() {
     VkSemaphore wait_semaphore = m_render_graph->render(image_index, m_image_available_semaphore->get(),
                                                         m_device->graphics_queue(), m_frame_finished_fence->get());
 
-    // TODO(): Create a queue wrapper class
+    // TODO: Move present to device wrapper!
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;
     present_info.waitSemaphoreCount = 1;

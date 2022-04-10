@@ -51,7 +51,7 @@ public:
     ModelGpuPbrData(const ModelGpuPbrData &) = delete;
     ModelGpuPbrData(ModelGpuPbrData &&) noexcept;
 
-    ~ModelGpuPbrData();
+    ~ModelGpuPbrData() override;
 
     ModelGpuPbrData &operator=(const ModelGpuPbrData &) = delete;
     ModelGpuPbrData &operator=(ModelGpuPbrData &&) noexcept = default;

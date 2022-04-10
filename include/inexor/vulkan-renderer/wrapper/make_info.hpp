@@ -50,6 +50,11 @@ template <typename T>
 
 ///
 ///
+[[nodiscard]] VkPipelineColorBlendStateCreateInfo
+make_info(const std::vector<VkPipelineColorBlendAttachmentState> &attachments);
+
+///
+///
 ///
 [[nodiscard]] VkPipelineVertexInputStateCreateInfo
 make_info(const std::vector<VkVertexInputBindingDescription> &vertex_input_binding_descriptions,

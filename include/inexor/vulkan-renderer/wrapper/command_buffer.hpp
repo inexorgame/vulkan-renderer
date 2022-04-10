@@ -2,6 +2,9 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <string>
@@ -50,6 +53,9 @@ public:
     /// @param layout The pipeline layout which will be used to bind the resource descriptor
     /// @param first_set The first set to use
     const CommandBuffer &bind_descriptor_set(VkDescriptorSet descriptor_set, VkPipelineLayout layout,
+                                             VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+
+    const CommandBuffer &bind_descriptor_set(VkDescriptorSet descriptor_set, const PipelineLayout &layout,
                                              VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// @brief Call vkCmdBindDescriptorSets
@@ -131,6 +137,9 @@ public:
     const CommandBuffer &bind_graphics_pipeline(VkPipeline pipeline,
                                                 VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
+    const CommandBuffer &bind_graphics_pipeline(const GraphicsPipeline &pipeline,
+                                                VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+
     /// @brief Call vkCmdBindIndexBuffer
     /// @param buffer The index buffer to bind
     /// @param index_type The index type, ``VK_INDEX_TYPE_UINT32`` by default
@@ -166,14 +175,14 @@ public:
                                       std::uint32_t vertex_offset = 0, std::uint32_t instance_count = 1,
                                       std::uint32_t first_instance = 0) const;
 
-    /// @brief Call vkCmdEndRenderPass
+    /// Call vkCmdEndRenderPass
     const CommandBuffer &end_render_pass() const;
 
     const CommandBuffer &end_command_buffer() const;
 
     const CommandBuffer &flush_command_buffer_and_wait() const;
 
-    const CommandBuffer &free_command_buffer(const VkCommandPool cmd_pool) const;
+    const CommandBuffer &free_command_buffer(VkCommandPool cmd_pool) const;
 
     // TODO: Refactor: unified get syntax!
     [[nodiscard]] const VkCommandBuffer *ptr() const {

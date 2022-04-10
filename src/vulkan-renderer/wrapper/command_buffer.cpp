@@ -1,8 +1,10 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
@@ -53,7 +55,6 @@ const CommandBuffer &CommandBuffer::end_command_buffer() const {
     if (const auto result = vkEndCommandBuffer(m_command_buffer); result != VK_SUCCESS) {
         throw VulkanException("Error: VkEndCommandBuffer failed!", result);
     }
-
     return *this;
 }
 
@@ -66,6 +67,12 @@ const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet de
 
     vkCmdBindDescriptorSets(m_command_buffer, bind_point, layout, 0, 1, &descriptor_set, 0, nullptr);
     return *this;
+}
+
+const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
+                                                        const PipelineLayout &layout,
+                                                        const VkPipelineBindPoint bind_point) const {
+    return bind_descriptor_set(descriptor_set, layout.pipeline_layout(), bind_point);
 }
 
 // TODO: Expose more parameters
@@ -192,6 +199,11 @@ const CommandBuffer &CommandBuffer::bind_graphics_pipeline(const VkPipeline pipe
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::bind_graphics_pipeline(const GraphicsPipeline &pipeline,
+                                                           VkPipelineBindPoint bind_point) const {
+    return bind_graphics_pipeline(pipeline.pipeline(), bind_point);
+}
+
 const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buffer, const VkIndexType index_type,
                                                       const std::uint32_t offset) const {
     assert(buffer);
@@ -199,6 +211,7 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buffer, con
     return *this;
 }
 
+// TODO: Expose more parameters and use C++20 std::span!
 const CommandBuffer &CommandBuffer::bind_vertex_buffer(const VkBuffer buffer) const {
     assert(buffer);
     VkDeviceSize offsets[1] = {0};
@@ -206,6 +219,7 @@ const CommandBuffer &CommandBuffer::bind_vertex_buffer(const VkBuffer buffer) co
     return *this;
 }
 
+// TODO: Expose more parameters and use C++20 std::span!
 const CommandBuffer &CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {
     assert(!buffers.empty());
 
@@ -237,6 +251,7 @@ const CommandBuffer &CommandBuffer::end_render_pass() const {
 }
 
 const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait() const {
+    // We do not check if command buffers are in recording state (validation layers should check for this)
     end_command_buffer();
 
     VkSubmitInfo submitInfo{};
@@ -244,30 +259,13 @@ const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait() const {
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &m_command_buffer;
 
-    // Create fence to ensure that the command buffer has finished executing
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    VkFence fence;
-
-    if (const auto result = vkCreateFence(m_device.device(), &fenceInfo, nullptr, &fence); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateFence failed!", result);
-    }
-
-    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submitInfo, fence); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkQueueSubmit failed!", result);
-    }
-
-    if (const auto result =
-            vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE, std::numeric_limits<std::uint64_t>::max());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkWaitForFences failed!", result);
-    }
-
-    vkDestroyFence(m_device.device(), fence, nullptr);
+    Fence fence(m_device, "command buffer flush",
+                [&](const VkFence fence) { m_device.queue_submit(submitInfo, fence); });
 
     return *this;
 }
 
+// TODO: Use C++20 and use std::span!
 const CommandBuffer &CommandBuffer::free_command_buffer(const VkCommandPool cmd_pool) const {
     vkFreeCommandBuffers(m_device.device(), cmd_pool, 1, &m_command_buffer);
     return *this;

@@ -87,7 +87,7 @@ public:
     ~Device();
 
     Device &operator=(const Device &) = delete;
-    Device &operator=(Device &&) = delete;
+    Device &operator=(Device &&) noexcept = default;
 
     [[nodiscard]] VkDevice device() const {
         return m_device;
@@ -201,6 +201,14 @@ public:
         if (const auto result = vkCreateGraphicsPipelines(m_device, nullptr, 1, pipeline_ci, nullptr, pipeline);
             result != VK_SUCCESS) {
             throw VulkanException("Failed to create graphics pipeline (vkCreateGraphicsPipelines)!", result);
+        }
+    }
+
+    // TODO: Accept multiple submissions by using C++20 std::span!
+    // TODO: Overload so it only accepts one VkCommandBuffer!
+    void queue_submit(const VkSubmitInfo submit_info, const VkFence fence = VK_NULL_HANDLE) const {
+        if (const auto result = vkQueueSubmit(graphics_queue(), 1, &submit_info, fence); result != VK_SUCCESS) {
+            throw VulkanException("Error: vkQueueSubmit failed!", result);
         }
     }
 };

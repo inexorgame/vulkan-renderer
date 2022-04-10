@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/offscreen_framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
@@ -46,16 +47,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                                    const cubemap::GpuCubemap &skybox_gpu_cubemap) {
 
     // TODO: Can we make this a scoped enum?
-    // ok
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
-    // ok
     for (std::uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
 
         VkFormat format;
         std::uint32_t dim;
 
-        // ok
         switch (target) {
         case IRRADIANCE:
             format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -69,13 +67,11 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
         const VkExtent2D image_extent{dim, dim};
 
-        // ok
         const auto miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
 
         // ???
         m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, dim, miplevel_count, "cubemap");
 
-        // ok
         std::vector<VkAttachmentDescription> att_desc(1);
         att_desc[0].format = format;
         att_desc[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -86,7 +82,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         att_desc[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         att_desc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        // ok
         VkAttachmentReference color_ref;
         color_ref.attachment = 0;
         color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -119,8 +114,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
         wrapper::RenderPass renderpass(device, renderpass_ci, "cubemap renderpass");
 
-        m_offscreen_framebuffer = std::make_unique<wrapper::OffscreenFramebuffer>(
-            device, format, image_extent.width, image_extent.height, renderpass.renderpass(), "offscreen framebuffer");
+        wrapper::OffscreenFramebuffer m_offscreen_framebuffer(device, format, image_extent.width, image_extent.height,
+                                                              renderpass.renderpass(), "offscreen framebuffer");
 
         wrapper::CommandPool cmd_pool(device);
 
@@ -130,7 +125,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.image = m_offscreen_framebuffer->image();
+            barrier.image = m_offscreen_framebuffer.image();
             barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             barrier.srcAccessMask = 0;
@@ -139,14 +134,55 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
             // TODO: Use change_image_layout();
             cmd_buf2.pipeline_barrier(barrier);
-
             cmd_buf2.flush_command_buffer_and_wait();
             cmd_buf2.free_command_buffer(cmd_pool.get());
         }
 
-        wrapper::DescriptorBuilder builder(device);
+        // wrapper::DescriptorBuilder builder(device);
 
-        m_descriptor = builder.add_combined_image_sampler(skybox_gpu_cubemap).build("cubemap generator", 2);
+        // m_descriptor = builder.add_combined_image_sampler(skybox_gpu_cubemap).build("cubemap generator", 2);
+
+        // Descriptors
+        VkDescriptorSetLayout descriptorsetlayout;
+        VkDescriptorSetLayoutBinding setLayoutBinding = {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+                                                         VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+        descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptorSetLayoutCI.pBindings = &setLayoutBinding;
+        descriptorSetLayoutCI.bindingCount = 1;
+
+        vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorsetlayout);
+
+        // Descriptor Pool
+        VkDescriptorPoolSize poolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
+        VkDescriptorPoolCreateInfo descriptorPoolCI{};
+        descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        descriptorPoolCI.poolSizeCount = 1;
+        descriptorPoolCI.pPoolSizes = &poolSize;
+        descriptorPoolCI.maxSets = 2;
+        VkDescriptorPool descriptorpool;
+
+        vkCreateDescriptorPool(device.device(), &descriptorPoolCI, nullptr, &descriptorpool);
+
+        // Descriptor sets
+        VkDescriptorSet descriptorset;
+        VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+        descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        descriptorSetAllocInfo.descriptorPool = descriptorpool;
+        descriptorSetAllocInfo.pSetLayouts = &descriptorsetlayout;
+        descriptorSetAllocInfo.descriptorSetCount = 1;
+
+        vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &descriptorset);
+
+        VkWriteDescriptorSet writeDescriptorSet{};
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.dstSet = descriptorset;
+        writeDescriptorSet.dstBinding = 0;
+        writeDescriptorSet.pImageInfo = &skybox_gpu_cubemap.descriptor_image_info;
+
+        vkUpdateDescriptorSets(device.device(), 1, &writeDescriptorSet, 0, nullptr);
 
         // TODO: Move this code block to ...?
         struct PushBlockIrradiance {
@@ -176,45 +212,15 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             break;
         };
 
-        const std::vector desc_set_layouts{m_descriptor->descriptor_set_layout};
+        const std::vector desc_set_layouts{descriptorsetlayout};
 
         wrapper::PipelineLayout pipeline_layout(device, wrapper::make_info(desc_set_layouts, push_constant_range),
                                                 "pipeline layout");
 
-        const auto input_assembly_sci = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
-
-        const auto rast_sci = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
-
-        VkPipelineColorBlendAttachmentState blend_att_state{};
-        blend_att_state.colorWriteMask =
+        std::vector<VkPipelineColorBlendAttachmentState> blend_att_state(1);
+        blend_att_state[0].colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        blend_att_state.blendEnable = VK_FALSE;
-
-        // TODO: Move this into make_info wrapper function?
-        // TODO: Use C++20 std::span!
-        auto color_blend_sci = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
-        color_blend_sci.attachmentCount = 1;
-        color_blend_sci.pAttachments = &blend_att_state;
-
-        auto depth_stencil_sci = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>();
-        depth_stencil_sci.depthTestEnable = VK_FALSE;
-        depth_stencil_sci.depthWriteEnable = VK_FALSE;
-        depth_stencil_sci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-        depth_stencil_sci.front = depth_stencil_sci.back;
-        depth_stencil_sci.back.compareOp = VK_COMPARE_OP_ALWAYS;
-
-        // TODO: Turn all this into a builder pattern?
-        auto viewport_sci = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
-        viewport_sci.viewportCount = 1;
-        viewport_sci.scissorCount = 1;
-
-        auto multisample_sci = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
-        multisample_sci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-        // TODO: Move this into rendergraph and enable dynamic states as you call the specific methods which set them!
-        const std::vector dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-
-        const auto dynamic_state_ci = wrapper::make_info(dynamic_states);
+        blend_att_state[0].blendEnable = VK_FALSE;
 
         // TODO: Move this code block to ...?
         struct CubemapVertex {
@@ -226,18 +232,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::vec4 weight0;
         };
 
-        const std::vector<VkVertexInputBindingDescription> vertex_input_binding{
-            {0, sizeof(CubemapVertex), VK_VERTEX_INPUT_RATE_VERTEX}};
-
-        const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes{
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0}};
-
-        const VkPipelineVertexInputStateCreateInfo vertex_input_state_ci =
-            wrapper::make_info(vertex_input_binding, vertex_input_attributes);
-
-        std::vector<VkPipelineShaderStageCreateInfo> shader_stages(2);
-
-        // TODO: Use ShaderLoader here as well?
         wrapper::Shader filtercube(device, VK_SHADER_STAGE_VERTEX_BIT, "shaders/cubemap/filtercube.vert.spv",
                                    "filtercube");
 
@@ -247,6 +241,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         wrapper::Shader prefilterenvmap(device, VK_SHADER_STAGE_FRAGMENT_BIT,
                                         "shaders/cubemap/prefilterenvmap.frag.spv", "prefilterenvmap");
 
+        std::vector<VkPipelineShaderStageCreateInfo> shader_stages(2);
         shader_stages[0] = wrapper::make_info(filtercube);
 
         switch (target) {
@@ -258,19 +253,26 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             break;
         };
 
-        const auto pipeline_ci =
-            wrapper::make_info(pipeline_layout.pipeline_layout(), renderpass.renderpass(), shader_stages,
-                               &vertex_input_state_ci, &input_assembly_sci, &viewport_sci, &rast_sci, &multisample_sci,
-                               &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
+        wrapper::GraphicsPipelineBuilder pipeline_builder(device);
 
-        wrapper::GraphicsPipeline pipeline(device, pipeline_ci, "pipeline");
+        const std::vector<VkVertexInputAttributeDescription> vertex_input_attribute_descs{
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0}};
+
+        const std::vector<VkVertexInputBindingDescription> vertex_input_binding_descs{
+            {0, sizeof(CubemapVertex), VK_VERTEX_INPUT_RATE_VERTEX}};
+
+        auto pipeline = pipeline_builder.set_color_blend_attachments(blend_att_state)
+                            .set_vertex_input_attributes(vertex_input_attribute_descs)
+                            .set_vertex_input_bindings(vertex_input_binding_descs)
+                            .set_dynamic_states({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
+                            .build(pipeline_layout, renderpass, shader_stages, "test");
 
         VkClearValue clearValues[1];
         clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
 
         auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
         renderpass_bi.renderPass = renderpass.renderpass();
-        renderpass_bi.framebuffer = m_offscreen_framebuffer->framebuffer();
+        renderpass_bi.framebuffer = m_offscreen_framebuffer.framebuffer();
         renderpass_bi.renderArea.extent.width = dim;
         renderpass_bi.renderArea.extent.height = dim;
         renderpass_bi.clearValueCount = 1;
@@ -341,9 +343,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     break;
                 };
 
-                // TODO: Add overloads
-                cmd_buf2.bind_graphics_pipeline(pipeline.pipeline())
-                    .bind_descriptor_set(m_descriptor->descriptor_set, pipeline_layout.pipeline_layout())
+                cmd_buf2.bind_graphics_pipeline(pipeline)
+                    .bind_descriptor_set(descriptorset, pipeline_layout)
                     .bind_vertex_buffer(skybox.vertex_buffer());
 
                 if (skybox.has_index_buffer()) {
@@ -359,7 +360,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                 {
                     VkImageMemoryBarrier barrier{};
                     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                    barrier.image = m_offscreen_framebuffer->image();
+                    barrier.image = m_offscreen_framebuffer.image();
                     barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                     barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
                     barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -368,7 +369,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     cmd_buf2.pipeline_barrier(barrier);
                 }
 
-                // Copy region for transfer from framebuffer to cube face
                 VkImageCopy copyRegion{};
 
                 copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -387,13 +387,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                 copyRegion.extent.height = static_cast<uint32_t>(mip_level_dim);
                 copyRegion.extent.depth = 1;
 
-                vkCmdCopyImage(cmd_buf2.get(), m_offscreen_framebuffer->image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                vkCmdCopyImage(cmd_buf2.get(), m_offscreen_framebuffer.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                m_cubemap_texture->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
                 {
                     VkImageMemoryBarrier barrier{};
                     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                    barrier.image = m_offscreen_framebuffer->image();
+                    barrier.image = m_offscreen_framebuffer.image();
                     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
                     barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                     barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;

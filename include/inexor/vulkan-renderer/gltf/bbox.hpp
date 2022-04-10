@@ -45,7 +45,7 @@ struct BoundingBox {
         min += glm::min(v0, v1);
         max += glm::max(v0, v1);
 
-        return BoundingBox(min, max);
+        return  {min, max};
     }
 };
 

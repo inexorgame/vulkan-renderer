@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include <cassert>
+#include <functional>
 #include <limits>
 #include <string>
 
@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
-/// A RAII wrapper for VkFence
+/// RAII wrapper for VkFence
 class Fence {
     const wrapper::Device &m_device;
     std::string m_name;
@@ -24,6 +24,9 @@ public:
     /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
     Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state = false);
+
+    Fence(const wrapper::Device &device, const std::string &name, std::function<void(const VkFence fence)> command,
+          std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max(), bool in_signaled_state = false);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
@@ -42,7 +45,7 @@ public:
     /// is used.
     void wait(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
 
-    /// @brief Call vkResetFences.
+    /// Call vkResetFences
     void reset() const;
 };
 

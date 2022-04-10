@@ -27,6 +27,7 @@ public:
 
     ModelCpuData(const ModelCpuData &) = delete;
     ModelCpuData(ModelCpuData &&) noexcept;
+    ~ModelCpuData() = default;
 
     ModelCpuData &operator=(const ModelCpuData &) = delete;
     ModelCpuData &operator=(ModelCpuData &&) = default;

@@ -64,6 +64,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/graphics_pipeline.cpp
+    vulkan-renderer/wrapper/graphics_pipeline_builder.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp

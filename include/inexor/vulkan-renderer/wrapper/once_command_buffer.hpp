@@ -6,6 +6,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include <cassert>
+#include <functional>
 #include <memory>
 
 namespace inexor::vulkan_renderer::wrapper {

@@ -143,6 +143,7 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     });
 
     m_sampler = std::make_unique<texture::Sampler>(m_device, fill_sampler_ci(cpu_cubemap.miplevel_count()), m_name);
+    descriptor_image_info.sampler = m_sampler->sampler();
 }
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci,

@@ -16,7 +16,6 @@ namespace inexor::vulkan_renderer::cubemap {
 // TODO: How to integrate this into rendergraph?
 class CubemapGenerator {
 private:
-    std::unique_ptr<wrapper::OffscreenFramebuffer> m_offscreen_framebuffer;
     std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
     std::unique_ptr<GpuCubemap> m_cubemap_texture;
     std::unique_ptr<GpuCubemap> m_irradiance_cube_texture;

@@ -198,10 +198,23 @@ VkPipelineColorBlendStateCreateInfo make_info() {
     return ret;
 }
 
+VkPipelineColorBlendStateCreateInfo make_info(const std::vector<VkPipelineColorBlendAttachmentState> &attachments) {
+    VkPipelineColorBlendStateCreateInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    ret.pAttachments = attachments.data();
+    ret.attachmentCount = static_cast<std::uint32_t>(attachments.size());
+    return ret;
+}
+
 template <>
 VkPipelineDepthStencilStateCreateInfo make_info() {
     VkPipelineDepthStencilStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    ret.depthTestEnable = VK_FALSE;
+    ret.depthWriteEnable = VK_FALSE;
+    ret.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    ret.front = ret.back;
+    ret.back.compareOp = VK_COMPARE_OP_ALWAYS;
     return ret;
 }
 
@@ -257,6 +270,7 @@ template <>
 VkPipelineMultisampleStateCreateInfo make_info() {
     VkPipelineMultisampleStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    ret.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     return ret;
 }
 

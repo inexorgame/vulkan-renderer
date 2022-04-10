@@ -18,9 +18,9 @@ enum class AnimationPathType { TRANSLATION, ROTATION, SCALE };
 enum class AnimationInterpolationType { LINEAR, STEP, CUBICSPLINE };
 
 struct ModelAnimationChannel {
-    AnimationPathType path;
+    AnimationPathType path{};
     ModelNode *node{nullptr};
-    std::uint32_t sampler_index;
+    std::uint32_t sampler_index{0};
 };
 
 struct ModelAnimationSampler {

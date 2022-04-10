@@ -172,7 +172,7 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
         cmd_buf.begin_render_pass(renderpass_bi)
             .set_viewport(image_extent.width, image_extent.height)
             .set_scissor(image_extent.width, image_extent.height)
-            .bind_graphics_pipeline(pipeline.pipeline())
+            .bind_graphics_pipeline(pipeline)
             .draw(3, 0, 1, 0)
             .end_render_pass();
 

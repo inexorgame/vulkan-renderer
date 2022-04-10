@@ -6,6 +6,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cassert>
 #include <stdexcept>
 #include <utility>
 
@@ -28,6 +29,15 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
+}
+
+Fence::Fence(const wrapper::Device &device, const std::string &name, std::function<void(const VkFence fence)> command,
+             const std::uint64_t timeout_limit, bool in_signaled_state)
+    : Fence(device, name, in_signaled_state) {
+
+    // Execute the command and wait
+    command(m_fence);
+    wait(timeout_limit);
 }
 
 Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {
