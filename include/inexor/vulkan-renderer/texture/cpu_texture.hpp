@@ -52,7 +52,7 @@ public:
     ~CpuTexture();
 
     CpuTexture &operator=(const CpuTexture &) = delete;
-    CpuTexture &operator=(CpuTexture &&) = default;
+    CpuTexture &operator=(CpuTexture &&) noexcept = default;
 
     [[nodiscard]] const void *data() const {
         // The texture data is either stored in stb_image or ktx wrapper

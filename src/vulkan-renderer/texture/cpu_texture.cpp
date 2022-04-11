@@ -23,6 +23,7 @@ void CpuTexture::load_ktx_texture(const std::string &file_name) {
 
     if (const auto result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
                                                            &m_ktx_texture) != KTX_SUCCESS) {
+        // TODO: Why can't we throw a KtxException here?
         throw std::runtime_error("Error: ktxTexture_CreateFromNamedFile failed for file " + file_name + "!");
     }
 
@@ -77,11 +78,9 @@ void CpuTexture::load_texture(const std::string &file_name) {
     }
 }
 
-CpuTexture::CpuTexture(std::string file_name, std::string name) {
+CpuTexture::CpuTexture(std::string file_name, std::string name) : m_name(name) {
     assert(!file_name.empty());
-    assert(!name.empty());
-
-    m_name = name;
+    assert(!m_name.empty());
 
     spdlog::trace("Loading texture file {}", file_name);
 

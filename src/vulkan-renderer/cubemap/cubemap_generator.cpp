@@ -69,7 +69,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
         const auto miplevel_count = static_cast<std::uint32_t>(floor(log2(dim))) + 1;
 
-        // ???
         m_cubemap_texture = std::make_unique<cubemap::GpuCubemap>(device, format, dim, dim, miplevel_count, "cubemap");
 
         std::vector<VkAttachmentDescription> att_desc(1);
@@ -134,12 +133,12 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
             // TODO: Use change_image_layout();
             cmd_buf2.pipeline_barrier(barrier);
+
             cmd_buf2.flush_command_buffer_and_wait();
             cmd_buf2.free_command_buffer(cmd_pool.get());
         }
 
         // wrapper::DescriptorBuilder builder(device);
-
         // m_descriptor = builder.add_combined_image_sampler(skybox_gpu_cubemap).build("cubemap generator", 2);
 
         // Descriptors
@@ -292,6 +291,7 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         VkImageSubresourceRange subresource_range{};
         subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         subresource_range.baseMipLevel = 0;
+        subresource_range.baseArrayLayer = 0;
         subresource_range.levelCount = miplevel_count;
         subresource_range.layerCount = 6;
 
@@ -308,7 +308,10 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.subresourceRange = subresource_range;
-            cmd_buf2.pipeline_barrier(barrier);
+            // cmd_buf1.pipeline_barrier(barrier);
+
+            vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                 0, 0, nullptr, 0, nullptr, 1, &barrier);
         }
 
         cmd_buf2.flush_command_buffer_and_wait();
@@ -366,7 +369,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                     barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                     barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-                    cmd_buf2.pipeline_barrier(barrier);
+
+                    vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
                 }
 
                 VkImageCopy copyRegion{};
@@ -399,16 +404,19 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                     barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                     barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-                    cmd_buf2.pipeline_barrier(barrier);
+
+                    vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
                 }
 
                 cmd_buf2.flush_command_buffer_and_wait();
             }
         }
 
-        cmd_buf2.begin_command_buffer();
-
         {
+            wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
+            cmd_buf2.begin_command_buffer();
+
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             barrier.image = m_cubemap_texture->image();
@@ -417,10 +425,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.subresourceRange = subresource_range;
-            cmd_buf2.pipeline_barrier(barrier);
-        }
 
-        cmd_buf2.flush_command_buffer_and_wait();
+            // cmd_buf2.pipeline_barrier(barrier);
+            vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+            cmd_buf2.flush_command_buffer_and_wait();
+        }
 
         switch (target) {
         case IRRADIANCE:

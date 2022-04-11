@@ -26,9 +26,11 @@ private:
 
 public:
     OnceCommandBuffer(const Device &device, VkQueue queue, std::uint32_t queue_family_index,
-                      std::function<void(const CommandBuffer &cmd_buf)> command_lambda);
+                      std::function<void(const CommandBuffer &cmd_buf)> command_lambda,
+                      std::string name = "once command");
 
-    OnceCommandBuffer(const Device &device, std::function<void(const CommandBuffer &cmd_buf)> command_lambda);
+    OnceCommandBuffer(const Device &device, std::function<void(const CommandBuffer &cmd_buf)> command_lambda,
+                      std::string name = "once command");
 
     OnceCommandBuffer(const OnceCommandBuffer &) = delete;
     OnceCommandBuffer(OnceCommandBuffer &&) noexcept;

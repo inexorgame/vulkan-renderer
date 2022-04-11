@@ -17,16 +17,18 @@ class Fence {
     std::string m_name;
     VkFence m_fence{VK_NULL_HANDLE};
 
+    static constexpr auto MAX_WAIT_TIME{std::numeric_limits<std::uint64_t>::max()};
+
 public:
-    /// @brief Default constructor.
+    /// Default constructor
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the VkFence.
     /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
     Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state = false);
 
-    Fence(const wrapper::Device &device, const std::string &name, std::function<void(const VkFence fence)> command,
-          std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max(), bool in_signaled_state = false);
+    Fence(const wrapper::Device &device, const std::string &name, std::function<void(const VkFence wait_fence)> command,
+          std::uint64_t timeout_limit = MAX_WAIT_TIME, bool in_signaled_state = false);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
@@ -43,7 +45,7 @@ public:
     /// @brief Block fence by calling vkWaitForFences and wait until fence condition is fulfilled.
     /// @param timeout_limit The time to wait in milliseconds. If no time is specified, the numeric maximum value
     /// is used.
-    void wait(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
+    void wait(std::uint64_t timeout_limit = MAX_WAIT_TIME) const;
 
     /// Call vkResetFences
     void reset() const;

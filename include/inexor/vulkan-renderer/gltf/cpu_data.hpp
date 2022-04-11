@@ -23,14 +23,14 @@ public:
     ///
     ///
     ///
-    ModelCpuData(const std::string &file_name, const std::string &model_name);
+    ModelCpuData(std::string file_name, std::string model_name);
 
     ModelCpuData(const ModelCpuData &) = delete;
     ModelCpuData(ModelCpuData &&) noexcept;
     ~ModelCpuData() = default;
 
     ModelCpuData &operator=(const ModelCpuData &) = delete;
-    ModelCpuData &operator=(ModelCpuData &&) = default;
+    ModelCpuData &operator=(ModelCpuData &&) noexcept = default;
 
     [[nodiscard]] const tinygltf::Model &model() const {
         return m_model;

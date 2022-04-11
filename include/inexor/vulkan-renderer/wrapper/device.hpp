@@ -205,10 +205,27 @@ public:
     }
 
     // TODO: Accept multiple submissions by using C++20 std::span!
-    // TODO: Overload so it only accepts one VkCommandBuffer!
     void queue_submit(const VkSubmitInfo submit_info, const VkFence fence = VK_NULL_HANDLE) const {
         if (const auto result = vkQueueSubmit(graphics_queue(), 1, &submit_info, fence); result != VK_SUCCESS) {
             throw VulkanException("Error: vkQueueSubmit failed!", result);
+        }
+    }
+
+    // TODO: Accept multiple submissions by using C++20 std::span!
+    void queue_submit(const VkCommandBuffer cmd_buf, const VkFence fence = VK_NULL_HANDLE) const {
+
+        // TODO: Move into make_info!
+        VkSubmitInfo submit_info{};
+        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &cmd_buf;
+
+        queue_submit(submit_info, fence);
+    }
+
+    void wait_idle() const {
+        if (const auto result = vkDeviceWaitIdle(m_device); result != VK_SUCCESS) {
+            throw VulkanException("Error: vkDeviceWaitIdle failed!", result);
         }
     }
 };

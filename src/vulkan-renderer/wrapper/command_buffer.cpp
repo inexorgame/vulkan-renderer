@@ -14,7 +14,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandBuffer::CommandBuffer(const Device &device) : m_device(device) {}
+CommandBuffer::CommandBuffer(const Device &device, std::string name) : m_device(device), m_name(name) {}
 
 void CommandBuffer::create_command_buffer(const VkCommandPool command_pool) {
     auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
@@ -186,9 +186,9 @@ const CommandBuffer &CommandBuffer::pipeline_barrier(const VkImageMemoryBarrier 
     return pipeline_barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, barrier);
 }
 
-// TODO: Expose more parameters
-const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const {
-    vkCmdBeginRenderPass(m_command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi,
+                                                      const VkSubpassContents subpass_contents) const {
+    vkCmdBeginRenderPass(m_command_buffer, &render_pass_bi, subpass_contents);
     return *this;
 }
 
@@ -254,13 +254,9 @@ const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait() const {
     // We do not check if command buffers are in recording state (validation layers should check for this)
     end_command_buffer();
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &m_command_buffer;
-
+    // Execute the command buffer and wait for it to finish
     Fence fence(m_device, "command buffer flush",
-                [&](const VkFence fence) { m_device.queue_submit(submitInfo, fence); });
+                [&](const VkFence wait_fence) { m_device.queue_submit(m_command_buffer, wait_fence); });
 
     return *this;
 }

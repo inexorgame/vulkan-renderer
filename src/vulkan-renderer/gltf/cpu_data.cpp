@@ -9,16 +9,17 @@
 #include <spdlog/spdlog.h>
 
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::gltf {
 
-ModelCpuData::ModelCpuData(const std::string &file_name, const std::string &model_name)
-    : m_file_name(file_name), m_model_name(model_name) {
+ModelCpuData::ModelCpuData(std::string file_name, std::string model_name)
+    : m_file_name(std::move(file_name)), m_model_name(std::move(model_name)) {
 
-    assert(!file_name.empty());
-    assert(!model_name.empty());
+    assert(!m_file_name.empty());
+    assert(!m_model_name.empty());
 
-    const auto file_extension = tools::get_file_extension_lowercase(file_name);
+    const auto file_extension = tools::get_file_extension_lowercase(m_file_name);
 
     bool loading_succeeded = false;
 
@@ -26,11 +27,11 @@ ModelCpuData::ModelCpuData(const std::string &file_name, const std::string &mode
     std::string loading_warnings;
 
     if (file_extension == "gltf") {
-        spdlog::trace("Loading ASCII glTF file {}", file_name);
-        loading_succeeded = m_loader.LoadASCIIFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
+        spdlog::trace("Loading ASCII glTF file {}", m_file_name);
+        loading_succeeded = m_loader.LoadASCIIFromFile(&m_model, &loading_errors, &loading_warnings, m_file_name);
     } else if (file_extension == "glb") {
-        spdlog::trace("Loading binary glTF file {}", file_name);
-        loading_succeeded = m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, file_name);
+        spdlog::trace("Loading binary glTF file {}", m_file_name);
+        loading_succeeded = m_loader.LoadBinaryFromFile(&m_model, &loading_errors, &loading_warnings, m_file_name);
     } else if (file_extension == "obj") {
         throw InexorException("Error: Object files (.obj) are not supported. Use glTF2 format!");
     } else if (file_extension == "fbx") {
@@ -42,7 +43,8 @@ ModelCpuData::ModelCpuData(const std::string &file_name, const std::string &mode
     }
 
     if (!loading_succeeded) {
-        throw InexorException("Error: Failed to load glTF2 file " + file_name + "!");
+        // TODO: Redirect errors and warnings into a custom exception class!
+        throw InexorException("Error: Failed to load glTF2 file " + m_file_name + "!");
     }
 
     if (!loading_warnings.empty()) {

@@ -94,7 +94,7 @@ void VulkanRenderer::setup_render_graph() {
 
 void VulkanRenderer::recreate_swapchain() {
     m_window->wait_for_focus();
-    vkDeviceWaitIdle(m_device->device());
+    m_device->wait_idle();
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
@@ -179,8 +179,8 @@ void VulkanRenderer::calculate_memory_budget() {
 
 VulkanRenderer::~VulkanRenderer() {
     spdlog::debug("Shutting down vulkan renderer");
-    // TODO: Add wrapper::Device::wait_idle()
-    vkDeviceWaitIdle(m_device->device());
+
+    m_device->wait_idle();
 
     if (!m_debug_report_callback_initialised) {
         return;

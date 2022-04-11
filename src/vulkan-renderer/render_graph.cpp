@@ -65,6 +65,7 @@ GraphicsStage *GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     return this;
 }
 
+// TODO: Use C++20 std::span!
 GraphicsStage *GraphicsStage::uses_shaders(const std::vector<wrapper::Shader> &shaders) {
     assert(!shaders.empty());
     for (const auto &shader : shaders) {
@@ -78,6 +79,7 @@ GraphicsStage *GraphicsStage::uses_shader(const VkPipelineShaderStageCreateInfo 
     return this;
 }
 
+// TODO: Use C++20 std::span!
 GraphicsStage *GraphicsStage::uses_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shaders) {
     assert(!shaders.empty());
     for (const auto &shader : shaders) {

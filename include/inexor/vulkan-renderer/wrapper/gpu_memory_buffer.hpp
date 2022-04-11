@@ -7,6 +7,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for GPU Memory buffers.
@@ -61,15 +62,16 @@ public:
         return m_buffer;
     }
 
+    /// @note VmaAllocation ist just a handle, so we don't need to return a const reference to it
     [[nodiscard]] VmaAllocation allocation() const {
         return m_allocation;
     }
 
-    [[nodiscard]] VmaAllocationInfo allocation_info() const {
+    [[nodiscard]] const VmaAllocationInfo &allocation_info() const {
         return m_allocation_info;
     }
 
-    [[nodiscard]] VmaAllocationCreateInfo allocation_create_info() const {
+    [[nodiscard]] const VmaAllocationCreateInfo &allocation_create_info() const {
         return m_allocation_ci;
     }
 };

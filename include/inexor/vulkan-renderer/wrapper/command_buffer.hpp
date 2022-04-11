@@ -13,6 +13,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declarations
+// TODO: More forward declarations
 class Device;
 class ResourceDescriptor;
 
@@ -24,7 +25,7 @@ protected:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     std::string m_name;
 
-    CommandBuffer(const Device &device);
+    CommandBuffer(const Device &device, std::string name);
     void create_command_buffer(const VkCommandPool command_pool);
 
 public:
@@ -72,6 +73,7 @@ public:
     /// @param layout The pipeline layout
     /// @param stage_flags The shader stage(s) that will accept the push constants
     /// @param offset The data offset
+    /// // TODO: Rename to push_constant, as we only take one defined template type T!
     template <typename T>
     const CommandBuffer &push_constants(const T *data, const VkPipelineLayout layout,
                                         const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
@@ -87,6 +89,7 @@ public:
     /// @param layout The pipeline layout
     /// @param stage_flags The shader stage(s) that will accept the push constants
     /// @param offset The data offset
+    /// // TODO: Rename to push_constant, as we only take one defined template type T!
     template <typename T>
     const CommandBuffer &push_constants(const T &data, const VkPipelineLayout layout,
                                         const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
@@ -129,7 +132,8 @@ public:
 
     /// @brief Call vkCmdBeginRenderPass
     /// @param render_pass_bi The const reference to the VkRenderPassBeginInfo which is used
-    const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const;
+    const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi,
+                                           const VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
 
     /// @brief Call vkCmdBindPipeline
     /// @param pipeline The graphics pipeline to bind
@@ -178,6 +182,7 @@ public:
     /// Call vkCmdEndRenderPass
     const CommandBuffer &end_render_pass() const;
 
+    /// Call vkEndCommandBuffer
     const CommandBuffer &end_command_buffer() const;
 
     const CommandBuffer &flush_command_buffer_and_wait() const;
