@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/gltf/gpu_data.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/render_graph.hpp"
 
 #include <cassert>
 #include <utility>

@@ -10,6 +10,8 @@
 #include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 
+// TODO: Forward declare!
+
 #include <tiny_gltf.h>
 
 #include <unordered_map>

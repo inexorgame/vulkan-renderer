@@ -46,6 +46,14 @@ void CubemapGenerator::draw_node(const wrapper::CommandBuffer &cmd_buf, const gl
 CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::SkyboxGpuData &skybox,
                                    const cubemap::GpuCubemap &skybox_gpu_cubemap) {
 
+    wrapper::Shader filtercube(device, VK_SHADER_STAGE_VERTEX_BIT, "shaders/cubemap/filtercube.vert.spv", "filtercube");
+
+    wrapper::Shader irradiancecube(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/cubemap/irradiancecube.frag.spv",
+                                   "irradiancecube");
+
+    wrapper::Shader prefilterenvmap(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/cubemap/prefilterenvmap.frag.spv",
+                                    "prefilterenvmap");
+
     // TODO: Can we make this a scoped enum?
     enum CubemapTarget { IRRADIANCE = 0, PREFILTEREDENV = 1 };
 
@@ -116,9 +124,9 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         wrapper::OffscreenFramebuffer m_offscreen_framebuffer(device, format, image_extent.width, image_extent.height,
                                                               renderpass.renderpass(), "offscreen framebuffer");
 
-        wrapper::CommandPool cmd_pool(device);
-
         {
+            wrapper::CommandPool cmd_pool(device);
+
             wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
             cmd_buf2.begin_command_buffer();
 
@@ -231,15 +239,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::vec4 weight0;
         };
 
-        wrapper::Shader filtercube(device, VK_SHADER_STAGE_VERTEX_BIT, "shaders/cubemap/filtercube.vert.spv",
-                                   "filtercube");
-
-        wrapper::Shader irradiancecube(device, VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/cubemap/irradiancecube.frag.spv",
-                                       "irradiancecube");
-
-        wrapper::Shader prefilterenvmap(device, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                        "shaders/cubemap/prefilterenvmap.frag.spv", "prefilterenvmap");
-
         std::vector<VkPipelineShaderStageCreateInfo> shader_stages(2);
         shader_stages[0] = wrapper::make_info(filtercube);
 
@@ -260,22 +259,21 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         const std::vector<VkVertexInputBindingDescription> vertex_input_binding_descs{
             {0, sizeof(CubemapVertex), VK_VERTEX_INPUT_RATE_VERTEX}};
 
-        auto pipeline = pipeline_builder.set_color_blend_attachments(blend_att_state)
-                            .set_vertex_input_attributes(vertex_input_attribute_descs)
-                            .set_vertex_input_bindings(vertex_input_binding_descs)
-                            .set_dynamic_states({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
-                            .build(pipeline_layout, renderpass, shader_stages, "test");
+        const auto pipeline = pipeline_builder.set_color_blend_attachments(blend_att_state)
+                                  .set_vertex_input_attributes(vertex_input_attribute_descs)
+                                  .set_vertex_input_bindings(vertex_input_binding_descs)
+                                  .set_dynamic_states({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
+                                  .build(pipeline_layout, renderpass, shader_stages, "test");
 
-        VkClearValue clearValues[1];
-        clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
+        std::vector<VkClearValue> clear_values(1);
+        clear_values[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
 
-        auto renderpass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
-        renderpass_bi.renderPass = renderpass.renderpass();
-        renderpass_bi.framebuffer = m_offscreen_framebuffer.framebuffer();
-        renderpass_bi.renderArea.extent.width = dim;
-        renderpass_bi.renderArea.extent.height = dim;
-        renderpass_bi.clearValueCount = 1;
-        renderpass_bi.pClearValues = clearValues;
+        VkRect2D render_area{};
+        render_area.extent.width = dim;
+        render_area.extent.height = dim;
+
+        const auto renderpass_bi = wrapper::make_info(renderpass.renderpass(), m_offscreen_framebuffer.framebuffer(),
+                                                      render_area, clear_values);
 
         const std::vector matrices{
             glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
@@ -295,11 +293,11 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         subresource_range.levelCount = miplevel_count;
         subresource_range.layerCount = 6;
 
-        wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
-
-        cmd_buf2.begin_command_buffer();
-
         {
+            wrapper::CommandPool cmd_pool(device);
+            wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
+
+            cmd_buf2.begin_command_buffer();
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             barrier.image = m_cubemap_texture->image();
@@ -308,16 +306,19 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.subresourceRange = subresource_range;
-            // cmd_buf1.pipeline_barrier(barrier);
 
             vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                                  0, 0, nullptr, 0, nullptr, 1, &barrier);
-        }
 
-        cmd_buf2.flush_command_buffer_and_wait();
+            cmd_buf2.flush_command_buffer_and_wait();
+        }
 
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
+
+                wrapper::CommandPool cmd_pool(device);
+
+                wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
 
                 const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
 
@@ -331,8 +332,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     pushBlockIrradiance.mvp =
                         glm::perspective(static_cast<float>(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[face];
 
-                    cmd_buf2.push_constants(pushBlockIrradiance, pipeline_layout.pipeline_layout(),
-                                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+                    cmd_buf2.push_constant(pushBlockIrradiance, pipeline_layout,
+                                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
                     break;
 
                 case PREFILTEREDENV:
@@ -341,17 +342,17 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     pushBlockPrefilterEnv.roughness =
                         static_cast<float>(mip_level) / static_cast<float>(miplevel_count - 1);
 
-                    cmd_buf2.push_constants(pushBlockPrefilterEnv, pipeline_layout.pipeline_layout(),
-                                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+                    cmd_buf2.push_constant(pushBlockPrefilterEnv, pipeline_layout,
+                                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
                     break;
                 };
 
                 cmd_buf2.bind_graphics_pipeline(pipeline)
                     .bind_descriptor_set(descriptorset, pipeline_layout)
-                    .bind_vertex_buffer(skybox.vertex_buffer());
+                    .bind_vertex_buffer(skybox);
 
                 if (skybox.has_index_buffer()) {
-                    cmd_buf2.bind_index_buffer(skybox.index_buffer());
+                    cmd_buf2.bind_index_buffer(skybox);
                 }
 
                 for (auto &node : skybox.nodes()) {
@@ -414,6 +415,8 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
         }
 
         {
+            wrapper::CommandPool cmd_pool(device);
+
             wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
             cmd_buf2.begin_command_buffer();
 
@@ -426,7 +429,6 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             barrier.dstAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.subresourceRange = subresource_range;
 
-            // cmd_buf2.pipeline_barrier(barrier);
             vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                                  0, 0, nullptr, 0, nullptr, 1, &barrier);
 

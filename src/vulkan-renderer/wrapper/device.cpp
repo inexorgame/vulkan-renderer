@@ -415,6 +415,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
     name_info.pObjectName = name.c_str();
 
     if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
+        // TODO: Add representation for object type to std::string_view
         throw VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
     }
 #endif

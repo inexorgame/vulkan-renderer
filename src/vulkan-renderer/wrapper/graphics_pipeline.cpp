@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <cassert>
 #include <utility>
@@ -15,7 +16,7 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkGraphicsPipelin
     if (const auto result =
             vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateGraphicsPipeline failed for graphics pipeline " + m_name + "!", result);
+        throw VulkanException("Error: vkCreateGraphicsPipelines failed for graphics pipeline " + m_name + "!", result);
     }
 
     // TODO: Assign internal debug name!

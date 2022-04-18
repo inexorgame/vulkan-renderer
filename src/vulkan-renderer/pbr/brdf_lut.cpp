@@ -176,7 +176,8 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
             .draw(3, 0, 1, 0)
             .end_render_pass();
 
-        m_brdf_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        m_brdf_texture->change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED,
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
     spdlog::trace("Generating BRDF look-up table finished.");

@@ -2,9 +2,6 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
-
 #include <cassert>
 #include <cstdint>
 #include <string>
@@ -12,12 +9,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-// Forward declarations
-// TODO: More forward declarations
+// Forward declarations (in alphabetical order)
 class Device;
+class GraphicsPipeline;
+class PipelineLayout;
 class ResourceDescriptor;
 
-/// @brief RAII wrapper class for VkCommandBuffer.
+/// RAII wrapper class for VkCommandBuffer
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
 protected:
@@ -73,13 +71,12 @@ public:
     /// @param layout The pipeline layout
     /// @param stage_flags The shader stage(s) that will accept the push constants
     /// @param offset The data offset
-    /// // TODO: Rename to push_constant, as we only take one defined template type T!
-    template <typename T>
-    const CommandBuffer &push_constants(const T *data, const VkPipelineLayout layout,
-                                        const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
+    template <typename DataType>
+    const CommandBuffer &push_constant(const DataType *data, const VkPipelineLayout layout,
+                                       const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
         assert(data);
         assert(layout);
-        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(T), data);
+        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(DataType), data);
         return *this;
     }
 
@@ -89,17 +86,19 @@ public:
     /// @param layout The pipeline layout
     /// @param stage_flags The shader stage(s) that will accept the push constants
     /// @param offset The data offset
-    /// // TODO: Rename to push_constant, as we only take one defined template type T!
-    template <typename T>
-    const CommandBuffer &push_constants(const T &data, const VkPipelineLayout layout,
-                                        const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
+    template <typename DataType>
+    const CommandBuffer &push_constant(const DataType &data, const VkPipelineLayout layout,
+                                       const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
         assert(layout);
-        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(T), &data);
+        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(DataType), &data);
         return *this;
     }
 
-    // Graphics commands
-    // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
+    template <typename DataType, typename PipelineWrapperType>
+    const CommandBuffer &push_constant(const DataType &data, const PipelineWrapperType &pipeline_wrapper,
+                                       const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
+        return push_constant(data, pipeline_wrapper.pipeline_layout(), stage_flags, offset);
+    }
 
     const CommandBuffer &copy_buffer(VkBuffer source_buffer, VkBuffer target_buffer,
                                      const VkBufferCopy &copy_region) const;
@@ -135,14 +134,16 @@ public:
     const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi,
                                            const VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
 
+    // TODO: Implement bind_compute_pipeline!
+
     /// @brief Call vkCmdBindPipeline
     /// @param pipeline The graphics pipeline to bind
-    /// @param bind_point The pipeline bind point, ``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default
-    const CommandBuffer &bind_graphics_pipeline(VkPipeline pipeline,
-                                                VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+    const CommandBuffer &bind_graphics_pipeline(VkPipeline pipeline) const;
 
-    const CommandBuffer &bind_graphics_pipeline(const GraphicsPipeline &pipeline,
-                                                VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+    template <typename PipelineWrapperType>
+    const CommandBuffer &bind_graphics_pipeline(const PipelineWrapperType &wrapper) const {
+        return bind_graphics_pipeline(wrapper.pipeline());
+    }
 
     /// @brief Call vkCmdBindIndexBuffer
     /// @param buffer The index buffer to bind
@@ -151,15 +152,24 @@ public:
     const CommandBuffer &bind_index_buffer(VkBuffer buffer, VkIndexType index_type = VK_INDEX_TYPE_UINT32,
                                            std::uint32_t offset = 0) const;
 
-    /// @brief Call vkCmdBindVertexBuffers
-    /// @param buffers A std::vector of vertex buffers to bind
-    /// @todo Expose more parameters from vkCmdBindVertexBuffers as method arguments
-    const CommandBuffer &bind_vertex_buffer(VkBuffer buffers) const;
+    template <typename IndexBufferWrapperType>
+    const CommandBuffer &bind_index_buffer(const IndexBufferWrapperType &object) const {
+        return bind_index_buffer(object.index_buffer());
+    }
+
+    /// Call vkCmdBindVertexBuffers
+    // TODO: Expose more parameters and use C++20 std::span!
+    const CommandBuffer &bind_vertex_buffer(VkBuffer buffer) const;
 
     /// @brief Call vkCmdBindVertexBuffers
     /// @param buffers A std::vector of vertex buffers to bind
     /// @todo Expose more parameters from vkCmdBindVertexBuffers as method arguments
-    const CommandBuffer &bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const;
+    const CommandBuffer &bind_vertex_buffers(const std::vector<VkBuffer> &buffer) const;
+
+    template <typename T>
+    const CommandBuffer &bind_vertex_buffer(const T &object) const {
+        return bind_vertex_buffer(object.vertex_buffer());
+    }
 
     /// @brief Call vkCmdDraw
     /// @param vertex_count The number of vertices to draw

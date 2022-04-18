@@ -7,7 +7,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// @brief RAII wrapper class for VkInstances.
+/// RAII wrapper class for VkInstance
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
@@ -58,7 +58,7 @@ public:
     ~Instance();
 
     Instance &operator=(const Instance &) = delete;
-    Instance &operator=(Instance &&) = default;
+    Instance &operator=(Instance &&) noexcept = default;
 
     [[nodiscard]] VkInstance instance() const {
         return m_instance;

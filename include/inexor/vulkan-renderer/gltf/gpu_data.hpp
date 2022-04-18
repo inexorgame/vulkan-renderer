@@ -4,7 +4,6 @@
 #include "inexor/vulkan-renderer/gltf/gpu_data_base.hpp"
 #include "inexor/vulkan-renderer/gltf/node.hpp"
 #include "inexor/vulkan-renderer/pbr/pbr_shader_params.hpp"
-#include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
@@ -14,12 +13,20 @@
 #include <string>
 #include <vector>
 
+// Forward declarations
+namespace inexor::vulkan_renderer {
+class RenderGraph;
+
+namespace wrapper {
+class Device;
+}
+} // namespace inexor::vulkan_renderer
+
 namespace inexor::vulkan_renderer::gltf {
 
 class ModelGpuPbrData : public ModelGpuPbrDataBase {
 private:
     const wrapper::Device &m_device;
-
     std::string m_name;
 
     // TODO: Is this even taken into account?

@@ -8,6 +8,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
+// TODO: More forward declarations!
 class Shader;
 
 // TODO: Use C++209 std::span for all make_infos which accept a std::vector!
@@ -47,6 +48,12 @@ template <typename T>
 ///
 ///
 [[nodiscard]] VkPipelineDynamicStateCreateInfo make_info(const std::vector<VkDynamicState> &dynamic_states);
+
+///
+///
+[[nodiscard]] VkRenderPassBeginInfo make_info(VkRenderPass renderpass, VkFramebuffer framebuffer,
+                                              const VkRect2D &render_area,
+                                              const std::vector<VkClearValue> &clear_values);
 
 ///
 ///

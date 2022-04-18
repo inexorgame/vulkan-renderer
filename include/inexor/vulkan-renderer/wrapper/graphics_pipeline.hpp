@@ -1,23 +1,27 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
 #include <vulkan/vulkan_core.h>
 
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-// TODO: Add a wrapper for Vulkan compute pipelines
+// Forward declaration
+class Device;
 
+/// RAII wrapper class for VkPipeline (graphics pipelines only so far)
+/// TODO: Implement compute pipeline using a base class
 class GraphicsPipeline {
 private:
     const Device &m_device;
     std::string m_name;
-
     VkPipeline m_pipeline;
 
 public:
+    ///
+    ///
+    ///
+    ///
     GraphicsPipeline(const Device &device, const VkGraphicsPipelineCreateInfo &graphics_pipeline_ci, std::string name);
 
     GraphicsPipeline(const GraphicsPipeline &) = delete;

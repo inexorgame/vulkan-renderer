@@ -89,7 +89,6 @@ void ModelGpuPbrDataBase::load_textures() {
 
             VkImageViewCreateInfo image_view_ci{};
             image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            // The image will be filled out later
             image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
             image_view_ci.format = format;
             image_view_ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B,
@@ -97,6 +96,7 @@ void ModelGpuPbrDataBase::load_textures() {
             image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             image_view_ci.subresourceRange.layerCount = 1;
             image_view_ci.subresourceRange.levelCount = miplevel_count;
+            // Notice that the image will be filled out later
 
             return image_view_ci;
         };

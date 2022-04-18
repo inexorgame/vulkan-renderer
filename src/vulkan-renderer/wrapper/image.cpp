@@ -59,12 +59,13 @@ Image::Image(const Device &device, const VkImageCreateInfo image_ci, const VkIma
     create_image_view();
 }
 
-void Image::change_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkImageLayout new_layout,
-                                const std::uint32_t miplevel_count, const std::uint32_t layer_count,
-                                const std::uint32_t base_mip_level, const std::uint32_t base_array_layer) {
+void Image::change_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkImageLayout old_layout,
+                                const VkImageLayout new_layout, const std::uint32_t miplevel_count,
+                                const std::uint32_t layer_count, const std::uint32_t base_mip_level,
+                                const std::uint32_t base_array_layer) {
 
     auto barrier = make_info<VkImageMemoryBarrier>();
-    barrier.oldLayout = descriptor_image_info.imageLayout;
+    barrier.oldLayout = old_layout;
     barrier.newLayout = new_layout;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -112,43 +113,6 @@ void Image::change_image_layout(const wrapper::CommandBuffer &cmd_buf, const VkI
     }
 
     cmd_buf.pipeline_barrier(source_stage, destination_stage, barrier);
-
-    descriptor_image_info.imageLayout = new_layout;
-}
-
-void Image::copy_from_image(const wrapper::CommandBuffer &cmd_buf, Image &image, const std::uint32_t width,
-                            const std::uint32_t height, const std::uint32_t miplevel_count,
-                            const std::uint32_t layer_count, const std::uint32_t base_array_layer,
-                            const std::uint32_t mip_level) {
-
-    image.change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-    // TOOD: Expose more parameters!
-
-    VkImageSubresourceRange subres_range{};
-    subres_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    subres_range.baseMipLevel = 0;
-    subres_range.levelCount = miplevel_count;
-    subres_range.layerCount = layer_count;
-
-    VkImageCopy copy_region{};
-    copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    copy_region.srcSubresource.baseArrayLayer = 0;
-    copy_region.srcSubresource.mipLevel = 0;
-    copy_region.srcSubresource.layerCount = layer_count;
-    copy_region.srcOffset = {0, 0, 0};
-    copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    copy_region.dstSubresource.baseArrayLayer = base_array_layer;
-    copy_region.dstSubresource.mipLevel = mip_level;
-    copy_region.dstSubresource.layerCount = layer_count;
-    copy_region.dstOffset = {0, 0, 0};
-    copy_region.extent.width = width;
-    copy_region.extent.height = height;
-    copy_region.extent.depth = 1;
-
-    cmd_buf.copy_image(image.image(), m_image, copy_region);
-
-    image.change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 void Image::copy_from_buffer(const wrapper::CommandBuffer &cmd_buf, const VkBuffer src_buffer,

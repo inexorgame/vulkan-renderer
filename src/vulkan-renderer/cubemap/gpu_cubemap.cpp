@@ -53,7 +53,7 @@ VkImageViewCreateInfo GpuCubemap::fill_image_view_ci(const VkFormat format, cons
     image_view_ci.components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
                                 VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
     image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_ci.subresourceRange.baseArrayLayer = 0;
+    image_view_ci.subresourceRange.baseMipLevel = 0;
     image_view_ci.subresourceRange.levelCount = miplevel_count;
     image_view_ci.subresourceRange.baseArrayLayer = 0;
     image_view_ci.subresourceRange.layerCount = FACE_COUNT;
@@ -101,11 +101,13 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
 
     copy_regions.reserve(cpu_cubemap.miplevel_count() * FACE_COUNT);
 
+    const auto ktx_wrapper = cpu_cubemap.ktx_wrapper();
+
     for (std::uint32_t face = 0; face < FACE_COUNT; face++) {
         for (std::uint32_t mip_level = 0; mip_level < cpu_cubemap.miplevel_count(); mip_level++) {
             ktx_size_t offset = 0;
 
-            if (const auto result = ktxTexture_GetImageOffset(cpu_cubemap.ktx_wrapper(), mip_level, 0, face, &offset);
+            if (const auto result = ktxTexture_GetImageOffset(ktx_wrapper, mip_level, 0, face, &offset);
                 result != KTX_SUCCESS) {
                 throw KtxException("Error: ktxTexture_GetImageOffset failed!", result);
             }
@@ -115,8 +117,8 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
             copy_region.imageSubresource.mipLevel = mip_level;
             copy_region.imageSubresource.baseArrayLayer = face;
             copy_region.imageSubresource.layerCount = 1;
-            copy_region.imageExtent.width = cpu_cubemap.ktx_wrapper()->baseWidth >> mip_level;
-            copy_region.imageExtent.height = cpu_cubemap.ktx_wrapper()->baseHeight >> mip_level;
+            copy_region.imageExtent.width = ktx_wrapper->baseWidth >> mip_level;
+            copy_region.imageExtent.height = ktx_wrapper->baseHeight >> mip_level;
             copy_region.imageExtent.depth = 1;
             copy_region.bufferOffset = offset;
 
@@ -134,16 +136,19 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     subresourceRange.layerCount = FACE_COUNT;
 
     wrapper::OnceCommandBuffer copy_command(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
-        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cpu_cubemap.miplevel_count(), FACE_COUNT);
+        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                            cpu_cubemap.miplevel_count(), FACE_COUNT);
 
         cmd_buf.copy_buffer_to_image(texture_staging_buffer.buffer(), image(), copy_regions);
 
-        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cpu_cubemap.miplevel_count(),
-                            FACE_COUNT);
+        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                            cpu_cubemap.miplevel_count(), FACE_COUNT);
     });
 
     m_sampler = std::make_unique<texture::Sampler>(m_device, fill_sampler_ci(cpu_cubemap.miplevel_count()), m_name);
+
     descriptor_image_info.sampler = m_sampler->sampler();
+    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci,
@@ -152,7 +157,14 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci
       m_name(name), wrapper::Image(device, image_ci, image_view_ci, name) {
 
     m_sampler = std::make_unique<texture::Sampler>(device, m_sampler_ci, m_name);
+
+    wrapper::OnceCommandBuffer copy_command(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
+        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                            m_image_ci.mipLevels, FACE_COUNT);
+    });
+
     descriptor_image_info.sampler = m_sampler->sampler();
+    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, const std::uint32_t width,
@@ -163,29 +175,5 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
 GpuCubemap::GpuCubemap(const wrapper::Device &device, VkFormat format, std::uint32_t width, std::uint32_t height,
                        std::string name)
     : GpuCubemap(device, format, width, height, 1, name) {}
-
-void GpuCubemap::copy_from_image(const wrapper::CommandBuffer &cmd_buf, const VkImage source_image,
-                                 const std::uint32_t face, const std::uint32_t mip_level, const std::uint32_t width,
-                                 const std::uint32_t height) {
-    VkImageCopy region{};
-
-    region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.srcSubresource.baseArrayLayer = 0;
-    region.srcSubresource.mipLevel = 0;
-    region.srcSubresource.layerCount = 1;
-    region.srcOffset = {0, 0, 0};
-
-    region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.dstSubresource.baseArrayLayer = face;
-    region.dstSubresource.mipLevel = mip_level;
-    region.dstSubresource.layerCount = 1;
-    region.dstOffset = {0, 0, 0};
-
-    region.extent.width = width;
-    region.extent.height = height;
-    region.extent.depth = 1;
-
-    cmd_buf.copy_image(source_image, image(), region);
-}
 
 } // namespace inexor::vulkan_renderer::cubemap

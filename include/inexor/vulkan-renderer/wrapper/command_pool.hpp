@@ -10,7 +10,7 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
-/// @brief RAII wrapper class for VkCommandPool.
+/// RAII wrapper class for VkCommandPool.
 class CommandPool {
     const Device &m_device;
     VkCommandPool m_command_pool{VK_NULL_HANDLE};

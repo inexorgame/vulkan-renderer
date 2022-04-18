@@ -163,6 +163,23 @@ VkGraphicsPipelineCreateInfo make_info(const VkPipelineLayout pipeline_layout, c
     return ret;
 }
 
+template <typename PipelineWrapperType, typename RenderpassWrapperType, typename ShaderWrapperType>
+VkGraphicsPipelineCreateInfo make_info(const PipelineWrapperType &pipeline_wrapper,
+                                       const RenderpassWrapperType &renderpass_wrapper,
+                                       const ShaderWrapperType &shader_loader, 
+                                       const VkPipelineVertexInputStateCreateInfo &vertex_input_sci,
+                                       const VkPipelineInputAssemblyStateCreateInfo &input_assembly_sci,
+                                       const VkPipelineViewportStateCreateInfo &viewport_sci,
+                                       const VkPipelineRasterizationStateCreateInfo *&rasterization_sci,
+                                       const VkPipelineMultisampleStateCreateInfo &multisample_sci,
+                                       const VkPipelineDepthStencilStateCreateInfo &depth_stencil_sci,
+                                       const VkPipelineColorBlendStateCreateInfo &color_blend_sci,
+                                       const VkPipelineDynamicStateCreateInfo &dynamic_state_ci) {
+    return make_info(pipeline_wrapper.pipeline_layout(), renderpass_wrapper.renderpass(),
+                     shader_loader.shader_stage_create_infos(), &vertex_input_sci, &input_assembly_sci, &viewport_sci,
+                     &rasterization_sci, &multisample_sci, &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
+}
+
 template <>
 VkImageCreateInfo make_info() {
     VkImageCreateInfo ret{};
@@ -344,6 +361,19 @@ template <>
 VkRenderPassBeginInfo make_info() {
     VkRenderPassBeginInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    return ret;
+}
+
+VkRenderPassBeginInfo make_info(const VkRenderPass renderpass, const VkFramebuffer framebuffer,
+                                const VkRect2D &render_area, const std::vector<VkClearValue> &clear_values) {
+    VkRenderPassBeginInfo ret{};
+    ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    ret.renderPass = renderpass;
+    ret.framebuffer = framebuffer;
+    ret.renderArea = render_area;
+    ret.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
+    ret.pClearValues = clear_values.data();
+
     return ret;
 }
 

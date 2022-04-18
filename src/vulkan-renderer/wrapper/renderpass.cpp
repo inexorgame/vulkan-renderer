@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <cassert>
 #include <utility>

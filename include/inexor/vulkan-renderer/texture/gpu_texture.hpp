@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/texture/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/texture/sampler.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -11,6 +10,11 @@
 
 #include <memory>
 #include <string>
+
+namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
+class Device;
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::texture {
 
@@ -26,7 +30,7 @@ private:
 
     std::string m_name;
 
-    static constexpr VkFormat DEFAULT_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
+    static constexpr VkFormat DEFAULT_TEXTURE_FORMAT{VK_FORMAT_R8G8B8A8_UNORM};
 
     [[nodiscard]] VkImageCreateInfo fill_image_ci(VkFormat format, std::uint32_t width, std::uint32_t height);
 
@@ -35,6 +39,8 @@ private:
     [[nodiscard]] VkSamplerCreateInfo fill_sampler_ci(const wrapper::Device &device);
 
     void upload_texture_data(const void *texture_data, std::size_t texture_size);
+
+    void generate_mipmaps();
 
 public:
     GpuTexture(const wrapper::Device &device, const void *texture_data, std::size_t texture_size,

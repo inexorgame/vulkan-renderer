@@ -7,6 +7,9 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/graphics_pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+
 #include <cassert>
 #include <limits>
 #include <stdexcept>
@@ -112,6 +115,7 @@ const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer source_buffer, co
     return *this;
 }
 
+// TODO: Support multiple copies!
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buffer, const VkImage target_image,
                                                          const VkBufferImageCopy &regions) const {
     assert(src_buffer);
@@ -192,16 +196,10 @@ const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInf
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_graphics_pipeline(const VkPipeline pipeline,
-                                                           const VkPipelineBindPoint bind_point) const {
+const CommandBuffer &CommandBuffer::bind_graphics_pipeline(const VkPipeline pipeline) const {
     assert(pipeline);
-    vkCmdBindPipeline(m_command_buffer, bind_point, pipeline);
+    vkCmdBindPipeline(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     return *this;
-}
-
-const CommandBuffer &CommandBuffer::bind_graphics_pipeline(const GraphicsPipeline &pipeline,
-                                                           VkPipelineBindPoint bind_point) const {
-    return bind_graphics_pipeline(pipeline.pipeline(), bind_point);
 }
 
 const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buffer, const VkIndexType index_type,
@@ -211,7 +209,6 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buffer, con
     return *this;
 }
 
-// TODO: Expose more parameters and use C++20 std::span!
 const CommandBuffer &CommandBuffer::bind_vertex_buffer(const VkBuffer buffer) const {
     assert(buffer);
     VkDeviceSize offsets[1] = {0};

@@ -1,5 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/texture/gpu_texture.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #include <utility>
@@ -13,12 +15,12 @@ VkImageCreateInfo GpuTexture::fill_image_ci(const VkFormat format, const std::ui
     image_ci.extent.width = width;
     image_ci.extent.height = height;
     image_ci.extent.depth = 1;
-    image_ci.mipLevels = 1;
+    image_ci.mipLevels = static_cast<uint32_t>(floor(log2(std::max(width, height))) + 1.0);
     image_ci.arrayLayers = 1;
     image_ci.format = format;
     image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_ci.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_ci.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
     image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     return image_ci;
@@ -77,6 +79,7 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const void *texture_data, 
     : GpuTexture(device, image_ci, image_view_ci, sampler_ci, name) {
 
     upload_texture_data(texture_data, texture_size);
+    generate_mipmaps();
 }
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const VkImageCreateInfo image_ci,
@@ -100,8 +103,8 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const VkFormat format, con
                  fill_image_view_ci(format), fill_sampler_ci(device)) {}
 
 GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
-    : GpuTexture(device, cpu_texture, fill_image_ci(DEFAULT_FORMAT, cpu_texture.width(), cpu_texture.height()),
-                 fill_image_view_ci(DEFAULT_FORMAT), fill_sampler_ci(device)) {}
+    : GpuTexture(device, cpu_texture, fill_image_ci(DEFAULT_TEXTURE_FORMAT, cpu_texture.width(), cpu_texture.height()),
+                 fill_image_view_ci(DEFAULT_TEXTURE_FORMAT), fill_sampler_ci(device)) {}
 
 GpuTexture::GpuTexture(const wrapper::Device &device) : GpuTexture(device, CpuTexture()) {}
 
@@ -113,13 +116,66 @@ void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t
 
     wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(),
                                             [&](const wrapper::CommandBuffer &cmd_buf) {
-                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED,
+                                                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
                                                 copy_from_buffer(cmd_buf, texture_staging_buffer.buffer(),
                                                                  m_image_ci.extent.width, m_image_ci.extent.height);
-                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                                             });
 }
 
-GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device), wrapper::Image(std::move(other)) {}
+void GpuTexture::generate_mipmaps() {
+    // TODO: Only one command pool per thread!
+    wrapper::CommandPool cmd_pool(m_device);
+    wrapper::CommandBuffer cmd_buf(m_device, cmd_pool.get(), "test");
+
+    cmd_buf.begin_command_buffer();
+
+    change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image_ci.mipLevels);
+
+    // Note that when generating mip levels here, we start with index 1
+    for (std::uint32_t mip_level = 1; mip_level < m_image_ci.mipLevels; mip_level++) {
+
+        VkImageBlit imageBlit{};
+        imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageBlit.srcSubresource.layerCount = 1;
+        imageBlit.srcSubresource.mipLevel = mip_level - 1;
+        imageBlit.srcOffsets[1].x = static_cast<std::int32_t>(m_image_ci.extent.width >> (mip_level - 1));
+        imageBlit.srcOffsets[1].y = static_cast<std::int32_t>(m_image_ci.extent.height >> (mip_level - 1));
+        imageBlit.srcOffsets[1].z = 1;
+
+        imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageBlit.dstSubresource.layerCount = 1;
+        imageBlit.dstSubresource.mipLevel = mip_level;
+        imageBlit.dstOffsets[1].x = static_cast<std::int32_t>(m_image_ci.extent.width >> mip_level);
+        imageBlit.dstOffsets[1].y = static_cast<std::int32_t>(m_image_ci.extent.height >> mip_level);
+        imageBlit.dstOffsets[1].z = 1;
+
+        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 1,
+                            mip_level);
+
+        vkCmdBlitImage(cmd_buf.get(), image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image(),
+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_LINEAR);
+
+        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1, 1,
+                            mip_level);
+    }
+
+    change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                        m_image_ci.mipLevels);
+
+    cmd_buf.flush_command_buffer_and_wait();
+
+    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+}
+
+GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device), wrapper::Image(std::move(other)) {
+    m_sampler = std::exchange(other.m_sampler, nullptr);
+    m_image_ci = std::move(other.m_image_ci);
+    m_name = std::move(other.m_name);
+    m_image_view_ci = std::move(other.m_image_view_ci);
+    m_sampler_ci = std::move(other.m_sampler_ci);
+}
 
 } // namespace inexor::vulkan_renderer::texture
