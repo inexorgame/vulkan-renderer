@@ -1,7 +1,5 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
-
 #include <vk_mem_alloc.h>
 
 #include <string>
@@ -11,8 +9,10 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
+/// RAII wrapper class for VkImage and the associated VmaAllocation, VmaAllocationInfo, and VkImageView
 class Image {
 private:
+    std::string m_name;
     const Device &m_device;
 
     VmaAllocation m_allocation{VK_NULL_HANDLE};
@@ -23,13 +23,11 @@ private:
     VkImageCreateInfo m_image_ci;
     VkImageViewCreateInfo m_image_view_ci;
 
-    std::string m_name;
-
     void create_image();
     void create_image_view();
 
 public:
-    // TODO: Make private member and add get methods!
+    // TODO: Make a private member and add get method!
     VkDescriptorImageInfo descriptor_image_info;
 
     Image(const Device &device, VkImageCreateInfo image_ci, VkImageViewCreateInfo image_view_ci, std::string name);
@@ -41,22 +39,9 @@ public:
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) noexcept = default;
 
-    // Execute the image layout transition by taking an external command buffer
-    void change_image_layout(const wrapper::CommandBuffer &cmd_buf, VkImageLayout old_layout, VkImageLayout new_layout,
-                             std::uint32_t miplevel_count = 1, std::uint32_t layer_count = 1,
-                             std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0);
-
-    ///
-    ///
-    ///
-    void copy_from_buffer(const wrapper::CommandBuffer &cmd_buf, VkBuffer src_buffer, std::uint32_t width,
-                          std::uint32_t height);
-
     [[nodiscard]] VkFormat format() const {
         return m_image_ci.format;
     }
-
-    // TODO: Add get methods for all members of m_image_ci.
 
     [[nodiscard]] VkImageView image_view() const {
         return m_image_view;

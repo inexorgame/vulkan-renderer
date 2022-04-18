@@ -114,15 +114,21 @@ void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t
 
     wrapper::StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
-    wrapper::OnceCommandBuffer copy_command(m_device, m_device.graphics_queue(), m_device.graphics_queue_family_index(),
-                                            [&](const wrapper::CommandBuffer &cmd_buf) {
-                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED,
-                                                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-                                                copy_from_buffer(cmd_buf, texture_staging_buffer.buffer(),
-                                                                 m_image_ci.extent.width, m_image_ci.extent.height);
-                                                change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                                            });
+    wrapper::OnceCommandBuffer copy_cmd(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
+        VkBufferImageCopy copy_region{};
+        copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        copy_region.imageSubresource.mipLevel = 1;
+        copy_region.imageSubresource.baseArrayLayer = 0;
+        copy_region.imageSubresource.layerCount = 1;
+        copy_region.imageExtent = m_image_ci.extent;
+        copy_region.imageExtent.depth = 1;
+        copy_region.imageOffset = {0, 0, 0};
+
+        cmd_buf.change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+            .copy_buffer_to_image(texture_staging_buffer.buffer(), image(), copy_region)
+            .change_image_layout(image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    });
 }
 
 void GpuTexture::generate_mipmaps() {
@@ -130,9 +136,8 @@ void GpuTexture::generate_mipmaps() {
     wrapper::CommandPool cmd_pool(m_device);
     wrapper::CommandBuffer cmd_buf(m_device, cmd_pool.get(), "test");
 
-    cmd_buf.begin_command_buffer();
-
-    change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image_ci.mipLevels);
+    cmd_buf.begin_command_buffer().change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_image_ci.mipLevels);
 
     // Note that when generating mip levels here, we start with index 1
     for (std::uint32_t mip_level = 1; mip_level < m_image_ci.mipLevels; mip_level++) {
@@ -152,20 +157,20 @@ void GpuTexture::generate_mipmaps() {
         imageBlit.dstOffsets[1].y = static_cast<std::int32_t>(m_image_ci.extent.height >> mip_level);
         imageBlit.dstOffsets[1].z = 1;
 
-        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 1,
-                            mip_level);
+        cmd_buf.change_image_layout(image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                    1, 1, mip_level);
 
         vkCmdBlitImage(cmd_buf.get(), image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image(),
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_LINEAR);
 
-        change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1, 1,
-                            mip_level);
+        cmd_buf.change_image_layout(image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                    1, 1, mip_level);
     }
 
-    change_image_layout(cmd_buf, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                        m_image_ci.mipLevels);
-
-    cmd_buf.flush_command_buffer_and_wait();
+    cmd_buf
+        .change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                             m_image_ci.mipLevels)
+        .flush_command_buffer_and_wait();
 
     descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }

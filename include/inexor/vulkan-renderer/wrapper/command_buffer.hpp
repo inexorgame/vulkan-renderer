@@ -20,7 +20,7 @@ class ResourceDescriptor;
 class CommandBuffer {
 protected:
     const Device &m_device;
-    VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
+    VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
     std::string m_name;
 
     CommandBuffer(const Device &device, std::string name);
@@ -65,6 +65,16 @@ public:
                                               VkPipelineLayout layout,
                                               VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
+    const CommandBuffer &change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
+                                             VkImageSubresourceRange subresource_range,
+                                             VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                             VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
+
+    const CommandBuffer &change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
+                                             std::uint32_t mip_level_count = 1, std::uint32_t array_layer_count = 1,
+                                             std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0,
+                                             VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                             VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
     /// @brief Update push constant data
     /// @tparam T the type of the push constants
     /// @param data The data
@@ -76,7 +86,7 @@ public:
                                        const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
         assert(data);
         assert(layout);
-        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(DataType), data);
+        vkCmdPushConstants(m_cmd_buf, layout, stage_flags, offset, sizeof(DataType), data);
         return *this;
     }
 
@@ -90,7 +100,7 @@ public:
     const CommandBuffer &push_constant(const DataType &data, const VkPipelineLayout layout,
                                        const VkShaderStageFlags stage_flags, const std::uint32_t offset = 0) const {
         assert(layout);
-        vkCmdPushConstants(m_command_buffer, layout, stage_flags, offset, sizeof(DataType), &data);
+        vkCmdPushConstants(m_cmd_buf, layout, stage_flags, offset, sizeof(DataType), &data);
         return *this;
     }
 
@@ -201,11 +211,11 @@ public:
 
     // TODO: Refactor: unified get syntax!
     [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_command_buffer;
+        return &m_cmd_buf;
     }
 
     [[nodiscard]] VkCommandBuffer get() const {
-        return m_command_buffer;
+        return m_cmd_buf;
     }
 };
 
