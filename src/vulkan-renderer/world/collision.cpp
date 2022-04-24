@@ -25,7 +25,7 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
 
     // This lambda adjusts the center points on a cube's face to the size of the octree,
     // so collision works with cubes of any size. This does not yet account for rotations!
-    const auto adjust_coordinates = [=](const glm::vec3 pos) {
+    const auto adjust_coordinates = [&](const glm::vec3 pos) {
         // TODO: Take rotation of the cube into account.
         return m_cube.center() + pos * (m_cube.size() / 2);
     };
