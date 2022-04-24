@@ -325,13 +325,12 @@ const CommandBuffer &CommandBuffer::end_render_pass() const {
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait() const {
+const CommandBuffer &CommandBuffer::flush_command_buffer_and_wait(const std::string &name) const {
     // We do not check if command buffers are in recording state (validation layers should check for this)
     end_command_buffer();
 
     // Execute the command buffer and wait for it to finish
-    Fence fence(m_device, "command buffer flush",
-                [&](const VkFence wait_fence) { m_device.queue_submit(m_cmd_buf, wait_fence); });
+    Fence fence(m_device, name, [&](const VkFence wait_fence) { m_device.queue_submit(m_cmd_buf, wait_fence); });
 
     return *this;
 }

@@ -3,6 +3,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include <cassert>
+#include <cstdint>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -21,18 +22,6 @@ class Shader;
 template <typename T>
 [[nodiscard]] T make_info();
 
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
 [[nodiscard]] VkGraphicsPipelineCreateInfo make_info(const VkPipelineLayout pipeline_layout,
                                                      const VkRenderPass renderpass,
                                                      const std::vector<VkPipelineShaderStageCreateInfo> &stages,
@@ -45,48 +34,28 @@ template <typename T>
                                                      const VkPipelineColorBlendStateCreateInfo *color_blend_state,
                                                      const VkPipelineDynamicStateCreateInfo *dynamic_state);
 
-///
-///
 [[nodiscard]] VkPipelineDynamicStateCreateInfo make_info(const std::vector<VkDynamicState> &dynamic_states);
 
-///
-///
 [[nodiscard]] VkRenderPassBeginInfo make_info(VkRenderPass renderpass, VkFramebuffer framebuffer,
                                               const VkRect2D &render_area,
                                               const std::vector<VkClearValue> &clear_values);
 
-///
-///
 [[nodiscard]] VkPipelineColorBlendStateCreateInfo
 make_info(const std::vector<VkPipelineColorBlendAttachmentState> &attachments);
 
-///
-///
-///
 [[nodiscard]] VkPipelineVertexInputStateCreateInfo
 make_info(const std::vector<VkVertexInputBindingDescription> &vertex_input_binding_descriptions,
           const std::vector<VkVertexInputAttributeDescription> &vertex_input_attribute_descriptions);
 
-///
-///
-///
 [[nodiscard]] VkPipelineLayoutCreateInfo make_info(const std::vector<VkDescriptorSetLayout> &set_layouts,
                                                    const std::vector<VkPushConstantRange> &push_constant_ranges = {});
 
-///
-///
-///
 [[nodiscard]] VkPipelineShaderStageCreateInfo make_info(const wrapper::Shader &shader);
 
-///
-///
-[[nodiscard]] VkImageCreateInfo make_info(VkFormat format);
+[[nodiscard]] VkImageSubresourceRange make_info(std::uint32_t mip_level_count, std::uint32_t layer_count,
+                                                std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0,
+                                                VkImageAspectFlags aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT);
 
-///
-///
-///
-///
-///
 [[nodiscard]] VkRenderPassCreateInfo make_info(const std::vector<VkAttachmentDescription> &attachments,
                                                const std::vector<VkSubpassDescription> &subpasses,
                                                const std::vector<VkSubpassDependency> &dependencies);

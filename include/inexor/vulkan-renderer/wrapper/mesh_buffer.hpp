@@ -15,6 +15,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for mesh buffers.
@@ -123,7 +124,7 @@ public:
         StagingBuffer staging_buffer_for_vertices(m_device, name, vertex_buffer_size, vertices.data(),
                                                   vertex_buffer_size);
 
-        staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
+        staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer, name);
 
         if (!indices.empty()) {
             VkDeviceSize indices_memory_size = sizeof(IndexType) * indices.size();
@@ -131,7 +132,7 @@ public:
             StagingBuffer staging_buffer_for_indices(m_device, name, index_buffer_size,
                                                      static_cast<void *>(indices.data()), indices_memory_size);
 
-            staging_buffer_for_indices.upload_data_to_gpu(*m_index_buffer);
+            staging_buffer_for_indices.upload_data_to_gpu(*m_index_buffer, name);
         } else {
             spdlog::warn("No index buffer created for mesh {}!", name);
         }
@@ -160,7 +161,7 @@ public:
         StagingBuffer staging_buffer_for_vertices(m_device, name, size_of_vertex_buffer, vertices,
                                                   vertices_memory_size);
 
-        staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
+        staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer, name);
 
         update_vertices(vertices);
     }

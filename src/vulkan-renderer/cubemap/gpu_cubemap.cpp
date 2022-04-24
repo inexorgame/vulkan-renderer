@@ -135,13 +135,16 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, const VkFormat format, con
     subres_range.baseArrayLayer = 0;
     subres_range.layerCount = FACE_COUNT;
 
-    wrapper::OnceCommandBuffer copy_command(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf
-            .change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subres_range)
-            .copy_buffer_to_image(texture_staging_buffer.buffer(), image(), copy_regions)
-            .change_image_layout(image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cpu_cubemap.miplevel_count(), FACE_COUNT);
-    });
+    wrapper::OnceCommandBuffer copy_command(
+        m_device, "copy gpu cubemap staging buffer into memory", [&](const wrapper::CommandBuffer &cmd_buf) {
+            cmd_buf
+                .change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                     subres_range)
+                .copy_buffer_to_image(texture_staging_buffer.buffer(), image(), copy_regions)
+                .change_image_layout(image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cpu_cubemap.miplevel_count(),
+                                     FACE_COUNT);
+        });
 
     m_sampler = std::make_unique<texture::Sampler>(m_device, fill_sampler_ci(cpu_cubemap.miplevel_count()), m_name);
 
@@ -154,10 +157,11 @@ GpuCubemap::GpuCubemap(const wrapper::Device &device, VkImageCreateInfo image_ci
     : m_device(device), m_image_ci(image_ci), m_image_view_ci(image_view_ci), m_sampler_ci(sampler_ci),
       m_name(name), wrapper::Image(device, image_ci, image_view_ci, name) {
 
-    wrapper::OnceCommandBuffer copy_command(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                    m_image_ci.mipLevels, FACE_COUNT);
-    });
+    wrapper::OnceCommandBuffer copy_command(
+        m_device, "change gpu cubemap image layout", [&](const wrapper::CommandBuffer &cmd_buf) {
+            cmd_buf.change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                        m_image_ci.mipLevels, FACE_COUNT);
+        });
 
     m_sampler = std::make_unique<texture::Sampler>(device, m_sampler_ci, m_name);
     descriptor_image_info.sampler = m_sampler->sampler();

@@ -164,17 +164,16 @@ VkGraphicsPipelineCreateInfo make_info(const VkPipelineLayout pipeline_layout, c
 }
 
 template <typename PipelineWrapperType, typename RenderpassWrapperType, typename ShaderWrapperType>
-VkGraphicsPipelineCreateInfo make_info(const PipelineWrapperType &pipeline_wrapper,
-                                       const RenderpassWrapperType &renderpass_wrapper,
-                                       const ShaderWrapperType &shader_loader, 
-                                       const VkPipelineVertexInputStateCreateInfo &vertex_input_sci,
-                                       const VkPipelineInputAssemblyStateCreateInfo &input_assembly_sci,
-                                       const VkPipelineViewportStateCreateInfo &viewport_sci,
-                                       const VkPipelineRasterizationStateCreateInfo *&rasterization_sci,
-                                       const VkPipelineMultisampleStateCreateInfo &multisample_sci,
-                                       const VkPipelineDepthStencilStateCreateInfo &depth_stencil_sci,
-                                       const VkPipelineColorBlendStateCreateInfo &color_blend_sci,
-                                       const VkPipelineDynamicStateCreateInfo &dynamic_state_ci) {
+VkGraphicsPipelineCreateInfo
+make_info(const PipelineWrapperType &pipeline_wrapper, const RenderpassWrapperType &renderpass_wrapper,
+          const ShaderWrapperType &shader_loader, const VkPipelineVertexInputStateCreateInfo &vertex_input_sci,
+          const VkPipelineInputAssemblyStateCreateInfo &input_assembly_sci,
+          const VkPipelineViewportStateCreateInfo &viewport_sci,
+          const VkPipelineRasterizationStateCreateInfo *&rasterization_sci,
+          const VkPipelineMultisampleStateCreateInfo &multisample_sci,
+          const VkPipelineDepthStencilStateCreateInfo &depth_stencil_sci,
+          const VkPipelineColorBlendStateCreateInfo &color_blend_sci,
+          const VkPipelineDynamicStateCreateInfo &dynamic_state_ci) {
     return make_info(pipeline_wrapper.pipeline_layout(), renderpass_wrapper.renderpass(),
                      shader_loader.shader_stage_create_infos(), &vertex_input_sci, &input_assembly_sci, &viewport_sci,
                      &rasterization_sci, &multisample_sci, &depth_stencil_sci, &color_blend_sci, &dynamic_state_ci);
@@ -373,7 +372,6 @@ VkRenderPassBeginInfo make_info(const VkRenderPass renderpass, const VkFramebuff
     ret.renderArea = render_area;
     ret.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
     ret.pClearValues = clear_values.data();
-
     return ret;
 }
 
@@ -382,6 +380,19 @@ VkRenderPassCreateInfo make_info() {
     VkRenderPassCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     return ret;
+}
+
+VkImageSubresourceRange make_info(const std::uint32_t mip_level_count, const std::uint32_t layer_count,
+                                  const std::uint32_t base_mip_level, const std::uint32_t base_array_layer,
+                                  const VkImageAspectFlags aspect_mask) {
+
+    VkImageSubresourceRange subres_range{};
+    subres_range.aspectMask = aspect_mask;
+    subres_range.baseMipLevel = base_mip_level;
+    subres_range.baseArrayLayer = base_array_layer;
+    subres_range.levelCount = mip_level_count;
+    subres_range.layerCount = layer_count;
+    return subres_range;
 }
 
 VkRenderPassCreateInfo make_info(const std::vector<VkAttachmentDescription> &attachments,

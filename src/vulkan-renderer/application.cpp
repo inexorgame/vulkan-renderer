@@ -427,11 +427,6 @@ Application::Application(int argc, char **argv) {
 
     bool enable_debug_marker_device_extension = true;
 
-    if (!enable_renderdoc_instance_layer) {
-        // Debug markers are only available if RenderDoc is enabled.
-        enable_debug_marker_device_extension = false;
-    }
-
     // Check if Vulkan debug markers should be disabled.
     // Those are only available if RenderDoc instance layer is enabled!
     const auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");

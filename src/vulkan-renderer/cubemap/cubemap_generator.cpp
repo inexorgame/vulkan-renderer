@@ -126,24 +126,13 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
 
         {
             wrapper::CommandPool cmd_pool(device);
-
             wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
-            cmd_buf2.begin_command_buffer();
 
-            VkImageMemoryBarrier barrier{};
-            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.image = m_offscreen_framebuffer.image();
-            barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-
-            // TODO: Use change_image_layout();
-            cmd_buf2.pipeline_barrier(barrier);
-
-            cmd_buf2.flush_command_buffer_and_wait();
-            cmd_buf2.free_command_buffer(cmd_pool.get());
+            cmd_buf2.begin_command_buffer()
+                .change_image_layout(m_offscreen_framebuffer.image(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+                .flush_command_buffer_and_wait("offscreen framebuffer image layout change")
+                .free_command_buffer(cmd_pool.get());
         }
 
         // wrapper::DescriptorBuilder builder(device);
@@ -286,38 +275,22 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
             glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         };
 
-        VkImageSubresourceRange subresource_range{};
-        subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subresource_range.baseMipLevel = 0;
-        subresource_range.baseArrayLayer = 0;
-        subresource_range.levelCount = miplevel_count;
-        subresource_range.layerCount = 6;
+        const auto subres_range = wrapper::make_info(miplevel_count, 6);
 
         {
             wrapper::CommandPool cmd_pool(device);
             wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
 
-            cmd_buf2.begin_command_buffer();
-            VkImageMemoryBarrier barrier{};
-            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.image = m_cubemap_texture->image();
-            barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.subresourceRange = subresource_range;
-
-            vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-            cmd_buf2.flush_command_buffer_and_wait();
+            cmd_buf2.begin_command_buffer()
+                .change_image_layout(m_cubemap_texture->image(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subres_range)
+                .flush_command_buffer_and_wait("cubemap texture image layout transition");
         }
 
         for (std::uint32_t mip_level = 0; mip_level < miplevel_count; mip_level++) {
             for (std::uint32_t face = 0; face < CUBE_FACE_COUNT; face++) {
 
                 wrapper::CommandPool cmd_pool(device);
-
                 wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
 
                 const auto mip_level_dim = static_cast<std::uint32_t>(dim * std::pow(0.5f, mip_level));
@@ -359,80 +332,39 @@ CubemapGenerator::CubemapGenerator(const wrapper::Device &device, const skybox::
                     draw_node(cmd_buf2, *node);
                 }
 
-                cmd_buf2.end_render_pass();
+                VkImageCopy copy_region{};
+                copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                copy_region.srcSubresource.baseArrayLayer = 0;
+                copy_region.srcSubresource.mipLevel = 0;
+                copy_region.srcSubresource.layerCount = 1;
+                copy_region.srcOffset = {0, 0, 0};
+                copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                copy_region.dstSubresource.baseArrayLayer = face;
+                copy_region.dstSubresource.mipLevel = mip_level;
+                copy_region.dstSubresource.layerCount = 1;
+                copy_region.dstOffset = {0, 0, 0};
+                copy_region.extent.width = static_cast<uint32_t>(mip_level_dim);
+                copy_region.extent.height = static_cast<uint32_t>(mip_level_dim);
+                copy_region.extent.depth = 1;
 
-                {
-                    VkImageMemoryBarrier barrier{};
-                    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                    barrier.image = m_offscreen_framebuffer.image();
-                    barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-                    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-                    barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-
-                    vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-                }
-
-                VkImageCopy copyRegion{};
-
-                copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                copyRegion.srcSubresource.baseArrayLayer = 0;
-                copyRegion.srcSubresource.mipLevel = 0;
-                copyRegion.srcSubresource.layerCount = 1;
-                copyRegion.srcOffset = {0, 0, 0};
-
-                copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                copyRegion.dstSubresource.baseArrayLayer = face;
-                copyRegion.dstSubresource.mipLevel = mip_level;
-                copyRegion.dstSubresource.layerCount = 1;
-                copyRegion.dstOffset = {0, 0, 0};
-
-                copyRegion.extent.width = static_cast<uint32_t>(mip_level_dim);
-                copyRegion.extent.height = static_cast<uint32_t>(mip_level_dim);
-                copyRegion.extent.depth = 1;
-
-                vkCmdCopyImage(cmd_buf2.get(), m_offscreen_framebuffer.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               m_cubemap_texture->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-                {
-                    VkImageMemoryBarrier barrier{};
-                    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                    barrier.image = m_offscreen_framebuffer.image();
-                    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-                    barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-                    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                    barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-
-                    vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-                }
-
-                cmd_buf2.flush_command_buffer_and_wait();
+                cmd_buf2.end_render_pass()
+                    .change_image_layout(m_offscreen_framebuffer.image(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+                    .copy_image(m_offscreen_framebuffer.image(), m_cubemap_texture->image(), copy_region)
+                    .change_image_layout(m_offscreen_framebuffer.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+                    .flush_command_buffer_and_wait("copy offscreen framebuffer into cubemap");
             }
         }
 
         {
             wrapper::CommandPool cmd_pool(device);
-
             wrapper::CommandBuffer cmd_buf2(device, cmd_pool.get(), "test");
-            cmd_buf2.begin_command_buffer();
 
-            VkImageMemoryBarrier barrier{};
-            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.image = m_cubemap_texture->image();
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.subresourceRange = subresource_range;
-
-            vkCmdPipelineBarrier(cmd_buf2.get(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-            cmd_buf2.flush_command_buffer_and_wait();
+            cmd_buf2.begin_command_buffer()
+                .change_image_layout(m_cubemap_texture->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subres_range)
+                .flush_command_buffer_and_wait("cubemap texture image layout transition");
         }
 
         switch (target) {

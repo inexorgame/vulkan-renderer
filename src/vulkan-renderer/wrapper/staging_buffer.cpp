@@ -20,8 +20,8 @@ StagingBuffer::StagingBuffer(const Device &device, VkDeviceSize buffer_size, con
 StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept
     : GPUMemoryBuffer(std::move(other)), m_device(other.m_device) {}
 
-void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer) {
-    OnceCommandBuffer upload_command(m_device, [&](const CommandBuffer &cmd_buf) {
+void StagingBuffer::upload_data_to_gpu(const GPUMemoryBuffer &target_buffer, std::string name) {
+    OnceCommandBuffer upload_command(m_device, name, [&](const CommandBuffer &cmd_buf) {
         cmd_buf.copy_buffer(m_buffer, target_buffer.buffer(), m_buffer_size);
     });
 }

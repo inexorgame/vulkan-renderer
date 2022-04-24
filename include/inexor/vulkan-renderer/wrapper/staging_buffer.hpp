@@ -7,6 +7,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for staging buffers.
@@ -37,11 +38,11 @@ public:
     ~StagingBuffer() override = default;
 
     StagingBuffer &operator=(const StagingBuffer &) = delete;
-    StagingBuffer &operator=(StagingBuffer &&) = delete;
+    StagingBuffer &operator=(StagingBuffer &&) noexcept = default;
 
     /// @brief Call vkCmdCopyBuffer inside of the once command buffer.
     /// @param tarbuffer The memory buffer to copy.
-    void upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer);
+    void upload_data_to_gpu(const GPUMemoryBuffer &tarbuffer, std::string name);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

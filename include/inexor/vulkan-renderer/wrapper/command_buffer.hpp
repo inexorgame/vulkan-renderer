@@ -205,7 +205,7 @@ public:
     /// Call vkEndCommandBuffer
     const CommandBuffer &end_command_buffer() const;
 
-    const CommandBuffer &flush_command_buffer_and_wait() const;
+    const CommandBuffer &flush_command_buffer_and_wait(const std::string &name) const;
 
     const CommandBuffer &free_command_buffer(VkCommandPool cmd_pool) const;
 

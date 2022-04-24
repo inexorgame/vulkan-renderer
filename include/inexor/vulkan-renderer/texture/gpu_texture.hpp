@@ -38,7 +38,7 @@ private:
 
     [[nodiscard]] VkSamplerCreateInfo fill_sampler_ci(const wrapper::Device &device);
 
-    void upload_texture_data(const void *texture_data, std::size_t texture_size);
+    void upload_texture_data(const void *texture_data, std::size_t texture_size, std::string name);
 
     void generate_mipmaps();
 

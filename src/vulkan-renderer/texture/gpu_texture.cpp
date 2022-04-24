@@ -78,7 +78,7 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const void *texture_data, 
                        const VkSamplerCreateInfo sampler_ci, const std::string name)
     : GpuTexture(device, image_ci, image_view_ci, sampler_ci, name) {
 
-    upload_texture_data(texture_data, texture_size);
+    upload_texture_data(texture_data, texture_size, name);
     generate_mipmaps();
 }
 
@@ -108,16 +108,16 @@ GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_text
 
 GpuTexture::GpuTexture(const wrapper::Device &device) : GpuTexture(device, CpuTexture()) {}
 
-void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t texture_size) {
+void GpuTexture::upload_texture_data(const void *texture_data, const std::size_t texture_size, std::string name) {
     assert(texture_data);
     assert(texture_size > 0);
 
     wrapper::StagingBuffer texture_staging_buffer(m_device, m_name, texture_size, texture_data, texture_size);
 
-    wrapper::OnceCommandBuffer copy_cmd(m_device, [&](const wrapper::CommandBuffer &cmd_buf) {
+    wrapper::OnceCommandBuffer copy_cmd(m_device, name, [&](const wrapper::CommandBuffer &cmd_buf) {
         VkBufferImageCopy copy_region{};
         copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        copy_region.imageSubresource.mipLevel = 1;
+        copy_region.imageSubresource.mipLevel = 0;
         copy_region.imageSubresource.baseArrayLayer = 0;
         copy_region.imageSubresource.layerCount = 1;
         copy_region.imageExtent = m_image_ci.extent;
@@ -170,7 +170,7 @@ void GpuTexture::generate_mipmaps() {
     cmd_buf
         .change_image_layout(image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                              m_image_ci.mipLevels)
-        .flush_command_buffer_and_wait();
+        .flush_command_buffer_and_wait("gpu texture mipmap generation");
 
     descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }

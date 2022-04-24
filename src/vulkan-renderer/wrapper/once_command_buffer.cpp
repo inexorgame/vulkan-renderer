@@ -12,13 +12,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-OnceCommandBuffer::OnceCommandBuffer(const Device &device,
-                                     std::function<void(const CommandBuffer &cmd_buf)> command_lambda, std::string name)
-    : OnceCommandBuffer(device, device.graphics_queue(), device.graphics_queue_family_index(), command_lambda,
-                        std::move(name)) {}
+OnceCommandBuffer::OnceCommandBuffer(const Device &device, std::string name,
+                                     std::function<void(const CommandBuffer &cmd_buf)> command_lambda)
+    : OnceCommandBuffer(device, device.graphics_queue(), device.graphics_queue_family_index(), std::move(name),
+                        command_lambda) {}
 
 OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, const std::uint32_t queue_family_index,
-                                     std::function<void(const CommandBuffer &cmd_buf)> command_lambda, std::string name)
+                                     std::string name, std::function<void(const CommandBuffer &cmd_buf)> command_lambda)
     : m_command_pool(device, device.graphics_queue_family_index()), CommandBuffer(device, std::move(name)) {
 
     CommandBuffer::create_command_buffer(m_command_pool.get());
@@ -26,7 +26,7 @@ OnceCommandBuffer::OnceCommandBuffer(const Device &device, const VkQueue queue, 
 
     command_lambda(*this);
 
-    CommandBuffer::flush_command_buffer_and_wait();
+    CommandBuffer::flush_command_buffer_and_wait(m_name);
 }
 
 OnceCommandBuffer::OnceCommandBuffer(OnceCommandBuffer &&other) noexcept

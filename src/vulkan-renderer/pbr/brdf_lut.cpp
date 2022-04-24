@@ -168,16 +168,17 @@ BRDFLUTGenerator::BRDFLUTGenerator(wrapper::Device &device) : m_device(device) {
     renderpass_bi.pClearValues = clear_values;
     renderpass_bi.framebuffer = m_framebuffer->framebuffer();
 
-    wrapper::OnceCommandBuffer single_command(device, [&](const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.begin_render_pass(renderpass_bi)
-            .set_viewport(image_extent.width, image_extent.height)
-            .set_scissor(image_extent.width, image_extent.height)
-            .bind_graphics_pipeline(pipeline)
-            .draw(3, 0, 1, 0)
-            .end_render_pass()
-            .change_image_layout(m_brdf_texture->image(), VK_IMAGE_LAYOUT_UNDEFINED,
-                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    });
+    wrapper::OnceCommandBuffer single_command(
+        device, "render BRDF lookup table", [&](const wrapper::CommandBuffer &cmd_buf) {
+            cmd_buf.begin_render_pass(renderpass_bi)
+                .set_viewport(image_extent.width, image_extent.height)
+                .set_scissor(image_extent.width, image_extent.height)
+                .bind_graphics_pipeline(pipeline)
+                .draw(3, 0, 1, 0)
+                .end_render_pass()
+                .change_image_layout(m_brdf_texture->image(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        });
 
     spdlog::trace("Generating BRDF look-up table finished.");
 
