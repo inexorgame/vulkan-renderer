@@ -81,7 +81,7 @@ jobs:
           tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure CMake
         shell: bash
@@ -155,7 +155,7 @@ jobs:
           7z x vulkansdk.exe -o"${{ env.inexor_vulkan_sdk }}"
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure CMake
         shell: pwsh

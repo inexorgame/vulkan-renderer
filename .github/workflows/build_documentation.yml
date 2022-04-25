@@ -27,7 +27,7 @@ jobs:
           apt install -y cmake
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure CMake
         working-directory: ${{ github.workspace }}/documentation
