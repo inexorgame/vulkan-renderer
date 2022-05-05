@@ -204,7 +204,7 @@ public:
 
     [[nodiscard]] auto get_index_buffer_address() const {
         if (!m_index_buffer) {
-            throw std::runtime_error("Error: No index buffer for mesh " + m_name + "!");
+            throw std::runtime_error("Error: No index buffer for mesh " + m_name);
         }
 
         return m_index_buffer.value().allocation_info().pMappedData;
@@ -217,7 +217,7 @@ public:
 
     void update_indices(const std::vector<IndexType> &indices) {
         if (!m_index_buffer) {
-            throw std::runtime_error("Error: No index buffer for mesh " + m_name + "!");
+            throw std::runtime_error("Error: No index buffer for mesh " + m_name);
         }
 
         std::memcpy(m_index_buffer.value().allocation_info().pMappedData, indices.data(),
