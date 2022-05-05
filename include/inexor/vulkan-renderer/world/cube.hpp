@@ -86,7 +86,7 @@ private:
     void remove_children();
 
     /// Get the root to this cube.
-    [[nodiscard]] std::shared_ptr<Cube> root() noexcept;
+    [[nodiscard]] std::shared_ptr<Cube> root();
     /// Get the vertices of this cube. Use only on geometry cubes.
     [[nodiscard]] std::array<glm::vec3, 8> vertices() const noexcept;
 
