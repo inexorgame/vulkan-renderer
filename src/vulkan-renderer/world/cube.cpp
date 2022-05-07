@@ -23,7 +23,7 @@ void Cube::remove_children() {
     }
 }
 
-std::shared_ptr<Cube> Cube::root() noexcept {
+std::shared_ptr<Cube> Cube::root() {
     std::shared_ptr<Cube> new_parent = m_parent.lock();
     if (!new_parent) {
         return shared_from_this();

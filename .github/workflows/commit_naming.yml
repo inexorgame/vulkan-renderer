@@ -20,19 +20,20 @@ jobs:
 
       - name: Checkout (Pull Request)
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Shallow fetch (Pull Request)
         if: ${{ github.event_name == 'pull_request' }}
         run: |
+          git config --global --add safe.directory $(pwd)
           git fetch --progress --shallow-exclude ${{ github.base_ref }} origin +${{ github.sha }}:refs/remotes/origin/${{ github.head_ref }}
           git log --pretty=oneline
 
       - name: Checkout (Push)
         if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install gitcc
         run: |
@@ -42,9 +43,11 @@ jobs:
       - name: Check commits (Pull Request)
         if: ${{ github.event_name == 'pull_request' }}
         run: |
+          git config --global --add safe.directory $(pwd)
           gitcc history --verbose ./
 
       - name: Check commit (Push)
         if: ${{ github.event_name == 'push' }}
         run: |
+          git config --global --add safe.directory $(pwd)
           gitcc commit ./

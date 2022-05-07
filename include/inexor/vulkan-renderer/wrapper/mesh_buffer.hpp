@@ -38,7 +38,7 @@ class Device;
 template <typename VertexType, typename IndexType = std::uint32_t>
 class MeshBuffer {
     const Device &m_device;
-    std::string m_name;
+    const std::string &m_name;
 
     GPUMemoryBuffer m_vertex_buffer;
 
@@ -64,7 +64,7 @@ public:
           m_index_buffer(std::make_optional<GPUMemoryBuffer>(
               device, name, sizeof(IndexType) * index_count,
               VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY)),
-          m_device(device) {
+          m_device(device), m_name(name) {
         assert(device.device());
         assert(device.allocator());
         assert(!name.empty());
@@ -89,8 +89,7 @@ public:
         : m_vertex_buffer(device, name, sizeof(VertexType) * vertex_count,
                           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                           VMA_MEMORY_USAGE_CPU_ONLY),
-          m_index_buffer(std::nullopt), m_number_of_vertices(vertex_count), m_device(device) {
-
+          m_index_buffer(std::nullopt), m_number_of_vertices(vertex_count), m_device(device), m_name(name) {
         assert(device.device());
         assert(device.allocator());
         assert(!name.empty());
@@ -167,11 +166,12 @@ public:
 
     MeshBuffer(const MeshBuffer &) = delete;
 
-    MeshBuffer(MeshBuffer &&other) noexcept
-        : m_name(std::move(other.m_name)), m_vertex_buffer(std::move(other.m_vertex_buffer)),
-          m_index_buffer(std::exchange(other.m_index_buffer, std::nullopt)),
-          m_number_of_vertices(other.m_number_of_vertices), m_number_of_indices(other.m_number_of_indices),
-          m_device(other.m_device) {}
+    MeshBuffer(MeshBuffer &&other) noexcept : m_device(other.m_device), m_name(other.m_name) {
+        m_vertex_buffer = std::move(other.m_vertex_buffer);
+        m_index_buffer = std::exchange(other.m_index_buffer, std::nullopt);
+        m_number_of_vertices = other.m_number_of_vertices;
+        m_number_of_indices = other.m_number_of_indices;
+    }
 
     ~MeshBuffer() = default;
 
@@ -204,7 +204,7 @@ public:
 
     [[nodiscard]] auto get_index_buffer_address() const {
         if (!m_index_buffer) {
-            throw std::runtime_error(std::string("Error: No index buffer for mesh " + m_name + "!"));
+            throw std::runtime_error("Error: No index buffer for mesh available");
         }
 
         return m_index_buffer.value().allocation_info().pMappedData;
@@ -217,7 +217,7 @@ public:
 
     void update_indices(const std::vector<IndexType> &indices) {
         if (!m_index_buffer) {
-            throw std::runtime_error(std::string("Error: No index buffer for mesh " + m_name + "!"));
+            throw std::runtime_error("Error: No index buffer for mesh available");
         }
 
         std::memcpy(m_index_buffer.value().allocation_info().pMappedData, indices.data(),
