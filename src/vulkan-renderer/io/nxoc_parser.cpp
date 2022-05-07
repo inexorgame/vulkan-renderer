@@ -76,7 +76,7 @@ ByteStream NXOCParser::serialize(const std::shared_ptr<const world::Cube> cube, 
 
 std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
     ByteStreamReader reader(stream);
-    if (reader.read<std::string>(static_cast<std::size_t>(13)) != "Inexor Octree") {
+    if (reader.read<std::string>(13ull) != "Inexor Octree") {
         throw IoException("Wrong identifier.");
     }
     const auto version = reader.read<std::uint32_t>();
