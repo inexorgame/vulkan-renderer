@@ -65,13 +65,13 @@ void Application::mouse_scroll_callback(GLFWwindow * /*window*/, double /*x_offs
 }
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
-    spdlog::debug("Loading TOML configuration file: '{}'", file_name);
+    spdlog::trace("Loading TOML configuration file: {}", file_name);
 
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
         // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
         throw std::runtime_error("Could not find configuration file: " + file_name +
-                                 "! You must set the working directory properly in your IDE.");
+                                 "! You must set the working directory properly in your IDE");
     }
 
     toml_file.close();
@@ -81,7 +81,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 
     // Search for the title of the configuration file and print it to debug output.
     const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
-    spdlog::debug("Title: '{}'", configuration_title);
+    spdlog::trace("Title: {}", configuration_title);
 
     using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
     const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
@@ -99,39 +99,39 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
     m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
     m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
-    spdlog::debug("Window: '{}', {} x {}", m_window_title, m_window_width, m_window_height);
+    spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
 
     m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
 
-    spdlog::debug("Textures:");
+    spdlog::trace("Textures:");
 
     for (const auto &texture_file : m_texture_files) {
-        spdlog::debug("{}", texture_file);
+        spdlog::trace("   - {}", texture_file);
     }
 
     m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
 
-    spdlog::debug("glTF 2.0 models:");
+    spdlog::trace("glTF 2.0 models:");
 
     for (const auto &gltf_model_file : m_gltf_model_files) {
-        spdlog::debug("{}", gltf_model_file);
+        spdlog::trace("   - {}", gltf_model_file);
     }
 
     m_vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
 
-    spdlog::debug("Vertex shaders:");
+    spdlog::trace("Vertex shaders:");
 
     for (const auto &vertex_shader_file : m_vertex_shader_files) {
-        spdlog::debug("{}", vertex_shader_file);
+        spdlog::trace("   - {}", vertex_shader_file);
     }
 
     m_fragment_shader_files =
         toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
 
-    spdlog::debug("Fragment shaders:");
+    spdlog::trace("Fragment shaders:");
 
     for (const auto &fragment_shader_file : m_fragment_shader_files) {
-        spdlog::debug("{}", fragment_shader_file);
+        spdlog::trace("   - {}", fragment_shader_file);
     }
 
     // TODO: Load more info from TOML file.
@@ -145,7 +145,11 @@ void Application::load_textures() {
     // Insert the new texture into the list of textures.
     std::string texture_name = "unnamed texture";
 
+    spdlog::trace("Loading texture files:");
+
     for (const auto &texture_file : m_texture_files) {
+        spdlog::trace("   - {}", texture_file);
+
         wrapper::CpuTexture cpu_texture(texture_file, texture_name);
         m_textures.emplace_back(*m_device, cpu_texture);
     }
@@ -154,7 +158,7 @@ void Application::load_textures() {
 void Application::load_shaders() {
     assert(m_device->device());
 
-    spdlog::debug("Loading vertex shaders.");
+    spdlog::trace("Loading vertex shaders:");
 
     if (m_vertex_shader_files.empty()) {
         spdlog::error("No vertex shaders to load!");
@@ -162,13 +166,13 @@ void Application::load_shaders() {
 
     // Loop through the list of vertex shaders and initialise all of them.
     for (const auto &vertex_shader_file : m_vertex_shader_files) {
-        spdlog::debug("Loading vertex shader file {}.", vertex_shader_file);
+        spdlog::trace("   - {}", vertex_shader_file);
 
         // Insert the new shader into the list of shaders.
         m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
     }
 
-    spdlog::debug("Loading fragment shaders.");
+    spdlog::trace("Loading fragment shaders:");
 
     if (m_fragment_shader_files.empty()) {
         spdlog::error("No fragment shaders to load!");
@@ -176,18 +180,18 @@ void Application::load_shaders() {
 
     // Loop through the list of fragment shaders and initialise all of them.
     for (const auto &fragment_shader_file : m_fragment_shader_files) {
-        spdlog::debug("Loading fragment shader file {}.", fragment_shader_file);
+        spdlog::trace("   - {}", fragment_shader_file);
 
         // Insert the new shader into the list of shaders.
         m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
                                fragment_shader_file);
     }
 
-    spdlog::debug("Loading shaders finished.");
+    spdlog::trace("Loading shaders finished");
 }
 
 void Application::load_octree_geometry(bool initialize) {
-    spdlog::debug("Creating octree geometry.");
+    spdlog::trace("Creating octree geometry");
 
     // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
     m_worlds.clear();
@@ -224,28 +228,26 @@ void Application::check_application_specific_features() {
     if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
         spdlog::warn("The selected graphics card does not support anisotropic filtering!");
     } else {
-        spdlog::debug("The selected graphics card does support anisotropic filtering.");
+        spdlog::trace("The selected graphics card does support anisotropic filtering");
     }
 
     // TODO: Add more checks if necessary.
 }
 
 void Application::setup_window_and_input_callbacks() {
-    spdlog::debug("Storing GLFW window user pointer.");
-
     m_window->set_user_ptr(this);
 
-    spdlog::debug("Setting up framebuffer resize callback.");
+    spdlog::trace("Setting up window callback:");
 
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        spdlog::debug("Frame buffer resize callback called. window width: {}, height: {}", width, height);
+        spdlog::trace("Frame buffer resize callback called. window width: {}, height: {}", width, height);
         app->m_window_resized = true;
     };
 
     m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
 
-    spdlog::debug("Setting up keyboard button callback.");
+    spdlog::trace("   - keyboard button callback");
 
     auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -254,7 +256,7 @@ void Application::setup_window_and_input_callbacks() {
 
     m_window->set_keyboard_button_callback(lambda_key_callback);
 
-    spdlog::debug("Setting up cursor position callback.");
+    spdlog::trace("   - cursor position callback");
 
     auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -263,7 +265,7 @@ void Application::setup_window_and_input_callbacks() {
 
     m_window->set_cursor_position_callback(lambda_cursor_position_callback);
 
-    spdlog::debug("Setting up mouse button callback.");
+    spdlog::trace("   - mouse button callback");
 
     auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -272,7 +274,7 @@ void Application::setup_window_and_input_callbacks() {
 
     m_window->set_mouse_button_callback(lambda_mouse_button_callback);
 
-    spdlog::debug("Setting up mouse wheel scroll callback.");
+    spdlog::trace("   - mouse wheel scroll callback");
 
     auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -285,7 +287,7 @@ void Application::setup_window_and_input_callbacks() {
 void Application::setup_vulkan_debug_callback() {
     // Check if validation is enabled check for availability of VK_EXT_debug_utils.
     if (m_enable_validation_layers) {
-        spdlog::debug("Khronos validation layer is enabled.");
+        spdlog::trace("Khronos validation layer is enabled");
 
         if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
             auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
@@ -316,7 +318,7 @@ void Application::setup_vulkan_debug_callback() {
                     if (user_data != nullptr) {
                         // This feature stops command lines from overflowing with messages in case many validation
                         // layer messages are reported in a short amount of time.
-                        spdlog::critical("Command line argument --stop-on-validation-message is enabled.");
+                        spdlog::critical("Command line argument --stop-on-validation-message is enabled");
                         spdlog::critical("Application will cause a break point now!");
 
                         // Wait for spdlog to shut down before aborting.
@@ -336,28 +338,27 @@ void Application::setup_vulkan_debug_callback() {
                     result != VK_SUCCESS) {
                     throw VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
                 }
-                spdlog::debug("Creating Vulkan debug callback.");
+                spdlog::trace("Creating Vulkan debug callback");
                 m_debug_report_callback_initialised = true;
             } else {
-                spdlog::error("vkCreateDebugReportCallbackEXT is a null-pointer! Function not available.");
+                spdlog::error("vkCreateDebugReportCallbackEXT is a null-pointer! Function not available");
             }
         } else {
             spdlog::warn("Khronos validation layer is not available!");
         }
     } else {
-        spdlog::warn("Khronos validation layer is DISABLED.");
+        spdlog::warn("Khronos validation layer is DISABLED");
     }
 }
 
 Application::Application(int argc, char **argv) {
-    spdlog::debug("Initialising vulkan-renderer.");
-    spdlog::debug("Initialising thread-pool with {} threads.", std::thread::hardware_concurrency());
+    spdlog::trace("Initialising vulkan-renderer");
 
     tools::CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);
 
-    spdlog::debug("application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
-    spdlog::debug("engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
+    spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
+    spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
 
     // Load the configuration from the TOML file.
     load_toml_configuration_file("configuration/renderer.toml");
@@ -367,11 +368,11 @@ Application::Application(int argc, char **argv) {
     auto enable_renderdoc = cla_parser.arg<bool>("--renderdoc");
     if (enable_renderdoc) {
 #ifdef NDEBUG
-        spdlog::warn("You can't use -renderdoc command line argument in release mode. You have to download the code "
-                     "and compile it yourself in debug mode.");
+        spdlog::warn("You can't use --renderdoc command line argument in release mode. You have to download the code "
+                     "and compile it yourself in debug mode");
 #else
         if (*enable_renderdoc) {
-            spdlog::debug("--renderdoc specified, enabling renderdoc instance layer.");
+            spdlog::trace("--renderdoc specified, enabling renderdoc instance layer");
             enable_renderdoc_instance_layer = true;
         }
 #endif
@@ -381,11 +382,11 @@ Application::Application(int argc, char **argv) {
     // disabled. For debug builds, this is not advisable! Always use validation layers during development!
     const auto disable_validation = cla_parser.arg<bool>("--no-validation");
     if (disable_validation.value_or(false)) {
-        spdlog::warn("--no-validation specified, disabling validation layers.");
+        spdlog::warn("--no-validation specified, disabling validation layers");
         m_enable_validation_layers = false;
     }
 
-    spdlog::debug("Creating Vulkan instance.");
+    spdlog::trace("Creating Vulkan instance");
 
     m_window =
         std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
@@ -406,19 +407,19 @@ Application::Application(int argc, char **argv) {
 #ifndef NDEBUG
     if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
         spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
-                     "validation layer message.");
+                     "validation layer message");
         m_stop_on_validation_message = true;
     }
 
     setup_vulkan_debug_callback();
 #endif
 
-    spdlog::debug("Creating window surface.");
+    spdlog::trace("Creating window surface");
 
     // The user can specify with "--gpu <number>" which graphics card to prefer.
     auto preferred_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
     if (preferred_graphics_card) {
-        spdlog::debug("Preferential graphics card index {} specified.", *preferred_graphics_card);
+        spdlog::trace("Preferential graphics card index {} specified", *preferred_graphics_card);
     }
 
     bool display_graphics_card_info = true;
@@ -427,7 +428,7 @@ Application::Application(int argc, char **argv) {
     // displayed about all the graphics cards which are available on the system.
     const auto hide_gpu_stats = cla_parser.arg<bool>("--no-stats");
     if (hide_gpu_stats.value_or(false)) {
-        spdlog::debug("--no-stats specified, no extended information about graphics cards will be shown.");
+        spdlog::trace("--no-stats specified, no extended information about graphics cards will be shown");
         display_graphics_card_info = false;
     }
 
@@ -435,10 +436,10 @@ Application::Application(int argc, char **argv) {
     // for the next vertical blanking period to update the current image.
     const auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
     if (enable_vertical_synchronisation.value_or(false)) {
-        spdlog::debug("V-sync enabled!");
+        spdlog::trace("V-sync enabled!");
         m_vsync_enabled = true;
     } else {
-        spdlog::debug("V-sync disabled!");
+        spdlog::trace("V-sync disabled!");
         m_vsync_enabled = false;
     }
 
@@ -451,8 +452,8 @@ Application::Application(int argc, char **argv) {
     // Ignore distinct data transfer queue
     const auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
     if (forbid_distinct_data_transfer_queue.value_or(false)) {
-        spdlog::warn("Command line argument --no-separate-data-queue specified.");
-        spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU.");
+        spdlog::warn("Command line argument --no-separate-data-queue specified");
+        spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU");
         spdlog::warn("Performance loss might be a result of this!");
         use_distinct_data_transfer_queue = false;
     }
@@ -499,9 +500,6 @@ Application::Application(int argc, char **argv) {
 
     load_octree_geometry(true);
     generate_octree_indices();
-
-    spdlog::debug("Vulkan initialisation finished.");
-    spdlog::debug("Showing window.");
 
     m_window->show();
     recreate_swapchain();
@@ -598,7 +596,7 @@ void Application::check_octree_collisions() {
 }
 
 void Application::run() {
-    spdlog::debug("Running Application.");
+    spdlog::trace("Running Application");
 
     while (!m_window->should_close()) {
         m_window->poll();

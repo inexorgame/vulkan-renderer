@@ -20,7 +20,7 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
 
-    spdlog::debug("Creating window");
+    spdlog::trace("Creating window");
 
     GLFWmonitor *monitor = nullptr;
     if (m_mode != Mode::WINDOWED) {

@@ -105,16 +105,16 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     // Get the information about that graphics card's properties.
     vkGetPhysicalDeviceProperties(m_graphics_card, &graphics_card_properties);
 
-    spdlog::trace("Creating device using graphics card: {}.", graphics_card_properties.deviceName);
+    spdlog::trace("Creating device using graphics card: {}", graphics_card_properties.deviceName);
 
     m_gpu_name = graphics_card_properties.deviceName;
 
-    spdlog::trace("Creating Vulkan device queues.");
+    spdlog::trace("Creating Vulkan device queues");
 
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 
     if (prefer_distinct_transfer_queue) {
-        spdlog::trace("The application will try to use a distinct data transfer queue if it is available.");
+        spdlog::trace("The application will try to use a distinct data transfer queue if it is available");
     } else {
         spdlog::warn("The application is forced not to use a distinct data transfer queue!");
     }
@@ -124,7 +124,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation) {
-        spdlog::trace("One queue for both graphics and presentation will be used.");
+        spdlog::trace("One queue for both graphics and presentation will be used");
 
         m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
         m_present_queue_family_index = m_graphics_queue_family_index;
@@ -137,8 +137,8 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
         queues_to_create.push_back(device_queue_ci);
     } else {
-        spdlog::trace("No queue found which supports both graphics and presentation.");
-        spdlog::trace("The application will try to use 2 separate queues.");
+        spdlog::trace("No queue found which supports both graphics and presentation");
+        spdlog::trace("The application will try to use 2 separate queues");
 
         // We have to use 2 different queue families.
         // One for graphics and another one for presentation.
@@ -160,9 +160,6 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         }
 
         m_present_queue_family_index = *queue_candidate;
-
-        spdlog::trace("Graphics queue family index: {}.", m_graphics_queue_family_index);
-        spdlog::trace("Presentation queue family index: {}.", m_present_queue_family_index);
 
         // Set up one queue for graphics.
         auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
@@ -190,7 +187,6 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_transfer_queue_family_index = *queue_candidate;
 
         spdlog::trace("A separate queue will be used for data transfer.");
-        spdlog::trace("Data transfer queue family index: {}.", m_transfer_queue_family_index);
 
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
@@ -208,8 +204,8 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 
     if (!use_distinct_data_transfer_queue) {
-        spdlog::warn("The application is forces to avoid distinct data transfer queues.");
-        spdlog::warn("Because of this, the graphics queue will be used for data transfer.");
+        spdlog::warn("The application is forced to avoid distinct data transfer queues");
+        spdlog::warn("Because of this, the graphics queue will be used for data transfer");
 
         m_transfer_queue_family_index = m_graphics_queue_family_index;
     }
@@ -232,7 +228,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     for (const auto &device_extension_name : device_extensions_wishlist) {
         if (is_extension_supported(m_graphics_card, device_extension_name)) {
-            spdlog::debug("Device extension '{}' is available on this system.", device_extension_name);
+            spdlog::trace("Device extension {} is available on this system", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
         } else {
             throw std::runtime_error("Device extension " + std::string(device_extension_name) +
@@ -255,7 +251,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     device_ci.ppEnabledExtensionNames = enabled_device_extensions.data();
     device_ci.pEnabledFeatures = &used_features;
 
-    spdlog::trace("Creating physical device.");
+    spdlog::trace("Creating physical device");
 
     if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
@@ -263,7 +259,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
 #ifndef NDEBUG
     if (m_enable_vulkan_debug_markers) {
-        spdlog::trace("Initializing Vulkan debug markers.");
+        spdlog::trace("Initializing Vulkan debug markers");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
         m_vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>( // NOLINT
@@ -292,9 +288,10 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 #endif
 
-    spdlog::trace("Graphics queue family index: {}.", m_graphics_queue_family_index);
-    spdlog::trace("Presentation queue family index: {}.", m_present_queue_family_index);
-    spdlog::trace("Data transfer queue family index: {}.", m_transfer_queue_family_index);
+    spdlog::trace("Queue family indices:");
+    spdlog::trace("   - Graphics: {}", m_graphics_queue_family_index);
+    spdlog::trace("   - Present: {}", m_present_queue_family_index);
+    spdlog::trace("   - Transfer: {}", m_transfer_queue_family_index);
 
     // Setup the queues for presentation and graphics.
     // Since we only have one queue per queue family, we acquire index 0.
@@ -307,12 +304,12 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
     }
 
-    spdlog::trace("Creating VMA allocator.");
+    spdlog::trace("Creating VMA allocator");
 
     // Make sure to set the root directory of this repository as working directory in the debugger!
     // Otherwise, VMA won't be able to open this allocation replay file for writing.
     const std::string vma_replay_file = "vma-replays/vma_replay.csv";
-    spdlog::trace("Opening VMA memory recording file for writing.");
+    spdlog::trace("Opening VMA memory recording file for writing");
 
     std::ofstream replay_file_test(vma_replay_file, std::ios::out);
 
@@ -322,7 +319,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         throw std::runtime_error("Could not open VMA replay file " + vma_replay_file + " !");
     }
 
-    spdlog::trace("VMA memory recording file opened successfully.");
+    spdlog::trace("VMA memory recording file opened successfully");
 
     replay_file_test.close();
 
@@ -348,7 +345,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     vma_allocator_ci.pRecordSettings = &vma_record_settings;
 #endif
 
-    spdlog::trace("Creating Vulkan memory allocator instance.");
+    spdlog::trace("Creating Vulkan memory allocator instance");
 
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);

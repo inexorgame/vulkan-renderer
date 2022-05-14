@@ -399,20 +399,25 @@ void RenderGraph::compile(const RenderResource *target) {
         dfs(stage);
     }
 
-    m_log->debug("Final stage order:");
+    m_log->trace("Final stage order:");
     for (auto *stage : m_stage_stack) {
-        m_log->debug("  - {}", stage->m_name);
+        m_log->trace("  - {}", stage->m_name);
     }
 
     // Create physical resources. For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage
     // respectively. Every physical resource also has a VmaAllocation.
     // TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources).
+    m_log->trace("Allocating physical resource for buffers:");
+
     for (auto &buffer_resource : m_buffer_resources) {
-        m_log->trace("Allocating physical resource for buffer '{}'", buffer_resource->m_name);
+        m_log->trace("   - {}", buffer_resource->m_name);
         buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device.allocator(), m_device.device());
     }
+
+    m_log->trace("Allocating physical resource for texture:");
+
     for (auto &texture_resource : m_texture_resources) {
-        m_log->trace("Allocating physical resource for texture '{}'", texture_resource->m_name);
+        m_log->trace("   - {}", texture_resource->m_name);
         // Back buffer gets special handling.
         if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
             // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
@@ -481,12 +486,14 @@ void RenderGraph::compile(const RenderResource *target) {
         }
     }
 
+    m_log->trace("Allocating command buffers for stage:");
+
     // Allocate command buffers and finished semaphore.
     for (const auto *stage : m_stage_stack) {
         auto &physical = *stage->m_physical;
         physical.m_finished_semaphore =
             std::make_unique<wrapper::Semaphore>(m_device, "Finished semaphore for stage " + stage->m_name);
-        m_log->trace("Allocating command buffers for stage '{}'", stage->m_name);
+        m_log->trace("   - {}", stage->m_name);
         for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
             physical.m_command_buffers.emplace_back(m_device, m_command_pool,
                                                     "Command buffer for stage " + stage->m_name);

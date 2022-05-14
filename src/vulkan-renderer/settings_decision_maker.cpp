@@ -13,7 +13,7 @@ std::uint32_t VulkanSettingsDecisionMaker::swapchain_image_count(const VkPhysica
     assert(graphics_card);
     assert(surface);
 
-    spdlog::debug("Deciding automatically how many images in swapchain to use.");
+    spdlog::trace("Deciding automatically how many images in swapchain to use");
 
     VkSurfaceCapabilitiesKHR surface_capabilities{};
 
@@ -42,7 +42,7 @@ VulkanSettingsDecisionMaker::swapchain_surface_color_format(const VkPhysicalDevi
     assert(graphics_card);
     assert(surface);
 
-    spdlog::debug("Deciding automatically which surface color format in swapchain to use.");
+    spdlog::trace("Deciding automatically which surface color format in swapchain to use");
 
     std::uint32_t number_of_available_surface_formats = 0;
 
@@ -119,7 +119,7 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     // Get the information about the graphics card's features.
     vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
 
-    spdlog::debug("Checking suitability of graphics card: {}.", graphics_card_properties.deviceName);
+    spdlog::trace("Checking suitability of graphics card: {}", graphics_card_properties.deviceName);
 
     // Step 1: Check if swapchain is supported.
     // In theory we could have used the code from VulkanAvailabilityChecks, but I didn't want
@@ -159,7 +159,7 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     }
 
     if (!swapchain_is_supported) {
-        spdlog::debug("This device is not suitable because it does not support swap chain!.");
+        spdlog::trace("This device is not suitable because it does not support swap chain!");
         return false;
     }
 
@@ -175,7 +175,7 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     }
 
     if (presentation_available == 0) {
-        spdlog::debug("This device is not suitable because it does not support presentation!");
+        spdlog::trace("This device is not suitable because it does not support presentation!");
         return false;
     }
 
@@ -256,7 +256,7 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
     // The preferred graphics card index which could have been specified by the user must be either this one or an
     // invalid index!
     if (gpu_count == 1) {
-        spdlog::debug("Because there is only 1 graphics card available, we don't have a choice and must use that one");
+        spdlog::trace("Because there is only 1 graphics card available, we don't have a choice and must use that one");
 
         // Did the user specify a preferred GPU by command line argument?
         // If so, let's take a look at what he wanted us to use.
@@ -264,7 +264,7 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
         if (preferred_gpu_index) {
             // Since we only have one graphics card to choose from, index 0 is our only option.
             if (0 != *preferred_gpu_index) {
-                spdlog::debug("Ignoring command line argument -gpu {} because there is only one GPU to chose from",
+                spdlog::trace("Ignoring command line argument -gpu {} because there is only one GPU to chose from",
                               *preferred_gpu_index);
             }
             if (!(*preferred_gpu_index >= 0 && *preferred_gpu_index < available_gpus.size())) {
@@ -273,8 +273,8 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
         }
 
         if (is_graphics_card_suitable(available_gpus[0], surface)) {
-            spdlog::debug("The only graphics card available is suitable for the application!");
-            spdlog::debug("Score: {}", rate_graphics_card(available_gpus[0]));
+            spdlog::trace("The only graphics card available is suitable for the application!");
+            spdlog::trace("Score: {}", rate_graphics_card(available_gpus[0]));
             return available_gpus[0];
         }
 
@@ -291,14 +291,14 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
     if (preferred_gpu_index) {
         // Check if this array index is valid!
         if (*preferred_gpu_index >= 0 && preferred_gpu_index < gpu_count) {
-            spdlog::debug("Command line parameter for preferred GPU specified. Checking graphics card with index {}",
-                          *preferred_gpu_index);
+            spdlog::trace("Command line parameter for preferred GPU specified");
+            spdlog::trace("Checking graphics card with index {}", *preferred_gpu_index);
 
             // Check if the graphics card selected by the user meets all the criteria we need!
             if (is_graphics_card_suitable(available_gpus[*preferred_gpu_index], surface)) {
                 // We are done: Use the graphics card which was specified by the user's command line argument.
-                spdlog::debug("The preferred graphics card is suitable for this application");
-                spdlog::debug("Score: {}", rate_graphics_card(available_gpus[*preferred_gpu_index]));
+                spdlog::trace("The preferred graphics card is suitable for this application");
+                spdlog::trace("Score: {}", rate_graphics_card(available_gpus[*preferred_gpu_index]));
                 return available_gpus[*preferred_gpu_index];
             }
             spdlog::error("The preferred graphics card with index {} is not suitable for this application!",
@@ -318,10 +318,10 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
         }
     } else {
         // Give the user a little hint message.
-        spdlog::debug("Info: No command line argument for preferred graphics card given");
-        spdlog::debug("You have more than 1 graphics card available on your machine");
-        spdlog::debug("Specify which one to use by passing -gpu <number> as command line argument");
-        spdlog::debug("Please be aware that the first index is 0");
+        spdlog::trace("Info: No command line argument for preferred graphics card given");
+        spdlog::trace("You have more than 1 graphics card available on your machine");
+        spdlog::trace("Specify which one to use by passing -gpu <number> as command line argument");
+        spdlog::trace("Please be aware that the first index is 0");
     }
 
     // ATTEMPT 3
@@ -367,17 +367,17 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
 
             // Ok, so try to prefer the discrete GPU over the integrated GPU.
             if (is_graphics_card_suitable(discrete_gpu, surface)) {
-                spdlog::debug("You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application"
+                spdlog::trace("You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application"
                               "The integrated GPU is not!");
-                spdlog::debug("Score: {}", rate_graphics_card(discrete_gpu));
+                spdlog::trace("Score: {}", rate_graphics_card(discrete_gpu));
 
                 return discrete_gpu;
             }
             // Ok, so the discrete GPU is unsuitable. What about the integrated GPU?
             if (is_graphics_card_suitable(integrated_gpu, surface)) {
-                spdlog::debug("You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The "
+                spdlog::trace("You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The "
                               "discrete GPU is not!");
-                spdlog::debug("Score: {}", rate_graphics_card(integrated_gpu));
+                spdlog::trace("Score: {}", rate_graphics_card(integrated_gpu));
 
                 // This might be a very rare case though.
                 return integrated_gpu;
@@ -388,7 +388,7 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
             return std::nullopt;
         }
 
-        spdlog::debug("Only discrete GPUs available, no integrated graphics");
+        spdlog::trace("Only discrete GPUs available, no integrated graphics");
     }
 
     // ATTEMPT 4
@@ -405,7 +405,7 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
     // Loop through all available graphics cards and sort out the unsuitable ones.
     for (std::size_t i = 0; i < gpu_count; i++) {
         if (is_graphics_card_suitable(available_gpus[i], surface)) {
-            spdlog::debug("Adding graphics card index {} to the list of suitable graphics cards", i);
+            spdlog::trace("Adding graphics card index {} to the list of suitable graphics cards", i);
 
             // Add this graphics card to the list of suitable graphics cards.
             suitable_graphics_cards.push_back(i);
@@ -419,7 +419,7 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
     const auto qualified_gpu_count = gpu_count - suitable_graphics_cards.size();
 
     if (qualified_gpu_count > 0) {
-        spdlog::debug("{} gpus have been disqualified because they are unsuitable for the application's purposes!",
+        spdlog::trace("{} gpus have been disqualified because they are unsuitable for the application's purposes!",
                       qualified_gpu_count);
     }
 
@@ -431,8 +431,8 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
 
     // Only 1 graphics card is suitable, let's choose that one.
     if (suitable_graphics_cards.size() == 1) {
-        spdlog::debug("There is only 1 suitable graphics card available");
-        spdlog::debug("Score: {}", rate_graphics_card(available_gpus[0]));
+        spdlog::trace("There is only 1 suitable graphics card available");
+        spdlog::trace("Score: {}", rate_graphics_card(available_gpus[0]));
         return available_gpus[0];
     }
 
@@ -449,7 +449,7 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
             highest_gpu_score = gpu_score;
             highest_score_gpu = gpu_candidate;
         } else {
-            spdlog::debug("A graphics card has been disqualified because it received a score of 0");
+            spdlog::trace("A graphics card has been disqualified because it received a score of 0");
         }
     }
 
@@ -560,13 +560,13 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_present_mode
         // re-use by the application. One request is removed from the queue and processed during each vertical blanking
         // period in which the queue is non-empty.
         if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            spdlog::debug("VK_PRESENT_MODE_MAILBOX_KHR will be used.");
+            spdlog::trace("VK_PRESENT_MODE_MAILBOX_KHR will be used");
             return VK_PRESENT_MODE_MAILBOX_KHR;
         }
     }
 
-    spdlog::warn("VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device.");
-    spdlog::debug("Let's see if VK_PRESENT_MODE_IMMEDIATE_KHR is supported.");
+    spdlog::warn("VK_PRESENT_MODE_MAILBOX_KHR is not supported by the regarded device");
+    spdlog::trace("Let's see if VK_PRESENT_MODE_IMMEDIATE_KHR is supported");
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
@@ -574,13 +574,13 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_present_mode
         // period to update the current image, meaning this mode may result in visible tearing. No internal queuing of
         // presentation requests is needed, as the requests are applied immediately.
         if (present_mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-            spdlog::debug("VK_PRESENT_MODE_IMMEDIATE_KHR will be used.");
+            spdlog::trace("VK_PRESENT_MODE_IMMEDIATE_KHR will be used");
             return VK_PRESENT_MODE_IMMEDIATE_KHR;
         }
     }
 
-    spdlog::warn("VK_PRESENT_MODE_IMMEDIATE_KHR is not supported by the regarded device.");
-    spdlog::warn("Let's see if VK_PRESENT_MODE_FIFO_KHR is supported.");
+    spdlog::warn("VK_PRESENT_MODE_IMMEDIATE_KHR is not supported by the regarded device");
+    spdlog::warn("Let's see if VK_PRESENT_MODE_FIFO_KHR is supported");
 
     for (auto present_mode : available_present_modes) {
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPresentModeKHR.html
@@ -590,12 +590,12 @@ std::optional<VkPresentModeKHR> VulkanSettingsDecisionMaker::decide_present_mode
         // beginning of the queue and processed during each vertical blanking period in which the queue is non-empty.
         // This is the only value of presentMode that is required to be supported.
         if (present_mode == VK_PRESENT_MODE_FIFO_KHR) {
-            spdlog::debug("VK_PRESENT_MODE_FIFO_KHR will be used.");
+            spdlog::trace("VK_PRESENT_MODE_FIFO_KHR will be used");
             return VK_PRESENT_MODE_FIFO_KHR;
         }
     }
 
-    spdlog::error("VK_PRESENT_MODE_FIFO_KHR is not supported by the regarded device.");
+    spdlog::error("VK_PRESENT_MODE_FIFO_KHR is not supported by the regarded device");
     spdlog::error("According to the Vulkan specification, this shouldn't even be possible!");
 
     // Lets try with any present mode available!
@@ -648,7 +648,7 @@ VulkanSettingsDecisionMaker::find_graphics_queue_family(const VkPhysicalDevice g
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-    spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
+    spdlog::trace("There are {} queue families available", number_of_available_queue_families);
 
     // Preallocate memory for the available queue families.
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -683,7 +683,7 @@ VulkanSettingsDecisionMaker::find_presentation_queue_family(const VkPhysicalDevi
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-    spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
+    spdlog::trace("There are {} queue families available", number_of_available_queue_families);
 
     // Preallocate memory for the available queue families.
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -725,7 +725,7 @@ VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(const VkPh
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-    spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
+    spdlog::trace("There are {} queue families available", number_of_available_queue_families);
 
     // Preallocate memory for the available queue families.
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -760,7 +760,7 @@ VulkanSettingsDecisionMaker::find_any_data_transfer_queue_family(const VkPhysica
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-    spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
+    spdlog::trace("There are {} queue families available", number_of_available_queue_families);
 
     // Preallocate memory for the available queue families.
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -797,7 +797,7 @@ VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentatio
     // First check how many queue families are available.
     vkGetPhysicalDeviceQueueFamilyProperties(graphics_card, &number_of_available_queue_families, nullptr);
 
-    spdlog::debug("There are {} queue families available.", number_of_available_queue_families);
+    spdlog::trace("There are {} queue families available", number_of_available_queue_families);
 
     // Preallocate memory for the available queue families.
     std::vector<VkQueueFamilyProperties> available_queue_families(number_of_available_queue_families);
@@ -826,7 +826,7 @@ VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentatio
 
                 // Check if we can use this queue family for presentation as well.
                 if (presentation_available != 0) {
-                    spdlog::debug("Found one queue family for both graphics and presentation.");
+                    spdlog::trace("Found one queue family for both graphics and presentation");
                     return this_queue_family_index;
                 }
             }
@@ -847,7 +847,7 @@ VulkanSettingsDecisionMaker::find_depth_buffer_format(const VkPhysicalDevice gra
     assert(tiling);
     assert(feature_flags);
 
-    spdlog::debug("Trying to find appropriate format for depth buffer.");
+    spdlog::trace("Trying to find appropriate format for depth buffer");
 
     for (const auto &format : formats) {
         VkFormatProperties format_properties;
