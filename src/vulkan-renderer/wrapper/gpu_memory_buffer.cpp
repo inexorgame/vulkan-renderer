@@ -18,7 +18,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
     assert(device.allocator());
     assert(!name.empty());
 
-    spdlog::trace("Creating GPU memory buffer of size {} for '{}'.", size, name);
+    spdlog::trace("Creating GPU memory buffer of size {} for {}", size, name);
 
     auto buffer_ci = make_info<VkBufferCreateInfo>();
     buffer_ci.size = size;

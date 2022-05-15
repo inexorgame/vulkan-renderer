@@ -13,7 +13,7 @@ namespace inexor::vulkan_renderer {
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
                            RenderGraph *render_graph, TextureResource *back_buffer)
     : m_device(device), m_swapchain(swapchain) {
-    spdlog::debug("Creating ImGUI context");
+    spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
 
     ImGuiStyle &style = ImGui::GetStyle();
@@ -37,7 +37,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     ImGuiIO &io = ImGui::GetIO();
     io.FontGlobalScale = m_scale;
 
-    spdlog::debug("Loading ImGUI shaders");
+    spdlog::trace("Loading ImGUI shaders");
     m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
                                                         "shaders/ui.vert.spv");
     m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -49,7 +49,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     constexpr const char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
     constexpr float FONT_SIZE = 18.0f;
 
-    spdlog::debug("Loading front '{}'", FONT_FILE_PATH);
+    spdlog::trace("Loading front {}", FONT_FILE_PATH);
 
     ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
 
@@ -59,10 +59,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
 
     if (font == nullptr || font_texture_data == nullptr) {
-        spdlog::error("Unable to load font {}.  Falling back to error texture.", FONT_FILE_PATH);
+        spdlog::error("Unable to load font {}.  Falling back to error texture", FONT_FILE_PATH);
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
     } else {
-        spdlog::debug("Creating ImGUI font texture");
+        spdlog::trace("Creating ImGUI font texture");
 
         // Our font textures always have 4 channels and a single mip level by definition.
         constexpr int FONT_TEXTURE_CHANNELS{4};

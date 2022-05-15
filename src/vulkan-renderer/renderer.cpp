@@ -121,7 +121,7 @@ void VulkanRenderer::render_frame() {
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
-        spdlog::debug("FPS: {}, window size: {} x {}.", *fps_value, m_window->width(), m_window->height());
+        spdlog::trace("FPS: {}, window size: {} x {}", *fps_value, m_window->width(), m_window->height());
     }
 }
 
@@ -129,21 +129,20 @@ void VulkanRenderer::calculate_memory_budget() {
     VmaStats memory_stats;
     vmaCalculateStats(m_device->allocator(), &memory_stats);
 
-    spdlog::debug("-------------VMA stats-------------");
-    spdlog::debug("Number of `VkDeviceMemory` (physical memory) blocks allocated: {} still alive, {} in total",
-                  memory_stats.memoryHeap->blockCount, memory_stats.total.blockCount);
-    spdlog::debug("Number of VmaAlllocation objects allocated (requested memory): {} still alive, {} in total",
-                  memory_stats.memoryHeap->allocationCount, memory_stats.total.allocationCount);
-    spdlog::debug("Number of free ranges of memory between allocations: {}", memory_stats.memoryHeap->unusedRangeCount);
-    spdlog::debug("Total number of bytes occupied by all allocations: {}", memory_stats.memoryHeap->usedBytes);
-    spdlog::debug("Total number of bytes occupied by unused ranges: {}", memory_stats.memoryHeap->unusedBytes);
-    spdlog::debug("memory_stats.memoryHeap->allocationSizeMin: {}", memory_stats.memoryHeap->allocationSizeMin);
-    spdlog::debug("memory_stats.memoryHeap->allocationSizeAvg: {}", memory_stats.memoryHeap->allocationSizeAvg);
-    spdlog::debug("memory_stats.memoryHeap->allocationSizeMax: {}", memory_stats.memoryHeap->allocationSizeMax);
-    spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeMin: {}", memory_stats.memoryHeap->unusedRangeSizeMin);
-    spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeAvg: {}", memory_stats.memoryHeap->unusedRangeSizeAvg);
-    spdlog::debug("memory_stats.memoryHeap->unusedRangeSizeMax: {}", memory_stats.memoryHeap->unusedRangeSizeMax);
-    spdlog::debug("-------------VMA stats-------------");
+    spdlog::trace("Vulkan Memory Allocator statistics:");
+    spdlog::trace("   total.blockCount: {}", memory_stats.total.blockCount);
+    spdlog::trace("   total.allocationCount: {}", memory_stats.total.allocationCount);
+    spdlog::trace("   memoryHeap->blockCount: {}", memory_stats.memoryHeap->blockCount);
+    spdlog::trace("   memoryHeap->allocationCount: {}", memory_stats.memoryHeap->allocationCount);
+    spdlog::trace("   memoryHeap->unusedRangeCount: {}", memory_stats.memoryHeap->unusedRangeCount);
+    spdlog::trace("   memoryHeap->usedBytes: {}", memory_stats.memoryHeap->usedBytes);
+    spdlog::trace("   memoryHeap->unusedBytes: {}", memory_stats.memoryHeap->unusedBytes);
+    spdlog::trace("   memoryHeap->allocationSizeMin: {}", memory_stats.memoryHeap->allocationSizeMin);
+    spdlog::trace("   memoryHeap->allocationSizeAvg: {}", memory_stats.memoryHeap->allocationSizeAvg);
+    spdlog::trace("   memoryHeap->allocationSizeMax: {}", memory_stats.memoryHeap->allocationSizeMax);
+    spdlog::trace("   memoryHeap->unusedRangeSizeMin: {}", memory_stats.memoryHeap->unusedRangeSizeMin);
+    spdlog::trace("   memoryHeap->unusedRangeSizeAvg: {}", memory_stats.memoryHeap->unusedRangeSizeAvg);
+    spdlog::trace("   memoryHeap->unusedRangeSizeMax: {}", memory_stats.memoryHeap->unusedRangeSizeMax);
 
     char *vma_stats_string = nullptr;
     vmaBuildStatsString(m_device->allocator(), &vma_stats_string, VK_TRUE);
@@ -157,7 +156,7 @@ void VulkanRenderer::calculate_memory_budget() {
 }
 
 VulkanRenderer::~VulkanRenderer() {
-    spdlog::debug("Shutting down vulkan renderer");
+    spdlog::trace("Shutting down vulkan renderer");
 
     if (m_device == nullptr) {
         return;

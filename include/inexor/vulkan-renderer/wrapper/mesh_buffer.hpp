@@ -74,8 +74,8 @@ public:
         std::size_t vertex_buffer_size = sizeof(VertexType) * vertex_count;
         std::size_t index_buffer_size = sizeof(IndexType) * index_count;
 
-        spdlog::debug("Creating vertex buffer of size {} for mesh {}.", vertex_buffer_size, name);
-        spdlog::debug("Creating index buffer of size {} for mesh {}.", index_buffer_size, name);
+        spdlog::trace("Creating vertex buffer of size {} for mesh {}", vertex_buffer_size, name);
+        spdlog::trace("Creating index buffer of size {} for mesh {}", index_buffer_size, name);
     }
 
     /// @brief Creates a mesh buffer of type VertexType without a corresponding index buffer by specifying the number of
@@ -96,7 +96,7 @@ public:
 
         std::size_t vertex_buffer_size = sizeof(VertexType) * vertex_count;
 
-        spdlog::debug("Creating vertex buffer of size {} for mesh {}.", vertex_buffer_size, name);
+        spdlog::trace("Creating vertex buffer of size {} for mesh {}", vertex_buffer_size, name);
     }
 
     /// @brief Constructs a mesh buffer of type VertexType with a corresponding index buffer of type IndexType.
@@ -110,8 +110,8 @@ public:
         std::size_t vertex_buffer_size = sizeof(VertexType) * vertices.size();
         std::size_t index_buffer_size = sizeof(IndexType) * indices.size();
 
-        spdlog::debug("Creating vertex buffer of size {} for mesh {}.", vertex_buffer_size, name);
-        spdlog::debug("Creating index buffer of size {} for mesh {}.", index_buffer_size, name);
+        spdlog::trace("Creating vertex buffer of size {} for mesh {}", vertex_buffer_size, name);
+        spdlog::trace("Creating index buffer of size {} for mesh {}", index_buffer_size, name);
 
         // Not using an index buffer can decrease performance drastically!
         if (index_buffer_size == 0) {
@@ -148,7 +148,7 @@ public:
         : MeshBuffer(device, name, vertices.size()) {
         std::size_t size_of_vertex_buffer = sizeof(VertexType) * vertices.size();
 
-        spdlog::debug("Creating vertex buffer of size {} for mesh {}.", size_of_vertex_buffer, name);
+        spdlog::trace("Creating vertex buffer of size {} for mesh {}", size_of_vertex_buffer, name);
 
         // Not using an index buffer can decrease performance drastically!
         spdlog::warn("Creating a vertex buffer without an index buffer!");

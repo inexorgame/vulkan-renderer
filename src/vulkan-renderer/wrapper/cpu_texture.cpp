@@ -18,14 +18,12 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
     assert(!file_name.empty());
     assert(!m_name.empty());
 
-    spdlog::trace("Loading texture file {}.", file_name);
-
     // Load the texture file using stb_image library.
     // Force stb_image to load an alpha channel as well.
     m_texture_data = stbi_load(file_name.c_str(), &m_texture_width, &m_texture_height, nullptr, STBI_rgb_alpha);
 
     if (m_texture_data == nullptr) {
-        spdlog::error("Could not load texture file {} using stbi_load!  Falling back to error texture.", file_name);
+        spdlog::error("Could not load texture file {} using stbi_load!  Falling back to error texture", file_name);
         generate_error_texture_data();
     } else {
 
@@ -40,7 +38,7 @@ CpuTexture::CpuTexture(const std::string &file_name, std::string name) : m_name(
         // TODO: We are currently only supporting 1 mip level.
         m_mip_levels = 1;
 
-        spdlog::trace("Texture dimensions: width: {}, height: {}, channels: {} mip levels: {}.", m_texture_width,
+        spdlog::trace("Texture dimensions: width: {}, height: {}, channels: {} mip levels: {}", m_texture_width,
                       m_texture_height, m_texture_channels, m_mip_levels);
     }
 }

@@ -10,7 +10,7 @@ WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_
     assert(instance);
     assert(window);
 
-    spdlog::trace("Creating window surface.");
+    spdlog::trace("Creating window surface");
 
     if (const auto result = glfwCreateWindowSurface(instance, window, nullptr, &m_surface); result != VK_SUCCESS) {
         throw VulkanException("Error: glfwCreateWindowSurface failed!", result);

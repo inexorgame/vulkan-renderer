@@ -21,8 +21,8 @@ int main(int argc, char *argv[]) {
 
     spdlog::set_default_logger(vulkan_renderer_log);
 
-    spdlog::debug("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
-    spdlog::debug("Parsing command line arguments.");
+    spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+    spdlog::trace("Parsing command line arguments");
 
     std::unique_ptr<inexor::vulkan_renderer::Application> renderer;
 
@@ -38,5 +38,5 @@ int main(int argc, char *argv[]) {
 
     renderer->run();
     renderer->calculate_memory_budget();
-    spdlog::debug("Window closed");
+    spdlog::trace("Window closed");
 }
