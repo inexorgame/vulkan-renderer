@@ -87,8 +87,7 @@ void VulkanRenderer::recreate_swapchain() {
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
-    m_camera->set_movement_speed(5.0f);
-    m_camera->set_rotation_speed(0.5f);
+    m_camera->set_movement_speed(5.0f).set_rotation_speed(0.5f);
 
     m_imgui_overlay.reset();
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
