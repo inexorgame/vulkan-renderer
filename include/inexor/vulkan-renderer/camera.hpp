@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <array>
+#include <mutex>
+#include <shared_mutex>
 #include <vector>
 
 namespace inexor::vulkan_renderer {
@@ -23,9 +25,12 @@ enum class CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
 // TODO: Implement more camera types
 enum class CameraType { LOOK_AT };
 
-/// @warning This class is not thread safe!
+/// A wrapper class for cameras
+/// @note This class uses ``std::shared_mutex`` to ensure thread safety
 class Camera {
 private:
+    mutable std::shared_mutex m_cam_mutex;
+
     /// The type of the camera
     CameraType m_type{CameraType::LOOK_AT};
     /// The start position of the camera
@@ -83,8 +88,10 @@ private:
     bool m_update_view_matrix{false};
     bool m_update_perspective_matrix{false};
 
+    /// @note We are not using a shared mutex in here because this private method will only be called by other methods
     void update_vectors();
 
+    /// @note We are not using a shared mutex in here because this private method will only be called by other methods
     void update_matrices();
 
     [[nodiscard]] bool is_moving() const;
@@ -96,6 +103,8 @@ public:
     /// @param pitch The camera's pitch angle in degrees
     /// @param window_width The width of the window
     /// @param window_height The height of the window
+    // @note We don't use the shared mutex in the constructor because there is no case where multiple threads can
+    // construct the same object, meaning the constructor is thread-safe by default
     Camera(const glm::vec3 &position, float yaw, float pitch, float window_width, float window_height);
 
     /// Set the camera type
@@ -104,6 +113,7 @@ public:
     Camera &set_type(CameraType type);
 
     [[nodiscard]] const CameraType &type() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_type;
     }
 
@@ -117,6 +127,7 @@ public:
     Camera &set_position(glm::vec3 position);
 
     [[nodiscard]] const glm::vec3 &position() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_position;
     }
 
@@ -126,10 +137,12 @@ public:
     Camera &set_aspect_ratio(float width, float height);
 
     [[nodiscard]] float aspect_ratio() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_aspect_ratio;
     }
 
     [[nodiscard]] float fov() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_fov;
     }
 
@@ -138,6 +151,7 @@ public:
     Camera &set_movement_speed(float speed);
 
     [[nodiscard]] float movement_speed() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_movement_speed;
     }
 
@@ -146,6 +160,7 @@ public:
     Camera &set_rotation_speed(float speed);
 
     [[nodiscard]] float rotation_speed() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_rotation_speed;
     }
 
@@ -162,30 +177,37 @@ public:
     Camera &set_rotation(float yaw, float pitch, float roll);
 
     [[nodiscard]] const glm::vec3 &rotation() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_front;
     }
 
     [[nodiscard]] float yaw() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_yaw;
     }
 
     [[nodiscard]] float pitch() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_pitch;
     }
 
     [[nodiscard]] float roll() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_roll;
     }
 
     [[nodiscard]] const glm::vec3 &front() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_front;
     }
 
     [[nodiscard]] const glm::vec3 &up() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_up;
     }
 
     [[nodiscard]] const glm::vec3 &right() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_right;
     }
 
@@ -194,6 +216,7 @@ public:
     Camera &set_near_plane(float near_plane);
 
     [[nodiscard]] float near_plane() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_near_plane;
     }
 
@@ -202,6 +225,7 @@ public:
     Camera &set_far_plane(float far_plane);
 
     [[nodiscard]] float far_plane() const {
+        std::shared_lock lock(m_cam_mutex);
         return m_far_plane;
     }
 
@@ -214,11 +238,13 @@ public:
     Camera &update(float delta_time);
 
     [[nodiscard]] const glm::mat4 &view_matrix() {
+        std::scoped_lock lock(m_cam_mutex);
         update_matrices();
         return m_view_matrix;
     }
 
     [[nodiscard]] const glm::mat4 &perspective_matrix() {
+        std::scoped_lock lock(m_cam_mutex);
         update_matrices();
         return m_perspective_matrix;
     }

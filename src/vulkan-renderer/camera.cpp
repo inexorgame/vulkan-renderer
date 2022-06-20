@@ -22,7 +22,6 @@ void Camera::update_vectors() {
         m_front = glm::normalize(front);
         m_right = glm::normalize(glm::cross(m_front, m_world_up));
         m_up = glm::normalize(glm::cross(m_right, m_front));
-
         m_update_view_matrix = true;
     }
 }
@@ -49,11 +48,13 @@ bool Camera::is_moving() const {
 }
 
 Camera &Camera::set_type(const CameraType type) {
+    std::scoped_lock lock(m_cam_mutex);
     m_type = type;
     return *this;
 }
 
 Camera &Camera::set_movement_state(const CameraMovement key, const bool pressed) {
+    std::scoped_lock lock(m_cam_mutex);
     switch (key) {
     case CameraMovement::FORWARD:
         m_keys[0] = pressed;
@@ -72,12 +73,14 @@ Camera &Camera::set_movement_state(const CameraMovement key, const bool pressed)
 }
 
 Camera &Camera::set_position(const glm::vec3 position) {
+    std::scoped_lock lock(m_cam_mutex);
     m_position = position;
     m_update_view_matrix = true;
     return *this;
 }
 
 Camera &Camera::set_aspect_ratio(const float width, const float height) {
+    std::scoped_lock lock(m_cam_mutex);
     m_aspect_ratio = width / height;
     m_update_perspective_matrix = true;
     m_update_vertical_fov = true;
@@ -85,16 +88,19 @@ Camera &Camera::set_aspect_ratio(const float width, const float height) {
 }
 
 Camera &Camera::set_movement_speed(const float speed) {
+    std::scoped_lock lock(m_cam_mutex);
     m_movement_speed = speed;
     return *this;
 }
 
 Camera &Camera::set_rotation_speed(const float speed) {
+    std::scoped_lock lock(m_cam_mutex);
     m_rotation_speed = speed;
     return *this;
 }
 
 Camera &Camera::rotate(const float delta_yaw, const float delta_pitch, const float delta_roll) {
+    std::scoped_lock lock(m_cam_mutex);
     m_yaw += delta_yaw;
     m_yaw = std::fmod(m_yaw, 360.0f);
     m_pitch += delta_pitch;
@@ -105,6 +111,7 @@ Camera &Camera::rotate(const float delta_yaw, const float delta_pitch, const flo
 }
 
 Camera &Camera::set_rotation(const float yaw, const float pitch, const float roll) {
+    std::scoped_lock lock(m_cam_mutex);
     m_yaw = m_mouse_sensitivity * yaw;
     m_pitch = m_mouse_sensitivity * pitch;
     m_roll = m_mouse_sensitivity * roll;
@@ -112,18 +119,21 @@ Camera &Camera::set_rotation(const float yaw, const float pitch, const float rol
 }
 
 Camera &Camera::set_near_plane(const float near_plane) {
+    std::scoped_lock lock(m_cam_mutex);
     m_near_plane = near_plane;
     m_update_perspective_matrix = true;
     return *this;
 }
 
 Camera &Camera::set_far_plane(const float far_plane) {
+    std::scoped_lock lock(m_cam_mutex);
     m_far_plane = far_plane;
     m_update_perspective_matrix = true;
     return *this;
 }
 
 Camera &Camera::change_zoom(const float offset) {
+    std::scoped_lock lock(m_cam_mutex);
     m_fov -= offset * m_zoom_step;
 
     // Make sure field of view is in range between specified minimum and maximum value.
@@ -135,6 +145,7 @@ Camera &Camera::change_zoom(const float offset) {
 }
 
 Camera &Camera::update(const float delta_time) {
+    std::scoped_lock lock(m_cam_mutex);
     if (m_type == CameraType::LOOK_AT && is_moving()) {
         const float move_speed = delta_time * m_movement_speed;
 
