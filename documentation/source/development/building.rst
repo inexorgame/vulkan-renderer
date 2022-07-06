@@ -213,6 +213,45 @@ Install dependencies and tools:
 |        |         conan                        |
 |        |                                      |
 +--------+--------------------------------------+
+| Arch   | Follow the                           |
+|        | `Install the SDK`_-instructions on   |
+|        | the vulkan-sdk page.                 |
+|        |                                      |
+|        | Install the required packages:[#f1]_ |
+|        |                                      |
+|        | .. code-block:: shell-session        |
+|        |                                      |
+|        |     # pacman -S \                    |
+|        |         pkg-config \                 |
+|        |         glslang \                    |
+|        |         spirv-tools \                |
+|        |         glm \                        |
+|        |         libice \                     |
+|        |         libpciaccess \               |
+|        |         libpng \                     |
+|        |         libx11 \                     |
+|        |         libxres \                    |
+|        |         xkeyboard-config \           |
+|        |         libxrandr \                  |
+|        |         libxcb \                     |
+|        |         libxaw \                     |
+|        |         xcb-util \                   |
+|        |         xtrans \                     |
+|        |         libxvmc                      |
+|        |     # pacman -S \                    |
+|        |         cmake \                      |
+|        |         ninja \                      |
+|        |         vulkan-headers \             |
+|        |         vulkan-tools \               |
+|        |         vulkan-validation-layers \   |
+|        |         python3 \                    |
+|        |         python-pip                   |
+|        |     $ pip3 install \                 |
+|        |         wheel \                      |
+|        |         setuptools \                 |
+|        |         conan                        |
+|        |                                      |
++--------+--------------------------------------+
 | Other  | Planned. `We would love to see a     |
 |        | pull request on this file if you get |
 |        | it running on other                  |
