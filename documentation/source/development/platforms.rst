@@ -17,7 +17,7 @@ Linux
 ------
 
 - We support every x64 Linux distribution for which Vulkan drivers exist.
-- We have specific :ref:`build instructions for Gentoo and Ubuntu <BUILDING linux>`.
+- We have specific :ref:`build instructions for Gentoo, Ubuntu, Debian, and Arch. <BUILDING linux>`.
 - If you have found a way to set it up for other Linux distributions, please `open a pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__ and let us know!
 
 macOS and iOS
