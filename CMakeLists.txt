@@ -17,6 +17,7 @@ option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
 set(INEXOR_CONAN_PROFILE "default" CACHE STRING "conan profile")
 option(INEXOR_USE_VMA_RECORDING "Use VulkanMemoryAllocator recording feature" OFF)
+option(INEXOR_FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
@@ -58,6 +59,16 @@ execute_process(
     OUTPUT_VARIABLE INEXOR_GIT_SHA
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+# Enable GCC/clang ANSI-colored terminal output using Ninja build tool
+# TODO: Switch to `CMAKE_COLOR_DIAGNOSTICS` with cmake 3.24 in the future
+if (FORCE_COLORED_OUTPUT)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-fdiagnostics-color=always)
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_compile_options(-fcolor-diagnostics)
+    endif()
+endif()
 
 add_subdirectory(shaders)
 add_subdirectory(src)
