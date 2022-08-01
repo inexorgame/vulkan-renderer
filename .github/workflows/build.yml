@@ -42,6 +42,7 @@ jobs:
             cmake \
             curl \
             git \
+            libfmt-dev \
             libgl1-mesa-dev \
             libx11-dev \
             libx11-xcb-dev \
