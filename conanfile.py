@@ -13,6 +13,7 @@ class InexorConan(ConanFile):
         "glfw/3.3.2",
         "glm/0.9.9.8",
         "imgui/1.77",
+        "fmt/9.0.0",
         "spdlog/1.7.0",
         "stb/20200203",
         "tinygltf/2.2.0",
