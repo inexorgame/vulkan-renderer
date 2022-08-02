@@ -10,7 +10,7 @@ jobs:
   linux:
     name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
-    container: ubuntu:rolling
+    container: ubuntu:22.04
     env:
       DEBIAN_FRONTEND: "noninteractive"
       inexor_conan_path: "$HOME/.local/bin"
