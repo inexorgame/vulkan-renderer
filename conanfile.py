@@ -10,13 +10,13 @@ class InexorConan(ConanFile):
     )
 
     requires = (
-        "glfw/3.3.2",
+        "glfw/3.3.7",
         "glm/0.9.9.8",
-        "imgui/1.77",
-        "spdlog/1.7.0",
-        "stb/20200203",
-        "tinygltf/2.2.0",
-        "toml11/3.4.0",
+        "imgui/1.88",
+        "spdlog/1.10.0",
+        "stb/cci.20210910",
+        "tinygltf/2.5.0",
+        "toml11/3.7.1",
         "vulkan-memory-allocator/2.3.0",
     )
 
@@ -39,9 +39,9 @@ class InexorConan(ConanFile):
 
     def requirements(self):
         if self.options.build_benchmarks:
-            self.requires("benchmark/1.5.2")
+            self.requires("benchmark/1.6.2")
         if self.options.build_tests:
-            self.requires("gtest/1.10.0")
+            self.requires("gtest/1.12.1")
 
     def imports(self):
         # Copies all dll files from packages bin folder to my "bin" folder (win)
