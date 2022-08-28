@@ -185,6 +185,23 @@ const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const Vk
     return copy_buffer(src_buf, dst_buf, buf_copy);
 }
 
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
+                                                         const std::span<const VkBufferImageCopy> copy_regions) const {
+    assert(src_buf);
+    assert(dst_img);
+    vkCmdCopyBufferToImage(m_command_buffer, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                           static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
+                                                         const VkBufferImageCopy &copy_region) const {
+    assert(src_buf);
+    assert(dst_img);
+    vkCmdCopyBufferToImage(m_command_buffer, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags src_stage_flags,
                                                      const VkPipelineStageFlags dst_stage_flags,
                                                      const std::span<const VkImageMemoryBarrier> img_mem_barriers,
