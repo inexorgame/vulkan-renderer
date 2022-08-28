@@ -51,12 +51,14 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
     // Try to find a command buffer which is currently not used
     for (const auto &cmd_buf : m_cmd_bufs) {
         if (cmd_buf->fence_status() == VK_SUCCESS) {
+            // Reset the command buffer's fence to make it usable again
             cmd_buf->reset_fence();
             return *cmd_buf;
         }
     }
 
     // We need to create a new command buffer because no free one was found
+    // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
     m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, m_queue_type, "command buffer"));
     return *m_cmd_bufs.back();
 }

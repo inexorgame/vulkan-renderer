@@ -277,6 +277,12 @@ public:
 
     /// Call the reset method of the Fence member
     const CommandBuffer &reset_fence() const;
+
+    /// Call vkQueueSubmit
+    const CommandBuffer &submit() const; // NOLINT
+
+    /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
+    const CommandBuffer &submit_and_wait() const; // NOLINT
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

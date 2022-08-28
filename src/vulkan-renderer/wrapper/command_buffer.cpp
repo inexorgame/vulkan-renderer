@@ -296,4 +296,23 @@ const CommandBuffer &CommandBuffer::reset_fence() const {
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::submit() const {
+    auto submit_info = make_info<VkSubmitInfo>();
+    submit_info.pCommandBuffers = &m_command_buffer;
+    submit_info.commandBufferCount = 1;
+
+    if (const auto result =
+            vkQueueSubmit((m_queue_type == QueueType::GRAPHICS) ? m_device.graphics_queue() : m_device.transfer_queue(),
+                          1, &submit_info, m_wait_fence->get())) {
+        throw VulkanException("Error: vkQueueSubmit failed!", result);
+    }
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::submit_and_wait() const {
+    submit();
+    m_wait_fence->block();
+    return *this;
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

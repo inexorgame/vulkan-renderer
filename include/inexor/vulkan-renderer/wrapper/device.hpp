@@ -1,11 +1,15 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/queue_type.hpp"
+
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
 #include <array>
 #include <cassert>
+#include <functional>
 #include <optional>
 #include <string>
 
@@ -28,6 +32,12 @@ class Device {
     std::uint32_t m_graphics_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
 
+    /// According to NVidia, we should aim for one command pool per thread
+    /// We will create one for graphics and one for transfer queue per thread
+    /// https://developer.nvidia.com/blog/vulkan-dos-donts/
+    std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
+    std::mutex m_mutex;
+
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
     PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag{nullptr};
@@ -38,6 +48,8 @@ class Device {
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
 
     const bool m_enable_vulkan_debug_markers{false};
+
+    CommandPool &thread_graphics_pool();
 
 public:
     /// @brief Check if a certain device extension is available for a specific graphics card.
@@ -249,6 +261,8 @@ public:
     /// @param name The internal debug marker name which will be assigned to this swapchain
     void create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSwapchainKHR *swapchain,
                           const std::string &name) const;
+
+    [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

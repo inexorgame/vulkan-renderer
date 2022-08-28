@@ -586,4 +586,19 @@ void Device::create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSw
     set_debug_marker_name(&swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, name);
 }
 
+CommandPool &Device::thread_graphics_pool() {
+    // Note that thread_graphics_pool is implicitely static!
+    thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
+    if (thread_graphics_pool == nullptr) {
+        auto cmd_pool = std::make_unique<CommandPool>(*this, QueueType::GRAPHICS, "graphics pool");
+        std::scoped_lock locker(m_mutex);
+        thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+    }
+    return *thread_graphics_pool;
+}
+
+const CommandBuffer &Device::request_command_buffer(const std::string &name) {
+    return thread_graphics_pool().request_command_buffer(name);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper
