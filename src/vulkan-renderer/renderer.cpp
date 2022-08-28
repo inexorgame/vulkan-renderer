@@ -1,5 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -76,7 +77,7 @@ void VulkanRenderer::recreate_swapchain() {
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
     m_swapchain->recreate(m_window->width(), m_window->height());
-    m_render_graph = std::make_unique<RenderGraph>(*m_device, m_command_pool->get(), *m_swapchain);
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
     m_frame_finished_fence.reset();
@@ -107,17 +108,16 @@ void VulkanRenderer::render_frame() {
     m_frame_finished_fence->reset();
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    VkSemaphore wait_semaphore = m_render_graph->render(image_index, m_image_available_semaphore->get(),
-                                                        m_device->graphics_queue(), m_frame_finished_fence->get());
+    m_render_graph->render(image_index, m_device->graphics_queue(), m_frame_finished_fence->get());
 
-    // TODO(): Create a queue wrapper class
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;
-    present_info.waitSemaphoreCount = 1;
     present_info.pImageIndices = &image_index;
     present_info.pSwapchains = m_swapchain->swapchain_ptr();
-    present_info.pWaitSemaphores = &wait_semaphore;
-    vkQueuePresentKHR(m_device->present_queue(), &present_info);
+
+    if (const auto result = vkQueuePresentKHR(m_device->present_queue(), &present_info); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkQueuePresentKHR failed!", result);
+    }
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");

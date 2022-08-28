@@ -26,18 +26,6 @@ CommandPool::CommandPool(Device &device, QueueType queue_type, std::string name)
     }
 }
 
-/// THIS WILL BE DELETED AS PART OF THE REFACTORING BUT NEEDS TO STAY IN THIS COMMIT TO KEEP COMMITS SMALL
-CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_index, std::string name)
-    : m_device(device), m_name(std::move(name)), m_queue_type(QueueType::GRAPHICS),
-      m_queue_family_index(m_device.graphics_queue_family_index()) {
-    assert(device.device());
-
-    auto command_pool_ci = make_info<VkCommandPoolCreateInfo>();
-    command_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_ci.queueFamilyIndex = queue_family_index;
-    device.create_command_pool(command_pool_ci, &m_cmd_pool, m_name);
-}
-
 CommandPool::CommandPool(CommandPool &&other) noexcept
     : m_device(other.m_device), m_queue_type(other.m_queue_type), m_queue_family_index(other.m_queue_family_index) {
     m_cmd_pool = std::exchange(other.m_cmd_pool, nullptr);
@@ -53,6 +41,7 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
         if (cmd_buf->fence_status() == VK_SUCCESS) {
             // Reset the command buffer's fence to make it usable again
             cmd_buf->reset_fence();
+            m_device.set_debug_marker_name(*cmd_buf->ptr(), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, name);
             return *cmd_buf;
         }
     }

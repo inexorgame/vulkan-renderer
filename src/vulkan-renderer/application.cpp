@@ -484,9 +484,6 @@ Application::Application(int argc, char **argv) {
     load_textures();
     load_shaders();
 
-    m_command_pool =
-        std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index(), "command pool");
-
     m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
 
     // Create an instance of the resource descriptor builder.

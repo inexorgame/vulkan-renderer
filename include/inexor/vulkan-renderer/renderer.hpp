@@ -64,7 +64,6 @@ protected:
     std::unique_ptr<wrapper::Device> m_device;
     std::unique_ptr<wrapper::WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
-    std::unique_ptr<wrapper::CommandPool> m_command_pool;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
     std::unique_ptr<wrapper::Fence> m_frame_finished_fence;
     std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;

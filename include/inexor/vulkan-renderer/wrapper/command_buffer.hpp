@@ -69,13 +69,6 @@ public:
     /// @param name The internal debug marker name of the command buffer (must not be empty)
     CommandBuffer(const Device &device, VkCommandPool cmd_pool, QueueType queue_type, std::string name);
 
-    /// THIS WILL BE DELETED AS PART OF THE REFACTORING BUT NEEDS TO STAY IN THIS COMMIT TO KEEP COMMITS SMALL
-    /// @brief Default constructor.
-    /// @param device The const reference to the device RAII wrapper class.
-    /// @param command_pool The command pool from which the command buffer will be allocated.
-    /// @param name The internal debug marker name of the command buffer. This must not be an empty string.
-    CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, std::string name);
-
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
 

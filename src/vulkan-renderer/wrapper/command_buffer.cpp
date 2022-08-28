@@ -26,36 +26,21 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }
 
-/// THIS WILL BE DELETED AS PART OF THE REFACTORING BUT NEEDS TO STAY IN THIS COMMIT TO KEEP COMMITS SMALL
-CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, std::string name)
-    : m_device(device), m_name(std::move(name)), m_queue_type(QueueType::GRAPHICS) {
-    auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
-    alloc_info.commandBufferCount = 1;
-    alloc_info.commandPool = command_pool;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    if (const auto result = vkAllocateCommandBuffers(device.device(), &alloc_info, &m_command_buffer);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to allocate command buffer!", result);
-    }
-
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
-
-    m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
-}
-
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
     : m_device(other.m_device), m_queue_type(other.m_queue_type) {
     m_command_buffer = std::exchange(other.m_command_buffer, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
     m_wait_fence = std::exchange(other.m_wait_fence, nullptr);
+    m_staging_bufs = std::move(other.m_staging_bufs);
 }
 
 const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();
     begin_info.flags = flags;
     vkBeginCommandBuffer(m_command_buffer, &begin_info);
+
+    // We must clear the staging buffers which could be left over from previous use of this command buffer
+    m_staging_bufs.clear();
     return *this;
 }
 

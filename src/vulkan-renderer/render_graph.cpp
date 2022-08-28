@@ -82,9 +82,8 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
         assert(false);
     }
 
-    VmaAllocationInfo &alloc_info = physical.m_alloc_info;
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
-                                            &physical.m_allocation, &alloc_info);
+                                            &physical.m_allocation, &physical.m_alloc_info);
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create buffer!", result);
     }
@@ -99,7 +98,6 @@ void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalI
     image_ci.extent.width = m_swapchain.extent().width;
     image_ci.extent.height = m_swapchain.extent().height;
     image_ci.extent.depth = 1;
-
     image_ci.arrayLayers = 1;
     image_ci.mipLevels = 1;
     image_ci.format = texture_resource.m_format;
@@ -112,10 +110,11 @@ void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalI
                          : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     VmaAllocationInfo alloc_info;
+    // TODO: Assign proper name to this image inside of rendergraph
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &physical.m_image,
                                            &physical.m_allocation, &alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Failed to create image!", result);
+        throw VulkanException("Error: vkCreateImage failed for rendergraph image", result);
     }
 }
 
@@ -130,7 +129,11 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
     image_view_ci.subresourceRange.levelCount = 1;
     image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    m_device.create_image_view(image_view_ci, &physical.m_image_view, texture_resource.m_name);
+    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateImageView failed for image view " + texture_resource.m_name + "!",
+                              result);
+    }
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
@@ -140,13 +143,19 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
     pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
     pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
 
-    m_device.create_pipeline_layout(pipeline_layout_ci, &physical.m_pipeline_layout, stage->name());
+    if (const auto result =
+            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + stage->name() + "!",
+                              result);
+    }
 }
 
-void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical,
+void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
                                         const std::uint32_t image_index) const {
-    auto &cmd_buf = physical.m_command_buffers[image_index];
     cmd_buf.begin_command_buffer();
+
+    const PhysicalStage &physical = *stage->m_physical;
 
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
@@ -196,6 +205,10 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
     if (graphics_stage != nullptr) {
         cmd_buf.end_render_pass();
     }
+
+    // TODO: Find a more performant solution instead of placing a full memory barrier after each stage!
+    cmd_buf.pipeline_full_memory_barrier();
+
     cmd_buf.end_command_buffer();
 }
 
@@ -267,7 +280,10 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
     render_pass_ci.pDependencies = &subpass_dependency;
     render_pass_ci.pSubpasses = &subpass_description;
 
-    m_device.create_render_pass(render_pass_ci, &physical.m_render_pass, stage->name());
+    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateRenderPass failed for renderpass " + stage->name() + " !", result);
+    }
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -367,7 +383,11 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     pipeline_ci.pStages = stage->m_shaders.data();
 
     // TODO: Pipeline caching (basically load the render graph from a file)
-    m_device.create_graphics_pipeline(pipeline_ci, &physical.m_pipeline, stage->name());
+    if (const auto result =
+            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + stage->name() + " !", result);
+    }
 }
 
 void RenderGraph::compile(const RenderResource *target) {
@@ -485,30 +505,26 @@ void RenderGraph::compile(const RenderResource *target) {
         }
     }
 
-    m_log->trace("Allocating command buffers for stage:");
+    m_log->trace("Creating semaphore for stage:");
 
     // Allocate command buffers and finished semaphore.
     for (const auto *stage : m_stage_stack) {
         auto &physical = *stage->m_physical;
-        physical.m_finished_semaphore =
-            std::make_unique<wrapper::Semaphore>(m_device, "Finished semaphore for stage " + stage->m_name);
+        physical.m_finished_semaphore = std::make_unique<wrapper::Semaphore>(m_device, stage->m_name);
         m_log->trace("   - {}", stage->m_name);
-        for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-            physical.m_command_buffers.emplace_back(m_device, m_command_pool,
-                                                    "Command buffer for stage " + stage->m_name);
-        }
     }
 }
 
-VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue,
-                                VkFence signal_fence) {
+VkSemaphore RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
             auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
 
-            // Destroy the old buffer and create a new one with the required size.
-            vmaDestroyBuffer(m_device.allocator(), physical.m_buffer, physical.m_allocation);
+            if (physical.m_buffer != nullptr) {
+                vmaDestroyBuffer(m_device.allocator(), physical.m_buffer, physical.m_allocation);
+            }
+
             build_buffer(*buffer_resource, physical);
 
             // Upload new data.
@@ -518,39 +534,29 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
         }
     }
 
-    // Re-record all command buffers. This isn't great, but it's fine for simple rendering pipelines. Eventually we'll
-    // want to generate these in parallel.
-    vkResetCommandPool(m_device.device(), m_command_pool, 0);
-    for (const auto *stage : m_stage_stack) {
-        record_command_buffer(stage, *stage->m_physical, image_index);
-    }
-
-    auto submit_info = wrapper::make_info<VkSubmitInfo>();
-    submit_info.commandBufferCount = 1;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.waitSemaphoreCount = 1;
-
-    std::array<VkPipelineStageFlags, 1> wait_stage_mask{
-        // Wait on wait_semaphore before writing to the framebuffer.
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    };
-    submit_info.pWaitDstStageMask = wait_stage_mask.data();
-
-    std::vector<VkSemaphore> wait_semaphores;
-    for (const auto *stage : m_stage_stack) {
-        wait_semaphores.push_back(wait_semaphore);
-        wait_semaphore = stage->m_physical->m_finished_semaphore->get();
-    }
-
+    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     std::vector<VkSubmitInfo> submit_infos;
-    for (std::size_t i = 0; i < m_stage_stack.size(); i++) {
-        const auto &physical = *m_stage_stack[i]->m_physical;
-        submit_info.pCommandBuffers = physical.m_command_buffers[image_index].ptr();
-        submit_info.pSignalSemaphores = physical.m_finished_semaphore->ptr();
-        submit_info.pWaitSemaphores = &wait_semaphores[i];
+
+    for (const auto &stage : m_stage_stack) {
+        const auto &cmd_buf = m_device.request_command_buffer("rendergraph");
+
+        // Record one command buffer per stage
+        record_command_buffer(stage, cmd_buf, image_index);
+
+        auto submit_info = wrapper::make_info<VkSubmitInfo>();
+        submit_info.commandBufferCount = 1;
+        // We store the raw pointer to the VkCommandBuffer which lives in the static thread_local command pool of the
+        // device wrapper, so this pointer does not become invalid.
+        submit_info.pCommandBuffers = cmd_buf.ptr();
+        submit_info.pWaitDstStageMask = stage_mask.data();
         submit_infos.push_back(submit_info);
     }
-    vkQueueSubmit(graphics_queue, submit_infos.size(), submit_infos.data(), signal_fence);
+
+    if (const auto result = vkQueueSubmit(graphics_queue, static_cast<std::uint32_t>(submit_infos.size()),
+                                          submit_infos.data(), signal_fence)) {
+        throw VulkanException("Error: vkQueueSubmit failed!", result);
+    }
+
     return m_stage_stack.back()->m_physical->m_finished_semaphore->get();
 }
 

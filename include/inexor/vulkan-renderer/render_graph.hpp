@@ -334,7 +334,6 @@ class PhysicalStage : public RenderGraphObject {
     friend RenderGraph;
 
 private:
-    std::vector<wrapper::CommandBuffer> m_command_buffers;
     std::unique_ptr<wrapper::Semaphore> m_finished_semaphore;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
@@ -377,8 +376,7 @@ public:
 
 class RenderGraph {
 private:
-    const wrapper::Device &m_device;
-    VkCommandPool m_command_pool{VK_NULL_HANDLE};
+    wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
@@ -397,15 +395,16 @@ private:
 
     // Functions for building stage related vulkan objects.
     void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
-    void record_command_buffer(const RenderStage *, PhysicalStage &, std::uint32_t image_index) const;
+    void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf,
+                               std::uint32_t image_index) const;
 
     // Functions for building graphics stage related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage &) const;
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage &) const;
 
 public:
-    RenderGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
-        : m_device(device), m_command_pool(command_pool), m_swapchain(swapchain) {}
+    RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
+        : m_device(device), m_swapchain(swapchain) {}
 
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
@@ -429,12 +428,9 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing.
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
-    /// @param wait_semaphore The semaphore to wait on before rendering, typically some kind of "swapchain image
-    /// available" semaphore
     /// @param graphics_queue The graphics queue to push rendering commands to
     /// @param signal_fence The fence to signal on completion of the whole frame
-    VkSemaphore render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue,
-                       VkFence signal_fence);
+    VkSemaphore render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence);
 };
 
 template <typename T>
