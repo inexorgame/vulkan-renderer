@@ -181,6 +181,10 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_command_buffer() const; // NOLINT
 
+    /// Call vkCmdEndRenderPass
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_render_pass() const; // NOLINT
+
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
@@ -219,18 +223,31 @@ public:
     /// @warning You should avoid full barriers since they are not the most performant solution in most cases
     const CommandBuffer &pipeline_full_memory_barrier() const;
 
-    /// @brief Update push constant data.
+    /// Call vkCmdPushConstants
     /// @param layout The pipeline layout
     /// @param stage The shader stage that will be accepting the push constants
     /// @param size The size of the push constant data in bytes
     /// @param data A pointer to the push constant data
-    void push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size, void *data) const;
+    /// @param offset The offset value (``0`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, // NOLINT
+                                        std::uint32_t size, const void *data, VkDeviceSize offset = 0) const;
+
+    /// Call vkCmdPushConstants
+    /// @tparam T the data type of the push constant
+    /// @param layout The pipeline layout
+    /// @param data A const reference to the data
+    /// @param stage The shader stage that will be accepting the push constants
+    /// @param offset The offset value (``0`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    template <typename T>
+    const CommandBuffer &push_constant(const VkPipelineLayout layout, const T &data, // NOLINT
+                                       const VkShaderStageFlags stage, const VkDeviceSize offset = 0) const {
+        return push_constants(layout, stage, sizeof(data), &data, offset);
+    }
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdEndRenderPass.
-    void end_render_pass() const;
 
     [[nodiscard]] VkCommandBuffer get() const {
         return m_command_buffer;

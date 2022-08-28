@@ -220,6 +220,11 @@ const CommandBuffer &CommandBuffer::end_command_buffer() const {
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::end_render_pass() const {
+    vkCmdEndRenderPass(m_command_buffer);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags src_stage_flags,
                                                      const VkPipelineStageFlags dst_stage_flags,
                                                      const std::span<const VkImageMemoryBarrier> img_mem_barriers,
@@ -255,13 +260,14 @@ const CommandBuffer &CommandBuffer::pipeline_full_memory_barrier() const {
     return pipeline_memory_barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, mem_barrier);
 }
 
-void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size,
-                                   void *data) const {
-    vkCmdPushConstants(m_command_buffer, layout, stage, 0, size, data);
-}
-
-void CommandBuffer::end_render_pass() const {
-    vkCmdEndRenderPass(m_command_buffer);
+const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout, const VkShaderStageFlags stage,
+                                                   const std::uint32_t size, const void *data,
+                                                   const VkDeviceSize offset) const {
+    assert(layout);
+    assert(size > 0);
+    assert(data);
+    vkCmdPushConstants(m_command_buffer, layout, stage, offset, size, data);
+    return *this;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
