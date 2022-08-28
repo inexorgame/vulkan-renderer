@@ -57,6 +57,13 @@ const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const V
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buf, const VkIndexType index_type,
+                                                      const VkDeviceSize offset) const {
+    assert(buf);
+    vkCmdBindIndexBuffer(m_command_buffer, buf, offset, index_type);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
     assert(pipeline);
@@ -71,10 +78,6 @@ void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags s
 
 void CommandBuffer::end() const {
     vkEndCommandBuffer(m_command_buffer);
-}
-
-void CommandBuffer::bind_index_buffer(VkBuffer buffer) const {
-    vkCmdBindIndexBuffer(m_command_buffer, buffer, 0, VK_INDEX_TYPE_UINT32);
 }
 
 void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {

@@ -57,6 +57,14 @@ public:
                                               std::uint32_t first_set = 0,
                                               std::span<const std::uint32_t> dyn_offsets = {}) const;
 
+    /// Call vkCmdBindIndexBuffer
+    /// @param buf The index buffer to bind
+    /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
+    /// @param offset The offset (``0`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_index_buffer(VkBuffer buf, VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
+                                           VkDeviceSize offset = 0) const;
+
     /// Call vkCmdBindPipeline
     /// @param pipeline The graphics pipeline to bind
     /// @param bind_point The pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
@@ -76,11 +84,6 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdBindIndexBuffer.
-    /// @todo Don't hardcode 16 for index bit width here.
-    /// @param buffer The index buffer to bind.
-    void bind_index_buffer(VkBuffer buffer) const;
 
     /// @brief Call vkCmdBindVertexBuffers.
     /// @param buffers A std::vector of vertex buffers to bind.
