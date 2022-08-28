@@ -40,7 +40,7 @@ public:
     /// @param data_size The size of the memory to copy from data pointer.
     /// @param buffer_usage The buffer usage flags.
     /// @param memory_usage The VMA memory usage flags which specify the required memory allocation.
-    GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size, void *data,
+    GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &buffer_size, const void *data,
                     std::size_t data_size, const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage);
 
     GPUMemoryBuffer(const GPUMemoryBuffer &) = delete;
