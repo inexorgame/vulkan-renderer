@@ -39,6 +39,12 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi,
+                                                      const VkSubpassContents subpass_contents) const {
+    vkCmdBeginRenderPass(m_command_buffer, &render_pass_bi, subpass_contents);
+    return *this;
+}
+
 void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const {
     vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1,
                             descriptor.descriptor_sets().data(), 0, nullptr);
@@ -51,10 +57,6 @@ void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags s
 
 void CommandBuffer::end() const {
     vkEndCommandBuffer(m_command_buffer);
-}
-
-void CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const {
-    vkCmdBeginRenderPass(m_command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void CommandBuffer::bind_graphics_pipeline(VkPipeline pipeline) const {

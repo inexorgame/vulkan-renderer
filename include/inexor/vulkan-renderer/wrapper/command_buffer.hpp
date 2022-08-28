@@ -37,6 +37,13 @@ public:
     /// @param flags The command buffer usage flags, 0 by default
     const CommandBuffer &begin_command_buffer(VkCommandBufferUsageFlags flags = 0) const; // NOLINT
 
+    /// Call vkCmdBeginRenderPass
+    /// @param render_pass_bi The renderpass begin info
+    /// @param subpass_contents The subpass contents (``VK_SUBPASS_CONTENTS_INLINE`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi, // NOLINT
+                                           VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
+
     /// @brief Call vkCmdBindDescriptorSets.
     /// @param descriptor The const reference to the resource descriptor RAII wrapper instance.
     /// @param layout The pipeline layout which will be used to bind the resource descriptor.
@@ -54,10 +61,6 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdBeginRenderPass.
-    /// @param render_pass_bi The const reference to the VkRenderPassBeginInfo which is used.
-    void begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi) const;
 
     /// @brief Call vkCmdBindPipeline.
     /// @param pipeline The graphics pipeline to bind.
