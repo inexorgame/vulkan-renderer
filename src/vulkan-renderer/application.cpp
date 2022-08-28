@@ -491,7 +491,7 @@ Application::Application(int argc, char **argv) {
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
+    wrapper::DescriptorBuilder descriptor_builder(*m_device);
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
     m_descriptors.emplace_back(

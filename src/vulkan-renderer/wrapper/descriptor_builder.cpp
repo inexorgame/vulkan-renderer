@@ -9,10 +9,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-DescriptorBuilder::DescriptorBuilder(const Device &device, std::uint32_t swapchain_image_count)
-    : m_device(device), m_swapchain_image_count(swapchain_image_count) {
+DescriptorBuilder::DescriptorBuilder(const Device &device) : m_device(device) {
     assert(m_device.device());
-    assert(m_swapchain_image_count > 0);
 }
 
 ResourceDescriptor DescriptorBuilder::build(std::string name) {
@@ -21,8 +19,8 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     assert(m_write_sets.size() == m_layout_bindings.size());
 
     // Generate a new resource descriptor.
-    ResourceDescriptor generated_descriptor(m_device, m_swapchain_image_count, std::move(m_layout_bindings),
-                                            std::move(m_write_sets), std::move(name));
+    ResourceDescriptor generated_descriptor(m_device, std::move(m_layout_bindings), std::move(m_write_sets),
+                                            std::move(name));
 
     m_descriptor_buffer_infos.clear();
     m_descriptor_image_infos.clear();
