@@ -265,12 +265,10 @@ class PhysicalResource : public RenderGraphObject {
     friend RenderGraph;
 
 protected:
-    // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
-    const VmaAllocator m_allocator;
-    const VkDevice m_device;
+    const wrapper::Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
-    PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}
+    PhysicalResource(const wrapper::Device &device) : m_device(device) {}
 
 public:
     PhysicalResource(const PhysicalResource &) = delete;
@@ -289,7 +287,7 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
-    PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;
     ~PhysicalBuffer() override;
@@ -306,7 +304,7 @@ private:
     VkImageView m_image_view{VK_NULL_HANDLE};
 
 public:
-    PhysicalImage(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    PhysicalImage(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
     ~PhysicalImage() override;
@@ -322,8 +320,8 @@ private:
     const wrapper::Swapchain &m_swapchain;
 
 public:
-    PhysicalBackBuffer(VmaAllocator allocator, VkDevice device, const wrapper::Swapchain &swapchain)
-        : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
+    PhysicalBackBuffer(const wrapper::Device &device, const wrapper::Swapchain &swapchain)
+        : PhysicalResource(device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
     ~PhysicalBackBuffer() override = default;
@@ -337,15 +335,12 @@ class PhysicalStage : public RenderGraphObject {
 
 private:
     std::vector<wrapper::CommandBuffer> m_command_buffers;
-    const wrapper::Device &m_device;
     std::unique_ptr<wrapper::Semaphore> m_finished_semaphore;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
 protected:
-    [[nodiscard]] VkDevice device() const {
-        return m_device.device();
-    }
+    const wrapper::Device &m_device;
 
 public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}

@@ -45,12 +45,12 @@ void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
 }
 
 PhysicalBuffer::~PhysicalBuffer() {
-    vmaDestroyBuffer(m_allocator, m_buffer, m_allocation);
+    vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
 }
 
 PhysicalImage::~PhysicalImage() {
-    vkDestroyImageView(m_device, m_image_view, nullptr);
-    vmaDestroyImage(m_allocator, m_image, m_allocation);
+    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
+    vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
 }
 
 PhysicalStage::~PhysicalStage() {
@@ -59,7 +59,7 @@ PhysicalStage::~PhysicalStage() {
 }
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
-    vkDestroyRenderPass(device(), m_render_pass, nullptr);
+    vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
 }
 
 void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
@@ -411,7 +411,7 @@ void RenderGraph::compile(const RenderResource *target) {
 
     for (auto &buffer_resource : m_buffer_resources) {
         m_log->trace("   - {}", buffer_resource->m_name);
-        buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device.allocator(), m_device.device());
+        buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device);
     }
 
     m_log->trace("Allocating physical resource for texture:");
@@ -421,8 +421,7 @@ void RenderGraph::compile(const RenderResource *target) {
         // Back buffer gets special handling.
         if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
             // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
-            texture_resource->m_physical =
-                std::make_shared<PhysicalBackBuffer>(m_device.allocator(), m_device.device(), m_swapchain);
+            texture_resource->m_physical = std::make_shared<PhysicalBackBuffer>(m_device, m_swapchain);
             continue;
         }
 
@@ -433,7 +432,7 @@ void RenderGraph::compile(const RenderResource *target) {
         alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
 #endif
 
-        auto physical = std::make_shared<PhysicalImage>(m_device.allocator(), m_device.device());
+        auto physical = std::make_shared<PhysicalImage>(m_device);
         texture_resource->m_physical = physical;
         alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
         build_image(*texture_resource, *physical, &alloc_ci);
@@ -509,7 +508,7 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkSemaphore wait_sema
             auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
 
             // Destroy the old buffer and create a new one with the required size.
-            vmaDestroyBuffer(physical.m_allocator, physical.m_buffer, physical.m_allocation);
+            vmaDestroyBuffer(m_device.allocator(), physical.m_buffer, physical.m_allocation);
             build_buffer(*buffer_resource, physical);
 
             // Upload new data.
