@@ -81,6 +81,44 @@ public:
                                              std::uint32_t first_binding = 0,
                                              std::span<const VkDeviceSize> offsets = {}) const;
 
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The the source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param img_mem_barriers The image memory barriers
+    /// @note We start with image memory barriers as no-default parameter, since it's the most common use case
+    /// @param mem_barriers The memory barriers (empty by default)
+    /// @param buf_mem_barriers The buffer memory barriers (empty by default)
+    /// @param dep_flags The dependency flags (``0`` by default)
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_barrier(VkPipelineStageFlags src_stage_flags, // NOLINT
+                                          VkPipelineStageFlags dst_stage_flags,
+                                          std::span<const VkImageMemoryBarrier> img_mem_barriers,
+                                          std::span<const VkMemoryBarrier> mem_barriers = {},
+                                          std::span<const VkBufferMemoryBarrier> buf_mem_barriers = {},
+                                          VkDependencyFlags dep_flags = 0) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The the source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param barrier The image memory barrier
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_image_memory_barrier(VkPipelineStageFlags src_stage_flags, // NOLINT
+                                                       VkPipelineStageFlags dst_stage_flags,
+                                                       const VkImageMemoryBarrier &barrier) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The the source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param barrier The memory barrier
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_memory_barrier(VkPipelineStageFlags src_stage_flags, // NOLINT
+                                                 VkPipelineStageFlags dst_stage_flags,
+                                                 const VkMemoryBarrier &barrier) const;
+
+    /// Call vkCmdPipelineBarrier to place a full memory barrier
+    /// @warning You should avoid full barriers since they are not the most performant solution in most cases
+    const CommandBuffer &pipeline_full_memory_barrier() const;
+
     /// @brief Update push constant data.
     /// @param layout The pipeline layout
     /// @param stage The shader stage that will be accepting the push constants
