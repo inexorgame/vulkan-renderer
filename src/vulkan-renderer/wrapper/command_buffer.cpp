@@ -163,6 +163,28 @@ CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_
     return change_image_layout(image, old_layout, new_layout, subres_range, src_mask, dst_mask);
 }
 
+const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
+                                                const std::span<const VkBufferCopy> copy_regions) const {
+    assert(src_buf);
+    assert(dst_buf);
+    assert(!copy_regions.empty());
+    vkCmdCopyBuffer(m_command_buffer, src_buf, dst_buf, static_cast<std::uint32_t>(copy_regions.size()),
+                    copy_regions.data());
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
+                                                const VkBufferCopy &copy_region) const {
+    return copy_buffer(src_buf, dst_buf, {&copy_region, 1});
+}
+
+const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
+                                                const VkDeviceSize src_buf_size) const {
+    VkBufferCopy buf_copy{};
+    buf_copy.size = src_buf_size;
+    return copy_buffer(src_buf, dst_buf, buf_copy);
+}
+
 const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags src_stage_flags,
                                                      const VkPipelineStageFlags dst_stage_flags,
                                                      const std::span<const VkImageMemoryBarrier> img_mem_barriers,
