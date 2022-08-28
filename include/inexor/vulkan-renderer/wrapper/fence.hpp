@@ -43,6 +43,9 @@ public:
 
     /// @brief Call vkResetFences.
     void reset() const;
+
+    /// Call vkGetFenceStatus
+    [[nodiscard]] VkResult status() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
