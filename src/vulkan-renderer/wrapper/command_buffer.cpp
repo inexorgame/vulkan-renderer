@@ -32,10 +32,11 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
     m_name = std::move(other.m_name);
 }
 
-void CommandBuffer::begin(VkCommandBufferUsageFlags flags) const {
+const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
     auto begin_info = make_info<VkCommandBufferBeginInfo>();
     begin_info.flags = flags;
     vkBeginCommandBuffer(m_command_buffer, &begin_info);
+    return *this;
 }
 
 void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const {

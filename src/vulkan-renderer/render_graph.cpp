@@ -146,7 +146,7 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
 void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage &physical,
                                         const std::uint32_t image_index) const {
     auto &cmd_buf = physical.m_command_buffers[image_index];
-    cmd_buf.begin();
+    cmd_buf.begin_command_buffer();
 
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();

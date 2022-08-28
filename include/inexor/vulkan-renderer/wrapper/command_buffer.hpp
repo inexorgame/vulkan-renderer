@@ -33,12 +33,9 @@ public:
     CommandBuffer &operator=(const CommandBuffer &) = delete;
     CommandBuffer &operator=(CommandBuffer &&) = delete;
 
-    /// @brief Call vkBeginCommandBuffer.
-    /// @note Sometimes it's useful to pass VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT to specify that a command
-    /// buffer can be resubmitted to a queue while it is in the pending state, and recorded into multiple primary
-    /// command buffers. Otherwise, synchronization must be done using a VkFence.
-    /// @param flags The command buffer usage flags, 0 by default.
-    void begin(VkCommandBufferUsageFlags flags = 0) const;
+    /// Call vkBeginCommandBuffer
+    /// @param flags The command buffer usage flags, 0 by default
+    const CommandBuffer &begin_command_buffer(VkCommandBufferUsageFlags flags = 0) const; // NOLINT
 
     /// @brief Call vkCmdBindDescriptorSets.
     /// @param descriptor The const reference to the resource descriptor RAII wrapper instance.
