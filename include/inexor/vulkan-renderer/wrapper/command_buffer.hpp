@@ -57,6 +57,13 @@ public:
                                               std::uint32_t first_set = 0,
                                               std::span<const std::uint32_t> dyn_offsets = {}) const;
 
+    /// Call vkCmdBindPipeline
+    /// @param pipeline The graphics pipeline to bind
+    /// @param bind_point The pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_pipeline(VkPipeline pipeline, // NOLINT
+                                       VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+
     /// @brief Update push constant data.
     /// @param layout The pipeline layout
     /// @param stage The shader stage that will be accepting the push constants
@@ -69,10 +76,6 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdBindPipeline.
-    /// @param pipeline The graphics pipeline to bind.
-    void bind_graphics_pipeline(VkPipeline pipeline) const;
 
     /// @brief Call vkCmdBindIndexBuffer.
     /// @todo Don't hardcode 16 for index bit width here.

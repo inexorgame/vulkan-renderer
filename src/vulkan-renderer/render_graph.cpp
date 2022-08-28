@@ -190,7 +190,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
         cmd_buf.bind_vertex_buffers(vertex_buffers);
     }
 
-    cmd_buf.bind_graphics_pipeline(physical.m_pipeline);
+    cmd_buf.bind_pipeline(physical.m_pipeline);
     stage->m_on_record(physical, cmd_buf);
 
     if (graphics_stage != nullptr) {
