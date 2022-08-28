@@ -95,6 +95,14 @@ public:
         return m_device;
     }
 
+    /// A wrapper method for beginning, ending and submitting command buffers
+    /// This method calls the request method for the given command pool, begins the command buffer, executes the lambda,
+    /// ends recording the command buffer, submits it and waits for it.
+    /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param cmd_lambda The command lambda to execute
+    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda,
+                 QueueType queue_type = QueueType::GRAPHICS);
+
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_graphics_card;
     }

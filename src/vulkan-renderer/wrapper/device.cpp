@@ -363,6 +363,18 @@ Device::~Device() {
     vkDestroyDevice(m_device, nullptr);
 }
 
+void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda,
+                     QueueType queue_type) {
+    assert(queue_type == QueueType::GRAPHICS);
+
+    // TODO: Support other queues (not just graphics).
+    const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
+    cmd_buf.begin_command_buffer();
+    // Execute the lambda
+    cmd_lambda(cmd_buf);
+    cmd_buf.end_command_buffer().submit_and_wait();
+}
+
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
                                    const std::string &name) const {
 #ifndef NDEBUG
