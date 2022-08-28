@@ -177,6 +177,10 @@ public:
                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
 
+    /// Call vkEndCommandBuffer
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_command_buffer() const; // NOLINT
+
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
@@ -221,9 +225,6 @@ public:
     /// @param size The size of the push constant data in bytes
     /// @param data A pointer to the push constant data
     void push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size, void *data) const;
-
-    /// @brief Call vkEndCommandBuffer.
-    void end() const;
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)

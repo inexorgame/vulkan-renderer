@@ -196,7 +196,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, PhysicalStage 
     if (graphics_stage != nullptr) {
         cmd_buf.end_render_pass();
     }
-    cmd_buf.end();
+    cmd_buf.end_command_buffer();
 }
 
 void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
