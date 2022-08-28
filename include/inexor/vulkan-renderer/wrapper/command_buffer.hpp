@@ -156,6 +156,15 @@ public:
     const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img, // NOLINT
                                               const VkBufferImageCopy &copy_region) const;
 
+    /// Call vkCmdDraw
+    /// @param vert_count The number of vertices to draw
+    /// @param inst_count The number of instances (``1`` by default)
+    /// @param first_vert The index of the first vertex (``0`` by default)
+    /// @param first_inst The instance ID of the first instance to draw (``0`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &draw(std::uint32_t vert_count, std::uint32_t inst_count = 1, // NOLINT
+                              std::uint32_t first_vert = 0, std::uint32_t first_inst = 0) const;
+
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
@@ -206,10 +215,6 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdDraw.
-    /// @param vertex_count The number of vertices to draw.
-    void draw(std::size_t vertex_count) const;
 
     /// @brief Call vkCmdDrawIndexed.
     /// @param index_count The number of indices to draw.
