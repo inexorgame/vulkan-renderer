@@ -268,7 +268,7 @@ protected:
     const wrapper::Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
-    PhysicalResource(const wrapper::Device &device) : m_device(device) {}
+    explicit PhysicalResource(const wrapper::Device &device) : m_device(device) {}
 
 public:
     PhysicalResource(const PhysicalResource &) = delete;
@@ -287,7 +287,7 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
-    PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
+    explicit PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;
     ~PhysicalBuffer() override;
@@ -304,7 +304,7 @@ private:
     VkImageView m_image_view{VK_NULL_HANDLE};
 
 public:
-    PhysicalImage(const wrapper::Device &device) : PhysicalResource(device) {}
+    explicit PhysicalImage(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
     ~PhysicalImage() override;

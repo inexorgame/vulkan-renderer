@@ -23,7 +23,7 @@ class DescriptorBuilder {
 public:
     /// @brief Constructs the descriptor builder.
     /// @param device The const reference to a device RAII wrapper instance.
-    DescriptorBuilder(const Device &device);
+    explicit DescriptorBuilder(const Device &device);
 
     DescriptorBuilder(const DescriptorBuilder &) = delete;
     DescriptorBuilder(DescriptorBuilder &&) = delete;
