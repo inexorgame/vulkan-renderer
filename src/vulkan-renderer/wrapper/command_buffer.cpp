@@ -80,6 +80,89 @@ const CommandBuffer &CommandBuffer::bind_vertex_buffers(const std::span<const Vk
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_layout,
+                                                        const VkImageLayout new_layout,
+                                                        const VkImageSubresourceRange subres_range,
+                                                        const VkPipelineStageFlags src_mask,
+                                                        const VkPipelineStageFlags dst_mask) const {
+    assert(new_layout != old_layout);
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.oldLayout = old_layout;
+    barrier.newLayout = new_layout;
+    barrier.image = image;
+    barrier.subresourceRange = subres_range;
+
+    switch (old_layout) {
+    case VK_IMAGE_LAYOUT_UNDEFINED:
+        barrier.srcAccessMask = 0;
+        break;
+    case VK_IMAGE_LAYOUT_PREINITIALIZED:
+        barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        break;
+    default:
+        break;
+    }
+
+    switch (new_layout) {
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+        barrier.dstAccessMask = barrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        break;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+        if (barrier.srcAccessMask == 0) {
+            barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+        }
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        break;
+    default:
+        break;
+    }
+
+    return pipeline_image_memory_barrier(src_mask, dst_mask, barrier);
+}
+
+const CommandBuffer &
+CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_layout, const VkImageLayout new_layout,
+                                   const std::uint32_t mip_level_count, const std::uint32_t array_layer_count,
+                                   const std::uint32_t base_mip_level, const std::uint32_t base_array_layer,
+                                   const VkPipelineStageFlags src_mask, const VkPipelineStageFlags dst_mask) const {
+
+    const VkImageSubresourceRange subres_range{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                               .baseMipLevel = base_mip_level,
+                                               .levelCount = mip_level_count,
+                                               .baseArrayLayer = base_array_layer,
+                                               .layerCount = array_layer_count};
+
+    return change_image_layout(image, old_layout, new_layout, subres_range, src_mask, dst_mask);
+}
+
 const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags src_stage_flags,
                                                      const VkPipelineStageFlags dst_stage_flags,
                                                      const std::span<const VkImageMemoryBarrier> img_mem_barriers,

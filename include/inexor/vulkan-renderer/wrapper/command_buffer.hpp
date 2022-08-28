@@ -82,6 +82,39 @@ public:
                                              std::span<const VkDeviceSize> offsets = {}) const;
 
     /// Call vkCmdPipelineBarrier
+    /// @param image The image
+    /// @param old_layout The old layout of the image
+    /// @param new_layout The new layout of the image
+    /// @note The new layout must be different from the old layout!
+    /// @param subres_range The image subresource range
+    /// @param src_mask The source pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
+    /// @param dst_mask The destination pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer & // NOLINT
+    change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
+                        VkImageSubresourceRange subres_range,
+                        VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                        VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param image The image
+    /// @param old_layout The old layout of the image
+    /// @param new_layout The new layout of the image
+    /// @param mip_level_count The number of mip levels (The parameter in ``VkImageSubresourceRange``)
+    /// @param array_layer_count The number of array layers (The parameter in ``VkImageSubresourceRange``)
+    /// @param base_mip_level The base mip level index (The parameter in ``VkImageSubresourceRange``)
+    /// @param base_array_layer The base array layer index (The parameter in ``VkImageSubresourceRange``)
+    /// @param src_mask The source pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
+    /// @param dst_mask The destination pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer & // NOLINT
+    change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
+                        std::uint32_t mip_level_count = 1, std::uint32_t array_layer_count = 1,
+                        std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0,
+                        VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                        VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
+
+    /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
     /// @param img_mem_barriers The image memory barriers
