@@ -223,6 +223,13 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
+                                                         const VkDeviceSize data_size, // NOLINT
+                                                         const VkImage dst_img, const VkBufferImageCopy &copy_region,
+                                                         const std::string &name) const {
+    return copy_buffer_to_image(create_staging_buffer(data, data_size, name), dst_img, copy_region);
+}
+
 const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count, const std::uint32_t inst_count,
                                          const std::uint32_t first_vert, const std::uint32_t first_inst) const {
     vkCmdDraw(m_command_buffer, vert_count, inst_count, first_vert, first_inst);

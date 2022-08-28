@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/staging_buffer.hpp"
 
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
@@ -119,21 +118,14 @@ public:
             spdlog::warn("Not using an index buffer decreases performance drastically!");
         }
 
-        StagingBuffer staging_buffer_for_vertices(m_device, name, vertex_buffer_size, vertices.data(),
-                                                  vertex_buffer_size);
-
-        staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
-
-        if (!indices.empty()) {
-            VkDeviceSize indices_memory_size = sizeof(IndexType) * indices.size();
-
-            StagingBuffer staging_buffer_for_indices(m_device, name, index_buffer_size,
-                                                     static_cast<void *>(indices.data()), indices_memory_size);
-
-            staging_buffer_for_indices.upload_data_to_gpu(*m_index_buffer);
-        } else {
-            spdlog::warn("No index buffer created for mesh {}!", name);
-        }
+        m_device.execute(m_name, [&](const CommandBuffer &cmd_buf) {
+            cmd_buf.copy_buffer(vertices, m_vertex_buffer.buffer(), m_name);
+            if (!indices.empty()) {
+                cmd_buf.copy_buffer(indices, m_index_buffer.value().buffer());
+            } else {
+                spdlog::warn("No index buffer created for mesh {}!", name);
+            }
+        });
 
         update_vertices(vertices);
         update_indices(indices);
@@ -156,10 +148,9 @@ public:
 
         VkDeviceSize vertices_memory_size = sizeof(VertexType) * vertices.size();
 
-        StagingBuffer staging_buffer_for_vertices(m_device, name, size_of_vertex_buffer, vertices,
-                                                  vertices_memory_size);
-
-        staging_buffer_for_vertices.upload_data_to_gpu(m_vertex_buffer);
+        m_device.execute(m_name, [&](const CommandBuffer &cmd_buf) {
+            cmd_buf.copy_buffer(vertices, m_vertex_buffer.buffer(), m_name);
+        });
 
         update_vertices(vertices);
     }
