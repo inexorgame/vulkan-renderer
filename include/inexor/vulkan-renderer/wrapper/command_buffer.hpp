@@ -3,13 +3,13 @@
 #include <vulkan/vulkan_core.h>
 
 #include <cstdint>
+#include <span>
 #include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
-class ResourceDescriptor;
 
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
@@ -44,10 +44,18 @@ public:
     const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi, // NOLINT
                                            VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
 
-    /// @brief Call vkCmdBindDescriptorSets.
-    /// @param descriptor The const reference to the resource descriptor RAII wrapper instance.
-    /// @param layout The pipeline layout which will be used to bind the resource descriptor.
-    void bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const;
+    /// Call vkCmdBindDescriptorSets
+    /// @param desc_sets The descriptor sets to bind
+    /// @param layout The pipeline layout
+    /// @param bind_point the pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
+    /// @param first_set The first descriptor set (``0`` by default)
+    /// @param dyn_offsets The dynamic offset values (empty by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_descriptor_sets(std::span<const VkDescriptorSet> desc_sets, // NOLINT
+                                              VkPipelineLayout layout,
+                                              VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                              std::uint32_t first_set = 0,
+                                              std::span<const std::uint32_t> dyn_offsets = {}) const;
 
     /// @brief Update push constant data.
     /// @param layout The pipeline layout

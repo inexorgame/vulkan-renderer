@@ -1,7 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -45,9 +44,17 @@ const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInf
     return *this;
 }
 
-void CommandBuffer::bind_descriptor(const ResourceDescriptor &descriptor, VkPipelineLayout layout) const {
-    vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1,
-                            descriptor.descriptor_sets().data(), 0, nullptr);
+const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const VkDescriptorSet> desc_sets,
+                                                         const VkPipelineLayout layout,
+                                                         const VkPipelineBindPoint bind_point,
+                                                         const std::uint32_t first_set,
+                                                         const std::span<const std::uint32_t> dyn_offsets) const {
+    assert(layout);
+    assert(!desc_sets.empty());
+    vkCmdBindDescriptorSets(m_command_buffer, bind_point, layout, first_set,
+                            static_cast<std::uint32_t>(desc_sets.size()), desc_sets.data(),
+                            static_cast<std::uint32_t>(dyn_offsets.size()), dyn_offsets.data());
+    return *this;
 }
 
 void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size,
