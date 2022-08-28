@@ -208,6 +208,13 @@ const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count, const s
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::draw_indexed(const std::uint32_t index_count, const std::uint32_t inst_count,
+                                                 const std::uint32_t first_index, const std::int32_t vert_offset,
+                                                 const std::uint32_t first_inst) const {
+    vkCmdDrawIndexed(m_command_buffer, index_count, inst_count, first_index, vert_offset, first_inst);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags src_stage_flags,
                                                      const VkPipelineStageFlags dst_stage_flags,
                                                      const std::span<const VkImageMemoryBarrier> img_mem_barriers,
@@ -250,10 +257,6 @@ void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags s
 
 void CommandBuffer::end() const {
     vkEndCommandBuffer(m_command_buffer);
-}
-
-void CommandBuffer::draw_indexed(std::size_t index_count) const {
-    vkCmdDrawIndexed(m_command_buffer, static_cast<std::uint32_t>(index_count), 1, 0, 0, 0);
 }
 
 void CommandBuffer::end_render_pass() const {

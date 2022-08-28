@@ -165,6 +165,18 @@ public:
     const CommandBuffer &draw(std::uint32_t vert_count, std::uint32_t inst_count = 1, // NOLINT
                               std::uint32_t first_vert = 0, std::uint32_t first_inst = 0) const;
 
+    /// Call vkCmdDrawIndexed
+    /// @param index_count The number of vertices to draw
+    /// @param inst_count The number of instances to draw (``1`` by defaul)
+    /// @param first_index The base index withing the index buffer (``0`` by default)
+    /// @param vert_offset The value added to the vertex index before indexing into the vertex buffer (``0`` by default)
+    /// @param first_inst The instance ID of the first instance to draw (``0`` by default)
+    /// @param index_count The number of indices to draw
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &draw_indexed(std::uint32_t index_count, std::uint32_t inst_count = 1, // NOLINT
+                                      std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
+                                      std::uint32_t first_inst = 0) const;
+
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
@@ -215,10 +227,6 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdDrawIndexed.
-    /// @param index_count The number of indices to draw.
-    void draw_indexed(std::size_t index_count) const;
 
     /// @brief Call vkCmdEndRenderPass.
     void end_render_pass() const;
