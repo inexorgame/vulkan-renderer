@@ -5,13 +5,30 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
-#include <stdexcept>
+#include <memory>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, const QueueType queue_type,
+                             std::string name)
+    : m_device(device), m_queue_type(queue_type), m_name(std::move(name)) {
+    auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>();
+    cmd_buf_ai.commandBufferCount = 1;
+    cmd_buf_ai.commandPool = cmd_pool;
+    cmd_buf_ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+    if (const auto result = vkAllocateCommandBuffers(m_device.device(), &cmd_buf_ai, &m_command_buffer);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkAllocateCommandBuffers failed!", result);
+    }
+
+    m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
+}
+
+/// THIS WILL BE DELETED AS PART OF THE REFACTORING BUT NEEDS TO STAY IN THIS COMMIT TO KEEP COMMITS SMALL
 CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool command_pool, std::string name)
-    : m_device(device), m_name(std::move(name)) {
+    : m_device(device), m_name(std::move(name)), m_queue_type(QueueType::GRAPHICS) {
     auto alloc_info = make_info<VkCommandBufferAllocateInfo>();
     alloc_info.commandBufferCount = 1;
     alloc_info.commandPool = command_pool;
@@ -24,11 +41,15 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, VkCommandPool comman
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
+
+    m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }
 
-CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
-    m_command_buffer = std::exchange(other.m_command_buffer, nullptr);
+CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
+    : m_device(other.m_device), m_queue_type(other.m_queue_type) {
+    m_command_buffer = std::exchange(other.m_command_buffer, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
+    m_wait_fence = std::exchange(other.m_wait_fence, nullptr);
 }
 
 const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
@@ -267,6 +288,11 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
     assert(size > 0);
     assert(data);
     vkCmdPushConstants(m_command_buffer, layout, stage, offset, size, data);
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::reset_fence() const {
+    m_wait_fence->reset();
     return *this;
 }
 

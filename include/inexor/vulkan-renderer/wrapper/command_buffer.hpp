@@ -2,7 +2,11 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include "inexor/vulkan-renderer/wrapper/fence.hpp"
+#include "inexor/vulkan-renderer/wrapper/queue_type.hpp"
+
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -17,8 +21,18 @@ class CommandBuffer {
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const wrapper::Device &m_device;
     std::string m_name;
+    const QueueType m_queue_type;
+    std::unique_ptr<Fence> m_wait_fence;
 
 public:
+    /// Default constructor
+    /// @param device A const reference to the device wrapper class
+    /// @param cmd_pool The command pool from which the command buffer will be allocated
+    /// @param queue_type The queue type the command pool was allocated for
+    /// @param name The internal debug marker name of the command buffer (must not be empty)
+    CommandBuffer(const Device &device, VkCommandPool cmd_pool, QueueType queue_type, std::string name);
+
+    /// THIS WILL BE DELETED AS PART OF THE REFACTORING BUT NEEDS TO STAY IN THIS COMMIT TO KEEP COMMITS SMALL
     /// @brief Default constructor.
     /// @param device The const reference to the device RAII wrapper class.
     /// @param command_pool The command pool from which the command buffer will be allocated.
@@ -185,6 +199,10 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_render_pass() const; // NOLINT
 
+    [[nodiscard]] VkResult fence_status() const {
+        return m_wait_fence->status();
+    }
+
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
@@ -256,6 +274,9 @@ public:
     [[nodiscard]] const VkCommandBuffer *ptr() const {
         return &m_command_buffer;
     }
+
+    /// Call the reset method of the Fence member
+    const CommandBuffer &reset_fence() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
