@@ -71,6 +71,15 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::bind_vertex_buffers(const std::span<const VkBuffer> bufs,
+                                                        const std::uint32_t first_binding,
+                                                        const std::span<const VkDeviceSize> offsets) const {
+    assert(!bufs.empty());
+    vkCmdBindVertexBuffers(m_command_buffer, first_binding, static_cast<std::uint32_t>(bufs.size()), bufs.data(),
+                           offsets.empty() ? std::vector<VkDeviceSize>(bufs.size(), 0).data() : offsets.data());
+    return *this;
+}
+
 void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size,
                                    void *data) const {
     vkCmdPushConstants(m_command_buffer, layout, stage, 0, size, data);
@@ -78,12 +87,6 @@ void CommandBuffer::push_constants(VkPipelineLayout layout, VkShaderStageFlags s
 
 void CommandBuffer::end() const {
     vkEndCommandBuffer(m_command_buffer);
-}
-
-void CommandBuffer::bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const {
-    std::vector<VkDeviceSize> offsets(buffers.size(), 0);
-    vkCmdBindVertexBuffers(m_command_buffer, 0, static_cast<std::uint32_t>(buffers.size()), buffers.data(),
-                           offsets.data());
 }
 
 void CommandBuffer::draw(std::size_t vertex_count) const {

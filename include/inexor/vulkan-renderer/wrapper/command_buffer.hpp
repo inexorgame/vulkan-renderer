@@ -72,6 +72,15 @@ public:
     const CommandBuffer &bind_pipeline(VkPipeline pipeline, // NOLINT
                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
+    /// Call vkCmdBindVertexBuffers
+    /// @param bufs The vertex buffers to bind
+    /// @param first_binding The first binding (``0`` by default)
+    /// @param offsets The device offsets (empty by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_vertex_buffers(std::span<const VkBuffer> bufs, // NOLINT
+                                             std::uint32_t first_binding = 0,
+                                             std::span<const VkDeviceSize> offsets = {}) const;
+
     /// @brief Update push constant data.
     /// @param layout The pipeline layout
     /// @param stage The shader stage that will be accepting the push constants
@@ -84,11 +93,6 @@ public:
 
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    /// @brief Call vkCmdBindVertexBuffers.
-    /// @param buffers A std::vector of vertex buffers to bind.
-    /// @todo Expose more parameters from vkCmdBindVertexBuffers as method arguments.
-    void bind_vertex_buffers(const std::vector<VkBuffer> &buffers) const;
 
     /// @brief Call vkCmdDraw.
     /// @param vertex_count The number of vertices to draw.
