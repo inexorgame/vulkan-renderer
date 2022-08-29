@@ -78,8 +78,9 @@ public:
     CommandBuffer &operator=(CommandBuffer &&) = delete;
 
     /// Call vkBeginCommandBuffer
-    /// @param flags The command buffer usage flags, 0 by default
-    const CommandBuffer &begin_command_buffer(VkCommandBufferUsageFlags flags = 0) const; // NOLINT
+    /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
+    const CommandBuffer & // NOLINT
+    begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 
     /// Call vkCmdBeginRenderPass
     /// @param render_pass_bi The renderpass begin info

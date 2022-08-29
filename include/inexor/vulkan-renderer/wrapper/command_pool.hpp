@@ -21,7 +21,6 @@ class CommandPool {
     VkCommandPool m_cmd_pool{VK_NULL_HANDLE};
 
     /// The command buffers which can be requested by the current thread
-    /// Each command buffer is created with ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT``
     std::vector<std::unique_ptr<CommandBuffer>> m_cmd_bufs;
 
 public:
