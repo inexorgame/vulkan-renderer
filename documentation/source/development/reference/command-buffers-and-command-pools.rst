@@ -44,7 +44,7 @@ Since the command pools are owned by a thread-global device object, the vector m
         // Note that thread_graphics_pool is implicitely static!
         thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
         if (thread_graphics_pool == nullptr) {
-            auto cmd_pool = std::make_unique<CommandPool>(*this, QueueType::GRAPHICS, "graphics pool");
+            auto cmd_pool = std::make_unique<CommandPool>(*this, "graphics pool");
             std::scoped_lock locker(m_mutex);
             thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
@@ -80,7 +80,7 @@ The request method of the command pool wrapper tries to find a command buffer wh
        }
        // We need to create a new command buffer because no free one was found
        // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
-       m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, m_queue_type, "command buffer"));
+       m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, "command buffer"));
        return *m_cmd_bufs.back();
     }
 
@@ -93,9 +93,8 @@ To automate beginning and ending of command buffer recording and submission, we 
 
 .. code-block:: cpp
 
-    void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda, QueueType queue_type) {
-       assert(queue_type == QueueType::GRAPHICS);
-       // TODO: Support other queues (not just graphics).
+    void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) {
+       // TODO: Support other queues (not just graphics)
        const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
        cmd_buf.begin_command_buffer();
        // Execute the lambda

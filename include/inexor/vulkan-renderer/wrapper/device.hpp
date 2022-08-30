@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "inexor/vulkan-renderer/wrapper/queue_type.hpp"
 
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
@@ -100,8 +99,7 @@ public:
     /// ends recording the command buffer, submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
     /// @param cmd_lambda The command lambda to execute
-    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda,
-                 QueueType queue_type = QueueType::GRAPHICS);
+    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda);
 
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;

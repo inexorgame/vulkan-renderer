@@ -371,11 +371,8 @@ Device::~Device() {
     vkDestroyDevice(m_device, nullptr);
 }
 
-void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda,
-                     QueueType queue_type) {
-    assert(queue_type == QueueType::GRAPHICS);
-
-    // TODO: Support other queues (not just graphics).
+void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) {
+    // TODO: Support other queues (not just graphics)
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
     cmd_buf.begin_command_buffer();
     // Execute the lambda
@@ -610,7 +607,7 @@ CommandPool &Device::thread_graphics_pool() {
     // Note that thread_graphics_pool is implicitely static!
     thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
     if (thread_graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, QueueType::GRAPHICS, "graphics pool");
+        auto cmd_pool = std::make_unique<CommandPool>(*this, "graphics pool");
         std::scoped_lock locker(m_mutex);
         thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }

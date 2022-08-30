@@ -4,7 +4,6 @@
 
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/queue_type.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -22,7 +21,6 @@ class CommandBuffer {
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const wrapper::Device &m_device;
     std::string m_name;
-    const QueueType m_queue_type;
     std::unique_ptr<Fence> m_wait_fence;
 
     // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
@@ -77,9 +75,8 @@ public:
     /// Default constructor
     /// @param device A const reference to the device wrapper class
     /// @param cmd_pool The command pool from which the command buffer will be allocated
-    /// @param queue_type The queue type the command pool was allocated for
     /// @param name The internal debug marker name of the command buffer (must not be empty)
-    CommandBuffer(const Device &device, VkCommandPool cmd_pool, QueueType queue_type, std::string name);
+    CommandBuffer(const Device &device, VkCommandPool cmd_pool, std::string name);
 
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;

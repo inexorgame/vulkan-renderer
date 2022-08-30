@@ -10,9 +10,8 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, const QueueType queue_type,
-                             std::string name)
-    : m_device(device), m_queue_type(queue_type), m_name(std::move(name)) {
+CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>();
     cmd_buf_ai.commandBufferCount = 1;
     cmd_buf_ai.commandPool = cmd_pool;
@@ -26,8 +25,7 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }
 
-CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept
-    : m_device(other.m_device), m_queue_type(other.m_queue_type) {
+CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
     m_command_buffer = std::exchange(other.m_command_buffer, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
     m_wait_fence = std::exchange(other.m_wait_fence, nullptr);
@@ -296,9 +294,7 @@ const CommandBuffer &CommandBuffer::submit() const {
     submit_info.commandBufferCount = 1;
     submit_info.pWaitDstStageMask = stage_mask.data();
 
-    if (const auto result =
-            vkQueueSubmit((m_queue_type == QueueType::GRAPHICS) ? m_device.graphics_queue() : m_device.transfer_queue(),
-                          1, &submit_info, m_wait_fence->get())) {
+    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, m_wait_fence->get())) {
         throw VulkanException("Error: vkQueueSubmit failed!", result);
     }
     return *this;

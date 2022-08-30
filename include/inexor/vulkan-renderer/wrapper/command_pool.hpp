@@ -4,7 +4,6 @@
 #include <vulkan/vulkan_core.h>
 
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/queue_type.hpp"
 
 #include <cassert>
 
@@ -16,8 +15,6 @@ class Device;
 class CommandPool {
     std::string m_name;
     const Device &m_device;
-    const QueueType m_queue_type;
-    const std::uint32_t m_queue_family_index;
     VkCommandPool m_cmd_pool{VK_NULL_HANDLE};
 
     /// The command buffers which can be requested by the current thread
@@ -26,9 +23,8 @@ class CommandPool {
 public:
     /// Default constructor
     /// @param device The device wrapper instance
-    /// @param queue_type The queue type
     /// @param name The internal debug marker name which will be assigned to this command pool
-    CommandPool(Device &device, QueueType queue_type, std::string name);
+    CommandPool(Device &device, std::string name);
 
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;
