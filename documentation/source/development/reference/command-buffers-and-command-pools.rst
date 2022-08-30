@@ -1,7 +1,7 @@
 Management of command pools and command bufers
 ==============================================
 
-Inexor engine's command pool and command buffer management code is based on the following sources:
+Inexor engine's command pool and command buffer management code is based on the following resources:
 
 * `Tips and Tricks: Vulkan Dos and Don'ts  <https://developer.nvidia.com/blog/vulkan-dos-donts/>`__
 * `Writing an efficient Vulkan renderer <https://zeux.io/2020/02/27/writing-an-efficient-vulkan-renderer/>`__
@@ -12,7 +12,7 @@ From that we concluded our solution should look like this:
 
 * The device wrapper should be exclusively responsible for the management of command pools and command buffers
 * The command pool and command buffer management system must be thread safe
-* We should have only one command pool per thread (as is recommended)
+* We should have only one command pool per thread per queue (as is recommended)
 * Each command buffer should be allocated from the command pool which is associated to the current thread
 * Command buffers must be reused instead of being allocated and destroyed every time
 * We should abstract command buffers as much as possible
@@ -36,15 +36,7 @@ The command pools are managed exclusively by the device wrapper class. Inside of
 .. note::
     It must be a ``std::vector<std::unique_ptr<CommandPool>>`` and not a ``std::vector<CommandPool>`` because std::vector is allowed to reorder the memory and we want to store a pointer into the std::vector!
 
-Because there is only one instance of the device wrapper class, the memory for all these command pools will be owned by one device wrapper instance. In order to synchronize access to this command pool vector, we use a std::mutex. It is necessary to have only one instance of the device wrapper class owning all the memory, because we need a valid VkDevice handle for destroying the command pools in the Device wrapper's destructor.
-
-.. note::
-    We do not use a singleton pattern to enforce that there is only one instance of the Device wrapper class, as singletons are considered bad practise.
-
-.. note::
-    Since C++11 there is the keyword ``thread_local``. You might wonder why we do not keep the command pools as ``static thread_local`` inside of the Device wrapper class. The reason for this is because we need to ensure correct order of destruction of the command pools and the VkDeivce itself in the Device wrapper's destructor. To destroy the command pools, we need a valid VkDevice handle. We tried this ``static thread_local`` approach and found out it is difficult to ensure correct order of destruction manually.
-
-But how do we set up a command pool on a per-thread basis and how do we get the command pool for the current thread? To do this, we decided to use a thread local raw pointer into the command pool member vector. We then use the following get method to return a const reference into the thread's command pool. This get method also sets up the command pool for the thread if it's not already set up:
+Since the command pools are owned by a thread-global device object, the vector must be protected by a mutex. But how do we set up a command pool on a per-thread basis and how do we get the command pool for the current thread? To do this, we have a non-owning ``thread_local`` pointer to the thread's command pool which points to an entry inside the device's command pool vector, and is initialized the first time the getter is called.
 
 .. code-block:: cpp
 
@@ -60,9 +52,6 @@ But how do we set up a command pool on a per-thread basis and how do we get the 
     }
 
 This get method is private. It is used only internally for the command buffer request system, as explained in the next section.
-
-.. note::
-    On the first call of ``thread_graphics_pool()``, there will be a delay because of the command pool creation overhead. This is negligible though.
 
 Command buffer request system
 -----------------------------
