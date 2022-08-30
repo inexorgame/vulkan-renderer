@@ -334,7 +334,6 @@ class PhysicalStage : public RenderGraphObject {
     friend RenderGraph;
 
 private:
-    std::unique_ptr<wrapper::Semaphore> m_finished_semaphore;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
@@ -430,7 +429,7 @@ public:
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
     /// @param graphics_queue The graphics queue to push rendering commands to
     /// @param signal_fence The fence to signal on completion of the whole frame
-    VkSemaphore render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence);
+    void render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence);
 };
 
 template <typename T>

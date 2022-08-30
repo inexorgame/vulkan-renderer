@@ -504,18 +504,9 @@ void RenderGraph::compile(const RenderResource *target) {
             }
         }
     }
-
-    m_log->trace("Creating semaphore for stage:");
-
-    // Allocate command buffers and finished semaphore.
-    for (const auto *stage : m_stage_stack) {
-        auto &physical = *stage->m_physical;
-        physical.m_finished_semaphore = std::make_unique<wrapper::Semaphore>(m_device, stage->m_name);
-        m_log->trace("   - {}", stage->m_name);
-    }
 }
 
-VkSemaphore RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence) {
+void RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -556,8 +547,6 @@ VkSemaphore RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queu
                                           submit_infos.data(), signal_fence)) {
         throw VulkanException("Error: vkQueueSubmit failed!", result);
     }
-
-    return m_stage_stack.back()->m_physical->m_finished_semaphore->get();
 }
 
 } // namespace inexor::vulkan_renderer
