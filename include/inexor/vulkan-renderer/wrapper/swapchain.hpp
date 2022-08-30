@@ -13,7 +13,7 @@ class Semaphore;
 
 /// @brief RAII wrapper class for VkSwapchainKHR.
 class Swapchain {
-    const wrapper::Device &m_device;
+    wrapper::Device &m_device;
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceFormatKHR m_surface_format{};
@@ -34,13 +34,13 @@ class Swapchain {
 
 public:
     /// @brief Default constructor.
-    /// @param device The const reference to a device RAII wrapper instance.
+    /// @param device The reference to a device RAII wrapper instance.
     /// @param surface The surface.
     /// @param window_width The width of the window.
     /// @param window_height The height of the window.
     /// @param enable_vsync True if vertical synchronization is requested, false otherwise.
     /// @param name The internal debug marker name of the VkSwapchainKHR.
-    Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
+    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
               bool enable_vsync, std::string name);
 
     Swapchain(const Swapchain &) = delete;
