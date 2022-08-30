@@ -48,16 +48,13 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
         m_device, m_texture_image_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
 
-    VkBufferImageCopy copy_region{};
-    copy_region.bufferOffset = 0;
-    copy_region.bufferRowLength = 0;
-    copy_region.bufferImageHeight = 0;
-    copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    copy_region.imageSubresource.mipLevel = 0;
-    copy_region.imageSubresource.baseArrayLayer = 0;
-    copy_region.imageSubresource.layerCount = 1;
-    copy_region.imageOffset = {0, 0, 0};
-    copy_region.imageExtent = {static_cast<uint32_t>(m_texture_width), static_cast<uint32_t>(m_texture_height), 1};
+    VkBufferImageCopy copy_region{
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .baseArrayLayer = 0, .layerCount = 1},
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {static_cast<uint32_t>(m_texture_width), static_cast<uint32_t>(m_texture_height), 1}};
 
     m_device.execute(m_name, [&](const CommandBuffer &cmd_buf) {
         cmd_buf
