@@ -153,8 +153,6 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
                                         const std::uint32_t image_index) const {
-    cmd_buf.begin_command_buffer();
-
     const PhysicalStage &physical = *stage->m_physical;
 
     // Record render pass for graphics stages.
@@ -208,8 +206,6 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
     // TODO: Find a more performant solution instead of placing a full memory barrier after each stage!
     cmd_buf.pipeline_full_memory_barrier();
-
-    cmd_buf.end_command_buffer();
 }
 
 void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -506,7 +502,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue, VkFence signal_fence) {
+void RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -525,28 +521,12 @@ void RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue, VkFe
         }
     }
 
-    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    std::vector<VkSubmitInfo> submit_infos;
-
-    for (const auto &stage : m_stage_stack) {
-        const auto &cmd_buf = m_device.request_command_buffer("rendergraph");
-
-        // Record one command buffer per stage
-        record_command_buffer(stage, cmd_buf, image_index);
-
-        auto submit_info = wrapper::make_info<VkSubmitInfo>();
-        submit_info.commandBufferCount = 1;
-        // We store the raw pointer to the VkCommandBuffer which lives in the static thread_local command pool of the
-        // device wrapper, so this pointer does not become invalid.
-        submit_info.pCommandBuffers = cmd_buf.ptr();
-        submit_info.pWaitDstStageMask = stage_mask.data();
-        submit_infos.push_back(submit_info);
-    }
-
-    if (const auto result = vkQueueSubmit(graphics_queue, static_cast<std::uint32_t>(submit_infos.size()),
-                                          submit_infos.data(), signal_fence)) {
-        throw VulkanException("Error: vkQueueSubmit failed!", result);
-    }
+    // Record one command buffer for all stages
+    m_device.execute("rendergraph", [&](const wrapper::CommandBuffer &cmd_buf) {
+        for (const auto &stage : m_stage_stack) {
+            record_command_buffer(stage, cmd_buf, image_index);
+        }
+    });
 }
 
 } // namespace inexor::vulkan_renderer

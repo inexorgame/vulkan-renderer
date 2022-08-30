@@ -25,6 +25,9 @@ class CommandBuffer {
     const QueueType m_queue_type;
     std::unique_ptr<Fence> m_wait_fence;
 
+    // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
+    friend class Device;
+
     /// The staging buffers which are used maybe in the command buffer
     /// @note We must to store the staging buffer as ``std::unique_ptr<GPUMemoryBuffer>``, because ``std::vector`` is
     /// allowed to reorder memory, meaning we can't simply store a pointer into ``std::vector<GPUMemoryBuffer>``
@@ -32,6 +35,11 @@ class CommandBuffer {
     /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator in managing the memory for
     /// staging buffers.
     mutable std::vector<std::unique_ptr<GPUMemoryBuffer>> m_staging_bufs;
+
+    /// Call vkBeginCommandBuffer
+    /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
+    const CommandBuffer & // NOLINT
+    begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 
     /// Create a new staging buffer which will be stored internally for a copy operation
     /// @param data A raw pointer to the data to copy (must not be ``nullptr``)
@@ -61,6 +69,10 @@ class CommandBuffer {
         return create_staging_buffer(data.data(), static_cast<VkDeviceSize>(sizeof(data) * data.size()), name);
     }
 
+    /// Call vkEndCommandBuffer
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_command_buffer() const; // NOLINT
+
 public:
     /// Default constructor
     /// @param device A const reference to the device wrapper class
@@ -76,11 +88,6 @@ public:
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;
     CommandBuffer &operator=(CommandBuffer &&) = delete;
-
-    /// Call vkBeginCommandBuffer
-    /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
-    const CommandBuffer & // NOLINT
-    begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 
     /// Call vkCmdBeginRenderPass
     /// @param render_pass_bi The renderpass begin info
@@ -250,10 +257,6 @@ public:
     const CommandBuffer &draw_indexed(std::uint32_t index_count, std::uint32_t inst_count = 1, // NOLINT
                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
-
-    /// Call vkEndCommandBuffer
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &end_command_buffer() const; // NOLINT
 
     /// Call vkCmdEndRenderPass
     /// @return A const reference to the this pointer (allowing method calls to be chained)
