@@ -19,7 +19,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
-    VkPhysicalDevice m_graphics_card{VK_NULL_HANDLE};
+    VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
 
@@ -104,7 +104,7 @@ public:
                  QueueType queue_type = QueueType::GRAPHICS);
 
     [[nodiscard]] VkPhysicalDevice physical_device() const {
-        return m_graphics_card;
+        return m_physical_device;
     }
 
     [[nodiscard]] VmaAllocator allocator() const {

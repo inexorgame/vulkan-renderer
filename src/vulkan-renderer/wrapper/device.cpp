@@ -98,12 +98,12 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         throw std::runtime_error("Error: Could not find suitable graphics card!");
     }
 
-    m_graphics_card = *selected_gpu;
+    m_physical_device = *selected_gpu;
 
     VkPhysicalDeviceProperties graphics_card_properties;
 
     // Get the information about that graphics card's properties.
-    vkGetPhysicalDeviceProperties(m_graphics_card, &graphics_card_properties);
+    vkGetPhysicalDeviceProperties(m_physical_device, &graphics_card_properties);
 
     spdlog::trace("Creating device using graphics card: {}", graphics_card_properties.deviceName);
 
@@ -121,7 +121,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     // Check if there is one queue family which can be used for both graphics and presentation.
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
-        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
+        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_physical_device, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation) {
         spdlog::trace("One queue for both graphics and presentation will be used");
@@ -144,7 +144,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         // One for graphics and another one for presentation.
 
         // Check which queue family index can be used for graphics.
-        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_graphics_card);
+        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_physical_device);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
@@ -153,7 +153,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_graphics_queue_family_index = *queue_candidate;
 
         // Check which queue family index can be used for presentation.
-        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_graphics_card, surface);
+        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_physical_device, surface);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
@@ -179,7 +179,8 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 
     // Add another device queue just for data transfer.
-    const auto queue_candidate = VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_graphics_card);
+    const auto queue_candidate =
+        VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_physical_device);
 
     bool use_distinct_data_transfer_queue = false;
 
@@ -227,7 +228,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     std::vector<const char *> enabled_device_extensions;
 
     for (const auto &device_extension_name : device_extensions_wishlist) {
-        if (is_extension_supported(m_graphics_card, device_extension_name)) {
+        if (is_extension_supported(m_physical_device, device_extension_name)) {
             spdlog::trace("Device extension {} is available on this system", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
         } else {
@@ -253,7 +254,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     spdlog::trace("Creating physical device");
 
-    if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
+    if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
@@ -334,7 +335,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     vma_record_settings.pFilePath = vma_replay_file.c_str();
 
     VmaAllocatorCreateInfo vma_allocator_ci{};
-    vma_allocator_ci.physicalDevice = m_graphics_card;
+    vma_allocator_ci.physicalDevice = m_physical_device;
     vma_allocator_ci.instance = instance.instance();
     vma_allocator_ci.device = m_device;
 
@@ -354,7 +355,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
 Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
     m_device = std::exchange(other.m_device, nullptr);
-    m_graphics_card = std::exchange(other.m_graphics_card, nullptr);
+    m_physical_device = std::exchange(other.m_physical_device, nullptr);
     m_surface = other.m_surface;
 }
 
