@@ -102,7 +102,7 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_render_graph->render(image_index, m_device->graphics_queue());
+    m_render_graph->render(image_index);
 
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;

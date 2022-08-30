@@ -502,7 +502,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(std::uint32_t image_index, VkQueue graphics_queue) {
+void RenderGraph::render(std::uint32_t image_index) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {

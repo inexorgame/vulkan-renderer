@@ -427,8 +427,7 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing.
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
-    /// @param graphics_queue The graphics queue to push rendering commands to
-    void render(std::uint32_t image_index, VkQueue graphics_queue);
+    void render(std::uint32_t image_index);
 };
 
 template <typename T>
