@@ -13,7 +13,7 @@ CommandPool::CommandPool(Device &device, QueueType queue_type, std::string name)
       m_queue_family_index((queue_type == QueueType::GRAPHICS) ? m_device.graphics_queue_family_index()
                                                                : m_device.transfer_queue_family_index()) {
     auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>();
-    cmd_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    cmd_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
     cmd_pool_ci.queueFamilyIndex = device.graphics_queue_family_index();
 
     // Get the thread id as string for naming the command pool and the command buffers
