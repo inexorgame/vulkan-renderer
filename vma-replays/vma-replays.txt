@@ -1,5 +1,0 @@
-The folder 'vma-replays' contains memory replays which will be created by Vulkan memory allocator library at runtime.
-https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-
-The replay acts as a trace of memory allocation. The file can be opened in any text editor.
-It can also be replayed using VmaReplay which can be found in VMA's github repository.
