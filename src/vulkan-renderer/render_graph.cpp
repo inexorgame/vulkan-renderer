@@ -428,14 +428,10 @@ void RenderGraph::compile(const RenderResource *target) {
 
         // TODO: Use a constexpr bool.
         VmaAllocationCreateInfo alloc_ci{};
-#if VMA_RECORDING_ENABLED
-        alloc_ci.flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-        alloc_ci.pUserData = const_cast<char *>(resource->m_name.data());
-#endif
+        alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
         auto physical = std::make_shared<PhysicalImage>(m_device.allocator(), m_device.device());
         texture_resource->m_physical = physical;
-        alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
         build_image(*texture_resource, *physical, &alloc_ci);
         build_image_view(*texture_resource, *physical);
     }

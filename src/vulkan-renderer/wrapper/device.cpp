@@ -306,33 +306,6 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     spdlog::trace("Creating VMA allocator");
 
-    // Make sure to set the root directory of this repository as working directory in the debugger!
-    // Otherwise, VMA won't be able to open this allocation replay file for writing.
-    const std::string vma_replay_file = "vma-replays/vma_replay.csv";
-    spdlog::trace("Opening VMA memory recording file for writing");
-
-    std::ofstream replay_file_test(vma_replay_file, std::ios::out);
-
-    // Check if we can open the csv file.
-    // This causes problems when the debugging path is set incorrectly!
-    if (!replay_file_test) {
-        throw std::runtime_error("Could not open VMA replay file " + vma_replay_file + " !");
-    }
-
-    spdlog::trace("VMA memory recording file opened successfully");
-
-    replay_file_test.close();
-
-    // VMA allows recording memory allocations to a .csv file.
-    // This .csv file can be replayed using tools from the repository.
-    // This is very useful every time there is a bug in memory management.
-    VmaRecordSettings vma_record_settings;
-
-    // We flush the stream after every write operation because we are expecting unforeseen program crashes
-    // This might have a negative effect on the application's performance
-    vma_record_settings.flags = VMA_RECORD_FLUSH_AFTER_CALL_BIT;
-    vma_record_settings.pFilePath = vma_replay_file.c_str();
-
     VmaAllocatorCreateInfo vma_allocator_ci{};
     vma_allocator_ci.physicalDevice = m_graphics_card;
     vma_allocator_ci.instance = instance.instance();
@@ -341,9 +314,6 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
     // This might need to be changed in the future
     vma_allocator_ci.vulkanApiVersion = VK_API_VERSION_1_1;
-#if VMA_RECORDING_ENABLED
-    vma_allocator_ci.pRecordSettings = &vma_record_settings;
-#endif
 
     spdlog::trace("Creating Vulkan memory allocator instance");
 

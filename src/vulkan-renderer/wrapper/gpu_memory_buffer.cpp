@@ -26,13 +26,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
     buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     m_allocation_ci.usage = memory_usage;
-
-#if VMA_RECORDING_ENABLED
-    m_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    m_allocation_ci.pUserData = m_name.data();
-#else
     m_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-#endif
 
     // TODO: Should we create this buffer as mapped?
     // TODO: Is it good to have memory mapped all the time?

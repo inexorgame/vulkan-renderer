@@ -37,13 +37,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
 
     VmaAllocationCreateInfo vma_allocation_ci{};
     vma_allocation_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-#if VMA_RECORDING_ENABLED
-    vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    vma_allocation_ci.pUserData = m_name.data();
-#else
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-#endif
 
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
                                            &m_allocation_info);
