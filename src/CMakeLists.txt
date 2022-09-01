@@ -82,7 +82,6 @@ target_compile_definitions(
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
-    VMA_RECORDING_ENABLED=$<BOOL:${INEXOR_USE_VMA_RECORDING}>
 )
 
 # enable multi processor building if VS project

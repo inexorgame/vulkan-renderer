@@ -103,7 +103,6 @@ jobs:
           cmake . \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} \
-            -DINEXOR_USE_VMA_RECORDING=OFF \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
