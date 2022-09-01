@@ -502,7 +502,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(std::uint32_t image_index) {
+void RenderGraph::render(const std::uint32_t image_index, const VkFence signal_fence) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -521,12 +521,25 @@ void RenderGraph::render(std::uint32_t image_index) {
         }
     }
 
-    // Record one command buffer for all stages
-    m_device.execute("rendergraph", [&](const wrapper::CommandBuffer &cmd_buf) {
-        for (const auto &stage : m_stage_stack) {
-            record_command_buffer(stage, cmd_buf, image_index);
-        }
-    });
+    const auto &cmd_buf = m_device.request_command_buffer("rendergraph");
+    cmd_buf.begin_command_buffer();
+
+    for (const auto &stage : m_stage_stack) {
+        record_command_buffer(stage, cmd_buf, image_index);
+    }
+
+    cmd_buf.end_command_buffer();
+
+    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    auto submit_info = wrapper::make_info<VkSubmitInfo>();
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = cmd_buf.ptr();
+    submit_info.pWaitDstStageMask = stage_mask.data();
+
+    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, signal_fence)) {
+        throw VulkanException("Error: vkQueueSubmit failed!", result);
+    }
 }
 
 } // namespace inexor::vulkan_renderer

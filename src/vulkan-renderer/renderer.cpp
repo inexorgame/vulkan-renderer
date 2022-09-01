@@ -80,6 +80,9 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
+    m_frame_finished_fence.reset();
+    m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
+
     m_image_available_semaphore.reset();
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
 
@@ -101,8 +104,11 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
+    m_frame_finished_fence->block();
+    m_frame_finished_fence->reset();
+
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_render_graph->render(image_index);
+    m_render_graph->render(image_index, m_frame_finished_fence->get());
 
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;

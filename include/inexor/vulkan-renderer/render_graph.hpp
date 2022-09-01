@@ -427,7 +427,8 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing.
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
-    void render(std::uint32_t image_index);
+    /// @param signal_fence The fence to signal on completion of the whole frame
+    void render(std::uint32_t image_index, VkFence signal_fence);
 };
 
 template <typename T>
