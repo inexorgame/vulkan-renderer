@@ -125,36 +125,6 @@ void VulkanRenderer::render_frame() {
     }
 }
 
-void VulkanRenderer::calculate_memory_budget() {
-    VmaStats memory_stats;
-    vmaCalculateStats(m_device->allocator(), &memory_stats);
-
-    spdlog::trace("Vulkan Memory Allocator statistics:");
-    spdlog::trace("   total.blockCount: {}", memory_stats.total.blockCount);
-    spdlog::trace("   total.allocationCount: {}", memory_stats.total.allocationCount);
-    spdlog::trace("   memoryHeap->blockCount: {}", memory_stats.memoryHeap->blockCount);
-    spdlog::trace("   memoryHeap->allocationCount: {}", memory_stats.memoryHeap->allocationCount);
-    spdlog::trace("   memoryHeap->unusedRangeCount: {}", memory_stats.memoryHeap->unusedRangeCount);
-    spdlog::trace("   memoryHeap->usedBytes: {}", memory_stats.memoryHeap->usedBytes);
-    spdlog::trace("   memoryHeap->unusedBytes: {}", memory_stats.memoryHeap->unusedBytes);
-    spdlog::trace("   memoryHeap->allocationSizeMin: {}", memory_stats.memoryHeap->allocationSizeMin);
-    spdlog::trace("   memoryHeap->allocationSizeAvg: {}", memory_stats.memoryHeap->allocationSizeAvg);
-    spdlog::trace("   memoryHeap->allocationSizeMax: {}", memory_stats.memoryHeap->allocationSizeMax);
-    spdlog::trace("   memoryHeap->unusedRangeSizeMin: {}", memory_stats.memoryHeap->unusedRangeSizeMin);
-    spdlog::trace("   memoryHeap->unusedRangeSizeAvg: {}", memory_stats.memoryHeap->unusedRangeSizeAvg);
-    spdlog::trace("   memoryHeap->unusedRangeSizeMax: {}", memory_stats.memoryHeap->unusedRangeSizeMax);
-
-    char *vma_stats_string = nullptr;
-    vmaBuildStatsString(m_device->allocator(), &vma_stats_string, VK_TRUE);
-
-    std::string memory_dump_file_name = "vma-dumps/dump.json";
-    std::ofstream vma_memory_dump(memory_dump_file_name, std::ios::out);
-    vma_memory_dump.write(vma_stats_string, strlen(vma_stats_string)); // NOLINT
-    vma_memory_dump.close();
-
-    vmaFreeStatsString(m_device->allocator(), vma_stats_string);
-}
-
 VulkanRenderer::~VulkanRenderer() {
     spdlog::trace("Shutting down vulkan renderer");
 

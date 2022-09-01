@@ -97,9 +97,6 @@ public:
     VulkanRenderer &operator=(const VulkanRenderer &) = delete;
     VulkanRenderer &operator=(VulkanRenderer &&) = delete;
 
-    /// @brief Run Vulkan memory allocator's memory statistics
-    void calculate_memory_budget();
-
     bool m_window_resized{false};
 
     /// Necessary for taking into account the relative speed of the system's CPU.

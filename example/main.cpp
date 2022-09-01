@@ -37,6 +37,5 @@ int main(int argc, char *argv[]) {
     }
 
     renderer->run();
-    renderer->calculate_memory_budget();
     spdlog::trace("Window closed");
 }
