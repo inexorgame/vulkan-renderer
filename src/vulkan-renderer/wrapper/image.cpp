@@ -45,6 +45,8 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
 
+    vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
+
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
 

@@ -88,6 +88,9 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create buffer!", result);
     }
+
+    // TODO: Use a better naming system for memory resources inside of rendergraph
+    vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph buffer");
 }
 
 void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical,
@@ -117,6 +120,9 @@ void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalI
         result != VK_SUCCESS) {
         throw VulkanException("Failed to create image!", result);
     }
+
+    // TODO: Use a better naming system for memory resources inside of rendergraph
+    vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph image");
 }
 
 void RenderGraph::build_image_view(const TextureResource &texture_resource, PhysicalImage &physical) const {
