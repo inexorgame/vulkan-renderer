@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-CommandPool::CommandPool(Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
+CommandPool::CommandPool(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
     auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>();
     cmd_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
     cmd_pool_ci.queueFamilyIndex = device.graphics_queue_family_index();

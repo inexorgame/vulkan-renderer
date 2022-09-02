@@ -11,13 +11,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GpuTexture::GpuTexture(wrapper::Device &device, const CpuTexture &cpu_texture)
+GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
     : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
       m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()) {
     create_texture(cpu_texture.data(), cpu_texture.data_size());
 }
 
-GpuTexture::GpuTexture(wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
+GpuTexture::GpuTexture(const wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
                        const int texture_height, const int texture_channels, const int mip_levels, std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)) {

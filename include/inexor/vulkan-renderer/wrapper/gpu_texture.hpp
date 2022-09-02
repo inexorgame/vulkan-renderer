@@ -28,7 +28,7 @@ class GpuTexture {
     int m_mip_levels{0};
 
     std::string m_name;
-    wrapper::Device &m_device;
+    const wrapper::Device &m_device;
     const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
     /// @brief Create the texture.
@@ -50,7 +50,7 @@ public:
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param file_name The name of the texture file.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(wrapper::Device &device, const CpuTexture &cpu_texture);
+    GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a block of memory.
     /// @param device The const reference to a device RAII wrapper instance.
@@ -60,7 +60,7 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(wrapper::Device &device, void *data, std::size_t data_size, int texture_width, int texture_height,
+    GpuTexture(const wrapper::Device &device, void *data, std::size_t data_size, int texture_width, int texture_height,
                int texture_channels, int mip_levels, std::string name);
 
     GpuTexture(const GpuTexture &) = delete;

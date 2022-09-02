@@ -34,8 +34,8 @@ class Device {
     /// According to NVidia, we should aim for one command pool per thread
     /// We will create one for graphics and one for transfer queue per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
-    std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
-    std::mutex m_mutex;
+    mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
+    mutable std::mutex m_mutex;
 
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
@@ -48,7 +48,7 @@ class Device {
 
     const bool m_enable_vulkan_debug_markers{false};
 
-    CommandPool &thread_graphics_pool();
+    CommandPool &thread_graphics_pool() const;
 
 public:
     /// @brief Check if a certain device extension is available for a specific graphics card.
@@ -99,7 +99,7 @@ public:
     /// ends recording the command buffer, submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
     /// @param cmd_lambda The command lambda to execute
-    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda);
+    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
 
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;

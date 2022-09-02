@@ -371,7 +371,8 @@ Device::~Device() {
     vkDestroyDevice(m_device, nullptr);
 }
 
-void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) {
+void Device::execute(const std::string &name,
+                     const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues (not just graphics)
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
     cmd_buf.begin_command_buffer();
@@ -603,7 +604,7 @@ void Device::create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSw
     set_debug_marker_name(&swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, name);
 }
 
-CommandPool &Device::thread_graphics_pool() {
+CommandPool &Device::thread_graphics_pool() const {
     // Note that thread_graphics_pool is implicitely static!
     thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
     if (thread_graphics_pool == nullptr) {

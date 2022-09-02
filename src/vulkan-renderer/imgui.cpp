@@ -10,8 +10,8 @@
 
 namespace inexor::vulkan_renderer {
 
-ImGUIOverlay::ImGUIOverlay(wrapper::Device &device, const wrapper::Swapchain &swapchain, RenderGraph *render_graph,
-                           TextureResource *back_buffer)
+ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
+                           RenderGraph *render_graph, TextureResource *back_buffer)
     : m_device(device), m_swapchain(swapchain) {
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
