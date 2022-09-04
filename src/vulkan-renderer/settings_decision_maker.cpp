@@ -343,7 +343,8 @@ VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, con
             discrete_gpu_exists = true;
         }
 
-        if (gpu_type_1 == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || gpu_type_2 == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+        if (gpu_type_1 == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ||
+            gpu_type_2 == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
             integrated_gpu_exists = true;
         }
 
