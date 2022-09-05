@@ -118,13 +118,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
 
-    // Change the image layout of the swapchain images
-    m_device.execute("change swapchain image layout", [&](const CommandBuffer &cmd_buf) {
-        for (const auto &img : m_swapchain_images) {
-            cmd_buf.change_image_layout(img, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-        }
-    });
-
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
 
