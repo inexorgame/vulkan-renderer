@@ -264,7 +264,7 @@ const CommandBuffer &CommandBuffer::pipeline_memory_barrier(VkPipelineStageFlags
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {&mem_barrier, 1});
 }
 
-const CommandBuffer &CommandBuffer::pipeline_full_memory_barrier() const {
+const CommandBuffer &CommandBuffer::full_barrier() const {
     auto mem_barrier = make_info<VkMemoryBarrier>();
     mem_barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
     mem_barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;

@@ -205,7 +205,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
     }
 
     // TODO: Find a more performant solution instead of placing a full memory barrier after each stage!
-    cmd_buf.pipeline_full_memory_barrier();
+    cmd_buf.full_barrier();
 }
 
 void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {

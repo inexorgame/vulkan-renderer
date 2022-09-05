@@ -299,7 +299,7 @@ public:
 
     /// Call vkCmdPipelineBarrier to place a full memory barrier
     /// @warning You should avoid full barriers since they are not the most performant solution in most cases
-    const CommandBuffer &pipeline_full_memory_barrier() const;
+    const CommandBuffer &full_barrier() const;
 
     /// Call vkCmdPushConstants
     /// @param layout The pipeline layout
