@@ -18,7 +18,7 @@ From that we concluded our solution should look like this:
 * We should abstract command buffers as much as possible
 * The solution must support an arbitrary number of threads and an arbitrary number of command buffers per thread
 * Command buffer recording should be done with the ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` flag
-* We should start with graphics command pools only and work on other pool types (transfer, compute..) later
+* We should start with graphics command pools only and work on other pool types (transfer, compute..) later (GitHub issue https://github.com/inexorgame/vulkan-renderer/issues/486)
 
 .. note::
     Do not forget that we need to specify on which queue the command pool will operate on. We are currently using the graphics queue for copy operations, but there are other queue types such as transfer queues or compute queues. We will need to create separate command pools on a per-thread basis once we want to use those queues.
