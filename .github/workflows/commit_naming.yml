@@ -1,53 +1,11 @@
 name: Commit Naming
-on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   naming:
     name: Commit Naming
     runs-on: ubuntu-latest
-    container: python:alpine
     steps:
-      - name: Update environment
-        run: |
-          apk update
-          apk add --no-cache git less openssh
-
-      - name: Checkout (Pull Request)
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v3
+      - uses: IceflowRE/gitcc@v2
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Shallow fetch (Pull Request)
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          git config --global --add safe.directory $(pwd)
-          git fetch --progress --shallow-exclude ${{ github.base_ref }} origin +${{ github.sha }}:refs/remotes/origin/${{ github.head_ref }}
-          git log --pretty=oneline
-
-      - name: Checkout (Push)
-        if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@v3
-
-      - name: Install gitcc
-        run: |
-          cd ./helper/gitcc
-          pip install .
-
-      - name: Check commits (Pull Request)
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          git config --global --add safe.directory $(pwd)
-          gitcc history --verbose ./
-
-      - name: Check commit (Push)
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          git config --global --add safe.directory $(pwd)
-          gitcc commit ./
+          validator_file: helper/commit_validator.mjs
