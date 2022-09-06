@@ -37,19 +37,15 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
 
     VmaAllocationCreateInfo vma_allocation_ci{};
     vma_allocation_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-#if VMA_RECORDING_ENABLED
-    vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-    vma_allocation_ci.pUserData = m_name.data();
-#else
     vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-#endif
 
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
                                            &m_allocation_info);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
+
+    vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
 
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);

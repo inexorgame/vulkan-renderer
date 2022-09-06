@@ -56,9 +56,6 @@ The following CMake targets and options are available:
    * - INEXOR_CONAN_PROFILE
      - To adjust the conan profile, use ``-DINEXOR_CONAN_PROFILE=<name>``.
      - ``default``
-   * - INEXOR_USE_VMA_RECORDING
-     - Enables or disables `Vulkan Memory Allocator's <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ recording feature.
-     - ``OFF``
    * - INEXOR_BUILD_DOC
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
      - ``OFF``
