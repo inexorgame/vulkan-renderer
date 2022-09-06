@@ -26,13 +26,12 @@ class CommandBuffer {
     // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
     friend class Device;
 
-    /// The staging buffers which are used maybe in the command buffer
-    /// @note We must to store the staging buffer as ``std::unique_ptr<GPUMemoryBuffer>``, because ``std::vector`` is
-    /// allowed to reorder memory, meaning we can't simply store a pointer into ``std::vector<GPUMemoryBuffer>``
+    /// The staging buffers which are maybe used in the command buffer
+    /// This vector of staging buffers will be cleared every time ``begin_command_buffer`` is called
     /// @note We are not recycling staging buffers. Once they are used and the command buffer handle has reached the end
-    /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator in managing the memory for
-    /// staging buffers.
-    mutable std::vector<std::unique_ptr<GPUMemoryBuffer>> m_staging_bufs;
+    /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator (VMA) in managing the
+    /// memory for staging buffers.
+    mutable std::vector<GPUMemoryBuffer> m_staging_bufs;
 
     friend class CommandPool;
 
@@ -53,10 +52,10 @@ class CommandBuffer {
         assert(!name.empty());
 
         // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
-        m_staging_bufs.emplace_back(std::make_unique<GPUMemoryBuffer>(
-            m_device, name, data_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY));
+        m_staging_bufs.emplace_back(m_device, name, data_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                    VMA_MEMORY_USAGE_CPU_ONLY);
 
-        return m_staging_bufs.back()->buffer();
+        return m_staging_bufs.back().buffer();
     }
 
     /// Create a new staging buffer which will be stored internally for a copy operation
