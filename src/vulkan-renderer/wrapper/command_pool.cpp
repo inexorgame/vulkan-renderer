@@ -38,6 +38,7 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
             // Reset the command buffer's fence to make it usable again
             cmd_buf->reset_fence();
             m_device.set_debug_marker_name(*cmd_buf->ptr(), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, name);
+            cmd_buf->begin_command_buffer();
             return *cmd_buf;
         }
     }
@@ -45,6 +46,10 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
     // We need to create a new command buffer because no free one was found
     // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
     m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, "command buffer"));
+
+    spdlog::trace("Creating new command buffer #{}", m_cmd_bufs.size());
+
+    m_cmd_bufs.back()->begin_command_buffer();
     return *m_cmd_bufs.back();
 }
 

@@ -34,6 +34,13 @@ class CommandBuffer {
     /// staging buffers.
     mutable std::vector<std::unique_ptr<GPUMemoryBuffer>> m_staging_bufs;
 
+    friend class CommandPool;
+
+    /// Call vkBeginCommandBuffer
+    /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
+    const CommandBuffer & // NOLINT
+    begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
+
     /// Create a new staging buffer which will be stored internally for a copy operation
     /// @param data A raw pointer to the data to copy (must not be ``nullptr``)
     /// @param data_size The size of the data to copy (must be greater than ``0``)
@@ -62,6 +69,10 @@ class CommandBuffer {
         return create_staging_buffer(data.data(), static_cast<VkDeviceSize>(sizeof(data) * data.size()), name);
     }
 
+    /// Call vkEndCommandBuffer
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_command_buffer() const; // NOLINT
+
 public:
     /// Default constructor
     /// @param device A const reference to the device wrapper class
@@ -76,11 +87,6 @@ public:
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;
     CommandBuffer &operator=(CommandBuffer &&) = delete;
-
-    /// Call vkBeginCommandBuffer
-    /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
-    const CommandBuffer & // NOLINT
-    begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 
     /// Call vkCmdBeginRenderPass
     /// @param render_pass_bi The renderpass begin info
@@ -251,10 +257,6 @@ public:
                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
 
-    /// Call vkEndCommandBuffer
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &end_command_buffer() const; // NOLINT
-
     /// Call vkCmdEndRenderPass
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_render_pass() const; // NOLINT
@@ -329,6 +331,10 @@ public:
 
     [[nodiscard]] VkCommandBuffer get() const {
         return m_command_buffer;
+    }
+
+    [[nodiscard]] const Fence &get_wait_fence() const {
+        return *m_wait_fence;
     }
 
     [[nodiscard]] const VkCommandBuffer *ptr() const {

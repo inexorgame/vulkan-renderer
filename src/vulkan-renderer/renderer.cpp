@@ -104,11 +104,8 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
-    m_frame_finished_fence->block();
-    m_frame_finished_fence->reset();
-
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    m_render_graph->render(image_index, m_frame_finished_fence->get());
+    const wrapper::Fence &wait_fence = m_render_graph->render(image_index);
 
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;
@@ -118,6 +115,8 @@ void VulkanRenderer::render_frame() {
     if (const auto result = vkQueuePresentKHR(m_device->present_queue(), &present_info); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueuePresentKHR failed!", result);
     }
+
+    wait_fence.block();
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");

@@ -502,7 +502,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(const std::uint32_t image_index, const VkFence signal_fence) {
+const wrapper::Fence &RenderGraph::render(const std::uint32_t image_index) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -522,21 +522,13 @@ void RenderGraph::render(const std::uint32_t image_index, const VkFence signal_f
     }
 
     const auto &cmd_buf = m_device.request_command_buffer("rendergraph");
-    cmd_buf.begin_command_buffer();
-
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);
     }
 
-    cmd_buf.end_command_buffer();
+    cmd_buf.submit();
 
-    auto submit_info = wrapper::make_info<VkSubmitInfo>();
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = cmd_buf.ptr();
-
-    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, signal_fence)) {
-        throw VulkanException("Error: vkQueueSubmit failed!", result);
-    }
+    return cmd_buf.get_wait_fence();
 }
 
 } // namespace inexor::vulkan_renderer

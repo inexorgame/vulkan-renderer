@@ -287,12 +287,11 @@ const CommandBuffer &CommandBuffer::reset_fence() const {
 }
 
 const CommandBuffer &CommandBuffer::submit() const {
-    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    end_command_buffer();
 
     auto submit_info = make_info<VkSubmitInfo>();
     submit_info.pCommandBuffers = &m_command_buffer;
     submit_info.commandBufferCount = 1;
-    submit_info.pWaitDstStageMask = stage_mask.data();
 
     if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, m_wait_fence->get())) {
         throw VulkanException("Error: vkQueueSubmit failed!", result);

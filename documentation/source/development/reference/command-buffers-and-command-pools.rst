@@ -64,7 +64,7 @@ Inexor engine uses a command buffer request system. If you need to record and su
         return thread_graphics_pool().request_command_buffer(name);
     }
 
-The request method of the command pool wrapper tries to find a command buffer which is currently not used anywhere else. It does so by testing the state of the command buffer's fence. If no free command buffer is found, a new one is simply allocated. Note that this is thread local, so we need no synchronization here. Note that the command buffer request method resets the command buffer's fence:
+The request method of the command pool wrapper tries to find a command buffer which is currently not used anywhere else. It does so by testing the state of the command buffer's fence. If no free command buffer is found, a new one is simply allocated. Note that this is thread local, so we need no synchronization here. Note that the command buffer request method resets the command buffer's fence. The request method will call ``begin_command_buffer`` before returning the requested command buffer.
 
 .. code-block:: cpp
 
@@ -75,6 +75,7 @@ The request method of the command pool wrapper tries to find a command buffer wh
                 // Reset the command buffer's fence to make it usable again
                 cmd_buf->reset_fence();
                 m_device.set_debug_marker_name(*cmd_buf->ptr(), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, name);
+                cmd_buf->begin_command_buffer();
                 return *cmd_buf;
             }
        }
@@ -89,17 +90,16 @@ After this, you can use it to record and submit your command buffer. You can als
 Device wrapper's execute method
 -------------------------------
 
-To automate beginning and ending of command buffer recording and submission, we created the execute method of the device wrapper. This is quire helpful and it is recommended to use it instead of requesting command buffer handles manually. The execute method takes a lambda as argument and calls ``begin_command_buffer`` before executing it. After execution, it calls ``end_command_buffer`` and ``submit_and_wait``. For debugging purposes, it also assigns a debug name to the command buffer which executes your lambda:
+To automate beginning and ending of command buffer recording and submission, we created the execute method of the device wrapper. This is quire helpful and it is recommended to use it instead of requesting command buffer handles manually. The execute method takes a lambda as argument and requests a command buffer. After execution, it calls ``submit_and_wait``. For debugging purposes, it also assigns a debug name to the command buffer which executes your lambda:
 
 .. code-block:: cpp
 
     void Device::execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) {
        // TODO: Support other queues (not just graphics)
        const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
-       cmd_buf.begin_command_buffer();
        // Execute the lambda
        cmd_lambda(cmd_buf);
-       cmd_buf.end_command_buffer().submit_and_wait();
+       cmd_buf.submit_and_wait();
     }
 
 .. note::
