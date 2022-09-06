@@ -4,7 +4,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
-#include "inexor/vulkan-renderer/wrapper/once_command_buffer.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -15,14 +14,12 @@ namespace inexor::vulkan_renderer::wrapper {
 
 class Device;
 class GPUMemoryBuffer;
-class OnceCommandBuffer;
 
 /// @note The code which loads textures from files is wrapped in CpuTexture.
 /// @brief RAII wrapper class for textures which are stored in GPU memory.
 /// @todo Support 3D textures and cube maps (implement new and separate wrappers though).
 class GpuTexture {
     std::unique_ptr<wrapper::Image> m_texture_image;
-    OnceCommandBuffer m_copy_command_buffer;
     VkSampler m_sampler{VK_NULL_HANDLE};
 
     int m_texture_width{0};

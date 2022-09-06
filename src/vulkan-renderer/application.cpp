@@ -484,14 +484,11 @@ Application::Application(int argc, char **argv) {
     load_textures();
     load_shaders();
 
-    m_command_pool =
-        std::make_unique<wrapper::CommandPool>(*m_device, m_device->graphics_queue_family_index(), "command pool");
-
     m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device, m_swapchain->image_count());
+    wrapper::DescriptorBuilder descriptor_builder(*m_device);
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
     m_descriptors.emplace_back(

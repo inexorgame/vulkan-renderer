@@ -152,6 +152,11 @@ VkInstanceCreateInfo make_info() {
 }
 
 template <>
+VkMemoryBarrier make_info() {
+    return {.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+}
+
+template <>
 VkPipelineColorBlendStateCreateInfo make_info() {
     VkPipelineColorBlendStateCreateInfo ret{};
     ret.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

@@ -98,12 +98,12 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         throw std::runtime_error("Error: Could not find suitable graphics card!");
     }
 
-    m_graphics_card = *selected_gpu;
+    m_physical_device = *selected_gpu;
 
     VkPhysicalDeviceProperties graphics_card_properties;
 
     // Get the information about that graphics card's properties.
-    vkGetPhysicalDeviceProperties(m_graphics_card, &graphics_card_properties);
+    vkGetPhysicalDeviceProperties(m_physical_device, &graphics_card_properties);
 
     spdlog::trace("Creating device using graphics card: {}", graphics_card_properties.deviceName);
 
@@ -121,7 +121,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     // Check if there is one queue family which can be used for both graphics and presentation.
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
-        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_graphics_card, surface);
+        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_physical_device, surface);
 
     if (queue_family_index_for_both_graphics_and_presentation) {
         spdlog::trace("One queue for both graphics and presentation will be used");
@@ -144,7 +144,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         // One for graphics and another one for presentation.
 
         // Check which queue family index can be used for graphics.
-        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_graphics_card);
+        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_physical_device);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
@@ -153,7 +153,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_graphics_queue_family_index = *queue_candidate;
 
         // Check which queue family index can be used for presentation.
-        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_graphics_card, surface);
+        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_physical_device, surface);
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
@@ -179,7 +179,8 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 
     // Add another device queue just for data transfer.
-    const auto queue_candidate = VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_graphics_card);
+    const auto queue_candidate =
+        VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_physical_device);
 
     bool use_distinct_data_transfer_queue = false;
 
@@ -227,7 +228,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     std::vector<const char *> enabled_device_extensions;
 
     for (const auto &device_extension_name : device_extensions_wishlist) {
-        if (is_extension_supported(m_graphics_card, device_extension_name)) {
+        if (is_extension_supported(m_physical_device, device_extension_name)) {
             spdlog::trace("Device extension {} is available on this system", device_extension_name);
             enabled_device_extensions.push_back(device_extension_name);
         } else {
@@ -253,7 +254,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     spdlog::trace("Creating physical device");
 
-    if (const auto result = vkCreateDevice(m_graphics_card, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
+    if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
@@ -307,7 +308,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     spdlog::trace("Creating VMA allocator");
 
     VmaAllocatorCreateInfo vma_allocator_ci{};
-    vma_allocator_ci.physicalDevice = m_graphics_card;
+    vma_allocator_ci.physicalDevice = m_physical_device;
     vma_allocator_ci.instance = instance.instance();
     vma_allocator_ci.device = m_device;
 
@@ -324,13 +325,29 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
 Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
     m_device = std::exchange(other.m_device, nullptr);
-    m_graphics_card = std::exchange(other.m_graphics_card, nullptr);
+    m_physical_device = std::exchange(other.m_physical_device, nullptr);
     m_surface = other.m_surface;
 }
 
 Device::~Device() {
+    std::scoped_lock locker(m_mutex);
+
+    // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
+    // we must destroy the command pools manually here in order to ensure the right order of destruction
+    m_cmd_pools.clear();
+
+    // Now that we destroyed the command pools, we can destroy the allocator and finally the device itself
     vmaDestroyAllocator(m_allocator);
     vkDestroyDevice(m_device, nullptr);
+}
+
+void Device::execute(const std::string &name,
+                     const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
+    // TODO: Support other queues (not just graphics)
+    const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
+    // Execute the lambda
+    cmd_lambda(cmd_buf);
+    cmd_buf.submit_and_wait();
 }
 
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
@@ -554,6 +571,21 @@ void Device::create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSw
     }
 
     set_debug_marker_name(&swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, name);
+}
+
+CommandPool &Device::thread_graphics_pool() const {
+    // Note that thread_graphics_pool is implicitely static!
+    thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
+    if (thread_graphics_pool == nullptr) {
+        auto cmd_pool = std::make_unique<CommandPool>(*this, "graphics pool");
+        std::scoped_lock locker(m_mutex);
+        thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+    }
+    return *thread_graphics_pool;
+}
+
+const CommandBuffer &Device::request_command_buffer(const std::string &name) {
+    return thread_graphics_pool().request_command_buffer(name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

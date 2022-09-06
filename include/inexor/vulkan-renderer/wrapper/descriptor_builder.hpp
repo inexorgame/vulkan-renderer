@@ -14,7 +14,6 @@ class ResourceDescriptor;
 
 class DescriptorBuilder {
     const Device &m_device;
-    const std::uint32_t m_swapchain_image_count{0};
 
     std::vector<VkDescriptorSetLayoutBinding> m_layout_bindings;
     std::vector<VkWriteDescriptorSet> m_write_sets;
@@ -24,8 +23,7 @@ class DescriptorBuilder {
 public:
     /// @brief Constructs the descriptor builder.
     /// @param device The const reference to a device RAII wrapper instance.
-    /// @param swapchain_image_count The number of images in swapchain.
-    DescriptorBuilder(const Device &device, std::uint32_t swapchain_image_count);
+    explicit DescriptorBuilder(const Device &device);
 
     DescriptorBuilder(const DescriptorBuilder &) = delete;
     DescriptorBuilder(DescriptorBuilder &&) = delete;

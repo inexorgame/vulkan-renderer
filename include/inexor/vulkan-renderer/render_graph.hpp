@@ -265,12 +265,10 @@ class PhysicalResource : public RenderGraphObject {
     friend RenderGraph;
 
 protected:
-    // TODO: Add OOP device functions (see above todo) and only store a wrapper::Device here.
-    const VmaAllocator m_allocator;
-    const VkDevice m_device;
+    const wrapper::Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
 
-    PhysicalResource(VmaAllocator allocator, VkDevice device) : m_allocator(allocator), m_device(device) {}
+    explicit PhysicalResource(const wrapper::Device &device) : m_device(device) {}
 
 public:
     PhysicalResource(const PhysicalResource &) = delete;
@@ -289,7 +287,7 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
 
 public:
-    PhysicalBuffer(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    explicit PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;
     ~PhysicalBuffer() override;
@@ -306,7 +304,7 @@ private:
     VkImageView m_image_view{VK_NULL_HANDLE};
 
 public:
-    PhysicalImage(VmaAllocator allocator, VkDevice device) : PhysicalResource(allocator, device) {}
+    explicit PhysicalImage(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
     ~PhysicalImage() override;
@@ -322,8 +320,8 @@ private:
     const wrapper::Swapchain &m_swapchain;
 
 public:
-    PhysicalBackBuffer(VmaAllocator allocator, VkDevice device, const wrapper::Swapchain &swapchain)
-        : PhysicalResource(allocator, device), m_swapchain(swapchain) {}
+    PhysicalBackBuffer(const wrapper::Device &device, const wrapper::Swapchain &swapchain)
+        : PhysicalResource(device), m_swapchain(swapchain) {}
     PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
     PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
     ~PhysicalBackBuffer() override = default;
@@ -336,16 +334,11 @@ class PhysicalStage : public RenderGraphObject {
     friend RenderGraph;
 
 private:
-    std::vector<wrapper::CommandBuffer> m_command_buffers;
-    const wrapper::Device &m_device;
-    std::unique_ptr<wrapper::Semaphore> m_finished_semaphore;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
 protected:
-    [[nodiscard]] VkDevice device() const {
-        return m_device.device();
-    }
+    const wrapper::Device &m_device;
 
 public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
@@ -382,8 +375,7 @@ public:
 
 class RenderGraph {
 private:
-    const wrapper::Device &m_device;
-    VkCommandPool m_command_pool{VK_NULL_HANDLE};
+    wrapper::Device &m_device;
     const wrapper::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
@@ -402,15 +394,16 @@ private:
 
     // Functions for building stage related vulkan objects.
     void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
-    void record_command_buffer(const RenderStage *, PhysicalStage &, std::uint32_t image_index) const;
+    void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf,
+                               std::uint32_t image_index) const;
 
     // Functions for building graphics stage related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage &) const;
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage &) const;
 
 public:
-    RenderGraph(const wrapper::Device &device, VkCommandPool command_pool, const wrapper::Swapchain &swapchain)
-        : m_device(device), m_command_pool(command_pool), m_swapchain(swapchain) {}
+    RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
+        : m_device(device), m_swapchain(swapchain) {}
 
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
@@ -434,12 +427,8 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing.
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
-    /// @param wait_semaphore The semaphore to wait on before rendering, typically some kind of "swapchain image
-    /// available" semaphore
-    /// @param graphics_queue The graphics queue to push rendering commands to
-    /// @param signal_fence The fence to signal on completion of the whole frame
-    VkSemaphore render(std::uint32_t image_index, VkSemaphore wait_semaphore, VkQueue graphics_queue,
-                       VkFence signal_fence);
+    /// @param cmd_buf The command buffer
+    void render(std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf);
 };
 
 template <typename T>

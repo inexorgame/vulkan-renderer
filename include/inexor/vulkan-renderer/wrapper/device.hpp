@@ -1,11 +1,14 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
 #include <array>
 #include <cassert>
+#include <functional>
 #include <optional>
 #include <string>
 
@@ -15,7 +18,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
-    VkPhysicalDevice m_graphics_card{VK_NULL_HANDLE};
+    VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
 
@@ -28,6 +31,12 @@ class Device {
     std::uint32_t m_graphics_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
 
+    /// According to NVidia, we should aim for one command pool per thread
+    /// We will create one for graphics and one for transfer queue per thread
+    /// https://developer.nvidia.com/blog/vulkan-dos-donts/
+    mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
+    mutable std::mutex m_mutex;
+
     // The debug marker extension is not part of the core,
     // so function pointers need to be loaded manually.
     PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag{nullptr};
@@ -38,6 +47,8 @@ class Device {
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
 
     const bool m_enable_vulkan_debug_markers{false};
+
+    CommandPool &thread_graphics_pool() const;
 
 public:
     /// @brief Check if a certain device extension is available for a specific graphics card.
@@ -83,8 +94,15 @@ public:
         return m_device;
     }
 
+    /// A wrapper method for beginning, ending and submitting command buffers
+    /// This method calls the request method for the given command pool, begins the command buffer, executes the lambda,
+    /// ends recording the command buffer, submits it and waits for it.
+    /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param cmd_lambda The command lambda to execute
+    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
+
     [[nodiscard]] VkPhysicalDevice physical_device() const {
-        return m_graphics_card;
+        return m_physical_device;
     }
 
     [[nodiscard]] VmaAllocator allocator() const {
@@ -249,6 +267,8 @@ public:
     /// @param name The internal debug marker name which will be assigned to this swapchain
     void create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSwapchainKHR *swapchain,
                           const std::string &name) const;
+
+    [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

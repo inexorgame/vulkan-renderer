@@ -39,4 +39,8 @@ void Fence::reset() const {
     vkResetFences(m_device.device(), 1, &m_fence);
 }
 
+VkResult Fence::status() const {
+    return vkGetFenceStatus(m_device.device(), m_fence);
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

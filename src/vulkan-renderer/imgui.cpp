@@ -79,7 +79,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(m_device, m_swapchain.image_count());
+    wrapper::DescriptorBuilder descriptor_builder(m_device);
 
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(
@@ -173,7 +173,7 @@ void ImGUIOverlay::update() {
         const ImGuiIO &io = ImGui::GetIO();
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
         m_push_const_block.translate = glm::vec2(-1.0f);
-        cmd_buf.bind_descriptor(*m_descriptor, physical.pipeline_layout());
+        cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.pipeline_layout());
         cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
                                &m_push_const_block);
 
