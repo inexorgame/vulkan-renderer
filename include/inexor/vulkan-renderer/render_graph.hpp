@@ -427,8 +427,8 @@ public:
 
     /// @brief Submits the command frame's command buffers for drawing.
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
-    /// @return A fence to signal on completion of the whole frame
-    const wrapper::Fence &render(std::uint32_t image_index);
+    /// @param cmd_buf The command buffer
+    void render(std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf);
 };
 
 template <typename T>

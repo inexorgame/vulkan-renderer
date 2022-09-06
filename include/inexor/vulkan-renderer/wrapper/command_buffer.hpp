@@ -4,6 +4,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -344,7 +345,23 @@ public:
     const CommandBuffer &reset_fence() const;
 
     /// Call vkQueueSubmit
+    /// @param submit_infos The submit infos
+    const CommandBuffer &submit(std::span<const VkSubmitInfo> submit_infos) const; // NOLINT
+
+    /// Call vkQueueSubmit
+    /// @param submit_info The submit info
+    const CommandBuffer &submit(VkSubmitInfo submit_infos) const; // NOLINT
+
+    /// Call vkQueueSubmit
     const CommandBuffer &submit() const; // NOLINT
+
+    /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
+    /// @param submit_infos The submit infos
+    const CommandBuffer &submit_and_wait(std::span<const VkSubmitInfo> submit_infos) const; // NOLINT
+
+    /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
+    /// @param submit_info The submit info
+    const CommandBuffer &submit_and_wait(VkSubmitInfo submit_info) const; // NOLINT
 
     /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
     const CommandBuffer &submit_and_wait() const; // NOLINT

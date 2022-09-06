@@ -502,7 +502,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-const wrapper::Fence &RenderGraph::render(const std::uint32_t image_index) {
+void RenderGraph::render(const std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -521,14 +521,9 @@ const wrapper::Fence &RenderGraph::render(const std::uint32_t image_index) {
         }
     }
 
-    const auto &cmd_buf = m_device.request_command_buffer("rendergraph");
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);
     }
-
-    cmd_buf.submit();
-
-    return cmd_buf.get_wait_fence();
 }
 
 } // namespace inexor::vulkan_renderer

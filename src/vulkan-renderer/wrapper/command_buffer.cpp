@@ -286,23 +286,43 @@ const CommandBuffer &CommandBuffer::reset_fence() const {
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::submit() const {
+const CommandBuffer &CommandBuffer::submit(const std::span<const VkSubmitInfo> submit_infos) const {
+    assert(!submit_infos.empty());
     end_command_buffer();
 
-    auto submit_info = make_info<VkSubmitInfo>();
-    submit_info.pCommandBuffers = &m_command_buffer;
-    submit_info.commandBufferCount = 1;
-
-    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, m_wait_fence->get())) {
+    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), static_cast<std::uint32_t>(submit_infos.size()),
+                                          submit_infos.data(), m_wait_fence->get())) {
         throw VulkanException("Error: vkQueueSubmit failed!", result);
     }
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::submit_and_wait() const {
-    submit();
+const CommandBuffer &CommandBuffer::submit(const VkSubmitInfo submit_info) const {
+    return submit({&submit_info, 1});
+}
+
+const CommandBuffer &CommandBuffer::submit() const {
+    auto submit_info = wrapper::make_info<VkSubmitInfo>();
+    submit_info.pCommandBuffers = &m_command_buffer;
+    submit_info.commandBufferCount = 1;
+    return submit(submit_info);
+}
+
+const CommandBuffer &CommandBuffer::submit_and_wait(const std::span<const VkSubmitInfo> submit_infos) const {
+    submit(submit_infos);
     m_wait_fence->block();
     return *this;
+}
+
+const CommandBuffer &CommandBuffer::submit_and_wait(const VkSubmitInfo submit_info) const {
+    return submit_and_wait({&submit_info, 1});
+}
+
+const CommandBuffer &CommandBuffer::submit_and_wait() const {
+    auto submit_info = wrapper::make_info<VkSubmitInfo>();
+    submit_info.pCommandBuffers = &m_command_buffer;
+    submit_info.commandBufferCount = 1;
+    return submit_and_wait(submit_info);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

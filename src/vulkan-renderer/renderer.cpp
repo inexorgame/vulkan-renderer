@@ -80,9 +80,6 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
-    m_frame_finished_fence.reset();
-    m_frame_finished_fence = std::make_unique<wrapper::Fence>(*m_device, "Farme finished fence", true);
-
     m_image_available_semaphore.reset();
     m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
 
@@ -105,7 +102,18 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
-    const wrapper::Fence &wait_fence = m_render_graph->render(image_index);
+    const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
+
+    m_render_graph->render(image_index, cmd_buf);
+
+    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    auto submit_info = wrapper::make_info<VkSubmitInfo>();
+    submit_info.pCommandBuffers = cmd_buf.ptr();
+    submit_info.commandBufferCount = 1;
+    submit_info.pWaitDstStageMask = stage_mask.data();
+
+    cmd_buf.submit_and_wait(submit_info);
 
     auto present_info = wrapper::make_info<VkPresentInfoKHR>();
     present_info.swapchainCount = 1;
@@ -115,8 +123,6 @@ void VulkanRenderer::render_frame() {
     if (const auto result = vkQueuePresentKHR(m_device->present_queue(), &present_info); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueuePresentKHR failed!", result);
     }
-
-    wait_fence.block();
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
