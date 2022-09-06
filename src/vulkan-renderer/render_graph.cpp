@@ -530,12 +530,9 @@ void RenderGraph::render(const std::uint32_t image_index, const VkFence signal_f
 
     cmd_buf.end_command_buffer();
 
-    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
     auto submit_info = wrapper::make_info<VkSubmitInfo>();
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = cmd_buf.ptr();
-    submit_info.pWaitDstStageMask = stage_mask.data();
 
     if (const auto result = vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, signal_fence)) {
         throw VulkanException("Error: vkQueueSubmit failed!", result);
