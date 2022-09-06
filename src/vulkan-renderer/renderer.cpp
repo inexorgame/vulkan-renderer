@@ -111,6 +111,8 @@ void VulkanRenderer::render_frame() {
     auto submit_info = wrapper::make_info<VkSubmitInfo>();
     submit_info.pCommandBuffers = cmd_buf.ptr();
     submit_info.commandBufferCount = 1;
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = m_image_available_semaphore->ptr();
     submit_info.pWaitDstStageMask = stage_mask.data();
 
     cmd_buf.submit_and_wait(submit_info);
