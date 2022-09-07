@@ -101,24 +101,25 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     m_stage->uses_shader(*m_vertex_shader);
     m_stage->uses_shader(*m_fragment_shader);
 
-    // Setup push constant range for global translation and scale.
-    VkPushConstantRange push_constant_range{};
-    push_constant_range.offset = 0;
-    push_constant_range.size = sizeof(PushConstBlock);
-    push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-    m_stage->add_push_constant_range(push_constant_range);
+
+    // Setup push constant range for global translation and scale.
+    m_stage->add_push_constant_range({
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof(PushConstBlock),
+    });
 
     // Setup blend attachment.
-    VkPipelineColorBlendAttachmentState blend_attachment;
-    blend_attachment.blendEnable = VK_TRUE;
-    blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-    blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    m_stage->set_blend_attachment(blend_attachment);
+    m_stage->set_blend_attachment({
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+    });
 }
 
 ImGUIOverlay::~ImGUIOverlay() {
