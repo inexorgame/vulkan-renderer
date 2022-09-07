@@ -12,10 +12,11 @@ namespace inexor::vulkan_renderer::wrapper {
 
 CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, std::string name)
     : m_device(device), m_name(std::move(name)) {
-    auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>();
-    cmd_buf_ai.commandBufferCount = 1;
-    cmd_buf_ai.commandPool = cmd_pool;
-    cmd_buf_ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    const auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>({
+        .commandPool = cmd_pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    });
 
     if (const auto result = vkAllocateCommandBuffers(m_device.device(), &cmd_buf_ai, &m_command_buffer);
         result != VK_SUCCESS) {
@@ -33,8 +34,9 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
 }
 
 const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
-    auto begin_info = make_info<VkCommandBufferBeginInfo>();
-    begin_info.flags = flags;
+    const auto begin_info = make_info<VkCommandBufferBeginInfo>({
+        .flags = flags,
+    });
     vkBeginCommandBuffer(m_command_buffer, &begin_info);
 
     // We must clear the staging buffers which could be left over from previous use of this command buffer
@@ -91,14 +93,14 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, con
                                                         const VkPipelineStageFlags dst_mask) const {
     assert(new_layout != old_layout);
 
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.oldLayout = old_layout;
-    barrier.newLayout = new_layout;
-    barrier.image = image;
-    barrier.subresourceRange = subres_range;
+    auto barrier = make_info<VkImageMemoryBarrier>({
+        .oldLayout = old_layout,
+        .newLayout = new_layout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = image,
+        .subresourceRange = subres_range,
+    });
 
     switch (old_layout) {
     case VK_IMAGE_LAYOUT_UNDEFINED:
@@ -157,14 +159,13 @@ CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_
                                    const std::uint32_t mip_level_count, const std::uint32_t array_layer_count,
                                    const std::uint32_t base_mip_level, const std::uint32_t base_array_layer,
                                    const VkPipelineStageFlags src_mask, const VkPipelineStageFlags dst_mask) const {
-
-    const VkImageSubresourceRange subres_range{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                                               .baseMipLevel = base_mip_level,
-                                               .levelCount = mip_level_count,
-                                               .baseArrayLayer = base_array_layer,
-                                               .layerCount = array_layer_count};
-
-    return change_image_layout(image, old_layout, new_layout, subres_range, src_mask, dst_mask);
+    return change_image_layout(image, old_layout, new_layout,
+                               {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                .baseMipLevel = base_mip_level,
+                                .levelCount = mip_level_count,
+                                .baseArrayLayer = base_array_layer,
+                                .layerCount = array_layer_count},
+                               src_mask, dst_mask);
 }
 
 const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
@@ -184,9 +185,7 @@ const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const Vk
 
 const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
                                                 const VkDeviceSize src_buf_size) const {
-    VkBufferCopy buf_copy{};
-    buf_copy.size = src_buf_size;
-    return copy_buffer(src_buf, dst_buf, buf_copy);
+    return copy_buffer(src_buf, dst_buf, {.size = src_buf_size});
 }
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
@@ -265,10 +264,11 @@ const CommandBuffer &CommandBuffer::pipeline_memory_barrier(VkPipelineStageFlags
 }
 
 const CommandBuffer &CommandBuffer::full_barrier() const {
-    auto mem_barrier = make_info<VkMemoryBarrier>();
-    mem_barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-    mem_barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    return pipeline_memory_barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, mem_barrier);
+    return pipeline_memory_barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                   make_info<VkMemoryBarrier>({
+                                       .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+                                       .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+                                   }));
 }
 
 const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout, const VkShaderStageFlags stage,
@@ -302,10 +302,10 @@ const CommandBuffer &CommandBuffer::submit(const VkSubmitInfo submit_info) const
 }
 
 const CommandBuffer &CommandBuffer::submit() const {
-    auto submit_info = wrapper::make_info<VkSubmitInfo>();
-    submit_info.pCommandBuffers = &m_command_buffer;
-    submit_info.commandBufferCount = 1;
-    return submit(submit_info);
+    return submit(make_info<VkSubmitInfo>({
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_command_buffer,
+    }));
 }
 
 const CommandBuffer &CommandBuffer::submit_and_wait(const std::span<const VkSubmitInfo> submit_infos) const {
@@ -319,10 +319,10 @@ const CommandBuffer &CommandBuffer::submit_and_wait(const VkSubmitInfo submit_in
 }
 
 const CommandBuffer &CommandBuffer::submit_and_wait() const {
-    auto submit_info = wrapper::make_info<VkSubmitInfo>();
-    submit_info.pCommandBuffers = &m_command_buffer;
-    submit_info.commandBufferCount = 1;
-    return submit_and_wait(submit_info);
+    return submit_and_wait(make_info<VkSubmitInfo>({
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_command_buffer,
+    }));
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
