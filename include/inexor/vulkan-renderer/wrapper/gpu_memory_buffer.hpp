@@ -20,7 +20,6 @@ protected:
     VkDeviceSize m_buffer_size{0};
     VmaAllocation m_allocation{VK_NULL_HANDLE};
     VmaAllocationInfo m_allocation_info{};
-    VmaAllocationCreateInfo m_allocation_ci{};
 
 public:
     /// @brief Construct the GPU memory buffer without specifying the actual data to fill in, only the memory size.
@@ -65,10 +64,6 @@ public:
 
     [[nodiscard]] VmaAllocationInfo allocation_info() const {
         return m_allocation_info;
-    }
-
-    [[nodiscard]] VmaAllocationCreateInfo allocation_create_info() const {
-        return m_allocation_ci;
     }
 };
 
