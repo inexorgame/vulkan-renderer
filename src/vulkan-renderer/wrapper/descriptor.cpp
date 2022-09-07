@@ -45,25 +45,27 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
         pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, 1});
     }
 
-    auto descriptor_pool_ci = wrapper::make_info<VkDescriptorPoolCreateInfo>();
-    descriptor_pool_ci.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
-    descriptor_pool_ci.pPoolSizes = pool_sizes.data();
-    descriptor_pool_ci.maxSets = 1;
+    m_device.create_descriptor_pool(wrapper::make_info<VkDescriptorPoolCreateInfo>({
+                                        .maxSets = 1,
+                                        .poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size()),
+                                        .pPoolSizes = pool_sizes.data(),
+                                    }),
+                                    &m_descriptor_pool, m_name);
 
-    m_device.create_descriptor_pool(descriptor_pool_ci, &m_descriptor_pool, m_name);
-
-    auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>();
-    descriptor_set_layout_ci.bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size());
-    descriptor_set_layout_ci.pBindings = m_descriptor_set_layout_bindings.data();
-
-    m_device.create_descriptor_set_layout(descriptor_set_layout_ci, &m_descriptor_set_layout, m_name);
+    m_device.create_descriptor_set_layout(
+        make_info<VkDescriptorSetLayoutCreateInfo>({
+            .bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size()),
+            .pBindings = m_descriptor_set_layout_bindings.data(),
+        }),
+        &m_descriptor_set_layout, m_name);
 
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(1, m_descriptor_set_layout);
 
-    auto descriptor_set_ai = wrapper::make_info<VkDescriptorSetAllocateInfo>();
-    descriptor_set_ai.descriptorPool = m_descriptor_pool;
-    descriptor_set_ai.descriptorSetCount = 1;
-    descriptor_set_ai.pSetLayouts = descriptor_set_layouts.data();
+    const auto descriptor_set_ai = wrapper::make_info<VkDescriptorSetAllocateInfo>({
+        .descriptorPool = m_descriptor_pool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = descriptor_set_layouts.data(),
+    });
 
     m_descriptor_sets.resize(1);
 
