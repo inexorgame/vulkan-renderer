@@ -277,7 +277,7 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
     assert(layout);
     assert(size > 0);
     assert(data);
-    vkCmdPushConstants(m_command_buffer, layout, stage, offset, size, data);
+    vkCmdPushConstants(m_command_buffer, layout, stage, static_cast<std::uint32_t>(offset), size, data);
     return *this;
 }
 

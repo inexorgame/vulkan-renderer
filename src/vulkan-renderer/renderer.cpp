@@ -41,7 +41,7 @@ void VulkanRenderer::setup_render_graph() {
     main_stage->set_depth_options(true, true);
     main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
-        cmd_buf.draw_indexed(m_octree_indices.size());
+        cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
     });
 
     for (const auto &shader : m_shaders) {
