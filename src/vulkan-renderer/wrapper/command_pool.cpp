@@ -9,9 +9,10 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 CommandPool::CommandPool(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
-    auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>();
-    cmd_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    cmd_pool_ci.queueFamilyIndex = device.graphics_queue_family_index();
+    const auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>({
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .queueFamilyIndex = device.graphics_queue_family_index(),
+    });
 
     // Get the thread id as string for naming the command pool and the command buffers
     const std::size_t thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
