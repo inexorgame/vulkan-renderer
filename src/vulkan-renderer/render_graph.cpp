@@ -17,11 +17,11 @@
 namespace inexor::vulkan_renderer {
 
 void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
-    VkVertexInputAttributeDescription vertex_attribute{};
-    vertex_attribute.format = format;
-    vertex_attribute.location = static_cast<std::uint32_t>(m_vertex_attributes.size());
-    vertex_attribute.offset = offset;
-    m_vertex_attributes.push_back(vertex_attribute);
+    m_vertex_attributes.push_back({
+        .location = static_cast<std::uint32_t>(m_vertex_attributes.size()),
+        .format = format,
+        .offset = offset,
+    });
 }
 
 void RenderStage::writes_to(const RenderResource *resource) {
@@ -37,11 +37,11 @@ void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_
 }
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
-    auto create_info = wrapper::make_info<VkPipelineShaderStageCreateInfo>();
-    create_info.module = shader.module();
-    create_info.stage = shader.type();
-    create_info.pName = shader.entry_point().c_str();
-    m_shaders.push_back(create_info);
+    m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
+        .stage = shader.type(),
+        .module = shader.module(),
+        .pName = shader.entry_point().c_str(),
+    }));
 }
 
 PhysicalBuffer::~PhysicalBuffer() {
@@ -64,13 +64,16 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
 
 void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
     // TODO: Don't always create mapped.
-    VmaAllocationCreateInfo alloc_ci{};
-    alloc_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-    alloc_ci.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    const VmaAllocationCreateInfo alloc_ci{
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
+    };
 
-    auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>();
-    buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    buffer_ci.size = buffer_resource.m_data_size;
+    auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
+        .size = buffer_resource.m_data_size,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    });
+
     switch (buffer_resource.m_usage) {
     case BufferUsage::INDEX_BUFFER:
         buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
@@ -94,23 +97,25 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
 
 void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical,
                               VmaAllocationCreateInfo *alloc_ci) const {
-    auto image_ci = wrapper::make_info<VkImageCreateInfo>();
-    image_ci.imageType = VK_IMAGE_TYPE_2D;
-
-    // TODO: Support textures with dimensions not equal to back buffer size.
-    image_ci.extent.width = m_swapchain.extent().width;
-    image_ci.extent.height = m_swapchain.extent().height;
-    image_ci.extent.depth = 1;
-    image_ci.arrayLayers = 1;
-    image_ci.mipLevels = 1;
-    image_ci.format = texture_resource.m_format;
-    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_ci.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.usage = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                         ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-                         : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    const auto image_ci = wrapper::make_info<VkImageCreateInfo>({
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = texture_resource.m_format,
+        .extent{
+            // TODO: Support textures with dimensions not equal to back buffer size.
+            .width = m_swapchain.extent().width,
+            .height = m_swapchain.extent().height,
+            .depth = 1,
+        },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                     ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                     : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    });
 
     VmaAllocationInfo alloc_info;
     // TODO: Assign proper name to this image inside of rendergraph
@@ -125,15 +130,18 @@ void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalI
 }
 
 void RenderGraph::build_image_view(const TextureResource &texture_resource, PhysicalImage &physical) const {
-    auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>();
-    image_view_ci.format = texture_resource.m_format;
-    image_view_ci.image = physical.m_image;
-    image_view_ci.subresourceRange.aspectMask = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                                                    ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                                                    : VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_ci.subresourceRange.layerCount = 1;
-    image_view_ci.subresourceRange.levelCount = 1;
-    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    const auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
+        .image = physical.m_image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = texture_resource.m_format,
+        .subresourceRange{
+            .aspectMask = static_cast<VkImageAspectFlags>(texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                                                              ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                                                              : VK_IMAGE_ASPECT_COLOR_BIT),
+            .levelCount = 1,
+            .layerCount = 1,
+        },
+    });
 
     if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
         result != VK_SUCCESS) {
@@ -143,11 +151,12 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
-    auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>();
-    pipeline_layout_ci.setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size());
-    pipeline_layout_ci.pSetLayouts = stage->m_descriptor_layouts.data();
-    pipeline_layout_ci.pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size());
-    pipeline_layout_ci.pPushConstantRanges = stage->m_push_constant_ranges.data();
+    const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({
+        .setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size()),
+        .pSetLayouts = stage->m_descriptor_layouts.data(),
+        .pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size()),
+        .pPushConstantRanges = stage->m_push_constant_ranges.data(),
+    });
 
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
@@ -167,18 +176,21 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         const auto *phys_graphics_stage = physical.as<PhysicalGraphicsStage>();
         assert(phys_graphics_stage != nullptr);
 
-        auto render_pass_bi = wrapper::make_info<VkRenderPassBeginInfo>();
         std::array<VkClearValue, 2> clear_values{};
         if (graphics_stage->m_clears_screen) {
             clear_values[0].color = {0, 0, 0, 0};
             clear_values[1].depthStencil = {1.0f, 0};
-            render_pass_bi.clearValueCount = static_cast<std::uint32_t>(clear_values.size());
-            render_pass_bi.pClearValues = clear_values.data();
         }
-        render_pass_bi.framebuffer = phys_graphics_stage->m_framebuffers[image_index].get();
-        render_pass_bi.renderArea.extent = m_swapchain.extent();
-        render_pass_bi.renderPass = phys_graphics_stage->m_render_pass;
-        cmd_buf.begin_render_pass(render_pass_bi);
+
+        cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
+            .renderPass = phys_graphics_stage->m_render_pass,
+            .framebuffer = phys_graphics_stage->m_framebuffers[image_index].get(),
+            .renderArea{
+                .extent = m_swapchain.extent(),
+            },
+            .clearValueCount = static_cast<std::uint32_t>(clear_values.size()),
+            .pClearValues = clear_values.data(),
+        }));
     }
 
     std::vector<VkBuffer> vertex_buffers;
@@ -230,15 +242,16 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
             continue;
         }
 
-        VkAttachmentDescription attachment{};
-        attachment.format = texture->m_format;
-        attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        attachment.loadOp = stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        VkAttachmentDescription attachment{
+            .format = texture->m_format,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
 
-        attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         switch (texture->m_usage) {
         case TextureUsage::BACK_BUFFER:
             if (!stage->m_clears_screen) {
@@ -262,25 +275,28 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
 
     // Build a simple subpass that just waits for the output colour vector to be written by the fragment shader. In the
     // future, we may want to make use of subpasses more.
-    VkSubpassDependency subpass_dependency{};
-    subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    const VkSubpassDependency subpass_dependency{
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    };
 
-    VkSubpassDescription subpass_description{};
-    subpass_description.colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size());
-    subpass_description.pColorAttachments = colour_refs.data();
-    subpass_description.pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr;
-    subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    const VkSubpassDescription subpass_description{
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size()),
+        .pColorAttachments = colour_refs.data(),
+        .pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr,
+    };
 
-    auto render_pass_ci = wrapper::make_info<VkRenderPassCreateInfo>();
-    render_pass_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
-    render_pass_ci.dependencyCount = 1;
-    render_pass_ci.subpassCount = 1;
-    render_pass_ci.pAttachments = attachments.data();
-    render_pass_ci.pDependencies = &subpass_dependency;
-    render_pass_ci.pSubpasses = &subpass_description;
+    const auto render_pass_ci = wrapper::make_info<VkRenderPassCreateInfo>({
+        .attachmentCount = static_cast<std::uint32_t>(attachments.size()),
+        .pAttachments = attachments.data(),
+        .subpassCount = 1,
+        .pSubpasses = &subpass_description,
+        .dependencyCount = 1,
+        .pDependencies = &subpass_dependency,
+    });
 
     if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
         result != VK_SUCCESS) {
@@ -311,78 +327,88 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
             attribute_bindings.push_back(attribute_binding);
         }
 
-        VkVertexInputBindingDescription vertex_binding{};
-        vertex_binding.binding = binding;
-        vertex_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-        vertex_binding.stride = static_cast<std::uint32_t>(buffer_resource->m_element_size);
-        vertex_bindings.push_back(vertex_binding);
+        vertex_bindings.push_back({
+            .binding = binding,
+            .stride = static_cast<std::uint32_t>(buffer_resource->m_element_size),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+        });
     }
 
-    auto vertex_input = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>();
-    vertex_input.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_bindings.size());
-    vertex_input.vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_bindings.size());
-    vertex_input.pVertexAttributeDescriptions = attribute_bindings.data();
-    vertex_input.pVertexBindingDescriptions = vertex_bindings.data();
+    const auto vertex_input = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>({
+        .vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_bindings.size()),
+        .pVertexBindingDescriptions = vertex_bindings.data(),
+        .vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_bindings.size()),
+        .pVertexAttributeDescriptions = attribute_bindings.data(),
+    });
 
     // TODO: Support primitives other than triangles.
-    auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>();
-    input_assembly.primitiveRestartEnable = VK_FALSE;
-    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    const auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>({
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE,
+    });
 
     // TODO: Also allow depth compare func to be changed?
-    auto depth_stencil = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>();
-    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depth_stencil.depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE;
-    depth_stencil.depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE;
+    const auto depth_stencil = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
+        .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
+        .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+    });
 
     // TODO: Allow culling to be disabled.
     // TODO: Wireframe rendering.
-    auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>();
-    rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterization_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterization_state.lineWidth = 1.0f;
-    rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
+    const auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>({
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .lineWidth = 1.0f,
+    });
 
     // TODO(GH-203): Support multisampling again.
-    auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>();
-    multisample_state.minSampleShading = 1.0f;
-    multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    const auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>({
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .minSampleShading = 1.0f,
+    });
 
-    VkPipelineColorBlendAttachmentState blend_attachment = stage->m_blend_attachment;
+    auto blend_attachment = stage->m_blend_attachment;
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    auto blend_state = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>();
-    blend_state.attachmentCount = 1;
-    blend_state.pAttachments = &blend_attachment;
+    const auto blend_state = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
+        .attachmentCount = 1,
+        .pAttachments = &blend_attachment,
+    });
 
-    VkRect2D scissor{};
-    scissor.extent = m_swapchain.extent();
+    const VkRect2D scissor{
+        .extent = m_swapchain.extent(),
+    };
 
-    VkViewport viewport{};
-    viewport.width = static_cast<float>(m_swapchain.extent().width);
-    viewport.height = static_cast<float>(m_swapchain.extent().height);
-    viewport.maxDepth = 1.0f;
+    const VkViewport viewport{
+        .width = static_cast<float>(m_swapchain.extent().width),
+        .height = static_cast<float>(m_swapchain.extent().height),
+        .maxDepth = 1.0f,
+    };
 
     // TODO: Custom scissors?
-    auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>();
-    viewport_state.scissorCount = 1;
-    viewport_state.viewportCount = 1;
-    viewport_state.pScissors = &scissor;
-    viewport_state.pViewports = &viewport;
+    const auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>({
+        .viewportCount = 1,
+        .pViewports = &viewport,
+        .scissorCount = 1,
+        .pScissors = &scissor,
+    });
 
-    auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>();
-    pipeline_ci.pVertexInputState = &vertex_input;
-    pipeline_ci.pInputAssemblyState = &input_assembly;
-    pipeline_ci.pDepthStencilState = &depth_stencil;
-    pipeline_ci.pRasterizationState = &rasterization_state;
-    pipeline_ci.pMultisampleState = &multisample_state;
-    pipeline_ci.pColorBlendState = &blend_state;
-    pipeline_ci.pViewportState = &viewport_state;
-    pipeline_ci.layout = physical.m_pipeline_layout;
-    pipeline_ci.renderPass = physical.m_render_pass;
-    pipeline_ci.stageCount = static_cast<std::uint32_t>(stage->m_shaders.size());
-    pipeline_ci.pStages = stage->m_shaders.data();
+    const auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>({
+        .stageCount = static_cast<std::uint32_t>(stage->m_shaders.size()),
+        .pStages = stage->m_shaders.data(),
+        .pVertexInputState = &vertex_input,
+        .pInputAssemblyState = &input_assembly,
+        .pViewportState = &viewport_state,
+        .pRasterizationState = &rasterization_state,
+        .pMultisampleState = &multisample_state,
+        .pDepthStencilState = &depth_stencil,
+        .pColorBlendState = &blend_state,
+        .layout = physical.m_pipeline_layout,
+        .renderPass = physical.m_render_pass,
+    });
 
     // TODO: Pipeline caching (basically load the render graph from a file)
     if (const auto result =
