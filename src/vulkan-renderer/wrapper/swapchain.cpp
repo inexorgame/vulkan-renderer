@@ -60,30 +60,6 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     m_surface_format = *surface_format_candidate;
 
-    auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>();
-    swapchain_ci.surface = m_surface;
-    swapchain_ci.minImageCount = m_swapchain_image_count;
-    swapchain_ci.imageFormat = m_surface_format.format;
-    swapchain_ci.imageColorSpace = m_surface_format.colorSpace;
-    swapchain_ci.imageExtent.width = m_extent.width;
-    swapchain_ci.imageExtent.height = m_extent.height;
-    swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchain_ci.preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(
-        VulkanSettingsDecisionMaker::image_transform(m_device.physical_device(), m_surface));
-    swapchain_ci.imageArrayLayers = 1;
-    swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchain_ci.queueFamilyIndexCount = 0;
-    swapchain_ci.pQueueFamilyIndices = nullptr;
-    swapchain_ci.presentMode = *present_mode;
-
-    // Swapchain recreation can be accelerated a lot when storing the old swapchain.
-    if (old_swapchain != VK_NULL_HANDLE) {
-        swapchain_ci.oldSwapchain = old_swapchain;
-    }
-
-    // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
-    swapchain_ci.clipped = VK_TRUE;
-
     const auto &composite_alpha =
         VulkanSettingsDecisionMaker::find_composite_alpha_format(m_device.physical_device(), m_surface);
 
@@ -91,7 +67,28 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
         throw std::runtime_error("Error: Could not find composite alpha format while recreating swapchain!");
     }
 
-    swapchain_ci.compositeAlpha = composite_alpha.value();
+    auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
+        .surface = m_surface,
+        .minImageCount = m_swapchain_image_count,
+        .imageFormat = m_surface_format.format,
+        .imageColorSpace = m_surface_format.colorSpace,
+        .imageExtent{
+            .width = m_extent.width,
+            .height = m_extent.height,
+        },
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = nullptr,
+        .preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(
+            VulkanSettingsDecisionMaker::image_transform(m_device.physical_device(), m_surface)),
+        .compositeAlpha = composite_alpha.value(),
+        .presentMode = *present_mode,
+        // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
+        .clipped = VK_TRUE,
+        .oldSwapchain = old_swapchain,
+    });
 
     // Set additional usage flag for blitting from the swapchain images if supported.
     VkFormatProperties format_properties;
@@ -125,18 +122,23 @@ void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_
 
     m_swapchain_image_views.resize(m_swapchain_image_count);
 
-    auto image_view_ci = make_info<VkImageViewCreateInfo>();
-    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_ci.format = m_surface_format.format;
-    image_view_ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_ci.subresourceRange.baseMipLevel = 0;
-    image_view_ci.subresourceRange.levelCount = 1;
-    image_view_ci.subresourceRange.baseArrayLayer = 0;
-    image_view_ci.subresourceRange.layerCount = 1;
+    auto image_view_ci = make_info<VkImageViewCreateInfo>({
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = m_surface_format.format,
+        .components{
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+        },
+        .subresourceRange{
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+    });
 
     for (std::size_t i = 0; i < m_swapchain_image_count; i++) {
         image_view_ci.image = m_swapchain_images[i];
