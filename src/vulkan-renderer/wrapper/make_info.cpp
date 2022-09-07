@@ -238,4 +238,10 @@ VkSwapchainCreateInfoKHR make_info(VkSwapchainCreateInfoKHR info) {
     return info;
 }
 
+template <>
+VkWriteDescriptorSet make_info(VkWriteDescriptorSet info) {
+    info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    return info;
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

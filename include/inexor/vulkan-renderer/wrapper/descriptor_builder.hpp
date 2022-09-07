@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+
 #include <cassert>
 #include <string>
 #include <vector>
@@ -67,32 +69,28 @@ DescriptorBuilder &DescriptorBuilder::add_uniform_buffer(const VkBuffer uniform_
                                                          const VkShaderStageFlagBits shader_stage) {
     assert(uniform_buffer);
 
-    VkDescriptorSetLayoutBinding layout_binding{};
-    layout_binding.binding = binding;
-    layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    layout_binding.descriptorCount = 1;
-    layout_binding.stageFlags = shader_stage;
-    layout_binding.pImmutableSamplers = nullptr;
+    m_layout_bindings.push_back({
+        .binding = binding,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = static_cast<VkShaderStageFlags>(shader_stage),
+        .pImmutableSamplers = nullptr,
+    });
 
-    m_layout_bindings.push_back(layout_binding);
+    m_descriptor_buffer_infos.push_back({
+        .buffer = uniform_buffer,
+        .offset = 0,
+        .range = sizeof(T),
+    });
 
-    VkDescriptorBufferInfo uniform_buffer_info{};
-    uniform_buffer_info.buffer = uniform_buffer;
-    uniform_buffer_info.offset = 0;
-    uniform_buffer_info.range = sizeof(T);
-
-    m_descriptor_buffer_infos.push_back(uniform_buffer_info);
-
-    VkWriteDescriptorSet descriptor_write{};
-    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_write.dstSet = nullptr;
-    descriptor_write.dstBinding = binding;
-    descriptor_write.dstArrayElement = 0;
-    descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor_write.descriptorCount = 1;
-    descriptor_write.pBufferInfo = &m_descriptor_buffer_infos.back();
-
-    m_write_sets.push_back(descriptor_write);
+    m_write_sets.push_back(make_info<VkWriteDescriptorSet>({
+        .dstSet = nullptr,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &m_descriptor_buffer_infos.back(),
+    }));
 
     return *this;
 }
