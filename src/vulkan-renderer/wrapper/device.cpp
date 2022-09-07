@@ -130,12 +130,11 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_present_queue_family_index = m_graphics_queue_family_index;
 
         // In this case, there is one queue family which can be used for both graphics and presentation.
-        auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation;
-        device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
-
-        queues_to_create.push_back(device_queue_ci);
+        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
+            .queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation,
+            .queueCount = 1,
+            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
+        }));
     } else {
         spdlog::trace("No queue found which supports both graphics and presentation");
         spdlog::trace("The application will try to use 2 separate queues");
@@ -162,20 +161,18 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_present_queue_family_index = *queue_candidate;
 
         // Set up one queue for graphics.
-        auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = m_graphics_queue_family_index;
-        device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
-
-        queues_to_create.push_back(device_queue_ci);
+        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
+            .queueFamilyIndex = m_graphics_queue_family_index,
+            .queueCount = 1,
+            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
+        }));
 
         // Set up one queue for presentation.
-        device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = m_present_queue_family_index;
-        device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
-
-        queues_to_create.push_back(device_queue_ci);
+        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
+            .queueFamilyIndex = m_present_queue_family_index,
+            .queueCount = 1,
+            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
+        }));
     }
 
     // Add another device queue just for data transfer.
@@ -192,12 +189,11 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
 
-        auto device_queue_ci = make_info<VkDeviceQueueCreateInfo>();
-        device_queue_ci.queueFamilyIndex = m_transfer_queue_family_index;
-        device_queue_ci.queueCount = 1;
-        device_queue_ci.pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY;
-
-        queues_to_create.push_back(device_queue_ci);
+        queues_to_create.push_back({
+            .queueFamilyIndex = m_transfer_queue_family_index,
+            .queueCount = 1,
+            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
+        });
     } else {
         // We don't have the opportunity to use a separated queue for data transfer!
         // Do not create a new queue, use the graphics queue instead.
@@ -237,20 +233,21 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         }
     }
 
-    VkPhysicalDeviceFeatures used_features{};
+    const VkPhysicalDeviceFeatures used_features{
+        // Enable anisotropic filtering.
+        .samplerAnisotropy = VK_TRUE,
+    };
 
-    // Enable anisotropic filtering.
-    used_features.samplerAnisotropy = VK_TRUE;
-
-    auto device_ci = make_info<VkDeviceCreateInfo>();
-    device_ci.queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size());
-    device_ci.pQueueCreateInfos = queues_to_create.data();
-    // Device layers were deprecated in Vulkan some time ago, essentially making all layers instance layers.
-    device_ci.enabledLayerCount = 0;
-    device_ci.ppEnabledLayerNames = nullptr;
-    device_ci.enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size());
-    device_ci.ppEnabledExtensionNames = enabled_device_extensions.data();
-    device_ci.pEnabledFeatures = &used_features;
+    const auto device_ci = make_info<VkDeviceCreateInfo>({
+        .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
+        .pQueueCreateInfos = queues_to_create.data(),
+        // Device layers were deprecated in Vulkan some time ago, essentially making all layers instance layers.
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = nullptr,
+        .enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size()),
+        .ppEnabledExtensionNames = enabled_device_extensions.data(),
+        .pEnabledFeatures = &used_features,
+    });
 
     spdlog::trace("Creating physical device");
 
@@ -307,14 +304,14 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     spdlog::trace("Creating VMA allocator");
 
-    VmaAllocatorCreateInfo vma_allocator_ci{};
-    vma_allocator_ci.physicalDevice = m_physical_device;
-    vma_allocator_ci.instance = instance.instance();
-    vma_allocator_ci.device = m_device;
-
-    // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
-    // This might need to be changed in the future
-    vma_allocator_ci.vulkanApiVersion = VK_API_VERSION_1_1;
+    const VmaAllocatorCreateInfo vma_allocator_ci{
+        .physicalDevice = m_physical_device,
+        .device = m_device,
+        .instance = instance.instance(),
+        // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
+        // This might need to be changed in the future
+        .vulkanApiVersion = VK_API_VERSION_1_1,
+    };
 
     spdlog::trace("Creating Vulkan memory allocator instance");
 
@@ -361,10 +358,11 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
     assert(!name.empty());
     assert(m_vk_debug_marker_set_object_name);
 
-    auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>();
-    name_info.objectType = object_type;
-    name_info.object = reinterpret_cast<std::uint64_t>(object); // NOLINT
-    name_info.pObjectName = name.c_str();
+    const auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>({
+        .objectType = object_type,
+        .object = reinterpret_cast<std::uint64_t>(object), // NOLINT
+        .pObjectName = name.c_str(),
+    });
 
     if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
         throw VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
@@ -384,12 +382,13 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
     assert(memory_block);
     assert(m_vk_debug_marker_set_object_tag);
 
-    auto tag_info = make_info<VkDebugMarkerObjectTagInfoEXT>();
-    tag_info.object = reinterpret_cast<std::uint64_t>(object); // NOLINT
-    tag_info.objectType = object_type;
-    tag_info.tagName = name;
-    tag_info.tagSize = memory_size;
-    tag_info.pTag = memory_block;
+    const auto tag_info = make_info<VkDebugMarkerObjectTagInfoEXT>({
+        .objectType = object_type,
+        .object = reinterpret_cast<std::uint64_t>(object), // NOLINT
+        .tagName = name,
+        .tagSize = memory_size,
+        .pTag = memory_block,
+    });
 
     if (const auto result = m_vk_debug_marker_set_object_tag(m_device, &tag_info); result != VK_SUCCESS) {
         throw VulkanException("Failed to assign Vulkan debug marker memory block!", result);
