@@ -22,12 +22,12 @@ struct SwapchainSettings {
 /// - Which presentation modes should be used?
 struct VulkanSettingsDecisionMaker {
 
-    /// @brief Rate a graphics card by its features.
-    /// @note The current implementation just sums up all available memory as a score.
-    /// @todo Implement additional graphics card rating criteria if desired.
-    /// @param graphics_card The graphics card which will be rated.
-    /// @return The graphics card's score which is greater or equal to 0.
-    [[nodiscard]] static std::size_t rate_graphics_card(VkPhysicalDevice graphics_card);
+    /// Rate a graphics card by its features
+    /// @param graphics_card The graphics card which will be rated
+    /// @param surface The window surface
+    /// @return The graphics card's score
+    /// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
+    [[nodiscard]] static std::int32_t rate_physical_device(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
     /// Return a std::vector of all device extensions properties of a physical device
     /// @note This function can return an empty vector! It is the caller's responsibility to account for this!
@@ -58,18 +58,17 @@ struct VulkanSettingsDecisionMaker {
     /// @return The type of the graphics card.
     [[nodiscard]] static VkPhysicalDeviceType graphics_card_type(VkPhysicalDevice graphics_card);
 
-    /// @brief Automatically select the best graphics card considering all available ones.
-    /// Please take a look at Inexor's advanced device selection mechanism which is build into this method.
-    /// If there is only one graphics card available, we don't have a choice and must try that one.
-    /// The user can manually specify which graphics card will be used with command line argument --gpu <index>.
-    /// Please note that the graphics cards index starts with 0.
-    /// @param vulkan_instance A pointer to the Vulkan instance handle.
-    /// @param surface The selected (window) surface.
-    /// @param preferred_graphics_card_index The preferred graphics card (by array index).
-    /// @return A physical device which was chosen if a suitable one could be found, std::nullopt otherwise.
+    /// Automatically select the best physical device (graphics card) out of all the available ones
+    /// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``.
+    /// Please note that the graphics cards index starts with 0!
+    /// The method will check if the specified index is a valid array index
+    /// @param inst The Vulkan instance
+    /// @param surface The window surface
+    /// @param prefered_index The preferred graphics card index (starting with ``0``!)
+    /// @return The selected physical device (if any could be found), or std::nullopt otherwise
     [[nodiscard]] static std::optional<VkPhysicalDevice>
-    graphics_card(VkInstance vulkan_instance, VkSurfaceKHR surface,
-                  std::optional<std::uint32_t> preferred_gpu_index = std::nullopt);
+    pick_graphics_card(VkInstance inst, VkSurfaceKHR surface,
+                       std::optional<std::uint32_t> prefered_index = std::nullopt);
 
     /// @brief Automatically decide how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.

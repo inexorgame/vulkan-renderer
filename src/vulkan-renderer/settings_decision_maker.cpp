@@ -4,6 +4,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cassert>
 
 namespace inexor::vulkan_renderer {
@@ -159,31 +160,39 @@ VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(const VkPhy
     return props.deviceType;
 }
 
-std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevice graphics_card) {
+std::int32_t VulkanSettingsDecisionMaker::rate_physical_device(const VkPhysicalDevice graphics_card,
+                                                               const VkSurfaceKHR surface) {
     assert(graphics_card);
+    assert(surface);
 
-    // The score of the graphics card.
-    std::size_t graphics_card_score = 0;
-
-    // For now, we will only score the memory of the graphics cards.
-    // Therefore we calculate the sum of all memory that is
-
-    // Check memory properties of this graphics card.
-    VkPhysicalDeviceMemoryProperties graphics_card_memory_properties;
-
-    vkGetPhysicalDeviceMemoryProperties(graphics_card, &graphics_card_memory_properties);
-
-    // Loop through all memory heaps.
-    for (std::size_t i = 0; i < graphics_card_memory_properties.memoryHeapCount; i++) {
-        if ((graphics_card_memory_properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
-            // Use real GPU memory as score.
-            graphics_card_score += graphics_card_memory_properties.memoryHeaps[i].size / (1000 * 1000);
-        }
+    if (!is_graphics_card_suitable(graphics_card, surface)) {
+        return -1;
     }
 
-    // TODO: Check for more features or limits.
+    // We prefer discrete physical devices over integrated ones
+    std::int32_t type_score = 1;
+    switch (graphics_card_type(graphics_card)) {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        type_score = 10;
+        break;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        type_score = 2;
+        break;
+    default:
+        break;
+    }
 
-    return graphics_card_score;
+    VkPhysicalDeviceMemoryProperties mem_props;
+    vkGetPhysicalDeviceMemoryProperties(graphics_card, &mem_props);
+
+    // Summarize real GPU memory in megabytes as a factor for the rating
+    std::int32_t mem_score = 0;
+    for (std::size_t i = 0; i < mem_props.memoryHeapCount; i++) {
+        if ((mem_props.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
+            mem_score += mem_props.memoryHeaps[i].size / (1000 * 1000);
+        }
+    }
+    return type_score * mem_score;
 }
 
 std::vector<VkPhysicalDevice> VulkanSettingsDecisionMaker::get_all_physical_devices(const VkInstance inst) {
@@ -202,242 +211,34 @@ std::vector<VkPhysicalDevice> VulkanSettingsDecisionMaker::get_all_physical_devi
 }
 
 std::optional<VkPhysicalDevice>
-VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, const VkSurfaceKHR surface,
-                                           const std::optional<std::uint32_t> preferred_gpu_index) {
-    assert(vulkan_instance);
+VulkanSettingsDecisionMaker::pick_graphics_card(const VkInstance inst, const VkSurfaceKHR surface,
+                                                const std::optional<std::uint32_t> preferred_index) {
+    assert(inst);
     assert(surface);
 
-    // Do not assert preferred_graphics_card_index because this classifies as runtime error!
-
-    std::uint32_t gpu_count = 0;
-
-    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &gpu_count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+    auto physical_devices = get_all_physical_devices(inst);
+    if (physical_devices.empty()) {
+        throw std::runtime_error("Error: No physical devices available!");
     }
 
-    if (gpu_count == 0) {
-        // In this case there are not Vulkan compatible graphics cards available!
-        spdlog::error("Could not find any graphics cards!");
-        return std::nullopt;
-    }
-
-    std::vector<VkPhysicalDevice> available_gpus(gpu_count);
-
-    // Get information about the available graphics cards.
-    if (const auto result = vkEnumeratePhysicalDevices(vulkan_instance, &gpu_count, available_gpus.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
-    }
-
-    // ATTEMPT 1
-    // If there is only 1 graphics card available, we don't have a choice and must use that one.
-    // The preferred graphics card index which could have been specified by the user must be either this one or an
-    // invalid index!
-    if (gpu_count == 1) {
-        spdlog::trace("Because there is only 1 graphics card available, we don't have a choice and must use that one");
-
-        // Did the user specify a preferred GPU by command line argument?
-        // If so, let's take a look at what he wanted us to use.
-        // This does not matter in any way in this case.
-        if (preferred_gpu_index) {
-            // Since we only have one graphics card to choose from, index 0 is our only option.
-            if (0 != *preferred_gpu_index) {
-                spdlog::trace("Ignoring command line argument -gpu {} because there is only one GPU to chose from",
-                              *preferred_gpu_index);
+    // Did the user specify the index of a prefered physical device?
+    if (preferred_index) {
+        // Is the index even valid?
+        if (*preferred_index < physical_devices.size()) {
+            if (rate_physical_device(physical_devices[*preferred_index], surface) > 0) {
+                return physical_devices[*preferred_index];
             }
-            if (!(*preferred_gpu_index >= 0 && *preferred_gpu_index < available_gpus.size())) {
-                spdlog::warn("Warning: Array index for selected graphics card would have been invalid anyways!");
-            }
+            spdlog::error("The prefered physical device is unsuitable!");
         }
-
-        if (is_graphics_card_suitable(available_gpus[0], surface)) {
-            spdlog::trace("The only graphics card available is suitable for the application!");
-            spdlog::trace("Score: {}", rate_graphics_card(available_gpus[0]));
-            return available_gpus[0];
-        }
-
-        spdlog::error("Error: The only graphics card available is unsuitable for the application's purposes!");
-        return std::nullopt;
+        spdlog::error("The specified index for a prefered physical device is invalid!");
     }
 
-    // ATTEMPT 2
-    // There is more than 1 graphics cards available, but the user specified which one should be preferred.
-    // It is important to note that the preferred graphics card can be unsuitable for the application's purposes
-    // though! If that is the case, the automatic graphics card selection mechanism is responsible for finding a
-    // suitable graphics card. The user can also simply change the command line argument and try to prefer another
-    // graphics card.
-    if (preferred_gpu_index) {
-        // Check if this array index is valid!
-        if (*preferred_gpu_index >= 0 && preferred_gpu_index < gpu_count) {
-            spdlog::trace("Command line parameter for preferred GPU specified");
-            spdlog::trace("Checking graphics card with index {}", *preferred_gpu_index);
+    std::sort(physical_devices.begin(), physical_devices.end(),
+              [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
+                  return rate_physical_device(lhs, surface) < rate_physical_device(rhs, surface);
+              });
 
-            // Check if the graphics card selected by the user meets all the criteria we need!
-            if (is_graphics_card_suitable(available_gpus[*preferred_gpu_index], surface)) {
-                // We are done: Use the graphics card which was specified by the user's command line argument.
-                spdlog::trace("The preferred graphics card is suitable for this application");
-                spdlog::trace("Score: {}", rate_graphics_card(available_gpus[*preferred_gpu_index]));
-                return available_gpus[*preferred_gpu_index];
-            }
-            spdlog::error("The preferred graphics card with index {} is not suitable for this application!",
-                          *preferred_gpu_index);
-            spdlog::error("The array index is valid, but this graphics card does not fulfill all requirements!");
-
-            // We are NOT done!
-            // Try to select the best graphics card automatically!
-
-        } else {
-            // No, this array index for available_graphics_cards is invalid!
-            spdlog::error("Error: Invalid command line argument! Graphics card array index {} is invalid!",
-                          *preferred_gpu_index);
-
-            // We are NOT done!
-            // Try to select the best graphics card automatically!
-        }
-    } else {
-        // Give the user a little hint message.
-        spdlog::trace("Info: No command line argument for preferred graphics card given");
-        spdlog::trace("You have more than 1 graphics card available on your machine");
-        spdlog::trace("Specify which one to use by passing -gpu <number> as command line argument");
-        spdlog::trace("Please be aware that the first index is 0");
-    }
-
-    // ATTEMPT 3
-    // There are more than 1 graphics card available and the user did not specify which one to use.
-    // If there are exactly 2 graphics card and one of them is VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU and the other one
-    // is VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, we should prefer the real graphics card over the integrated one.
-    // We also need to check if the VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU one is suitable though!
-    // If that is not the case, we check if the VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU is suitable and use it instead.
-    // If both are unsuitable, there are no suitable graphics cards available on this machine!
-    if (gpu_count == 2) {
-        bool integrated_gpu_exists = false;
-        bool discrete_gpu_exists = false;
-
-        // Both indices are available because number_of_available_graphics_cards is 2.
-        const VkPhysicalDeviceType gpu_type_1 = graphics_card_type(available_gpus[0]);
-        const VkPhysicalDeviceType gpu_type_2 = graphics_card_type(available_gpus[1]);
-
-        if (gpu_type_1 == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || gpu_type_2 == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-            discrete_gpu_exists = true;
-        }
-
-        if (gpu_type_1 == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ||
-            gpu_type_2 == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-            integrated_gpu_exists = true;
-        }
-
-        if (discrete_gpu_exists && integrated_gpu_exists) {
-            // Try to prefer the discrete graphics card over the integrated one!
-            VkPhysicalDevice discrete_gpu{nullptr};
-            VkPhysicalDevice integrated_gpu{nullptr};
-
-            if (gpu_type_1 == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-                discrete_gpu = available_gpus[0];
-                integrated_gpu = available_gpus[1];
-            } else if (gpu_type_2 == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-                // The other way around.
-                discrete_gpu = available_gpus[1];
-                integrated_gpu = available_gpus[0];
-            }
-
-            // Usually integrated GPUs which do not support Vulkan are not visible to Vulkan's
-            // graphics card enumeration. It could be the case that an integrated GPU supports
-            // Vulkan but is unsuitable for the application's purposes, since this decision is up to us.
-
-            // Ok, so try to prefer the discrete GPU over the integrated GPU.
-            if (is_graphics_card_suitable(discrete_gpu, surface)) {
-                spdlog::trace("You have 2 GPUs. The discrete GPU (real graphics card) is suitable for the application"
-                              "The integrated GPU is not!");
-                spdlog::trace("Score: {}", rate_graphics_card(discrete_gpu));
-
-                return discrete_gpu;
-            }
-            // Ok, so the discrete GPU is unsuitable. What about the integrated GPU?
-            if (is_graphics_card_suitable(integrated_gpu, surface)) {
-                spdlog::trace("You have 2 GPUs. Surprisingly, the integrated one is suitable for the application. The "
-                              "discrete GPU is not!");
-                spdlog::trace("Score: {}", rate_graphics_card(integrated_gpu));
-
-                // This might be a very rare case though.
-                return integrated_gpu;
-            }
-            spdlog::critical("Neither the integrated GPU nor the discrete GPU are suitable!");
-
-            // Neither the integrated GPU nor the discrete GPU are suitable!
-            return std::nullopt;
-        }
-
-        spdlog::trace("Only discrete GPUs available, no integrated graphics");
-    }
-
-    // ATTEMPT 4
-    // - There are more than 2 graphics cards available.
-    // - Some of them might be suitable for the application.
-    // - The user did no specify a command line argument to prefer a certain graphics card.
-    // - It's not like there are 2 GPUs, one of them a real graphics card and another one an integrated one.
-    // We now have to sort out all the GPU which are unsuitable for the application's purposes.
-    // After this we have to rank them by a score!
-
-    // The suitable graphics cards (by array index).
-    std::vector<std::size_t> suitable_graphics_cards;
-
-    // Loop through all available graphics cards and sort out the unsuitable ones.
-    for (std::size_t i = 0; i < gpu_count; i++) {
-        if (is_graphics_card_suitable(available_gpus[i], surface)) {
-            spdlog::trace("Adding graphics card index {} to the list of suitable graphics cards", i);
-
-            // Add this graphics card to the list of suitable graphics cards.
-            suitable_graphics_cards.push_back(i);
-        } else {
-            spdlog::debug(
-                "Sorting out graphics card index {} because it is unsuitable for this application's purposes!", i);
-        }
-    }
-
-    // How many graphics cards have been sorted out?
-    const auto qualified_gpu_count = gpu_count - suitable_graphics_cards.size();
-
-    if (qualified_gpu_count > 0) {
-        spdlog::trace("{} gpus have been disqualified because they are unsuitable for the application's purposes!",
-                      qualified_gpu_count);
-    }
-
-    // We could not find any suitable graphics card!
-    if (suitable_graphics_cards.empty()) {
-        spdlog::critical("Error: Could not find suitable graphics card automatically");
-        return std::nullopt;
-    }
-
-    // Only 1 graphics card is suitable, let's choose that one.
-    if (suitable_graphics_cards.size() == 1) {
-        spdlog::trace("There is only 1 suitable graphics card available");
-        spdlog::trace("Score: {}", rate_graphics_card(available_gpus[0]));
-        return available_gpus[0];
-    }
-
-    // We have more than one suitable graphics card.
-    // There is at least one graphics card that is suitable.
-
-    VkPhysicalDevice highest_score_gpu{};
-    std::size_t highest_gpu_score{0};
-
-    for (auto *gpu_candidate : available_gpus) {
-        std::size_t gpu_score = rate_graphics_card(gpu_candidate);
-
-        if (gpu_score > highest_gpu_score) {
-            highest_gpu_score = gpu_score;
-            highest_score_gpu = gpu_candidate;
-        } else {
-            spdlog::trace("A graphics card has been disqualified because it received a score of 0");
-        }
-    }
-
-    if (!static_cast<bool>(highest_score_gpu)) {
-        spdlog::critical("Could no find any suitable graphics card");
-        return std::nullopt;
-    }
-
-    return highest_score_gpu;
+    return physical_devices.front();
 }
 
 VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::image_transform(const VkPhysicalDevice graphics_card,

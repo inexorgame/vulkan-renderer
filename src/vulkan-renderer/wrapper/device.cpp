@@ -92,7 +92,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
     const auto selected_gpu =
-        VulkanSettingsDecisionMaker::graphics_card(instance.instance(), surface, preferred_physical_device_index);
+        VulkanSettingsDecisionMaker::pick_graphics_card(instance.instance(), surface, preferred_physical_device_index);
 
     if (!selected_gpu) {
         throw std::runtime_error("Error: Could not find suitable graphics card!");
