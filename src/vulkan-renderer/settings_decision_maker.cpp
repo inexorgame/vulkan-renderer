@@ -154,14 +154,9 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
 
 VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(const VkPhysicalDevice graphics_card) {
     assert(graphics_card);
-
-    // The properties of the graphics card.
-    VkPhysicalDeviceProperties graphics_card_properties;
-
-    // Get the information about that graphics card.
-    vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
-
-    return graphics_card_properties.deviceType;
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(graphics_card, &props);
+    return props.deviceType;
 }
 
 std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevice graphics_card) {
