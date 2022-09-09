@@ -191,6 +191,21 @@ std::size_t VulkanSettingsDecisionMaker::rate_graphics_card(const VkPhysicalDevi
     return graphics_card_score;
 }
 
+std::vector<VkPhysicalDevice> VulkanSettingsDecisionMaker::get_all_physical_devices(const VkInstance inst) {
+    // Query how many physical devices are available
+    std::uint32_t physical_device_count = 0;
+    if (const auto result = vkEnumeratePhysicalDevices(inst, &physical_device_count, nullptr); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+    }
+    // Get information about the available graphics cards
+    std::vector<VkPhysicalDevice> phys_devices(physical_device_count);
+    if (const auto result = vkEnumeratePhysicalDevices(inst, &physical_device_count, phys_devices.data());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+    }
+    return std::move(phys_devices);
+}
+
 std::optional<VkPhysicalDevice>
 VulkanSettingsDecisionMaker::graphics_card(const VkInstance vulkan_instance, const VkSurfaceKHR surface,
                                            const std::optional<std::uint32_t> preferred_gpu_index) {

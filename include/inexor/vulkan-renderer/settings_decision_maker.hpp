@@ -36,6 +36,12 @@ struct VulkanSettingsDecisionMaker {
     [[nodiscard]] static std::vector<VkExtensionProperties>
     get_all_device_extension_properties(VkPhysicalDevice physical_device);
 
+    /// Return a std::vector of all available physical devices
+    /// @note This function can return an empty vector! It is the caller's responsibility to account for this!
+    /// @param inst The Vulkan instance
+    /// @return A std::vector of the physical devices
+    [[nodiscard]] static std::vector<VkPhysicalDevice> get_all_physical_devices(VkInstance inst);
+
     /// @brief Automatically decide if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphics card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.
