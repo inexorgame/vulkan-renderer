@@ -29,6 +29,13 @@ struct VulkanSettingsDecisionMaker {
     /// @return The graphics card's score which is greater or equal to 0.
     [[nodiscard]] static std::size_t rate_graphics_card(VkPhysicalDevice graphics_card);
 
+    /// Return a std::vector of all device extensions properties of a physical device
+    /// @note This function can return an empty vector! It is the caller's responsibility to account for this!
+    /// @param physical_device The physical device
+    /// @return A std::vector of the device extension properties of a physical device
+    [[nodiscard]] static std::vector<VkExtensionProperties>
+    get_all_device_extension_properties(VkPhysicalDevice physical_device);
+
     /// @brief Automatically decide if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphics card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.

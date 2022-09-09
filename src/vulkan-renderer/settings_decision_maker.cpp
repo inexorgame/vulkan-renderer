@@ -102,86 +102,54 @@ VulkanSettingsDecisionMaker::swapchain_surface_color_format(const VkPhysicalDevi
     return accepted_color_format;
 }
 
-bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice graphics_card,
-                                                            const VkSurfaceKHR surface) {
-    assert(graphics_card);
-    assert(surface);
-
-    // The properties of the graphics card.
-    VkPhysicalDeviceProperties graphics_card_properties;
-
-    // The features of the graphics card.
-    VkPhysicalDeviceFeatures graphics_card_features;
-
-    // Get the information about that graphics card's properties.
-    vkGetPhysicalDeviceProperties(graphics_card, &graphics_card_properties);
-
-    // Get the information about the graphics card's features.
-    vkGetPhysicalDeviceFeatures(graphics_card, &graphics_card_features);
-
-    spdlog::trace("Checking suitability of graphics card: {}", graphics_card_properties.deviceName);
-
-    // Step 1: Check if swapchain is supported.
-    // In theory we could have used the code from VulkanAvailabilityChecks, but I didn't want
-    // VulkanSettingsDecisionMaker to have a dependency just because of this one code part here.
-
-    bool swapchain_is_supported = false;
-
-    std::uint32_t number_of_available_device_extensions = 0;
-
-    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr,
-                                                                 &number_of_available_device_extensions, nullptr);
+std::vector<VkExtensionProperties>
+VulkanSettingsDecisionMaker::get_all_device_extension_properties(const VkPhysicalDevice physical_device) {
+    std::uint32_t count = 0;
+    if (const auto result = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &count, nullptr);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
-
-    if (number_of_available_device_extensions == 0) {
-        spdlog::error("No Vulkan device extensions available!");
-
-        // Since there are no device extensions available at all, the desired one is not supported either.
-        swapchain_is_supported = false;
-    } else {
-        // Preallocate memory for device extensions.
-        std::vector<VkExtensionProperties> device_extensions(number_of_available_device_extensions);
-
-        if (const auto result = vkEnumerateDeviceExtensionProperties(
-                graphics_card, nullptr, &number_of_available_device_extensions, device_extensions.data());
-            result != VK_SUCCESS) {
-            throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-        }
-
-        // Loop through all available device extensions and search for the requested one.
-        for (const VkExtensionProperties &device_extension : device_extensions) {
-            if (strcmp(device_extension.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
-                swapchain_is_supported = true;
-            }
-        }
+    std::vector<VkExtensionProperties> extensions(count);
+    if (const auto result = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &count, extensions.data());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
+    return std::move(extensions);
+}
 
-    if (!swapchain_is_supported) {
-        spdlog::trace("This device is not suitable because it does not support swap chain!");
+bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice physical_device,
+                                                            const VkSurfaceKHR surface) {
+    assert(physical_device);
+    assert(surface);
+
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(physical_device, &props);
+
+    const auto extension_props = get_all_device_extension_properties(physical_device);
+    if (extension_props.empty()) {
+        spdlog::error("No device extensions available for physical device {}!", props.deviceName);
         return false;
     }
 
-    // Step 2: Check if presentation is supported
+    bool swapchain_supported = false;
+    for (const auto &prop : extension_props) {
+        if (strcmp(prop.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
+            swapchain_supported = true;
+        }
+    }
+
+    if (!swapchain_supported) {
+        return false;
+    }
+
     // TODO: Check if the selected device supports queue families for graphics bits and presentation!
-
-    VkBool32 presentation_available = 0;
-
-    // Query if presentation is supported.
-    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_available);
+    VkBool32 presentation_supported = 0;
+    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, 0, surface, &presentation_supported);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
 
-    if (presentation_available == 0) {
-        spdlog::trace("This device is not suitable because it does not support presentation!");
-        return false;
-    }
-
-    // Add more suitability checks here if necessary.
-
-    return true;
+    return presentation_supported == VK_TRUE;
 }
 
 VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(const VkPhysicalDevice graphics_card) {
