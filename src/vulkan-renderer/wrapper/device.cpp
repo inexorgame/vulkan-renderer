@@ -241,9 +241,6 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
-        // Device layers were deprecated in Vulkan some time ago, essentially making all layers instance layers.
-        .enabledLayerCount = 0,
-        .ppEnabledLayerNames = nullptr,
         .enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size()),
         .ppEnabledExtensionNames = enabled_device_extensions.data(),
         .pEnabledFeatures = &used_features,
