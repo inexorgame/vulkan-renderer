@@ -5,274 +5,243 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 template <>
-VkApplicationInfo make_info() {
-    VkApplicationInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    return ret;
+VkApplicationInfo make_info(VkApplicationInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    return info;
 }
 
 template <>
-VkBufferCreateInfo make_info() {
-    VkBufferCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    return ret;
+VkBufferCreateInfo make_info(VkBufferCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkCommandBufferAllocateInfo make_info() {
-    VkCommandBufferAllocateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    return ret;
+VkCommandBufferAllocateInfo make_info(VkCommandBufferAllocateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    return info;
 }
 
 template <>
-VkCommandBufferBeginInfo make_info() {
-    VkCommandBufferBeginInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    return ret;
+VkCommandBufferBeginInfo make_info(VkCommandBufferBeginInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    return info;
 }
 
 template <>
-VkCommandPoolCreateInfo make_info() {
-    VkCommandPoolCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    return ret;
+VkCommandPoolCreateInfo make_info(VkCommandPoolCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkDebugMarkerMarkerInfoEXT make_info() {
-    VkDebugMarkerMarkerInfoEXT ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-    return ret;
+VkDebugMarkerMarkerInfoEXT make_info(VkDebugMarkerMarkerInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+    return info;
 }
 
 template <>
-VkDebugMarkerObjectNameInfoEXT make_info() {
-    VkDebugMarkerObjectNameInfoEXT ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-    return ret;
+VkDebugMarkerObjectNameInfoEXT make_info(VkDebugMarkerObjectNameInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+    return info;
 }
 
 template <>
-VkDebugMarkerObjectTagInfoEXT make_info() {
-    VkDebugMarkerObjectTagInfoEXT ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
-    return ret;
+VkDebugMarkerObjectTagInfoEXT make_info(VkDebugMarkerObjectTagInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_TAG_INFO_EXT;
+    return info;
 }
 
 template <>
-VkDebugReportCallbackCreateInfoEXT make_info() {
-    VkDebugReportCallbackCreateInfoEXT ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    return ret;
+VkDebugReportCallbackCreateInfoEXT make_info(VkDebugReportCallbackCreateInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    return info;
 }
 
 template <>
-VkDescriptorPoolCreateInfo make_info() {
-    VkDescriptorPoolCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    return ret;
+VkDescriptorPoolCreateInfo make_info(VkDescriptorPoolCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkDescriptorSetAllocateInfo make_info() {
-    VkDescriptorSetAllocateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    return ret;
+VkDescriptorSetAllocateInfo make_info(VkDescriptorSetAllocateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    return info;
 }
 
 template <>
-VkDescriptorSetLayoutCreateInfo make_info() {
-    VkDescriptorSetLayoutCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    return ret;
+VkDescriptorSetLayoutCreateInfo make_info(VkDescriptorSetLayoutCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkDeviceCreateInfo make_info() {
-    VkDeviceCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    return ret;
+VkDeviceCreateInfo make_info(VkDeviceCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkDeviceQueueCreateInfo make_info() {
-    VkDeviceQueueCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    return ret;
+VkDeviceQueueCreateInfo make_info(VkDeviceQueueCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkFenceCreateInfo make_info() {
-    VkFenceCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    return ret;
+VkFenceCreateInfo make_info(VkFenceCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkFramebufferCreateInfo make_info() {
-    VkFramebufferCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    return ret;
+VkFramebufferCreateInfo make_info(VkFramebufferCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkGraphicsPipelineCreateInfo make_info() {
-    VkGraphicsPipelineCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    return ret;
+VkGraphicsPipelineCreateInfo make_info(VkGraphicsPipelineCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkImageCreateInfo make_info() {
-    VkImageCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    return ret;
+VkImageCreateInfo make_info(VkImageCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkImageMemoryBarrier make_info() {
-    VkImageMemoryBarrier ret{};
-    ret.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    return ret;
+VkImageMemoryBarrier make_info(VkImageMemoryBarrier info) {
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    return info;
 }
 
 template <>
-VkImageViewCreateInfo make_info() {
-    VkImageViewCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    return ret;
+VkImageViewCreateInfo make_info(VkImageViewCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkInstanceCreateInfo make_info() {
-    VkInstanceCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    return ret;
+VkInstanceCreateInfo make_info(VkInstanceCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkMemoryBarrier make_info() {
-    return {.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+VkMemoryBarrier make_info(VkMemoryBarrier info) {
+    info.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    return info;
 }
 
 template <>
-VkPipelineColorBlendStateCreateInfo make_info() {
-    VkPipelineColorBlendStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    return ret;
+VkPipelineColorBlendStateCreateInfo make_info(VkPipelineColorBlendStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineDepthStencilStateCreateInfo make_info() {
-    VkPipelineDepthStencilStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    return ret;
+VkPipelineDepthStencilStateCreateInfo make_info(VkPipelineDepthStencilStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineInputAssemblyStateCreateInfo make_info() {
-    VkPipelineInputAssemblyStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    return ret;
+VkPipelineInputAssemblyStateCreateInfo make_info(VkPipelineInputAssemblyStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineLayoutCreateInfo make_info() {
-    VkPipelineLayoutCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    return ret;
+VkPipelineLayoutCreateInfo make_info(VkPipelineLayoutCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineMultisampleStateCreateInfo make_info() {
-    VkPipelineMultisampleStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    return ret;
+VkPipelineMultisampleStateCreateInfo make_info(VkPipelineMultisampleStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineRasterizationStateCreateInfo make_info() {
-    VkPipelineRasterizationStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    return ret;
+VkPipelineRasterizationStateCreateInfo make_info(VkPipelineRasterizationStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineShaderStageCreateInfo make_info() {
-    VkPipelineShaderStageCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    return ret;
+VkPipelineShaderStageCreateInfo make_info(VkPipelineShaderStageCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineVertexInputStateCreateInfo make_info() {
-    VkPipelineVertexInputStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    return ret;
+VkPipelineVertexInputStateCreateInfo make_info(VkPipelineVertexInputStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPipelineViewportStateCreateInfo make_info() {
-    VkPipelineViewportStateCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    return ret;
+VkPipelineViewportStateCreateInfo make_info(VkPipelineViewportStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkPresentInfoKHR make_info() {
-    VkPresentInfoKHR ret{};
-    ret.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    return ret;
+VkPresentInfoKHR make_info(VkPresentInfoKHR info) {
+    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    return info;
 }
 
 template <>
-VkRenderPassBeginInfo make_info() {
-    VkRenderPassBeginInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    return ret;
+VkRenderPassBeginInfo make_info(VkRenderPassBeginInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    return info;
 }
 
 template <>
-VkRenderPassCreateInfo make_info() {
-    VkRenderPassCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    return ret;
+VkRenderPassCreateInfo make_info(VkRenderPassCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkSamplerCreateInfo make_info() {
-    VkSamplerCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    return ret;
+VkSamplerCreateInfo make_info(VkSamplerCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkSemaphoreCreateInfo make_info() {
-    VkSemaphoreCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    return ret;
+VkSemaphoreCreateInfo make_info(VkSemaphoreCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkShaderModuleCreateInfo make_info() {
-    VkShaderModuleCreateInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    return ret;
+VkShaderModuleCreateInfo make_info(VkShaderModuleCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    return info;
 }
 
 template <>
-VkSubmitInfo make_info() {
-    VkSubmitInfo ret{};
-    ret.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    return ret;
+VkSubmitInfo make_info(VkSubmitInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    return info;
 }
 
 template <>
-VkSwapchainCreateInfoKHR make_info() {
-    VkSwapchainCreateInfoKHR ret{};
-    ret.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    return ret;
+VkSwapchainCreateInfoKHR make_info(VkSwapchainCreateInfoKHR info) {
+    info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    return info;
+}
+
+template <>
+VkWriteDescriptorSet make_info(VkWriteDescriptorSet info) {
+    info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    return info;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

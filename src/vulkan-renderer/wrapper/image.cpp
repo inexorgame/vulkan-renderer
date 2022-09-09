@@ -21,23 +21,27 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     assert(image_extent.height > 0);
     assert(!name.empty());
 
-    auto image_ci = make_info<VkImageCreateInfo>();
-    image_ci.imageType = VK_IMAGE_TYPE_2D;
-    image_ci.extent.width = image_extent.width;
-    image_ci.extent.height = image_extent.height;
-    image_ci.extent.depth = 1;
-    image_ci.mipLevels = 1;
-    image_ci.arrayLayers = 1;
-    image_ci.format = format;
-    image_ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_ci.usage = image_usage;
-    image_ci.samples = sample_count;
-    image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    const auto image_ci = make_info<VkImageCreateInfo>({
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = format,
+        .extent{
+            .width = image_extent.width,
+            .height = image_extent.height,
+            .depth = 1,
+        },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = sample_count,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = image_usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    });
 
-    VmaAllocationCreateInfo vma_allocation_ci{};
-    vma_allocation_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vma_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    const VmaAllocationCreateInfo vma_allocation_ci{
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
+    };
 
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
                                            &m_allocation_info);
@@ -50,17 +54,19 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
 
-    auto image_view_ci = make_info<VkImageViewCreateInfo>();
-    image_view_ci.image = m_image;
-    image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_ci.format = format;
-    image_view_ci.subresourceRange.aspectMask = aspect_flags;
-    image_view_ci.subresourceRange.baseMipLevel = 0;
-    image_view_ci.subresourceRange.levelCount = 1;
-    image_view_ci.subresourceRange.baseArrayLayer = 0;
-    image_view_ci.subresourceRange.layerCount = 1;
-
-    m_device.create_image_view(image_view_ci, &m_image_view, m_name);
+    m_device.create_image_view(make_info<VkImageViewCreateInfo>({
+                                   .image = m_image,
+                                   .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                                   .format = format,
+                                   .subresourceRange{
+                                       .aspectMask = aspect_flags,
+                                       .baseMipLevel = 0,
+                                       .levelCount = 1,
+                                       .baseArrayLayer = 0,
+                                       .layerCount = 1,
+                                   },
+                               }),
+                               &m_image_view, m_name);
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {

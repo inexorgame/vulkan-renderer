@@ -35,31 +35,27 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     assert(image_sampler);
     assert(image_view);
 
-    VkDescriptorSetLayoutBinding layout_binding{};
-    layout_binding.binding = 0;
-    layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    layout_binding.descriptorCount = 1;
-    layout_binding.stageFlags = shader_stage;
+    m_layout_bindings.push_back({
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .stageFlags = static_cast<VkShaderStageFlags>(shader_stage),
+    });
 
-    m_layout_bindings.push_back(layout_binding);
+    m_descriptor_image_infos.push_back({
+        .sampler = image_sampler,
+        .imageView = image_view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    });
 
-    VkDescriptorImageInfo image_info{};
-    image_info.sampler = image_sampler;
-    image_info.imageView = image_view;
-    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-    m_descriptor_image_infos.push_back(image_info);
-
-    VkWriteDescriptorSet descriptor_write{};
-    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_write.dstSet = nullptr;
-    descriptor_write.dstBinding = binding;
-    descriptor_write.dstArrayElement = 0;
-    descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor_write.descriptorCount = 1;
-    descriptor_write.pImageInfo = &m_descriptor_image_infos.back();
-
-    m_write_sets.push_back(descriptor_write);
+    m_write_sets.push_back(make_info<VkWriteDescriptorSet>({
+        .dstSet = nullptr,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &m_descriptor_image_infos.back(),
+    }));
 
     return *this;
 }

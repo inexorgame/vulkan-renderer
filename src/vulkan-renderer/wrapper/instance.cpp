@@ -109,12 +109,13 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         throw std::runtime_error(exception_message);
     }
 
-    auto app_info = make_info<VkApplicationInfo>();
-    app_info.pApplicationName = application_name.c_str();
-    app_info.applicationVersion = application_version;
-    app_info.pEngineName = engine_name.c_str();
-    app_info.engineVersion = engine_version;
-    app_info.apiVersion = REQUIRED_VK_API_VERSION;
+    const auto app_info = make_info<VkApplicationInfo>({
+        .pApplicationName = application_name.c_str(),
+        .applicationVersion = application_version,
+        .pEngineName = engine_name.c_str(),
+        .engineVersion = engine_version,
+        .apiVersion = REQUIRED_VK_API_VERSION,
+    });
 
     std::vector<const char *> instance_extension_wishlist = {
 #ifndef NDEBUG
@@ -216,12 +217,13 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         }
     }
 
-    auto instance_ci = make_info<VkInstanceCreateInfo>();
-    instance_ci.pApplicationInfo = &app_info;
-    instance_ci.ppEnabledExtensionNames = enabled_instance_extensions.data();
-    instance_ci.enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size());
-    instance_ci.ppEnabledLayerNames = enabled_instance_layers.data();
-    instance_ci.enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size());
+    const auto instance_ci = make_info<VkInstanceCreateInfo>({
+        .pApplicationInfo = &app_info,
+        .enabledLayerCount = static_cast<std::uint32_t>(enabled_instance_layers.size()),
+        .ppEnabledLayerNames = enabled_instance_layers.data(),
+        .enabledExtensionCount = static_cast<std::uint32_t>(enabled_instance_extensions.size()),
+        .ppEnabledExtensionNames = enabled_instance_extensions.data(),
+    });
 
     if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);

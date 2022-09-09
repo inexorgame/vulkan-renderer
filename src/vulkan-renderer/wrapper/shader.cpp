@@ -25,15 +25,15 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
     assert(!code.empty());
     assert(!entry_point.empty());
 
-    auto shader_module_ci = make_info<VkShaderModuleCreateInfo>();
-    shader_module_ci.codeSize = code.size();
-
-    // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
-    // requirements of std::uint32_t. Lucky for us, the data is stored in an std::vector where the default
-    // allocator already ensures that the data satisfies the worst case alignment requirements.
-    shader_module_ci.pCode = reinterpret_cast<const std::uint32_t *>(code.data()); // NOLINT
-
-    m_device.create_shader_module(shader_module_ci, &m_shader_module, m_name);
+    m_device.create_shader_module(
+        make_info<VkShaderModuleCreateInfo>({
+            .codeSize = code.size(),
+            // When you perform a cast like this, you also need to ensure that the data satisfies the alignment
+            // requirements of std::uint32_t. Lucky for us, the data is stored in an std::vector where the default
+            // allocator already ensures that the data satisfies the worst case alignment requirements.
+            .pCode = reinterpret_cast<const std::uint32_t *>(code.data()), // NOLINT
+        }),
+        &m_shader_module, m_name);
 }
 
 Shader::Shader(Shader &&other) noexcept : m_device(other.m_device) {

@@ -20,13 +20,16 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
 
     spdlog::trace("Creating GPU memory buffer of size {} for {}", size, name);
 
-    auto buffer_ci = make_info<VkBufferCreateInfo>();
-    buffer_ci.size = size;
-    buffer_ci.usage = buffer_usage;
-    buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    const auto buffer_ci = make_info<VkBufferCreateInfo>({
+        .size = size,
+        .usage = buffer_usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    });
 
-    m_allocation_ci.usage = memory_usage;
-    m_allocation_ci.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    const VmaAllocationCreateInfo m_allocation_ci{
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = memory_usage,
+    };
 
     // TODO: Should we create this buffer as mapped?
     // TODO: Is it good to have memory mapped all the time?
@@ -64,7 +67,6 @@ GPUMemoryBuffer::GPUMemoryBuffer(GPUMemoryBuffer &&other) noexcept : m_device(ot
     m_buffer = std::exchange(other.m_buffer, nullptr);
     m_allocation = std::exchange(other.m_allocation, nullptr);
     m_allocation_info = other.m_allocation_info;
-    m_allocation_ci = other.m_allocation_ci;
 }
 
 GPUMemoryBuffer::~GPUMemoryBuffer() {

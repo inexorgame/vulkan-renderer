@@ -41,7 +41,7 @@ void VulkanRenderer::setup_render_graph() {
     main_stage->set_depth_options(true, true);
     main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
-        cmd_buf.draw_indexed(m_octree_indices.size());
+        cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
     });
 
     for (const auto &shader : m_shaders) {
@@ -108,19 +108,19 @@ void VulkanRenderer::render_frame() {
 
     const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    auto submit_info = wrapper::make_info<VkSubmitInfo>();
-    submit_info.pCommandBuffers = cmd_buf.ptr();
-    submit_info.commandBufferCount = 1;
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = m_image_available_semaphore->ptr();
-    submit_info.pWaitDstStageMask = stage_mask.data();
+    cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = m_image_available_semaphore->ptr(),
+        .pWaitDstStageMask = stage_mask.data(),
+        .commandBufferCount = 1,
+        .pCommandBuffers = cmd_buf.ptr(),
+    }));
 
-    cmd_buf.submit_and_wait(submit_info);
-
-    auto present_info = wrapper::make_info<VkPresentInfoKHR>();
-    present_info.swapchainCount = 1;
-    present_info.pImageIndices = &image_index;
-    present_info.pSwapchains = m_swapchain->swapchain_ptr();
+    const auto present_info = wrapper::make_info<VkPresentInfoKHR>({
+        .swapchainCount = 1,
+        .pSwapchains = m_swapchain->swapchain_ptr(),
+        .pImageIndices = &image_index,
+    });
 
     if (const auto result = vkQueuePresentKHR(m_device->present_queue(), &present_info); result != VK_SUCCESS) {
         throw VulkanException("Error: vkQueuePresentKHR failed!", result);

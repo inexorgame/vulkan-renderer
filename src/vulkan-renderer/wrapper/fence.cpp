@@ -16,10 +16,11 @@ Fence::Fence(const wrapper::Device &device, const std::string &name, const bool 
     assert(!name.empty());
     assert(device.device());
 
-    auto fence_ci = make_info<VkFenceCreateInfo>();
-    fence_ci.flags = in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
-
-    m_device.create_fence(fence_ci, &m_fence, m_name);
+    m_device.create_fence(
+        make_info<VkFenceCreateInfo>({
+            .flags = static_cast<VkFenceCreateFlags>(in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0),
+        }),
+        &m_fence, m_name);
 }
 
 Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {

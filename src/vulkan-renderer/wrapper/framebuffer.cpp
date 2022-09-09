@@ -15,16 +15,15 @@ namespace inexor::vulkan_renderer::wrapper {
 Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
                          const wrapper::Swapchain &swapchain, std::string name)
     : m_device(device), m_name(std::move(name)) {
-
-    auto framebuffer_ci = make_info<VkFramebufferCreateInfo>();
-    framebuffer_ci.attachmentCount = static_cast<std::uint32_t>(attachments.size());
-    framebuffer_ci.pAttachments = attachments.data();
-    framebuffer_ci.width = swapchain.extent().width;
-    framebuffer_ci.height = swapchain.extent().height;
-    framebuffer_ci.layers = 1;
-    framebuffer_ci.renderPass = render_pass;
-
-    m_device.create_framebuffer(framebuffer_ci, &m_framebuffer, m_name);
+    m_device.create_framebuffer(make_info<VkFramebufferCreateInfo>({
+                                    .renderPass = render_pass,
+                                    .attachmentCount = static_cast<std::uint32_t>(attachments.size()),
+                                    .pAttachments = attachments.data(),
+                                    .width = swapchain.extent().width,
+                                    .height = swapchain.extent().height,
+                                    .layers = 1,
+                                }),
+                                &m_framebuffer, m_name);
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {

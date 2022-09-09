@@ -8,6 +8,6 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @endcode
 /// @note Also zeros the returned struct
 template <typename T>
-[[nodiscard]] T make_info();
+[[nodiscard]] T make_info(T = {});
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -14,9 +14,7 @@ namespace inexor::vulkan_renderer::wrapper {
 Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(device), m_name(name) {
     assert(device.device());
     assert(!name.empty());
-
-    auto semaphore_ci = make_info<VkSemaphoreCreateInfo>();
-    device.create_semaphore(semaphore_ci, &m_semaphore, m_name);
+    device.create_semaphore(make_info<VkSemaphoreCreateInfo>(), &m_semaphore, m_name);
 }
 
 Semaphore::Semaphore(Semaphore &&other) noexcept : m_device(other.m_device) {
