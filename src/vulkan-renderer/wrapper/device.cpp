@@ -173,10 +173,12 @@ std::int32_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysi
     std::int32_t type_score = 1;
     switch (type) {
     case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-        type_score = 10;
+        // Those are just arbitrary score values to give discrete gpus higher scores
+        type_score = 1024 * 4096;
         break;
     case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-        type_score = 2;
+        // Those are just arbitrary score values to give integrated gpus lower scores
+        type_score = 32;
         break;
     default:
         break;
@@ -189,7 +191,9 @@ std::int32_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysi
             memory_score += memory_props.memoryHeaps[i].size / (1000 * 1000);
         }
     }
-    return type_score * memory_score;
+    // We are not multiplying the scores, because for an integrated gpu which has access to the RAM, the memory will be
+    // huge so it would get an overall higher score compared with a discrete gpu
+    return type_score + memory_score;
 }
 
 Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
