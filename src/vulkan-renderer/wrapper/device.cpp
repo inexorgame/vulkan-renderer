@@ -132,20 +132,22 @@ std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const 
 
     auto physical_devices = get_all_physical_devices(inst);
     if (physical_devices.empty()) {
-        throw std::runtime_error("Error: No physical devices available!");
+        spdlog::error("Error: No physical devices available!");
+        return std::nullopt;
     }
 
     // Did the user specify the index of a preferred physical device?
     if (preferred_index) {
         // Is the index even valid?
-        if (*preferred_index < physical_devices.size()) {
-            auto *const candidate = physical_devices[*preferred_index];
-            if (rate_physical_device(
-                    get_physical_device_type(candidate), get_physical_device_memory_properties(candidate),
-                    is_swapchain_supported(candidate), is_presentation_supported(candidate, surface)) > 0) {
-                return candidate;
-            }
+        if (*preferred_index > physical_devices.size()) {
             spdlog::error("The preferred physical device is unsuitable!");
+            return std::nullopt;
+        }
+        auto *const candidate = physical_devices[*preferred_index];
+        if (rate_physical_device(get_physical_device_type(candidate), get_physical_device_memory_properties(candidate),
+                                 is_swapchain_supported(candidate),
+                                 is_presentation_supported(candidate, surface)) > 0) {
+            return candidate;
         }
         spdlog::error("The specified index {} for a preferred physical device is invalid!", *preferred_index);
     }
