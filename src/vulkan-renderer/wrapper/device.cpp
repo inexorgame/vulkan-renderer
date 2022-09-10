@@ -88,8 +88,7 @@ bool is_swapchain_supported(const VkPhysicalDevice physical_device) {
     return is_extension_supported(physical_device, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }
 
-std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const VkSurfaceKHR surface,
-                                                   const std::optional<std::uint32_t> preferred_index) {
+std::optional<VkPhysicalDevice> pick_physical_device(const VkInstance inst, const VkSurfaceKHR surface) {
     assert(inst);
     assert(surface);
 
@@ -97,22 +96,6 @@ std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const 
     if (physical_devices.empty()) {
         spdlog::error("Error: No physical devices available!");
         return std::nullopt;
-    }
-
-    // Did the user specify the index of a preferred physical device?
-    if (preferred_index) {
-        // Is the index even valid?
-        if (*preferred_index > physical_devices.size()) {
-            spdlog::error("The preferred physical device is unsuitable!");
-            return std::nullopt;
-        }
-        auto *const candidate = physical_devices[*preferred_index];
-        if (rate_physical_device(get_physical_device_type(candidate), get_physical_device_memory_properties(candidate),
-                                 is_swapchain_supported(candidate),
-                                 is_presentation_supported(candidate, surface)) > 0) {
-            return candidate;
-        }
-        spdlog::error("The specified index {} for a preferred physical device is invalid!", *preferred_index);
     }
 
     // Pick the best physical device by sorting by its rating value (higher score means better)
@@ -161,17 +144,41 @@ std::int64_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysi
     return type_score + memory_score;
 }
 
-Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
+Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_index)
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
-    const auto selected_gpu = pick_graphics_card(instance.instance(), surface, preferred_physical_device_index);
-
-    if (!selected_gpu) {
-        throw std::runtime_error("Error: Could not find suitable graphics card!");
+    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
+    if (physical_devices.empty()) {
+        throw std::runtime_error("Error: There are no physical devices available");
     }
 
-    m_physical_device = *selected_gpu;
+    // Check if the user specified a preferred gpu index
+    if (preferred_index) {
+        // Check if the user specified index is valid
+        if (*preferred_index < physical_devices.size()) {
+            const auto candidate = physical_devices[*preferred_index];
+            // Check if the physical device supports all features
+            if (is_swapchain_supported(candidate) && is_presentation_supported(candidate, surface)) {
+                m_physical_device = candidate;
+            } else {
+                spdlog::error("Physical device {} is not suitable!", get_physical_device_name(candidate));
+            }
+        } else {
+            spdlog::error("Preferred physical device index {} is invalid!", *preferred_index);
+        }
+    }
+
+    // If the user specified no preferred physical device index or if it was invalid,
+    // we need to pick a physical device automatically
+    if (!m_physical_device) {
+        const auto candidate = pick_physical_device(inst.instance(), surface);
+        if (!candidate) {
+            throw std::runtime_error("Error: Could not find a suitable physical device!");
+        }
+        m_physical_device = *candidate;
+    }
+
     m_gpu_name = get_physical_device_name(m_physical_device);
 
     spdlog::trace("Creating device using graphics card: {}", m_gpu_name);
@@ -370,7 +377,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     const VmaAllocatorCreateInfo vma_allocator_ci{
         .physicalDevice = m_physical_device,
         .device = m_device,
-        .instance = instance.instance(),
+        .instance = inst.instance(),
         // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
         // This might need to be changed in the future
         .vulkanApiVersion = VK_API_VERSION_1_1,

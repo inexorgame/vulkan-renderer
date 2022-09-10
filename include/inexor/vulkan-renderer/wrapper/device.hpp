@@ -47,15 +47,10 @@ namespace inexor::vulkan_renderer::wrapper {
 [[nodiscard]] bool is_swapchain_supported(VkPhysicalDevice physical_device);
 
 /// Automatically select the best physical device (graphics card) out of all the available ones
-/// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``
-/// The method will check if the specified index is a valid array index
-/// Please note that the graphics cards index starts with 0!
 /// @param inst The Vulkan instance
 /// @param surface The window surface
-/// @param preferred_index The preferred graphics card index (starting with ``0``!)
 /// @return The selected physical device (if any could be found), or std::nullopt otherwise
-[[nodiscard]] std::optional<VkPhysicalDevice>
-pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> preferred_index = std::nullopt);
+[[nodiscard]] std::optional<VkPhysicalDevice> pick_physical_device(VkInstance inst, VkSurfaceKHR surface);
 
 /// Rate a graphics card by its features and properties
 /// @param type The physical device type
@@ -105,19 +100,15 @@ class Device {
     CommandPool &thread_graphics_pool() const;
 
 public:
-    /// @brief Default constructor.
-    /// @param instance The instance wrapper from which the device will be created
-    /// @param surface The surface which will be associated with the device
+    /// Default constructor
+    /// @param inst The Vulkan instance
+    /// @param surface The window surface
     /// @param enable_vulkan_debug_markers ``true`` if Vulkan debug markers should be enabled
     /// @param prefer_distinct_transfer_queue ``true`` if a distinct data transfer queue should be preferred
-    /// @param preferred_physical_device_index The index of the preferred graphics card which should be used,
-    /// starting from 0. If the graphics card index is invalid or if the graphics card is unsuitable for the
-    /// application's purpose, another graphics card will be selected automatically. See the details of the device
-    /// selection mechanism.
+    /// @param preferred_index The index of the preferred physical device to create
     /// TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions
-    Device(const wrapper::Instance &instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-           bool prefer_distinct_transfer_queue,
-           std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
+    Device(const Instance &inst, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+           bool prefer_distinct_transfer_queue, std::optional<std::uint32_t> preferred_index = std::nullopt);
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
