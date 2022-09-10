@@ -67,10 +67,10 @@ get_all_physical_device_extension_properties(VkPhysicalDevice physical_device);
 /// Please note that the graphics cards index starts with 0!
 /// @param inst The Vulkan instance
 /// @param surface The window surface
-/// @param prefered_index The preferred graphics card index (starting with ``0``!)
+/// @param preferred_index The preferred graphics card index (starting with ``0``!)
 /// @return The selected physical device (if any could be found), or std::nullopt otherwise
 [[nodiscard]] std::optional<VkPhysicalDevice>
-pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> prefered_index = std::nullopt);
+pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> preferred_index = std::nullopt);
 
 /// Rate a graphics card by its features and properties
 /// @param type The physical device type
@@ -79,7 +79,7 @@ pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uin
 /// @param presentation_supported ``true`` if the physical device supports presentation
 /// @return The graphics card's score
 /// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
-[[nodiscard]] std::int32_t rate_physical_device(VkPhysicalDeviceType type,
+[[nodiscard]] std::int64_t rate_physical_device(VkPhysicalDeviceType type,
                                                 const VkPhysicalDeviceMemoryProperties &memory_props,
                                                 bool swapchain_supported, bool presentation_supported);
 

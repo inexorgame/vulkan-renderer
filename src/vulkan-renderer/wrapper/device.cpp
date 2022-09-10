@@ -75,7 +75,7 @@ VkPhysicalDeviceMemoryProperties get_physical_device_memory_properties(const VkP
     assert(physical_device);
     VkPhysicalDeviceMemoryProperties memory_props;
     vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_props);
-    return std::move(memory_props);
+    return memory_props;
 }
 
 std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
@@ -97,7 +97,7 @@ bool is_extension_supported(const VkPhysicalDevice physical_device, const std::s
     assert(!extension_name.empty());
 
     const auto extension_props = get_all_physical_device_extension_properties(physical_device);
-    if (extension_props.size() == 0) {
+    if (extension_props.empty()) {
         spdlog::info("No Vulkan device extensions available!");
         return false;
     }
@@ -135,19 +135,19 @@ std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const 
         throw std::runtime_error("Error: No physical devices available!");
     }
 
-    // Did the user specify the index of a prefered physical device?
+    // Did the user specify the index of a preferred physical device?
     if (preferred_index) {
         // Is the index even valid?
         if (*preferred_index < physical_devices.size()) {
-            const auto candidate = physical_devices[*preferred_index];
+            auto *const candidate = physical_devices[*preferred_index];
             if (rate_physical_device(
                     get_physical_device_type(candidate), get_physical_device_memory_properties(candidate),
                     is_swapchain_supported(candidate), is_presentation_supported(candidate, surface)) > 0) {
                 return candidate;
             }
-            spdlog::error("The prefered physical device is unsuitable!");
+            spdlog::error("The preferred physical device is unsuitable!");
         }
-        spdlog::error("The specified index {} for a prefered physical device is invalid!", *preferred_index);
+        spdlog::error("The specified index {} for a preferred physical device is invalid!", *preferred_index);
     }
 
     // Pick the best physical device by sorting by its rating value (higher score means better)
@@ -163,7 +163,7 @@ std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const 
     return physical_devices.front();
 }
 
-std::int32_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysicalDeviceMemoryProperties &memory_props,
+std::int64_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysicalDeviceMemoryProperties &memory_props,
                                   const bool swapchain_supported, const bool presentation_supported) {
     if (!swapchain_supported || !presentation_supported) {
         return -1;
