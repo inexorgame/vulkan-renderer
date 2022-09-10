@@ -145,9 +145,7 @@ std::int64_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysi
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_index)
-    : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
-
+               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_index) {
     const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
     if (physical_devices.empty()) {
         throw std::runtime_error("Error: There are no physical devices available");
@@ -326,7 +324,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
     }
 
 #ifndef NDEBUG
-    if (m_enable_vulkan_debug_markers) {
+    if (enable_vulkan_debug_markers) {
         spdlog::trace("Initializing Vulkan debug markers");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
@@ -390,10 +388,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
     }
 }
 
-Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
+Device::Device(Device &&other) noexcept {
     m_device = std::exchange(other.m_device, nullptr);
     m_physical_device = std::exchange(other.m_physical_device, nullptr);
-    m_surface = other.m_surface;
 }
 
 Device::~Device() {
@@ -420,13 +417,12 @@ void Device::execute(const std::string &name,
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
                                    const std::string &name) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (!m_vk_debug_marker_set_object_name) {
         return;
     }
 
     assert(object);
     assert(!name.empty());
-    assert(m_vk_debug_marker_set_object_name);
 
     const auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>({
         .objectType = object_type,
@@ -443,14 +439,13 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
 void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
                                          const std::size_t memory_size, const void *memory_block) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (!m_vk_debug_marker_set_object_tag) {
         return;
     }
 
     assert(name);
     assert(memory_size > 0);
     assert(memory_block);
-    assert(m_vk_debug_marker_set_object_tag);
 
     const auto tag_info = make_info<VkDebugMarkerObjectTagInfoEXT>({
         .objectType = object_type,
@@ -469,13 +464,12 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                                const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (!m_vk_cmd_debug_marker_begin) {
         return;
     }
 
     assert(command_buffer);
     assert(!name.empty());
-    assert(m_vk_cmd_debug_marker_begin);
 
     auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
 
@@ -490,13 +484,12 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
 void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
                                  const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (!m_vk_cmd_debug_marker_insert) {
         return;
     }
 
     assert(command_buffer);
     assert(!name.empty());
-    assert(m_vk_cmd_debug_marker_insert);
 
     auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
 
@@ -510,11 +503,10 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
 
 void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (!m_vk_cmd_debug_marker_end) {
         return;
     }
 
-    assert(m_vk_cmd_debug_marker_end);
     m_vk_cmd_debug_marker_end(command_buffer);
 #endif
 }

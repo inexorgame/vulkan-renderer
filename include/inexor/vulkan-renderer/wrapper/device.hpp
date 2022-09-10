@@ -74,7 +74,6 @@ class Device {
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
-    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
     std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_graphics_queue_family_index{0};
@@ -94,8 +93,6 @@ class Device {
     PFN_vkCmdDebugMarkerEndEXT m_vk_cmd_debug_marker_end{nullptr};
     PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert{nullptr};
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
-
-    const bool m_enable_vulkan_debug_markers{false};
 
     CommandPool &thread_graphics_pool() const;
 
