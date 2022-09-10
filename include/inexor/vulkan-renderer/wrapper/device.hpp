@@ -14,23 +14,42 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// Automatically decide if a graphics card is suitable for this application's purposes
-/// @param physical_device The physical device which will be rated
-/// @param surface The window surface
-/// @return ``true`` if the graphics card is suitable
-[[nodiscard]] bool is_physical_device_suitable(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
+/// Call vkGetPhysicalDeviceMemoryProperties
+/// @param physical_device The physical device
+/// @return The memory properties of the physical device
+[[nodiscard]] VkPhysicalDeviceMemoryProperties get_physical_device_memory_properties(VkPhysicalDevice physical_device);
 
-/// Rate a graphics card by its features
-/// @param physical_device The physical device which will be rated
+/// Call vkGetPhysicalDeviceProperties
+/// @param physical_device The physical device
+/// @return The user-friendly name of the physical device
+[[nodiscard]] std::string get_physical_device_name(VkPhysicalDevice physical_device);
+
+/// Call vkGetPhysicalDeviceProperties
+/// @param physical_device The physical device
+/// @return The physical device type
+[[nodiscard]] VkPhysicalDeviceType get_physical_device_type(VkPhysicalDevice physical_device);
+
+/// Check if a certain device extension is available for a specific graphics card
+/// @param physical_device The physical device
+/// @param extension The name of the device extension
+/// @return ``true`` if the requested device extension is available
+[[nodiscard]] bool is_extension_supported(VkPhysicalDevice physical_device, const std::string &extension);
+
+/// Call vkGetPhysicalDeviceSurfaceSupportKHR
+/// @param physical_device The physical device
 /// @param surface The window surface
-/// @return The graphics card's score
-/// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
-[[nodiscard]] std::int32_t rate_physical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+/// @return ``true`` if presentation is supported
+[[nodiscard]] bool is_presentation_supported(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+
+/// Call is_extension_supported with ``VK_KHR_SWAPCHAIN_EXTENSION_NAME``
+/// @param physical_device The physical device
+/// @return ``true`` if swapchain is supported
+[[nodiscard]] bool is_swapchain_supported(VkPhysicalDevice physical_device);
 
 /// Automatically select the best physical device (graphics card) out of all the available ones
-/// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``.
-/// Please note that the graphics cards index starts with 0!
+/// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``
 /// The method will check if the specified index is a valid array index
+/// Please note that the graphics cards index starts with 0!
 /// @param inst The Vulkan instance
 /// @param surface The window surface
 /// @param prefered_index The preferred graphics card index (starting with ``0``!)
@@ -38,25 +57,22 @@ namespace inexor::vulkan_renderer::wrapper {
 [[nodiscard]] std::optional<VkPhysicalDevice>
 pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> prefered_index = std::nullopt);
 
-/// Check if a certain device extension is available for a specific graphics card
-/// @param physical_device The physical device which will be rated
-/// @param extension The name of the device extension
-/// @return ``true`` if the requested device extension is available
-[[nodiscard]] bool is_extension_supported(VkPhysicalDevice physical_device, const std::string &extension);
-
-/// Check if a swapchain is available for a specific graphics card
-/// @param physical_device The physical device which will be rated
-/// @return ``true`` if swapchain is supported
-[[nodiscard]] bool is_swapchain_supported(VkPhysicalDevice physical_device);
-
-/// Check if presentation is available for a specific combination of graphics card and surface
+/// Rate a graphics card by its features and properties
 /// @param physical_device The physical device which will be rated
 /// @param surface The window surface
-/// @return ``true`` if presentation is supported
-[[nodiscard]] bool is_presentation_supported(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+/// @param type The physical device type
+/// @param memory_props The memory properties of the physical device
+/// @param swapchain_supported ``true`` if the physical device supports swapchains
+/// @param presentation_supported ``true`` if the physical device supports presentation
+/// @return The graphics card's score
+/// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
+[[nodiscard]] std::int32_t rate_physical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
+                                                VkPhysicalDeviceType type,
+                                                const VkPhysicalDeviceMemoryProperties &memory_props,
+                                                bool swapchain_supported, bool presentation_supported);
 
-/// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
-/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
+/// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
+/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
