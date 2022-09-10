@@ -29,19 +29,6 @@ struct VulkanSettingsDecisionMaker {
     /// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
     [[nodiscard]] static std::int32_t rate_physical_device(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
 
-    /// Return a std::vector of all device extensions properties of a physical device
-    /// @note This function can return an empty vector! It is the caller's responsibility to account for this!
-    /// @param physical_device The physical device
-    /// @return A std::vector of the device extension properties of a physical device
-    [[nodiscard]] static std::vector<VkExtensionProperties>
-    get_all_device_extension_properties(VkPhysicalDevice physical_device);
-
-    /// Return a std::vector of all available physical devices
-    /// @note This function can return an empty vector! It is the caller's responsibility to account for this!
-    /// @param inst The Vulkan instance
-    /// @return A std::vector of the physical devices
-    [[nodiscard]] static std::vector<VkPhysicalDevice> get_all_physical_devices(VkInstance inst);
-
     /// @brief Automatically decide if a graphics card is suitable for this application's purposes.
     /// In order to be a suitable graphics card for Inexor's purposes, it must fulfill the following criteria:
     /// - It must support a swapchain.
@@ -52,11 +39,6 @@ struct VulkanSettingsDecisionMaker {
     /// @warning When implementing additional graphics card suitability criteria, do not return false for graphics cards
     /// which are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU!
     [[nodiscard]] static bool is_graphics_card_suitable(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
-
-    /// @brief Gets the VkPhysicalDeviceType of a graphics card.
-    /// @param graphics_card The graphics card.
-    /// @return The type of the graphics card.
-    [[nodiscard]] static VkPhysicalDeviceType graphics_card_type(VkPhysicalDevice graphics_card);
 
     /// Automatically select the best physical device (graphics card) out of all the available ones
     /// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``.

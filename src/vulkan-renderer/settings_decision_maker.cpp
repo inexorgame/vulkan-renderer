@@ -1,6 +1,8 @@
 ﻿#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/vk_tools/get_info.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -103,32 +105,15 @@ VulkanSettingsDecisionMaker::swapchain_surface_color_format(const VkPhysicalDevi
     return accepted_color_format;
 }
 
-std::vector<VkExtensionProperties>
-VulkanSettingsDecisionMaker::get_all_device_extension_properties(const VkPhysicalDevice physical_device) {
-    std::uint32_t count = 0;
-    if (const auto result = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-    }
-    std::vector<VkExtensionProperties> extensions(count);
-    if (const auto result = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &count, extensions.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-    }
-    return std::move(extensions);
-}
-
 bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice physical_device,
                                                             const VkSurfaceKHR surface) {
     assert(physical_device);
     assert(surface);
 
-    VkPhysicalDeviceProperties props;
-    vkGetPhysicalDeviceProperties(physical_device, &props);
-
-    const auto extension_props = get_all_device_extension_properties(physical_device);
+    const auto extension_props = vk_tools::get_all_device_extension_properties(physical_device);
     if (extension_props.empty()) {
-        spdlog::error("No device extensions available for physical device {}!", props.deviceName);
+        spdlog::error("No device extensions available for physical device {}!",
+                      vk_tools::get_physical_device_name(physical_device));
         return false;
     }
 
@@ -153,13 +138,6 @@ bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevi
     return presentation_supported == VK_TRUE;
 }
 
-VkPhysicalDeviceType VulkanSettingsDecisionMaker::graphics_card_type(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
-    VkPhysicalDeviceProperties props;
-    vkGetPhysicalDeviceProperties(graphics_card, &props);
-    return props.deviceType;
-}
-
 std::int32_t VulkanSettingsDecisionMaker::rate_physical_device(const VkPhysicalDevice graphics_card,
                                                                const VkSurfaceKHR surface) {
     assert(graphics_card);
@@ -171,7 +149,7 @@ std::int32_t VulkanSettingsDecisionMaker::rate_physical_device(const VkPhysicalD
 
     // We prefer discrete physical devices over integrated ones
     std::int32_t type_score = 1;
-    switch (graphics_card_type(graphics_card)) {
+    switch (vk_tools::get_physical_device_type(graphics_card)) {
     case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
         type_score = 10;
         break;
@@ -195,28 +173,13 @@ std::int32_t VulkanSettingsDecisionMaker::rate_physical_device(const VkPhysicalD
     return type_score * mem_score;
 }
 
-std::vector<VkPhysicalDevice> VulkanSettingsDecisionMaker::get_all_physical_devices(const VkInstance inst) {
-    // Query how many physical devices are available
-    std::uint32_t physical_device_count = 0;
-    if (const auto result = vkEnumeratePhysicalDevices(inst, &physical_device_count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
-    }
-    // Get information about the available graphics cards
-    std::vector<VkPhysicalDevice> phys_devices(physical_device_count);
-    if (const auto result = vkEnumeratePhysicalDevices(inst, &physical_device_count, phys_devices.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
-    }
-    return std::move(phys_devices);
-}
-
 std::optional<VkPhysicalDevice>
 VulkanSettingsDecisionMaker::pick_graphics_card(const VkInstance inst, const VkSurfaceKHR surface,
                                                 const std::optional<std::uint32_t> preferred_index) {
     assert(inst);
     assert(surface);
 
-    auto physical_devices = get_all_physical_devices(inst);
+    auto physical_devices = vk_tools::get_all_physical_devices(inst);
     if (physical_devices.empty()) {
         throw std::runtime_error("Error: No physical devices available!");
     }
