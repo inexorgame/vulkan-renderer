@@ -14,6 +14,30 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// Automatically decide if a graphics card is suitable for this application's purposes
+/// @param physical_device The physical device which will be rated
+/// @param surface The window surface
+/// @return ``true`` if the graphics card is suitable
+[[nodiscard]] bool is_physical_device_suitable(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
+
+/// Rate a graphics card by its features
+/// @param physical_device The physical device which will be rated
+/// @param surface The window surface
+/// @return The graphics card's score
+/// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
+[[nodiscard]] std::int32_t rate_physical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+
+/// Automatically select the best physical device (graphics card) out of all the available ones
+/// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``.
+/// Please note that the graphics cards index starts with 0!
+/// The method will check if the specified index is a valid array index
+/// @param inst The Vulkan instance
+/// @param surface The window surface
+/// @param prefered_index The preferred graphics card index (starting with ``0``!)
+/// @return The selected physical device (if any could be found), or std::nullopt otherwise
+[[nodiscard]] std::optional<VkPhysicalDevice>
+pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> prefered_index = std::nullopt);
+
 /// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {

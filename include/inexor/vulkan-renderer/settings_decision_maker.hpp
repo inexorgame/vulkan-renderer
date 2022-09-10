@@ -22,36 +22,6 @@ struct SwapchainSettings {
 /// - Which presentation modes should be used?
 struct VulkanSettingsDecisionMaker {
 
-    /// Rate a graphics card by its features
-    /// @param graphics_card The graphics card which will be rated
-    /// @param surface The window surface
-    /// @return The graphics card's score
-    /// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
-    [[nodiscard]] static std::int32_t rate_physical_device(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
-
-    /// @brief Automatically decide if a graphics card is suitable for this application's purposes.
-    /// In order to be a suitable graphics card for Inexor's purposes, it must fulfill the following criteria:
-    /// - It must support a swapchain.
-    /// - It must support presentation.
-    /// @todo Add more checks to the validation mechanism if necessary, e.h. check for geometry shader support.
-    /// @param graphics_card The graphics card which will be checked for suitability.
-    /// @return ``true`` if the graphics card is suitable.
-    /// @warning When implementing additional graphics card suitability criteria, do not return false for graphics cards
-    /// which are not VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU!
-    [[nodiscard]] static bool is_graphics_card_suitable(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
-
-    /// Automatically select the best physical device (graphics card) out of all the available ones
-    /// The user can manually specify which graphics card will be used with command line argument ``--gpu <index>``.
-    /// Please note that the graphics cards index starts with 0!
-    /// The method will check if the specified index is a valid array index
-    /// @param inst The Vulkan instance
-    /// @param surface The window surface
-    /// @param prefered_index The preferred graphics card index (starting with ``0``!)
-    /// @return The selected physical device (if any could be found), or std::nullopt otherwise
-    [[nodiscard]] static std::optional<VkPhysicalDevice>
-    pick_graphics_card(VkInstance inst, VkSurfaceKHR surface,
-                       std::optional<std::uint32_t> prefered_index = std::nullopt);
-
     /// @brief Automatically decide how many images will be used in the swap chain.
     /// @param graphics_card The selected graphics card.
     /// @param surface The selected (window) surface.

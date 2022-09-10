@@ -2,6 +2,8 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/vk_tools/get_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #define VMA_IMPLEMENTATION
@@ -31,6 +33,102 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {
+
+bool is_physical_device_suitable(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
+    assert(physical_device);
+    assert(surface);
+
+    const auto extension_props = vk_tools::get_all_device_extension_properties(physical_device);
+    if (extension_props.empty()) {
+        spdlog::error("No device extensions available for physical device {}!",
+                      vk_tools::get_physical_device_name(physical_device));
+        return false;
+    }
+
+    bool swapchain_supported = false;
+    for (const auto &prop : extension_props) {
+        if (strcmp(prop.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
+            swapchain_supported = true;
+        }
+    }
+
+    if (!swapchain_supported) {
+        return false;
+    }
+
+    // TODO: Check if the selected device supports queue families for graphics bits and presentation!
+    VkBool32 presentation_supported = 0;
+    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, 0, surface, &presentation_supported);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+    }
+
+    return presentation_supported == VK_TRUE;
+}
+
+std::int32_t rate_physical_device(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
+    assert(physical_device);
+    assert(surface);
+
+    if (!is_physical_device_suitable(physical_device, surface)) {
+        return -1;
+    }
+
+    // We prefer discrete physical devices over integrated ones
+    std::int32_t type_score = 1;
+    switch (vk_tools::get_physical_device_type(physical_device)) {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        type_score = 10;
+        break;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        type_score = 2;
+        break;
+    default:
+        break;
+    }
+
+    VkPhysicalDeviceMemoryProperties mem_props;
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &mem_props);
+
+    // Summarize real GPU memory in megabytes as a factor for the rating
+    std::int32_t mem_score = 0;
+    for (std::size_t i = 0; i < mem_props.memoryHeapCount; i++) {
+        if ((mem_props.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
+            mem_score += mem_props.memoryHeaps[i].size / (1000 * 1000);
+        }
+    }
+    return type_score * mem_score;
+}
+
+std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const VkSurfaceKHR surface,
+                                                   const std::optional<std::uint32_t> preferred_index) {
+    assert(inst);
+    assert(surface);
+
+    auto physical_devices = vk_tools::get_all_physical_devices(inst);
+    if (physical_devices.empty()) {
+        throw std::runtime_error("Error: No physical devices available!");
+    }
+
+    // Did the user specify the index of a prefered physical device?
+    if (preferred_index) {
+        // Is the index even valid?
+        if (*preferred_index < physical_devices.size()) {
+            if (rate_physical_device(physical_devices[*preferred_index], surface) > 0) {
+                return physical_devices[*preferred_index];
+            }
+            spdlog::error("The prefered physical device is unsuitable!");
+        }
+        spdlog::error("The specified index for a prefered physical device is invalid!");
+    }
+
+    std::sort(physical_devices.begin(), physical_devices.end(),
+              [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
+                  return rate_physical_device(lhs, surface) < rate_physical_device(rhs, surface);
+              });
+
+    return physical_devices.front();
+}
 
 bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
     assert(graphics_card);
@@ -91,8 +189,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
                bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
     : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
 
-    const auto selected_gpu =
-        VulkanSettingsDecisionMaker::pick_graphics_card(instance.instance(), surface, preferred_physical_device_index);
+    const auto selected_gpu = pick_graphics_card(instance.instance(), surface, preferred_physical_device_index);
 
     if (!selected_gpu) {
         throw std::runtime_error("Error: Could not find suitable graphics card!");

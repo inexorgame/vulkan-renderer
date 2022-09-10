@@ -1,8 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
-#include "inexor/vulkan-renderer/vk_tools/get_info.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -103,105 +101,6 @@ VulkanSettingsDecisionMaker::swapchain_surface_color_format(const VkPhysicalDevi
     }
 
     return accepted_color_format;
-}
-
-bool VulkanSettingsDecisionMaker::is_graphics_card_suitable(const VkPhysicalDevice physical_device,
-                                                            const VkSurfaceKHR surface) {
-    assert(physical_device);
-    assert(surface);
-
-    const auto extension_props = vk_tools::get_all_device_extension_properties(physical_device);
-    if (extension_props.empty()) {
-        spdlog::error("No device extensions available for physical device {}!",
-                      vk_tools::get_physical_device_name(physical_device));
-        return false;
-    }
-
-    bool swapchain_supported = false;
-    for (const auto &prop : extension_props) {
-        if (strcmp(prop.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
-            swapchain_supported = true;
-        }
-    }
-
-    if (!swapchain_supported) {
-        return false;
-    }
-
-    // TODO: Check if the selected device supports queue families for graphics bits and presentation!
-    VkBool32 presentation_supported = 0;
-    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, 0, surface, &presentation_supported);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
-    }
-
-    return presentation_supported == VK_TRUE;
-}
-
-std::int32_t VulkanSettingsDecisionMaker::rate_physical_device(const VkPhysicalDevice graphics_card,
-                                                               const VkSurfaceKHR surface) {
-    assert(graphics_card);
-    assert(surface);
-
-    if (!is_graphics_card_suitable(graphics_card, surface)) {
-        return -1;
-    }
-
-    // We prefer discrete physical devices over integrated ones
-    std::int32_t type_score = 1;
-    switch (vk_tools::get_physical_device_type(graphics_card)) {
-    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-        type_score = 10;
-        break;
-    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-        type_score = 2;
-        break;
-    default:
-        break;
-    }
-
-    VkPhysicalDeviceMemoryProperties mem_props;
-    vkGetPhysicalDeviceMemoryProperties(graphics_card, &mem_props);
-
-    // Summarize real GPU memory in megabytes as a factor for the rating
-    std::int32_t mem_score = 0;
-    for (std::size_t i = 0; i < mem_props.memoryHeapCount; i++) {
-        if ((mem_props.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
-            mem_score += mem_props.memoryHeaps[i].size / (1000 * 1000);
-        }
-    }
-    return type_score * mem_score;
-}
-
-std::optional<VkPhysicalDevice>
-VulkanSettingsDecisionMaker::pick_graphics_card(const VkInstance inst, const VkSurfaceKHR surface,
-                                                const std::optional<std::uint32_t> preferred_index) {
-    assert(inst);
-    assert(surface);
-
-    auto physical_devices = vk_tools::get_all_physical_devices(inst);
-    if (physical_devices.empty()) {
-        throw std::runtime_error("Error: No physical devices available!");
-    }
-
-    // Did the user specify the index of a prefered physical device?
-    if (preferred_index) {
-        // Is the index even valid?
-        if (*preferred_index < physical_devices.size()) {
-            if (rate_physical_device(physical_devices[*preferred_index], surface) > 0) {
-                return physical_devices[*preferred_index];
-            }
-            spdlog::error("The prefered physical device is unsuitable!");
-        }
-        spdlog::error("The specified index for a prefered physical device is invalid!");
-    }
-
-    std::sort(physical_devices.begin(), physical_devices.end(),
-              [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
-                  return rate_physical_device(lhs, surface) < rate_physical_device(rhs, surface);
-              });
-
-    return physical_devices.front();
 }
 
 VkSurfaceTransformFlagsKHR VulkanSettingsDecisionMaker::image_transform(const VkPhysicalDevice graphics_card,
