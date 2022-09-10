@@ -140,38 +140,31 @@ std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const 
         // Is the index even valid?
         if (*preferred_index < physical_devices.size()) {
             const auto candidate = physical_devices[*preferred_index];
-            if (rate_physical_device(candidate, surface, get_physical_device_type(candidate),
-                                     get_physical_device_memory_properties(candidate),
-                                     is_swapchain_supported(candidate),
-                                     is_presentation_supported(candidate, surface)) > 0) {
+            if (rate_physical_device(
+                    get_physical_device_type(candidate), get_physical_device_memory_properties(candidate),
+                    is_swapchain_supported(candidate), is_presentation_supported(candidate, surface)) > 0) {
                 return candidate;
             }
             spdlog::error("The prefered physical device is unsuitable!");
         }
-        spdlog::error("The specified index for a prefered physical device is invalid!");
+        spdlog::error("The specified index {} for a prefered physical device is invalid!", *preferred_index);
     }
 
-    // Pick the best physical device by sorting by its rating value
-    std::sort(physical_devices.begin(), physical_devices.end(),
-              [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
-                  return rate_physical_device(lhs, surface, get_physical_device_type(lhs),
-                                              get_physical_device_memory_properties(lhs), is_swapchain_supported(lhs),
-                                              is_presentation_supported(lhs, surface)) //
-                         > rate_physical_device(rhs, surface, get_physical_device_type(rhs),
-                                                get_physical_device_memory_properties(rhs), is_swapchain_supported(rhs),
-                                                is_presentation_supported(rhs, surface));
-              });
+    // Pick the best physical device by sorting by its rating value (higher score means better)
+    std::sort(
+        physical_devices.begin(), physical_devices.end(), [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
+            return rate_physical_device(get_physical_device_type(lhs), get_physical_device_memory_properties(lhs),
+                                        is_swapchain_supported(lhs), is_presentation_supported(lhs, surface)) //
+                   > rate_physical_device(get_physical_device_type(rhs), get_physical_device_memory_properties(rhs),
+                                          is_swapchain_supported(rhs), is_presentation_supported(rhs, surface));
+        });
 
     // Return the physical device with the highest score
     return physical_devices.front();
 }
 
-std::int32_t rate_physical_device(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface,
-                                  const VkPhysicalDeviceType type, const VkPhysicalDeviceMemoryProperties &memory_props,
+std::int32_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysicalDeviceMemoryProperties &memory_props,
                                   const bool swapchain_supported, const bool presentation_supported) {
-    assert(physical_device);
-    assert(surface);
-
     if (!swapchain_supported || !presentation_supported) {
         return -1;
     }

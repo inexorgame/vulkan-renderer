@@ -73,16 +73,13 @@ get_all_physical_device_extension_properties(VkPhysicalDevice physical_device);
 pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> prefered_index = std::nullopt);
 
 /// Rate a graphics card by its features and properties
-/// @param physical_device The physical device which will be rated
-/// @param surface The window surface
 /// @param type The physical device type
 /// @param memory_props The memory properties of the physical device
 /// @param swapchain_supported ``true`` if the physical device supports swapchains
 /// @param presentation_supported ``true`` if the physical device supports presentation
 /// @return The graphics card's score
 /// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
-[[nodiscard]] std::int32_t rate_physical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
-                                                VkPhysicalDeviceType type,
+[[nodiscard]] std::int32_t rate_physical_device(VkPhysicalDeviceType type,
                                                 const VkPhysicalDeviceMemoryProperties &memory_props,
                                                 bool swapchain_supported, bool presentation_supported);
 
