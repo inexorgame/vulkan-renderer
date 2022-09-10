@@ -130,58 +130,37 @@ std::optional<VkPhysicalDevice> pick_graphics_card(const VkInstance inst, const 
     return physical_devices.front();
 }
 
-bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
-    assert(graphics_card);
+bool is_extension_supported(const VkPhysicalDevice physical_device, const std::string &extension_name) {
+    assert(physical_device);
     assert(!extension_name.empty());
 
-    std::uint32_t device_extension_count = 0;
-
-    // Query how many device extensions are available.
-    if (const auto result =
-            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-    }
-
-    if (device_extension_count == 0) {
-        // This is not an error. Some platforms simply don't have any device extensions.
+    const auto extension_props = vk_tools::get_all_device_extension_properties(physical_device);
+    if (extension_props.size() == 0) {
         spdlog::info("No Vulkan device extensions available!");
         return false;
     }
 
-    std::vector<VkExtensionProperties> device_extensions(device_extension_count);
-
-    // Store all available device extensions.
-    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
-                                                                 device_extensions.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-    }
-
-    // Search for the requested device extension.
-    return std::find_if(device_extensions.begin(), device_extensions.end(),
-                        [&](const VkExtensionProperties device_extension) {
-                            return device_extension.extensionName == extension_name;
-                        }) != device_extensions.end();
+    // Search for the requested device extension
+    return std::find_if(extension_props.begin(), extension_props.end(),
+                        [&](const VkExtensionProperties extension_prop) {
+                            return extension_prop.extensionName == extension_name;
+                        }) != extension_props.end();
 }
 
-bool Device::is_swapchain_supported(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
-    return is_extension_supported(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+bool is_swapchain_supported(const VkPhysicalDevice physical_device) {
+    return is_extension_supported(physical_device, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }
 
-bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface) {
-    assert(graphics_card);
+bool is_presentation_supported(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
+    assert(physical_device);
     assert(surface);
 
+    // Query if presentation is supported
     VkBool32 presentation_supported = VK_FALSE;
-
-    // Query if presentation is supported.
-    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_supported);
+    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, 0, surface, &presentation_supported);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
-
     return presentation_supported == VK_TRUE;
 }
 

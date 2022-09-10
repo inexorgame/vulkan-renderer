@@ -38,6 +38,23 @@ namespace inexor::vulkan_renderer::wrapper {
 [[nodiscard]] std::optional<VkPhysicalDevice>
 pick_graphics_card(VkInstance inst, VkSurfaceKHR surface, std::optional<std::uint32_t> prefered_index = std::nullopt);
 
+/// Check if a certain device extension is available for a specific graphics card
+/// @param physical_device The physical device which will be rated
+/// @param extension The name of the device extension
+/// @return ``true`` if the requested device extension is available
+[[nodiscard]] bool is_extension_supported(VkPhysicalDevice physical_device, const std::string &extension);
+
+/// Check if a swapchain is available for a specific graphics card
+/// @param physical_device The physical device which will be rated
+/// @return ``true`` if swapchain is supported
+[[nodiscard]] bool is_swapchain_supported(VkPhysicalDevice physical_device);
+
+/// Check if presentation is available for a specific combination of graphics card and surface
+/// @param physical_device The physical device which will be rated
+/// @param surface The window surface
+/// @return ``true`` if presentation is supported
+[[nodiscard]] bool is_presentation_supported(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+
 /// @brief A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
@@ -75,23 +92,6 @@ class Device {
     CommandPool &thread_graphics_pool() const;
 
 public:
-    /// @brief Check if a certain device extension is available for a specific graphics card.
-    /// @param graphics_card The graphics card
-    /// @param extension The name of the device extension
-    /// @return ``true`` if the requested device extension is available
-    [[nodiscard]] static bool is_extension_supported(VkPhysicalDevice graphics_card, const std::string &extension);
-
-    /// @brief Check if a swapchain is available for a specific graphics card.
-    /// @param graphics_card The graphics card
-    /// @return ``true`` if swapchain is supported
-    [[nodiscard]] static bool is_swapchain_supported(VkPhysicalDevice graphics_card);
-
-    /// @brief Check if presentation is available for a specific combination of graphics card and surface.
-    /// @param graphics_card The graphics card
-    /// @param surface The window surface
-    /// @return ``true`` if presentation is supported
-    [[nodiscard]] static bool is_presentation_supported(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
-
     /// @brief Default constructor.
     /// @param instance The instance wrapper from which the device will be created
     /// @param surface The surface which will be associated with the device
