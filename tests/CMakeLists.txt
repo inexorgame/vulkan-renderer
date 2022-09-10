@@ -1,6 +1,8 @@
 set(INEXOR_UNIT_TEST_SOURCE_FILES
     unit_tests_main.cpp
 
+    gpu-selection/physical-device-rating.cpp
+
     world/cube_collision.cpp
     world/cube.cpp
 )
