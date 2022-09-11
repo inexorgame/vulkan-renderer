@@ -189,11 +189,11 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
 
-        queues_to_create.push_back({
+        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = m_transfer_queue_family_index,
             .queueCount = 1,
             .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        });
+        }));
     } else {
         // We don't have the opportunity to use a separated queue for data transfer!
         // Do not create a new queue, use the graphics queue instead.
