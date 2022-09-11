@@ -301,9 +301,14 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     spdlog::trace("Creating VMA allocator");
 
+    VmaVulkanFunctions vma_vulkan_functions{
+        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+        .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+    };
     const VmaAllocatorCreateInfo vma_allocator_ci{
         .physicalDevice = m_physical_device,
         .device = m_device,
+        .pVulkanFunctions = &vma_vulkan_functions,
         .instance = instance.instance(),
         // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
         // This might need to be changed in the future
