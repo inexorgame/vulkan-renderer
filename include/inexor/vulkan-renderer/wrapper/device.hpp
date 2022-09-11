@@ -19,6 +19,11 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @return The memory properties of the physical device
 [[nodiscard]] VkPhysicalDeviceMemoryProperties get_physical_device_memory_properties(VkPhysicalDevice physical_device);
 
+/// Call vkGetPhysicalDeviceMemoryProperties to calculate the memory score of a physical device
+/// @param physical_device The physical device
+/// @return The memory score of the physical device
+[[nodiscard]] std::int64_t get_physical_device_memory_score(VkPhysicalDevice physical_device);
+
 /// Call vkGetPhysicalDeviceProperties
 /// @param physical_device The physical device
 /// @return The user-friendly name of the physical device
@@ -52,16 +57,10 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @return The selected physical device (if any could be found), or std::nullopt otherwise
 [[nodiscard]] std::optional<VkPhysicalDevice> pick_physical_device(VkInstance inst, VkSurfaceKHR surface);
 
-/// Rate a graphics card by its features and properties
+/// Rate a phytical device by type
 /// @param type The physical device type
-/// @param memory_props The memory properties of the physical device
-/// @param swapchain_supported ``true`` if the physical device supports swapchains
-/// @param presentation_supported ``true`` if the physical device supports presentation
-/// @return The graphics card's score
-/// @note If the score is smaller than ``0``, this means the physical device is unsuitable and can't be used!
-[[nodiscard]] std::int64_t rate_physical_device(VkPhysicalDeviceType type,
-                                                const VkPhysicalDeviceMemoryProperties &memory_props,
-                                                bool swapchain_supported, bool presentation_supported);
+/// @return The physical device type score
+[[nodiscard]] std::uint32_t rate_physical_device_type(const VkPhysicalDeviceType type);
 
 /// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated

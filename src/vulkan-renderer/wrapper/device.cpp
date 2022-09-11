@@ -41,6 +41,20 @@ VkPhysicalDeviceMemoryProperties get_physical_device_memory_properties(const VkP
     return memory_props;
 }
 
+std::int64_t get_physical_device_memory_score(const VkPhysicalDevice physical_device) {
+    // Get information about the physical device's memory
+    VkPhysicalDeviceMemoryProperties memory_props;
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_props);
+    std::int64_t memory_score = 0;
+    for (std::size_t i = 0; i < memory_props.memoryHeapCount; i++) {
+        if ((memory_props.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
+            // Summarize real GPU memory in megabytes as a factor for the rating
+            memory_score += memory_props.memoryHeaps[i].size / (1000 * 1000);
+        }
+    }
+    return memory_score;
+}
+
 std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
     assert(physical_device);
     VkPhysicalDeviceProperties props;
@@ -92,56 +106,44 @@ std::optional<VkPhysicalDevice> pick_physical_device(const VkInstance inst, cons
     assert(inst);
     assert(surface);
 
-    auto physical_devices = vk_tools::get_all_physical_devices(inst);
+    const auto physical_devices = vk_tools::get_all_physical_devices(inst);
     if (physical_devices.empty()) {
         spdlog::error("Error: No physical devices available!");
         return std::nullopt;
     }
 
-    // Pick the best physical device by sorting by its rating value (higher score means better)
-    std::sort(
-        physical_devices.begin(), physical_devices.end(), [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
-            return rate_physical_device(get_physical_device_type(lhs), get_physical_device_memory_properties(lhs),
-                                        is_swapchain_supported(lhs), is_presentation_supported(lhs, surface)) //
-                   > rate_physical_device(get_physical_device_type(rhs), get_physical_device_memory_properties(rhs),
-                                          is_swapchain_supported(rhs), is_presentation_supported(rhs, surface));
-        });
+    std::vector<VkPhysicalDevice> suitable_physical_devices;
+    std::copy_if(physical_devices.begin(), physical_devices.end(), std::back_inserter(suitable_physical_devices),
+                 [&](const VkPhysicalDevice candidate) {
+                     return is_swapchain_supported(candidate) && is_presentation_supported(candidate, surface);
+                 });
 
-    // Return the physical device with the highest score
-    return physical_devices.front();
+    std::sort(suitable_physical_devices.begin(), suitable_physical_devices.end(),
+              [&](const VkPhysicalDevice lhs, const VkPhysicalDevice rhs) {
+                  // If the physical devices are not of the same type, return the better type
+                  const auto lhs_type = get_physical_device_type(lhs);
+                  const auto rhs_type = get_physical_device_type(rhs);
+                  if (lhs_type != rhs_type) {
+                      // Use physical device type as first sorting criteria
+                      return rate_physical_device_type(lhs_type) > rate_physical_device_type(rhs_type);
+                  }
+                  // In case the two physical devices have the same type, sort by memory score
+                  return get_physical_device_memory_score(lhs) > get_physical_device_memory_score(rhs);
+              });
+
+    return suitable_physical_devices.front();
 }
 
-std::int64_t rate_physical_device(const VkPhysicalDeviceType type, const VkPhysicalDeviceMemoryProperties &memory_props,
-                                  const bool swapchain_supported, const bool presentation_supported) {
-    if (!swapchain_supported || !presentation_supported) {
-        return -1;
-    }
-
-    // We prefer discrete physical devices over integrated ones
-    std::int32_t type_score = 1;
+std::uint32_t rate_physical_device_type(const VkPhysicalDeviceType type) {
     switch (type) {
     case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-        // Those are just arbitrary score values to give discrete gpus higher scores
-        type_score = 1024 * 4096;
-        break;
+        return 2;
     case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-        // Those are just arbitrary score values to give integrated gpus lower scores
-        type_score = 32;
-        break;
+        return 1;
     default:
         break;
     }
-
-    // Summarize real GPU memory in megabytes as a factor for the rating
-    std::int32_t memory_score = 0;
-    for (std::size_t i = 0; i < memory_props.memoryHeapCount; i++) {
-        if ((memory_props.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
-            memory_score += memory_props.memoryHeaps[i].size / (1000 * 1000);
-        }
-    }
-    // We are not multiplying the scores, because for an integrated gpu which has access to the RAM, the memory will be
-    // huge so it would get an overall higher score compared with a discrete gpu
-    return type_score + memory_score;
+    return 0;
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
@@ -178,11 +180,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
     }
 
     m_gpu_name = get_physical_device_name(m_physical_device);
-
     spdlog::trace("Creating device using graphics card: {}", m_gpu_name);
-    spdlog::trace("Creating Vulkan device queues");
 
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
+    spdlog::trace("Creating Vulkan device queues");
 
     if (prefer_distinct_transfer_queue) {
         spdlog::trace("The application will try to use a distinct data transfer queue if it is available");
