@@ -41,11 +41,11 @@ VkPhysicalDeviceMemoryProperties get_physical_device_memory_properties(const VkP
     return memory_props;
 }
 
-std::int64_t get_physical_device_memory_score(const VkPhysicalDevice physical_device) {
+std::uint64_t get_physical_device_memory_score(const VkPhysicalDevice physical_device) {
     // Get information about the physical device's memory
     VkPhysicalDeviceMemoryProperties memory_props;
     vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_props);
-    std::int64_t memory_score = 0;
+    std::uint64_t memory_score = 0;
     for (std::size_t i = 0; i < memory_props.memoryHeapCount; i++) {
         if ((memory_props.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
             // Summarize real GPU memory in megabytes as a factor for the rating
@@ -157,7 +157,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
     if (preferred_index) {
         // Check if the user specified index is valid
         if (*preferred_index < physical_devices.size()) {
-            const auto candidate = physical_devices[*preferred_index];
+            auto *const candidate = physical_devices[*preferred_index];
             // Check if the physical device supports all features
             if (is_swapchain_supported(candidate) && is_presentation_supported(candidate, surface)) {
                 m_physical_device = candidate;
@@ -171,7 +171,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
 
     // If the user specified no preferred physical device index or if it was invalid,
     // we need to pick a physical device automatically
-    if (!m_physical_device) {
+    if (m_physical_device == VK_NULL_HANDLE) {
         const auto candidate = pick_physical_device(inst.instance(), surface);
         if (!candidate) {
             throw std::runtime_error("Error: Could not find a suitable physical device!");
@@ -418,7 +418,7 @@ void Device::execute(const std::string &name,
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
                                    const std::string &name) const {
 #ifndef NDEBUG
-    if (!m_vk_debug_marker_set_object_name) {
+    if (m_vk_debug_marker_set_object_name == nullptr) {
         return;
     }
 
@@ -440,7 +440,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
 void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
                                          const std::size_t memory_size, const void *memory_block) const {
 #ifndef NDEBUG
-    if (!m_vk_debug_marker_set_object_tag) {
+    if (m_vk_debug_marker_set_object_tag == nullptr) {
         return;
     }
 
@@ -465,7 +465,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                                const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_vk_cmd_debug_marker_begin) {
+    if (m_vk_cmd_debug_marker_begin == nullptr) {
         return;
     }
 
@@ -485,7 +485,7 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
 void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
                                  const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_vk_cmd_debug_marker_insert) {
+    if (m_vk_cmd_debug_marker_insert == nullptr) {
         return;
     }
 
@@ -504,7 +504,7 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
 
 void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
 #ifndef NDEBUG
-    if (!m_vk_cmd_debug_marker_end) {
+    if (m_vk_cmd_debug_marker_end == nullptr) {
         return;
     }
 

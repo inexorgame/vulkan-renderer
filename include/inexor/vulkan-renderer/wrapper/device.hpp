@@ -22,7 +22,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// Call vkGetPhysicalDeviceMemoryProperties to calculate the memory score of a physical device
 /// @param physical_device The physical device
 /// @return The memory score of the physical device
-[[nodiscard]] std::int64_t get_physical_device_memory_score(VkPhysicalDevice physical_device);
+[[nodiscard]] std::uint64_t get_physical_device_memory_score(VkPhysicalDevice physical_device);
 
 /// Call vkGetPhysicalDeviceProperties
 /// @param physical_device The physical device
@@ -60,7 +60,7 @@ namespace inexor::vulkan_renderer::wrapper {
 /// Rate a phytical device by type
 /// @param type The physical device type
 /// @return The physical device type score
-[[nodiscard]] std::uint32_t rate_physical_device_type(const VkPhysicalDeviceType type);
+[[nodiscard]] std::uint32_t rate_physical_device_type(VkPhysicalDeviceType type);
 
 /// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated
