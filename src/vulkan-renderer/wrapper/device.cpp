@@ -233,10 +233,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         }
     }
 
-    const VkPhysicalDeviceFeatures used_features{
-        // Enable anisotropic filtering.
-        .samplerAnisotropy = VK_TRUE,
-    };
+    const VkPhysicalDeviceFeatures used_features{};
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),

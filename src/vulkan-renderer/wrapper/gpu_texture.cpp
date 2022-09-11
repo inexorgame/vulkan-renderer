@@ -88,10 +88,8 @@ void GpuTexture::create_texture_sampler() {
         .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .mipLodBias = 0.0f,
-        .anisotropyEnable = device_features.samplerAnisotropy,
-        .maxAnisotropy = (device_features.samplerAnisotropy == VK_TRUE)
-                             ? graphics_card_properties.limits.maxSamplerAnisotropy
-                             : 1.0f,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0f,
         .compareEnable = VK_FALSE,
         .compareOp = VK_COMPARE_OP_ALWAYS,
         .minLod = 0.0f,
