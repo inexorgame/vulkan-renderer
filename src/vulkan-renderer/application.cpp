@@ -457,8 +457,7 @@ Application::Application(int argc, char **argv) {
     }
 
     const VkPhysicalDeviceFeatures requested_features{
-        // Request anisotropic filtering
-        .samplerAnisotropy = VK_TRUE,
+        // Enable the device features you request here
     };
 
     m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
