@@ -456,8 +456,11 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
+    const VkPhysicalDeviceFeatures required_features{};
+    auto *physical_device =
+        wrapper::Device::pick_best_physical_device(*m_instance, required_features, m_surface->get());
     m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
-                                                 use_distinct_data_transfer_queue, preferred_graphics_card);
+                                                 use_distinct_data_transfer_queue, physical_device);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");

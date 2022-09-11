@@ -31,11 +31,54 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {
+namespace {
 
-bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
-    assert(graphics_card);
-    assert(!extension_name.empty());
+struct DeviceInfo {
+    VkPhysicalDevice physical_device;
+    VkPhysicalDeviceType type;
+    VkDeviceSize total_device_local;
+    bool presentation_supported;
+    bool swapchain_supported;
+};
 
+std::uint32_t device_type_rating(const DeviceInfo &info) {
+    switch (info.type) {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        return 2;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &) {
+    // TODO(device-sel): Actually take required features into account!
+    return info.presentation_supported && info.swapchain_supported;
+}
+
+// Returns true if `lhs` is more preferrable over `rhs`.
+bool compare_physical_devices(const VkPhysicalDeviceFeatures &features, const DeviceInfo &lhs, const DeviceInfo &rhs) {
+    if (!is_device_suitable(rhs, features)) {
+        return true;
+    }
+    if (!is_device_suitable(lhs, features)) {
+        return false;
+    }
+
+    if (device_type_rating(lhs) > device_type_rating(rhs)) {
+        return true;
+    }
+    if (device_type_rating(lhs) < device_type_rating(rhs)) {
+        return false;
+    }
+
+    // Device types equal, compare total amount of DEVICE_LOCAL memory.
+    return lhs.total_device_local >= rhs.total_device_local;
+}
+
+// TODO(device-sel): Bring over vk_tools/enumerate.cpp
+bool is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
     std::uint32_t device_extension_count = 0;
 
     // Query how many device extensions are available.
@@ -67,37 +110,69 @@ bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const 
                         }) != device_extensions.end();
 }
 
-bool Device::is_swapchain_supported(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
-    return is_extension_supported(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-}
+// Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
+DeviceInfo build_device_info(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physical_device, &properties);
 
-bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface) {
-    assert(graphics_card);
-    assert(surface);
+    VkPhysicalDeviceMemoryProperties memory_properties{};
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
-    VkBool32 presentation_supported = VK_FALSE;
-
-    // Query if presentation is supported.
-    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_supported);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+    VkDeviceSize total_device_local = 0;
+    for (std::size_t i = 0; i < memory_properties.memoryHeapCount; i++) {
+        const auto &heap = memory_properties.memoryHeaps[i];
+        if ((heap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
+            total_device_local += heap.size;
+        }
     }
 
-    return presentation_supported == VK_TRUE;
-}
-
-Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index) {
-    const auto selected_gpu =
-        VulkanSettingsDecisionMaker::graphics_card(instance.instance(), surface, preferred_physical_device_index);
-
-    if (!selected_gpu) {
-        throw std::runtime_error("Error: Could not find suitable graphics card!");
+    // Default to true in this case where a surface is not passed (and therefore presentation supported isn't cared
+    // about).
+    VkBool32 presentation_supported = VK_TRUE;
+    if (surface != nullptr) {
+        if (const auto result =
+                vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, 0, surface, &presentation_supported);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+        }
     }
 
-    m_physical_device = *selected_gpu;
+    return DeviceInfo{
+        .physical_device = physical_device,
+        .type = properties.deviceType,
+        .total_device_local = total_device_local,
+        .presentation_supported = presentation_supported == VK_TRUE,
+        .swapchain_supported =
+            surface == nullptr || is_extension_supported(physical_device, VK_KHR_SWAPCHAIN_EXTENSION_NAME),
+    };
+}
 
+} // namespace
+
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance, const VkPhysicalDeviceFeatures &features,
+                                                   VkSurfaceKHR surface) {
+    std::uint32_t count = 0;
+    vkEnumeratePhysicalDevices(instance.instance(), &count, nullptr);
+    std::vector<VkPhysicalDevice> physical_devices(count);
+    vkEnumeratePhysicalDevices(instance.instance(), &count, physical_devices.data());
+
+    std::vector<DeviceInfo> infos(physical_devices.size());
+    std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
+                   [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
+
+    std::sort(infos.begin(), infos.end(),
+              [&](const auto &lhs, const auto &rhs) { return compare_physical_devices(features, lhs, rhs); });
+
+    if (infos.empty() || !is_device_suitable(infos.front(), features)) {
+        // TODO(device-sel): Handle no suitable devices properly.
+        std::terminate();
+    }
+    return infos.front().physical_device;
+}
+
+Device::Device(const Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+               bool prefer_distinct_transfer_queue, VkPhysicalDevice physical_device)
+    : m_physical_device(physical_device) {
     VkPhysicalDeviceProperties graphics_card_properties;
 
     // Get the information about that graphics card's properties.

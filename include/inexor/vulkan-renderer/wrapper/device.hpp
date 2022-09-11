@@ -45,41 +45,28 @@ class Device {
     PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert{nullptr};
     PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
 
-    const bool m_enable_vulkan_debug_markers{false};
-
     CommandPool &thread_graphics_pool() const;
 
 public:
-    /// @brief Check if a certain device extension is available for a specific graphics card.
-    /// @param graphics_card The graphics card
-    /// @param extension The name of the device extension
-    /// @return ``true`` if the requested device extension is available
-    [[nodiscard]] static bool is_extension_supported(VkPhysicalDevice graphics_card, const std::string &extension);
-
-    /// @brief Check if a swapchain is available for a specific graphics card.
-    /// @param graphics_card The graphics card
-    /// @return ``true`` if swapchain is supported
-    [[nodiscard]] static bool is_swapchain_supported(VkPhysicalDevice graphics_card);
-
-    /// @brief Check if presentation is available for a specific combination of graphics card and surface.
-    /// @param graphics_card The graphics card
-    /// @param surface The window surface
-    /// @return ``true`` if presentation is supported
-    [[nodiscard]] static bool is_presentation_supported(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
+    /// @brief Tries to pick the best physical device based on some criteria
+    /// @param instance The instance
+    /// @param features Required features for the device to have
+    /// @param surface A surface to check presentation support for, may be nullptr if presentation isn't cared about
+    static VkPhysicalDevice pick_best_physical_device(const Instance &instance,
+                                                      const VkPhysicalDeviceFeatures &features, VkSurfaceKHR surface);
 
     /// @brief Default constructor.
     /// @param instance The instance wrapper from which the device will be created
     /// @param surface The surface which will be associated with the device
     /// @param enable_vulkan_debug_markers ``true`` if Vulkan debug markers should be enabled
     /// @param prefer_distinct_transfer_queue ``true`` if a distinct data transfer queue should be preferred
-    /// @param preferred_physical_device_index The index of the preferred graphics card which should be used,
+    /// @param physical_device The physical device from which to create the device from
     /// starting from 0. If the graphics card index is invalid or if the graphics card is unsuitable for the
     /// application's purpose, another graphics card will be selected automatically. See the details of the device
     /// selection mechanism.
     /// TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions
-    Device(const wrapper::Instance &instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-           bool prefer_distinct_transfer_queue,
-           std::optional<std::uint32_t> preferred_physical_device_index = std::nullopt);
+    Device(const Instance &instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+           bool prefer_distinct_transfer_queue, VkPhysicalDevice physical_device);
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
