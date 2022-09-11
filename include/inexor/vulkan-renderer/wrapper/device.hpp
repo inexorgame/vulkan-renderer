@@ -25,7 +25,6 @@ class Device {
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
-    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
 
     std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_graphics_queue_family_index{0};

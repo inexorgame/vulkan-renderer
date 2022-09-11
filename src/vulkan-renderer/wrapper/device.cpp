@@ -88,9 +88,7 @@ bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, con
 }
 
 Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
-    : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
-
+               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index) {
     const auto selected_gpu =
         VulkanSettingsDecisionMaker::graphics_card(instance.instance(), surface, preferred_physical_device_index);
 
@@ -250,7 +248,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 
 #ifndef NDEBUG
-    if (m_enable_vulkan_debug_markers) {
+    if (enable_vulkan_debug_markers) {
         spdlog::trace("Initializing Vulkan debug markers");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
@@ -319,10 +317,9 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 }
 
-Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
+Device::Device(Device &&other) noexcept {
     m_device = std::exchange(other.m_device, nullptr);
     m_physical_device = std::exchange(other.m_physical_device, nullptr);
-    m_surface = other.m_surface;
 }
 
 Device::~Device() {
@@ -349,7 +346,7 @@ void Device::execute(const std::string &name,
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
                                    const std::string &name) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_debug_marker_set_object_name == nullptr) {
         return;
     }
 
@@ -372,7 +369,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
 void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
                                          const std::size_t memory_size, const void *memory_block) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_debug_marker_set_object_tag == nullptr) {
         return;
     }
 
@@ -398,7 +395,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                                const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_cmd_debug_marker_begin == nullptr) {
         return;
     }
 
@@ -419,7 +416,7 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
 void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
                                  const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_cmd_debug_marker_insert == nullptr) {
         return;
     }
 
@@ -439,7 +436,7 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
 
 void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_cmd_debug_marker_end == nullptr) {
         return;
     }
 
