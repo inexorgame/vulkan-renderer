@@ -34,6 +34,22 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 
 namespace inexor::vulkan_renderer::wrapper {
 
+bool check_physical_device_feature_support(const VkPhysicalDevice physical_device,
+                                           const VkPhysicalDeviceFeatures requested_features) {
+    assert(physical_device);
+    VkPhysicalDeviceFeatures available_features;
+    vkGetPhysicalDeviceFeatures(physical_device, &available_features);
+    const auto physical_device_name = get_physical_device_name(physical_device);
+
+    if (requested_features.samplerAnisotropy == VK_TRUE && !available_features.samplerAnisotropy == VK_TRUE) {
+        spdlog::warn("Physical device {} does not support anisotropic filtering!", physical_device_name);
+        return false;
+    }
+    // TODO: Add more checks here once the engine uses them!
+    // The physical device supports all requested features
+    return true;
+}
+
 VkPhysicalDeviceMemoryProperties get_physical_device_memory_properties(const VkPhysicalDevice physical_device) {
     assert(physical_device);
     VkPhysicalDeviceMemoryProperties memory_props;
@@ -86,6 +102,12 @@ bool is_extension_supported(const VkPhysicalDevice physical_device, const std::s
                         }) != extension_props.end();
 }
 
+bool is_physical_device_suitable(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface,
+                                 const VkPhysicalDeviceFeatures requested_features) {
+    return is_presentation_supported(physical_device, surface) && is_swapchain_supported(physical_device) &&
+           check_physical_device_feature_support(physical_device, requested_features);
+}
+
 bool is_presentation_supported(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
     assert(physical_device);
     assert(surface);
@@ -102,7 +124,8 @@ bool is_swapchain_supported(const VkPhysicalDevice physical_device) {
     return is_extension_supported(physical_device, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }
 
-std::optional<VkPhysicalDevice> pick_physical_device(const VkInstance inst, const VkSurfaceKHR surface) {
+std::optional<VkPhysicalDevice> pick_physical_device(const VkInstance inst, const VkSurfaceKHR surface,
+                                                     const VkPhysicalDeviceFeatures requested_features) {
     assert(inst);
     assert(surface);
 
@@ -115,7 +138,7 @@ std::optional<VkPhysicalDevice> pick_physical_device(const VkInstance inst, cons
     std::vector<VkPhysicalDevice> suitable_physical_devices;
     std::copy_if(physical_devices.begin(), physical_devices.end(), std::back_inserter(suitable_physical_devices),
                  [&](const VkPhysicalDevice candidate) {
-                     return is_swapchain_supported(candidate) && is_presentation_supported(candidate, surface);
+                     return is_physical_device_suitable(candidate, surface, requested_features);
                  });
 
     std::sort(suitable_physical_devices.begin(), suitable_physical_devices.end(),
@@ -147,7 +170,8 @@ std::uint32_t rate_physical_device_type(const VkPhysicalDeviceType type) {
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_index) {
+               bool prefer_distinct_transfer_queue, const VkPhysicalDeviceFeatures requested_features,
+               const std::optional<std::uint32_t> preferred_index) {
     const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
     if (physical_devices.empty()) {
         throw std::runtime_error("Error: There are no physical devices available");
@@ -159,7 +183,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
         if (*preferred_index < physical_devices.size()) {
             auto *const candidate = physical_devices[*preferred_index];
             // Check if the physical device supports all features
-            if (is_swapchain_supported(candidate) && is_presentation_supported(candidate, surface)) {
+            if (is_physical_device_suitable(candidate, surface, requested_features)) {
                 m_physical_device = candidate;
             } else {
                 spdlog::error("Physical device {} is not suitable!", get_physical_device_name(candidate));
@@ -172,7 +196,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
     // If the user specified no preferred physical device index or if it was invalid,
     // we need to pick a physical device automatically
     if (m_physical_device == VK_NULL_HANDLE) {
-        const auto candidate = pick_physical_device(inst.instance(), surface);
+        const auto candidate = pick_physical_device(inst.instance(), surface, requested_features);
         if (!candidate) {
             throw std::runtime_error("Error: Could not find a suitable physical device!");
         }
@@ -305,17 +329,12 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, bool enable_vul
         }
     }
 
-    const VkPhysicalDeviceFeatures used_features{
-        // Enable anisotropic filtering.
-        .samplerAnisotropy = VK_TRUE,
-    };
-
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
         .enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size()),
         .ppEnabledExtensionNames = enabled_device_extensions.data(),
-        .pEnabledFeatures = &used_features,
+        .pEnabledFeatures = &requested_features,
     });
 
     spdlog::trace("Creating physical device");

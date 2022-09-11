@@ -217,23 +217,6 @@ void Application::load_octree_geometry(bool initialize) {
     }
 }
 
-void Application::check_application_specific_features() {
-    assert(m_device->physical_device());
-
-    VkPhysicalDeviceFeatures graphics_card_features;
-
-    vkGetPhysicalDeviceFeatures(m_device->physical_device(), &graphics_card_features);
-
-    // Check if anisotropic filtering is available!
-    if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
-        spdlog::warn("The selected graphics card does not support anisotropic filtering!");
-    } else {
-        spdlog::trace("The selected graphics card does support anisotropic filtering");
-    }
-
-    // TODO: Add more checks if necessary.
-}
-
 void Application::setup_window_and_input_callbacks() {
     m_window->set_user_ptr(this);
 
@@ -473,10 +456,14 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
-                                                 use_distinct_data_transfer_queue, preferred_graphics_card);
+    const VkPhysicalDeviceFeatures requested_features{
+        // Request anisotropic filtering
+        .samplerAnisotropy = VK_TRUE,
+    };
 
-    check_application_specific_features();
+    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
+                                                 use_distinct_data_transfer_queue, requested_features,
+                                                 preferred_graphics_card);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");

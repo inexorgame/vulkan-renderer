@@ -14,6 +14,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// Call vkGetPhysicalDeviceFeatures to check if a physical device supports all requested device features
+/// @param physical_device The physical device
+/// @param requested_features The requested device features the physical device must support
+/// @return ``true`` if the physical device supports all requested device features
+bool check_physical_device_feature_support(VkPhysicalDevice physical_device,
+                                           VkPhysicalDeviceFeatures requested_features);
+
 /// Call vkGetPhysicalDeviceMemoryProperties
 /// @param physical_device The physical device
 /// @return The memory properties of the physical device
@@ -40,6 +47,14 @@ namespace inexor::vulkan_renderer::wrapper {
 /// @return ``true`` if the requested device extension is available
 [[nodiscard]] bool is_extension_supported(VkPhysicalDevice physical_device, const std::string &extension);
 
+/// Check if a physical device is suitable
+/// @param physical_device The physical device
+/// @param surface The window surface
+/// @param requested_features The requested device features
+/// @return ``true`` if the physical device is suitable
+[[nodiscard]] bool is_physical_device_suitable(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
+                                               VkPhysicalDeviceFeatures requested_features);
+
 /// Call vkGetPhysicalDeviceSurfaceSupportKHR
 /// @param physical_device The physical device
 /// @param surface The window surface
@@ -54,8 +69,10 @@ namespace inexor::vulkan_renderer::wrapper {
 /// Automatically select the best physical device (graphics card) out of all the available ones
 /// @param inst The Vulkan instance
 /// @param surface The window surface
+/// @param requested_features The requested device features
 /// @return The selected physical device (if any could be found), or std::nullopt otherwise
-[[nodiscard]] std::optional<VkPhysicalDevice> pick_physical_device(VkInstance inst, VkSurfaceKHR surface);
+[[nodiscard]] std::optional<VkPhysicalDevice> pick_physical_device(VkInstance inst, VkSurfaceKHR surface,
+                                                                   VkPhysicalDeviceFeatures requested_features);
 
 /// Rate a phytical device by type
 /// @param type The physical device type
@@ -101,10 +118,14 @@ public:
     /// @param surface The window surface
     /// @param enable_vulkan_debug_markers ``true`` if Vulkan debug markers should be enabled
     /// @param prefer_distinct_transfer_queue ``true`` if a distinct data transfer queue should be preferred
+    /// @param requested_features The requested device features
+    /// @note The engine will check if a physical device supports all requested features.
+    /// If the physical device does not support all requested features, it can't be used!
     /// @param preferred_index The index of the preferred physical device to create
     /// TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions
     Device(const Instance &inst, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-           bool prefer_distinct_transfer_queue, std::optional<std::uint32_t> preferred_index = std::nullopt);
+           bool prefer_distinct_transfer_queue, VkPhysicalDeviceFeatures requested_features,
+           std::optional<std::uint32_t> preferred_index = std::nullopt);
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
