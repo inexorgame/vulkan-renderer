@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #define VMA_IMPLEMENTATION
@@ -151,11 +152,7 @@ DeviceInfo build_device_info(VkPhysicalDevice physical_device, VkSurfaceKHR surf
 
 VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance, const VkPhysicalDeviceFeatures &features,
                                                    VkSurfaceKHR surface) {
-    std::uint32_t count = 0;
-    vkEnumeratePhysicalDevices(instance.instance(), &count, nullptr);
-    std::vector<VkPhysicalDevice> physical_devices(count);
-    vkEnumeratePhysicalDevices(instance.instance(), &count, physical_devices.data());
-
+    const auto physical_devices = vk_tools::get_all_physical_devices(instance.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
