@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
@@ -456,9 +457,17 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
+    const auto physical_devices = vk_tools::get_all_physical_devices(m_instance->instance());
+    if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
+        spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
+        throw std::runtime_error("Invalid GPU index");
+    }
+
     const VkPhysicalDeviceFeatures required_features{};
-    auto *physical_device =
-        wrapper::Device::pick_best_physical_device(*m_instance, required_features, m_surface->get());
+    VkPhysicalDevice physical_device =
+        preferred_graphics_card
+            ? physical_devices[*preferred_graphics_card]
+            : wrapper::Device::pick_best_physical_device(*m_instance, required_features, m_surface->get());
     m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
                                                  use_distinct_data_transfer_queue, physical_device);
 
