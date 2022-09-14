@@ -216,12 +216,12 @@ bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
 }
 
 // TODO(device-sel): Bring over vk_tools/enumerate.cpp
-bool is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
+bool is_extension_supported(const VkPhysicalDevice physical_device, const std::string &extension_name) {
     std::uint32_t device_extension_count = 0;
 
     // Query how many device extensions are available.
     if (const auto result =
-            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
+            vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, nullptr);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
@@ -235,7 +235,7 @@ bool is_extension_supported(const VkPhysicalDevice graphics_card, const std::str
     std::vector<VkExtensionProperties> device_extensions(device_extension_count);
 
     // Store all available device extensions.
-    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
+    if (const auto result = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count,
                                                                  device_extensions.data());
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
@@ -313,14 +313,14 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
 Device::Device(const Instance &instance, const VkSurfaceKHR surface, const bool enable_vulkan_debug_markers,
                const bool prefer_distinct_transfer_queue, const VkPhysicalDevice physical_device)
     : m_physical_device(physical_device) {
-    VkPhysicalDeviceProperties graphics_card_properties;
+    VkPhysicalDeviceProperties physical_device_properties;
 
     // Get the information about that graphics card's properties.
-    vkGetPhysicalDeviceProperties(m_physical_device, &graphics_card_properties);
+    vkGetPhysicalDeviceProperties(m_physical_device, &physical_device_properties);
 
-    spdlog::trace("Creating device using graphics card: {}", graphics_card_properties.deviceName);
+    spdlog::trace("Creating device using graphics card: {}", physical_device_properties.deviceName);
 
-    m_gpu_name = graphics_card_properties.deviceName;
+    m_gpu_name = physical_device_properties.deviceName;
 
     spdlog::trace("Creating Vulkan device queues");
 
