@@ -59,11 +59,12 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
 }
 
 // Returns true if `lhs` is more preferrable over `rhs`.
-bool compare_physical_devices(const VkPhysicalDeviceFeatures &features, const DeviceInfo &lhs, const DeviceInfo &rhs) {
-    if (!is_device_suitable(rhs, features)) {
+bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features, const DeviceInfo &lhs,
+                              const DeviceInfo &rhs) {
+    if (!is_device_suitable(rhs, required_features)) {
         return true;
     }
-    if (!is_device_suitable(lhs, features)) {
+    if (!is_device_suitable(lhs, required_features)) {
         return false;
     }
 
@@ -112,7 +113,7 @@ bool is_extension_supported(const VkPhysicalDevice graphics_card, const std::str
 }
 
 // Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
-DeviceInfo build_device_info(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {
+DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(physical_device, &properties);
 
@@ -150,25 +151,26 @@ DeviceInfo build_device_info(VkPhysicalDevice physical_device, VkSurfaceKHR surf
 
 } // namespace
 
-VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance, const VkPhysicalDeviceFeatures &features,
-                                                   VkSurfaceKHR surface) {
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
+                                                   const VkPhysicalDeviceFeatures &required_features,
+                                                   const VkSurfaceKHR surface) {
     const auto physical_devices = vk_tools::get_all_physical_devices(instance.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
 
     std::sort(infos.begin(), infos.end(),
-              [&](const auto &lhs, const auto &rhs) { return compare_physical_devices(features, lhs, rhs); });
+              [&](const auto &lhs, const auto &rhs) { return compare_physical_devices(required_features, lhs, rhs); });
 
-    if (infos.empty() || !is_device_suitable(infos.front(), features)) {
+    if (infos.empty() || !is_device_suitable(infos.front(), required_features)) {
         // TODO(device-sel): Handle no suitable devices properly.
         std::terminate();
     }
     return infos.front().physical_device;
 }
 
-Device::Device(const Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, VkPhysicalDevice physical_device)
+Device::Device(const Instance &instance, const VkSurfaceKHR surface, const bool enable_vulkan_debug_markers,
+               const bool prefer_distinct_transfer_queue, const VkPhysicalDevice physical_device)
     : m_physical_device(physical_device) {
     VkPhysicalDeviceProperties graphics_card_properties;
 

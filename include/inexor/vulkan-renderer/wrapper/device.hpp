@@ -50,10 +50,11 @@ class Device {
 public:
     /// @brief Tries to pick the best physical device based on some criteria
     /// @param instance The instance
-    /// @param features Required features for the device to have
+    /// @param required_features Required features for the device to have
     /// @param surface A surface to check presentation support for, may be nullptr if presentation isn't cared about
     static VkPhysicalDevice pick_best_physical_device(const Instance &instance,
-                                                      const VkPhysicalDeviceFeatures &features, VkSurfaceKHR surface);
+                                                      const VkPhysicalDeviceFeatures &required_features,
+                                                      VkSurfaceKHR surface);
 
     /// @brief Default constructor.
     /// @param instance The instance wrapper from which the device will be created
