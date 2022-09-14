@@ -35,11 +35,13 @@ namespace inexor::vulkan_renderer::wrapper {
 namespace {
 
 struct DeviceInfo {
+    std::string name;
     VkPhysicalDevice physical_device;
     VkPhysicalDeviceType type;
     VkDeviceSize total_device_local;
     bool presentation_supported;
     bool swapchain_supported;
+    VkPhysicalDeviceFeatures features;
 };
 
 std::uint32_t device_type_rating(const DeviceInfo &info) {
@@ -53,8 +55,142 @@ std::uint32_t device_type_rating(const DeviceInfo &info) {
     }
 }
 
-bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &) {
-    // TODO(device-sel): Actually take required features into account!
+bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features) {
+    // How many physical device features are in the VkPhysicalDeviceFeatures structure?
+    constexpr auto feature_count = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+
+    // We copy the VkBool32 values of required_features into a std::vector so we can iterate over them
+    std::vector<VkBool32> comparable_required_features(feature_count);
+    std::memcpy(comparable_required_features.data(), &required_features, sizeof(VkPhysicalDeviceFeatures));
+
+    // We do the same trick for the available features so we can compare them
+    std::vector<VkBool32> comparable_available_features(feature_count);
+    std::memcpy(comparable_available_features.data(), &info.features, sizeof(VkPhysicalDeviceFeatures));
+
+    // This array stores descriptions for physical device features
+    // In case a feature is no available, it will be used to generate an info message
+    const std::array<std::string_view, feature_count> feature_descriptions{
+        // robustBufferAccess
+        "accesses to buffers which are bounds-checked against the range of the buffer descriptor",
+        // fullDrawIndexUint32
+        "full 32-bit range of indices for indexed draw calls when using a VkIndexType of VK_INDEX_TYPE_UINT32",
+        // imageCubeArray
+        "creation of image views of type VK_IMAGE_VIEW_TYPE_CUBE_ARRAY",
+        // independentBlend
+        "VkPipelineColorBlendAttachmentState settings which are controlled independently per-attachment",
+        // geometryShader
+        "geometry shaders",
+        // tessellationShader
+        "tessellation control and evaluation shaders",
+        // sampleRateShading
+        "sample shading and multisample interpolation",
+        // dualSrcBlend
+        "blend operations which take two sources",
+        // logicOp
+        "color blending logic operations",
+        // multiDrawIndirect
+        "multiple draw indirect",
+        // drawIndirectFirstInstance
+        "firstInstance parameter in VkDrawIndirectCommand",
+        // depthClamp
+        "depth clamping in rasterization",
+        // depthBiasClamp
+        "depth bias clamping in rasterization",
+        // fillModeNonSolid
+        "point and wireframe fill modes",
+        // depthBounds
+        "depth bound tests",
+        // wideLines
+        "lines with width other than 1.0 in rasterization",
+        // largePoints
+        "points with size greater than 1.0 in rasterization",
+        // alphaToOne
+        "replacing the alpha value of the fragment shader color output in the multisample coverage fragment operation",
+        // multiViewport
+        "more than one viewport",
+        // samplerAnisotropy
+        "anisotropic filtering",
+        // textureCompressionETC2
+        "all of the ETC2 and EAC compressed texture formats",
+        // textureCompressionASTC_LDR
+        "all of the ASTC LDR compressed texture formats",
+        // textureCompressionBC
+        "all of the BC compressed texture formats",
+        // occlusionQueryPrecise
+        "occlusion queries returning actual sample counts",
+        // pipelineStatisticsQuery
+        "pipeline statistics queries",
+        // vertexPipelineStoresAndAtomics
+        "storage buffers and images which support atomic operations in vertex, tessellation, and geometry shaders",
+        // fragmentStoresAndAtomics
+        "storage buffers and images which support atomic operations in fragment shaders",
+        // shaderTessellationAndGeometryPointSize
+        "PointSize built-in decoration being available in the tessellation control, tessellation evaluation, and "
+        "geometry shaders",
+        // shaderImageGatherExtended
+        "extended set of image gather instructions in shader code",
+        // shaderStorageImageExtendedFormats
+        "all the storage image extended formats",
+        // shaderStorageImageMultisample
+        "multisampled storage images",
+        // shaderStorageImageReadWithoutFormat
+        "storage images which require a format qualifier to be specified when reading",
+        // shaderStorageImageWriteWithoutFormat
+        "storage images which require a format qualifier to be specified when writing",
+        // shaderUniformBufferArrayDynamicIndexing
+        "arrays of uniform buffers which can be indexed by dynamically uniform integer expressions in shader code",
+        // shaderSampledImageArrayDynamicIndexing
+        "arrays of samplers or sampled images which can be indexed by dynamically uniform integer expressions in "
+        "shader code",
+        // shaderStorageBufferArrayDynamicIndexing
+        "arrays of storage buffers which can be indexed by dynamically uniform integer expressions in shader code",
+        // shaderStorageImageArrayDynamicIndexing
+        "arrays of storage images which can be indexed by dynamically uniform integer expressions in shader code",
+        // shaderClipDistance
+        "clip distances which are supported in shader code",
+        // shaderCullDistance
+        "cull distances in shader code",
+        // shaderFloat64
+        "64-bit floats (doubles) in shader code",
+        // shaderInt64
+        "64-bit integers (signed and unsigned) in shader code",
+        // shaderInt16
+        "16-bit integers (signed and unsigned) in shader code",
+        // shaderResourceResidency
+        "image operations that return resource residency information in shader code",
+        // shaderResourceMinLod
+        "image operations specifying the minimum resource LOD in shader code",
+        // sparseBinding
+        "resource memory which can be managed at opaque sparse block level instead of at the object level",
+        // sparseResidencyBuffer
+        "access to partially resident buffers",
+        // sparseResidencyImage2D
+        "access to partially resident 2D images with 1 sample per pixel",
+        // sparseResidencyImage3D
+        "access to partially resident 3D images",
+        // sparseResidency2Samples
+        "access to partially resident 2D images with 2 samples per pixel",
+        // sparseResidency4Samples
+        "access to partially resident 2D images with 4 samples per pixel",
+        // sparseResidency8Samples
+        "access to partially resident 2D images with 8 samples per pixel",
+        // sparseResidency16Samples
+        "access to partially resident 2D images with 16 samples per pixel",
+        // sparseResidencyAliased
+        "correct access to data aliased into multiple locations",
+        // variableMultisampleRate
+        "variable multisample rate",
+        // inheritedQueries
+        "execution of secondary command buffers while a query is active"};
+
+    // Loop through all physical device features and check if a feature is required but not supported
+    for (std::size_t i = 0; i < feature_count; i++) {
+        if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
+            spdlog::info("Physical device {} does not support {}!", info.name, feature_descriptions[i]);
+            return false;
+        }
+    }
+
     return info.presentation_supported && info.swapchain_supported;
 }
 
@@ -120,6 +256,9 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
     VkPhysicalDeviceMemoryProperties memory_properties{};
     vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
+    VkPhysicalDeviceFeatures features{};
+    vkGetPhysicalDeviceFeatures(physical_device, &features);
+
     VkDeviceSize total_device_local = 0;
     for (std::size_t i = 0; i < memory_properties.memoryHeapCount; i++) {
         const auto &heap = memory_properties.memoryHeaps[i];
@@ -140,12 +279,14 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
     }
 
     return DeviceInfo{
+        .name = properties.deviceName,
         .physical_device = physical_device,
         .type = properties.deviceType,
         .total_device_local = total_device_local,
         .presentation_supported = presentation_supported == VK_TRUE,
         .swapchain_supported =
             surface == nullptr || is_extension_supported(physical_device, VK_KHR_SWAPCHAIN_EXTENSION_NAME),
+        .features = features,
     };
 }
 
