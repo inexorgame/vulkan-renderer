@@ -215,33 +215,10 @@ bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
     return lhs.total_device_local >= rhs.total_device_local;
 }
 
-// TODO(device-sel): Bring over vk_tools/enumerate.cpp
 bool is_extension_supported(const VkPhysicalDevice physical_device, const std::string &extension_name) {
-    std::uint32_t device_extension_count = 0;
+    const auto device_extensions = vk_tools::get_all_physical_device_extension_properties(physical_device);
 
-    // Query how many device extensions are available.
-    if (const auto result =
-            vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-    }
-
-    if (device_extension_count == 0) {
-        // This is not an error. Some platforms simply don't have any device extensions.
-        spdlog::info("No Vulkan device extensions available!");
-        return false;
-    }
-
-    std::vector<VkExtensionProperties> device_extensions(device_extension_count);
-
-    // Store all available device extensions.
-    if (const auto result = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count,
-                                                                 device_extensions.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
-    }
-
-    // Search for the requested device extension.
+    // Search for the requested device extension
     return std::find_if(device_extensions.begin(), device_extensions.end(),
                         [&](const VkExtensionProperties device_extension) {
                             return device_extension.extensionName == extension_name;
