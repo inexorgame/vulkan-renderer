@@ -283,12 +283,15 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
 
+    if (infos.empty()) {
+        throw std::runtime_error("Error: There are no physical devices available!");
+    }
+
     std::sort(infos.begin(), infos.end(),
               [&](const auto &lhs, const auto &rhs) { return compare_physical_devices(required_features, lhs, rhs); });
 
-    if (infos.empty() || !is_device_suitable(infos.front(), required_features)) {
-        // TODO(device-sel): Handle no suitable devices properly.
-        std::terminate();
+    if (!is_device_suitable(infos.front(), required_features)) {
+        throw std::runtime_error("Error: Could not determine a suitable physical device!");
     }
     return infos.front().physical_device;
 }
