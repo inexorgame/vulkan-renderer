@@ -42,6 +42,7 @@ struct DeviceInfo {
     bool presentation_supported;
     bool swapchain_supported;
     VkPhysicalDeviceFeatures features;
+    std::vector<VkExtensionProperties> extensions;
 };
 
 std::uint32_t device_type_rating(const DeviceInfo &info) {
@@ -215,14 +216,14 @@ bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
     return lhs.total_device_local >= rhs.total_device_local;
 }
 
-bool is_extension_supported(const VkPhysicalDevice physical_device, const std::string &extension_name) {
-    const auto device_extensions = vk_tools::get_all_physical_device_extension_properties(physical_device);
-
-    // Search for the requested device extension
-    return std::find_if(device_extensions.begin(), device_extensions.end(),
-                        [&](const VkExtensionProperties device_extension) {
-                            return device_extension.extensionName == extension_name;
-                        }) != device_extensions.end();
+/// Search for the required device extension
+/// @param extensions The device extensions
+/// @param extension_name The extension name
+/// @return ``true`` if the required device extension is supported
+bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions, const std::string &extension_name) {
+    return std::find_if(extensions.begin(), extensions.end(), [&](const VkExtensionProperties extension) {
+               return extension.extensionName == extension_name;
+           }) != extensions.end();
 }
 
 // Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
@@ -255,15 +256,20 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
         }
     }
 
+    const auto extensions = vk_tools::get_all_physical_device_extension_properties(physical_device);
+
+    const bool is_swapchain_supported =
+        surface == nullptr || is_extension_supported(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
     return DeviceInfo{
         .name = properties.deviceName,
         .physical_device = physical_device,
         .type = properties.deviceType,
         .total_device_local = total_device_local,
         .presentation_supported = presentation_supported == VK_TRUE,
-        .swapchain_supported =
-            surface == nullptr || is_extension_supported(physical_device, VK_KHR_SWAPCHAIN_EXTENSION_NAME),
+        .swapchain_supported = is_swapchain_supported,
         .features = features,
+        .extensions = extensions,
     };
 }
 
@@ -398,37 +404,22 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool enab
         m_transfer_queue_family_index = m_graphics_queue_family_index;
     }
 
-    std::vector<const char *> device_extensions_wishlist = {
-        // Since we want to draw on a window, we need the swapchain extension.
+    std::vector<const char *> device_extensions{
+        // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
 
 #ifndef NDEBUG
     if (enable_vulkan_debug_markers) {
-        // Debug markers allow the assignment of internal names to Vulkan resources.
-        // These internal names will conveniently be visible in debuggers like RenderDoc.
-        // Debug markers are only available if RenderDoc is enabled.
-        device_extensions_wishlist.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+        device_extensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
     }
 #endif
-
-    std::vector<const char *> enabled_device_extensions;
-
-    for (const auto &device_extension_name : device_extensions_wishlist) {
-        if (is_extension_supported(m_physical_device, device_extension_name)) {
-            spdlog::trace("Device extension {} is available on this system", device_extension_name);
-            enabled_device_extensions.push_back(device_extension_name);
-        } else {
-            throw std::runtime_error("Device extension " + std::string(device_extension_name) +
-                                     " is not available on this system!");
-        }
-    }
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
-        .enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size()),
-        .ppEnabledExtensionNames = enabled_device_extensions.data(),
+        .enabledExtensionCount = static_cast<std::uint32_t>(device_extensions.size()),
+        .ppEnabledExtensionNames = device_extensions.data(),
         .pEnabledFeatures = &used_features,
     });
 
