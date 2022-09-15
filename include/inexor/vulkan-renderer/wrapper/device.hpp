@@ -56,18 +56,15 @@ public:
                                                       const VkPhysicalDeviceFeatures &required_features,
                                                       VkSurfaceKHR surface);
 
-    /// @brief Default constructor.
-    /// @param instance The instance wrapper from which the device will be created
-    /// @param surface The surface which will be associated with the device
-    /// @param enable_vulkan_debug_markers ``true`` if Vulkan debug markers should be enabled
-    /// @param prefer_distinct_transfer_queue ``true`` if a distinct data transfer queue should be preferred
-    /// @param physical_device The physical device from which to create the device from
-    /// starting from 0. If the graphics card index is invalid or if the graphics card is unsuitable for the
-    /// application's purpose, another graphics card will be selected automatically. See the details of the device
-    /// selection mechanism.
-    /// TODO: Add overloaded constructors for VkPhysicalDeviceFeatures and requested device extensions
-    Device(const Instance &instance, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-           bool prefer_distinct_transfer_queue, VkPhysicalDevice physical_device);
+    /// Default constructor
+    /// @param inst The Vulkan instance
+    /// @param surface The window surface
+    /// @param enable_vulkan_debug_markers Specifies if Vulkan debug markers will be enabled
+    /// @param prefer_distinct_transfer_queue Specifies if a distinct transfer queue will be preferred
+    /// @param required_features The required device features
+    Device(const Instance &inst, VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
+           bool prefer_distinct_transfer_queue, VkPhysicalDevice physical_device,
+           VkPhysicalDeviceFeatures required_features = {});
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;

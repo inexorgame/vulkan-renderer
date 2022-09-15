@@ -287,8 +287,9 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
     return infos.front().physical_device;
 }
 
-Device::Device(const Instance &instance, const VkSurfaceKHR surface, const bool enable_vulkan_debug_markers,
-               const bool prefer_distinct_transfer_queue, const VkPhysicalDevice physical_device)
+Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool enable_vulkan_debug_markers,
+               const bool prefer_distinct_transfer_queue, const VkPhysicalDevice physical_device,
+               const VkPhysicalDeviceFeatures used_features)
     : m_physical_device(physical_device) {
     VkPhysicalDeviceProperties physical_device_properties;
 
@@ -423,8 +424,6 @@ Device::Device(const Instance &instance, const VkSurfaceKHR surface, const bool 
         }
     }
 
-    const VkPhysicalDeviceFeatures used_features{};
-
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
@@ -496,7 +495,7 @@ Device::Device(const Instance &instance, const VkSurfaceKHR surface, const bool 
         .physicalDevice = m_physical_device,
         .device = m_device,
         .pVulkanFunctions = &vma_vulkan_functions,
-        .instance = instance.instance(),
+        .instance = inst.instance(),
         // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
         // This might need to be changed in the future
         .vulkanApiVersion = VK_API_VERSION_1_1,
