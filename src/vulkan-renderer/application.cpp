@@ -463,13 +463,28 @@ Application::Application(int argc, char **argv) {
         throw std::runtime_error("Invalid GPU index");
     }
 
-    const VkPhysicalDeviceFeatures required_features{};
-    VkPhysicalDevice physical_device =
-        preferred_graphics_card
-            ? physical_devices[*preferred_graphics_card]
-            : wrapper::Device::pick_best_physical_device(*m_instance, required_features, m_surface->get());
-    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
-                                                 use_distinct_data_transfer_queue, physical_device);
+    const VkPhysicalDeviceFeatures required_features{
+        // Add required physical device features here
+    };
+
+    std::vector<const char *> required_extensions{
+        // Since we want to draw on a window, we need the swapchain extension
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
+#ifndef NDEBUG
+    if (enable_debug_marker_device_extension) {
+        required_extensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+    }
+#endif
+
+    const VkPhysicalDevice physical_device =
+        preferred_graphics_card ? physical_devices[*preferred_graphics_card]
+                                : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->get(),
+                                                                             required_features, required_extensions);
+
+    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
+                                                 physical_device, required_features, required_extensions);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");

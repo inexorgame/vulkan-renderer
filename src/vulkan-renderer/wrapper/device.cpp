@@ -67,7 +67,7 @@ bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions
 }
 
 bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                        const std::vector<std::string> &required_extensions) {
+                        const std::vector<const char *> &required_extensions) {
     // How many physical device features are in the VkPhysicalDeviceFeatures structure?
     constexpr auto feature_count = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
 
@@ -221,7 +221,7 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
 /// @param rhs The other physical device
 /// @return ``true`` if `lhs` is more preferrable over `rhs`
 bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
-                              const std::vector<std::string> &required_extensions, const DeviceInfo &lhs,
+                              const std::vector<const char *> &required_extensions, const DeviceInfo &lhs,
                               const DeviceInfo &rhs) {
     if (!is_device_suitable(rhs, required_features, required_extensions)) {
         return true;
@@ -290,10 +290,9 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
 
 } // namespace
 
-VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst,
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const VkSurfaceKHR surface,
                                                    const VkPhysicalDeviceFeatures &required_features,
-                                                   const VkSurfaceKHR surface,
-                                                   const std::vector<std::string> &required_extensions) {
+                                                   const std::vector<const char *> &required_extensions) {
     const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
 
     // Put together all data that is required to compare the physical devices
@@ -315,10 +314,15 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst,
     return infos.front().physical_device;
 }
 
-Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool enable_vulkan_debug_markers,
-               const bool prefer_distinct_transfer_queue, const VkPhysicalDevice physical_device,
-               const VkPhysicalDeviceFeatures used_features)
+Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool prefer_distinct_transfer_queue,
+               const VkPhysicalDevice physical_device, const VkPhysicalDeviceFeatures &required_features,
+               const std::vector<const char *> &required_extensions)
     : m_physical_device(physical_device) {
+
+    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions)) {
+        throw std::runtime_error("Error: The chosen physical device is not suitable!");
+    }
+
     VkPhysicalDeviceProperties physical_device_properties;
 
     // Get the information about that graphics card's properties.
@@ -426,23 +430,12 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool enab
         m_transfer_queue_family_index = m_graphics_queue_family_index;
     }
 
-    std::vector<const char *> device_extensions{
-        // Since we want to draw on a window, we need the swapchain extension
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    };
-
-#ifndef NDEBUG
-    if (enable_vulkan_debug_markers) {
-        device_extensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-    }
-#endif
-
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
-        .enabledExtensionCount = static_cast<std::uint32_t>(device_extensions.size()),
-        .ppEnabledExtensionNames = device_extensions.data(),
-        .pEnabledFeatures = &used_features,
+        .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
+        .ppEnabledExtensionNames = required_extensions.data(),
+        .pEnabledFeatures = &required_features,
     });
 
     spdlog::trace("Creating physical device");
@@ -451,8 +444,13 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool enab
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
+    const bool enable_debug_markers =
+        std::find_if(required_extensions.begin(), required_extensions.end(), [&](const char *extension) {
+            return std::string(extension) == std::string(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+        }) != required_extensions.end();
+
 #ifndef NDEBUG
-    if (enable_vulkan_debug_markers) {
+    if (enable_debug_markers) {
         spdlog::trace("Initializing Vulkan debug markers");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
