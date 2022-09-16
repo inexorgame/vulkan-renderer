@@ -21,6 +21,7 @@ class Device {
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
+    VkPhysicalDeviceFeatures m_enabled_features{};
 
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
@@ -64,11 +65,13 @@ public:
     /// @param inst The Vulkan instance
     /// @param surface The window surface
     /// @param prefer_distinct_transfer_queue Specifies if a distinct transfer queue will be preferred
-    /// @param required_features The required device features
-    /// @param required_extensions The required device extensions
+    /// @param required_features The required device features which the physical device must all support
+    /// @param optional_features The optional device features which do not necessarily have to be present
+    /// @note The creation of the physical device will not fail if one of the optional device features is not available
     Device(const Instance &inst, VkSurfaceKHR surface, bool prefer_distinct_transfer_queue,
            VkPhysicalDevice physical_device, const VkPhysicalDeviceFeatures &required_features,
-           const std::vector<const char *> &required_extensions);
+           const std::vector<const char *> &required_extensions,
+           const VkPhysicalDeviceFeatures &optional_features = {});
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
@@ -95,6 +98,11 @@ public:
 
     [[nodiscard]] VmaAllocator allocator() const {
         return m_allocator;
+    }
+
+    /// @note Available features are the set of all required features and all optional features which are supported
+    [[nodiscard]] const VkPhysicalDeviceFeatures &available_device_features() const {
+        return m_enabled_features;
     }
 
     [[nodiscard]] const std::string &gpu_name() const {

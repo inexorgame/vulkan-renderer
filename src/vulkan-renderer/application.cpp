@@ -467,6 +467,10 @@ Application::Application(int argc, char **argv) {
         // Add required physical device features here
     };
 
+    const VkPhysicalDeviceFeatures optional_features{
+        // Add required physical device features here
+    };
+
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -483,8 +487,9 @@ Application::Application(int argc, char **argv) {
                                 : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->get(),
                                                                              required_features, required_extensions);
 
-    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
-                                                 physical_device, required_features, required_extensions);
+    m_device =
+        std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
+                                          physical_device, required_features, required_extensions, optional_features);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");

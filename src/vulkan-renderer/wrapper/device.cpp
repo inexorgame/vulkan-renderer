@@ -66,22 +66,14 @@ bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions
            }) != extensions.end();
 }
 
-bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                        const std::vector<const char *> &required_extensions) {
-    // How many physical device features are in the VkPhysicalDeviceFeatures structure?
-    constexpr auto feature_count = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+std::vector<VkBool32> get_device_features(const VkPhysicalDeviceFeatures &features) {
+    std::vector<VkBool32> comparable_features(sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32));
+    std::memcpy(comparable_features.data(), &features, sizeof(VkPhysicalDeviceFeatures));
+    return comparable_features;
+}
 
-    // We copy the VkBool32 values of required_features into a std::vector so we can iterate over them
-    std::vector<VkBool32> comparable_required_features(feature_count);
-    std::memcpy(comparable_required_features.data(), &required_features, sizeof(VkPhysicalDeviceFeatures));
-
-    // We do the same trick for the available features so we can compare them
-    std::vector<VkBool32> comparable_available_features(feature_count);
-    std::memcpy(comparable_available_features.data(), &info.features, sizeof(VkPhysicalDeviceFeatures));
-
-    // This array stores descriptions for physical device features
-    // In case a feature is no available, it will be used to generate an info message
-    const std::array<std::string_view, feature_count> feature_descriptions{
+std::string_view get_feature_description(const std::uint32_t index) {
+    const std::array<std::string_view, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32)> feature_descriptions{
         // robustBufferAccess
         "accesses to buffers which are bounds-checked against the range of the buffer descriptor",
         // fullDrawIndexUint32
@@ -195,10 +187,31 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
         // inheritedQueries
         "execution of secondary command buffers while a query is active"};
 
+    if (index > feature_descriptions.size()) {
+        return "";
+    }
+    return feature_descriptions[index];
+}
+
+/// Get the name of a physical device
+/// @param physical_device The physical device
+/// @return The name of the physical device
+std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physical_device, &properties);
+    return properties.deviceName;
+}
+
+bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
+                        const std::vector<const char *> &required_extensions) {
+    const auto comparable_required_features = get_device_features(required_features);
+    const auto comparable_available_features = get_device_features(info.features);
+    constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+
     // Loop through all physical device features and check if a feature is required but not supported
-    for (std::size_t i = 0; i < feature_count; i++) {
+    for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
-            spdlog::info("Physical device {} does not support {}!", info.name, feature_descriptions[i]);
+            spdlog::info("Physical device {} does not support {}!", info.name, get_feature_description(i));
             return false;
         }
     }
@@ -316,11 +329,11 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const V
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool prefer_distinct_transfer_queue,
                const VkPhysicalDevice physical_device, const VkPhysicalDeviceFeatures &required_features,
-               const std::vector<const char *> &required_extensions)
+               const std::vector<const char *> &required_extensions, const VkPhysicalDeviceFeatures &optional_features)
     : m_physical_device(physical_device) {
 
     if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions)) {
-        throw std::runtime_error("Error: The chosen physical device is not suitable!");
+        throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
 
     VkPhysicalDeviceProperties physical_device_properties;
@@ -430,12 +443,37 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         m_transfer_queue_family_index = m_graphics_queue_family_index;
     }
 
+    VkPhysicalDeviceFeatures available_features{};
+    vkGetPhysicalDeviceFeatures(physical_device, &available_features);
+
+    const auto comparable_required_features = get_device_features(required_features);
+    const auto comparable_optional_features = get_device_features(optional_features);
+    const auto comparable_available_features = get_device_features(available_features);
+
+    constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+    std::vector<VkBool32> features_to_enable(FEATURE_COUNT);
+
+    for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
+        if (comparable_required_features[i] == VK_TRUE) {
+            features_to_enable[i] = VK_TRUE;
+        }
+        if (comparable_optional_features[i] == VK_TRUE && comparable_available_features[i] == VK_TRUE) {
+            features_to_enable[i] = VK_TRUE;
+        }
+        if (comparable_optional_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
+            spdlog::warn("The physical device {} does not support {}!", get_physical_device_name(physical_device),
+                         get_feature_description(i));
+        }
+    }
+
+    std::memcpy(&m_enabled_features, features_to_enable.data(), features_to_enable.size());
+
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
         .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
         .ppEnabledExtensionNames = required_extensions.data(),
-        .pEnabledFeatures = &required_features,
+        .pEnabledFeatures = &m_enabled_features,
     });
 
     spdlog::trace("Creating physical device");
