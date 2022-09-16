@@ -48,13 +48,17 @@ class Device {
     CommandPool &thread_graphics_pool() const;
 
 public:
-    /// @brief Tries to pick the best physical device based on some criteria
-    /// @param instance The instance
-    /// @param required_features Required features for the device to have
-    /// @param surface A surface to check presentation support for, may be nullptr if presentation isn't cared about
-    static VkPhysicalDevice pick_best_physical_device(const Instance &instance,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      VkSurfaceKHR surface);
+    /// Pick the best physical device automatically
+    /// @warning If no physical device can be found (either because none are available at all or none of the available
+    /// ones is suitable), an exception is thrown! It is the responsibility of the caller to handle this!
+    /// @param required_features The required device features
+    /// @param required_extensions The required device extensions (``VK_KHR_SWAPCHAIN_EXTENSION_NAME`` by default)
+    /// @param surface The window surface
+    /// @return The chosen physical device which is most suitable
+    static VkPhysicalDevice
+    pick_best_physical_device(const Instance &instance, const VkPhysicalDeviceFeatures &required_features,
+                              VkSurfaceKHR surface,
+                              const std::vector<std::string> &required_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 
     /// Default constructor
     /// @param inst The Vulkan instance

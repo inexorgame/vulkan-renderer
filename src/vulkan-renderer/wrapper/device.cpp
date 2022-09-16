@@ -56,7 +56,18 @@ std::uint32_t device_type_rating(const DeviceInfo &info) {
     }
 }
 
-bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features) {
+/// Search for the required device extension
+/// @param extensions The device extensions
+/// @param extension_name The extension name
+/// @return ``true`` if the required device extension is supported
+bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions, const std::string &extension_name) {
+    return std::find_if(extensions.begin(), extensions.end(), [&](const VkExtensionProperties extension) {
+               return extension.extensionName == extension_name;
+           }) != extensions.end();
+}
+
+bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
+                        const std::vector<std::string> &required_extensions) {
     // How many physical device features are in the VkPhysicalDeviceFeatures structure?
     constexpr auto feature_count = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
 
@@ -192,16 +203,30 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
         }
     }
 
+    // Loop through all device extensions and check if an extension is required but not supported
+    for (const auto &extension : required_extensions) {
+        if (!is_extension_supported(info.extensions, extension)) {
+            spdlog::info("Physical device {} does not support extension {}!", info.name, extension);
+            return false;
+        }
+    }
+
     return info.presentation_supported && info.swapchain_supported;
 }
 
-// Returns true if `lhs` is more preferrable over `rhs`.
-bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features, const DeviceInfo &lhs,
+/// Compare two physical devices and determine which one is preferrable
+/// @param required_features The required device features which must all be supported by the physical device
+/// @param required_extensions The required device extensions which must all be supported by the physical device
+/// @param lhs A physical device to compare with the other one
+/// @param rhs The other physical device
+/// @return ``true`` if `lhs` is more preferrable over `rhs`
+bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
+                              const std::vector<std::string> &required_extensions, const DeviceInfo &lhs,
                               const DeviceInfo &rhs) {
-    if (!is_device_suitable(rhs, required_features)) {
+    if (!is_device_suitable(rhs, required_features, required_extensions)) {
         return true;
     }
-    if (!is_device_suitable(lhs, required_features)) {
+    if (!is_device_suitable(lhs, required_features, required_extensions)) {
         return false;
     }
 
@@ -214,16 +239,6 @@ bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
 
     // Device types equal, compare total amount of DEVICE_LOCAL memory.
     return lhs.total_device_local >= rhs.total_device_local;
-}
-
-/// Search for the required device extension
-/// @param extensions The device extensions
-/// @param extension_name The extension name
-/// @return ``true`` if the required device extension is supported
-bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions, const std::string &extension_name) {
-    return std::find_if(extensions.begin(), extensions.end(), [&](const VkExtensionProperties extension) {
-               return extension.extensionName == extension_name;
-           }) != extensions.end();
 }
 
 // Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
@@ -275,10 +290,13 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
 
 } // namespace
 
-VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst,
                                                    const VkPhysicalDeviceFeatures &required_features,
-                                                   const VkSurfaceKHR surface) {
-    const auto physical_devices = vk_tools::get_all_physical_devices(instance.instance());
+                                                   const VkSurfaceKHR surface,
+                                                   const std::vector<std::string> &required_extensions) {
+    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
+
+    // Put together all data that is required to compare the physical devices
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
@@ -287,10 +305,11 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
         throw std::runtime_error("Error: There are no physical devices available!");
     }
 
-    std::sort(infos.begin(), infos.end(),
-              [&](const auto &lhs, const auto &rhs) { return compare_physical_devices(required_features, lhs, rhs); });
+    std::sort(infos.begin(), infos.end(), [&](const auto &lhs, const auto &rhs) {
+        return compare_physical_devices(required_features, required_extensions, lhs, rhs);
+    });
 
-    if (!is_device_suitable(infos.front(), required_features)) {
+    if (!is_device_suitable(infos.front(), required_features, required_extensions)) {
         throw std::runtime_error("Error: Could not determine a suitable physical device!");
     }
     return infos.front().physical_device;
