@@ -10,9 +10,22 @@
 #include <cassert>
 #include <functional>
 #include <optional>
+#include <span>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+/// A wrapper struct for physical device data
+struct DeviceInfo {
+    std::string name;
+    VkPhysicalDevice physical_device;
+    VkPhysicalDeviceType type;
+    VkDeviceSize total_device_local;
+    VkPhysicalDeviceFeatures features;
+    std::vector<VkExtensionProperties> extensions;
+    bool presentation_supported;
+    bool swapchain_supported;
+};
 
 /// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
@@ -49,6 +62,17 @@ class Device {
     CommandPool &thread_graphics_pool() const;
 
 public:
+    /// Pick the best physical device automatically
+    /// @warning If no physical device can be found (either because none are available at all or none of the available
+    /// ones is suitable), an exception is thrown! It is the responsibility of the caller to handle this!
+    /// @param physical_device_infos The data of the physical devices
+    /// @param required_features The required device features
+    /// @param required_extensions The required device extensions
+    /// @return The chosen physical device which is most suitable
+    static VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
+                                                      const VkPhysicalDeviceFeatures &required_features,
+                                                      const std::vector<const char *> &required_extensions);
+
     /// Pick the best physical device automatically
     /// @warning If no physical device can be found (either because none are available at all or none of the available
     /// ones is suitable), an exception is thrown! It is the responsibility of the caller to handle this!

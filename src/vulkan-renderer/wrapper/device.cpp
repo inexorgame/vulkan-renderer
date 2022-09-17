@@ -34,18 +34,6 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 namespace inexor::vulkan_renderer::wrapper {
 namespace {
 
-/// A wrapper struct for physical device data
-struct DeviceInfo {
-    std::string name;
-    VkPhysicalDevice physical_device;
-    VkPhysicalDeviceType type;
-    VkDeviceSize total_device_local;
-    bool presentation_supported;
-    bool swapchain_supported;
-    VkPhysicalDeviceFeatures features;
-    std::vector<VkExtensionProperties> extensions;
-};
-
 /// A function for rating physical devices by type
 /// @param info The physical device info
 /// @return A number from 0 to 2 which rates the physical device (higher is better)
@@ -312,37 +300,39 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
         .physical_device = physical_device,
         .type = properties.deviceType,
         .total_device_local = total_device_local,
-        .presentation_supported = presentation_supported == VK_TRUE,
-        .swapchain_supported = is_swapchain_supported,
         .features = features,
         .extensions = extensions,
+        .presentation_supported = presentation_supported == VK_TRUE,
+        .swapchain_supported = is_swapchain_supported,
     };
 }
 
 } // namespace
 
+VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
+                                                   const VkPhysicalDeviceFeatures &required_features,
+                                                   const std::vector<const char *> &required_extensions) {
+    if (physical_device_infos.empty()) {
+        throw std::runtime_error("Error: There are no physical devices available!");
+    }
+    std::sort(physical_device_infos.begin(), physical_device_infos.end(), [&](const auto &lhs, const auto &rhs) {
+        return compare_physical_devices(required_features, required_extensions, lhs, rhs);
+    });
+    if (!is_device_suitable(physical_device_infos.front(), required_features, required_extensions)) {
+        throw std::runtime_error("Error: Could not determine a suitable physical device!");
+    }
+    return physical_device_infos.front().physical_device;
+}
+
 VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const VkSurfaceKHR surface,
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::vector<const char *> &required_extensions) {
-    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
-
     // Put together all data that is required to compare the physical devices
+    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
-
-    if (infos.empty()) {
-        throw std::runtime_error("Error: There are no physical devices available!");
-    }
-
-    std::sort(infos.begin(), infos.end(), [&](const auto &lhs, const auto &rhs) {
-        return compare_physical_devices(required_features, required_extensions, lhs, rhs);
-    });
-
-    if (!is_device_suitable(infos.front(), required_features, required_extensions)) {
-        throw std::runtime_error("Error: Could not determine a suitable physical device!");
-    }
-    return infos.front().physical_device;
+    return pick_best_physical_device(std::move(infos), required_features, required_extensions);
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool prefer_distinct_transfer_queue,
