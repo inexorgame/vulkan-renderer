@@ -18,13 +18,13 @@ namespace inexor::vulkan_renderer::wrapper {
 /// A wrapper struct for physical device data
 struct DeviceInfo {
     std::string name;
-    VkPhysicalDevice physical_device;
-    VkPhysicalDeviceType type;
-    VkDeviceSize total_device_local;
-    VkPhysicalDeviceFeatures features;
+    VkPhysicalDevice physical_device{nullptr};
+    VkPhysicalDeviceType type{VK_PHYSICAL_DEVICE_TYPE_OTHER};
+    VkDeviceSize total_device_local{0};
+    VkPhysicalDeviceFeatures features{};
     std::vector<VkExtensionProperties> extensions;
-    bool presentation_supported;
-    bool swapchain_supported;
+    bool presentation_supported{false};
+    bool swapchain_supported{false};
 };
 
 /// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
@@ -63,19 +63,17 @@ class Device {
 
 public:
     /// Pick the best physical device automatically
-    /// @warning If no physical device can be found (either because none are available at all or none of the available
-    /// ones is suitable), an exception is thrown! It is the responsibility of the caller to handle this!
     /// @param physical_device_infos The data of the physical devices
     /// @param required_features The required device features
     /// @param required_extensions The required device extensions
+    /// @exception std::runtime_error There are no physical devices are available at all
+    /// @exception std::runtime_error No suitable physical device could be determined
     /// @return The chosen physical device which is most suitable
     static VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
                                                       const VkPhysicalDeviceFeatures &required_features,
-                                                      const std::vector<const char *> &required_extensions);
+                                                      std::span<const char *> required_extensions);
 
     /// Pick the best physical device automatically
-    /// @warning If no physical device can be found (either because none are available at all or none of the available
-    /// ones is suitable), an exception is thrown! It is the responsibility of the caller to handle this!
     /// @param inst The Vulkan instance
     /// @param surface The window surface
     /// @param required_features The required device features
@@ -83,20 +81,25 @@ public:
     /// @return The chosen physical device which is most suitable
     static VkPhysicalDevice pick_best_physical_device(const Instance &inst, VkSurfaceKHR surface,
                                                       const VkPhysicalDeviceFeatures &required_features,
-                                                      const std::vector<const char *> &required_extensions);
+                                                      std::span<const char *> required_extensions);
 
     /// Default constructor
-    /// @warning This constructor can throw exceptions! It is the responsibility of the caller to handle this!
     /// @param inst The Vulkan instance
     /// @param surface The window surface
     /// @param prefer_distinct_transfer_queue Specifies if a distinct transfer queue will be preferred
+    /// @param physical_device The physical device
+    /// @param required_extensions The required device extensions
     /// @param required_features The required device features which the physical device must all support
     /// @param optional_features The optional device features which do not necessarily have to be present
+    /// @exception std::runtime_error The physical device is not suitable
+    /// @exception std::runtime_error No graphics queue could be found
+    /// @exception std::runtime_error No presentation queue could be found
+    /// @exception VulkanException vkCreateDevice call failed
+    /// @exception VulkanException vmaCreateAllocator call failed
     /// @note The creation of the physical device will not fail if one of the optional device features is not available
     Device(const Instance &inst, VkSurfaceKHR surface, bool prefer_distinct_transfer_queue,
-           VkPhysicalDevice physical_device, const VkPhysicalDeviceFeatures &required_features,
-           const std::vector<const char *> &required_extensions,
-           const VkPhysicalDeviceFeatures &optional_features = {});
+           VkPhysicalDevice physical_device, std::span<const char *> required_extensions,
+           const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features = {});
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;

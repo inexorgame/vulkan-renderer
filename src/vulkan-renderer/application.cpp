@@ -468,7 +468,7 @@ Application::Application(int argc, char **argv) {
     };
 
     const VkPhysicalDeviceFeatures optional_features{
-        // Add required physical device features here
+        // Add optional physical device features here
     };
 
     std::vector<const char *> required_extensions{
@@ -489,7 +489,7 @@ Application::Application(int argc, char **argv) {
 
     m_device =
         std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
-                                          physical_device, required_features, required_extensions, optional_features);
+                                          physical_device, required_extensions, required_features, optional_features);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");

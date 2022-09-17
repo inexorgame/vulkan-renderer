@@ -18,6 +18,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
+    vulkan-renderer/vk_tools/device_info.cpp
     vulkan-renderer/vk_tools/enumerate.cpp
     vulkan-renderer/vk_tools/gpu_info.cpp
     vulkan-renderer/vk_tools/representation.cpp

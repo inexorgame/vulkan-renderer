@@ -2,7 +2,9 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/vk_tools/device_info.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #define VMA_IMPLEMENTATION
@@ -59,151 +61,6 @@ bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions
            }) != extensions.end();
 }
 
-/// Transform a ``VkPhysicalDeviceFeatures`` into a ``std::vector<VkBool32>``
-/// @note The size of the vector will be determined by the number of ``VkBool32`` variables in the
-/// ``VkPhysicalDeviceFeatures`` struct
-/// @param features The physical device features
-/// @return A ``std::vector<VkBool32>`` The transformed data
-std::vector<VkBool32> get_device_features(const VkPhysicalDeviceFeatures &features) {
-    std::vector<VkBool32> comparable_features(sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32));
-    std::memcpy(comparable_features.data(), &features, sizeof(VkPhysicalDeviceFeatures));
-    return comparable_features;
-}
-
-/// Get a feature description of a ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct by index.
-/// @param index The index of the ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct.
-/// @note If the index is out of bounds, no exception will be thrown, but an empty description will be returned instead.
-/// @return A feature description
-std::string_view get_feature_description(const std::uint32_t index) {
-    const std::array<std::string_view, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32)> feature_descriptions{
-        // robustBufferAccess
-        "accesses to buffers which are bounds-checked against the range of the buffer descriptor",
-        // fullDrawIndexUint32
-        "full 32-bit range of indices for indexed draw calls when using a VkIndexType of VK_INDEX_TYPE_UINT32",
-        // imageCubeArray
-        "creation of image views of type VK_IMAGE_VIEW_TYPE_CUBE_ARRAY",
-        // independentBlend
-        "VkPipelineColorBlendAttachmentState settings which are controlled independently per-attachment",
-        // geometryShader
-        "geometry shaders",
-        // tessellationShader
-        "tessellation control and evaluation shaders",
-        // sampleRateShading
-        "sample shading and multisample interpolation",
-        // dualSrcBlend
-        "blend operations which take two sources",
-        // logicOp
-        "color blending logic operations",
-        // multiDrawIndirect
-        "multiple draw indirect",
-        // drawIndirectFirstInstance
-        "firstInstance parameter in VkDrawIndirectCommand",
-        // depthClamp
-        "depth clamping in rasterization",
-        // depthBiasClamp
-        "depth bias clamping in rasterization",
-        // fillModeNonSolid
-        "point and wireframe fill modes",
-        // depthBounds
-        "depth bound tests",
-        // wideLines
-        "lines with width other than 1.0 in rasterization",
-        // largePoints
-        "points with size greater than 1.0 in rasterization",
-        // alphaToOne
-        "replacing the alpha value of the fragment shader color output in the multisample coverage fragment operation",
-        // multiViewport
-        "more than one viewport",
-        // samplerAnisotropy
-        "anisotropic filtering",
-        // textureCompressionETC2
-        "all of the ETC2 and EAC compressed texture formats",
-        // textureCompressionASTC_LDR
-        "all of the ASTC LDR compressed texture formats",
-        // textureCompressionBC
-        "all of the BC compressed texture formats",
-        // occlusionQueryPrecise
-        "occlusion queries returning actual sample counts",
-        // pipelineStatisticsQuery
-        "pipeline statistics queries",
-        // vertexPipelineStoresAndAtomics
-        "storage buffers and images which support atomic operations in vertex, tessellation, and geometry shaders",
-        // fragmentStoresAndAtomics
-        "storage buffers and images which support atomic operations in fragment shaders",
-        // shaderTessellationAndGeometryPointSize
-        "PointSize built-in decoration being available in the tessellation control, tessellation evaluation, and "
-        "geometry shaders",
-        // shaderImageGatherExtended
-        "extended set of image gather instructions in shader code",
-        // shaderStorageImageExtendedFormats
-        "all the storage image extended formats",
-        // shaderStorageImageMultisample
-        "multisampled storage images",
-        // shaderStorageImageReadWithoutFormat
-        "storage images which require a format qualifier to be specified when reading",
-        // shaderStorageImageWriteWithoutFormat
-        "storage images which require a format qualifier to be specified when writing",
-        // shaderUniformBufferArrayDynamicIndexing
-        "arrays of uniform buffers which can be indexed by dynamically uniform integer expressions in shader code",
-        // shaderSampledImageArrayDynamicIndexing
-        "arrays of samplers or sampled images which can be indexed by dynamically uniform integer expressions in "
-        "shader code",
-        // shaderStorageBufferArrayDynamicIndexing
-        "arrays of storage buffers which can be indexed by dynamically uniform integer expressions in shader code",
-        // shaderStorageImageArrayDynamicIndexing
-        "arrays of storage images which can be indexed by dynamically uniform integer expressions in shader code",
-        // shaderClipDistance
-        "clip distances which are supported in shader code",
-        // shaderCullDistance
-        "cull distances in shader code",
-        // shaderFloat64
-        "64-bit floats (doubles) in shader code",
-        // shaderInt64
-        "64-bit integers (signed and unsigned) in shader code",
-        // shaderInt16
-        "16-bit integers (signed and unsigned) in shader code",
-        // shaderResourceResidency
-        "image operations that return resource residency information in shader code",
-        // shaderResourceMinLod
-        "image operations specifying the minimum resource LOD in shader code",
-        // sparseBinding
-        "resource memory which can be managed at opaque sparse block level instead of at the object level",
-        // sparseResidencyBuffer
-        "access to partially resident buffers",
-        // sparseResidencyImage2D
-        "access to partially resident 2D images with 1 sample per pixel",
-        // sparseResidencyImage3D
-        "access to partially resident 3D images",
-        // sparseResidency2Samples
-        "access to partially resident 2D images with 2 samples per pixel",
-        // sparseResidency4Samples
-        "access to partially resident 2D images with 4 samples per pixel",
-        // sparseResidency8Samples
-        "access to partially resident 2D images with 8 samples per pixel",
-        // sparseResidency16Samples
-        "access to partially resident 2D images with 16 samples per pixel",
-        // sparseResidencyAliased
-        "correct access to data aliased into multiple locations",
-        // variableMultisampleRate
-        "variable multisample rate",
-        // inheritedQueries
-        "execution of secondary command buffers while a query is active"};
-
-    if (index > feature_descriptions.size()) {
-        return "";
-    }
-    return feature_descriptions[index];
-}
-
-/// Get the name of a physical device
-/// @param physical_device The physical device
-/// @return The name of the physical device
-std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(physical_device, &properties);
-    return properties.deviceName;
-}
-
 /// Determine if a physical device is suitable. In order for a physical device to be suitable, it must support all
 /// required device features and required extensions.
 /// @param info The device info data
@@ -213,16 +70,17 @@ std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
 /// extension is not supported (``true`` by default)
 /// @return ``true`` if the physical device supports all device features and device extensions
 bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                        const std::vector<const char *> &required_extensions, const bool print_info = false) {
-    const auto comparable_required_features = get_device_features(required_features);
-    const auto comparable_available_features = get_device_features(info.features);
+                        const std::span<const char *> required_extensions, const bool print_info = false) {
+    const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
+    const auto comparable_available_features = vk_tools::get_device_features_as_vector(info.features);
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
 
     // Loop through all physical device features and check if a feature is required but not supported
     for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
             if (print_info) {
-                spdlog::info("Physical device {} does not support {}!", info.name, get_feature_description(i));
+                spdlog::info("Physical device {} does not support {}!", info.name,
+                             vk_tools::get_device_feature_description(i));
             }
             return false;
         }
@@ -239,14 +97,14 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
     return info.presentation_supported && info.swapchain_supported;
 }
 
-/// Compare two physical devices and determine which one is preferrable
+/// Compare two physical devices and determine which one is preferable
 /// @param required_features The required device features which must all be supported by the physical device
 /// @param required_extensions The required device extensions which must all be supported by the physical device
 /// @param lhs A physical device to compare with the other one
 /// @param rhs The other physical device
-/// @return ``true`` if `lhs` is more preferrable over `rhs`
+/// @return ``true`` if `lhs` is more preferable over `rhs`
 bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
-                              const std::vector<const char *> &required_extensions, const DeviceInfo &lhs,
+                              const std::span<const char *> required_extensions, const DeviceInfo &lhs,
                               const DeviceInfo &rhs) {
     if (!is_device_suitable(rhs, required_features, required_extensions)) {
         return true;
@@ -317,7 +175,7 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
 
 VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
                                                    const VkPhysicalDeviceFeatures &required_features,
-                                                   const std::vector<const char *> &required_extensions) {
+                                                   const std::span<const char *> required_extensions) {
     if (physical_device_infos.empty()) {
         throw std::runtime_error("Error: There are no physical devices available!");
     }
@@ -332,7 +190,7 @@ VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&phy
 
 VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const VkSurfaceKHR surface,
                                                    const VkPhysicalDeviceFeatures &required_features,
-                                                   const std::vector<const char *> &required_extensions) {
+                                                   const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
     const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
@@ -342,23 +200,18 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const V
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool prefer_distinct_transfer_queue,
-               const VkPhysicalDevice physical_device, const VkPhysicalDeviceFeatures &required_features,
-               const std::vector<const char *> &required_extensions, const VkPhysicalDeviceFeatures &optional_features)
+               const VkPhysicalDevice physical_device, const std::span<const char *> required_extensions,
+               const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features)
     : m_physical_device(physical_device) {
 
     if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions)) {
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
 
-    VkPhysicalDeviceProperties physical_device_properties;
-    vkGetPhysicalDeviceProperties(m_physical_device, &physical_device_properties);
-
-    spdlog::trace("Creating device using graphics card: {}", physical_device_properties.deviceName);
-
-    m_gpu_name = physical_device_properties.deviceName;
+    m_gpu_name = vk_tools::get_physical_device_name(m_physical_device);
+    spdlog::trace("Creating device using graphics card: {}", m_gpu_name);
 
     spdlog::trace("Creating Vulkan device queues");
-
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 
     if (prefer_distinct_transfer_queue) {
@@ -457,9 +310,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     VkPhysicalDeviceFeatures available_features{};
     vkGetPhysicalDeviceFeatures(physical_device, &available_features);
 
-    const auto comparable_required_features = get_device_features(required_features);
-    const auto comparable_optional_features = get_device_features(optional_features);
-    const auto comparable_available_features = get_device_features(available_features);
+    const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
+    const auto comparable_optional_features = vk_tools::get_device_features_as_vector(optional_features);
+    const auto comparable_available_features = vk_tools::get_device_features_as_vector(available_features);
 
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
     std::vector<VkBool32> features_to_enable(FEATURE_COUNT, VK_FALSE);
@@ -468,12 +321,14 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         if (comparable_required_features[i] == VK_TRUE) {
             features_to_enable[i] = VK_TRUE;
         }
-        if (comparable_optional_features[i] == VK_TRUE && comparable_available_features[i] == VK_TRUE) {
-            features_to_enable[i] = VK_TRUE;
-        }
-        if (comparable_optional_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
-            spdlog::warn("The physical device {} does not support {}!", get_physical_device_name(physical_device),
-                         get_feature_description(i));
+        if (comparable_optional_features[i] == VK_TRUE) {
+            if (comparable_available_features[i] == VK_TRUE) {
+                features_to_enable[i] = VK_TRUE;
+            } else {
+                spdlog::warn("The physical device {} does not support {}!",
+                             vk_tools::get_physical_device_name(physical_device),
+                             vk_tools::get_device_feature_description(i));
+            }
         }
     }
 

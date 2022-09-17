@@ -179,7 +179,7 @@ TEST(GpuSelection, DeviceExtensionTest) {
     };
 
     std::vector physical_devices{gpu1, gpu2};
-    const std::vector<const char *> required_extension{VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
+    std::vector<const char *> required_extension{VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
     EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), {}, required_extension), device1);
 }
 
