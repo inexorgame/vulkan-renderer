@@ -209,9 +209,11 @@ std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
 /// @param info The device info data
 /// @param required_features The required device features the physical device must all support
 /// @param required_extensions The required device extensions the physical device must all support
+/// @param print_message If ``true``, an info message will be printed to the console if a device feature or device
+/// extension is not supported (``true`` by default)
 /// @return ``true`` if the physical device supports all device features and device extensions
 bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                        const std::vector<const char *> &required_extensions) {
+                        const std::vector<const char *> &required_extensions, const bool print_info = false) {
     const auto comparable_required_features = get_device_features(required_features);
     const auto comparable_available_features = get_device_features(info.features);
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
@@ -219,14 +221,18 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
     // Loop through all physical device features and check if a feature is required but not supported
     for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
-            spdlog::info("Physical device {} does not support {}!", info.name, get_feature_description(i));
+            if (print_info) {
+                spdlog::info("Physical device {} does not support {}!", info.name, get_feature_description(i));
+            }
             return false;
         }
     }
     // Loop through all device extensions and check if an extension is required but not supported
     for (const auto &extension : required_extensions) {
         if (!is_extension_supported(info.extensions, extension)) {
-            spdlog::info("Physical device {} does not support extension {}!", info.name, extension);
+            if (print_info) {
+                spdlog::info("Physical device {} does not support extension {}!", info.name, extension);
+            }
             return false;
         }
     }
@@ -318,7 +324,7 @@ VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&phy
     std::sort(physical_device_infos.begin(), physical_device_infos.end(), [&](const auto &lhs, const auto &rhs) {
         return compare_physical_devices(required_features, required_extensions, lhs, rhs);
     });
-    if (!is_device_suitable(physical_device_infos.front(), required_features, required_extensions)) {
+    if (!is_device_suitable(physical_device_infos.front(), required_features, required_extensions, true)) {
         throw std::runtime_error("Error: Could not determine a suitable physical device!");
     }
     return physical_device_infos.front().physical_device;
