@@ -456,7 +456,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     const auto comparable_available_features = get_device_features(available_features);
 
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
-    std::vector<VkBool32> features_to_enable(FEATURE_COUNT);
+    std::vector<VkBool32> features_to_enable(FEATURE_COUNT, VK_FALSE);
 
     for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE) {
