@@ -34,6 +34,7 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 namespace inexor::vulkan_renderer::wrapper {
 namespace {
 
+/// A wrapper struct for physical device data
 struct DeviceInfo {
     std::string name;
     VkPhysicalDevice physical_device;
@@ -45,6 +46,9 @@ struct DeviceInfo {
     std::vector<VkExtensionProperties> extensions;
 };
 
+/// A function for rating physical devices by type
+/// @param info The physical device info
+/// @return A number from 0 to 2 which rates the physical device (higher is better)
 std::uint32_t device_type_rating(const DeviceInfo &info) {
     switch (info.type) {
     case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
@@ -56,8 +60,9 @@ std::uint32_t device_type_rating(const DeviceInfo &info) {
     }
 }
 
-/// Search for the required device extension
+/// Check if a device extension is supported by a physical device
 /// @param extensions The device extensions
+/// @note If extensions is empty, this function returns ``false``
 /// @param extension_name The extension name
 /// @return ``true`` if the required device extension is supported
 bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions, const std::string &extension_name) {
@@ -66,12 +71,21 @@ bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions
            }) != extensions.end();
 }
 
+/// Transform a ``VkPhysicalDeviceFeatures`` into a ``std::vector<VkBool32>``
+/// @note The size of the vector will be determined by the number of ``VkBool32`` variables in the
+/// ``VkPhysicalDeviceFeatures`` struct
+/// @param features The physical device features
+/// @return A ``std::vector<VkBool32>`` The transformed data
 std::vector<VkBool32> get_device_features(const VkPhysicalDeviceFeatures &features) {
     std::vector<VkBool32> comparable_features(sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32));
     std::memcpy(comparable_features.data(), &features, sizeof(VkPhysicalDeviceFeatures));
     return comparable_features;
 }
 
+/// Get a feature description of a ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct by index.
+/// @param index The index of the ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct.
+/// @note If the index is out of bounds, no exception will be thrown, but an empty description will be returned instead.
+/// @return A feature description
 std::string_view get_feature_description(const std::uint32_t index) {
     const std::array<std::string_view, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32)> feature_descriptions{
         // robustBufferAccess
@@ -202,6 +216,12 @@ std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
     return properties.deviceName;
 }
 
+/// Determine if a physical device is suitable. In order for a physical device to be suitable, it must support all
+/// required device features and required extensions.
+/// @param info The device info data
+/// @param required_features The required device features the physical device must all support
+/// @param required_extensions The required device extensions the physical device must all support
+/// @return ``true`` if the physical device supports all device features and device extensions
 bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
                         const std::vector<const char *> &required_extensions) {
     const auto comparable_required_features = get_device_features(required_features);
@@ -215,7 +235,6 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
             return false;
         }
     }
-
     // Loop through all device extensions and check if an extension is required but not supported
     for (const auto &extension : required_extensions) {
         if (!is_extension_supported(info.extensions, extension)) {
@@ -223,7 +242,6 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
             return false;
         }
     }
-
     return info.presentation_supported && info.swapchain_supported;
 }
 
@@ -242,19 +260,20 @@ bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
     if (!is_device_suitable(lhs, required_features, required_extensions)) {
         return false;
     }
-
     if (device_type_rating(lhs) > device_type_rating(rhs)) {
         return true;
     }
     if (device_type_rating(lhs) < device_type_rating(rhs)) {
         return false;
     }
-
-    // Device types equal, compare total amount of DEVICE_LOCAL memory.
+    // Device types equal, compare total amount of DEVICE_LOCAL memory
     return lhs.total_device_local >= rhs.total_device_local;
 }
 
-// Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
+/// Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
+/// @param physical_device The physical device
+/// @param surface The window surface
+/// @return The device info data
 DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(physical_device, &properties);
@@ -273,8 +292,7 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
         }
     }
 
-    // Default to true in this case where a surface is not passed (and therefore presentation supported isn't cared
-    // about).
+    // Default to true in this case where a surface is not passed (and therefore presentation isn't cared about)
     VkBool32 presentation_supported = VK_TRUE;
     if (surface != nullptr) {
         if (const auto result =
@@ -337,8 +355,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     }
 
     VkPhysicalDeviceProperties physical_device_properties;
-
-    // Get the information about that graphics card's properties.
     vkGetPhysicalDeviceProperties(m_physical_device, &physical_device_properties);
 
     spdlog::trace("Creating device using graphics card: {}", physical_device_properties.deviceName);
@@ -355,7 +371,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         spdlog::warn("The application is forced not to use a distinct data transfer queue!");
     }
 
-    // Check if there is one queue family which can be used for both graphics and presentation.
+    // Check if there is one queue family which can be used for both graphics and presentation
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
         VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_physical_device, surface);
 
@@ -365,7 +381,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
         m_present_queue_family_index = m_graphics_queue_family_index;
 
-        // In this case, there is one queue family which can be used for both graphics and presentation.
+        // In this case, there is one queue family which can be used for both graphics and presentation
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation,
             .queueCount = 1,
@@ -375,10 +391,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         spdlog::trace("No queue found which supports both graphics and presentation");
         spdlog::trace("The application will try to use 2 separate queues");
 
-        // We have to use 2 different queue families.
-        // One for graphics and another one for presentation.
-
-        // Check which queue family index can be used for graphics.
+        // We have to use 2 different queue families
+        // One for graphics and another one for presentation
+        // Check which queue family index can be used for graphics
         auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_physical_device);
 
         if (!queue_candidate) {
@@ -387,7 +402,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
         m_graphics_queue_family_index = *queue_candidate;
 
-        // Check which queue family index can be used for presentation.
+        // Check which queue family index can be used for presentation
         queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_physical_device, surface);
 
         if (!queue_candidate) {
@@ -396,14 +411,14 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
         m_present_queue_family_index = *queue_candidate;
 
-        // Set up one queue for graphics.
+        // Set up one queue for graphics
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = m_graphics_queue_family_index,
             .queueCount = 1,
             .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
         }));
 
-        // Set up one queue for presentation.
+        // Set up one queue for presentation
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = m_present_queue_family_index,
             .queueCount = 1,
@@ -411,7 +426,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         }));
     }
 
-    // Add another device queue just for data transfer.
+    // Add another device queue just for data transfer
     const auto queue_candidate =
         VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_physical_device);
 
@@ -578,7 +593,6 @@ void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues (not just graphics)
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
-    // Execute the lambda
     cmd_lambda(cmd_buf);
     cmd_buf.submit_and_wait();
 }
