@@ -114,146 +114,193 @@ Linux
 
 Install dependencies and tools:
 
-+--------+--------------------------------------+
-| Ubuntu | Follow the                           |
-|        | `Install the SDK`_-instructions on   |
-|        | the vulkan-sdk page.                 |
-|        |                                      |
-|        | Install the required packages:[#f1]_ |
-|        |                                      |
-|        | .. code-block:: shell-session        |
-|        |                                      |
-|        |     # apt install -y \               |
-|        |         pkg-config \                 |
-|        |         libglm-dev \                 |
-|        |         libxcb-dri3-0 \              |
-|        |         libxcb-present0 \            |
-|        |         libpciaccess0 \              |
-|        |         libpng-dev \                 |
-|        |         libxcb-keysyms1-dev \        |
-|        |         libxcb-dri3-dev \            |
-|        |         libx11-dev  \                |
-|        |         libmirclient-dev \           |
-|        |         libwayland-dev \             |
-|        |         libxrandr-dev \              |
-|        |         libxcb-ewmh-dev              |
-|        |     # apt install -y \               |
-|        |         cmake \                      |
-|        |         ninja-build \                |
-|        |         clang-tidy \                 |
-|        |         vulkan-sdk \                 |
-|        |         python3 \                    |
-|        |         python3-pip                  |
-|        |     $ pip3 install \                 |
-|        |         wheel \                      |
-|        |         setuptools \                 |
-|        |         conan                        |
-|        |                                      |
-+--------+--------------------------------------+
-| Gentoo | .. code-block:: shell-session        |
-|        |                                      |
-|        |     # emerge \                       |
-|        |        dev-util/cmake \              |
-|        |        dev-util/conan \              |
-|        |        dev-util/vulkan-headers \     |
-|        |        dev-util/vulkan-tools \       |
-|        |        dev-vcs/git \                 |
-|        |        media-libs/vulkan-layers \    |
-|        |        media-libs/vulkan-loader      |
-|        |                                      |
-|        |                                      |
-|        | Install ninja build tool (optional): |
-|        |                                      |
-|        |                                      |
-|        | .. code-block:: shell-session        |
-|        |                                      |
-|        |     # emerge dev-util/ninja          |
-+--------+--------------------------------------+
-| Debian | Follow the                           |
-|        | `Install the SDK`_-instructions on   |
-|        | the vulkan-sdk page.                 |
-|        |                                      |
-|        | Install the required packages:[#f1]_ |
-|        |                                      |
-|        | .. code-block:: shell-session        |
-|        |                                      |
-|        |     # apt install -y \               |
-|        |         libvulkan-dev                |
-|        |         glslang-dev                  |
-|        |         glslang-tools                |
-|        |         vulkan-tools                 |
-|        |         vulkan-validationlayers-dev  |
-|        |         spirv-tools                  |
-|        |         pkg-config \                 |
-|        |         libglm-dev \                 |
-|        |         libxcb-dri3-0 \              |
-|        |         libxcb-present0 \            |
-|        |         libpciaccess0 \              |
-|        |         libpng-dev \                 |
-|        |         libxcb-keysyms1-dev \        |
-|        |         libxcb-dri3-dev \            |
-|        |         libx11-dev  \                |
-|        |         libmirclient-dev \           |
-|        |         libwayland-dev \             |
-|        |         libxrandr-dev \              |
-|        |         libxcb-ewmh-dev              |
-|        |     # apt install -y \               |
-|        |         cmake \                      |
-|        |         ninja-build \                |
-|        |         clang-tidy \                 |
-|        |         vulkan-sdk \                 |
-|        |         python3 \                    |
-|        |         python3-pip                  |
-|        |     $ pip3 install \                 |
-|        |         wheel \                      |
-|        |         setuptools \                 |
-|        |         conan                        |
-|        |                                      |
-+--------+--------------------------------------+
-| Arch   | Follow the                           |
-|        | `Install the SDK`_-instructions on   |
-|        | the vulkan-sdk page.                 |
-|        |                                      |
-|        | Install the required packages:[#f1]_ |
-|        |                                      |
-|        | .. code-block:: shell-session        |
-|        |                                      |
-|        |     # pacman -S \                    |
-|        |         pkg-config \                 |
-|        |         glslang \                    |
-|        |         spirv-tools \                |
-|        |         glm \                        |
-|        |         libice \                     |
-|        |         libpciaccess \               |
-|        |         libpng \                     |
-|        |         libx11 \                     |
-|        |         libxres \                    |
-|        |         xkeyboard-config \           |
-|        |         libxrandr \                  |
-|        |         libxcb \                     |
-|        |         libxaw \                     |
-|        |         xcb-util \                   |
-|        |         xtrans \                     |
-|        |         libxvmc                      |
-|        |     # pacman -S \                    |
-|        |         cmake \                      |
-|        |         ninja \                      |
-|        |         vulkan-headers \             |
-|        |         vulkan-tools \               |
-|        |         vulkan-validation-layers \   |
-|        |         python3 \                    |
-|        |         python-pip                   |
-|        |     $ pip3 install \                 |
-|        |         wheel \                      |
-|        |         setuptools \                 |
-|        |         conan                        |
-|        |                                      |
-+--------+--------------------------------------+
-| Other  | Planned. `We would love to see a     |
-|        | pull request on this file if you get |
-|        | it running on other                  |
-|        | distributions.`__                    |
-+--------+--------------------------------------+
++--------+---------------------------------------+
+| Ubuntu | Follow the                            |
+|        | `Install the SDK`_-instructions on    |
+|        | the vulkan-sdk page.                  |
+|        |                                       |
+|        | Install the required packages:[#f1]_  |
+|        |                                       |
+|        | .. code-block:: shell-session         |
+|        |                                       |
+|        |     # apt install -y \                |
+|        |         pkg-config \                  |
+|        |         libglm-dev \                  |
+|        |         libxcb-dri3-0 \               |
+|        |         libxcb-present0 \             |
+|        |         libpciaccess0 \               |
+|        |         libpng-dev \                  |
+|        |         libxcb-keysyms1-dev \         |
+|        |         libxcb-dri3-dev \             |
+|        |         libx11-dev  \                 |
+|        |         libmirclient-dev \            |
+|        |         libwayland-dev \              |
+|        |         libxrandr-dev \               |
+|        |         libxcb-ewmh-dev               |
+|        |     # apt install -y \                |
+|        |         cmake \                       |
+|        |         ninja-build \                 |
+|        |         clang-tidy \                  |
+|        |         vulkan-sdk \                  |
+|        |         python3 \                     |
+|        |         python3-pip                   |
+|        |     $ pip3 install \                  |
+|        |         wheel \                       |
+|        |         setuptools \                  |
+|        |         conan                         |
+|        |                                       |
++--------+---------------------------------------+
+| Gentoo | .. code-block:: shell-session         |
+|        |                                       |
+|        |     # emerge \                        |
+|        |        dev-util/cmake \               |
+|        |        dev-util/conan \               |
+|        |        dev-util/vulkan-headers \      |
+|        |        dev-util/vulkan-tools \        |
+|        |        dev-vcs/git \                  |
+|        |        media-libs/vulkan-layers \     |
+|        |        media-libs/vulkan-loader       |
+|        |                                       |
+|        |                                       |
+|        | Install ninja build tool (optional):  |
+|        |                                       |
+|        |                                       |
+|        | .. code-block:: shell-session         |
+|        |                                       |
+|        |     # emerge dev-util/ninja           |
++--------+---------------------------------------+
+| Debian | Follow the                            |
+|        | `Install the SDK`_-instructions on    |
+|        | the vulkan-sdk page.                  |
+|        |                                       |
+|        | Install the required packages:[#f1]_  |
+|        |                                       |
+|        | .. code-block:: shell-session         |
+|        |                                       |
+|        |     # apt install -y \                |
+|        |         libvulkan-dev \               |
+|        |         glslang-dev \                 |
+|        |         glslang-tools \               |
+|        |         vulkan-tools \                |
+|        |         vulkan-validationlayers-dev \ |
+|        |         spirv-tools \                 |
+|        |         pkg-config \                  |
+|        |         libglm-dev \                  |
+|        |         libxcb-dri3-0 \               |
+|        |         libxcb-present0 \             |
+|        |         libpciaccess0 \               |
+|        |         libpng-dev \                  |
+|        |         libxcb-keysyms1-dev \         |
+|        |         libxcb-dri3-dev \             |
+|        |         libx11-dev \                  |
+|        |         libmirclient-dev \            |
+|        |         libwayland-dev \              |
+|        |         libxrandr-dev \               |
+|        |         libxcb-ewmh-dev               |
+|        |     # apt install -y \                |
+|        |         cmake \                       |
+|        |         ninja-build \                 |
+|        |         clang-tidy \                  |
+|        |         vulkan-sdk \                  |
+|        |         python3 \                     |
+|        |         python3-pip                   |
+|        |     $ pip3 install \                  |
+|        |         wheel \                       |
+|        |         setuptools \                  |
+|        |         conan                         |
+|        |                                       |
++--------+---------------------------------------+
+| Arch   | Follow the                            |
+|        | `Install the SDK`_-instructions on    |
+|        | the vulkan-sdk page.                  |
+|        |                                       |
+|        | Install the required packages:[#f1]_  |
+|        |                                       |
+|        | .. code-block:: shell-session         |
+|        |                                       |
+|        |     # pacman -S --noconfirm \         |
+|        |         pkg-config \                  |
+|        |         glslang \                     |
+|        |         spirv-tools \                 |
+|        |         glm \                         |
+|        |         libice \                      |
+|        |         libpciaccess \                |
+|        |         libpng \                      |
+|        |         libx11 \                      |
+|        |         libxres \                     |
+|        |         xkeyboard-config \            |
+|        |         libxrandr \                   |
+|        |         libxcb \                      |
+|        |         libxaw \                      |
+|        |         xcb-util \                    |
+|        |         xtrans \                      |
+|        |         libxvmc                       |
+|        |     # pacman -S --noconfirm \         |
+|        |         cmake \                       |
+|        |         ninja \                       |
+|        |         vulkan-headers \              |
+|        |         vulkan-tools \                |
+|        |         vulkan-validation-layers \    |
+|        |         python3 \                     |
+|        |         python-pip                    |
+|        |     $ pip3 install \                  |
+|        |         wheel \                       |
+|        |         setuptools \                  |
+|        |         conan                         |
+|        |                                       |
++--------+---------------------------------------+
+| Fedora | Install the required packages:        |
+|        |                                       |
+|        | .. code-block:: shell-session         |
+|        |                                       |
+|        |     # dnf install -y \                |
+|        |         git \                         |
+|        |         cmake \                       |
+|        |         gcc \                         |
+|        |         gcc-c++ \                     |
+|        |         ninja-build \                 |
+|        |         vulkan \                      |
+|        |         libvkd3d \                    |
+|        |         vulkan-loader-devel \         |
+|        |         python3-pip \                 |
+|        |         libglvnd-devel \              |
+|        |         libfontenc-devel \            |
+|        |         libXaw-devel \                |
+|        |         libXcomposite-devel \         |
+|        |         libXcursor-devel \            |
+|        |         libXdmcp-devel \              |
+|        |         libXtst-devel \               |
+|        |         libXinerama-devel \           |
+|        |         libxkbfile-devel \            |
+|        |         libXrandr-devel \             |
+|        |         libXres-devel \               |
+|        |         libXScrnSaver-devel \         |
+|        |         libXvMC-devel \               |
+|        |         xorg-x11-xtrans-devel \       |
+|        |         xcb-util-wm-devel \           |
+|        |         xcb-util-image-devel \        |
+|        |         xcb-util-keysyms-devel \      |
+|        |         xcb-util-renderutil-devel \   |
+|        |         libXdamage-devel \            |
+|        |         libXxf86vm-devel \            |
+|        |         libXv-devel \                 |
+|        |         xcb-util-devel \              |
+|        |         libuuid-devel \               |
+|        |         xkeyboard-config-devel \      |
+|        |         glslang-devel                 |
+|        |                                       |
+|        | Install conan: [#f1]_ [#f2]_          |
+|        |                                       |
+|        | .. code-block:: shell-session         |
+|        |                                       |
+|        |     $ pip install conan               |
+|        |                                       |
++--------+---------------------------------------+
+| Other  | Planned. `We would love to see a      |
+|        | pull request on this file if you get  |
+|        | it running on other                   |
+|        | distributions.`__                     |
++--------+---------------------------------------+
 
 __ https://github.com/inexorgame/vulkan-renderer/blob/main/documentation/source/development/building.rst
 
@@ -292,3 +339,4 @@ If you have any trouble please `open a ticket <https://github.com/inexorgame/vul
 .. rubric:: Footnotes
 
 .. [#f1] Make sure that ``$PATH`` includes the directory which contains ``conan`` (normally ``$HOME/.local/bin``). Bash includes this directory by default, zsh does **not**.
+.. [#f2] Make sure that you have version ``12.2`` `in conan's config file <https://docs.conan.io/en/latest/extending/custom_settings.html>`__
