@@ -47,7 +47,6 @@ class Application : public VulkanRenderer {
     void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
-    void check_application_specific_features();
     void update_uniform_buffers();
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();

@@ -2,6 +2,9 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/vk_tools/device_info.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #define VMA_IMPLEMENTATION
@@ -31,86 +34,184 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {
+namespace {
 
-bool Device::is_extension_supported(const VkPhysicalDevice graphics_card, const std::string &extension_name) {
-    assert(graphics_card);
-    assert(!extension_name.empty());
-
-    std::uint32_t device_extension_count = 0;
-
-    // Query how many device extensions are available.
-    if (const auto result =
-            vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+/// A function for rating physical devices by type
+/// @param info The physical device info
+/// @return A number from 0 to 2 which rates the physical device (higher is better)
+std::uint32_t device_type_rating(const DeviceInfo &info) {
+    switch (info.type) {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        return 2;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        return 1;
+    default:
+        return 0;
     }
+}
 
-    if (device_extension_count == 0) {
-        // This is not an error. Some platforms simply don't have any device extensions.
-        spdlog::info("No Vulkan device extensions available!");
+/// Check if a device extension is supported by a physical device
+/// @param extensions The device extensions
+/// @note If extensions is empty, this function returns ``false``
+/// @param extension_name The extension name
+/// @return ``true`` if the required device extension is supported
+bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions, const std::string &extension_name) {
+    return std::find_if(extensions.begin(), extensions.end(), [&](const VkExtensionProperties extension) {
+               return extension.extensionName == extension_name;
+           }) != extensions.end();
+}
+
+/// Determine if a physical device is suitable. In order for a physical device to be suitable, it must support all
+/// required device features and required extensions.
+/// @param info The device info data
+/// @param required_features The required device features the physical device must all support
+/// @param required_extensions The required device extensions the physical device must all support
+/// @param print_message If ``true``, an info message will be printed to the console if a device feature or device
+/// extension is not supported (``true`` by default)
+/// @return ``true`` if the physical device supports all device features and device extensions
+bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
+                        const std::span<const char *> required_extensions, const bool print_info = false) {
+    const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
+    const auto comparable_available_features = vk_tools::get_device_features_as_vector(info.features);
+    constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+
+    // Loop through all physical device features and check if a feature is required but not supported
+    for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
+        if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
+            if (print_info) {
+                spdlog::info("Physical device {} does not support {}!", info.name,
+                             vk_tools::get_device_feature_description(i));
+            }
+            return false;
+        }
+    }
+    // Loop through all device extensions and check if an extension is required but not supported
+    for (const auto &extension : required_extensions) {
+        if (!is_extension_supported(info.extensions, extension)) {
+            if (print_info) {
+                spdlog::info("Physical device {} does not support extension {}!", info.name, extension);
+            }
+            return false;
+        }
+    }
+    return info.presentation_supported && info.swapchain_supported;
+}
+
+/// Compare two physical devices and determine which one is preferable
+/// @param required_features The required device features which must all be supported by the physical device
+/// @param required_extensions The required device extensions which must all be supported by the physical device
+/// @param lhs A physical device to compare with the other one
+/// @param rhs The other physical device
+/// @return ``true`` if `lhs` is more preferable over `rhs`
+bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
+                              const std::span<const char *> required_extensions, const DeviceInfo &lhs,
+                              const DeviceInfo &rhs) {
+    if (!is_device_suitable(rhs, required_features, required_extensions)) {
+        return true;
+    }
+    if (!is_device_suitable(lhs, required_features, required_extensions)) {
         return false;
     }
-
-    std::vector<VkExtensionProperties> device_extensions(device_extension_count);
-
-    // Store all available device extensions.
-    if (const auto result = vkEnumerateDeviceExtensionProperties(graphics_card, nullptr, &device_extension_count,
-                                                                 device_extensions.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
+    if (device_type_rating(lhs) > device_type_rating(rhs)) {
+        return true;
     }
-
-    // Search for the requested device extension.
-    return std::find_if(device_extensions.begin(), device_extensions.end(),
-                        [&](const VkExtensionProperties device_extension) {
-                            return device_extension.extensionName == extension_name;
-                        }) != device_extensions.end();
+    if (device_type_rating(lhs) < device_type_rating(rhs)) {
+        return false;
+    }
+    // Device types equal, compare total amount of DEVICE_LOCAL memory
+    return lhs.total_device_local >= rhs.total_device_local;
 }
 
-bool Device::is_swapchain_supported(const VkPhysicalDevice graphics_card) {
-    assert(graphics_card);
-    return is_extension_supported(graphics_card, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-}
+/// Build DeviceInfo from a real vulkan physical device (as opposed to a fake one used in the tests).
+/// @param physical_device The physical device
+/// @param surface The window surface
+/// @return The device info data
+DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physical_device, &properties);
 
-bool Device::is_presentation_supported(const VkPhysicalDevice graphics_card, const VkSurfaceKHR surface) {
-    assert(graphics_card);
-    assert(surface);
+    VkPhysicalDeviceMemoryProperties memory_properties{};
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
-    VkBool32 presentation_supported = VK_FALSE;
+    VkPhysicalDeviceFeatures features{};
+    vkGetPhysicalDeviceFeatures(physical_device, &features);
 
-    // Query if presentation is supported.
-    if (const auto result = vkGetPhysicalDeviceSurfaceSupportKHR(graphics_card, 0, surface, &presentation_supported);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+    VkDeviceSize total_device_local = 0;
+    for (std::size_t i = 0; i < memory_properties.memoryHeapCount; i++) {
+        const auto &heap = memory_properties.memoryHeaps[i];
+        if ((heap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) {
+            total_device_local += heap.size;
+        }
     }
 
-    return presentation_supported == VK_TRUE;
-}
-
-Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bool enable_vulkan_debug_markers,
-               bool prefer_distinct_transfer_queue, const std::optional<std::uint32_t> preferred_physical_device_index)
-    : m_surface(surface), m_enable_vulkan_debug_markers(enable_vulkan_debug_markers) {
-
-    const auto selected_gpu =
-        VulkanSettingsDecisionMaker::graphics_card(instance.instance(), surface, preferred_physical_device_index);
-
-    if (!selected_gpu) {
-        throw std::runtime_error("Error: Could not find suitable graphics card!");
+    // Default to true in this case where a surface is not passed (and therefore presentation isn't cared about)
+    VkBool32 presentation_supported = VK_TRUE;
+    if (surface != nullptr) {
+        if (const auto result =
+                vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, 0, surface, &presentation_supported);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+        }
     }
 
-    m_physical_device = *selected_gpu;
+    const auto extensions = vk_tools::get_all_physical_device_extension_properties(physical_device);
 
-    VkPhysicalDeviceProperties graphics_card_properties;
+    const bool is_swapchain_supported =
+        surface == nullptr || is_extension_supported(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    // Get the information about that graphics card's properties.
-    vkGetPhysicalDeviceProperties(m_physical_device, &graphics_card_properties);
+    return DeviceInfo{
+        .name = properties.deviceName,
+        .physical_device = physical_device,
+        .type = properties.deviceType,
+        .total_device_local = total_device_local,
+        .features = features,
+        .extensions = extensions,
+        .presentation_supported = presentation_supported == VK_TRUE,
+        .swapchain_supported = is_swapchain_supported,
+    };
+}
 
-    spdlog::trace("Creating device using graphics card: {}", graphics_card_properties.deviceName);
+} // namespace
 
-    m_gpu_name = graphics_card_properties.deviceName;
+VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
+                                                   const VkPhysicalDeviceFeatures &required_features,
+                                                   const std::span<const char *> required_extensions) {
+    if (physical_device_infos.empty()) {
+        throw std::runtime_error("Error: There are no physical devices available!");
+    }
+    std::sort(physical_device_infos.begin(), physical_device_infos.end(), [&](const auto &lhs, const auto &rhs) {
+        return compare_physical_devices(required_features, required_extensions, lhs, rhs);
+    });
+    if (!is_device_suitable(physical_device_infos.front(), required_features, required_extensions, true)) {
+        throw std::runtime_error("Error: Could not determine a suitable physical device!");
+    }
+    return physical_device_infos.front().physical_device;
+}
+
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const VkSurfaceKHR surface,
+                                                   const VkPhysicalDeviceFeatures &required_features,
+                                                   const std::span<const char *> required_extensions) {
+    // Put together all data that is required to compare the physical devices
+    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
+    std::vector<DeviceInfo> infos(physical_devices.size());
+    std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
+                   [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
+    return pick_best_physical_device(std::move(infos), required_features, required_extensions);
+}
+
+Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool prefer_distinct_transfer_queue,
+               const VkPhysicalDevice physical_device, const std::span<const char *> required_extensions,
+               const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features)
+    : m_physical_device(physical_device) {
+
+    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions)) {
+        throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
+    }
+
+    m_gpu_name = vk_tools::get_physical_device_name(m_physical_device);
+    spdlog::trace("Creating device using graphics card: {}", m_gpu_name);
 
     spdlog::trace("Creating Vulkan device queues");
-
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 
     if (prefer_distinct_transfer_queue) {
@@ -119,7 +220,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         spdlog::warn("The application is forced not to use a distinct data transfer queue!");
     }
 
-    // Check if there is one queue family which can be used for both graphics and presentation.
+    // Check if there is one queue family which can be used for both graphics and presentation
     std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
         VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_physical_device, surface);
 
@@ -129,7 +230,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
         m_present_queue_family_index = m_graphics_queue_family_index;
 
-        // In this case, there is one queue family which can be used for both graphics and presentation.
+        // In this case, there is one queue family which can be used for both graphics and presentation
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation,
             .queueCount = 1,
@@ -139,10 +240,9 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         spdlog::trace("No queue found which supports both graphics and presentation");
         spdlog::trace("The application will try to use 2 separate queues");
 
-        // We have to use 2 different queue families.
-        // One for graphics and another one for presentation.
-
-        // Check which queue family index can be used for graphics.
+        // We have to use 2 different queue families
+        // One for graphics and another one for presentation
+        // Check which queue family index can be used for graphics
         auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_physical_device);
 
         if (!queue_candidate) {
@@ -151,7 +251,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
         m_graphics_queue_family_index = *queue_candidate;
 
-        // Check which queue family index can be used for presentation.
+        // Check which queue family index can be used for presentation
         queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_physical_device, surface);
 
         if (!queue_candidate) {
@@ -160,14 +260,14 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
         m_present_queue_family_index = *queue_candidate;
 
-        // Set up one queue for graphics.
+        // Set up one queue for graphics
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = m_graphics_queue_family_index,
             .queueCount = 1,
             .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
         }));
 
-        // Set up one queue for presentation.
+        // Set up one queue for presentation
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = m_present_queue_family_index,
             .queueCount = 1,
@@ -175,7 +275,7 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         }));
     }
 
-    // Add another device queue just for data transfer.
+    // Add another device queue just for data transfer
     const auto queue_candidate =
         VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_physical_device);
 
@@ -189,11 +289,11 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         // We have the opportunity to use a separated queue for data transfer!
         use_distinct_data_transfer_queue = true;
 
-        queues_to_create.push_back({
+        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
             .queueFamilyIndex = m_transfer_queue_family_index,
             .queueCount = 1,
             .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        });
+        }));
     } else {
         // We don't have the opportunity to use a separated queue for data transfer!
         // Do not create a new queue, use the graphics queue instead.
@@ -207,43 +307,39 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         m_transfer_queue_family_index = m_graphics_queue_family_index;
     }
 
-    std::vector<const char *> device_extensions_wishlist = {
-        // Since we want to draw on a window, we need the swapchain extension.
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    };
+    VkPhysicalDeviceFeatures available_features{};
+    vkGetPhysicalDeviceFeatures(physical_device, &available_features);
 
-#ifndef NDEBUG
-    if (enable_vulkan_debug_markers) {
-        // Debug markers allow the assignment of internal names to Vulkan resources.
-        // These internal names will conveniently be visible in debuggers like RenderDoc.
-        // Debug markers are only available if RenderDoc is enabled.
-        device_extensions_wishlist.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-    }
-#endif
+    const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
+    const auto comparable_optional_features = vk_tools::get_device_features_as_vector(optional_features);
+    const auto comparable_available_features = vk_tools::get_device_features_as_vector(available_features);
 
-    std::vector<const char *> enabled_device_extensions;
+    constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+    std::vector<VkBool32> features_to_enable(FEATURE_COUNT, VK_FALSE);
 
-    for (const auto &device_extension_name : device_extensions_wishlist) {
-        if (is_extension_supported(m_physical_device, device_extension_name)) {
-            spdlog::trace("Device extension {} is available on this system", device_extension_name);
-            enabled_device_extensions.push_back(device_extension_name);
-        } else {
-            throw std::runtime_error("Device extension " + std::string(device_extension_name) +
-                                     " is not available on this system!");
+    for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
+        if (comparable_required_features[i] == VK_TRUE) {
+            features_to_enable[i] = VK_TRUE;
+        }
+        if (comparable_optional_features[i] == VK_TRUE) {
+            if (comparable_available_features[i] == VK_TRUE) {
+                features_to_enable[i] = VK_TRUE;
+            } else {
+                spdlog::warn("The physical device {} does not support {}!",
+                             vk_tools::get_physical_device_name(physical_device),
+                             vk_tools::get_device_feature_description(i));
+            }
         }
     }
 
-    const VkPhysicalDeviceFeatures used_features{
-        // Enable anisotropic filtering.
-        .samplerAnisotropy = VK_TRUE,
-    };
+    std::memcpy(&m_enabled_features, features_to_enable.data(), features_to_enable.size());
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
-        .enabledExtensionCount = static_cast<std::uint32_t>(enabled_device_extensions.size()),
-        .ppEnabledExtensionNames = enabled_device_extensions.data(),
-        .pEnabledFeatures = &used_features,
+        .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
+        .ppEnabledExtensionNames = required_extensions.data(),
+        .pEnabledFeatures = &m_enabled_features,
     });
 
     spdlog::trace("Creating physical device");
@@ -252,8 +348,13 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
+    const bool enable_debug_markers =
+        std::find_if(required_extensions.begin(), required_extensions.end(), [&](const char *extension) {
+            return std::string(extension) == std::string(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+        }) != required_extensions.end();
+
 #ifndef NDEBUG
-    if (m_enable_vulkan_debug_markers) {
+    if (enable_debug_markers) {
         spdlog::trace("Initializing Vulkan debug markers");
 
         // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
@@ -301,10 +402,15 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
 
     spdlog::trace("Creating VMA allocator");
 
+    VmaVulkanFunctions vma_vulkan_functions{
+        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+        .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+    };
     const VmaAllocatorCreateInfo vma_allocator_ci{
         .physicalDevice = m_physical_device,
         .device = m_device,
-        .instance = instance.instance(),
+        .pVulkanFunctions = &vma_vulkan_functions,
+        .instance = inst.instance(),
         // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
         // This might need to be changed in the future
         .vulkanApiVersion = VK_API_VERSION_1_1,
@@ -317,10 +423,9 @@ Device::Device(const wrapper::Instance &instance, const VkSurfaceKHR surface, bo
     }
 }
 
-Device::Device(Device &&other) noexcept : m_enable_vulkan_debug_markers(other.m_enable_vulkan_debug_markers) {
+Device::Device(Device &&other) noexcept {
     m_device = std::exchange(other.m_device, nullptr);
     m_physical_device = std::exchange(other.m_physical_device, nullptr);
-    m_surface = other.m_surface;
 }
 
 Device::~Device() {
@@ -339,7 +444,6 @@ void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues (not just graphics)
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
-    // Execute the lambda
     cmd_lambda(cmd_buf);
     cmd_buf.submit_and_wait();
 }
@@ -347,7 +451,7 @@ void Device::execute(const std::string &name,
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
                                    const std::string &name) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_debug_marker_set_object_name == nullptr) {
         return;
     }
 
@@ -370,7 +474,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
 void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
                                          const std::size_t memory_size, const void *memory_block) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_debug_marker_set_object_tag == nullptr) {
         return;
     }
 
@@ -396,7 +500,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
 void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
                                const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_cmd_debug_marker_begin == nullptr) {
         return;
     }
 
@@ -417,7 +521,7 @@ void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::
 void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
                                  const std::array<float, 4> color) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_cmd_debug_marker_insert == nullptr) {
         return;
     }
 
@@ -437,7 +541,7 @@ void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std
 
 void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
 #ifndef NDEBUG
-    if (!m_enable_vulkan_debug_markers) {
+    if (m_vk_cmd_debug_marker_end == nullptr) {
         return;
     }
 

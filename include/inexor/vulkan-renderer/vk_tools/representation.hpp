@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <array>
 #include <string>
 
 namespace inexor::vulkan_renderer::vk_tools {
@@ -9,6 +10,12 @@ namespace inexor::vulkan_renderer::vk_tools {
 /// @brief This function returns a textual representation of the vulkan object T.
 template <typename T>
 [[nodiscard]] std::string_view as_string(T);
+
+/// Get a feature description of a ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct by index.
+/// @param index The index of the ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct.
+/// @note If the index is out of bounds, no exception will be thrown, but an empty description will be returned instead.
+/// @return A feature description
+[[nodiscard]] std::string_view get_device_feature_description(std::uint32_t index);
 
 /// @brief Convert a VkResult value into the corresponding error description as std::string_view
 /// @param result The VkResult to convert

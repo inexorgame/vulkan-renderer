@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
@@ -215,23 +216,6 @@ void Application::load_octree_geometry(bool initialize) {
             }
         }
     }
-}
-
-void Application::check_application_specific_features() {
-    assert(m_device->physical_device());
-
-    VkPhysicalDeviceFeatures graphics_card_features;
-
-    vkGetPhysicalDeviceFeatures(m_device->physical_device(), &graphics_card_features);
-
-    // Check if anisotropic filtering is available!
-    if (graphics_card_features.samplerAnisotropy != VK_TRUE) {
-        spdlog::warn("The selected graphics card does not support anisotropic filtering!");
-    } else {
-        spdlog::trace("The selected graphics card does support anisotropic filtering");
-    }
-
-    // TODO: Add more checks if necessary.
 }
 
 void Application::setup_window_and_input_callbacks() {
@@ -473,10 +457,39 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), enable_debug_marker_device_extension,
-                                                 use_distinct_data_transfer_queue, preferred_graphics_card);
+    const auto physical_devices = vk_tools::get_all_physical_devices(m_instance->instance());
+    if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
+        spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
+        throw std::runtime_error("Invalid GPU index");
+    }
 
-    check_application_specific_features();
+    const VkPhysicalDeviceFeatures required_features{
+        // Add required physical device features here
+    };
+
+    const VkPhysicalDeviceFeatures optional_features{
+        // Add optional physical device features here
+    };
+
+    std::vector<const char *> required_extensions{
+        // Since we want to draw on a window, we need the swapchain extension
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
+#ifndef NDEBUG
+    if (enable_debug_marker_device_extension) {
+        required_extensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+    }
+#endif
+
+    const VkPhysicalDevice physical_device =
+        preferred_graphics_card ? physical_devices[*preferred_graphics_card]
+                                : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->get(),
+                                                                             required_features, required_extensions);
+
+    m_device =
+        std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
+                                          physical_device, required_extensions, required_features, optional_features);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled, "Standard swapchain");
