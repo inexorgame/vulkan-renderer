@@ -3,8 +3,6 @@ on: [push, pull_request]
 
 env:
   inexor_build_type: "Release"
-  inexor_vulkan_version: "1.3.224.1"
-  inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
 
 jobs:
   linux:
@@ -69,17 +67,6 @@ jobs:
           pip3 install wheel setuptools
           pip3 install conan mako
 
-      - name: Install Vulkan SDK
-        shell: bash
-        run: |
-          # Download Vulkan SDK
-          curl -LS -o vulkansdk.tar.gz \
-            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
-
-          # Create Vulkan SDK directory and extract
-          mkdir "${{ env.inexor_vulkan_sdk }}"
-          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
-
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -89,10 +76,6 @@ jobs:
           export CC=${{ matrix.config.cc }}
           export CXX=${{ matrix.config.cxx }}
           export PATH="${{ env.inexor_conan_path }}":$PATH
-          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
-          export PATH=$VULKAN_SDK/bin:$PATH
-          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
-          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
 
           # Setup conan
           # Note: libstdc++11 is needed to use new libc++ ABI
@@ -145,14 +128,6 @@ jobs:
           pip3 install conan
           choco install ninja
 
-      - name: Install Vulkan SDK
-        shell: pwsh
-        run: |
-          curl -LS -o vulkansdk.exe `
-            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/windows/VulkanSDK-${{ env.inexor_vulkan_version }}-Installer.exe?Human=true
-
-          7z x vulkansdk.exe -o"${{ env.inexor_vulkan_sdk }}"
-
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -161,7 +136,6 @@ jobs:
         run: |
           $env:CC="${{ matrix.config.cc }}"
           $env:CXX="${{ matrix.config.cxx }}"
-          $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
 
           # Setup conan
           conan profile new default --detect --force

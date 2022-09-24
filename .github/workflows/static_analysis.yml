@@ -51,15 +51,6 @@ jobs:
           pip3 install wheel setuptools
           pip3 install conan mako
 
-      - name: Install Vulkan SDK
-        run: |
-          # Download Vulkan SDK
-          curl -LS -o vulkansdk.tar.gz \
-            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
-          # Create Vulkan SDK directory and extract
-          mkdir "${{ env.inexor_vulkan_sdk }}"
-          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
-
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -68,10 +59,6 @@ jobs:
           export CC=gcc
           export CXX=g++
           export PATH="${{ env.inexor_conan_path }}":$PATH
-          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
-          export PATH=$VULKAN_SDK/bin:$PATH
-          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
-          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
           cmake . -Bbuild -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Run clang-tidy
