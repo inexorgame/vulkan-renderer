@@ -1,9 +1,6 @@
 name: Build
 on: [push, pull_request]
 
-env:
-  inexor_build_type: "Release"
-
 jobs:
   linux:
     name: ${{ matrix.config.name }}
@@ -11,6 +8,8 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
+      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
+      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
       inexor_conan_path: "$HOME/.local/bin"
     strategy:
       fail-fast: false
@@ -21,11 +20,13 @@ jobs:
             artifact: "linux-clang.tar.xz",
             cc: "clang", cxx: "clang++",
             cmake_configure_options: '-DCMAKE_EXE_LINKER_FLAGS="-v -fuse-ld=lld"',
+            build_type: "Release",
           }
           - {
             name: "Ubuntu GCC",
             artifact: "linux-gcc.tar.xz",
             cc: "gcc", cxx: "g++",
+            build_type: "Release",
           }
 
     steps:
@@ -70,6 +71,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Cache Conan Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CONAN_USER_HOME }}
+          key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
+
       - name: Configure CMake
         shell: bash
         run: |
@@ -79,13 +86,13 @@ jobs:
 
           # Setup conan
           # Note: libstdc++11 is needed to use new libc++ ABI
-          conan profile new default --detect
+          conan profile new default --detect --force
           conan profile update settings.compiler.libcxx=libstdc++11 default
 
           # Configure cmake
           cmake . \
             -Bbuild \
-            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
@@ -104,9 +111,19 @@ jobs:
           path: ${{ matrix.config.artifact }}
           name: ${{ matrix.config.artifact }}
 
+      - name: Clean Up Conan
+        if: always()
+        shell: bash
+        run: |
+          conan remove "*" -f --builds --src
+          conan remove "*" -f --system-reqs
+
   windows:
     name: ${{ matrix.config.name }}
     runs-on: windows-latest
+    env:
+      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
+      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
     strategy:
       fail-fast: false
       matrix:
@@ -115,6 +132,7 @@ jobs:
             name: "Windows MSVC",
             artifact: "windows-msvc.zip",
             cc: "cl", cxx: "cl",
+            build_type: "Release",
             cmake_build_options: "--config Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
             conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=17 default',
@@ -131,6 +149,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Cache Conan Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CONAN_USER_HOME }}
+          key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
+
       - name: Configure CMake
         shell: pwsh
         run: |
@@ -144,7 +168,7 @@ jobs:
           # Configure CMake
           cmake . `
             -Bbuild `
-            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} `
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
             ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
@@ -162,3 +186,10 @@ jobs:
         with:
           path: ${{ matrix.config.artifact }}
           name: ${{ matrix.config.artifact }}
+
+      - name: Clean Up Conan
+        if: always()
+        shell: pwsh
+        run: |
+          conan remove "*" -f --builds --src
+          conan remove "*" -f --system-reqs
