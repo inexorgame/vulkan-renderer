@@ -20,13 +20,6 @@ Required Software
 `CMake <https://cmake.org/>`__
     The build generator which generates project files for various IDEs.
 
-`Vulkan SDK <https://vulkan.lunarg.com/sdk/home>`__
-    Vulkan SDK contains the libraries and tools which are necessary to work with Vulkan API.
-
-    Update your Vulkan SDK as often as possible, because new versions will be released frequently which contains new features and bug fixes.
-
-    Make sure you add the ``glslangValidator`` in the Vulkan SDK's bin folder to your path variable.
-
 Optional Software
 -----------------
 
