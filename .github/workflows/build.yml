@@ -152,7 +152,16 @@ jobs:
             build_type: "Release",
             cmake_build_options: "--config Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
-            conan_profile_update: 'conan profile update settings.compiler="Visual Studio" default; conan profile update settings.compiler.version=17 default',
+            conan_profile_update: ''
+          }
+          - {
+            name: "Windows Clang",
+            cc: "clang-cl", cxx: "clang-cl",
+            compiler: "clang",
+            build_type: "Release",
+            cmake_build_options: "--config Release",
+            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
+            conan_profile_update: 'conan profile update settings.compiler.libcxx=libstdc++11 default',
           }
 
     steps:
@@ -161,7 +170,6 @@ jobs:
         run: |
           pip3 install wheel setuptools
           pip3 install conan
-          choco install ninja
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -171,6 +179,17 @@ jobs:
         with:
           path: ${{ env.CONAN_USER_HOME }}
           key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
+
+      - name: Configure LLVM
+        if: matrix.config.compiler == 'clang'
+        shell: pwsh
+        run: |
+          choco upgrade --no-progress llvm
+          curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v22.09/LLVM_VS2017.zip"
+          7z x -y "LLVM_VS2017.zip" >NUL
+          LLVM_VS2017\install.bat
+          conan config init
+          (Get-Content "$(conan config home)\settings.yml") -replace 'v143', 'v143, LLVM_v143' | Out-File -encoding ASCII "$(conan config home)\settings.yml"
 
       - name: Configure CMake
         shell: pwsh
