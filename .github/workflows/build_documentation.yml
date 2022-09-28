@@ -38,12 +38,12 @@ jobs:
         run: |
           cmake --build build --target inexor-vulkan-renderer-documentation-linkcheck || true
 
-      - name: Prepare upload
+      - name: Prepare artifacts
         working-directory: ${{ github.workspace }}/documentation
         run: |
           tar cfz documentation.tar.xz build/html/*
 
-      - name: Upload
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           path: ${{ github.workspace }}/documentation/documentation.tar.xz

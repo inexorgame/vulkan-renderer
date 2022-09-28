@@ -1,0 +1,74 @@
+name: Release
+on:
+  workflow_run:
+    workflows:
+      - Build
+    branches:
+      - main
+    types:
+      - completed
+
+jobs:
+  devel-release:
+    name: Development
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifacts = allArtifacts.data.artifacts.filter((artifact) => {
+              console.log(artifact.name);
+              console.log(artifact.name.startsWith("release_"));
+              return artifact.name.startsWith("release_");
+            });
+            let fs = require('fs');
+            for (const artifact of matchArtifacts) {
+              console.log(artifact);
+              let download = await github.rest.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+                archive_format: 'zip',
+              });
+              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/`+artifact.name+`.zip`, Buffer.from(download.data));
+            }
+
+      - name: Unzip files
+        shell: bash
+        run: |
+          mkdir archives
+          unzip 'release_*.zip' -d archives
+          cd archives
+          for f in *; do mv "$f" "${f/release_/}";done
+
+      - name: Prepare Release
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag devel
+          git push -f origin tag devel
+
+      - name: Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES: |
+            Latest development release, ready to install.
+
+            This release tag is continuously updated.
+        run: |         
+          gh release delete devel -y || true
+          gh release create devel ./archives/* --title "Latest Development Release" --notes "${{ env.NOTES }}" --prerelease --target ${{ github.sha }}
