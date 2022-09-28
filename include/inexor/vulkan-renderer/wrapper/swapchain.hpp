@@ -53,7 +53,7 @@ public:
 
     /// @brief Call vkAcquireNextImageKHR.
     /// @param semaphore A semaphore to signal once image acquisition has completed.
-    [[nodiscard]] std::uint32_t acquire_next_image(const Semaphore &semaphore);
+    [[nodiscard]] std::uint32_t acquire_next_image(VkSemaphore semaphore);
 
     /// @brief Recreate the swapchain.
     /// @param window_width The width of the window.

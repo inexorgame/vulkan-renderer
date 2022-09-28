@@ -6,16 +6,17 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
-/// @brief RAII wrapper class for VkSemaphore.
+/// RAII wrapper class for VkSemaphore
 class Semaphore {
     const Device &m_device;
     VkSemaphore m_semaphore{VK_NULL_HANDLE};
     std::string m_name;
 
 public:
-    /// @brief Default constructor.
+    /// Default constructor
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the VkSemaphore.
     Semaphore(const Device &device, const std::string &name);
@@ -26,11 +27,7 @@ public:
     Semaphore &operator=(const Semaphore &) = delete;
     Semaphore &operator=(Semaphore &&) = delete;
 
-    [[nodiscard]] VkSemaphore get() const {
-        return m_semaphore;
-    }
-
-    [[nodiscard]] const VkSemaphore *ptr() const {
+    [[nodiscard]] const VkSemaphore *semaphore() const {
         return &m_semaphore;
     }
 };
