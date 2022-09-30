@@ -79,13 +79,13 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     spdlog::trace("Initialising Vulkan instance");
     spdlog::trace("Application name: {}", application_name);
-    spdlog::trace("Application version: {}.{}.{}", VK_VERSION_MAJOR(application_version),
-                  VK_VERSION_MINOR(application_version), VK_VERSION_PATCH(application_version));
+    spdlog::trace("Application version: {}.{}.{}", VK_API_VERSION_MAJOR(application_version),
+                  VK_API_VERSION_MINOR(application_version), VK_API_VERSION_PATCH(application_version));
     spdlog::trace("Engine name: {}", engine_name);
-    spdlog::trace("Engine version: {}.{}.{}", VK_VERSION_MAJOR(engine_version), VK_VERSION_MINOR(engine_version),
-                  VK_VERSION_PATCH(engine_version));
-    spdlog::trace("Requested Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(REQUIRED_VK_API_VERSION),
-                  VK_VERSION_MINOR(REQUIRED_VK_API_VERSION), VK_VERSION_PATCH(REQUIRED_VK_API_VERSION));
+    spdlog::trace("Engine version: {}.{}.{}", VK_API_VERSION_MAJOR(engine_version),
+                  VK_API_VERSION_MINOR(engine_version), VK_API_VERSION_PATCH(engine_version));
+    spdlog::trace("Requested Vulkan API version: {}.{}.{}", VK_API_VERSION_MAJOR(REQUIRED_VK_API_VERSION),
+                  VK_API_VERSION_MINOR(REQUIRED_VK_API_VERSION), VK_API_VERSION_PATCH(REQUIRED_VK_API_VERSION));
 
     std::uint32_t available_api_version = 0;
     if (const auto result = vkEnumerateInstanceVersion(&available_api_version); result != VK_SUCCESS) {
@@ -94,18 +94,18 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     }
 
     // This code will throw an exception if the required version of Vulkan API is not available on the system
-    if (VK_VERSION_MAJOR(REQUIRED_VK_API_VERSION) > VK_VERSION_MAJOR(available_api_version) ||
-        (VK_VERSION_MAJOR(REQUIRED_VK_API_VERSION) == VK_VERSION_MAJOR(available_api_version) &&
-         VK_VERSION_MINOR(REQUIRED_VK_API_VERSION) > VK_VERSION_MINOR(available_api_version))) {
+    if (VK_API_VERSION_MAJOR(REQUIRED_VK_API_VERSION) > VK_API_VERSION_MAJOR(available_api_version) ||
+        (VK_API_VERSION_MAJOR(REQUIRED_VK_API_VERSION) == VK_API_VERSION_MAJOR(available_api_version) &&
+         VK_API_VERSION_MINOR(REQUIRED_VK_API_VERSION) > VK_API_VERSION_MINOR(available_api_version))) {
         std::string exception_message = fmt::format(
             "Your system does not support the required version of Vulkan API. Required version: {}.{}.{}. Available "
             "Vulkan API version on this machine: {}.{}.{}. Please update your graphics drivers!",
-            std::to_string(VK_VERSION_MAJOR(REQUIRED_VK_API_VERSION)),
-            std::to_string(VK_VERSION_MINOR(REQUIRED_VK_API_VERSION)),
-            std::to_string(VK_VERSION_PATCH(REQUIRED_VK_API_VERSION)),
-            std::to_string(VK_VERSION_MAJOR(available_api_version)),
-            std::to_string(VK_VERSION_MINOR(available_api_version)),
-            std::to_string(VK_VERSION_PATCH(available_api_version)));
+            std::to_string(VK_API_VERSION_MAJOR(REQUIRED_VK_API_VERSION)),
+            std::to_string(VK_API_VERSION_MINOR(REQUIRED_VK_API_VERSION)),
+            std::to_string(VK_API_VERSION_PATCH(REQUIRED_VK_API_VERSION)),
+            std::to_string(VK_API_VERSION_MAJOR(available_api_version)),
+            std::to_string(VK_API_VERSION_MINOR(available_api_version)),
+            std::to_string(VK_API_VERSION_PATCH(available_api_version)));
         throw std::runtime_error(exception_message);
     }
 
