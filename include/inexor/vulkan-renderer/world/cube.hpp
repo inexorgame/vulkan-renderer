@@ -188,7 +188,7 @@ public:
 /// empty: 30%
 /// solid: 30%
 /// normal: 40%
-/// The number of intendations are evenly distributed. Empty normal cubes are not generated.
+/// The number of indentations are evenly distributed. Empty normal cubes are not generated.
 /// @param max_depth The maximum of nested octants.
 /// @param position The position where the root cube is placed.
 /// @param seed The seed used for the random number generator.

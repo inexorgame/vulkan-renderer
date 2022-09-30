@@ -1,10 +1,6 @@
 name: Static Analysis
 on: [push, pull_request]
 
-env:
-  inexor_vulkan_version: "1.2.189.0"
-  inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
-
 jobs:
   clang-tidy:
     name: Clang Tidy
@@ -12,6 +8,8 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
+      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
+      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
       inexor_conan_path: "$HOME/.local/bin"
     steps:
       - name: Update environment
@@ -41,6 +39,7 @@ jobs:
             libxcb-xfixes0-dev \
             libxcb-xinerama0-dev \
             libxcb-xkb-dev \
+            ninja-build \
             parallel \
             pkg-config \
             python3 \
@@ -51,28 +50,25 @@ jobs:
           pip3 install wheel setuptools
           pip3 install conan mako
 
-      - name: Install Vulkan SDK
-        run: |
-          # Download Vulkan SDK
-          curl -LS -o vulkansdk.tar.gz \
-            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
-          # Create Vulkan SDK directory and extract
-          mkdir "${{ env.inexor_vulkan_sdk }}"
-          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
-
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Cache Conan Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CONAN_USER_HOME }}
+          key: conan-${{ runner.os }}-Ubuntu GCC-Debug-${{ hashFiles('conanfile.py') }}
 
       - name: Configure CMake
         run: |
           export CC=gcc
           export CXX=g++
           export PATH="${{ env.inexor_conan_path }}":$PATH
-          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
-          export PATH=$VULKAN_SDK/bin:$PATH
-          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
-          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
-          cmake . -Bbuild -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+          conan profile new default --detect --force
+          conan profile update settings.compiler.libcxx=libstdc++11 default
+
+          cmake . -Bbuild -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Run clang-tidy
         run: |
@@ -83,3 +79,10 @@ jobs:
             clang-tidy -p build --header-filter=inexor/ --quiet {} 2>/dev/null |
           tee output
           if [ -s output ]; then exit 1; fi
+
+      - name: Clean Up Conan
+        if: always()
+        shell: bash
+        run: |
+          conan remove "*" -f --builds --src
+          conan remove "*" -f --system-reqs

@@ -117,7 +117,6 @@ if(CONAN_LIBS)
 
         PUBLIC
         ${CONAN_LIBS}
-        Vulkan::Vulkan
     )
 else()
     foreach(_LIB ${CONAN_LIBS_RELEASE})
@@ -126,7 +125,6 @@ else()
             optimized
 
             ${_LIB}
-            Vulkan::Vulkan
         )
     endforeach()
     foreach(_LIB ${CONAN_LIBS_DEBUG})
@@ -135,7 +133,6 @@ else()
             debug
 
             ${_LIB}
-            Vulkan::Vulkan
         )
     endforeach()
 endif()

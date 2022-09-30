@@ -31,8 +31,6 @@ message(STATUS "CXX Compiler executable: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Linker executable: ${CMAKE_LINKER}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-find_package(Vulkan REQUIRED)
-
 # Dependency setup with conan
 include(conan_setup)
 
