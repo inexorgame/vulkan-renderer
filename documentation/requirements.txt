@@ -4,4 +4,5 @@ exhale>=0.3.1
 sphinxcontrib-mermaid>=0.7.1
 plotly>=5.7.0
 pandas>=1.4.2
+sphobjinv>=2.2.2
 recommonmark>=0.7.1

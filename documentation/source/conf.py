@@ -6,15 +6,20 @@ import sphinx_rtd_theme
 sys.path.insert(0, str(Path('../../').resolve()))
 sys.path.insert(0, str(Path('../').resolve()))
 
-from helper import generate_radar
+from helper import generate_radar, generate_vk_inv
+
 # generate additional source stuff
+vk_version = generate_vk_inv.get_vulkan_version(Path("../../conanfile.py"))
 generate_radar.generate(Path("./auto-generated/"))
+generate_vk_inv.gen_intersphinx_inventory(vk_version, Path("./vulkan_objects.inv"))
 
 extensions = [
     'breathe',
     'exhale',
     'recommonmark',
-    'sphinxcontrib.mermaid'
+    'sphinxcontrib.mermaid',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
 ]
 source_suffix = ['.rst']
 master_doc = 'index'
@@ -43,7 +48,14 @@ html_css_files = [
 html_js_files = [
     'js/svg-highlight.js',
 ]
+html_extra_path = [
+    "vulkan_objects.inv",
+]
 html_favicon = "../../assets/textures/logo_rendered.png"
+
+intersphinx_mapping = {
+    'vulkan': (f"https://registry.khronos.org/vulkan/specs/{'.'.join(vk_version[:2])}-extensions/man/html/", 'vulkan_objects.inv'),
+}
 
 linkcheck_ignore = [
     r"https://github.com/.*#"  # do not check anchors from GitHub, JS magic
@@ -73,7 +85,10 @@ exhale_args = {
     "exhaleExecutesDoxygen": True,
     "exhaleDoxygenStdin": f"""INPUT = {header_path}
     EXTRACT_PRIVATE = YES
-    EXTRACT_ALL = YES""",
+    EXTRACT_ALL = YES
+    ALIASES  = "rst=\\verbatim embed:rst:leading-asterisk"
+    ALIASES += "endrst=\\endverbatim"
+""",
     "verboseBuild": True,
 }
 

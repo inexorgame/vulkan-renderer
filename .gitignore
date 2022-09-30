@@ -47,10 +47,11 @@ vma-dumps/*.json
 *.csv
 *__pycache__*
 
-# auto generated documentations paths
+# auto generated documentations files
 documentation/doxygen-output/
 documentation/source/auto-generated/
 documentation/source/exhale-generated/
+documentation/source/vulkan_objects.inv
 
 # logfiles
 *.log

@@ -2,6 +2,10 @@
 Development
 ***********
 
+.. note::
+
+    This section needs some love! Open a PR on `GitHub <https://github.com/inexorgame/vulkan-renderer/pulls>`__.
+
 .. toctree::
     :maxdepth: 2
 
@@ -10,10 +14,11 @@ Development
     building
     debugging/main
     engine-design/main
-    ci
+    reference/main
     clang-format
+    documentation
+    static-code-analysis
     test-automation
     benchmarking
-    static-code-analysis
-    reference/main
+    ci
     labeling
