@@ -284,7 +284,17 @@ def plotly(formats, categories, relative_to_format=None):
     return fig
 
 
-def generate(output_folder=Path("./")):
+def generate(output_folder: Path = Path("./"), skip_check: bool = False):
+    """
+    :param output_folder: output directory
+    :param skip_check: skip checking if all files exist and force a recreation
+    :return:
+    """
+    radar_html = output_folder.joinpath("radar.html")
+    radar_rel_html = output_folder.joinpath("radar_rel_inexor_iii.html")
+    if not skip_check and radar_html.exists() and radar_rel_html.exists():
+        return
+
     output_folder.mkdir(parents=True, exist_ok=True)
 
     formats = [Sauerbraten, InexorI, InexorII, InexorIII]
@@ -294,6 +304,6 @@ def generate(output_folder=Path("./")):
                   'Octant (min)', 'Octant (avg)', 'Octant (max)']
 
     fig = plotly(formats, categories, relative_to_format=None)
-    fig.write_html(str(output_folder.joinpath("radar.html")))
+    fig.write_html(str(radar_html))
     fig = plotly(formats, categories, relative_to_format=InexorIII)
-    fig.write_html(str(output_folder.joinpath("radar_rel_inexor_iii.html")))
+    fig.write_html(str(radar_rel_html))
