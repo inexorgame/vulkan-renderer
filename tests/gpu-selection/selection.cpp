@@ -15,20 +15,20 @@ TEST(GpuSelection, PhysicalDeviceTypeTest) {
         .physical_device = device1,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
     const DeviceInfo gpu2{
         .name = "Integrated GPU",
         .physical_device = device2,
         .type = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, // this will make gpu1 preferred
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
 
     std::vector physical_devices{gpu1, gpu2};
@@ -41,20 +41,20 @@ TEST(GpuSelection, DeviceLocalMemoryTest) {
         .physical_device = device1,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
     const DeviceInfo gpu2{
         .name = "Discrete GPU 1 with small memory",
         .physical_device = device2,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 128, // this will make gpu1 preferred
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
 
     std::vector physical_devices{gpu1, gpu2};
@@ -67,20 +67,20 @@ TEST(GpuSelection, SwapchainTest) {
         .physical_device = device1,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
     const DeviceInfo gpu2{
         .name = "GPU 2 without swapchain",
         .physical_device = device2,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = false, // this will make gpu1 preferred
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = false, // this will make gpu1 preferred
     };
 
     std::vector physical_devices{gpu1, gpu2};
@@ -93,20 +93,20 @@ TEST(GpuSelection, PresentationTest) {
         .physical_device = device1,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
     const DeviceInfo gpu2{
         .name = "GPU 2 without presentation support",
         .physical_device = device2,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = false, // this will make gpu1 preferred
-        .swapchain_supported = true,
         .features = {},
         .extensions = {},
+        .presentation_supported = false, // this will make gpu1 preferred
+        .swapchain_supported = true,
     };
 
     std::vector physical_devices{gpu1, gpu2};
@@ -127,20 +127,20 @@ TEST(GpuSelection, DeviceFeatureTest) {
         .physical_device = device1,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = all_features_enabled2,
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
     const DeviceInfo gpu2{
         .name = "GPU 2 with no features",
         .physical_device = device2,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = all_features_disabled2, // this will make gpu1 preferred
         .extensions = {},
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
 
     // Because gpu 1 has all features enabled and gpu 2 has all features disabled, gpu 1 must always be preferred
@@ -162,20 +162,20 @@ TEST(GpuSelection, DeviceExtensionTest) {
         .physical_device = device1,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = extensions,
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
     const DeviceInfo gpu2{
         .name = "GPU 2 without debug marker extension",
         .physical_device = device2,
         .type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
         .total_device_local = 1024,
-        .presentation_supported = true,
-        .swapchain_supported = true,
         .features = {},
         .extensions = {}, // this will make gpu1 preferred
+        .presentation_supported = true,
+        .swapchain_supported = true,
     };
 
     std::vector physical_devices{gpu1, gpu2};
