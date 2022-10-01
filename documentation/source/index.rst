@@ -2,13 +2,12 @@
 Vulkan-Renderer
 ===============
 
-|language| |platforms| |github actions| |readthedocs| |license|
+|language| |platforms| |github actions| |readthedocs| |discord| |license|
 
-|issues| |last commit| |code size| |contributors| |discord| |downloads|
+.. image:: /images/inexor-banner.svg
 
 **Inexor is a MIT-licensed open-source project which develops a new 3D octree game engine by combining modern C++ with Vulkan API.**
 
-.. image:: /images/banner.jpg
 
 Documentation
 #############
