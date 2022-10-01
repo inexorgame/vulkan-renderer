@@ -2,7 +2,7 @@
 vulkan-renderer
 ***************
 
-|language| |platforms| |github actions| |readthedocs| |discord| |downloads| |license|
+|language| |platforms| |github actions| |readthedocs| |discord| |license|
 
 
 .. image:: documentation/source/images/banner.jpg
@@ -53,7 +53,7 @@ Special thanks to `JetBrains <https://www.jetbrains.com/?from=github.com/inexorg
 
 .. |discord| image:: https://img.shields.io/discord/698219248954376256?logo=discord
    :target: https://discord.com/invite/acUW8k7
-   
+
 .. |license| image:: https://img.shields.io/github/license/inexorgame/vulkan-renderer?color=brightgreen
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
 
