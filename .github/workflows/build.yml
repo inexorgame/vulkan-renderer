@@ -103,7 +103,7 @@ jobs:
         shell: bash
         run: |
           cd build
-          tar cfz "../build_linux_${{ matrix.config.cc }}.tar.xz" .
+          tar -zcvf "../build_linux_${{ matrix.config.cc }}.tar.xz" *
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
@@ -115,11 +115,13 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          cp -r ./build/bin/. release
-          cp -r ./configuration/. release
-          cp -r ./assets/. release
+          cp -r ./build/bin/ release
+          cp -r ./configuration/ release
+          cp -r ./assets/ release
+          mkdir -p ./release/shaders
+          cp ./shaders/*.spv ./release/shaders/
           cd release
-          tar -zcvf "../release_linux_amd64_${{ matrix.config.cc }}.tar.xz" .
+          tar -zcvf "../release_linux_amd64_${{ matrix.config.cc }}.tar.xz" *
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
@@ -205,12 +207,14 @@ jobs:
           path: build_windows_${{ matrix.config.compiler }}.zip
 
       - name: Prepare release artifacts
-        shell: bash
+        shell: pwsh
         run: |
           mkdir release
           cp -r ./build/bin/. release
           cp -r ./configuration/. release
           cp -r ./assets/. release
+          mkdir -P ./release/shaders
+          cp ./shaders/*.spv ./release/shaders/
           7z a -tzip "release_windows_amd64_${{ matrix.config.compiler }}.zip" ./release/*
 
       - name: Upload release artifacts
