@@ -18,8 +18,8 @@ void print_driver_vulkan_version() {
         return;
     }
 
-    spdlog::trace("Supported Vulkan API version: {}.{}.{}", VK_VERSION_MAJOR(api_version),
-                  VK_VERSION_MINOR(api_version), VK_VERSION_PATCH(api_version));
+    spdlog::trace("Supported Vulkan API version: {}.{}.{}", VK_API_VERSION_MAJOR(api_version),
+                  VK_API_VERSION_MINOR(api_version), VK_API_VERSION_PATCH(api_version));
 }
 
 void print_physical_device_queue_families(const VkPhysicalDevice gpu) {
@@ -89,8 +89,8 @@ void print_instance_layers() {
 
     for (const auto &layer : instance_layers) {
         spdlog::trace("Name: {}", layer.layerName);
-        spdlog::trace("Spec Version: {}", VK_VERSION_MAJOR(layer.specVersion), VK_VERSION_MINOR(layer.specVersion),
-                      VK_VERSION_PATCH(layer.specVersion));
+        spdlog::trace("Spec Version: {}", VK_API_VERSION_MAJOR(layer.specVersion),
+                      VK_API_VERSION_MINOR(layer.specVersion), VK_API_VERSION_PATCH(layer.specVersion));
         spdlog::trace("Impl Version: {}", layer.implementationVersion);
         spdlog::trace("Description: {}", layer.description);
     }
@@ -125,8 +125,8 @@ void print_instance_extensions() {
     }
 
     for (const auto &extension : extensions) {
-        spdlog::trace("Spec version: {}.{}.{}\t Name: {}", VK_VERSION_MAJOR(extension.specVersion),
-                      VK_VERSION_MINOR(extension.specVersion), VK_VERSION_PATCH(extension.specVersion),
+        spdlog::trace("Spec version: {}.{}.{}\t Name: {}", VK_API_VERSION_MAJOR(extension.specVersion),
+                      VK_API_VERSION_MINOR(extension.specVersion), VK_API_VERSION_PATCH(extension.specVersion),
                       extension.extensionName);
     }
 }
@@ -162,8 +162,8 @@ void print_device_extensions(const VkPhysicalDevice gpu) {
     }
 
     for (const auto &extension : device_extensions) {
-        spdlog::trace("Spec version: {}.{}.{}\t Name: {}", VK_VERSION_MAJOR(extension.specVersion),
-                      VK_VERSION_MINOR(extension.specVersion), VK_VERSION_PATCH(extension.specVersion),
+        spdlog::trace("Spec version: {}.{}.{}\t Name: {}", VK_API_VERSION_MAJOR(extension.specVersion),
+                      VK_API_VERSION_MINOR(extension.specVersion), VK_API_VERSION_PATCH(extension.specVersion),
                       extension.extensionName);
     }
 }
@@ -273,12 +273,13 @@ void print_physical_device_info(const VkPhysicalDevice gpu) {
 
     spdlog::trace("Gpu: {}", gpu_properties.deviceName);
 
-    spdlog::trace("Vulkan API supported version: {}.{}.{}", VK_VERSION_MAJOR(gpu_properties.apiVersion),
-                  VK_VERSION_MINOR(gpu_properties.apiVersion), VK_VERSION_PATCH(gpu_properties.apiVersion));
+    spdlog::trace("Vulkan API supported version: {}.{}.{}", VK_API_VERSION_MAJOR(gpu_properties.apiVersion),
+                  VK_API_VERSION_MINOR(gpu_properties.apiVersion), VK_API_VERSION_PATCH(gpu_properties.apiVersion));
 
     // The driver version format is not standardised. It's not even always the same for one vendor!
-    spdlog::trace("Vulkan API supported version: {}.{}.{}", VK_VERSION_MAJOR(gpu_properties.driverVersion),
-                  VK_VERSION_MINOR(gpu_properties.driverVersion), VK_VERSION_PATCH(gpu_properties.driverVersion));
+    spdlog::trace("Vulkan API supported version: {}.{}.{}", VK_API_VERSION_MAJOR(gpu_properties.driverVersion),
+                  VK_API_VERSION_MINOR(gpu_properties.driverVersion),
+                  VK_API_VERSION_PATCH(gpu_properties.driverVersion));
     spdlog::trace("Vendor ID: {}", gpu_properties.vendorID);
     spdlog::trace("Device ID: {}", gpu_properties.deviceID);
     spdlog::trace("Device type: {}", vk_tools::as_string(gpu_properties.deviceType));
