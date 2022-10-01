@@ -2,11 +2,10 @@
 vulkan-renderer
 ***************
 
+.. image:: documentation/source/images/inexor2.png
+
+
 |language| |platforms| |github actions| |readthedocs| |discord| |license|
-
-
-.. image:: documentation/source/images/banner.jpg
-
 
 
 FAQ and documentation
@@ -18,9 +17,6 @@ Quickstart: `Building Instructions`_ (`Windows`_/`Linux`_) & `Getting started`_
 .. _Windows: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html#building-windows
 .. _Linux: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html#building-linux
 .. _Getting started: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/getting-started.html
-
-.. image:: documentation/source/images/inexor2.png
-
 
 
 Inexor is an open-source project which combines modern C++ with Vulkan API.
