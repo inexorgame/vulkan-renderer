@@ -2,10 +2,9 @@
 vulkan-renderer
 ***************
 
-.. image:: documentation/source/images/inexor2.png
-
-
 |language| |platforms| |github actions| |readthedocs| |discord| |license|
+
+.. image:: documentation/source/images/inexor2.png
 
 
 FAQ and documentation
