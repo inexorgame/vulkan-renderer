@@ -511,17 +511,15 @@ void RenderGraph::compile(const RenderResource *target) {
                     }
                 }
 
-                std::vector<VkImageView> image_views;
-                for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-                    image_views.clear();
-                    for (const auto *back_buffer : back_buffers) {
-                        image_views.push_back(back_buffer->m_swapchain.image_view(i));
+                for (auto *const img_view : m_swapchain.image_views()) {
+                    std::vector<VkImageView> image_views;
+                    image_views.reserve(back_buffers.size() + images.size());
+                    for (std::size_t i = 0; i < back_buffers.size(); i++) {
+                        image_views.push_back(img_view);
                     }
-
                     for (const auto *image : images) {
                         image_views.push_back(image->m_image_view);
                     }
-
                     physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
                                                          "Framebuffer");
                 }
