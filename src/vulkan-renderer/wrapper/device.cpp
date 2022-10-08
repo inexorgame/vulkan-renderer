@@ -461,6 +461,18 @@ void Device::execute(const std::string &name,
     cmd_buf.submit_and_wait();
 }
 
+std::optional<std::uint32_t> Device::find_queue_family_index_if(
+    const std::function<bool(const std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
+    std::uint32_t index = 0;
+    for (const auto queue_family : vk_tools::get_all_physical_device_queue_family_properties(m_physical_device)) {
+        if (queue_family.queueCount > 0 && criteria_lambda(index, queue_family)) {
+            return index;
+        }
+        index++;
+    }
+    return std::nullopt;
+}
+
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
                                    const std::string &name) const {
 #ifndef NDEBUG
