@@ -45,4 +45,19 @@ get_all_physical_device_extension_properties(const VkPhysicalDevice physical_dev
     return extensions;
 }
 
+std::vector<VkQueueFamilyProperties>
+get_all_physical_device_queue_family_properties(const VkPhysicalDevice physical_device) {
+    assert(physical_device);
+
+    // Query how many queue family properties are available
+    // Because vkGetPhysicalDeviceQueueFamilyProperties has void return type, no error handling is required
+    std::uint32_t count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count, nullptr);
+
+    /// Query queue family properties
+    std::vector<VkQueueFamilyProperties> queue_families(count);
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &count, queue_families.data());
+    return queue_families;
+}
+
 } // namespace inexor::vulkan_renderer::vk_tools
