@@ -70,52 +70,6 @@ struct VulkanSettingsDecisionMaker {
     [[nodiscard]] static std::optional<VkPresentModeKHR> decide_present_mode(VkPhysicalDevice graphics_card,
                                                                              VkSurfaceKHR surface, bool vsync = false);
 
-    /// @brief Decide which graphics queue family index to use in case it is not possible to use one for both graphics
-    /// and presentation.
-    /// @warning This function should only be used when it is not possible to use one queue family for both graphics and
-    /// presentation!
-    /// @param graphics_card The selected graphics card.
-    /// @return The index of the queue family which can be used for graphics.
-    [[nodiscard]] static std::optional<std::uint32_t> find_graphics_queue_family(VkPhysicalDevice graphics_card);
-
-    /// @brief Decide which presentation queue family index to use in case it is not possible to use one for both
-    /// graphics and presentation.
-    /// @warning This function should only be used when it is not possible to use one queue family for both graphics and
-    /// presentation!
-    /// @param graphics_card The selected graphics card.
-    /// @param surface The selected (window) surface.
-    /// @return The index of the queue family which can be used for presentation.
-    [[nodiscard]] static std::optional<std::uint32_t> find_presentation_queue_family(VkPhysicalDevice graphics_card,
-                                                                                     VkSurfaceKHR surface);
-
-    /// @brief Check if there is a queue family (index) which can be used for both graphics and presentation.
-    /// @param graphics_card The selected graphics card.
-    /// @param surface The selected (window) surface.
-    /// @return The queue family index which can be used for both graphics and presentation (if existent), std::nullopt
-    /// otherwise.
-    [[nodiscard]] static std::optional<std::uint32_t>
-    find_queue_family_for_both_graphics_and_presentation(VkPhysicalDevice graphics_card, VkSurfaceKHR surface);
-
-    /// @brief Find a queue family which has VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT.
-    /// @warning It might be the case that there is no distinct queue family available on your system!
-    /// This means that find_distinct_data_transfer_queue_family must be called to find any queue family which
-    /// has VK_QUEUE_TRANSFER_BIT (besides other flags).
-    /// @param graphics_card The selected graphics card.
-    /// @return The index of the queue family which can be used exclusively  for data transfer.
-    [[nodiscard]] static std::optional<std::uint32_t>
-    find_distinct_data_transfer_queue_family(VkPhysicalDevice graphics_card);
-
-    /// @brief Find a queue family which supports VK_QUEUE_TRANSFER_BIT.
-    /// @warning You should try to find a distinct queue family first using find_distinct_data_transfer_queue_family!
-    /// Distinct queue families have VK_QUEUE_TRANSFER_BIT, but not VK_QUEUE_GRAPHICS_BIT.
-    /// It is very likely that the queue family which can be found using this method has VK_QUEUE_GRAPHICS_BIT as well.
-    /// This could result in suboptimal use of queues which could decrease performance.
-    /// @param graphics_card The selected graphics card.
-    /// @return The index of the queue family which can be used for data transfer.
-    /// @return A queue family index which can be used for data transfer if any could be found, std::nullopt otherwise.
-    [[nodiscard]] static std::optional<std::uint32_t>
-    find_any_data_transfer_queue_family(VkPhysicalDevice graphics_card);
-
     /// @brief Find a suitable depth buffer format.
     /// @param graphics_card The selected graphics card.
     /// @param formats The depth buffer formats to check for.

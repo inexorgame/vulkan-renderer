@@ -221,18 +221,20 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     }
 
     // Check if there is one queue family which can be used for both graphics and presentation
-    std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
-        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_physical_device, surface);
+    auto queue_candidate =
+        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
+            return is_presentation_supported(surface, index) && (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
+        });
 
-    if (queue_family_index_for_both_graphics_and_presentation) {
+    if (queue_candidate) {
         spdlog::trace("One queue for both graphics and presentation will be used");
 
-        m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
+        m_graphics_queue_family_index = *queue_candidate;
         m_present_queue_family_index = m_graphics_queue_family_index;
 
         // In this case, there is one queue family which can be used for both graphics and presentation
         queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation,
+            .queueFamilyIndex = *queue_candidate,
             .queueCount = 1,
             .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
         }));
@@ -243,7 +245,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         // We have to use 2 different queue families
         // One for graphics and another one for presentation
         // Check which queue family index can be used for graphics
-        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_physical_device);
+        auto queue_candidate =
+            find_queue_family_index_if([&](const std::uint32_t /*index*/, const VkQueueFamilyProperties &queue_family) {
+                return (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
+            });
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for graphics!");
@@ -252,7 +257,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         m_graphics_queue_family_index = *queue_candidate;
 
         // Check which queue family index can be used for presentation
-        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_physical_device, surface);
+        queue_candidate = find_queue_family_index_if([&](const std::uint32_t index,
+                                                         const VkQueueFamilyProperties &queue_family) {
+            return is_presentation_supported(surface, index) && (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
+        });
 
         if (!queue_candidate) {
             throw std::runtime_error("Could not find suitable queue family indices for presentation!");
@@ -276,8 +284,13 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     }
 
     // Add another device queue just for data transfer
-    const auto queue_candidate =
-        VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_physical_device);
+    queue_candidate =
+        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
+            return is_presentation_supported(surface, index) &&
+                   // No graphics bit, only transfer bit
+                   (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u &&
+                   (queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u;
+        });
 
     bool use_distinct_data_transfer_queue = false;
 
