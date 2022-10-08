@@ -440,6 +440,19 @@ Device::~Device() {
     vkDestroyDevice(m_device, nullptr);
 }
 
+bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::uint32_t queue_family_index) const {
+    // Default to true in this case where a surface is not passed (and therefore presentation isn't cared about)
+    VkBool32 supported = VK_TRUE;
+    if (surface != nullptr) {
+        if (const auto result =
+                vkGetPhysicalDeviceSurfaceSupportKHR(m_physical_device, queue_family_index, surface, &supported);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+        }
+    }
+    return supported == VK_TRUE;
+}
+
 void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues (not just graphics)

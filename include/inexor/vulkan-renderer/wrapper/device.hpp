@@ -113,6 +113,13 @@ public:
         return m_device;
     }
 
+    /// Call vkGetPhysicalDeviceSurfaceSupportKHR
+    /// @param surface The window surface
+    /// @param queue_family_index The queue family index
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
+    /// @return ``true`` if presentation is supported
+    [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
+
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
