@@ -60,8 +60,6 @@ class InexorConan(ConanFile):
         self.copy("*.dll", dst="tests/Release", src="bin")
         self.copy("*.dll", dst="tests/MinSizeRel", src="bin")
         self.copy("*.dll", dst="tests/RelWithDebInfo", src="bin")
-        # Copies all dylib files from packages lib folder to my "lib" folder (macosx)
-        self.copy("*.dylib*", dst="lib", src="lib")
         # Copies all so files from packages lib folder to my "lib" folder (linux)
         self.copy("*.so*", dst="lib", src="lib")
 
