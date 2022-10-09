@@ -15,7 +15,7 @@ template <typename T>
 /// @param index The index of the ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct.
 /// @note If the index is out of bounds, no exception will be thrown, but an empty description will be returned instead.
 /// @return A feature description
-[[nodiscard]] std::string_view get_device_feature_description(std::uint32_t index);
+[[nodiscard]] std::string_view get_device_feature_description(std::size_t index);
 
 /// @brief Convert a VkResult value into the corresponding error description as std::string_view
 /// @param result The VkResult to convert

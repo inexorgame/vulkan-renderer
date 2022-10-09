@@ -692,7 +692,7 @@ std::string_view as_string(const VkResult result) {
     return "Unknown VkResult";
 }
 
-std::string_view get_device_feature_description(const std::uint32_t index) {
+std::string_view get_device_feature_description(const std::size_t index) {
     constexpr std::array<std::string_view, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32)> FEATURE_DESCRIPTIONS{
         // robustBufferAccess
         "accesses to buffers which are bounds-checked against the range of the buffer descriptor",
