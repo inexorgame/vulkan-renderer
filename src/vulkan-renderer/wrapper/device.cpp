@@ -226,62 +226,21 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
             return is_presentation_supported(surface, index) && (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
         });
 
-    if (queue_candidate) {
-        spdlog::trace("One queue for both graphics and presentation will be used");
-
-        m_graphics_queue_family_index = *queue_candidate;
-        m_present_queue_family_index = m_graphics_queue_family_index;
-
-        // In this case, there is one queue family which can be used for both graphics and presentation
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = *queue_candidate,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
-    } else {
-        spdlog::trace("No queue found which supports both graphics and presentation");
-        spdlog::trace("The application will try to use 2 separate queues");
-
-        // We have to use 2 different queue families
-        // One for graphics and another one for presentation
-        // Check which queue family index can be used for graphics
-        auto queue_candidate =
-            find_queue_family_index_if([&](const std::uint32_t /*index*/, const VkQueueFamilyProperties &queue_family) {
-                return (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
-            });
-
-        if (!queue_candidate) {
-            throw std::runtime_error("Could not find suitable queue family indices for graphics!");
-        }
-
-        m_graphics_queue_family_index = *queue_candidate;
-
-        // Check which queue family index can be used for presentation
-        queue_candidate = find_queue_family_index_if([&](const std::uint32_t index,
-                                                         const VkQueueFamilyProperties &queue_family) {
-            return is_presentation_supported(surface, index) && (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
-        });
-
-        if (!queue_candidate) {
-            throw std::runtime_error("Could not find suitable queue family indices for presentation!");
-        }
-
-        m_present_queue_family_index = *queue_candidate;
-
-        // Set up one queue for graphics
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_graphics_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
-
-        // Set up one queue for presentation
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_present_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
+    if (!queue_candidate) {
+        throw std::runtime_error("Error: Could not find a queue for both graphics and presentation!");
     }
+
+    spdlog::trace("One queue for both graphics and presentation will be used");
+
+    m_graphics_queue_family_index = *queue_candidate;
+    m_present_queue_family_index = m_graphics_queue_family_index;
+
+    // In this case, there is one queue family which can be used for both graphics and presentation
+    queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
+        .queueFamilyIndex = *queue_candidate,
+        .queueCount = 1,
+        .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
+    }));
 
     // Add another device queue just for data transfer
     queue_candidate =
