@@ -456,12 +456,10 @@ Device::~Device() {
 bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::uint32_t queue_family_index) const {
     // Default to true in this case where a surface is not passed (and therefore presentation isn't cared about)
     VkBool32 supported = VK_TRUE;
-    if (surface != nullptr) {
-        if (const auto result =
-                vkGetPhysicalDeviceSurfaceSupportKHR(m_physical_device, queue_family_index, surface, &supported);
-            result != VK_SUCCESS) {
-            throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
-        }
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceSupportKHR(m_physical_device, queue_family_index, surface, &supported);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
     return supported == VK_TRUE;
 }
@@ -475,10 +473,10 @@ void Device::execute(const std::string &name,
 }
 
 std::optional<std::uint32_t> Device::find_queue_family_index_if(
-    const std::function<bool(const std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
-    std::uint32_t index = 0;
-    for (const auto queue_family : vk_tools::get_all_physical_device_queue_family_properties(m_physical_device)) {
-        if (queue_family.queueCount > 0 && criteria_lambda(index, queue_family)) {
+    const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
+    for (std::uint32_t index = 0;
+         const auto queue_family : vk_tools::get_all_physical_device_queue_family_properties(m_physical_device)) {
+        if (criteria_lambda(index, queue_family)) {
             return index;
         }
         index++;
