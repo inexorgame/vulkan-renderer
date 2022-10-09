@@ -154,7 +154,7 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
         }
     }
 
-    const auto extensions = vk_tools::get_all_physical_device_extension_properties(physical_device);
+    const auto extensions = vk_tools::get_extension_properties(physical_device);
 
     const bool is_swapchain_supported =
         surface == nullptr || is_extension_supported(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -192,7 +192,7 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const V
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
-    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
+    const auto physical_devices = vk_tools::get_physical_devices(inst.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
