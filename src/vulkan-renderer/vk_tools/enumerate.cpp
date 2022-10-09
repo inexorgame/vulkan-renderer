@@ -45,8 +45,7 @@ get_all_physical_device_extension_properties(const VkPhysicalDevice physical_dev
     return extensions;
 }
 
-std::vector<VkQueueFamilyProperties>
-get_all_physical_device_queue_family_properties(const VkPhysicalDevice physical_device) {
+std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysicalDevice physical_device) {
     assert(physical_device);
 
     // Query how many queue family properties are available

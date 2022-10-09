@@ -474,8 +474,7 @@ void Device::execute(const std::string &name,
 
 std::optional<std::uint32_t> Device::find_queue_family_index_if(
     const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
-    for (std::uint32_t index = 0;
-         const auto queue_family : vk_tools::get_all_physical_device_queue_family_properties(m_physical_device)) {
+    for (std::uint32_t index = 0; const auto queue_family : vk_tools::get_queue_family_properties(m_physical_device)) {
         if (criteria_lambda(index, queue_family)) {
             return index;
         }

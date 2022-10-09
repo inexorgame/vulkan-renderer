@@ -25,7 +25,6 @@ get_all_physical_device_extension_properties(VkPhysicalDevice physical_device);
 /// @param physical_device The physical device to get all extension properties form
 /// @exception VulkanException vkGetPhysicalDeviceQueueFamilyProperties call failed
 /// @return A std::vector of all queue families which are available on the system (this can be empty!)
-[[nodiscard]] std::vector<VkQueueFamilyProperties>
-get_all_physical_device_queue_family_properties(VkPhysicalDevice physical_device);
+[[nodiscard]] std::vector<VkQueueFamilyProperties> get_queue_family_properties(VkPhysicalDevice physical_device);
 
 } // namespace inexor::vulkan_renderer::vk_tools
