@@ -457,7 +457,7 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    const auto physical_devices = vk_tools::get_all_physical_devices(m_instance->instance());
+    const auto physical_devices = vk_tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
         throw std::runtime_error("Invalid GPU index");

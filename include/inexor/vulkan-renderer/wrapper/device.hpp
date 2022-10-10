@@ -113,12 +113,25 @@ public:
         return m_device;
     }
 
+    /// Call vkGetPhysicalDeviceSurfaceSupportKHR
+    /// @param surface The window surface
+    /// @param queue_family_index The queue family index
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
+    /// @return ``true`` if presentation is supported
+    [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
+
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
     /// @param cmd_lambda The command lambda to execute
     void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
+
+    /// Find a queue family index that suits a specific criteria
+    /// @param criteria_lambda The lambda to sort out unsuitable queue families
+    /// @return The queue family index which was found (if any), ``std::nullopt`` otherwise
+    std::optional<std::uint32_t> find_queue_family_index_if(
+        const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda);
 
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;

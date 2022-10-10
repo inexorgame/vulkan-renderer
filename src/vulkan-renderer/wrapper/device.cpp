@@ -154,7 +154,7 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
         }
     }
 
-    const auto extensions = vk_tools::get_all_physical_device_extension_properties(physical_device);
+    const auto extensions = vk_tools::get_extension_properties(physical_device);
 
     const bool is_swapchain_supported =
         surface == nullptr || is_extension_supported(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -192,7 +192,7 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const V
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
-    const auto physical_devices = vk_tools::get_all_physical_devices(inst.instance());
+    const auto physical_devices = vk_tools::get_physical_devices(inst.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
@@ -221,63 +221,35 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     }
 
     // Check if there is one queue family which can be used for both graphics and presentation
-    std::optional<std::uint32_t> queue_family_index_for_both_graphics_and_presentation =
-        VulkanSettingsDecisionMaker::find_queue_family_for_both_graphics_and_presentation(m_physical_device, surface);
+    auto queue_candidate =
+        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
+            return is_presentation_supported(surface, index) && (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
+        });
 
-    if (queue_family_index_for_both_graphics_and_presentation) {
-        spdlog::trace("One queue for both graphics and presentation will be used");
-
-        m_graphics_queue_family_index = *queue_family_index_for_both_graphics_and_presentation;
-        m_present_queue_family_index = m_graphics_queue_family_index;
-
-        // In this case, there is one queue family which can be used for both graphics and presentation
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = *queue_family_index_for_both_graphics_and_presentation,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
-    } else {
-        spdlog::trace("No queue found which supports both graphics and presentation");
-        spdlog::trace("The application will try to use 2 separate queues");
-
-        // We have to use 2 different queue families
-        // One for graphics and another one for presentation
-        // Check which queue family index can be used for graphics
-        auto queue_candidate = VulkanSettingsDecisionMaker::find_graphics_queue_family(m_physical_device);
-
-        if (!queue_candidate) {
-            throw std::runtime_error("Could not find suitable queue family indices for graphics!");
-        }
-
-        m_graphics_queue_family_index = *queue_candidate;
-
-        // Check which queue family index can be used for presentation
-        queue_candidate = VulkanSettingsDecisionMaker::find_presentation_queue_family(m_physical_device, surface);
-
-        if (!queue_candidate) {
-            throw std::runtime_error("Could not find suitable queue family indices for presentation!");
-        }
-
-        m_present_queue_family_index = *queue_candidate;
-
-        // Set up one queue for graphics
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_graphics_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
-
-        // Set up one queue for presentation
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_present_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
+    if (!queue_candidate) {
+        throw std::runtime_error("Error: Could not find a queue for both graphics and presentation!");
     }
 
+    spdlog::trace("One queue for both graphics and presentation will be used");
+
+    m_graphics_queue_family_index = *queue_candidate;
+    m_present_queue_family_index = m_graphics_queue_family_index;
+
+    // In this case, there is one queue family which can be used for both graphics and presentation
+    queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
+        .queueFamilyIndex = *queue_candidate,
+        .queueCount = 1,
+        .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
+    }));
+
     // Add another device queue just for data transfer
-    const auto queue_candidate =
-        VulkanSettingsDecisionMaker::find_distinct_data_transfer_queue_family(m_physical_device);
+    queue_candidate =
+        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
+            return is_presentation_supported(surface, index) &&
+                   // No graphics bit, only transfer bit
+                   (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u &&
+                   (queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u;
+        });
 
     bool use_distinct_data_transfer_queue = false;
 
@@ -440,12 +412,34 @@ Device::~Device() {
     vkDestroyDevice(m_device, nullptr);
 }
 
+bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::uint32_t queue_family_index) const {
+    // Default to true in this case where a surface is not passed (and therefore presentation isn't cared about)
+    VkBool32 supported = VK_TRUE;
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceSupportKHR(m_physical_device, queue_family_index, surface, &supported);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
+    }
+    return supported == VK_TRUE;
+}
+
 void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues (not just graphics)
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
     cmd_lambda(cmd_buf);
     cmd_buf.submit_and_wait();
+}
+
+std::optional<std::uint32_t> Device::find_queue_family_index_if(
+    const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
+    for (std::uint32_t index = 0; const auto queue_family : vk_tools::get_queue_family_properties(m_physical_device)) {
+        if (criteria_lambda(index, queue_family)) {
+            return index;
+        }
+        index++;
+    }
+    return std::nullopt;
 }
 
 void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
