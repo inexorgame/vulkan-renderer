@@ -1,183 +1,289 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
+#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 
-#include <limits>
-#include <optional>
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <string_view>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, std::uint32_t window_width,
-                     std::uint32_t window_height, const bool enable_vsync, std::string name)
-    : m_device(device), m_surface(surface), m_vsync_enabled(enable_vsync), m_name(std::move(name)) {
-    assert(device.device());
-    assert(surface);
-
-    setup_swapchain(VK_NULL_HANDLE, window_width, window_height);
+Swapchain::Swapchain(Device &device, VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height)
+    : m_device(device), m_surface(surface) {
+    setup_swapchain(width, height);
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
-    m_surface = std::exchange(other.m_surface, nullptr);
-    m_swapchain = std::exchange(other.m_swapchain, nullptr);
+    m_swapchain = std::exchange(other.m_swapchain, VK_NULL_HANDLE);
+    m_surface = std::exchange(other.m_surface, VK_NULL_HANDLE);
     m_surface_format = other.m_surface_format;
+    m_imgs = std::move(other.m_imgs);
+    m_img_views = std::move(other.m_img_views);
+    m_img_count = other.m_img_count;
     m_extent = other.m_extent;
-    m_swapchain_images = std::move(other.m_swapchain_images);
-    m_swapchain_image_views = std::move(other.m_swapchain_image_views);
-    m_swapchain_image_count = other.m_swapchain_image_count;
-    m_vsync_enabled = other.m_vsync_enabled;
-    m_name = std::move(other.m_name);
 }
 
-void Swapchain::setup_swapchain(const VkSwapchainKHR old_swapchain, std::uint32_t window_width,
-                                std::uint32_t window_height) {
-    auto swapchain_settings = VulkanSettingsDecisionMaker::swapchain_extent(m_device.physical_device(), m_surface,
-                                                                            window_width, window_height);
+std::uint32_t Swapchain::acquire_next_image_index(const VkSemaphore semaphore, const VkFence fence,
+                                                  const std::uint64_t timeout) {
+    std::uint32_t img_index = 0;
+    if (const auto result =
+            vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout, semaphore, fence, &img_index);
+        result != VK_SUCCESS) {
+        if (result == VK_SUBOPTIMAL_KHR) {
+            // We need to recreate the swapchain
+            recreate(m_extent.width, m_extent.height);
+        } else {
+            throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
+        }
+    }
+    return img_index;
+}
 
-    m_extent = swapchain_settings.swapchain_size;
-
-    std::optional<VkPresentModeKHR> present_mode =
-        VulkanSettingsDecisionMaker::decide_present_mode(m_device.physical_device(), m_surface, m_vsync_enabled);
-
-    if (!present_mode) {
-        throw std::runtime_error("Error: Could not find a suitable present mode!");
+std::optional<VkCompositeAlphaFlagBitsKHR>
+Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_composite_alpha,
+                                  const VkCompositeAlphaFlagsKHR supported_composite_alpha) {
+    if ((request_composite_alpha & supported_composite_alpha) != 0u) {
+        return request_composite_alpha;
     }
 
-    m_swapchain_image_count = VulkanSettingsDecisionMaker::swapchain_image_count(m_device.physical_device(), m_surface);
+    static const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags{
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
 
-    auto surface_format_candidate =
-        VulkanSettingsDecisionMaker::swapchain_surface_color_format(m_device.physical_device(), m_surface);
+    for (const auto flag : composite_alpha_flags) {
+        if ((flag & supported_composite_alpha) != 0u) {
+            spdlog::trace("Swapchain composite alpha '{}' is not supported, selecting '{}'",
+                          vk_tools::as_string(request_composite_alpha), vk_tools::as_string(flag));
+            return flag;
+        }
+    }
+    return std::nullopt;
+}
 
-    if (!surface_format_candidate) {
-        throw std::runtime_error("Error: Could not find an image format for images in swapchain!");
+std::uint32_t Swapchain::choose_image_array_layer_count(const std::uint32_t requested_count,
+                                                        const std::uint32_t max_count) {
+    return std::clamp(requested_count, 1u, max_count);
+}
+
+VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, const VkExtent2D &min_extent,
+                                          const VkExtent2D &max_extent, const VkExtent2D &current_extent) {
+    if (current_extent.width == std::numeric_limits<std::uint32_t>::max()) {
+        return requested_extent;
+    }
+    if (requested_extent.width < 1 || requested_extent.height < 1) {
+        spdlog::trace("Swapchain image extent ({}, {}) is not supported! Selecting ({}, {})", requested_extent.width,
+                      requested_extent.height, current_extent.width, current_extent.height);
+        return current_extent;
+    }
+    return {
+        .width = std::clamp(requested_extent.width, min_extent.width, max_extent.width),
+        .height = std::clamp(requested_extent.height, min_extent.height, max_extent.height),
+    };
+}
+
+std::uint32_t Swapchain::choose_image_count(const std::uint32_t requested_count, const std::uint32_t min_count,
+                                            const std::uint32_t max_count) {
+    return (max_count != 0) ? std::min(requested_count, max_count) : std::max(requested_count, min_count);
+}
+
+VkPresentModeKHR Swapchain::choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
+                                                const std::vector<VkPresentModeKHR> &present_mode_priority_list) {
+    assert(!available_present_modes.empty());
+    assert(!present_mode_priority_list.empty());
+    for (const auto requested_present_mode : present_mode_priority_list) {
+        const auto present_mode =
+            std::find(available_present_modes.begin(), available_present_modes.end(), requested_present_mode);
+        if (present_mode != available_present_modes.end()) {
+            return *present_mode;
+        }
+    }
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+std::optional<VkSurfaceFormatKHR>
+Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats,
+                                 const std::vector<VkSurfaceFormatKHR> &format_prioriy_list) {
+    assert(!available_formats.empty());
+
+    // Try to find one of the formats in the priority list
+    for (const auto requested_format : format_prioriy_list) {
+        const auto format =
+            std::find_if(available_formats.begin(), available_formats.end(), [&](const VkSurfaceFormatKHR candidate) {
+                return requested_format.format == candidate.format &&
+                       requested_format.colorSpace == candidate.colorSpace;
+            });
+        if (format != available_formats.end()) {
+            spdlog::trace("Selecting swapchain surface format {}", vk_tools::as_string(*format));
+            return *format;
+        }
     }
 
-    m_surface_format = *surface_format_candidate;
+    spdlog::trace("None of the surface formats of the priority list are supported");
+    spdlog::trace("Selecting surface format from default list");
 
-    const auto &composite_alpha =
-        VulkanSettingsDecisionMaker::find_composite_alpha_format(m_device.physical_device(), m_surface);
+    static const std::vector<VkSurfaceFormatKHR> default_surface_format_priority_list{
+        {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+        {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+    std::optional<VkSurfaceFormatKHR> chosen_format{};
+
+    // Try to find one of the formats in the default list
+    for (const auto available_format : available_formats) {
+        const auto format =
+            std::find_if(default_surface_format_priority_list.begin(), default_surface_format_priority_list.end(),
+                         [&](const VkSurfaceFormatKHR candidate) {
+                             return available_format.format == candidate.format &&
+                                    available_format.colorSpace == candidate.colorSpace;
+                         });
+
+        if (format != default_surface_format_priority_list.end()) {
+            spdlog::trace("Selecting swapchain image format {}", vk_tools::as_string(*format));
+            chosen_format = *format;
+        }
+    }
+    // This can be std::nullopt
+    return chosen_format;
+}
+
+VkSurfaceTransformFlagBitsKHR Swapchain::choose_surface_transform(const VkSurfaceTransformFlagBitsKHR requested,
+                                                                  const VkSurfaceTransformFlagsKHR supported,
+                                                                  const VkSurfaceTransformFlagBitsKHR current) {
+    if ((requested & supported) != 0u) {
+        return requested;
+    }
+    spdlog::trace("Requested swapchain surface transform '{}' is not supported, selecting {}",
+                  vk_tools::as_string(requested), vk_tools::as_string(current));
+    return current;
+}
+
+void Swapchain::present(const std::uint32_t img_index) {
+    const auto present_info = make_info<VkPresentInfoKHR>({
+        .swapchainCount = 1,
+        .pSwapchains = &m_swapchain,
+        .pImageIndices = &img_index,
+    });
+    if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
+        if (result == VK_SUBOPTIMAL_KHR) {
+            // We need to recreate the swapchain
+            recreate(m_extent.width, m_extent.height);
+        } else {
+            // Exception is thrown if result is not VK_SUCCESS but also not VK_SUBOPTIMAL_KHR
+            throw VulkanException("Error: vkQueuePresentKHR failed!", result);
+        }
+    }
+}
+
+bool Swapchain::is_image_usage_supported(const VkImageUsageFlagBits requested_flag,
+                                         const VkImageUsageFlags supported_flags) {
+    return (supported_flags & requested_flag) != 0u;
+}
+
+void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height) {
+    // Store the old swapchain to speed up recreation later
+    auto *const old_swapchain = m_swapchain;
+    for (auto *const img_view : m_img_views) {
+        vkDestroyImageView(m_device.device(), img_view, nullptr);
+    }
+    m_imgs.clear();
+    m_img_views.clear();
+    setup_swapchain(width, height, old_swapchain);
+}
+
+void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height,
+                                const VkSwapchainKHR old_swapchain) {
+    const auto caps = m_device.get_surface_capabilities(m_surface);
+    m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.physical_device(), m_surface));
+    const VkExtent2D requested_extent{.width = width, .height = height};
+
+    static const std::vector<VkPresentModeKHR> default_present_mode_priorities{
+        VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR};
+
+    const auto composite_alpha =
+        choose_composite_alpha(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, caps.supportedCompositeAlpha);
 
     if (!composite_alpha) {
-        throw std::runtime_error("Error: Could not find composite alpha format while recreating swapchain!");
+        throw std::runtime_error("Error: Could not find suitable composite alpha!");
     }
 
-    auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
+    if (!is_image_usage_supported(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, caps.supportedUsageFlags)) {
+        throw std::runtime_error(
+            "Error: Swapchain image usage flag bit VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT is not supported!");
+    }
+
+    const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
         .surface = m_surface,
-        .minImageCount = m_swapchain_image_count,
-        .imageFormat = m_surface_format.format,
-        .imageColorSpace = m_surface_format.colorSpace,
-        .imageExtent{
-            .width = m_extent.width,
-            .height = m_extent.height,
-        },
-        .imageArrayLayers = 1,
+        .minImageCount = choose_image_count(caps.minImageCount + 1, caps.minImageCount, caps.maxImageCount),
+        .imageFormat = m_surface_format.value().format,
+        .imageColorSpace = m_surface_format.value().colorSpace,
+        .imageExtent = choose_image_extent(requested_extent, caps.minImageExtent, caps.maxImageExtent, m_extent),
+        .imageArrayLayers = choose_image_array_layer_count(1, caps.maxImageArrayLayers),
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = nullptr,
-        .preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(
-            VulkanSettingsDecisionMaker::image_transform(m_device.physical_device(), m_surface)),
+        .preTransform = choose_surface_transform(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, caps.supportedTransforms,
+                                                 caps.currentTransform),
         .compositeAlpha = composite_alpha.value(),
-        .presentMode = *present_mode,
-        // Setting clipped to VK_TRUE allows the implementation to discard rendering outside of the surface area.
+        .presentMode = choose_present_mode(vk_tools::get_surface_present_modes(m_device.physical_device(), m_surface),
+                                           default_present_mode_priorities),
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });
 
-    // Set additional usage flag for blitting from the swapchain images if supported.
-    VkFormatProperties format_properties;
+    spdlog::trace("Creating swapchain");
 
-    vkGetPhysicalDeviceFormatProperties(m_device.physical_device(), m_surface_format.format, &format_properties);
-
-    if ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) != 0 ||
-        (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) != 0) {
-        swapchain_ci.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    }
-
-    m_device.create_swapchain(swapchain_ci, &m_swapchain, m_name);
-
-    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count, nullptr);
+    if (const auto result = vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
+        throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
     }
 
-    m_swapchain_images.resize(m_swapchain_image_count);
+    m_extent.width = width;
+    m_extent.height = height;
 
-    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &m_swapchain_image_count,
-                                                    m_swapchain_images.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
+    m_imgs = vk_tools::get_swapchain_images(m_device.device(), m_swapchain);
+    m_img_count = static_cast<std::uint32_t>(m_imgs.size());
+
+    if (m_img_count == 0) {
+        throw std::runtime_error("Error: Swapchain image count is 0!");
     }
 
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, m_name);
+    spdlog::trace("Creating {} swapchain image views", m_img_count);
 
-    spdlog::trace("Creating {} swapchain image views", m_swapchain_image_count);
+    m_img_views.resize(m_img_count);
 
-    m_swapchain_image_views.resize(m_swapchain_image_count);
+    for (std::size_t i = 0; i < m_img_count; i++) {
+        const auto img_view_ci = make_info<VkImageViewCreateInfo>({
+            .image = m_imgs[i],
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = m_surface_format.value().format,
+            .components{
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+            },
+            .subresourceRange{
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            },
+        });
 
-    auto image_view_ci = make_info<VkImageViewCreateInfo>({
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = m_surface_format.format,
-        .components{
-            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-        },
-        .subresourceRange{
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-        },
-    });
-
-    for (std::size_t i = 0; i < m_swapchain_image_count; i++) {
-        image_view_ci.image = m_swapchain_images[i];
-        m_device.create_image_view(image_view_ci, &m_swapchain_image_views[i], m_name);
+        m_device.create_image_view(img_view_ci, &m_img_views[i], "swapchain image view");
     }
-}
-
-std::uint32_t Swapchain::acquire_next_image(const VkSemaphore semaphore) {
-    std::uint32_t image_index = 0;
-    vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(), semaphore,
-                          VK_NULL_HANDLE, &image_index);
-    return image_index;
-}
-
-void Swapchain::recreate(std::uint32_t window_width, std::uint32_t window_height) {
-    // Store the old swapchain. This allows us to pass it to VkSwapchainCreateInfoKHR::oldSwapchain to speed up
-    // swapchain recreation.
-    VkSwapchainKHR old_swapchain = m_swapchain;
-
-    // When swapchain needs to be recreated, all the old swapchain images need to be destroyed.
-
-    // Unlike swapchain images, the image views were created by us directly.
-    // It is our job to destroy them again.
-    for (auto *image_view : m_swapchain_image_views) {
-        vkDestroyImageView(m_device.device(), image_view, nullptr);
-    }
-
-    m_swapchain_image_views.clear();
-
-    m_swapchain_images.clear();
-
-    setup_swapchain(old_swapchain, window_width, window_height);
 }
 
 Swapchain::~Swapchain() {
     vkDestroySwapchainKHR(m_device.device(), m_swapchain, nullptr);
-
-    for (auto *image_view : m_swapchain_image_views) {
-        vkDestroyImageView(m_device.device(), image_view, nullptr);
+    for (auto *const img_view : m_img_views) {
+        vkDestroyImageView(m_device.device(), img_view, nullptr);
     }
 }
 

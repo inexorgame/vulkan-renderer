@@ -1,7 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/vk_tools/device_info.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
