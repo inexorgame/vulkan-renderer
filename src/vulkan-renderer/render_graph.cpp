@@ -511,9 +511,9 @@ void RenderGraph::compile(const RenderResource *target) {
                     }
                 }
 
+                std::vector<VkImageView> image_views;
+                image_views.reserve(back_buffers.size() + images.size());
                 for (auto *const img_view : m_swapchain.image_views()) {
-                    std::vector<VkImageView> image_views;
-                    image_views.reserve(back_buffers.size() + images.size());
                     for (std::size_t i = 0; i < back_buffers.size(); i++) {
                         image_views.push_back(img_view);
                     }
@@ -522,6 +522,7 @@ void RenderGraph::compile(const RenderResource *target) {
                     }
                     physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
                                                          "Framebuffer");
+                    image_views.clear();
                 }
             }
         }
