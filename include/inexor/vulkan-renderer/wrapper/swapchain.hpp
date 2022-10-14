@@ -70,13 +70,6 @@ public:
     choose_composite_alpha(VkCompositeAlphaFlagBitsKHR request_composite_alpha,
                            VkCompositeAlphaFlagsKHR supported_composite_alpha);
 
-    /// Choose the image array layer count
-    /// @param requested_count The requested image array layer count
-    /// @param max_count The maximum image array layer count
-    /// @return The chosen image array layer count
-    [[nodiscard]] static std::uint32_t choose_image_array_layer_count(std::uint32_t requested_count,
-                                                                      std::uint32_t max_count);
-
     /// Determine the swapchain image extent
     /// @param requested_extent The image extent requested by the programmer
     /// @param min_extent The minimum extent

@@ -66,11 +66,6 @@ Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_comp
     return std::nullopt;
 }
 
-std::uint32_t Swapchain::choose_image_array_layer_count(const std::uint32_t requested_count,
-                                                        const std::uint32_t max_count) {
-    return std::clamp(requested_count, 1u, max_count);
-}
-
 VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, const VkExtent2D &min_extent,
                                           const VkExtent2D &max_extent, const VkExtent2D &current_extent) {
     if (current_extent.width == std::numeric_limits<std::uint32_t>::max()) {
@@ -235,7 +230,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         .imageFormat = m_surface_format.value().format,
         .imageColorSpace = m_surface_format.value().colorSpace,
         .imageExtent = choose_image_extent(requested_extent, caps.minImageExtent, caps.maxImageExtent, m_extent),
-        .imageArrayLayers = choose_image_array_layer_count(1, caps.maxImageArrayLayers),
+        .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .preTransform = choose_surface_transform(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, caps.supportedTransforms,

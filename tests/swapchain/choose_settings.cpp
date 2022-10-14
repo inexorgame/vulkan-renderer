@@ -22,11 +22,6 @@ TEST(Swapchain, choose_composite_alpha) {
     }
 }
 
-TEST(Swapchain, choose_image_array_layer_count) {
-    EXPECT_EQ(Swapchain::choose_image_array_layer_count(0, 2), 1);
-    EXPECT_EQ(Swapchain::choose_image_array_layer_count(5, 2), 2);
-}
-
 TEST(Swapchain, choose_image_extent) {
     const VkExtent2D numeric_limit{std::numeric_limits<std::uint32_t>::max(),
                                    std::numeric_limits<std::uint32_t>::max()};
