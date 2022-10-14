@@ -423,6 +423,21 @@ bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::ui
     return supported == VK_TRUE;
 }
 
+VkSurfaceCapabilitiesKHR Device::get_surface_capabilities(const VkSurfaceKHR surface) const {
+    VkSurfaceCapabilitiesKHR caps{};
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical_device, surface, &caps);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
+    }
+    return caps;
+}
+
+bool Device::does_format_support_feature(const VkSurfaceKHR surface,
+                                         const VkFormatFeatureFlagBits requested_format_feature) const {
+    const auto surface_capabilities = get_surface_capabilities(surface);
+    return (surface_capabilities.supportedUsageFlags & requested_format_feature) != 0u;
+}
+
 void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues (not just graphics)

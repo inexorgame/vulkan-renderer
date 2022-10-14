@@ -113,6 +113,19 @@ public:
         return m_device;
     }
 
+    /// Check if a given VkFormat supports a certain format feature
+    /// @param surface The window surface
+    /// @param requested_format_feature The requested format feature
+    /// @return ``true`` if the format feature is supported
+    [[nodiscard]] bool does_format_support_feature(VkSurfaceKHR surface,
+                                                   VkFormatFeatureFlagBits requested_format_feature) const;
+
+    /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+    /// @param surface The window surface
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
+    /// @return The surface capabilities
+    [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
+
     /// Call vkGetPhysicalDeviceSurfaceSupportKHR
     /// @param surface The window surface
     /// @param queue_family_index The queue family index
