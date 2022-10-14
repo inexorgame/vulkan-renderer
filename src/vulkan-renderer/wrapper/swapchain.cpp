@@ -26,7 +26,6 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_surface_format = other.m_surface_format;
     m_imgs = std::move(other.m_imgs);
     m_img_views = std::move(other.m_img_views);
-    m_img_count = other.m_img_count;
     m_extent = other.m_extent;
 }
 
@@ -259,17 +258,16 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
     m_extent.height = height;
 
     m_imgs = get_swapchain_images(m_device.device(), m_swapchain);
-    m_img_count = static_cast<std::uint32_t>(m_imgs.size());
 
-    if (m_img_count == 0) {
+    if (m_imgs.empty()) {
         throw std::runtime_error("Error: Swapchain image count is 0!");
     }
 
-    spdlog::trace("Creating {} swapchain image views", m_img_count);
+    spdlog::trace("Creating {} swapchain image views", m_imgs.size());
 
-    m_img_views.resize(m_img_count);
+    m_img_views.resize(m_imgs.size());
 
-    for (std::size_t i = 0; i < m_img_count; i++) {
+    for (std::size_t i = 0; i < m_imgs.size(); i++) {
         const auto img_view_ci = make_info<VkImageViewCreateInfo>({
             .image = m_imgs[i],
             .viewType = VK_IMAGE_VIEW_TYPE_2D,

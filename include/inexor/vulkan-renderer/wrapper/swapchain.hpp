@@ -25,7 +25,6 @@ private:
     std::optional<VkSurfaceFormatKHR> m_surface_format{};
     std::vector<VkImage> m_imgs;
     std::vector<VkImageView> m_img_views;
-    std::uint32_t m_img_count{0};
     VkExtent2D m_extent{};
 
     /// Setup the swapchain
@@ -136,7 +135,7 @@ public:
     [[nodiscard]] static std::vector<VkImage> get_swapchain_images(VkDevice device, VkSwapchainKHR swapchain);
 
     [[nodiscard]] std::uint32_t image_count() const {
-        return m_img_count;
+        return static_cast<std::uint32_t>(m_imgs.size());
     }
 
     [[nodiscard]] VkFormat image_format() const {
