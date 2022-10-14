@@ -128,6 +128,13 @@ public:
         return m_extent;
     }
 
+    /// Call vkGetSwapchainImagesKHR
+    /// @param device The device
+    /// @param swapchain The swapchain to get the images from
+    /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
+    /// @return A std::vector of swapchain images (this can be empty!)
+    [[nodiscard]] static std::vector<VkImage> get_swapchain_images(VkDevice device, VkSwapchainKHR swapchain);
+
     [[nodiscard]] std::uint32_t image_count() const {
         return m_img_count;
     }

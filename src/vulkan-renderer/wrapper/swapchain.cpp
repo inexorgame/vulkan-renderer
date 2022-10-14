@@ -163,6 +163,19 @@ VkSurfaceTransformFlagBitsKHR Swapchain::choose_surface_transform(const VkSurfac
     return current;
 }
 
+std::vector<VkImage> Swapchain::get_swapchain_images(const VkDevice device, const VkSwapchainKHR swapchain) {
+    assert(device);
+    std::uint32_t count = 0;
+    if (const auto result = vkGetSwapchainImagesKHR(device, swapchain, &count, nullptr); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
+    }
+    std::vector<VkImage> imgs(count);
+    if (const auto result = vkGetSwapchainImagesKHR(device, swapchain, &count, imgs.data()); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
+    }
+    return imgs;
+}
+
 void Swapchain::present(const std::uint32_t img_index) {
     const auto present_info = make_info<VkPresentInfoKHR>({
         .swapchainCount = 1,
@@ -245,7 +258,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
     m_extent.width = width;
     m_extent.height = height;
 
-    m_imgs = vk_tools::get_swapchain_images(m_device.device(), m_swapchain);
+    m_imgs = get_swapchain_images(m_device.device(), m_swapchain);
     m_img_count = static_cast<std::uint32_t>(m_imgs.size());
 
     if (m_img_count == 0) {

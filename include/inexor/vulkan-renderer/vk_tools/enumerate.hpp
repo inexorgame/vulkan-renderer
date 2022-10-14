@@ -45,11 +45,4 @@ namespace inexor::vulkan_renderer::vk_tools {
 [[nodiscard]] std::vector<VkPresentModeKHR> get_surface_present_modes(VkPhysicalDevice physical_device,
                                                                       VkSurfaceKHR surface);
 
-/// Call vkGetSwapchainImagesKHR
-/// @param device The device
-/// @param swapchain The swapchain to get the images from
-/// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
-/// @return A std::vector of swapchain images (this can be empty!)
-[[nodiscard]] std::vector<VkImage> get_swapchain_images(VkDevice device, VkSwapchainKHR swapchain);
-
 } // namespace inexor::vulkan_renderer::vk_tools

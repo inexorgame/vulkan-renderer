@@ -79,17 +79,4 @@ std::vector<VkPresentModeKHR> get_surface_present_modes(const VkPhysicalDevice p
     return present_modes;
 }
 
-std::vector<VkImage> get_swapchain_images(const VkDevice device, const VkSwapchainKHR swapchain) {
-    assert(device);
-    std::uint32_t count = 0;
-    if (const auto result = vkGetSwapchainImagesKHR(device, swapchain, &count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
-    }
-    std::vector<VkImage> imgs(count);
-    if (const auto result = vkGetSwapchainImagesKHR(device, swapchain, &count, imgs.data()); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
-    }
-    return imgs;
-}
-
 } // namespace inexor::vulkan_renderer::vk_tools
