@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -29,11 +30,10 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_extent = other.m_extent;
 }
 
-std::uint32_t Swapchain::acquire_next_image_index(const VkSemaphore semaphore, const VkFence fence,
-                                                  const std::uint64_t timeout) {
+std::uint32_t Swapchain::acquire_next_image_index(const Semaphore &semaphore, const std::uint64_t timeout) {
     std::uint32_t img_index = 0;
-    if (const auto result =
-            vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout, semaphore, fence, &img_index);
+    if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout, *semaphore.semaphore(),
+                                                  VK_NULL_HANDLE, &img_index);
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain

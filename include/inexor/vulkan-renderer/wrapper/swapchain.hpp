@@ -13,8 +13,9 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-// Forward declaration
+// Forward declarations
 class Device;
+class Semaphore;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
@@ -52,13 +53,12 @@ public:
     Swapchain &operator=(Swapchain &&) = delete;
 
     /// Call vkAcquireNextImageKHR
-    /// @param semaphore The semaphore to index signal (``VK_NULL_HANDLE`` by default)
-    /// @param fence The fence to signal (``VK_NULL_HANDLE`` by default)
+    /// @param semaphore The semaphore to signal
     /// @param timeout (``std::numeric_limits<std::uint64_t>::max()`` by default)
     /// @exception VulkanException vkAcquireNextImageKHR call failed
     /// @return The index of the next image
     [[nodiscard]] std::uint32_t
-    acquire_next_image_index(VkSemaphore semaphore = VK_NULL_HANDLE, VkFence fence = VK_NULL_HANDLE,
+    acquire_next_image_index(const Semaphore &semaphore,
                              std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
 
     /// Choose the composite alpha

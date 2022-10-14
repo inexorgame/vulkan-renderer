@@ -101,7 +101,7 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
-    const auto image_index = m_swapchain->acquire_next_image_index(*m_img_available->semaphore());
+    const auto image_index = m_swapchain->acquire_next_image_index(*m_img_available);
     const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
