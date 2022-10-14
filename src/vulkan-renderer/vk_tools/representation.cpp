@@ -6,6 +6,25 @@ namespace inexor::vulkan_renderer::vk_tools {
 
 // Please keep the functions in here in alphabetical order (sort by function names, then by parameter types)
 
+/// Convert a VkCompositeAlphaFlagBitsKHR into the corresponding std::string_view
+/// @param flag The composite alpha flag bit
+/// @return A std::string_view which contains the composite alpha flag bit
+template <>
+std::string_view as_string(const VkCompositeAlphaFlagBitsKHR flag) {
+    switch (flag) {
+    case VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR";
+    case VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR";
+    case VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR";
+    case VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR";
+    default:
+        return "Unknown VkCompositeAlphaFlagBitsKHR";
+    }
+}
+
 /// @brief Convert a VkFormat value into the corresponding std::string_view
 /// @param format The VkFormat to convert
 /// @return A std::string_view which contains the format
@@ -500,6 +519,33 @@ std::string_view as_string(const VkFormat format) {
     return "Unknown VkFormat";
 }
 
+/// Convert a VkImageUsageFlagBits value into the corresponding std::string_view
+/// @param img_usage_flag_bits The image usage flag bit
+/// @return A std::string_view which contains the image usage flag bit
+template <>
+std::string_view as_string(const VkImageUsageFlagBits img_usage_flag_bits) {
+    switch (img_usage_flag_bits) {
+    case VK_IMAGE_USAGE_TRANSFER_SRC_BIT:
+        return "VK_IMAGE_USAGE_TRANSFER_SRC_BIT";
+    case VK_IMAGE_USAGE_TRANSFER_DST_BIT:
+        return "VK_IMAGE_USAGE_TRANSFER_DST_BIT";
+    case VK_IMAGE_USAGE_SAMPLED_BIT:
+        return "VK_IMAGE_USAGE_SAMPLED_BIT";
+    case VK_IMAGE_USAGE_STORAGE_BIT:
+        return "VK_IMAGE_USAGE_STORAGE_BIT";
+    case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT";
+    case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT";
+    case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT";
+    case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ";
+    default:
+        return "Unknown VkImageUsageFlagBits";
+    }
+}
+
 /// @brief Convert a VkMemoryPropertyFlagBits value into the corresponding std::string_view
 /// @param mem_prop_flag_bit The VkMemoryPropertyFlagBits to convert
 /// @return A std::string_view which contains the memory property flag bit
@@ -690,6 +736,43 @@ std::string_view as_string(const VkResult result) {
         break;
     }
     return "Unknown VkResult";
+}
+
+/// Convert the format member of a VkSurfaceFormatKHR value into the corresponding std::string_view
+/// @param surface_format The surface format
+/// @return A std::string_view which contains the surface format
+template <>
+std::string_view as_string(const VkSurfaceFormatKHR surface_format) {
+    return as_string(surface_format.format);
+}
+
+/// Convert a VkSurfaceTransformFlagBitsKHR value into the corresponding std::string_view
+/// @param flag The surface transform flag
+/// @return A std::string_view which contains the surface transform flag
+template <>
+std::string_view as_string(const VkSurfaceTransformFlagBitsKHR flag) {
+    switch (flag) {
+    case VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR";
+    default:
+        return "Unknown VkSurfaceTransformFlagBitsKHR";
+    }
 }
 
 std::string_view get_device_feature_description(const std::size_t index) {
