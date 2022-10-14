@@ -53,7 +53,7 @@ Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_comp
     }
 
     static const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags{
-        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
         VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
 
     for (const auto flag : composite_alpha_flags) {
@@ -218,7 +218,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR};
 
     const auto composite_alpha =
-        choose_composite_alpha(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, caps.supportedCompositeAlpha);
+        choose_composite_alpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, caps.supportedCompositeAlpha);
 
     if (!composite_alpha) {
         throw std::runtime_error("Error: Could not find suitable composite alpha!");
