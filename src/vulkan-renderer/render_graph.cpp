@@ -184,7 +184,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
         cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
             .renderPass = phys_graphics_stage->m_render_pass,
-            .framebuffer = phys_graphics_stage->m_framebuffers[image_index].get(),
+            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
             .renderArea{
                 .extent = m_swapchain.extent(),
             },
