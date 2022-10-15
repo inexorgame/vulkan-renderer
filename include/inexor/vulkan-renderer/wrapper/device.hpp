@@ -119,7 +119,7 @@ public:
     /// @return The surface capabilities
     [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
 
-    /// Check if a format a certain feature
+    /// Check if a format supports a feature for images created with ``VK_IMAGE_TILING_OPTIMAL``
     /// @param format The format
     /// @param feature The requested format feature
     /// @return ``true`` if the format feature is supported
