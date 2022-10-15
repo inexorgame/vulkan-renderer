@@ -85,14 +85,6 @@ public:
                                                         const VkExtent2D &min_extent, const VkExtent2D &max_extent,
                                                         const VkExtent2D &current_extent);
 
-    /// Choose the swapchain image count
-    /// @param requested_count The requested swapchain image count
-    /// @param min_count The minimum image count
-    /// @param max_count The maximum image count
-    /// @return The chosen swapchain image count
-    [[nodiscard]] static std::uint32_t choose_image_count(std::uint32_t requested_count, std::uint32_t min_count,
-                                                          std::uint32_t max_count);
-
     /// Choose the present mode
     /// @param available_present_modes The available present modes
     /// @param present_mode_priority_list The acceptable present modes (``DEFAULT_PRESENT_MODE_PRIORITY_LIST`` by

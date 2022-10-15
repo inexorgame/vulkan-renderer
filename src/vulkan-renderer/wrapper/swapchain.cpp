@@ -82,11 +82,6 @@ VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, co
     };
 }
 
-std::uint32_t Swapchain::choose_image_count(const std::uint32_t requested_count, const std::uint32_t min_count,
-                                            const std::uint32_t max_count) {
-    return (max_count != 0) ? std::min(requested_count, max_count) : std::max(requested_count, min_count);
-}
-
 VkPresentModeKHR Swapchain::choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
                                                 const std::vector<VkPresentModeKHR> &present_mode_priority_list) {
     assert(!available_present_modes.empty());
@@ -227,7 +222,8 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
 
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
         .surface = m_surface,
-        .minImageCount = choose_image_count(caps.minImageCount + 1, caps.minImageCount, caps.maxImageCount),
+        .minImageCount = (caps.maxImageCount != 0) ? std::min(caps.minImageCount + 1, caps.maxImageCount)
+                                                   : std::max(caps.minImageCount + 1, caps.minImageCount),
         .imageFormat = m_surface_format.value().format,
         .imageColorSpace = m_surface_format.value().colorSpace,
         .imageExtent = choose_image_extent(requested_extent, caps.minImageExtent, caps.maxImageExtent, m_extent),

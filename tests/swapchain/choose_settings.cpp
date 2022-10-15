@@ -63,17 +63,6 @@ TEST(Swapchain, choose_image_extent) {
     EXPECT_EQ(result.height, max_extent.height);
 }
 
-TEST(Swapchain, choose_image_count) {
-    // The order of parameters is: request, min, max
-    // If the max count is not zero, there is a max count
-    EXPECT_EQ(Swapchain::choose_image_count(4, 1, 5), 4);
-    EXPECT_EQ(Swapchain::choose_image_count(5, 1, 5), 5);
-    EXPECT_EQ(Swapchain::choose_image_count(6, 1, 5), 5);
-
-    // If the max count is zero, there is no max count
-    EXPECT_EQ(Swapchain::choose_image_count(5, 1, 0), 5);
-}
-
 TEST(Swapchain, choose_present_mode) {
     const std::vector<VkPresentModeKHR> available_present_modes{
         VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR};
