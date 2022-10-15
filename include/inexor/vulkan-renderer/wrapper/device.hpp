@@ -113,13 +113,6 @@ public:
         return m_device;
     }
 
-    /// Check if a given VkFormat supports a certain format feature
-    /// @param surface The window surface
-    /// @param requested_format_feature The requested format feature
-    /// @return ``true`` if the format feature is supported
-    [[nodiscard]] bool does_format_support_feature(VkSurfaceKHR surface,
-                                                   VkFormatFeatureFlagBits requested_format_feature) const;
-
     /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
     /// @param surface The window surface
     /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
@@ -320,6 +313,12 @@ public:
     /// @param name The name which will be assigned to the command buffer
     /// @return A command buffer from the thread_local command pool
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
+
+    /// Check if a surface supports a certain format feature
+    /// @param surface The window surface
+    /// @param feature The requested format feature
+    /// @return ``true`` if the format feature is supported
+    [[nodiscard]] bool surface_supports_feature(VkSurfaceKHR surface, VkFormatFeatureFlagBits feature) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

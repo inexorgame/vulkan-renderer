@@ -431,10 +431,9 @@ VkSurfaceCapabilitiesKHR Device::get_surface_capabilities(const VkSurfaceKHR sur
     return caps;
 }
 
-bool Device::does_format_support_feature(const VkSurfaceKHR surface,
-                                         const VkFormatFeatureFlagBits requested_format_feature) const {
-    const auto surface_capabilities = get_surface_capabilities(surface);
-    return (surface_capabilities.supportedUsageFlags & requested_format_feature) != 0u;
+bool Device::surface_supports_feature(const VkSurfaceKHR surface, const VkFormatFeatureFlagBits feature) const {
+    const auto capabilities = get_surface_capabilities(surface);
+    return (capabilities.supportedUsageFlags & feature) != 0u;
 }
 
 void Device::execute(const std::string &name,
