@@ -95,28 +95,6 @@ TEST(Swapchain, choose_surface_format) {
     EXPECT_EQ(Swapchain::choose_surface_format(priority_list2, priority_list1), std::nullopt);
 }
 
-TEST(Swapchain, choose_surface_transform) {
-    const std::vector available_surface_transforms{VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR,
-                                                   VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR};
-    VkSurfaceTransformFlagsKHR available_flags{};
-    for (const auto flag : available_surface_transforms) {
-        available_flags |= flag;
-    }
-
-    const auto current = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-    for (const auto flag : available_surface_transforms) {
-        EXPECT_EQ(Swapchain::choose_surface_transform(flag, available_flags, current), flag);
-        EXPECT_EQ(Swapchain::choose_surface_transform(flag, 0x0, current), current);
-    }
-}
-
 TEST(Swapchain, is_image_usage_supported) {
     const std::vector available_img_usage_flags{
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT,

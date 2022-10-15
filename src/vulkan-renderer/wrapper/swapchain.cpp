@@ -141,17 +141,6 @@ Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &availabl
     return chosen_format;
 }
 
-VkSurfaceTransformFlagBitsKHR Swapchain::choose_surface_transform(const VkSurfaceTransformFlagBitsKHR requested,
-                                                                  const VkSurfaceTransformFlagsKHR supported,
-                                                                  const VkSurfaceTransformFlagBitsKHR current) {
-    if ((requested & supported) != 0u) {
-        return requested;
-    }
-    spdlog::trace("Requested swapchain surface transform '{}' is not supported, selecting {}",
-                  vk_tools::as_string(requested), vk_tools::as_string(current));
-    return current;
-}
-
 std::vector<VkImage> Swapchain::get_swapchain_images() {
     std::uint32_t count = 0;
     if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &count, nullptr);
@@ -230,14 +219,17 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .preTransform = choose_surface_transform(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, caps.supportedTransforms,
-                                                 caps.currentTransform),
+        .preTransform = ((VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR & caps.supportedTransforms) != 0u)
+                            ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+                            : caps.currentTransform,
         .compositeAlpha = composite_alpha.value(),
         .presentMode = choose_present_mode(vk_tools::get_surface_present_modes(m_device.physical_device(), m_surface),
                                            default_present_mode_priorities),
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });
+
+    spdlog::trace("Using swapchain surface transform {}", vk_tools::as_string(swapchain_ci.preTransform));
 
     spdlog::trace("Creating swapchain");
 

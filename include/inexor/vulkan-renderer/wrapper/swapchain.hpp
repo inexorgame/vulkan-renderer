@@ -104,15 +104,6 @@ public:
     choose_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats,
                           const std::vector<VkSurfaceFormatKHR> &format_prioriy_list = {});
 
-    /// Choose the surface transform
-    /// @param request The requested surface transform
-    /// @param supported The supported surface transform
-    /// @param current The current surface transform
-    /// @return The chosen image transform
-    [[nodiscard]] static VkSurfaceTransformFlagBitsKHR choose_surface_transform(VkSurfaceTransformFlagBitsKHR requested,
-                                                                                VkSurfaceTransformFlagsKHR supported,
-                                                                                VkSurfaceTransformFlagBitsKHR current);
-
     [[nodiscard]] VkExtent2D extent() const {
         return m_extent;
     }
