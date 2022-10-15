@@ -172,11 +172,6 @@ void Swapchain::present(const std::uint32_t img_index) {
     }
 }
 
-bool Swapchain::is_image_usage_supported(const VkImageUsageFlagBits requested_flag,
-                                         const VkImageUsageFlags supported_flags) {
-    return (supported_flags & requested_flag) != 0u;
-}
-
 void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height) {
     // Store the old swapchain to speed up recreation later
     auto *const old_swapchain = m_swapchain;
@@ -204,7 +199,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         throw std::runtime_error("Error: Could not find suitable composite alpha!");
     }
 
-    if (!is_image_usage_supported(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, caps.supportedUsageFlags)) {
+    if ((caps.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == 0u) {
         throw std::runtime_error(
             "Error: Swapchain image usage flag bit VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT is not supported!");
     }

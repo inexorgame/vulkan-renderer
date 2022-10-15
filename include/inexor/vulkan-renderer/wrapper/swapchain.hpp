@@ -120,13 +120,6 @@ public:
         return m_img_views;
     }
 
-    /// Check if a certain image usage flag is supported
-    /// @param requested_flag The requested flag
-    /// @param supported_flags The supported flags
-    /// @return ``true`` if the requested image usage flag is supported
-    [[nodiscard]] static bool is_image_usage_supported(VkImageUsageFlagBits requested_flag,
-                                                       VkImageUsageFlags supported_flags);
-
     /// Call vkQueuePresentKHR
     /// @param img_index The image index
     /// @exception VulkanException vkQueuePresentKHR call failed

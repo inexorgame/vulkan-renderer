@@ -95,27 +95,4 @@ TEST(Swapchain, choose_surface_format) {
     EXPECT_EQ(Swapchain::choose_surface_format(priority_list2, priority_list1), std::nullopt);
 }
 
-TEST(Swapchain, is_image_usage_supported) {
-    const std::vector available_img_usage_flags{
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_USAGE_STORAGE_BIT,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-        VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-    };
-
-    VkImageUsageFlags available_flags{};
-    for (const auto flag : available_img_usage_flags) {
-        available_flags |= flag;
-    }
-
-    for (const auto flag : available_img_usage_flags) {
-        EXPECT_EQ(Swapchain::is_image_usage_supported(flag, available_flags), true);
-        EXPECT_EQ(Swapchain::is_image_usage_supported(flag, 0x0), false);
-    }
-}
-
 } // namespace inexor::vulkan_renderer::wrapper
