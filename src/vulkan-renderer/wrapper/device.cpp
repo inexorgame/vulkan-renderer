@@ -437,9 +437,9 @@ bool Device::format_supports_feature(const VkFormat format, const VkFormatFeatur
     return (properties.optimalTilingFeatures & feature) != 0u;
 }
 
-bool Device::surface_supports_feature(const VkSurfaceKHR surface, const VkFormatFeatureFlagBits feature) const {
+bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsageFlagBits usage) const {
     const auto capabilities = get_surface_capabilities(surface);
-    return (capabilities.supportedUsageFlags & feature) != 0u;
+    return (capabilities.supportedUsageFlags & usage) != 0u;
 }
 
 void Device::execute(const std::string &name,

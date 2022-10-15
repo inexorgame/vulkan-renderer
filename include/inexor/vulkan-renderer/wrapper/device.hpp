@@ -320,11 +320,11 @@ public:
     /// @return A command buffer from the thread_local command pool
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
 
-    /// Check if a surface supports a certain format feature
+    /// Check if a surface supports a certain image usage
     /// @param surface The window surface
-    /// @param feature The requested format feature
+    /// @param usage The requested image usage
     /// @return ``true`` if the format feature is supported
-    [[nodiscard]] bool surface_supports_feature(VkSurfaceKHR surface, VkFormatFeatureFlagBits feature) const;
+    [[nodiscard]] bool surface_supports_usage(VkSurfaceKHR surface, VkImageUsageFlagBits usage) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
