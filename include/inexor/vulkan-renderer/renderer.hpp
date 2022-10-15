@@ -61,7 +61,6 @@ protected:
     std::unique_ptr<wrapper::WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
-    std::unique_ptr<wrapper::Semaphore> m_img_available;
     std::unique_ptr<RenderGraph> m_render_graph;
 
     std::vector<wrapper::Shader> m_shaders;

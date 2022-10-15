@@ -3,9 +3,11 @@
 #include <vulkan/vulkan_core.h>
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <set>
 #include <span>
@@ -27,6 +29,7 @@ private:
     std::vector<VkImage> m_imgs;
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_extent{};
+    std::unique_ptr<Semaphore> m_img_available;
 
     /// Call vkGetSwapchainImagesKHR
     /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
@@ -58,13 +61,11 @@ public:
     Swapchain &operator=(Swapchain &&) = delete;
 
     /// Call vkAcquireNextImageKHR
-    /// @param semaphore The semaphore to signal
     /// @param timeout (``std::numeric_limits<std::uint64_t>::max()`` by default)
     /// @exception VulkanException vkAcquireNextImageKHR call failed
     /// @return The index of the next image
     [[nodiscard]] std::uint32_t
-    acquire_next_image_index(const Semaphore &semaphore,
-                             std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
+    acquire_next_image_index(std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
 
     /// Choose the composite alpha
     /// @param request_composite_alpha requested compositing flag
@@ -106,6 +107,10 @@ public:
 
     [[nodiscard]] VkExtent2D extent() const {
         return m_extent;
+    }
+
+    [[nodiscard]] const VkSemaphore *image_available_semaphore() const {
+        return m_img_available->semaphore();
     }
 
     [[nodiscard]] std::uint32_t image_count() const {

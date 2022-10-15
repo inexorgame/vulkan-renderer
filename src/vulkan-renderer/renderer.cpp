@@ -80,9 +80,6 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
-    m_img_available.reset();
-    m_img_available = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
-
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
@@ -101,7 +98,7 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
-    const auto image_index = m_swapchain->acquire_next_image_index(*m_img_available);
+    const auto image_index = m_swapchain->acquire_next_image_index();
     const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
@@ -110,7 +107,7 @@ void VulkanRenderer::render_frame() {
 
     cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = m_img_available->semaphore(),
+        .pWaitSemaphores = m_swapchain->image_available_semaphore(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
         .pCommandBuffers = cmd_buf.ptr(),
