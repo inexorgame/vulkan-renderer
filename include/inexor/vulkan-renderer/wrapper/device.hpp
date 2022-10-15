@@ -119,6 +119,12 @@ public:
     /// @return The surface capabilities
     [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
 
+    /// Check if a format a certain feature
+    /// @param format The format
+    /// @param feature The requested format feature
+    /// @return ``true`` if the format feature is supported
+    [[nodiscard]] bool format_supports_feature(VkFormat format, VkFormatFeatureFlagBits feature) const;
+
     /// Call vkGetPhysicalDeviceSurfaceSupportKHR
     /// @param surface The window surface
     /// @param queue_family_index The queue family index

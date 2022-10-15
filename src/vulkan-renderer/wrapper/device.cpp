@@ -431,6 +431,12 @@ VkSurfaceCapabilitiesKHR Device::get_surface_capabilities(const VkSurfaceKHR sur
     return caps;
 }
 
+bool Device::format_supports_feature(const VkFormat format, const VkFormatFeatureFlagBits feature) const {
+    VkFormatProperties properties{};
+    vkGetPhysicalDeviceFormatProperties(m_physical_device, format, &properties);
+    return (properties.optimalTilingFeatures & feature) != 0u;
+}
+
 bool Device::surface_supports_feature(const VkSurfaceKHR surface, const VkFormatFeatureFlagBits feature) const {
     const auto capabilities = get_surface_capabilities(surface);
     return (capabilities.supportedUsageFlags & feature) != 0u;
