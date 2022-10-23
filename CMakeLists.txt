@@ -15,6 +15,7 @@ option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(INEXOR_BUILD_DOC "Build documentation" OFF)
 option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
+option(INEXOR_BUILD_WITH_CHECKS "Build tests" OFF)
 set(INEXOR_CONAN_PROFILE "default" CACHE STRING "conan profile")
 option(INEXOR_FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
@@ -64,6 +65,10 @@ if (FORCE_COLORED_OUTPUT)
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         add_compile_options(-fcolor-diagnostics)
     endif()
+endif()
+
+if(INEXOR_BUILD_WITH_CHECKS)
+    add_compile_options("-Wall" "-Wextra")
 endif()
 
 add_subdirectory(shaders)
