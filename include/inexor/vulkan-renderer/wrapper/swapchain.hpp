@@ -29,6 +29,7 @@ private:
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_extent{};
     std::unique_ptr<Semaphore> m_img_available;
+    bool m_vsync_enabled{false};
 
     /// Call vkGetSwapchainImagesKHR
     /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
@@ -136,7 +137,8 @@ public:
     /// Recreate the swapchain by calling ``setup_swapchain``
     /// @param width The swapchain image width
     /// @param height The swapchain image height
-    void recreate(std::uint32_t width, std::uint32_t height);
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
+    void recreate(std::uint32_t width, std::uint32_t height, bool vsync_enabled);
 
     [[nodiscard]] const VkSwapchainKHR *swapchain() const {
         return &m_swapchain;

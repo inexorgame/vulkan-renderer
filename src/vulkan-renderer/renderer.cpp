@@ -76,7 +76,7 @@ void VulkanRenderer::recreate_swapchain() {
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
-    m_swapchain->recreate(m_window->width(), m_window->height());
+    m_swapchain->recreate(m_window->width(), m_window->height(), m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 

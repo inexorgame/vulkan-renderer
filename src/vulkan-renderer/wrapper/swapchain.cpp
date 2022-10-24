@@ -19,7 +19,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 Swapchain::Swapchain(Device &device, VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
                      const bool vsync_enabled)
-    : m_device(device), m_surface(surface) {
+    : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
     setup_swapchain(width, height, vsync_enabled);
 }
@@ -32,6 +32,7 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_img_views = std::move(other.m_img_views);
     m_extent = other.m_extent;
     m_img_available = std::exchange(other.m_img_available, nullptr);
+    m_vsync_enabled = other.m_vsync_enabled;
 }
 
 std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
@@ -41,7 +42,7 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain
-            recreate(m_extent.width, m_extent.height);
+            recreate(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
             throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
         }
@@ -171,7 +172,7 @@ void Swapchain::present(const std::uint32_t img_index) {
     if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain
-            recreate(m_extent.width, m_extent.height);
+            recreate(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
             // Exception is thrown if result is not VK_SUCCESS but also not VK_SUBOPTIMAL_KHR
             throw VulkanException("Error: vkQueuePresentKHR failed!", result);
@@ -179,7 +180,7 @@ void Swapchain::present(const std::uint32_t img_index) {
     }
 }
 
-void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height) {
+void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
     // Store the old swapchain to speed up recreation later
     auto *const old_swapchain = m_swapchain;
     for (auto *const img_view : m_img_views) {
@@ -187,7 +188,7 @@ void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height) 
     }
     m_imgs.clear();
     m_img_views.clear();
-    setup_swapchain(width, height, old_swapchain);
+    setup_swapchain(width, height, vsync_enabled, old_swapchain);
 }
 
 void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled,
