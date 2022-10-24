@@ -67,15 +67,22 @@ TEST(Swapchain, choose_present_mode) {
     const std::vector<VkPresentModeKHR> available_present_modes{
         VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR};
 
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_IMMEDIATE_KHR}),
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_IMMEDIATE_KHR}, false),
               VK_PRESENT_MODE_IMMEDIATE_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_MAILBOX_KHR}),
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_IMMEDIATE_KHR}, true),
+              VK_PRESENT_MODE_FIFO_KHR);
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_MAILBOX_KHR}, false),
               VK_PRESENT_MODE_MAILBOX_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_RELAXED_KHR}),
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_MAILBOX_KHR}, true),
+              VK_PRESENT_MODE_FIFO_KHR);
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_RELAXED_KHR}, false),
               VK_PRESENT_MODE_FIFO_RELAXED_KHR);
-
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_RELAXED_KHR}, true),
+              VK_PRESENT_MODE_FIFO_KHR);
     // This one is guaranteed to be available in any case
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_KHR}),
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_KHR}, false),
+              VK_PRESENT_MODE_FIFO_KHR);
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_KHR}, true),
               VK_PRESENT_MODE_FIFO_KHR);
 }
 
