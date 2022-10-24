@@ -38,10 +38,12 @@ private:
     /// Setup the swapchain
     /// @param width The width of the swapchain images
     /// @param height The height of the swapchain images
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
     /// @param old_swapchain The old swapchain which can be passed in to speed up swapchain recreation
     /// @exception VulkanException vkCreateSwapchainKHR call failed
     /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
-    void setup_swapchain(std::uint32_t width, std::uint32_t height, VkSwapchainKHR old_swapchain = VK_NULL_HANDLE);
+    void setup_swapchain(std::uint32_t width, std::uint32_t height, bool vsync_enabled,
+                         VkSwapchainKHR old_swapchain = VK_NULL_HANDLE);
 
 public:
     /// Default constructor
@@ -49,7 +51,8 @@ public:
     /// @param surface The surface
     /// @param width The swapchain image width
     /// @param height The swapchain image height
-    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height);
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
+    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
@@ -88,12 +91,13 @@ public:
     /// Choose the present mode
     /// @param available_present_modes The available present modes
     /// @param present_mode_priority_list The acceptable present modes (``DEFAULT_PRESENT_MODE_PRIORITY_LIST`` by
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
     /// default). Index ``0`` has highest priority, index ``n`` has lowest priority)
     /// @return The chosen present mode
     /// @note If none of the ``present_mode_priority_list`` are supported, ``VK_PRESENT_MODE_FIFO_KHR`` will be returned
     [[nodiscard]] static VkPresentModeKHR
     choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                        const std::vector<VkPresentModeKHR> &present_mode_priority_list);
+                        const std::vector<VkPresentModeKHR> &present_mode_priority_list, bool vsync_enabled);
 
     /// Choose a surface format
     /// @param available_formats The available surface formats

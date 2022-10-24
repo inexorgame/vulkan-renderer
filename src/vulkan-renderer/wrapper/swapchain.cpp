@@ -17,10 +17,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(Device &device, VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height)
+Swapchain::Swapchain(Device &device, VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
+                     const bool vsync_enabled)
     : m_device(device), m_surface(surface) {
     m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
-    setup_swapchain(width, height);
+    setup_swapchain(width, height, vsync_enabled);
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
@@ -86,14 +87,17 @@ VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, co
 }
 
 VkPresentModeKHR Swapchain::choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                                                const std::vector<VkPresentModeKHR> &present_mode_priority_list) {
+                                                const std::vector<VkPresentModeKHR> &present_mode_priority_list,
+                                                const bool vsync_enabled) {
     assert(!available_present_modes.empty());
     assert(!present_mode_priority_list.empty());
-    for (const auto requested_present_mode : present_mode_priority_list) {
-        const auto present_mode =
-            std::find(available_present_modes.begin(), available_present_modes.end(), requested_present_mode);
-        if (present_mode != available_present_modes.end()) {
-            return *present_mode;
+    if (!vsync_enabled) {
+        for (const auto requested_present_mode : present_mode_priority_list) {
+            const auto present_mode =
+                std::find(available_present_modes.begin(), available_present_modes.end(), requested_present_mode);
+            if (present_mode != available_present_modes.end()) {
+                return *present_mode;
+            }
         }
     }
     return VK_PRESENT_MODE_FIFO_KHR;
@@ -186,7 +190,7 @@ void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height) 
     setup_swapchain(width, height, old_swapchain);
 }
 
-void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height,
+void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled,
                                 const VkSwapchainKHR old_swapchain) {
     const auto caps = m_device.get_surface_capabilities(m_surface);
     m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.physical_device(), m_surface));
@@ -222,7 +226,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
                             : caps.currentTransform,
         .compositeAlpha = composite_alpha.value(),
         .presentMode = choose_present_mode(vk_tools::get_surface_present_modes(m_device.physical_device(), m_surface),
-                                           default_present_mode_priorities),
+                                           default_present_mode_priorities, vsync_enabled),
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });
