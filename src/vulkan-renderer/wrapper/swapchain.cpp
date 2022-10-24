@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"

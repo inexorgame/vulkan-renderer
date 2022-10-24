@@ -1,9 +1,8 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
-
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+
+#include <vulkan/vulkan_core.h>
 
 #include <cstdint>
 #include <limits>
