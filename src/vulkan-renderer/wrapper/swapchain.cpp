@@ -249,9 +249,9 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
 
     m_img_views.resize(m_imgs.size());
 
-    for (std::size_t i = 0; i < m_imgs.size(); i++) {
+    for (std::size_t img_index = 0; img_index < m_imgs.size(); img_index++) {
         const auto img_view_ci = make_info<VkImageViewCreateInfo>({
-            .image = m_imgs[i],
+            .image = m_imgs[img_index],
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .format = m_surface_format.value().format,
             .components{
@@ -269,7 +269,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
             },
         });
 
-        m_device.create_image_view(img_view_ci, &m_img_views[i], "swapchain image view");
+        m_device.create_image_view(img_view_ci, &m_img_views[img_index], "swapchain image view");
     }
 }
 
