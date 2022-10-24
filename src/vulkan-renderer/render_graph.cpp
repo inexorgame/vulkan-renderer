@@ -514,9 +514,7 @@ void RenderGraph::compile(const RenderResource *target) {
                 std::vector<VkImageView> image_views;
                 image_views.reserve(back_buffers.size() + images.size());
                 for (auto *const img_view : m_swapchain.image_views()) {
-                    for (std::size_t i = 0; i < back_buffers.size(); i++) {
-                        image_views.push_back(img_view);
-                    }
+                    std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
                     for (const auto *image : images) {
                         image_views.push_back(image->m_image_view);
                     }
