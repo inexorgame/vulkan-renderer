@@ -111,28 +111,36 @@ target_include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
-if(CONAN_LIBS)
-    target_link_libraries(
-        inexor-vulkan-renderer
+# TODO: Change on Conan 2.0
+function(find_conan_package NAME)
+    get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
+        find_package(${NAME} CONFIG REQUIRED)
+    else()
+        find_package(${NAME} REQUIRED)
+    endif()
+endfunction()
+find_conan_package(glfw3)
+find_conan_package(glm)
+find_conan_package(imgui)
+find_conan_package(spdlog)
+find_conan_package(stb)
+find_conan_package(TinyGLTF)
+find_conan_package(toml11)
+find_conan_package(Vulkan)
+find_conan_package(vulkan-memory-allocator)
 
-        PUBLIC
-        ${CONAN_LIBS}
-    )
-else()
-    foreach(_LIB ${CONAN_LIBS_RELEASE})
-        target_link_libraries(
-            inexor-vulkan-renderer
-            optimized
+target_link_libraries(
+    inexor-vulkan-renderer
 
-            ${_LIB}
-        )
-    endforeach()
-    foreach(_LIB ${CONAN_LIBS_DEBUG})
-        target_link_libraries(
-            inexor-vulkan-renderer
-            debug
-
-            ${_LIB}
-        )
-    endforeach()
-endif()
+    PUBLIC
+    glfw::glfw
+    glm::glm
+    imgui::imgui
+    spdlog::spdlog
+    stb::stb
+    TinyGLTF::TinyGLTF
+    toml11::toml11
+    Vulkan::Vulkan
+    vulkan-memory-allocator::vulkan-memory-allocator
+)

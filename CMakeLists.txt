@@ -15,6 +15,7 @@ option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(INEXOR_BUILD_DOC "Build documentation" OFF)
 option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
+option(INEXOR_USE_CONAN "Use conan to get required tools and dependencies." ON)
 set(INEXOR_CONAN_PROFILE "default" CACHE STRING "conan profile")
 option(INEXOR_FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
@@ -22,6 +23,7 @@ message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
 message(STATUS "INEXOR_BUILD_EXAMPLE = ${INEXOR_BUILD_EXAMPLE}")
 message(STATUS "INEXOR_BUILD_TESTS= ${INEXOR_BUILD_TESTS}")
+message(STATUS "INEXOR_USE_CONAN = ${INEXOR_USE_CONAN}")
 message(STATUS "INEXOR_CONAN_PROFILE = ${INEXOR_CONAN_PROFILE}")
 
 message(STATUS "CMAKE_VERSION = ${CMAKE_VERSION}")
@@ -32,7 +34,9 @@ message(STATUS "Linker executable: ${CMAKE_LINKER}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # Dependency setup with conan
-include(conan_setup)
+if (${INEXOR_USE_CONAN})
+    include(conan_setup)
+endif()
 
 # The marked constants in application.hpp will be replaced with the following values
 set(INEXOR_ENGINE_NAME "Inexor Engine")

@@ -39,14 +39,13 @@ if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
             BUILD outdated
             REMOTE conancenter
             PROFILE ${INEXOR_CONAN_PROFILE}
-            GENERATOR cmake_multi
+            GENERATOR cmake_find_package_multi
             OPTIONS build_benchmarks=${benchmark_option}
             OPTIONS build_tests=${tests_option}
             SETTINGS ${conan_settings}
             ${compiler_libcxx}
         )
     endforeach()
-    include(conanbuildinfo_multi)
 else()
     conan_cmake_autodetect(conan_settings)
     conan_cmake_install(
@@ -59,7 +58,4 @@ else()
         SETTINGS ${conan_settings}
         ${compiler_libcxx}
     )
-    include(conanbuildinfo)
 endif()
-
-conan_basic_setup()

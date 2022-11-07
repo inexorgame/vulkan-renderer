@@ -1,3 +1,11 @@
+ # TODO: Change on Conan 2.0
+ get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+ if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
+     find_package(GTest CONFIG REQUIRED)
+ else()
+     find_package(GTest REQUIRED)
+ endif()
+
 set(INEXOR_UNIT_TEST_SOURCE_FILES
     unit_tests_main.cpp
 
@@ -22,4 +30,7 @@ target_link_libraries(
 
     PRIVATE
     inexor-vulkan-renderer
+
+    PUBLIC
+    GTest::GTest
 )

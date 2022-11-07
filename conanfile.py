@@ -32,7 +32,7 @@ class InexorConan(ConanFile):
         "build_tests": False,
     }
 
-    generators = "cmake"
+    generators = "cmake_find_package"
 
     def configure(self):
         if self.settings.os == "Linux" and self.settings.compiler.libcxx == "libstdc++":
