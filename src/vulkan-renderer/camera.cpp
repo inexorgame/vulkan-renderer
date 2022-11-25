@@ -22,7 +22,6 @@ void Camera::update_vectors() {
         m_front = glm::normalize(front);
         m_right = glm::normalize(glm::cross(m_front, m_world_up));
         m_up = glm::normalize(glm::cross(m_right, m_front));
-
         m_update_view_matrix = true;
     }
 }
@@ -48,11 +47,14 @@ bool Camera::is_moving() const {
     return m_keys[0] || m_keys[1] || m_keys[2] || m_keys[3];
 }
 
-void Camera::set_type(const CameraType type) {
+Camera &Camera::set_type(const CameraType type) {
+    std::scoped_lock lock(m_cam_mutex);
     m_type = type;
+    return *this;
 }
 
-void Camera::set_movement_state(const CameraMovement key, const bool pressed) {
+Camera &Camera::set_movement_state(const CameraMovement key, const bool pressed) {
+    std::scoped_lock lock(m_cam_mutex);
     switch (key) {
     case CameraMovement::FORWARD:
         m_keys[0] = pressed;
@@ -67,53 +69,71 @@ void Camera::set_movement_state(const CameraMovement key, const bool pressed) {
         m_keys[3] = pressed;
         break;
     }
+    return *this;
 }
 
-void Camera::set_position(const glm::vec3 position) {
+Camera &Camera::set_position(const glm::vec3 position) {
+    std::scoped_lock lock(m_cam_mutex);
     m_position = position;
     m_update_view_matrix = true;
+    return *this;
 }
 
-void Camera::set_aspect_ratio(const float width, const float height) {
+Camera &Camera::set_aspect_ratio(const float width, const float height) {
+    std::scoped_lock lock(m_cam_mutex);
     m_aspect_ratio = width / height;
     m_update_perspective_matrix = true;
     m_update_vertical_fov = true;
+    return *this;
 }
 
-void Camera::set_movement_speed(const float speed) {
+Camera &Camera::set_movement_speed(const float speed) {
+    std::scoped_lock lock(m_cam_mutex);
     m_movement_speed = speed;
+    return *this;
 }
 
-void Camera::set_rotation_speed(const float speed) {
+Camera &Camera::set_rotation_speed(const float speed) {
+    std::scoped_lock lock(m_cam_mutex);
     m_rotation_speed = speed;
+    return *this;
 }
 
-void Camera::rotate(const float delta_yaw, const float delta_pitch, const float delta_roll) {
+Camera &Camera::rotate(const float delta_yaw, const float delta_pitch, const float delta_roll) {
+    std::scoped_lock lock(m_cam_mutex);
     m_yaw += delta_yaw;
     m_yaw = std::fmod(m_yaw, 360.0f);
     m_pitch += delta_pitch;
     m_roll += delta_roll;
     m_pitch = std::clamp(m_pitch, m_pitch_min, m_pitch_max);
     update_vectors();
+    return *this;
 }
 
-void Camera::set_rotation(const float yaw, const float pitch, const float roll) {
+Camera &Camera::set_rotation(const float yaw, const float pitch, const float roll) {
+    std::scoped_lock lock(m_cam_mutex);
     m_yaw = m_mouse_sensitivity * yaw;
     m_pitch = m_mouse_sensitivity * pitch;
     m_roll = m_mouse_sensitivity * roll;
+    return *this;
 }
 
-void Camera::set_near_plane(const float near_plane) {
+Camera &Camera::set_near_plane(const float near_plane) {
+    std::scoped_lock lock(m_cam_mutex);
     m_near_plane = near_plane;
     m_update_perspective_matrix = true;
+    return *this;
 }
 
-void Camera::set_far_plane(const float far_plane) {
+Camera &Camera::set_far_plane(const float far_plane) {
+    std::scoped_lock lock(m_cam_mutex);
     m_far_plane = far_plane;
     m_update_perspective_matrix = true;
+    return *this;
 }
 
-void Camera::change_zoom(const float offset) {
+Camera &Camera::change_zoom(const float offset) {
+    std::scoped_lock lock(m_cam_mutex);
     m_fov -= offset * m_zoom_step;
 
     // Make sure field of view is in range between specified minimum and maximum value.
@@ -121,9 +141,11 @@ void Camera::change_zoom(const float offset) {
 
     m_update_vertical_fov = true;
     m_update_perspective_matrix = true;
+    return *this;
 }
 
-void Camera::update(const float delta_time) {
+Camera &Camera::update(const float delta_time) {
+    std::scoped_lock lock(m_cam_mutex);
     if (m_type == CameraType::LOOK_AT && is_moving()) {
         const float move_speed = delta_time * m_movement_speed;
 
@@ -142,6 +164,7 @@ void Camera::update(const float delta_time) {
 
         m_update_view_matrix = true;
     }
+    return *this;
 }
 
 } // namespace inexor::vulkan_renderer

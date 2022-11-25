@@ -512,6 +512,12 @@ Application::Application(int argc, char **argv) {
     generate_octree_indices();
 
     m_window->show();
+
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+
+    m_camera->set_movement_speed(5.0f).set_rotation_speed(0.5f);
+
     recreate_swapchain();
 }
 
@@ -578,10 +584,10 @@ void Application::process_mouse_input() {
         m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
 
-    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
-    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
-    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
-    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
+    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W))
+        .set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A))
+        .set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S))
+        .set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
 }
 
 void Application::check_octree_collisions() {
