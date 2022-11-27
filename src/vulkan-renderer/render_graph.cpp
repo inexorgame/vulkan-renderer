@@ -184,7 +184,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
         cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
             .renderPass = phys_graphics_stage->m_render_pass,
-            .framebuffer = phys_graphics_stage->m_framebuffers[image_index].get(),
+            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
             .renderArea{
                 .extent = m_swapchain.extent(),
             },
@@ -512,18 +512,15 @@ void RenderGraph::compile(const RenderResource *target) {
                 }
 
                 std::vector<VkImageView> image_views;
-                for (std::uint32_t i = 0; i < m_swapchain.image_count(); i++) {
-                    image_views.clear();
-                    for (const auto *back_buffer : back_buffers) {
-                        image_views.push_back(back_buffer->m_swapchain.image_view(i));
-                    }
-
+                image_views.reserve(back_buffers.size() + images.size());
+                for (auto *const img_view : m_swapchain.image_views()) {
+                    std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
                     for (const auto *image : images) {
                         image_views.push_back(image->m_image_view);
                     }
-
                     physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
                                                          "Framebuffer");
+                    image_views.clear();
                 }
             }
         }

@@ -1,7 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/vk_tools/device_info.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
@@ -421,6 +420,26 @@ bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::ui
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceSupportKHR failed!", result);
     }
     return supported == VK_TRUE;
+}
+
+VkSurfaceCapabilitiesKHR Device::get_surface_capabilities(const VkSurfaceKHR surface) const {
+    VkSurfaceCapabilitiesKHR caps{};
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical_device, surface, &caps);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
+    }
+    return caps;
+}
+
+bool Device::format_supports_feature(const VkFormat format, const VkFormatFeatureFlagBits feature) const {
+    VkFormatProperties properties{};
+    vkGetPhysicalDeviceFormatProperties(m_physical_device, format, &properties);
+    return (properties.optimalTilingFeatures & feature) != 0u;
+}
+
+bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsageFlagBits usage) const {
+    const auto capabilities = get_surface_capabilities(surface);
+    return (capabilities.supportedUsageFlags & usage) != 0u;
 }
 
 void Device::execute(const std::string &name,

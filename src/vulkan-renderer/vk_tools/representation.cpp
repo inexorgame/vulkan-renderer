@@ -6,7 +6,26 @@ namespace inexor::vulkan_renderer::vk_tools {
 
 // Please keep the functions in here in alphabetical order (sort by function names, then by parameter types)
 
-/// @brief Convert a VkFormat value into the corresponding std::string_view
+/// Convert a VkCompositeAlphaFlagBitsKHR into the corresponding std::string_view
+/// @param flag The composite alpha flag bit
+/// @return A std::string_view which contains the composite alpha flag bit
+template <>
+std::string_view as_string(const VkCompositeAlphaFlagBitsKHR flag) {
+    switch (flag) {
+    case VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR";
+    case VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR";
+    case VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR";
+    case VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR:
+        return "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR";
+    default:
+        return "Unknown VkCompositeAlphaFlagBitsKHR";
+    }
+}
+
+/// Convert a VkFormat value into the corresponding std::string_view
 /// @param format The VkFormat to convert
 /// @return A std::string_view which contains the format
 template <>
@@ -495,12 +514,38 @@ std::string_view as_string(const VkFormat format) {
     case VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT:
         return "VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT";
     default:
-        break;
+        return "Unknown VkFormat";
     }
-    return "Unknown VkFormat";
 }
 
-/// @brief Convert a VkMemoryPropertyFlagBits value into the corresponding std::string_view
+/// Convert a VkImageUsageFlagBits value into the corresponding std::string_view
+/// @param img_usage_flag_bits The image usage flag bit
+/// @return A std::string_view which contains the image usage flag bit
+template <>
+std::string_view as_string(const VkImageUsageFlagBits img_usage_flag_bits) {
+    switch (img_usage_flag_bits) {
+    case VK_IMAGE_USAGE_TRANSFER_SRC_BIT:
+        return "VK_IMAGE_USAGE_TRANSFER_SRC_BIT";
+    case VK_IMAGE_USAGE_TRANSFER_DST_BIT:
+        return "VK_IMAGE_USAGE_TRANSFER_DST_BIT";
+    case VK_IMAGE_USAGE_SAMPLED_BIT:
+        return "VK_IMAGE_USAGE_SAMPLED_BIT";
+    case VK_IMAGE_USAGE_STORAGE_BIT:
+        return "VK_IMAGE_USAGE_STORAGE_BIT";
+    case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT";
+    case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT";
+    case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT";
+    case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT:
+        return "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ";
+    default:
+        return "Unknown VkImageUsageFlagBits";
+    }
+}
+
+/// Convert a VkMemoryPropertyFlagBits value into the corresponding std::string_view
 /// @param mem_prop_flag_bit The VkMemoryPropertyFlagBits to convert
 /// @return A std::string_view which contains the memory property flag bit
 template <>
@@ -525,12 +570,11 @@ std::string_view as_string(const VkMemoryPropertyFlagBits mem_prop_flag_bit) {
     case VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM:
         return "VK_MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM";
     default:
-        break;
+        return "Unknown VkMemoryPropertyFlagBits";
     }
-    return "Unknown VkMemoryPropertyFlagBits";
 }
 
-/// @brief Convert a VkMemoryHeapFlagBits value into the corresponding std::string_view
+/// Convert a VkMemoryHeapFlagBits value into the corresponding std::string_view
 /// @param mem_heap_flag_bit The VkMemoryHeapFlagBits to convert
 /// @return A std::string_view which contains the memory heap flag bit
 template <>
@@ -543,12 +587,11 @@ std::string_view as_string(const VkMemoryHeapFlagBits mem_heap_flag_bit) {
     case VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM:
         return "VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM";
     default:
-        break;
+        return "Unknown VkMemoryHeapFlagBits";
     }
-    return "Unknown VkMemoryHeapFlagBits";
 }
 
-/// @brief Convert a VkPhysicalDeviceType value into the corresponding std::string_view
+/// Convert a VkPhysicalDeviceType value into the corresponding std::string_view
 /// @param gpu_type The VkPhysicalDeviceType to convert
 /// @return A std::string_view which contains the physical device type
 template <>
@@ -565,12 +608,11 @@ std::string_view as_string(const VkPhysicalDeviceType gpu_type) {
     case VK_PHYSICAL_DEVICE_TYPE_CPU:
         return "VK_PHYSICAL_DEVICE_TYPE_CPU";
     default:
-        break;
+        return "Unknown VkPhysicalDeviceType";
     }
-    return "Unknown VkPhysicalDeviceType";
 }
 
-/// @brief Convert a VkPresentModeKHR value into the corresponding std::string_view
+/// Convert a VkPresentModeKHR value into the corresponding std::string_view
 /// @param present_mode The VkPresentModeKHR to convert
 /// @return A std::string_view which contains the presentation mode
 template <>
@@ -589,12 +631,11 @@ std::string_view as_string(const VkPresentModeKHR present_mode) {
     case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
         return "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR";
     default:
-        break;
+        return "Unknown VkPresentModeKHR";
     }
-    return "Unknown VkPresentModeKHR";
 }
 
-/// @brief Convert a VkQueueFlagBits value into the corresponding std::string_view
+/// Convert a VkQueueFlagBits value into the corresponding std::string_view
 /// @param queue_flag_bit The VkQueueFlagBits to convert
 /// @return A std::string_view which contains the queue flag bit
 template <>
@@ -613,12 +654,11 @@ std::string_view as_string(const VkQueueFlagBits queue_flag_bit) {
     case VK_QUEUE_FLAG_BITS_MAX_ENUM:
         return "VK_QUEUE_FLAG_BITS_MAX_ENUM";
     default:
-        break;
+        return "Unknown VkQueueFlagBits";
     }
-    return "Unknown VkQueueFlagBits";
 }
 
-/// @brief Convert a VkResult value into the corresponding std::string_view
+/// Convert a VkResult value into the corresponding std::string_view
 /// @param result The VkResult to convert
 /// @return A std::string_view which contains the result
 /// @note This function converts the VkResult into the corresponding std::string_view
@@ -687,9 +727,45 @@ std::string_view as_string(const VkResult result) {
     case VK_ERROR_UNKNOWN:
         return "VK_ERROR_UNKNOWN";
     default:
-        break;
+        return "Unknown VkResult";
     }
-    return "Unknown VkResult";
+}
+
+/// Convert the format member of a VkSurfaceFormatKHR value into the corresponding std::string_view
+/// @param surface_format The surface format
+/// @return A std::string_view which contains the surface format
+template <>
+std::string_view as_string(const VkSurfaceFormatKHR surface_format) {
+    return as_string(surface_format.format);
+}
+
+/// Convert a VkSurfaceTransformFlagBitsKHR value into the corresponding std::string_view
+/// @param flag The surface transform flag
+/// @return A std::string_view which contains the surface transform flag
+template <>
+std::string_view as_string(const VkSurfaceTransformFlagBitsKHR flag) {
+    switch (flag) {
+    case VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR";
+    case VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR:
+        return "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR";
+    default:
+        return "Unknown VkSurfaceTransformFlagBitsKHR";
+    }
 }
 
 std::string_view get_device_feature_description(const std::size_t index) {
@@ -889,9 +965,8 @@ std::string_view result_to_description(const VkResult result) {
         return "An unknown error has occurred; either the application has provided invalid input, or an implementation "
                "failure has occurred";
     default:
-        break;
+        return "Unknown VkResult";
     }
-    return "Unknown VkResult";
 }
 
 } // namespace inexor::vulkan_renderer::vk_tools

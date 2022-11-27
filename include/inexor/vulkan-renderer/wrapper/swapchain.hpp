@@ -1,47 +1,59 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+
 #include <vulkan/vulkan_core.h>
 
-#include <stdexcept>
-#include <string>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <set>
+#include <span>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declarations
 class Device;
 class Semaphore;
 
-/// @brief RAII wrapper class for VkSwapchainKHR.
+/// RAII wrapper class for swapchains
 class Swapchain {
-    wrapper::Device &m_device;
-    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
+private:
+    Device &m_device;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
-    VkSurfaceFormatKHR m_surface_format{};
+    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
+    std::optional<VkSurfaceFormatKHR> m_surface_format{};
+    std::vector<VkImage> m_imgs;
+    std::vector<VkImageView> m_img_views;
     VkExtent2D m_extent{};
-
-    std::vector<VkImage> m_swapchain_images;
-    std::vector<VkImageView> m_swapchain_image_views;
-    std::uint32_t m_swapchain_image_count{0};
-    std::string m_name;
+    std::unique_ptr<Semaphore> m_img_available;
     bool m_vsync_enabled{false};
 
-    /// @brief Set up the swapchain.
-    /// @param old_swapchain The old swapchain.
-    /// @note Swapchain recreation can be made faster drastically when passing the old swapchain.
-    /// @param window_width The width of the window.
-    /// @param window_height The height of the window.
-    void setup_swapchain(VkSwapchainKHR old_swapchain, std::uint32_t window_width, std::uint32_t window_height);
+    /// Call vkGetSwapchainImagesKHR
+    /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
+    /// @return A std::vector of swapchain images (this can be empty!)
+    [[nodiscard]] std::vector<VkImage> get_swapchain_images();
+
+    /// Setup the swapchain
+    /// @param width The width of the swapchain images
+    /// @param height The height of the swapchain images
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
+    /// @param old_swapchain The old swapchain which can be passed in to speed up swapchain recreation
+    /// @exception VulkanException vkCreateSwapchainKHR call failed
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
+    void setup_swapchain(std::uint32_t width, std::uint32_t height, bool vsync_enabled,
+                         VkSwapchainKHR old_swapchain = VK_NULL_HANDLE);
 
 public:
-    /// @brief Default constructor.
-    /// @param device The reference to a device RAII wrapper instance.
-    /// @param surface The surface.
-    /// @param window_width The width of the window.
-    /// @param window_height The height of the window.
-    /// @param enable_vsync True if vertical synchronization is requested, false otherwise.
-    /// @param name The internal debug marker name of the VkSwapchainKHR.
-    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t window_width, std::uint32_t window_height,
-              bool enable_vsync, std::string name);
+    /// Default constructor
+    /// @param device The device wrapper
+    /// @param surface The surface
+    /// @param width The swapchain image width
+    /// @param height The swapchain image height
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
+    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
@@ -51,47 +63,85 @@ public:
     Swapchain &operator=(const Swapchain &) = delete;
     Swapchain &operator=(Swapchain &&) = delete;
 
-    /// @brief Call vkAcquireNextImageKHR.
-    /// @param semaphore A semaphore to signal once image acquisition has completed.
-    [[nodiscard]] std::uint32_t acquire_next_image(const Semaphore &semaphore);
+    /// Call vkAcquireNextImageKHR
+    /// @param timeout (``std::numeric_limits<std::uint64_t>::max()`` by default)
+    /// @exception VulkanException vkAcquireNextImageKHR call failed
+    /// @return The index of the next image
+    [[nodiscard]] std::uint32_t
+    acquire_next_image_index(std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
 
-    /// @brief Recreate the swapchain.
-    /// @param window_width The width of the window.
-    /// @param window_height The height of the window.
-    void recreate(std::uint32_t window_width, std::uint32_t window_height);
+    /// Choose the composite alpha
+    /// @param request_composite_alpha requested compositing flag
+    /// @param supported_composite_alpha Alpha compositing modes supported on a device
+    /// @exception std::runtime_error No compatible composite alpha could be found
+    /// @return The chosen composite alpha flags
+    [[nodiscard]] static std::optional<VkCompositeAlphaFlagBitsKHR>
+    choose_composite_alpha(VkCompositeAlphaFlagBitsKHR request_composite_alpha,
+                           VkCompositeAlphaFlagsKHR supported_composite_alpha);
 
-    [[nodiscard]] const VkSwapchainKHR *swapchain_ptr() const {
-        return &m_swapchain;
-    }
+    /// Determine the swapchain image extent
+    /// @param requested_extent The image extent requested by the programmer
+    /// @param min_extent The minimum extent
+    /// @param max_extent The maximum extent
+    /// @param current_extent The current extent
+    /// @return The chosen swapchain image extent
+    [[nodiscard]] static VkExtent2D choose_image_extent(const VkExtent2D &requested_extent,
+                                                        const VkExtent2D &min_extent, const VkExtent2D &max_extent,
+                                                        const VkExtent2D &current_extent);
 
-    [[nodiscard]] VkSwapchainKHR swapchain() const {
-        return m_swapchain;
-    }
+    /// Choose the present mode
+    /// @param available_present_modes The available present modes
+    /// @param present_mode_priority_list The acceptable present modes (``DEFAULT_PRESENT_MODE_PRIORITY_LIST`` by
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
+    /// default). Index ``0`` has highest priority, index ``n`` has lowest priority)
+    /// @return The chosen present mode
+    /// @note If none of the ``present_mode_priority_list`` are supported, ``VK_PRESENT_MODE_FIFO_KHR`` will be returned
+    [[nodiscard]] static VkPresentModeKHR
+    choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
+                        const std::vector<VkPresentModeKHR> &present_mode_priority_list, bool vsync_enabled);
 
-    [[nodiscard]] std::uint32_t image_count() const {
-        return m_swapchain_image_count;
-    }
-
-    [[nodiscard]] VkFormat image_format() const {
-        return m_surface_format.format;
-    }
+    /// Choose a surface format
+    /// @param available_formats The available surface formats
+    /// @param format_prioriy_list A priority list of acceptable surface formats (empty by default)
+    /// @note Index ``0`` has highest priority, index ``n`` has lowest priority!
+    /// @return The chosen surface format (``VK_FORMAT_UNDEFINED`` if no suitable format was found)
+    [[nodiscard]] static std::optional<VkSurfaceFormatKHR>
+    choose_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats,
+                          const std::vector<VkSurfaceFormatKHR> &format_prioriy_list = {});
 
     [[nodiscard]] VkExtent2D extent() const {
         return m_extent;
     }
 
-    [[nodiscard]] VkImageView image_view(std::size_t index) const {
-        if (index >= m_swapchain_image_views.size()) {
-            throw std::out_of_range("Error: swapchain_image_views has " +
-                                    std::to_string(m_swapchain_image_views.size()) + " entries. Requested index " +
-                                    std::to_string(index) + " is out of bounds!");
-        }
-
-        return m_swapchain_image_views.at(index);
+    [[nodiscard]] const VkSemaphore *image_available_semaphore() const {
+        return m_img_available->semaphore();
     }
 
-    [[nodiscard]] std::vector<VkImageView> image_views() const {
-        return m_swapchain_image_views;
+    [[nodiscard]] std::uint32_t image_count() const {
+        return static_cast<std::uint32_t>(m_imgs.size());
+    }
+
+    [[nodiscard]] VkFormat image_format() const {
+        return m_surface_format.value().format;
+    }
+
+    [[nodiscard]] const std::vector<VkImageView> &image_views() const {
+        return m_img_views;
+    }
+
+    /// Call vkQueuePresentKHR
+    /// @param img_index The image index
+    /// @exception VulkanException vkQueuePresentKHR call failed
+    void present(std::uint32_t img_index);
+
+    /// Recreate the swapchain by calling ``setup_swapchain``
+    /// @param width The swapchain image width
+    /// @param height The swapchain image height
+    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
+    void recreate(std::uint32_t width, std::uint32_t height, bool vsync_enabled);
+
+    [[nodiscard]] const VkSwapchainKHR *swapchain() const {
+        return &m_swapchain;
     }
 };
 

@@ -76,12 +76,9 @@ void VulkanRenderer::recreate_swapchain() {
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
-    m_swapchain->recreate(m_window->width(), m_window->height());
+    m_swapchain->recreate(m_window->width(), m_window->height(), m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
-
-    m_image_available_semaphore.reset();
-    m_image_available_semaphore = std::make_unique<wrapper::Semaphore>(*m_device, "Image available semaphore");
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
@@ -101,7 +98,7 @@ void VulkanRenderer::render_frame() {
         return;
     }
 
-    const auto image_index = m_swapchain->acquire_next_image(*m_image_available_semaphore);
+    const auto image_index = m_swapchain->acquire_next_image_index();
     const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
@@ -110,7 +107,7 @@ void VulkanRenderer::render_frame() {
 
     cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = m_image_available_semaphore->ptr(),
+        .pWaitSemaphores = m_swapchain->image_available_semaphore(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
         .pCommandBuffers = cmd_buf.ptr(),
@@ -118,7 +115,7 @@ void VulkanRenderer::render_frame() {
 
     const auto present_info = wrapper::make_info<VkPresentInfoKHR>({
         .swapchainCount = 1,
-        .pSwapchains = m_swapchain->swapchain_ptr(),
+        .pSwapchains = m_swapchain->swapchain(),
         .pImageIndices = &image_index,
     });
 

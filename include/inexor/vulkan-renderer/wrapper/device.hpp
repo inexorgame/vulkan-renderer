@@ -113,6 +113,18 @@ public:
         return m_device;
     }
 
+    /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+    /// @param surface The window surface
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
+    /// @return The surface capabilities
+    [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
+
+    /// Check if a format supports a feature for images created with ``VK_IMAGE_TILING_OPTIMAL``
+    /// @param format The format
+    /// @param feature The requested format feature
+    /// @return ``true`` if the format feature is supported
+    [[nodiscard]] bool format_supports_feature(VkFormat format, VkFormatFeatureFlagBits feature) const;
+
     /// Call vkGetPhysicalDeviceSurfaceSupportKHR
     /// @param surface The window surface
     /// @param queue_family_index The queue family index
@@ -307,6 +319,12 @@ public:
     /// @param name The name which will be assigned to the command buffer
     /// @return A command buffer from the thread_local command pool
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
+
+    /// Check if a surface supports a certain image usage
+    /// @param surface The window surface
+    /// @param usage The requested image usage
+    /// @return ``true`` if the format feature is supported
+    [[nodiscard]] bool surface_supports_usage(VkSurfaceKHR surface, VkImageUsageFlagBits usage) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -3,6 +3,8 @@ set(INEXOR_UNIT_TEST_SOURCE_FILES
 
     gpu-selection/selection.cpp
 
+    swapchain/choose_settings.cpp
+
     world/cube_collision.cpp
     world/cube.cpp
 )

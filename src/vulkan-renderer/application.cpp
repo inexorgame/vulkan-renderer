@@ -492,7 +492,7 @@ Application::Application(int argc, char **argv) {
                                           physical_device, required_extensions, required_features, optional_features);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
-                                                       m_window->height(), m_vsync_enabled, "Standard swapchain");
+                                                       m_window->height(), m_vsync_enabled);
 
     load_textures();
     load_shaders();

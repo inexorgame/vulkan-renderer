@@ -6,7 +6,6 @@
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
-#include "inexor/vulkan-renderer/settings_decision_maker.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
@@ -36,9 +35,6 @@ namespace inexor::vulkan_renderer {
 
 class VulkanRenderer {
 protected:
-    std::shared_ptr<VulkanSettingsDecisionMaker> m_settings_decision_maker{
-        std::make_shared<VulkanSettingsDecisionMaker>()};
-
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
     VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
@@ -65,7 +61,6 @@ protected:
     std::unique_ptr<wrapper::WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
-    std::unique_ptr<wrapper::Semaphore> m_image_available_semaphore;
     std::unique_ptr<RenderGraph> m_render_graph;
 
     std::vector<wrapper::Shader> m_shaders;
