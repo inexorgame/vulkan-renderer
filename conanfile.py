@@ -48,9 +48,18 @@ class InexorConan(ConanFile):
 
     def imports(self):
         # Copies all dll files from packages bin folder to my "bin" folder (win)
-        self.copy("*.dll", dst="bin", src="bin")
-        # Copies all dylib files from packages lib folder to my "lib" folder (macosx)
-        self.copy("*.dylib*", dst="lib", src="lib")
+        self.copy("*.dll", dst="benchmarks/Debug", src="bin")
+        self.copy("*.dll", dst="benchmarks/Release", src="bin")
+        self.copy("*.dll", dst="benchmarks/MinSizeRel", src="bin")
+        self.copy("*.dll", dst="benchmarks/RelWithDebInfo", src="bin")
+        self.copy("*.dll", dst="example/Debug", src="bin")
+        self.copy("*.dll", dst="example/Release", src="bin")
+        self.copy("*.dll", dst="example/MinSizeRel", src="bin")
+        self.copy("*.dll", dst="example/RelWithDebInfo", src="bin")
+        self.copy("*.dll", dst="tests/Debug", src="bin")
+        self.copy("*.dll", dst="tests/Release", src="bin")
+        self.copy("*.dll", dst="tests/MinSizeRel", src="bin")
+        self.copy("*.dll", dst="tests/RelWithDebInfo", src="bin")
         # Copies all so files from packages lib folder to my "lib" folder (linux)
         self.copy("*.so*", dst="lib", src="lib")
 
