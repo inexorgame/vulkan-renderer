@@ -12,7 +12,7 @@ class Swapchain;
 
 /// @brief RAII wrapper class for VkFramebuffer.
 class Framebuffer {
-    const wrapper::Device &m_device;
+    const Device &m_device;
     VkFramebuffer m_framebuffer{VK_NULL_HANDLE};
     std::string m_name;
 

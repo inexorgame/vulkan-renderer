@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Fence::Fence(const wrapper::Device &device, const std::string &name, const bool in_signaled_state)
+Fence::Fence(const Device &device, const std::string &name, const bool in_signaled_state)
     : m_device(device), m_name(name) {
     assert(!name.empty());
     assert(device.device());

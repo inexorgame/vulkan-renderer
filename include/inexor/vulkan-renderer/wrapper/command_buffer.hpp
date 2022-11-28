@@ -20,7 +20,7 @@ class Device;
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
-    const wrapper::Device &m_device;
+    const Device &m_device;
     std::string m_name;
     std::unique_ptr<Fence> m_wait_fence;
 

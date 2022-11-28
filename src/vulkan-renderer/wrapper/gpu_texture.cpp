@@ -11,13 +11,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
+GpuTexture::GpuTexture(const Device &device, const CpuTexture &cpu_texture)
     : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
       m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()) {
     create_texture(cpu_texture.data(), cpu_texture.data_size());
 }
 
-GpuTexture::GpuTexture(const wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
+GpuTexture::GpuTexture(const Device &device, void *data, const std::size_t data_size, const int texture_width,
                        const int texture_height, const int texture_channels, const int mip_levels, std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)) {
@@ -46,9 +46,9 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
         .height = static_cast<uint32_t>(m_texture_height),
     };
 
-    m_texture_image = std::make_unique<wrapper::Image>(
-        m_device, m_texture_image_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
+    m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format,
+                                              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                              VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
 
     const VkBufferImageCopy copy_region{
         .bufferOffset = 0,
