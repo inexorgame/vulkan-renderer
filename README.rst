@@ -2,11 +2,9 @@
 vulkan-renderer
 ***************
 
-|language| |platforms| |github actions| |readthedocs| |discord| |downloads| |license|
+|language| |platforms| |github actions| |readthedocs| |discord| |license|
 
-
-.. image:: documentation/source/images/banner.jpg
-
+.. image:: documentation/source/images/inexor2.png
 
 
 FAQ and documentation
@@ -18,9 +16,6 @@ Quickstart: `Building Instructions`_ (`Windows`_/`Linux`_) & `Getting started`_
 .. _Windows: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html#building-windows
 .. _Linux: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/building.html#building-linux
 .. _Getting started: https://inexor-vulkan-renderer.readthedocs.io/en/latest/development/getting-started.html
-
-.. image:: documentation/source/images/inexor2.png
-
 
 
 Inexor is an open-source project which combines modern C++ with Vulkan API.
@@ -53,7 +48,7 @@ Special thanks to `JetBrains <https://www.jetbrains.com/?from=github.com/inexorg
 
 .. |discord| image:: https://img.shields.io/discord/698219248954376256?logo=discord
    :target: https://discord.com/invite/acUW8k7
-   
+
 .. |license| image:: https://img.shields.io/github/license/inexorgame/vulkan-renderer?color=brightgreen
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
 
