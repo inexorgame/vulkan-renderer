@@ -1,31 +1,28 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include <array>
 #include <shared_mutex>
+#include <vector>
 
 namespace inexor::vulkan_renderer::input {
 
 /// @brief A wrapper for keyboard and mouse input data.
 class KeyboardMouseInputData {
 private:
-    std::array<std::int64_t, 2> m_previous_cursor_pos{0, 0};
-    std::array<std::int64_t, 2> m_current_cursor_pos{0, 0};
-    std::array<bool, GLFW_KEY_LAST> m_pressed_keys{false};
-    std::array<bool, GLFW_MOUSE_BUTTON_LAST> m_pressed_mouse_buttons{false};
+    glm::ivec2 m_previous_cursor_pos{0, 0};
+    glm::ivec2 m_current_cursor_pos{0, 0};
+    std::array<bool, GLFW_KEY_LAST> m_key_states{false};
+    std::array<bool, GLFW_MOUSE_BUTTON_LAST> m_mouse_button_states{false};
+    double m_mouse_wheel_offset{};
     bool m_keyboard_updated{false};
     bool m_mouse_buttons_updated{false};
     mutable std::shared_mutex m_input_mutex;
 
 public:
     KeyboardMouseInputData() = default;
-    KeyboardMouseInputData(const KeyboardMouseInputData &) = delete;
-    KeyboardMouseInputData(KeyboardMouseInputData &&) = delete;
-    ~KeyboardMouseInputData() = default;
-
-    KeyboardMouseInputData &operator=(const KeyboardMouseInputData &) = delete;
-    KeyboardMouseInputData &operator=(KeyboardMouseInputData &&) = delete;
 
     /// @brief Change the key's state to pressed.
     /// @param key the key which was pressed and greater or equal to 0
@@ -75,12 +72,16 @@ public:
     /// @param pos_y the current y-coordinate of the cursor
     void set_cursor_pos(double pos_x, double pos_y);
 
-    [[nodiscard]] std::array<std::int64_t, 2> get_cursor_pos() const;
+    [[nodiscard]] glm::ivec2 get_cursor_pos() const;
 
     /// @brief Calculate the change in x- and y-position of the cursor.
     /// @return a std::array of size 2 which contains the change in x-position in index 0 and the change in y-position
     /// in index 1
-    [[nodiscard]] std::array<double, 2> calculate_cursor_position_delta();
+    [[nodiscard]] glm::dvec2 calculate_cursor_position_delta();
+
+    void set_mouse_wheel_offset(double y_offset);
+
+    [[nodiscard]] double get_mouse_wheel_offset() const;
 };
 
 } // namespace inexor::vulkan_renderer::input

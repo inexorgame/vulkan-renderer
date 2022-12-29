@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
+#include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -11,6 +12,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
+#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <toml.hpp>
 
@@ -18,48 +20,6 @@
 #include <thread>
 
 namespace inexor::vulkan_renderer {
-
-void Application::key_callback(GLFWwindow * /*window*/, int key, int, int action, int /*mods*/) {
-    if (key < 0 || key > GLFW_KEY_LAST) {
-        return;
-    }
-
-    switch (action) {
-    case GLFW_PRESS:
-        m_input_data->press_key(key);
-        break;
-    case GLFW_RELEASE:
-        m_input_data->release_key(key);
-        break;
-    default:
-        break;
-    }
-}
-
-void Application::cursor_position_callback(GLFWwindow * /*window*/, double x_pos, double y_pos) {
-    m_input_data->set_cursor_pos(x_pos, y_pos);
-}
-
-void Application::mouse_button_callback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
-    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
-        return;
-    }
-
-    switch (action) {
-    case GLFW_PRESS:
-        m_input_data->press_mouse_button(button);
-        break;
-    case GLFW_RELEASE:
-        m_input_data->release_mouse_button(button);
-        break;
-    default:
-        break;
-    }
-}
-
-void Application::mouse_scroll_callback(GLFWwindow * /*window*/, double /*x_offset*/, double y_offset) {
-    m_camera->change_zoom(static_cast<float>(y_offset));
-}
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
@@ -231,7 +191,7 @@ void Application::setup_window_and_input_callbacks() {
 
     auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->key_callback(window, key, scancode, action, mods);
+        app->m_input->key_callback(window, key, scancode, action, mods);
     };
 
     m_window->set_keyboard_button_callback(lambda_key_callback);
@@ -240,7 +200,7 @@ void Application::setup_window_and_input_callbacks() {
 
     auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->cursor_position_callback(window, xpos, ypos);
+        app->m_input->cursor_position_callback(window, xpos, ypos);
     };
 
     m_window->set_cursor_position_callback(lambda_cursor_position_callback);
@@ -249,7 +209,7 @@ void Application::setup_window_and_input_callbacks() {
 
     auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->mouse_button_callback(window, button, action, mods);
+        app->m_input->mouse_button_callback(window, button, action, mods);
     };
 
     m_window->set_mouse_button_callback(lambda_mouse_button_callback);
@@ -258,7 +218,7 @@ void Application::setup_window_and_input_callbacks() {
 
     auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->mouse_scroll_callback(window, xoffset, yoffset);
+        app->m_input->mouse_scroll_callback(window, xoffset, yoffset);
     };
 
     m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
@@ -376,7 +336,7 @@ Application::Application(int argc, char **argv) {
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers,
         enable_renderdoc_instance_layer);
 
-    m_input_data = std::make_unique<input::KeyboardMouseInputData>();
+    m_input = std::make_unique<input::Input>();
 
     m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
 
@@ -508,13 +468,13 @@ void Application::update_uniform_buffers() {
 }
 
 void Application::update_imgui_overlay() {
-    auto cursor_pos = m_input_data->get_cursor_pos();
+    auto cursor_pos = m_input->kbm_data().get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
     io.DeltaTime = m_time_passed;
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
-    io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
-    io.MouseDown[1] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
+    io.MouseDown[0] = m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
+    io.MouseDown[1] = m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
     io.DisplaySize =
         ImVec2(static_cast<float>(m_swapchain->extent().width), static_cast<float>(m_swapchain->extent().height));
 
@@ -551,17 +511,33 @@ void Application::update_imgui_overlay() {
     m_imgui_overlay->update();
 }
 
-void Application::process_mouse_input() {
-    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
+void Application::process_input() {
+    const auto cursor_pos_delta = m_input->kbm_data().calculate_cursor_position_delta();
 
-    if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+    auto deadzone_lambda = [](const float state) { return (glm::abs(state) < 0.2f) ? 0.0f : state; };
+
+    if (m_camera->type() == CameraType::LOOK_AT &&
+        m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
         m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
+    if (m_camera->type() == CameraType::LOOK_AT) {
+        m_camera->rotate(deadzone_lambda(m_input->gamepad_data().current_joystick_axes(1).x) * 5.f,
+                         deadzone_lambda(m_input->gamepad_data().current_joystick_axes(1).y) * -5.f);
+    }
 
-    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
-    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
-    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
-    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
+    m_camera->set_movement_state(CameraMovement::FORWARD,
+                                 m_input->gamepad_data().current_joystick_axes(0)[GLFW_GAMEPAD_AXIS_LEFT_Y] <= -0.15);
+    m_camera->set_movement_state(CameraMovement::LEFT,
+                                 m_input->gamepad_data().current_joystick_axes(0)[GLFW_GAMEPAD_AXIS_LEFT_X] <= -0.15);
+    m_camera->set_movement_state(CameraMovement::BACKWARD,
+                                 m_input->gamepad_data().current_joystick_axes(0)[GLFW_GAMEPAD_AXIS_LEFT_Y] >= 0.15);
+    m_camera->set_movement_state(CameraMovement::RIGHT,
+                                 m_input->gamepad_data().current_joystick_axes(0)[GLFW_GAMEPAD_AXIS_LEFT_X] >= 0.15);
+    m_camera->update(m_time_passed);
+    m_camera->set_movement_state(CameraMovement::FORWARD, m_input->kbm_data().is_key_pressed(GLFW_KEY_W));
+    m_camera->set_movement_state(CameraMovement::LEFT, m_input->kbm_data().is_key_pressed(GLFW_KEY_A));
+    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input->kbm_data().is_key_pressed(GLFW_KEY_S));
+    m_camera->set_movement_state(CameraMovement::RIGHT, m_input->kbm_data().is_key_pressed(GLFW_KEY_D));
 }
 
 void Application::check_octree_collisions() {
@@ -590,11 +566,12 @@ void Application::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
+        m_input->update_gamepad_data();
         update_uniform_buffers();
         update_imgui_overlay();
         render_frame();
-        process_mouse_input();
-        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+        process_input();
+        if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
             m_index_buffer->upload_data(m_octree_indices);
