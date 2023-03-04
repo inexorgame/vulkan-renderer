@@ -76,11 +76,11 @@ private:
     std::uint8_t m_index_in_parent{};
 
     /// Indentations, should only be used if it is a geometry cube.
-    std::array<Indentation, Cube::EDGES> m_indentations;
+    std::array<Indentation, Cube::EDGES> m_indentations{};
     std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_children;
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
-    mutable PolygonCache m_polygon_cache;
+    mutable PolygonCache m_polygon_cache{};
     mutable bool m_polygon_cache_valid{false};
 
     /// Removes all children recursive.
