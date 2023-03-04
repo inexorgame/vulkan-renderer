@@ -6,7 +6,6 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
-#include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
@@ -584,26 +583,7 @@ void Application::process_mouse_input() {
     m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
 }
 
-void Application::check_octree_collisions() {
-    // Check for collision between camera ray and every octree
-    for (const auto &world : m_worlds) {
-        const auto collision = ray_cube_collision_check(*world, m_camera->position(), m_camera->front());
-
-        if (collision) {
-            const auto intersection = collision.value().intersection();
-            const auto face_normal = collision.value().face();
-            const auto corner = collision.value().corner();
-            const auto edge = collision.value().edge();
-
-            spdlog::trace("pos {} {} {} | face {} {} {} | corner {} {} {} | edge {} {} {}", intersection.x,
-                          intersection.y, intersection.z, face_normal.x, face_normal.y, face_normal.z, corner.x,
-                          corner.y, corner.z, edge.x, edge.y, edge.z);
-
-            // Break after one collision.
-            break;
-        }
-    }
-}
+void Application::check_octree_collisions() {}
 
 void Application::run() {
     spdlog::trace("Running Application");

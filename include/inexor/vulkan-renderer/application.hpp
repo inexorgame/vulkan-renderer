@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 
 #include <GLFW/glfw3.h>

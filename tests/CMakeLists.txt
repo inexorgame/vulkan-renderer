@@ -5,7 +5,6 @@ set(INEXOR_UNIT_TEST_SOURCE_FILES
 
     swapchain/choose_settings.cpp
 
-    world/cube_collision.cpp
     world/cube.cpp
 )
 
