@@ -7,6 +7,7 @@ void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::wo
     std::swap(lhs.m_type, rhs.m_type);
     std::swap(lhs.m_size, rhs.m_size);
     std::swap(lhs.m_position, rhs.m_position);
+    std::swap(lhs.m_center, rhs.m_center);
     std::swap(lhs.m_parent, rhs.m_parent);
     std::swap(lhs.m_index_in_parent, rhs.m_index_in_parent);
     std::swap(lhs.m_indentations, rhs.m_indentations);
@@ -171,7 +172,8 @@ void Cube::rotate<3>(const RotationAxis::Type &axis) {
     }
 }
 
-Cube::Cube(const float size, const glm::vec3 &position) : m_size(size), m_position(position) {}
+Cube::Cube(const float size, const glm::vec3 &position)
+    : m_size(size), m_position(position), m_center(position + glm::vec3{size, size, size}) {}
 
 Cube::Cube(std::weak_ptr<Cube> parent, const std::uint8_t index, const float size, const glm::vec3 &position)
     : Cube(size, position) {

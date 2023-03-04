@@ -67,6 +67,7 @@ private:
     Type m_type{Type::EMPTY};
     float m_size{32};
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
+    glm::vec3 m_center{};
 
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
@@ -126,7 +127,7 @@ public:
     [[nodiscard]] std::size_t count_geometry_cubes() const noexcept;
 
     [[nodiscard]] glm::vec3 center() const noexcept {
-        return m_position + 0.5f * m_size;
+        return m_center;
     }
 
     [[nodiscard]] glm::vec3 position() const noexcept {
