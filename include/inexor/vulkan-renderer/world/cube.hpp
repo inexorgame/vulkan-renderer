@@ -67,6 +67,7 @@ private:
     Type m_type{Type::EMPTY};
     float m_size{32};
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
+    glm::vec3 m_center{};
 
     /// Root cube is empty.
     std::weak_ptr<Cube> m_parent{};
@@ -75,11 +76,11 @@ private:
     std::uint8_t m_index_in_parent{};
 
     /// Indentations, should only be used if it is a geometry cube.
-    std::array<Indentation, Cube::EDGES> m_indentations;
+    std::array<Indentation, Cube::EDGES> m_indentations{};
     std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> m_children;
 
     /// Only geometry cube (Type::SOLID and Type::Normal) have a polygon cache.
-    mutable PolygonCache m_polygon_cache;
+    mutable PolygonCache m_polygon_cache{};
     mutable bool m_polygon_cache_valid{false};
 
     /// Removes all children recursive.
@@ -126,7 +127,7 @@ public:
     [[nodiscard]] std::size_t count_geometry_cubes() const noexcept;
 
     [[nodiscard]] glm::vec3 center() const noexcept {
-        return m_position + 0.5f * m_size;
+        return m_center;
     }
 
     [[nodiscard]] glm::vec3 position() const noexcept {
