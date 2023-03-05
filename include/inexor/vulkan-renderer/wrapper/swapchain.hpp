@@ -36,16 +36,6 @@ private:
     /// @return A std::vector of swapchain images (this can be empty!)
     [[nodiscard]] std::vector<VkImage> get_swapchain_images();
 
-    /// Setup the swapchain
-    /// @param width The width of the swapchain images
-    /// @param height The height of the swapchain images
-    /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    /// @param old_swapchain The old swapchain which can be passed in to speed up swapchain recreation
-    /// @exception VulkanException vkCreateSwapchainKHR call failed
-    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
-    void setup_swapchain(std::uint32_t width, std::uint32_t height, bool vsync_enabled,
-                         VkSwapchainKHR old_swapchain = VK_NULL_HANDLE);
-
 public:
     /// Default constructor
     /// @param device The device wrapper
@@ -134,11 +124,13 @@ public:
     /// @exception VulkanException vkQueuePresentKHR call failed
     void present(std::uint32_t img_index);
 
-    /// Recreate the swapchain by calling ``setup_swapchain``
-    /// @param width The swapchain image width
-    /// @param height The swapchain image height
+    /// Setup the swapchain
+    /// @param width The width of the swapchain images
+    /// @param height The height of the swapchain images
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    void recreate(std::uint32_t width, std::uint32_t height, bool vsync_enabled);
+    /// @exception VulkanException vkCreateSwapchainKHR call failed
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
+    void setup_swapchain(std::uint32_t width, std::uint32_t height, bool vsync_enabled);
 
     [[nodiscard]] const VkSwapchainKHR *swapchain() const {
         return &m_swapchain;
