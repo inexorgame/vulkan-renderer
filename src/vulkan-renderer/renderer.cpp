@@ -71,13 +71,20 @@ void VulkanRenderer::generate_octree_indices() {
 }
 
 void VulkanRenderer::recreate_swapchain() {
-    m_device->wait_idle();
     m_window->wait_for_focus();
+    m_device->wait_idle();
+
+    // Query the framebuffer size here again although the window width is set during framebuffer resize callback
+    // The reason for this is that the framebuffer size could already be different again because we missed a poll
+    // This seems to be an issue on Linux only though
+    int window_width = 0;
+    int window_height = 0;
+    glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
     // Recreate the swapchain
-    m_swapchain->setup_swapchain(m_window->width(), m_window->height(), m_vsync_enabled);
+    m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
