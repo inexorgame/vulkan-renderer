@@ -170,7 +170,7 @@ void Swapchain::present(const std::uint32_t img_index) {
         .pImageIndices = &img_index,
     });
     if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
-        if (result == VK_SUBOPTIMAL_KHR) {
+        if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
             setup_swapchain(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
