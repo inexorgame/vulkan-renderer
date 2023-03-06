@@ -71,8 +71,8 @@ void VulkanRenderer::generate_octree_indices() {
 }
 
 void VulkanRenderer::recreate_swapchain() {
+    m_device->wait_idle();
     m_window->wait_for_focus();
-    vkDeviceWaitIdle(m_device->device());
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
@@ -137,7 +137,7 @@ VulkanRenderer::~VulkanRenderer() {
         return;
     }
 
-    vkDeviceWaitIdle(m_device->device());
+    m_device->wait_idle();
 
     if (!m_debug_report_callback_initialised) {
         return;
