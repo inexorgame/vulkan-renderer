@@ -43,11 +43,7 @@ void VulkanRenderer::setup_render_graph() {
         cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
         cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
     });
-
-    for (const auto &shader : m_shaders) {
-        main_stage->uses_shader(shader);
-    }
-
+    main_stage->uses_shaders(m_shaders);
     main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
 }
 

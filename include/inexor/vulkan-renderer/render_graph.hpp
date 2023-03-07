@@ -252,6 +252,10 @@ public:
     /// @brief Specifies that `shader` should be used during the pipeline of this stage.
     /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour.
     void uses_shader(const wrapper::Shader &shader);
+
+    /// Specifies the shaders which will be used during the pipeline of this stage
+    /// @param shaders The shaders to use during the pipeline of this stage
+    void uses_shaders(std::span<const wrapper::Shader> shaders);
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.

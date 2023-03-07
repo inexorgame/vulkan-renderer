@@ -44,6 +44,12 @@ void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     }));
 }
 
+void GraphicsStage::uses_shaders(const std::span<const wrapper::Shader> shaders) {
+    for (const auto &shader : shaders) {
+        uses_shader(shader);
+    }
+}
+
 PhysicalBuffer::~PhysicalBuffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
 }
