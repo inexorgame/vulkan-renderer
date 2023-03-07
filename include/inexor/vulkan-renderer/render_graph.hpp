@@ -189,10 +189,15 @@ public:
         m_descriptor_layouts.push_back(layout);
     }
 
-    /// @brief Add a push constant range to this render stage.
-    /// @param range The push constant range
-    void add_push_constant_range(VkPushConstantRange range) {
-        m_push_constant_ranges.push_back(range);
+    /// Add a push constant range to this render stage
+    template <typename PushConstantDataType>
+    void add_push_constant_range(const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
+                                 const std::uint32_t offset = 0) {
+        m_push_constant_ranges.push_back({
+            .stageFlags = stage_flags,
+            .offset = offset,
+            .size = sizeof(PushConstantDataType),
+        });
     }
 
     [[nodiscard]] const std::string &name() const {
