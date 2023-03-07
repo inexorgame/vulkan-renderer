@@ -17,11 +17,11 @@
 namespace inexor::vulkan_renderer {
 
 void VulkanRenderer::setup_render_graph() {
-    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
-    m_back_buffer->set_format(m_swapchain->image_format());
+    m_back_buffer =
+        m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER, m_swapchain->image_format());
 
-    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
-    depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
+    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER,
+                                                              VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     m_index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
     m_index_buffer->upload_data(m_octree_indices);

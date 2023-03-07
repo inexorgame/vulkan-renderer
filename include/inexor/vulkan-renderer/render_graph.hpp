@@ -145,14 +145,8 @@ private:
     VkFormat m_format{VK_FORMAT_UNDEFINED};
 
 public:
-    TextureResource(std::string &&name, TextureUsage usage) : RenderResource(name), m_usage(usage) {}
-
-    /// @brief Specifies the format of this texture that is required when the physical texture is made.
-    /// @details For TextureUsage::BACK_BUFFER textures, using the swapchain image format is preferable in most cases.
-    /// For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used.
-    void set_format(VkFormat format) {
-        m_format = format;
-    }
+    TextureResource(std::string &&name, TextureUsage usage, VkFormat format)
+        : RenderResource(name), m_usage(usage), m_format(format) {}
 };
 
 /// @brief A single render stage in the render graph.
@@ -408,7 +402,7 @@ public:
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
-    T *add(Args &&...args) {
+    T *add(Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         if constexpr (std::is_same_v<T, BufferResource>) {
             return static_cast<T *>(m_buffer_resources.emplace_back(std::move(ptr)).get());
