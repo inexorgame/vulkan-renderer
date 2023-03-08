@@ -34,6 +34,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/pipeline.cpp
+    vulkan-renderer/wrapper/pipeline_builder.cpp
     vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/renderpass.cpp

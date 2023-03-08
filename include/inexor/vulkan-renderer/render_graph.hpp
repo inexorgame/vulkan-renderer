@@ -6,6 +6,8 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
@@ -349,8 +351,8 @@ class PhysicalStage : public RenderGraphObject {
     friend RenderGraph;
 
 private:
-    VkPipeline m_pipeline{VK_NULL_HANDLE};
     std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
+    std::unique_ptr<wrapper::GraphicsPipeline> m_pipeline;
 
 protected:
     const wrapper::Device &m_device;

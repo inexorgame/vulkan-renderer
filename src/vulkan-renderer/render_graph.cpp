@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_builder.hpp"
 
 #include <spdlog/spdlog.h>
 #include <vk_mem_alloc.h>
@@ -53,9 +54,7 @@ PhysicalBuffer::~PhysicalBuffer() {
 
 PhysicalImage::~PhysicalImage() {}
 
-PhysicalStage::~PhysicalStage() {
-    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
-}
+PhysicalStage::~PhysicalStage() {}
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {}
 
@@ -189,7 +188,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         cmd_buf.bind_vertex_buffers(vertex_buffers);
     }
 
-    cmd_buf.bind_pipeline(physical.m_pipeline);
+    cmd_buf.bind_pipeline(physical.m_pipeline->pipeline());
     stage->m_on_record(physical, cmd_buf);
 
     if (graphics_stage != nullptr) {
@@ -300,88 +299,36 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
         });
     }
 
-    const auto vertex_input = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>({
-        .vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_bindings.size()),
-        .pVertexBindingDescriptions = vertex_bindings.data(),
-        .vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_bindings.size()),
-        .pVertexAttributeDescriptions = attribute_bindings.data(),
-    });
-
-    // TODO: Support primitives other than triangles.
-    const auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>({
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        .primitiveRestartEnable = VK_FALSE,
-    });
-
-    // TODO: Also allow depth compare func to be changed?
-    const auto depth_stencil = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
-        .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
-        .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
-        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-    });
-
-    // TODO: Allow culling to be disabled.
-    // TODO: Wireframe rendering.
-    const auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>({
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
-        .lineWidth = 1.0f,
-    });
-
-    // TODO(GH-203): Support multisampling again.
-    const auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>({
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .minSampleShading = 1.0f,
-    });
-
     auto blend_attachment = stage->m_blend_attachment;
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    const auto blend_state = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
-        .attachmentCount = 1,
-        .pAttachments = &blend_attachment,
-    });
-
-    const VkRect2D scissor{
-        .extent = m_swapchain.extent(),
-    };
-
-    const VkViewport viewport{
-        .width = static_cast<float>(m_swapchain.extent().width),
-        .height = static_cast<float>(m_swapchain.extent().height),
-        .maxDepth = 1.0f,
-    };
-
-    // TODO: Custom scissors?
-    const auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>({
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor,
-    });
-
-    const auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>({
-        .stageCount = static_cast<std::uint32_t>(stage->m_shaders.size()),
-        .pStages = stage->m_shaders.data(),
-        .pVertexInputState = &vertex_input,
-        .pInputAssemblyState = &input_assembly,
-        .pViewportState = &viewport_state,
-        .pRasterizationState = &rasterization_state,
-        .pMultisampleState = &multisample_state,
-        .pDepthStencilState = &depth_stencil,
-        .pColorBlendState = &blend_state,
-        .layout = physical.pipeline_layout(),
-        .renderPass = physical.m_render_pass->render_pass(),
-    });
+    // Create a graphics pipeline builder
+    std::unique_ptr<wrapper::GraphicsPipelineBuilder> builder =
+        std::make_unique<wrapper::GraphicsPipelineBuilder>(m_device);
 
     // TODO: Pipeline caching (basically load the render graph from a file)
-    if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + stage->name() + " !", result);
-    }
+    physical.m_pipeline = builder->set_shaders(stage->m_shaders)
+                              .set_vertex_input_attributes(attribute_bindings)
+                              .set_vertex_input_bindings(vertex_bindings)
+                              .set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
+                                  .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
+                                  .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
+                                  .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+                              }))
+                              .set_color_blend(wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
+                                  .attachmentCount = 1,
+                                  .pAttachments = &blend_attachment,
+                              }))
+                              .set_viewport({
+                                  .width = static_cast<float>(m_swapchain.extent().width),
+                                  .height = static_cast<float>(m_swapchain.extent().height),
+                                  .maxDepth = 1.0f,
+                              })
+                              .set_scissor({.extent = m_swapchain.extent()})
+                              .set_pipeline_layout(physical.pipeline_layout())
+                              .set_render_pass(physical.m_render_pass->render_pass())
+                              .build("graphics pipeline");
 }
 
 void RenderGraph::compile(const RenderResource *target) {
@@ -418,8 +365,8 @@ void RenderGraph::compile(const RenderResource *target) {
         m_log->trace("  - {}", stage->m_name);
     }
 
-    // Create physical resources. For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage
-    // respectively. Every physical resource also has a VmaAllocation.
+    // Create physical resources. For now, each buffer or texture resource maps directly to either a VkBuffer or
+    // VkImage respectively. Every physical resource also has a VmaAllocation.
     // TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources).
     m_log->trace("Allocating physical resource for buffers:");
 
@@ -444,8 +391,8 @@ void RenderGraph::compile(const RenderResource *target) {
         build_image(*texture_resource, *physical);
     }
 
-    // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
-    // command buffers. Each graphics stage also maps to a vulkan render pass.
+    // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list
+    // of command buffers. Each graphics stage also maps to a vulkan render pass.
     for (auto *stage : m_stage_stack) {
         if (auto *graphics_stage = stage->as<GraphicsStage>()) {
             auto physical_ptr = std::make_unique<PhysicalGraphicsStage>(m_device);
