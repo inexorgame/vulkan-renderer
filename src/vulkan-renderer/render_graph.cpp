@@ -58,7 +58,6 @@ PhysicalImage::~PhysicalImage() {
 
 PhysicalStage::~PhysicalStage() {
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
-    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
@@ -154,19 +153,8 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
-    const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({
-        .setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size()),
-        .pSetLayouts = stage->m_descriptor_layouts.data(),
-        .pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size()),
-        .pPushConstantRanges = stage->m_push_constant_ranges.data(),
-    });
-
-    if (const auto result =
-            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + stage->name() + "!",
-                              result);
-    }
+    physical.m_pipeline_layout = std::make_unique<wrapper::PipelineLayout>(
+        m_device, stage->m_descriptor_layouts, stage->m_push_constant_ranges, "graphics pipeline");
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
@@ -409,7 +397,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
         .pMultisampleState = &multisample_state,
         .pDepthStencilState = &depth_stencil,
         .pColorBlendState = &blend_state,
-        .layout = physical.m_pipeline_layout,
+        .layout = physical.pipeline_layout(),
         .renderPass = physical.m_render_pass,
     });
 

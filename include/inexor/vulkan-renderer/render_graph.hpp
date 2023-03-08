@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -344,7 +345,7 @@ class PhysicalStage : public RenderGraphObject {
 
 private:
     VkPipeline m_pipeline{VK_NULL_HANDLE};
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
 
 protected:
     const wrapper::Device &m_device;
@@ -361,7 +362,7 @@ public:
     /// @brief Retrieve the pipeline layout of this physical stage.
     // TODO: This can be removed once descriptors are properly implemented in the render graph.
     [[nodiscard]] VkPipelineLayout pipeline_layout() const {
-        return m_pipeline_layout;
+        return m_pipeline_layout->pipeline_layout();
     }
 };
 
