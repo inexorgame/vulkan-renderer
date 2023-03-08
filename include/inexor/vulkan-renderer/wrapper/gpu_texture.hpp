@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
+#include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -23,7 +23,7 @@ class GPUMemoryBuffer;
 class GpuTexture {
     const wrapper::Device &m_device;
     std::unique_ptr<wrapper::Image> m_texture_image;
-    VkSampler m_sampler{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::Sampler> m_sampler;
 
     VkFormat m_texture_format{VK_FORMAT_R8G8B8A8_UNORM};
     int m_texture_width{0};
@@ -43,15 +43,12 @@ class GpuTexture {
     /// @param new_layout The new image layout.
     void transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 
-    /// @brief Create the texture sampler.
-    void create_texture_sampler();
-
 public:
     /// @brief Construct a texture from a file.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param file_name The name of the texture file.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture);
+    GpuTexture(const Device &device, const CpuTexture &cpu_texture);
 
     /// @brief Construct a texture from a block of memory.
     /// @param device The const reference to a device RAII wrapper instance.
@@ -61,7 +58,7 @@ public:
     /// @param texture_height The height of the texture.
     /// @param texture_size The size of the texture.
     /// @param name The internal debug marker name of the texture.
-    GpuTexture(const wrapper::Device &device, void *data, std::size_t data_size, int texture_width, int texture_height,
+    GpuTexture(const Device &device, void *data, std::size_t data_size, int texture_width, int texture_height,
                int texture_channels, int mip_levels, std::string name);
 
     GpuTexture(const GpuTexture &) = delete;
@@ -85,7 +82,7 @@ public:
     }
 
     [[nodiscard]] VkSampler sampler() const {
-        return m_sampler;
+        return m_sampler->sampler();
     }
 };
 

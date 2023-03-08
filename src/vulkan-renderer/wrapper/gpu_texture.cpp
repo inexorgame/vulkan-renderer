@@ -2,22 +2,20 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-
-#include <spdlog/spdlog.h>
-#include <vk_mem_alloc.h>
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-GpuTexture::GpuTexture(const wrapper::Device &device, const CpuTexture &cpu_texture)
+GpuTexture::GpuTexture(const Device &device, const CpuTexture &cpu_texture)
     : m_device(device), m_texture_width(cpu_texture.width()), m_texture_height(cpu_texture.height()),
       m_texture_channels(cpu_texture.channels()), m_mip_levels(cpu_texture.mip_levels()), m_name(cpu_texture.name()) {
     create_texture(cpu_texture.data(), cpu_texture.data_size());
 }
 
-GpuTexture::GpuTexture(const wrapper::Device &device, void *data, const std::size_t data_size, const int texture_width,
+GpuTexture::GpuTexture(const Device &device, void *data, const std::size_t data_size, const int texture_width,
                        const int texture_height, const int texture_channels, const int mip_levels, std::string name)
     : m_device(device), m_texture_width(texture_width), m_texture_height(texture_height),
       m_texture_channels(texture_channels), m_mip_levels(mip_levels), m_name(std::move(name)) {
@@ -35,9 +33,7 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept : m_device(other.m_device) {
     m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
-GpuTexture::~GpuTexture() {
-    vkDestroySampler(m_device.device(), m_sampler, nullptr);
-}
+GpuTexture::~GpuTexture() {}
 
 void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
     const auto img_view = wrapper::make_info<VkImageCreateInfo>({
@@ -96,35 +92,8 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
-    create_texture_sampler();
-}
-
-void GpuTexture::create_texture_sampler() {
-    VkPhysicalDeviceFeatures device_features;
-    vkGetPhysicalDeviceFeatures(m_device.physical_device(), &device_features);
-
-    VkPhysicalDeviceProperties graphics_card_properties;
-    vkGetPhysicalDeviceProperties(m_device.physical_device(), &graphics_card_properties);
-
-    const auto sampler_ci = make_info<VkSamplerCreateInfo>({
-        .magFilter = VK_FILTER_LINEAR,
-        .minFilter = VK_FILTER_LINEAR,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .mipLodBias = 0.0f,
-        .anisotropyEnable = VK_FALSE,
-        .maxAnisotropy = 1.0f,
-        .compareEnable = VK_FALSE,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
-        .minLod = 0.0f,
-        .maxLod = 0.0f,
-        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE,
-    });
-
-    m_device.create_sampler(sampler_ci, &m_sampler, m_name);
+    // Create a default texture sampler
+    m_sampler = std::make_unique<wrapper::Sampler>(m_device, m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
