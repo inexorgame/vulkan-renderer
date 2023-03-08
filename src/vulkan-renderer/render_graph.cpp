@@ -16,30 +16,35 @@
 
 namespace inexor::vulkan_renderer {
 
-void RenderStage::writes_to(const RenderResource *resource) {
+RenderStage *RenderStage::writes_to(const RenderResource *resource) {
     m_writes.push_back(resource);
+    return this;
 }
 
-void RenderStage::reads_from(const RenderResource *resource) {
+RenderStage *RenderStage::reads_from(const RenderResource *resource) {
     m_reads.push_back(resource);
+    return this;
 }
 
-void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
+GraphicsStage *GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
     m_buffer_bindings.emplace(buffer, binding);
+    return this;
 }
 
-void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
+GraphicsStage *GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
         .stage = shader.type(),
         .module = shader.module(),
         .pName = shader.entry_point().c_str(),
     }));
+    return this;
 }
 
-void GraphicsStage::uses_shaders(const std::span<const wrapper::Shader> shaders) {
+GraphicsStage *GraphicsStage::uses_shaders(const std::span<const wrapper::Shader> shaders) {
     for (const auto &shader : shaders) {
         uses_shader(shader);
     }
+    return this;
 }
 
 PhysicalBuffer::~PhysicalBuffer() {

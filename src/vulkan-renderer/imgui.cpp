@@ -62,7 +62,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         spdlog::error("Unable to load font {}.  Falling back to error texture", FONT_FILE_PATH);
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
     } else {
-        spdlog::trace("Creating ImGUI font texture");
+        spdlog::trace("Creating ImGui font texture");
 
         // Our font textures always have 4 channels and a single mip level by definition.
         constexpr int FONT_TEXTURE_CHANNELS{4};
@@ -74,7 +74,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
             m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
-            FONT_MIP_LEVELS, "ImGUI font texture");
+            FONT_MIP_LEVELS, "ImGui font texture");
     }
 
     // Create an instance of the resource descriptor builder.
@@ -84,10 +84,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     // Make use of the builder to create a resource descriptor for the combined image sampler.
     m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(
         descriptor_builder.add_combined_image_sampler(m_imgui_texture->sampler(), m_imgui_texture->image_view(), 0)
-            .build("ImGUI"));
+            .build("ImGui"));
 
-    m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
-    m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_index_buffer = render_graph->add<BufferResource>("ImGui index buffer", BufferUsage::INDEX_BUFFER);
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui vertex buffer", BufferUsage::VERTEX_BUFFER);
 
     m_vertex_buffer->set_vertex_attributes<ImDrawVert>({
         {.location = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(ImDrawVert, pos)},
@@ -95,29 +95,27 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         {.location = 2, .format = VK_FORMAT_R8G8B8A8_UNORM, .offset = offsetof(ImDrawVert, col)},
     });
 
-    m_stage = render_graph->add<GraphicsStage>("imgui stage");
-    m_stage->writes_to(back_buffer);
-    m_stage->reads_from(m_index_buffer);
-    m_stage->reads_from(m_vertex_buffer);
-    m_stage->bind_buffer(m_vertex_buffer, 0);
-    m_stage->uses_shader(*m_vertex_shader);
-    m_stage->uses_shader(*m_fragment_shader);
+    // All aspects of the GraphicsStage
+    m_stage = render_graph->add<GraphicsStage>("ImGui")
+                  ->bind_buffer(m_vertex_buffer, 0)
+                  ->uses_shader(*m_vertex_shader)
+                  ->uses_shader(*m_fragment_shader)
+                  ->set_blend_attachment({
+                      .blendEnable = VK_TRUE,
+                      .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+                      .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                      .colorBlendOp = VK_BLEND_OP_ADD,
+                      .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+                      .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+                      .alphaBlendOp = VK_BLEND_OP_ADD,
+                  });
 
-    m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-
-    // Setup push constant range for global translation and scale.
-    m_stage->add_push_constant_range<PushConstBlock>();
-
-    // Setup blend attachment.
-    m_stage->set_blend_attachment({
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
-    });
+    // All aspects of the RenderStage
+    m_stage->writes_to(back_buffer)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
+        ->add_descriptor_layout(m_descriptor->descriptor_set_layout())
+        ->add_push_constant_range<PushConstBlock>(); // Setup push constant range for global translation and scale
 }
 
 ImGUIOverlay::~ImGUIOverlay() {

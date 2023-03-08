@@ -104,9 +104,10 @@ public:
     /// @tparam VertexDataType The vertex data type
     /// @param vertex_attribute_descriptions the vertex input attribute descriptions
     template <typename VertexDataType>
-    void set_vertex_attributes(std::vector<VkVertexInputAttributeDescription> vert_attr_descs) {
+    BufferResource *set_vertex_attributes(std::vector<VkVertexInputAttributeDescription> vert_attr_descs) {
         m_vert_input_attr_descs = std::move(vert_attr_descs);
         m_element_size = sizeof(VertexDataType);
+        return this;
     }
 
     /// @brief Specifies the data that should be uploaded to this buffer at the start of the next frame.
@@ -114,13 +115,13 @@ public:
     /// @param data A pointer to a contiguous block of memory that is at least `count * sizeof(T)` bytes long
     // TODO: Use std::span when we switch to C++ 20.
     template <typename T>
-    void upload_data(const T *data, std::size_t count);
+    BufferResource *upload_data(const T *data, std::size_t count);
 
     /// @brief @copybrief upload_data(const T *, std::size_t)
     /// @note This is equivalent to doing `upload_data(data.data(), data.size() * sizeof(T))`
     /// @see upload_data(const T *data, std::size_t count)
     template <typename T>
-    void upload_data(const std::vector<T> &data);
+    BufferResource *upload_data(const std::vector<T> &data);
 };
 
 enum class TextureUsage {
@@ -175,28 +176,30 @@ public:
     RenderStage &operator=(RenderStage &&) = delete;
 
     /// @brief Specifies that this stage writes to `resource`.
-    void writes_to(const RenderResource *resource);
+    RenderStage *writes_to(const RenderResource *resource);
 
     /// @brief Specifies that this stage reads from `resource`.
-    void reads_from(const RenderResource *resource);
+    RenderStage *reads_from(const RenderResource *resource);
 
     /// @brief Binds a descriptor set layout to this render stage.
     /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
     /// deal with descriptors at all.
     // TODO: Refactor descriptor management in the render graph
-    void add_descriptor_layout(VkDescriptorSetLayout layout) {
+    RenderStage *add_descriptor_layout(VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
+        return this;
     }
 
     /// Add a push constant range to this render stage
     template <typename PushConstantDataType>
-    void add_push_constant_range(const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
-                                 const std::uint32_t offset = 0) {
+    RenderStage *add_push_constant_range(const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
+                                         const std::uint32_t offset = 0) {
         m_push_constant_ranges.push_back({
             .stageFlags = stage_flags,
             .offset = offset,
             .size = sizeof(PushConstantDataType),
         });
+        return this;
     }
 
     [[nodiscard]] const std::string &name() const {
@@ -206,8 +209,9 @@ public:
     /// @brief Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
     /// common use for this is for draw commands.
-    void set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
+    RenderStage *set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
+        return this;
     }
 };
 
@@ -232,34 +236,37 @@ public:
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
     /// @brief Specifies that this stage should clear the screen before rendering.
-    void set_clears_screen(bool clears_screen) {
+    GraphicsStage *set_clears_screen(bool clears_screen) {
         m_clears_screen = clears_screen;
+        return this;
     }
 
     /// @brief Specifies the depth options for this stage.
     /// @param depth_test Whether depth testing should be performed
     /// @param depth_write Whether depth writing should be performed
-    void set_depth_options(bool depth_test, bool depth_write) {
+    GraphicsStage *set_depth_options(bool depth_test, bool depth_write) {
         m_depth_test = depth_test;
         m_depth_write = depth_write;
+        return this;
     }
 
     /// @brief Set the blend attachment for this stage.
     /// @param blend_attachment The blend attachment
-    void set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
+    GraphicsStage *set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
         m_blend_attachment = blend_attachment;
+        return this;
     }
 
     /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage.
-    void bind_buffer(const BufferResource *buffer, std::uint32_t binding);
+    GraphicsStage *bind_buffer(const BufferResource *buffer, std::uint32_t binding);
 
     /// @brief Specifies that `shader` should be used during the pipeline of this stage.
     /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour.
-    void uses_shader(const wrapper::Shader &shader);
+    GraphicsStage *uses_shader(const wrapper::Shader &shader);
 
     /// Specifies the shaders which will be used during the pipeline of this stage
     /// @param shaders The shaders to use during the pipeline of this stage
-    void uses_shaders(std::span<const wrapper::Shader> shaders);
+    GraphicsStage *uses_shaders(std::span<const wrapper::Shader> shaders);
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.
@@ -444,15 +451,17 @@ template <typename T>
 }
 
 template <typename T>
-void BufferResource::upload_data(const T *data, std::size_t count) {
+BufferResource *BufferResource::upload_data(const T *data, std::size_t count) {
     m_data = data;
     m_data_size = count * (m_element_size = sizeof(T));
     m_data_upload_needed = true;
+    return this;
 }
 
 template <typename T>
-void BufferResource::upload_data(const std::vector<T> &data) {
+BufferResource *BufferResource::upload_data(const std::vector<T> &data) {
     upload_data(data.data(), data.size());
+    return this;
 }
 
 } // namespace inexor::vulkan_renderer
