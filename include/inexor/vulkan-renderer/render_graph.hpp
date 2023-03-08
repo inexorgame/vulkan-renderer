@@ -7,6 +7,7 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/renderpass.hpp"
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -374,8 +375,8 @@ class PhysicalGraphicsStage : public PhysicalStage {
     friend RenderGraph;
 
 private:
-    VkRenderPass m_render_pass{VK_NULL_HANDLE};
     std::vector<wrapper::Framebuffer> m_framebuffers;
+    std::unique_ptr<wrapper::RenderPass> m_render_pass;
 
 public:
     explicit PhysicalGraphicsStage(const wrapper::Device &device) : PhysicalStage(device) {}
@@ -385,6 +386,10 @@ public:
 
     PhysicalGraphicsStage &operator=(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage &operator=(PhysicalGraphicsStage &&) = delete;
+
+    [[nodiscard]] VkRenderPass render_pass() const noexcept {
+        return m_render_pass->render_pass();
+    }
 };
 
 class RenderGraph {

@@ -57,9 +57,7 @@ PhysicalStage::~PhysicalStage() {
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
 }
 
-PhysicalGraphicsStage::~PhysicalGraphicsStage() {
-    vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
-}
+PhysicalGraphicsStage::~PhysicalGraphicsStage() {}
 
 void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
     // TODO: Don't always create mapped.
@@ -159,7 +157,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         }
 
         cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
-            .renderPass = phys_graphics_stage->m_render_pass,
+            .renderPass = phys_graphics_stage->m_render_pass->render_pass(),
             .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
             .renderArea{
                 .extent = m_swapchain.extent(),
@@ -249,35 +247,27 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         attachments.push_back(attachment);
     }
 
-    // Build a simple subpass that just waits for the output colour vector to be written by the fragment shader. In the
-    // future, we may want to make use of subpasses more.
-    const VkSubpassDependency subpass_dependency{
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    const std::vector<VkSubpassDescription> subpasses{
+        {
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size()),
+            .pColorAttachments = colour_refs.data(),
+            .pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr,
+        },
     };
 
-    const VkSubpassDescription subpass_description{
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size()),
-        .pColorAttachments = colour_refs.data(),
-        .pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr,
+    // Build a simple subpass that just waits for the output colour vector to be written by the fragment shader
+    const std::vector<VkSubpassDependency> dependencies{
+        {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        },
     };
 
-    const auto render_pass_ci = wrapper::make_info<VkRenderPassCreateInfo>({
-        .attachmentCount = static_cast<std::uint32_t>(attachments.size()),
-        .pAttachments = attachments.data(),
-        .subpassCount = 1,
-        .pSubpasses = &subpass_description,
-        .dependencyCount = 1,
-        .pDependencies = &subpass_dependency,
-    });
-
-    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateRenderPass failed for renderpass " + stage->name() + " !", result);
-    }
+    physical.m_render_pass =
+        std::make_unique<wrapper::RenderPass>(m_device, attachments, subpasses, dependencies, "renderpass");
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -383,7 +373,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
         .pDepthStencilState = &depth_stencil,
         .pColorBlendState = &blend_state,
         .layout = physical.pipeline_layout(),
-        .renderPass = physical.m_render_pass,
+        .renderPass = physical.m_render_pass->render_pass(),
     });
 
     // TODO: Pipeline caching (basically load the render graph from a file)
@@ -489,8 +479,8 @@ void RenderGraph::compile(const RenderResource *target) {
                     for (const auto *image : images) {
                         image_views.push_back(image->image_view());
                     }
-                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
-                                                         "Framebuffer");
+                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass->render_pass(), image_views,
+                                                         m_swapchain, "Framebuffer");
                     image_views.clear();
                 }
             }
