@@ -267,11 +267,21 @@ public:
     void create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeline_ci, VkPipeline *pipeline,
                                   const std::string &name) const;
 
+    /// Call vmaCreateImage (VMA wrapper)
+    /// @param img_ci The image create info structure
+    /// @param img_alloc_ci The image allocation create info
+    /// @param img The image to create
+    /// @param alloc The VMA allocation structure
+    /// @param alloc_info The VMA allocation info structure
+    /// @param name The internal debug name of the image
+    void create_image(const VkImageCreateInfo &img_ci, const VmaAllocationCreateInfo &img_alloc_ci, VkImage *img,
+                      VmaAllocation *alloc, VmaAllocationInfo *alloc_info, const std::string &name) const;
+
     /// Call vkCreateImageView
-    /// @param image_view_ci The image view create info structure
-    /// @param image_view The image view to create
-    /// @param name The internal debug marker name which will be assigned to this image view
-    void create_image_view(const VkImageViewCreateInfo &image_view_ci, VkImageView *image_view,
+    /// @param img_view_ci The image view create info structure
+    /// @param img_view The image view to create
+    /// @param name The internal debug name which will be assigned to this image view
+    void create_image_view(const VkImageViewCreateInfo &img_view_ci, VkImageView *img_view,
                            const std::string &name) const;
 
     /// Call vkCreatePipelineLayout

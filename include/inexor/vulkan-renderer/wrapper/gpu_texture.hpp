@@ -12,24 +12,25 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declarations
 class Device;
 class GPUMemoryBuffer;
 
+// TODO: Support 3D textures and cube maps (implement new and separate wrappers though).
+
 /// @note The code which loads textures from files is wrapped in CpuTexture.
-/// @brief RAII wrapper class for textures which are stored in GPU memory.
-/// @todo Support 3D textures and cube maps (implement new and separate wrappers though).
+/// RAII wrapper class for textures which are stored in GPU memory.
 class GpuTexture {
+    const wrapper::Device &m_device;
     std::unique_ptr<wrapper::Image> m_texture_image;
     VkSampler m_sampler{VK_NULL_HANDLE};
 
+    VkFormat m_texture_format{VK_FORMAT_R8G8B8A8_UNORM};
     int m_texture_width{0};
     int m_texture_height{0};
     int m_texture_channels{0};
     int m_mip_levels{0};
-
     std::string m_name;
-    const wrapper::Device &m_device;
-    const VkFormat m_texture_image_format{VK_FORMAT_R8G8B8A8_UNORM};
 
     /// @brief Create the texture.
     /// @param texture_data A pointer to the texture data.
@@ -76,7 +77,7 @@ public:
     }
 
     [[nodiscard]] VkImage image() const {
-        return m_texture_image->get();
+        return m_texture_image->image();
     }
 
     [[nodiscard]] VkImageView image_view() const {

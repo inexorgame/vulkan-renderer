@@ -51,10 +51,7 @@ PhysicalBuffer::~PhysicalBuffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
 }
 
-PhysicalImage::~PhysicalImage() {
-    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
-    vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
-}
+PhysicalImage::~PhysicalImage() {}
 
 PhysicalStage::~PhysicalStage() {
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
@@ -97,9 +94,8 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
     vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph buffer");
 }
 
-void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical,
-                              VmaAllocationCreateInfo *alloc_ci) const {
-    const auto image_ci = wrapper::make_info<VkImageCreateInfo>({
+void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical) const {
+    const auto img_ci = wrapper::make_info<VkImageCreateInfo>({
         .imageType = VK_IMAGE_TYPE_2D,
         .format = texture_resource.m_format,
         .extent{
@@ -119,21 +115,8 @@ void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalI
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     });
 
-    VmaAllocationInfo alloc_info;
-    // TODO: Assign proper name to this image inside of rendergraph
-    if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &physical.m_image,
-                                           &physical.m_allocation, &alloc_info);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImage failed for rendergraph image", result);
-    }
-
-    // TODO: Use a better naming system for memory resources inside of rendergraph
-    vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph image");
-}
-
-void RenderGraph::build_image_view(const TextureResource &texture_resource, PhysicalImage &physical) const {
-    const auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
-        .image = physical.m_image,
+    const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
+        // Note that .image is set by wrapper::Image itself
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = texture_resource.m_format,
         .subresourceRange{
@@ -145,11 +128,13 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
         },
     });
 
-    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + texture_resource.m_name + "!",
-                              result);
-    }
+    const VmaAllocationCreateInfo alloc_ci{
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
+    };
+
+    // TODO: Use a better naming system for memory resources inside of rendergraph
+    physical.m_img = std::make_unique<wrapper::Image>(m_device, img_ci, alloc_ci, img_view_ci, "rendergraph image");
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
@@ -464,14 +449,9 @@ void RenderGraph::compile(const RenderResource *target) {
             continue;
         }
 
-        // TODO: Use a constexpr bool.
-        VmaAllocationCreateInfo alloc_ci{};
-        alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
         auto physical = std::make_shared<PhysicalImage>(m_device);
         texture_resource->m_physical = physical;
-        build_image(*texture_resource, *physical, &alloc_ci);
-        build_image_view(*texture_resource, *physical);
+        build_image(*texture_resource, *physical);
     }
 
     // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
@@ -507,7 +487,7 @@ void RenderGraph::compile(const RenderResource *target) {
                 for (auto *const img_view : m_swapchain.image_views()) {
                     std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
                     for (const auto *image : images) {
-                        image_views.push_back(image->m_image_view);
+                        image_views.push_back(image->image_view());
                     }
                     physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
                                                          "Framebuffer");
