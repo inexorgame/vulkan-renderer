@@ -27,8 +27,12 @@ void VulkanRenderer::setup_render_graph() {
     m_index_buffer->upload_data(m_octree_indices);
 
     m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
+
+    m_vertex_buffer->set_vertex_attributes<OctreeGpuVertex>({
+        {.location = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(OctreeGpuVertex, position)},
+        {.location = 1, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(OctreeGpuVertex, color)},
+    });
+
     m_vertex_buffer->upload_data(m_octree_vertices);
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");

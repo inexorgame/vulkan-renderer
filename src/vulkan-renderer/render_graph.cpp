@@ -16,14 +16,6 @@
 
 namespace inexor::vulkan_renderer {
 
-void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
-    m_vertex_attributes.push_back({
-        .location = static_cast<std::uint32_t>(m_vertex_attributes.size()),
-        .format = format,
-        .offset = offset,
-    });
-}
-
 void RenderStage::writes_to(const RenderResource *resource) {
     m_writes.push_back(resource);
 }
@@ -328,7 +320,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
 
         // We use std::unordered_map::at() here to ensure that a binding value exists for buffer_resource.
         const std::uint32_t binding = stage->m_buffer_bindings.at(buffer_resource);
-        for (auto attribute_binding : buffer_resource->m_vertex_attributes) {
+        for (auto attribute_binding : buffer_resource->m_vert_input_attr_descs) {
             attribute_binding.binding = binding;
             attribute_bindings.push_back(attribute_binding);
         }

@@ -89,7 +89,7 @@ class BufferResource : public RenderResource {
 
 private:
     const BufferUsage m_usage;
-    std::vector<VkVertexInputAttributeDescription> m_vertex_attributes;
+    std::vector<VkVertexInputAttributeDescription> m_vert_input_attr_descs;
 
     // Data to upload during render graph compilation.
     const void *m_data{nullptr};
@@ -100,14 +100,13 @@ private:
 public:
     BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
 
-    /// @brief Specifies that element `offset` of this vertex buffer is of format `format`.
-    /// @note Calling this function is only valid on buffers of type BufferUsage::VERTEX_BUFFER.
-    void add_vertex_attribute(VkFormat format, std::uint32_t offset);
-
-    /// @brief Specifies the element size of the buffer upfront if data is not to be uploaded immediately.
-    /// @param element_size The element size in bytes
-    void set_element_size(std::size_t element_size) {
-        m_element_size = element_size;
+    /// Set the vertex input attribute descriptions
+    /// @tparam VertexDataType The vertex data type
+    /// @param vertex_attribute_descriptions the vertex input attribute descriptions
+    template <typename VertexDataType>
+    void set_vertex_attributes(std::vector<VkVertexInputAttributeDescription> vert_attr_descs) {
+        m_vert_input_attr_descs = std::move(vert_attr_descs);
+        m_element_size = sizeof(VertexDataType);
     }
 
     /// @brief Specifies the data that should be uploaded to this buffer at the start of the next frame.

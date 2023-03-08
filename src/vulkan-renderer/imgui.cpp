@@ -88,10 +88,12 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
     m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col));
-    m_vertex_buffer->set_element_size(sizeof(ImDrawVert));
+
+    m_vertex_buffer->set_vertex_attributes<ImDrawVert>({
+        {.location = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(ImDrawVert, pos)},
+        {.location = 1, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(ImDrawVert, uv)},
+        {.location = 2, .format = VK_FORMAT_R8G8B8A8_UNORM, .offset = offsetof(ImDrawVert, col)},
+    });
 
     m_stage = render_graph->add<GraphicsStage>("imgui stage");
     m_stage->writes_to(back_buffer);
