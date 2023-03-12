@@ -59,27 +59,17 @@ PhysicalStage::~PhysicalStage() {}
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {}
 
 void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
-    // TODO: Don't always create mapped.
     const VmaAllocationCreateInfo alloc_ci{
         .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
         .usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
     };
 
-    auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
+    const auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
         .size = buffer_resource.m_data_size,
+        .usage = buffer_resource.m_usage == BufferUsage::INDEX_BUFFER ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+                                                                      : VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
-
-    switch (buffer_resource.m_usage) {
-    case BufferUsage::INDEX_BUFFER:
-        buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        break;
-    case BufferUsage::VERTEX_BUFFER:
-        buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        break;
-    default:
-        assert(false);
-    }
 
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
                                             &physical.m_allocation, &physical.m_alloc_info);
