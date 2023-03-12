@@ -52,12 +52,6 @@ PhysicalBuffer::~PhysicalBuffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
 }
 
-PhysicalImage::~PhysicalImage() {}
-
-PhysicalStage::~PhysicalStage() {}
-
-PhysicalGraphicsStage::~PhysicalGraphicsStage() {}
-
 void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
     const VmaAllocationCreateInfo alloc_ci{
         .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,

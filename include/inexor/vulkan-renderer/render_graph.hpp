@@ -320,7 +320,7 @@ public:
     explicit PhysicalImage(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
-    ~PhysicalImage() override;
+    ~PhysicalImage() override = default;
 
     PhysicalImage &operator=(const PhysicalImage &) = delete;
     PhysicalImage &operator=(PhysicalImage &&) = delete;
@@ -361,7 +361,7 @@ public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
     PhysicalStage(const PhysicalStage &) = delete;
     PhysicalStage(PhysicalStage &&) = delete;
-    ~PhysicalStage() override;
+    ~PhysicalStage() override = default;
 
     PhysicalStage &operator=(const PhysicalStage &) = delete;
     PhysicalStage &operator=(PhysicalStage &&) = delete;
@@ -384,7 +384,7 @@ public:
     explicit PhysicalGraphicsStage(const wrapper::Device &device) : PhysicalStage(device) {}
     PhysicalGraphicsStage(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage(PhysicalGraphicsStage &&) = delete;
-    ~PhysicalGraphicsStage() override;
+    ~PhysicalGraphicsStage() override = default;
 
     PhysicalGraphicsStage &operator=(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage &operator=(PhysicalGraphicsStage &&) = delete;
