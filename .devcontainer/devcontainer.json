@@ -1,0 +1,16 @@
+{
+    "name": "Vulkan Renderer",
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "service": "devcontainer",
+    "workspaceFolder": "/workspace",
+    "shutdownAction": "stopCompose",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                
+            ]
+        }
+    }
+}
