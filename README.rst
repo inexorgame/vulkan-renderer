@@ -7,7 +7,16 @@ vulkan-renderer
 
 .. image:: documentation/source/images/banner.jpg
 
+conan profile new default --detect --force
 
+export CC=clang
+export CXX=clang++
+
+conan install . -pr ./conan/clang_release_profile --update --build=missing --output-folder build/
+
+cd build
+
+cmake . -G Ninja -DCAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 
 FAQ and documentation
 #####################
