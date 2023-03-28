@@ -26,7 +26,6 @@ class KenophobiaConan(ConanFile):
     def requirements(self):
         self.requires("glfw/3.3.8")
         self.requires("glm/cci.20220420")
-        self.requires("glslang/1.3.236.0")
         self.requires("imgui/1.89.2")
         self.requires("spdlog/1.11.0")
         self.requires("stb/cci.20220909", override=True)
@@ -42,6 +41,7 @@ class KenophobiaConan(ConanFile):
             self.requires("gtest/1.13.0")
 
     def build_requirements(self):
+        self.tool_requires("glslang/1.3.236.0")
         if self.options.use_conan_build_tools:
             self.tool_requires("cmake/3.25.2")
             self.tool_requires("ninja/1.11.1")

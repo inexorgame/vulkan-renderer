@@ -62,6 +62,17 @@ foreach(FILE ${INEXOR_SOURCE_FILES})
     source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
+find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
+find_package(imgui REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(stb REQUIRED)
+find_package(TinyGLTF REQUIRED)
+find_package(toml11 REQUIRED)
+find_package(Vulkan REQUIRED)
+find_package(VulkanHeaders REQUIRED)
+find_package(vulkan-memory-allocator REQUIRED)
+
 add_library(inexor-vulkan-renderer ${INEXOR_SOURCE_FILES})
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)
@@ -111,36 +122,18 @@ target_include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
-# TODO: Change on Conan 2.0
-function(find_conan_package NAME)
-    get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-    if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
-        find_package(${NAME} CONFIG REQUIRED)
-    else()
-        find_package(${NAME} REQUIRED)
-    endif()
-endfunction()
-find_conan_package(glfw3)
-find_conan_package(glm)
-find_conan_package(imgui)
-find_conan_package(spdlog)
-find_conan_package(stb)
-find_conan_package(TinyGLTF)
-find_conan_package(toml11)
-find_conan_package(Vulkan)
-find_conan_package(vulkan-memory-allocator)
-
 target_link_libraries(
     inexor-vulkan-renderer
 
     PUBLIC
-    glfw::glfw
+
+    fmt::fmt
+    glfw
     glm::glm
-    imgui::imgui
-    spdlog::spdlog
-    stb::stb
-    TinyGLTF::TinyGLTF
+    imgui
+    spdlog
+    tinygltf
     toml11::toml11
     Vulkan::Vulkan
-    vulkan-memory-allocator::vulkan-memory-allocator
+    VulkanMemoryAllocator
 )

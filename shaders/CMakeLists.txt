@@ -1,13 +1,9 @@
-# TODO: Change on Conan 2.0
-get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
-    find_package(glslang CONFIG REQUIRED)
-else()
-    find_package(glslang REQUIRED)
-endif()
+find_package(glslang REQUIRED)
 
-find_program(GLSL_VALIDATOR glslangValidator REQUIRED)
-if(NOT GLSL_VALIDATOR)
+message(STATUS ${CMAKE_PROGRAM_PATH})
+
+find_program(GLSLANG_VALIDATOR "glslangValidator" REQUIRED)
+if(NOT GLSLANG_VALIDATOR)
     message(FATAL_ERROR "glslangValidator not found!")
 endif()
 
@@ -24,7 +20,7 @@ foreach(SHADER ${SHADERS})
     set(SPIRV ${CMAKE_CURRENT_SOURCE_DIR}/${FILE_NAME}.spv)
     add_custom_command(
         OUTPUT ${SPIRV}
-        COMMAND ${GLSL_VALIDATOR} -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${SPIRV}
+        COMMAND ${GLSLANG_VALIDATOR} -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER} -o ${SPIRV}
         DEPENDS ${SHADER}
     )
 

@@ -8,9 +8,6 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
-      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
-      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
-      inexor_conan_path: "$HOME/.local/bin"
     strategy:
       fail-fast: false
       matrix:
@@ -18,12 +15,13 @@ jobs:
           - {
             name: "Ubuntu Clang",
             cc: "clang", cxx: "clang++",
-            cmake_configure_options: '-DCMAKE_EXE_LINKER_FLAGS="-v -fuse-ld=lld"',
+            conan_profile: './conan/clang_release_profile',
             build_type: "Release",
           }
           - {
             name: "Ubuntu GCC",
             cc: "gcc", cxx: "g++",
+            conan_profile: './conan/gcc_release_profile',
             build_type: "Release",
           }
 
@@ -35,7 +33,7 @@ jobs:
           apt update -qq
           # Install build tools
           apt install -y \
-            clang \
+            clang-14 \
             cmake \
             curl \
             git \
@@ -80,19 +78,10 @@ jobs:
         run: |
           export CC=${{ matrix.config.cc }}
           export CXX=${{ matrix.config.cxx }}
-          export PATH="${{ env.inexor_conan_path }}":$PATH
 
-          # Setup conan
-          # Note: libstdc++11 is needed to use new libc++ ABI
-          conan profile new default --detect --force
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-
-          # Configure cmake
-          cmake . \
-            -Bbuild \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -GNinja \
-            ${{ matrix.config.cmake_configure_options }}
+          conan install . -pr ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
+          cd build
+          cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
 
       - name: Build
         shell: bash

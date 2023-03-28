@@ -54,3 +54,7 @@ documentation/source/exhale-generated/
 
 # logfiles
 *.log
+
+# others
+.vscode/
+CMakeUserPresets.json
