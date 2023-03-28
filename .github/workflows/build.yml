@@ -8,6 +8,7 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
+      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
     strategy:
       fail-fast: false
       matrix:
@@ -131,7 +132,6 @@ jobs:
     runs-on: windows-latest
     env:
       CONAN_USER_HOME: "${{ github.workspace }}/conan/"
-      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
     strategy:
       fail-fast: false
       matrix:
