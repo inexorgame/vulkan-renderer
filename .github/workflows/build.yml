@@ -94,7 +94,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake --build .
+          cmake --build build
 
       - name: Prepare build artifacts
         shell: bash
