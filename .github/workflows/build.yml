@@ -74,20 +74,27 @@ jobs:
           path: ${{ env.CONAN_USER_HOME }}
           key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
 
-      - name: Configure CMake
+      - name: Configure Conan
+        env:
+          CC: ${{ matrix.config.cc }}
+          CXX: ${{ matrix.config.cxx }}
         shell: bash
         run: |
-          export CC=${{ matrix.config.cc }}
-          export CXX=${{ matrix.config.cxx }}
+          conan install . -pr:h ${{ matrix.config.conan_profile }} -pr:b ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
 
-          conan install . -pr ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
+      - name: Configure CMake
+        env:
+          CC: ${{ matrix.config.cc }}
+          CXX: ${{ matrix.config.cxx }}
+        shell: bash
+        run: |
           cd build
           cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
 
       - name: Build
         shell: bash
         run: |
-          cmake --build build
+          cmake --build .
 
       - name: Prepare build artifacts
         shell: bash
