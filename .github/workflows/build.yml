@@ -131,8 +131,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          conan remove "*" -f --builds --src
-          conan remove "*" -f --system-reqs
+          conan cache clean "*" --source --build --download
 
   windows:
     name: ${{ matrix.config.name }}
