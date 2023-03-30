@@ -11,7 +11,8 @@
             "extensions": [
 				"ms-vscode.cpptools",
 				"ms-vscode.cpptools-extension-pack",
-				"twxs.cmake"
+				"twxs.cmake",
+				"bungcip.better-toml"
 			]
         }
     }
