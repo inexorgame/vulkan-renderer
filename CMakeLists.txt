@@ -22,9 +22,7 @@ option(INEXOR_FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clan
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
 message(STATUS "INEXOR_BUILD_EXAMPLE = ${INEXOR_BUILD_EXAMPLE}")
-message(STATUS "INEXOR_BUILD_TESTS= ${INEXOR_BUILD_TESTS}")
-message(STATUS "INEXOR_USE_CONAN = ${INEXOR_USE_CONAN}")
-message(STATUS "INEXOR_CONAN_PROFILE = ${INEXOR_CONAN_PROFILE}")
+message(STATUS "INEXOR_BUILD_TESTS= ${INEXOR_BUILD_TESTS}") 
 
 message(STATUS "CMAKE_VERSION = ${CMAKE_VERSION}")
 message(STATUS "CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
@@ -32,11 +30,6 @@ message(STATUS "C Compiler executable: ${CMAKE_C_COMPILER}")
 message(STATUS "CXX Compiler executable: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Linker executable: ${CMAKE_LINKER}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
-# Dependency setup with conan
-if (${INEXOR_USE_CONAN})
-    include(conan_setup)
-endif()
 
 # The marked constants in application.hpp will be replaced with the following values
 set(INEXOR_ENGINE_NAME "Inexor Engine")

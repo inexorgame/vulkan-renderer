@@ -1,4 +1,4 @@
-find_package(glslang REQUIRED)
+find_package(glslang "1.3.236.0" REQUIRED)
 
 message(STATUS ${CMAKE_PROGRAM_PATH})
 

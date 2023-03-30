@@ -46,7 +46,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp
     vulkan-renderer/world/cube.cpp
-    vulkan-renderer/world/indentation.cpp)
+    vulkan-renderer/world/indentation.cpp
+ )
 
 foreach(FILE ${INEXOR_SOURCE_FILES})
     get_filename_component(PARENT_DIR "${FILE}" PATH)
@@ -63,15 +64,17 @@ foreach(FILE ${INEXOR_SOURCE_FILES})
 endforeach()
 
 find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
-find_package(imgui REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(stb REQUIRED)
-find_package(TinyGLTF REQUIRED)
-find_package(toml11 REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(VulkanHeaders REQUIRED)
-find_package(vulkan-memory-allocator REQUIRED)
+
+find_package(glfw3 "3.3.8" REQUIRED CONFIG)
+find_package(glm REQUIRED CONFIG)
+find_package(imgui "1.89.2" REQUIRED CONFIG)
+find_package(spdlog "1.11.0" REQUIRED CONFIG)
+find_package(stb REQUIRED CONFIG)
+find_package(TinyGLTF "2.5.0" REQUIRED CONFIG)
+find_package(toml11 "3.7.1" REQUIRED CONFIG)
+find_package(Vulkan "1.3.236.0" REQUIRED CONFIG)
+find_package(VulkanHeaders "1.3.236.0" REQUIRED CONFIG)
+find_package(vulkan-memory-allocator "3.0.1" REQUIRED CONFIG)
 
 add_library(inexor-vulkan-renderer ${INEXOR_SOURCE_FILES})
 
@@ -117,7 +120,6 @@ target_include_directories(
 
     PUBLIC
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/third_party
     # Include configured header file which contains engine metadata
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
@@ -130,10 +132,12 @@ target_link_libraries(
     fmt::fmt
     glfw
     glm::glm
-    imgui
-    spdlog
-    tinygltf
+    imgui::imgui
+    nlohmann_json::nlohmann_json
+    spdlog::spdlog
+    stb::stb
+    TinyGLTF::TinyGLTF
     toml11::toml11
     Vulkan::Vulkan
-    VulkanMemoryAllocator
+    vulkan-memory-allocator::vulkan-memory-allocator
 )

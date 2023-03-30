@@ -1,11 +1,13 @@
 import os
 
 from conan import ConanFile
+from conan.tools.build import check_min_cppstd
+from conan.tools.cmake import CMakeToolchain
 from conan.tools.files import copy
 
 
-class KenophobiaConan(ConanFile):
-    name = "Kenophobia"
+class VulkanRendererConan(ConanFile):
+    name = "Vulkan Renderer"
     version = "0.1.0"
 
     settings = "os", "compiler", "build_type", "arch"
@@ -13,11 +15,15 @@ class KenophobiaConan(ConanFile):
 
     options = {
         "build_benchmarks": [True, False],
+        "build_documentation": [True, False],
+        "build_example": [True, False],
         "build_tests": [True, False],
         "use_conan_build_tools": [True, False],
     }
     default_options = {
         "build_benchmarks": False,
+        "build_documentation": False,
+        "build_example": True,
         "build_tests": False,
         # let conan download all build tools, like CMake, Ninja
         "use_conan_build_tools": False,
@@ -26,6 +32,7 @@ class KenophobiaConan(ConanFile):
     def requirements(self):
         self.requires("glfw/3.3.8")
         self.requires("glm/cci.20220420")
+        self.requires("glslang/1.3.236.0")
         self.requires("imgui/1.89.2")
         self.requires("spdlog/1.11.0")
         self.requires("stb/cci.20220909", override=True)
@@ -47,6 +54,7 @@ class KenophobiaConan(ConanFile):
             self.tool_requires("ninja/1.11.1")
 
     def validate(self):
+        check_min_cppstd(self, 20)
         if self.settings.os == "Linux" and self.settings.compiler.libcxx == "libstdc++":
             raise Exception("Inexor is not compatible with libstdc++. "
                             "Please change the 'compiler.libcxx' setting "
