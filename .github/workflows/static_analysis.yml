@@ -59,16 +59,22 @@ jobs:
           path: ${{ env.CONAN_USER_HOME }}
           key: conan-${{ runner.os }}-Ubuntu GCC-Debug-${{ hashFiles('conanfile.py') }}
 
-      - name: Configure CMake
+      - name: Configure Conan
+        env:
+          CC: gcc
+          CXX: g++
+        shell: bash
         run: |
-          export CC=gcc
-          export CXX=g++
-          export PATH="${{ env.inexor_conan_path }}":$PATH
+          conan install . -pr:h ./conan/gcc_debug_profile -pr:b ./conan/gcc_debug_profile --update --build=missing --output-folder build/
 
-          conan profile new default --detect --force
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-
-          cmake . -Bbuild -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Configure CMake
+        env:
+          CC: gcc
+          CXX: g++
+        shell: bash
+        run: |
+          cd build
+          cmake .. -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
 
       - name: Run clang-tidy
         run: |
@@ -84,5 +90,4 @@ jobs:
         if: always()
         shell: bash
         run: |
-          conan remove "*" -f --builds --src
-          conan remove "*" -f --system-reqs
+          conan cache clean "*" --source --build --download

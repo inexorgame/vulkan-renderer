@@ -15,12 +15,14 @@ jobs:
         config:
           - {
             name: "Ubuntu Clang",
-            cc: "clang", cxx: "clang++",
+            compiler: "clang",
+            cc: "clang-14", cxx: "clang++-14",
             conan_profile: './conan/clang_release_profile',
             build_type: "Release",
           }
           - {
             name: "Ubuntu GCC",
+            compiler: "gcc",
             cc: "gcc", cxx: "g++",
             conan_profile: './conan/gcc_release_profile',
             build_type: "Release",
@@ -100,31 +102,31 @@ jobs:
         shell: bash
         run: |
           cd build
-          tar -zcvf "../build_linux_${{ matrix.config.cc }}.tar.xz" *
+          tar -zcvf "../build_linux_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build_linux_${{ matrix.config.cc }}.tar.xz
-          path: build_linux_${{ matrix.config.cc }}.tar.xz
+          name: build_linux_${{ matrix.config.compiler }}.tar.xz
+          path: build_linux_${{ matrix.config.compiler }}.tar.xz
 
       - name: Prepare release artifacts
         shell: bash
         run: |
           mkdir release
-          cp -r ./build/bin/ release
-          cp -r ./configuration/ release
+          cp ./build/example/inexor-vulkan-renderer-example release/
+          cp -r ./configuration/ release/
           cp -r ./assets/ release
           mkdir -p ./release/shaders
           cp ./shaders/*.spv ./release/shaders/
           cd release
-          tar -zcvf "../release_linux_amd64_${{ matrix.config.cc }}.tar.xz" *
+          tar -zcvf "../release_linux_amd64_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: release_linux_amd64_${{ matrix.config.cc }}.tar.xz
-          path: release_linux_amd64_${{ matrix.config.cc }}.tar.xz
+          name: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
+          path: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
           retention-days: 7
 
       - name: Clean Up Conan
@@ -144,21 +146,19 @@ jobs:
         config:
           - {
             name: "Windows MSVC",
-            cc: "cl", cxx: "cl",
             compiler: "msvc",
+            cc: "cl", cxx: "cl",
+            conan_profile: './conan/msvc_release_profile',
             build_type: "Release",
-            cmake_build_options: "--config Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
-            conan_profile_update: ''
           }
           - {
             name: "Windows Clang",
-            cc: "clang-cl", cxx: "clang-cl",
             compiler: "clang",
+            cc: "clang-cl", cxx: "clang-cl",
+            conan_profile: './conan/clang-cl_release_profile',
             build_type: "Release",
-            cmake_build_options: "--config Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
-            conan_profile_update: 'conan profile update settings.compiler.libcxx=libstdc++11 default',
           }
 
     steps:
@@ -188,26 +188,28 @@ jobs:
           conan config init
           (Get-Content "$(conan config home)\settings.yml") -replace 'v143', 'v143, LLVM_v143' | Out-File -encoding ASCII "$(conan config home)\settings.yml"
 
+      - name: Configure Conan
+        env:
+          CC: ${{ matrix.config.cc }}
+          CXX: ${{ matrix.config.cxx }}
+        shell: bash
+        run: |
+          conan profile new default --detect --force
+          conan install . -pr:h ${{ matrix.config.conan_profile }} -pr:b ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
+
       - name: Configure CMake
+        env:
+          CC: ${{ matrix.config.cc }}
+          CXX: ${{ matrix.config.cxx }}
         shell: pwsh
         run: |
-          $env:CC="${{ matrix.config.cc }}"
-          $env:CXX="${{ matrix.config.cxx }}"
-
-          # Setup conan
-          conan profile new default --detect --force
-          ${{ matrix.config.conan_profile_update }}
-
-          # Configure CMake
-          cmake . `
-            -Bbuild `
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
-            ${{ matrix.config.cmake_configure_options }}
+          cd build
+          cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
         shell: pwsh
         run: |
-          cmake --build build ${{ matrix.config.cmake_build_options }}
+          cmake --build build --config ${{ matrix.config.build_type }}
 
       - name: Prepare build artifacts
         shell: pwsh
@@ -242,5 +244,4 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          conan remove "*" -f --builds --src
-          conan remove "*" -f --system-reqs
+          conan cache clean "*" --source --build --download
