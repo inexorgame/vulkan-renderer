@@ -182,7 +182,7 @@ jobs:
         shell: pwsh
         run: |
           choco upgrade --no-progress llvm
-          curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v22.09/LLVM_VS2017.zip"
+          curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v23.03/LLVM_VS2017.zip"
           7z x -y "LLVM_VS2017.zip" >NUL
           LLVM_VS2017\install.bat
           conan config init
@@ -194,7 +194,6 @@ jobs:
           CXX: ${{ matrix.config.cxx }}
         shell: bash
         run: |
-          conan profile detect --name tmp -f
           conan install . -pr:h ${{ matrix.config.conan_profile }} -pr:b ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
 
       - name: Configure CMake
