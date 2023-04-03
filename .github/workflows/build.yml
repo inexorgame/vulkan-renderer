@@ -194,7 +194,7 @@ jobs:
           CXX: ${{ matrix.config.cxx }}
         shell: bash
         run: |
-          conan profile new default --detect --force
+          conan profile detect --name tmp -f
           conan install . -pr:h ${{ matrix.config.conan_profile }} -pr:b ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
 
       - name: Configure CMake
