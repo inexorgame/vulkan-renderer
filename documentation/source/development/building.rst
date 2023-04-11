@@ -53,9 +53,6 @@ The following CMake targets and options are available:
    * - INEXOR_BUILD_BENCHMARKS
      - Builds inexor-renderer-benchmarks.
      - ``OFF``
-   * - INEXOR_CONAN_PROFILE
-     - To adjust the conan profile, use ``-DINEXOR_CONAN_PROFILE=<name>``.
-     - ``default``
    * - INEXOR_BUILD_DOC
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
      - ``OFF``
@@ -68,17 +65,17 @@ The following CMake targets and options are available:
 Windows
 ^^^^^^^
 
-Example: Create Visual Studio 2019 project map for Debug mode including docs, tests, and benchmarks:
+Example: Create Visual Studio 2022 project map for Debug mode including docs, tests, and benchmarks:
 
 .. code-block:: shell
 
-    cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug -DINEXOR_BUILD_DOC=ON -DINEXOR_BUILD_TESTS=ON -DINEXOR_BUILD_BENCHMARKS=ON ./
+    cmake -G "Visual Studio 17 2022" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug -DINEXOR_BUILD_DOC=ON -DINEXOR_BUILD_TESTS=ON -DINEXOR_BUILD_BENCHMARKS=ON ./
 
-Example: Create Visual Studio 2019 project map for Release mode but without docs, tests, and benchmarks:
+Example: Create Visual Studio 2022 project map for Release mode but without docs, tests, and benchmarks:
 
 .. code-block:: shell
 
-    cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-release-vs/ -DCMAKE_BUILD_TYPE=Release ./
+    cmake -G "Visual Studio 17 2022" -A x64 -B./cmake-build-release-vs/ -DCMAKE_BUILD_TYPE=Release ./
 
 If you have `Ninja build system <https://ninja-build.org/>`__ installed, you can use it like this:
 
@@ -86,23 +83,20 @@ If you have `Ninja build system <https://ninja-build.org/>`__ installed, you can
 
     # executing from project root assumed
     # Ninja generator and Debug type
-    \> cmake -DINEXOR_CONAN_PROFILE=default -G Ninja -B./cmake-build-debug/ -DCMAKE_BUILD_TYPE=Debug ./
+    \> cmake -G Ninja -B./cmake-build-debug/ -DCMAKE_BUILD_TYPE=Debug ./
     # Ninja generator and Release type
     \> cmake -G Ninja -B./cmake-build-release/ -DCMAKE_BUILD_TYPE=Release ./
     # Create Visual Studio Solution
-    \> cmake -G "Visual Studio 16 2019" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug ./
+    \> cmake -G "Visual Studio 17 2022" -A x64 -B./cmake-build-debug-vs/ -DCMAKE_BUILD_TYPE=Debug ./
     # Build all targets
     \> cmake --build ./cmake-build-debug/
 
-.. note::
-    If you use CMake GUI add `CMAKE_BUILD_TYPE` with value `Debug` or `Release`. `#228 <https://github.com/inexorgame/vulkan-renderer/issues/228>`__.
-
-- Choose any IDE that CMake can generate a project map for. If in doubt use `Visual Studio 2019 <https://visualstudio.microsoft.com/>`__.
+- Choose any IDE that CMake can generate a project map for. If in doubt use `Visual Studio 2022 <https://visualstudio.microsoft.com/>`__.
 - Clone the source code. Free and good tools are `GitHub Desktop <https://desktop.github.com/>`__ or `GitKraken Git GUI <https://www.gitkraken.com/git-client>`__.
 - Open CMake and select the root folder which contains ``CMakeLists.txt`` (not just ``src`` folder!).
 - You can choose any location for the ``build`` folder.
-- Click "Configure" and select your IDE (in doubt ``Visual Studio 16 2019``). Click "Finish".
-- CMake will now set up dependencies automatically for you using conan package manager. This might take a while. If this fails, you really should open a ticket!
+- Click "Configure" and select your IDE (in doubt ``Visual Studio 17 2022``). Click "Finish".
+- CMake will now set up dependencies automatically for you. This might take a while. If this fails, you really should open a ticket!
 - Click "Generate". You can now open the Visual Studio project file in your ``build`` folder.
 - For debugging, please check that the root directory of the repository is set as working directory in Visual Studio. Usually, CMake should take care of this already.
 - You are now ready to start debugging! Our main branch must be stable at all cost.
@@ -119,7 +113,7 @@ Install dependencies and tools:
 |        | `Install the SDK`_-instructions on    |
 |        | the vulkan-sdk page.                  |
 |        |                                       |
-|        | Install the required packages:[#f1]_  |
+|        | Install the required packages:        |
 |        |                                       |
 |        | .. code-block:: shell-session         |
 |        |                                       |
@@ -147,14 +141,12 @@ Install dependencies and tools:
 |        |     $ pip3 install \                  |
 |        |         wheel \                       |
 |        |         setuptools \                  |
-|        |         conan                         |
 |        |                                       |
 +--------+---------------------------------------+
 | Gentoo | .. code-block:: shell-session         |
 |        |                                       |
 |        |     # emerge \                        |
 |        |        dev-util/cmake \               |
-|        |        dev-util/conan \               |
 |        |        dev-util/vulkan-headers \      |
 |        |        dev-util/vulkan-tools \        |
 |        |        dev-vcs/git \                  |
@@ -173,7 +165,7 @@ Install dependencies and tools:
 |        | `Install the SDK`_-instructions on    |
 |        | the vulkan-sdk page.                  |
 |        |                                       |
-|        | Install the required packages:[#f1]_  |
+|        | Install the required packages:        |
 |        |                                       |
 |        | .. code-block:: shell-session         |
 |        |                                       |
@@ -207,14 +199,13 @@ Install dependencies and tools:
 |        |     $ pip3 install \                  |
 |        |         wheel \                       |
 |        |         setuptools \                  |
-|        |         conan                         |
 |        |                                       |
 +--------+---------------------------------------+
 | Arch   | Follow the                            |
 |        | `Install the SDK`_-instructions on    |
 |        | the vulkan-sdk page.                  |
 |        |                                       |
-|        | Install the required packages:[#f1]_  |
+|        | Install the required packages:        |
 |        |                                       |
 |        | .. code-block:: shell-session         |
 |        |                                       |
@@ -246,7 +237,6 @@ Install dependencies and tools:
 |        |     $ pip3 install \                  |
 |        |         wheel \                       |
 |        |         setuptools \                  |
-|        |         conan                         |
 |        |                                       |
 +--------+---------------------------------------+
 | Fedora | Install the required packages:        |
@@ -289,12 +279,6 @@ Install dependencies and tools:
 |        |         xkeyboard-config-devel \      |
 |        |         glslang-devel                 |
 |        |                                       |
-|        | Install conan: [#f1]_ [#f2]_          |
-|        |                                       |
-|        | .. code-block:: shell-session         |
-|        |                                       |
-|        |     $ pip install conan               |
-|        |                                       |
 +--------+---------------------------------------+
 | Other  | Planned. `We would love to see a      |
 |        | pull request on this file if you get  |
@@ -335,8 +319,3 @@ If you have any trouble please `open a ticket <https://github.com/inexorgame/vul
 
     $ cmake --build build --target inexor-vulkan-renderer-example
     $ ./build/bin/inexor-vulkan-renderer-example
-
-.. rubric:: Footnotes
-
-.. [#f1] Make sure that ``$PATH`` includes the directory which contains ``conan`` (normally ``$HOME/.local/bin``). Bash includes this directory by default, zsh does **not**.
-.. [#f2] Make sure that you have version ``12.2`` `in conan's config file <https://docs.conan.io/en/latest/extending/custom_settings.html>`__

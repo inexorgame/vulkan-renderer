@@ -48,7 +48,7 @@ Inexor is a MIT-licensed open-source project which develops a new 3D octree game
 - Automatic `unit testing <https://github.com/google/googletest>`__ and `benchmarking <https://github.com/google/benchmark>`__.
 - `Static code analysis <https://en.wikipedia.org/wiki/Static_program_analysis>`__ with `clang-tidy <https://clang.llvm.org/extra/clang-tidy/>`__.
 - `Automatic code formatting <https://clang.llvm.org/docs/ClangFormat.html>`__ using `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`__.
-- `CMake <https://cmake.org/>`__ project setup with `conan package manager <https://conan.io/center/>`__ integration. 
+- `CMake <https://cmake.org/>`__ project setup. 
 
 You can find Vulkan example code online which follows the mantra "don't use this in production - it's tutorial code". Inexor disagrees with this as we believe that defeats its own purpose. If example code is not meant to be used in some other projects then there's something wrong with that example code. Many projects don't use a proper memory management library like `VMA <https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator>`__ or they do not abstract their code using `RAII <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii>`__, but use a lot of code duplication instead. Inexor is designed to be used in production. Bear in mind however that Inexor is also still far away from being a finished game engine.
 
@@ -70,7 +70,7 @@ What is the current state of the project?
 
 We are still in very early development, but this project can already offer:
 
-- A modern C++17 codebase with a setup for CMake and conan package manager.
+- A modern C++20 codebase with CMake setup.
 - Stable builds for Windows and Linux using `Continuous Integration (CI) <https://en.wikipedia.org/wiki/Continuous_integration>`__.
 - A `rendergraph <https://de.slideshare.net/DICEStudio/framegraph-extensible-rendering-architecture-in-frostbite>`__ in early development.
 - `ImGui <https://github.com/ocornut/imgui>`__ integration using separate renderpasses.
