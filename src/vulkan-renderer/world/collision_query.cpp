@@ -32,7 +32,7 @@ bool ray_box_collision(const std::array<glm::vec3, 2> &box_bounds, const glm::ve
     float tzmin{(box_bounds[sign[2]].z - position.z) * inverse_dir.z};
     float tzmax{(box_bounds[1 - sign[2]].z - position.z) * inverse_dir.z};
 
-    return !((tmin > tzmax) || (tzmin > tmax));
+    return (tmin <= tzmax) && (tzmin <= tmax);
 }
 
 std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube, const glm::vec3 pos,
