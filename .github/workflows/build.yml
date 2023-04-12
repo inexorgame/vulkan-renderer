@@ -8,7 +8,6 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
-      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
     strategy:
       fail-fast: false
       matrix:
@@ -17,14 +16,12 @@ jobs:
             name: "Ubuntu Clang",
             compiler: "clang",
             cc: "clang-14", cxx: "clang++-14",
-            conan_profile: './conan/clang_release_profile',
             build_type: "Release",
           }
           - {
             name: "Ubuntu GCC",
             compiler: "gcc",
             cc: "gcc", cxx: "g++",
-            conan_profile: './conan/gcc_release_profile',
             build_type: "Release",
           }
 
@@ -65,24 +62,9 @@ jobs:
             xorg-dev
 
           pip3 install wheel setuptools
-          pip3 install conan mako
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cache Conan Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CONAN_USER_HOME }}
-          key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
-
-      - name: Configure Conan
-        env:
-          CC: ${{ matrix.config.cc }}
-          CXX: ${{ matrix.config.cxx }}
-        shell: bash
-        run: |
-          conan install . -pr:h ${{ matrix.config.conan_profile }} -pr:b ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
 
       - name: Configure CMake
         env:
@@ -91,7 +73,7 @@ jobs:
         shell: bash
         run: |
           cd build
-          cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
 
       - name: Build
         shell: bash
@@ -129,17 +111,9 @@ jobs:
           path: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
           retention-days: 7
 
-      - name: Clean Up Conan
-        if: always()
-        shell: bash
-        run: |
-          conan cache clean "*" --source --build --download
-
   windows:
     name: ${{ matrix.config.name }}
     runs-on: windows-latest
-    env:
-      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
     strategy:
       fail-fast: false
       matrix:
@@ -148,7 +122,6 @@ jobs:
             name: "Windows MSVC",
             compiler: "msvc",
             cc: "cl", cxx: "cl",
-            conan_profile: './conan/msvc_release_profile',
             build_type: "Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
           }
@@ -156,7 +129,6 @@ jobs:
             name: "Windows Clang",
             compiler: "clang",
             cc: "clang-cl", cxx: "clang-cl",
-            conan_profile: './conan/clang-cl_release_profile',
             build_type: "Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
           }
@@ -166,16 +138,9 @@ jobs:
         shell: pwsh
         run: |
           pip3 install wheel setuptools
-          pip3 install conan
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cache Conan Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CONAN_USER_HOME }}
-          key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
 
       - name: Configure LLVM
         if: matrix.config.compiler == 'clang'
@@ -185,16 +150,6 @@ jobs:
           curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v23.03/LLVM_VS2017.zip"
           7z x -y "LLVM_VS2017.zip" >NUL
           LLVM_VS2017\install.bat
-          conan config init
-          (Get-Content "$(conan config home)\settings.yml") -replace 'v143', 'v143, LLVM_v143' | Out-File -encoding ASCII "$(conan config home)\settings.yml"
-
-      - name: Configure Conan
-        env:
-          CC: ${{ matrix.config.cc }}
-          CXX: ${{ matrix.config.cxx }}
-        shell: bash
-        run: |
-          conan install . -pr:h ${{ matrix.config.conan_profile }} -pr:b ${{ matrix.config.conan_profile }} --update --build=missing --output-folder build/
 
       - name: Configure CMake
         env:
@@ -203,7 +158,7 @@ jobs:
         shell: pwsh
         run: |
           cd build
-          cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.cmake_configure_options }}
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
         shell: pwsh
@@ -238,9 +193,3 @@ jobs:
           name: release_windows_amd64_${{ matrix.config.compiler }}.zip
           path: release_windows_amd64_${{ matrix.config.compiler }}.zip
           retention-days: 7
-
-      - name: Clean Up Conan
-        if: always()
-        shell: pwsh
-        run: |
-          conan cache clean "*" --source --build --download

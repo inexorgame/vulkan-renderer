@@ -1,5 +1,5 @@
 name: Static Analysis
-on: [push, pull_request]
+on: push
 
 jobs:
   clang-tidy:
@@ -8,9 +8,6 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
-      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
-      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
-      inexor_conan_path: "$HOME/.local/bin"
     steps:
       - name: Update environment
         run: |
@@ -48,24 +45,9 @@ jobs:
             xorg-dev
 
           pip3 install wheel setuptools
-          pip3 install conan mako
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cache Conan Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CONAN_USER_HOME }}
-          key: conan-${{ runner.os }}-Ubuntu GCC-Debug-${{ hashFiles('conanfile.py') }}
-
-      - name: Configure Conan
-        env:
-          CC: gcc
-          CXX: g++
-        shell: bash
-        run: |
-          conan install . -pr:h ./conan/gcc_debug_profile -pr:b ./conan/gcc_debug_profile --update --build=missing --output-folder build/
 
       - name: Configure CMake
         env:
@@ -74,7 +56,7 @@ jobs:
         shell: bash
         run: |
           cd build
-          cmake .. -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+          cmake .. -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug
 
       - name: Run clang-tidy
         run: |
@@ -85,9 +67,3 @@ jobs:
             clang-tidy -p build --header-filter=inexor/ --quiet {} 2>/dev/null |
           tee output
           if [ -s output ]; then exit 1; fi
-
-      - name: Clean Up Conan
-        if: always()
-        shell: bash
-        run: |
-          conan cache clean "*" --source --build --download

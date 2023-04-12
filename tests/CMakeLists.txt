@@ -1,4 +1,3 @@
- # TODO: Change on Conan 2.0
  get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
  if(${is_multi_config} AND NOT DEFINED CMAKE_BUILD_TYPE)
      find_package(GTest CONFIG REQUIRED)
