@@ -1,5 +1,5 @@
 name: Build Documentation
-on: [push, pull_request]
+on: push
 
 jobs:
   build_documentation:

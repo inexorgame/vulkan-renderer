@@ -1,5 +1,10 @@
 name: Build
-on: [push, pull_request]
+on: push
+
+env:
+  inexor_build_type: "Release"
+  inexor_vulkan_version: "1.2.189.0"
+  inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
 
 jobs:
   linux:
@@ -63,17 +68,35 @@ jobs:
 
           pip3 install wheel setuptools
 
+      - name: Install Vulkan SDK
+        shell: bash
+        run: |
+          # Download Vulkan SDK
+          curl -LS -o vulkansdk.tar.gz \
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
+          # Create Vulkan SDK directory and extract
+          mkdir "${{ env.inexor_vulkan_sdk }}"
+          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
+
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Configure CMake
-        env:
-          CC: ${{ matrix.config.cc }}
-          CXX: ${{ matrix.config.cxx }}
         shell: bash
         run: |
-          cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+          export CC=${{ matrix.config.cc }}
+          export CXX=${{ matrix.config.cxx }}
+          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
+          export PATH=$VULKAN_SDK/bin:$PATH
+          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+          # Configure cmake
+          cmake . \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} \
+            -DINEXOR_USE_VMA_RECORDING=OFF \
+            -GNinja \
+            ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
         shell: bash
@@ -151,14 +174,24 @@ jobs:
           7z x -y "LLVM_VS2017.zip" >NUL
           LLVM_VS2017\install.bat
 
-      - name: Configure CMake
-        env:
-          CC: ${{ matrix.config.cc }}
-          CXX: ${{ matrix.config.cxx }}
+      - name: Install Vulkan SDK
         shell: pwsh
         run: |
-          cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.cmake_configure_options }}
+          curl -LS -o vulkansdk.exe `
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/windows/VulkanSDK-${{ env.inexor_vulkan_version }}-Installer.exe?Human=true
+          7z x vulkansdk.exe -o"${{ env.inexor_vulkan_sdk }}"
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          $env:CC="${{ matrix.config.cc }}"
+          $env:CXX="${{ matrix.config.cxx }}"
+          $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
+          # Configure CMake
+          cmake . `
+            -Bbuild `
+            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} `
+            ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
         shell: pwsh
