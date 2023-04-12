@@ -63,17 +63,6 @@ foreach(FILE ${INEXOR_SOURCE_FILES})
     source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
-find_package(glfw3 "3.3.8" REQUIRED CONFIG)
-find_package(glm REQUIRED CONFIG)
-find_package(imgui "1.89.2" REQUIRED CONFIG)
-find_package(spdlog "1.11.0" REQUIRED CONFIG)
-find_package(stb REQUIRED CONFIG)
-find_package(TinyGLTF "2.5.0" REQUIRED CONFIG)
-find_package(toml11 "3.7.1" REQUIRED CONFIG)
-find_package(Vulkan "1.3.236.0" REQUIRED CONFIG)
-find_package(VulkanHeaders "1.3.236.0" REQUIRED CONFIG)
-find_package(vulkan-memory-allocator "3.0.1" REQUIRED CONFIG)
-
 add_library(inexor-vulkan-renderer ${INEXOR_SOURCE_FILES})
 
 add_dependencies(inexor-vulkan-renderer inexor-shaders)

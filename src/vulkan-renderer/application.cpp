@@ -16,7 +16,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
-#include <toml11/toml.hpp>
+#include <toml.hpp>
 
 #include <random>
 #include <thread>
