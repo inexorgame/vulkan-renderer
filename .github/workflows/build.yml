@@ -1,5 +1,10 @@
 name: Build
-on: [push, pull_request]
+on: push
+
+env:
+  inexor_build_type: "Release"
+  inexor_vulkan_version: "1.2.189.0"
+  inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
 
 jobs:
   linux:
@@ -8,21 +13,19 @@ jobs:
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
-      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
-      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
-      inexor_conan_path: "$HOME/.local/bin"
     strategy:
       fail-fast: false
       matrix:
         config:
           - {
             name: "Ubuntu Clang",
-            cc: "clang", cxx: "clang++",
-            cmake_configure_options: '-DCMAKE_EXE_LINKER_FLAGS="-v -fuse-ld=lld"',
+            compiler: "clang",
+            cc: "clang-14", cxx: "clang++-14",
             build_type: "Release",
           }
           - {
             name: "Ubuntu GCC",
+            compiler: "gcc",
             cc: "gcc", cxx: "g++",
             build_type: "Release",
           }
@@ -35,7 +38,7 @@ jobs:
           apt update -qq
           # Install build tools
           apt install -y \
-            clang \
+            clang-14 \
             cmake \
             curl \
             git \
@@ -64,33 +67,34 @@ jobs:
             xorg-dev
 
           pip3 install wheel setuptools
-          pip3 install conan mako
+
+      - name: Install Vulkan SDK
+        shell: bash
+        run: |
+          # Download Vulkan SDK
+          curl -LS -o vulkansdk.tar.gz \
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
+          # Create Vulkan SDK directory and extract
+          mkdir "${{ env.inexor_vulkan_sdk }}"
+          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cache Conan Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CONAN_USER_HOME }}
-          key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
 
       - name: Configure CMake
         shell: bash
         run: |
           export CC=${{ matrix.config.cc }}
           export CXX=${{ matrix.config.cxx }}
-          export PATH="${{ env.inexor_conan_path }}":$PATH
-
-          # Setup conan
-          # Note: libstdc++11 is needed to use new libc++ ABI
-          conan profile new default --detect --force
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-
+          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
+          export PATH=$VULKAN_SDK/bin:$PATH
+          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
           # Configure cmake
           cmake . \
             -Bbuild \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} \
+            -DINEXOR_USE_VMA_RECORDING=OFF \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
@@ -103,67 +107,53 @@ jobs:
         shell: bash
         run: |
           cd build
-          tar -zcvf "../build_linux_${{ matrix.config.cc }}.tar.xz" *
+          tar -zcvf "../build_linux_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build_linux_${{ matrix.config.cc }}.tar.xz
-          path: build_linux_${{ matrix.config.cc }}.tar.xz
+          name: build_linux_${{ matrix.config.compiler }}.tar.xz
+          path: build_linux_${{ matrix.config.compiler }}.tar.xz
 
       - name: Prepare release artifacts
         shell: bash
         run: |
           mkdir release
-          cp -r ./build/bin/ release
-          cp -r ./configuration/ release
+          cp ./build/example/inexor-vulkan-renderer-example release/
+          cp -r ./configuration/ release/
           cp -r ./assets/ release
           mkdir -p ./release/shaders
           cp ./shaders/*.spv ./release/shaders/
           cd release
-          tar -zcvf "../release_linux_amd64_${{ matrix.config.cc }}.tar.xz" *
+          tar -zcvf "../release_linux_amd64_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: release_linux_amd64_${{ matrix.config.cc }}.tar.xz
-          path: release_linux_amd64_${{ matrix.config.cc }}.tar.xz
+          name: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
+          path: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
           retention-days: 7
-
-      - name: Clean Up Conan
-        if: always()
-        shell: bash
-        run: |
-          conan remove "*" -f --builds --src
-          conan remove "*" -f --system-reqs
 
   windows:
     name: ${{ matrix.config.name }}
     runs-on: windows-latest
-    env:
-      CONAN_USER_HOME: "${{ github.workspace }}/conan/"
-      CONAN_USER_HOME_SHORT: "${{ github.workspace }}/conan/s"
     strategy:
       fail-fast: false
       matrix:
         config:
           - {
             name: "Windows MSVC",
-            cc: "cl", cxx: "cl",
             compiler: "msvc",
+            cc: "cl", cxx: "cl",
             build_type: "Release",
-            cmake_build_options: "--config Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
-            conan_profile_update: ''
           }
           - {
             name: "Windows Clang",
-            cc: "clang-cl", cxx: "clang-cl",
             compiler: "clang",
+            cc: "clang-cl", cxx: "clang-cl",
             build_type: "Release",
-            cmake_build_options: "--config Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
-            conan_profile_update: 'conan profile update settings.compiler.libcxx=libstdc++11 default',
           }
 
     steps:
@@ -171,48 +161,42 @@ jobs:
         shell: pwsh
         run: |
           pip3 install wheel setuptools
-          pip3 install conan
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cache Conan Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CONAN_USER_HOME }}
-          key: conan-${{ runner.os }}-${{ matrix.config.name }}-${{ matrix.config.build_type }}-${{ hashFiles('conanfile.py') }}
 
       - name: Configure LLVM
         if: matrix.config.compiler == 'clang'
         shell: pwsh
         run: |
           choco upgrade --no-progress llvm
-          curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v22.09/LLVM_VS2017.zip"
+          curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v23.03/LLVM_VS2017.zip"
           7z x -y "LLVM_VS2017.zip" >NUL
           LLVM_VS2017\install.bat
-          conan config init
-          (Get-Content "$(conan config home)\settings.yml") -replace 'v143', 'v143, LLVM_v143' | Out-File -encoding ASCII "$(conan config home)\settings.yml"
+
+      - name: Install Vulkan SDK
+        shell: pwsh
+        run: |
+          curl -LS -o vulkansdk.exe `
+            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/windows/VulkanSDK-${{ env.inexor_vulkan_version }}-Installer.exe?Human=true
+          7z x vulkansdk.exe -o"${{ env.inexor_vulkan_sdk }}"
 
       - name: Configure CMake
         shell: pwsh
         run: |
           $env:CC="${{ matrix.config.cc }}"
           $env:CXX="${{ matrix.config.cxx }}"
-
-          # Setup conan
-          conan profile new default --detect --force
-          ${{ matrix.config.conan_profile_update }}
-
+          $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
           # Configure CMake
           cmake . `
             -Bbuild `
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
+            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} `
             ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
         shell: pwsh
         run: |
-          cmake --build build ${{ matrix.config.cmake_build_options }}
+          cmake --build build --config ${{ matrix.config.build_type }}
 
       - name: Prepare build artifacts
         shell: pwsh
@@ -229,7 +213,7 @@ jobs:
         shell: pwsh
         run: |
           mkdir release
-          cp -r ./build/bin/. release
+          cp ./build/example/Release/. release/
           cp -r ./configuration/. release
           cp -r ./assets/. release
           mkdir -P ./release/shaders
@@ -242,10 +226,3 @@ jobs:
           name: release_windows_amd64_${{ matrix.config.compiler }}.zip
           path: release_windows_amd64_${{ matrix.config.compiler }}.zip
           retention-days: 7
-
-      - name: Clean Up Conan
-        if: always()
-        shell: pwsh
-        run: |
-          conan remove "*" -f --builds --src
-          conan remove "*" -f --system-reqs

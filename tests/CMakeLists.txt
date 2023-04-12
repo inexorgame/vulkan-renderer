@@ -1,10 +1,9 @@
+FetchContent_MakeAvailable(gtest)
+
 set(INEXOR_UNIT_TEST_SOURCE_FILES
     unit_tests_main.cpp
-
     gpu-selection/selection.cpp
-
     swapchain/choose_settings.cpp
-
     world/cube_collision.cpp
     world/cube.cpp
 )
@@ -24,4 +23,7 @@ target_link_libraries(
 
     PRIVATE
     inexor-vulkan-renderer
+
+    PUBLIC
+    gtest
 )

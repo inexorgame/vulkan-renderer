@@ -1,5 +1,5 @@
 name: Build Documentation
-on: [push, pull_request]
+on: push
 
 jobs:
   build_documentation:
@@ -44,7 +44,7 @@ jobs:
           tar cfz documentation.tar.xz build/html/*
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ${{ github.workspace }}/documentation/documentation.tar.xz
           name: documentation.tar.xz

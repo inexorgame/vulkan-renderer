@@ -1,12 +1,7 @@
 add_executable(inexor-vulkan-renderer-example main.cpp)
 
-set_target_properties(
-    inexor-vulkan-renderer-example PROPERTIES
-
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
-)
+target_compile_features(inexor-vulkan-renderer-example PRIVATE cxx_std_20)
+target_link_libraries(inexor-vulkan-renderer-example PRIVATE inexor-vulkan-renderer)
 
 if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
     set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "inexor-vulkan-renderer-example")
@@ -23,10 +18,3 @@ endif()
 if(MSVC)
     target_compile_options(inexor-vulkan-renderer-example PRIVATE "-EHs")
 endif()
-
-target_link_libraries(
-    inexor-vulkan-renderer-example
-
-    PRIVATE
-    inexor-vulkan-renderer
-)

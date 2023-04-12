@@ -1,6 +1,8 @@
+FetchContent_MakeAvailable(gtest)
+FetchContent_MakeAvailable(benchmark)
+
 set(INEXOR_BENCHMARKING_SOURCE_FILES
     engine_benchmark_main.cpp
-
     world/cube_collision.cpp
 )
 
@@ -19,4 +21,7 @@ target_link_libraries(
 
     PRIVATE
     inexor-vulkan-renderer
+
+    PUBLIC
+    benchmark::benchmark
 )
