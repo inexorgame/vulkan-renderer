@@ -63,8 +63,6 @@ foreach(FILE ${INEXOR_SOURCE_FILES})
     source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
-find_package(glfw3 REQUIRED)
-
 find_package(glfw3 "3.3.8" REQUIRED CONFIG)
 find_package(glm REQUIRED CONFIG)
 find_package(imgui "1.89.2" REQUIRED CONFIG)
@@ -124,20 +122,14 @@ target_include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
-target_link_libraries(
-    inexor-vulkan-renderer
-
+target_link_libraries(inexor-vulkan-renderer
     PUBLIC
-
     fmt::fmt
     glfw
     glm::glm
-    imgui::imgui
-    nlohmann_json::nlohmann_json
-    spdlog::spdlog
-    stb::stb
-    TinyGLTF::TinyGLTF
+    imgui
+    spdlog
+    tinygltf
     toml11::toml11
     Vulkan::Vulkan
-    vulkan-memory-allocator::vulkan-memory-allocator
-)
+    VulkanMemoryAllocator)

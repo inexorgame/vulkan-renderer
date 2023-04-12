@@ -1,14 +1,5 @@
-cmake_minimum_required(VERSION 3.12)
-
-# https://cmake.org/cmake/help/latest/prop_tgt/MSVC_RUNTIME_LIBRARY.html
-cmake_policy(SET CMP0091 NEW)
-
-project(inexor-vulkan-renderer)
-
-# Stop in source builds
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+cmake_minimum_required(VERSION 3.16)
+project(inexor-vulkan-renderer CXX)
 
 # Options
 option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
@@ -41,9 +32,80 @@ set(INEXOR_APP_VERSION_MAJOR 0)
 set(INEXOR_APP_VERSION_MINOR 1)
 set(INEXOR_APP_VERSION_PATCH 0)
 
-find_package(Git REQUIRED)
+include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
+
+FetchContent_Declare(fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 8.0.1
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(fmt)
+
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.3.2
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(glfw)
+
+FetchContent_Declare(glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 0.9.9.8
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(glm)
+
+FetchContent_Declare(imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG v1.85
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(imgui)
+add_library(imgui
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
+
+FetchContent_Declare(spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.9.2
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(spdlog)
+
+FetchContent_Declare(stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG af1a5bc352164740c1cc1354942b1c6b72eacb8a
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(stb)
+
+FetchContent_Declare(tinygltf
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+    GIT_TAG 81f7dbe53a112d05217a79bb1c986f9ada3b6631
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(tinygltf)
+
+FetchContent_Declare(toml
+    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
+    GIT_TAG v3.7.0
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(toml)
+
+FetchContent_Declare(vma
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+    GIT_TAG v3.0.1
+    GIT_PROGRESS ON)
+FetchContent_MakeAvailable(vma)
 
 # Extract the current git sha
+find_package(Git REQUIRED)
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=7
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
