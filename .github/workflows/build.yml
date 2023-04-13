@@ -1,15 +1,19 @@
-name: Build
-on: push
+name: Build Code
+
+on:
+  push:
+  pull_request:
+    types: [opened]
 
 env:
-  inexor_build_type: "Release"
-  inexor_vulkan_version: "1.2.189.0"
-  inexor_vulkan_sdk: "$GITHUB_WORKSPACE/../vulkan_sdk/"
+  INEXOR_VULKAN_VERSION: "1.3.216.0"
+  INEXOR_VULKAN_SDK_PATH: "$GITHUB_WORKSPACE/../vulkan_sdk/"
 
 jobs:
   linux:
     name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.merged || github.event_name == 'push' }}
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
@@ -18,16 +22,28 @@ jobs:
       matrix:
         config:
           - {
-            name: "Ubuntu Clang",
+            name: "Ubuntu Clang (Debug)",
             compiler: "clang",
             cc: "clang-14", cxx: "clang++-14",
-            build_type: "Release",
+            build_type: "Debug"
           }
           - {
-            name: "Ubuntu GCC",
+            name: "Ubuntu Clang (Release)",
+            compiler: "clang",
+            cc: "clang-14", cxx: "clang++-14",
+            build_type: "Release"
+          }
+          - {
+            name: "Ubuntu GCC (Debug)",
             compiler: "gcc",
-            cc: "gcc", cxx: "g++",
-            build_type: "Release",
+            cc: "gcc-12", cxx: "g++-12",
+            build_type: "Debug"
+          }
+          - {
+            name: "Ubuntu GCC (Release)",
+            compiler: "gcc",
+            cc: "gcc-12", cxx: "g++-12",
+            build_type: "Release"
           }
 
     steps:
@@ -37,7 +53,8 @@ jobs:
           # Update package lists
           apt update -qq
           # Install build tools
-          apt install -y \
+          apt-get install -y \
+            gcc-12 \
             clang-14 \
             cmake \
             curl \
@@ -66,17 +83,17 @@ jobs:
             xkb-data \
             xorg-dev
 
-          pip3 install wheel setuptools
+          pip3 install --break-system-packages wheel setuptools
 
       - name: Install Vulkan SDK
         shell: bash
         run: |
           # Download Vulkan SDK
           curl -LS -o vulkansdk.tar.gz \
-            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.inexor_vulkan_version }}.tar.gz
+            https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_VERSION }}/linux/vulkansdk-linux-x86_64-${{ env.INEXOR_VULKAN_VERSION }}.tar.gz
           # Create Vulkan SDK directory and extract
-          mkdir "${{ env.inexor_vulkan_sdk }}"
-          tar xfz vulkansdk.tar.gz -C "${{ env.inexor_vulkan_sdk }}"
+          mkdir "${{ env.INEXOR_VULKAN_SDK_PATH }}"
+          tar xfz vulkansdk.tar.gz -C "${{ env.INEXOR_VULKAN_SDK_PATH }}"
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -86,15 +103,14 @@ jobs:
         run: |
           export CC=${{ matrix.config.cc }}
           export CXX=${{ matrix.config.cxx }}
-          export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
+          export VULKAN_SDK="${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64"
           export PATH=$VULKAN_SDK/bin:$PATH
-          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
-          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
-          # Configure cmake
           cmake . \
             -Bbuild \
-            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} \
-            -DINEXOR_USE_VMA_RECORDING=OFF \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -DINEXOR_BUILD_BENCHMARKS=ON \
+            -DINEXOR_BUILD_TESTS=ON \
+            -DCMAKE_CXX_FLAGS="-Wall -Wextra" \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
@@ -107,31 +123,31 @@ jobs:
         shell: bash
         run: |
           cd build
-          tar -zcvf "../build_linux_${{ matrix.config.compiler }}.tar.xz" *
+          tar -zcvf "../build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
-      - name: Upload build artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build_linux_${{ matrix.config.compiler }}.tar.xz
-          path: build_linux_${{ matrix.config.compiler }}.tar.xz
+          name: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          path: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
 
-      - name: Prepare release artifacts
+      - name: Prepare Artifacts
         shell: bash
         run: |
-          mkdir release
-          cp ./build/example/inexor-vulkan-renderer-example release/
-          cp -r ./configuration/ release/
-          cp -r ./assets/ release
-          mkdir -p ./release/shaders
-          cp ./shaders/*.spv ./release/shaders/
-          cd release
-          tar -zcvf "../release_linux_amd64_${{ matrix.config.compiler }}.tar.xz" *
+          mkdir artifacts
+          cp ./build/example/inexor-vulkan-renderer-example artifacts/
+          cp -r ./configuration/ artifacts/
+          cp -r ./assets/ artifacts
+          mkdir -p ./artifacts/shaders
+          cp ./shaders/*.spv ./artifacts/shaders/
+          cd artifacts
+          tar -zcvf "../linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
-      - name: Upload release artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
-          path: release_linux_amd64_${{ matrix.config.compiler }}.tar.xz
+          name: linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          path: linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           retention-days: 7
 
   windows:
@@ -142,18 +158,36 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows MSVC",
+            name: "Windows MSVC (Debug)",
             compiler: "msvc",
             cc: "cl", cxx: "cl",
-            build_type: "Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
+            build_type: "Debug",
+            cmake_build_options: "--config Debug",
           }
           - {
-            name: "Windows Clang",
+            name: "Windows MSVC (Release)",
+            compiler: "msvc",
+            cc: "cl", cxx: "cl",
+            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
+            build_type: "Release",
+            cmake_build_options: "--config Release",
+          }
+          - {
+            name: "Windows Clang (Debug)",
             compiler: "clang",
             cc: "clang-cl", cxx: "clang-cl",
-            build_type: "Release",
             cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
+            build_type: "Debug",
+            cmake_build_options: "--config Debug",
+          }
+          - {
+            name: "Windows Clang (Release)",
+            compiler: "clang",
+            cc: "clang-cl", cxx: "clang-cl",
+            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
+            build_type: "Release",
+            cmake_build_options: "--config Release",
           }
 
     steps:
@@ -178,51 +212,53 @@ jobs:
         shell: pwsh
         run: |
           curl -LS -o vulkansdk.exe `
-            https://sdk.lunarg.com/sdk/download/${{ env.inexor_vulkan_version }}/windows/VulkanSDK-${{ env.inexor_vulkan_version }}-Installer.exe?Human=true
-          7z x vulkansdk.exe -o"${{ env.inexor_vulkan_sdk }}"
+            https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_VERSION }}/windows/VulkanSDK-${{ env.INEXOR_VULKAN_VERSION }}-Installer.exe
+          7z x vulkansdk.exe -o"${{ env.INEXOR_VULKAN_SDK_PATH }}"
 
       - name: Configure CMake
         shell: pwsh
         run: |
           $env:CC="${{ matrix.config.cc }}"
           $env:CXX="${{ matrix.config.cxx }}"
-          $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
-          # Configure CMake
+          $env:Path += ";${{ env.INEXOR_VULKAN_SDK_PATH }}\;${{ env.INEXOR_VULKAN_SDK_PATH }}\Bin\"
+          # TODO: Bring back Google tests and benchmarks in Windows CI
           cmake . `
             -Bbuild `
-            -DCMAKE_BUILD_TYPE=${{ env.inexor_build_type }} `
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
+            -DINEXOR_BUILD_BENCHMARKS=OFF `
+            -DINEXOR_BUILD_TESTS=OFF `
             ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
         shell: pwsh
         run: |
-          cmake --build build --config ${{ matrix.config.build_type }}
+          cmake --build build ${{ matrix.config.cmake_build_options }}
 
       - name: Prepare build artifacts
         shell: pwsh
         run: |
-          7z a -tzip "build_windows_${{ matrix.config.compiler }}.zip" ./build/*
+          7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./build/*
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build_windows_${{ matrix.config.compiler }}.zip
-          path: build_windows_${{ matrix.config.compiler }}.zip
+          name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
 
       - name: Prepare release artifacts
         shell: pwsh
         run: |
           mkdir release
-          cp ./build/example/Release/. release/
+          cp -r ./build/example/${{ matrix.config.build_type }}/. release
           cp -r ./configuration/. release
           cp -r ./assets/. release
           mkdir -P ./release/shaders
           cp ./shaders/*.spv ./release/shaders/
-          7z a -tzip "release_windows_amd64_${{ matrix.config.compiler }}.zip" ./release/*
+          7z a -tzip "windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./release/*
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: release_windows_amd64_${{ matrix.config.compiler }}.zip
-          path: release_windows_amd64_${{ matrix.config.compiler }}.zip
+          name: windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          path: windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
           retention-days: 7
