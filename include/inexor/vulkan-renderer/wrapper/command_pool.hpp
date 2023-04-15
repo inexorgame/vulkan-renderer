@@ -1,7 +1,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 

@@ -5,7 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include <memory>
 #include <string>

@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <vk_mem_alloc.h>
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include <cassert>
 #include <cstdint>

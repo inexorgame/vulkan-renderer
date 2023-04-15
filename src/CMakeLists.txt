@@ -81,6 +81,7 @@ target_compile_definitions(
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
+    VK_NO_PROTOTYPES # Required by volk metaloader
 )
 
 # enable multi processor building if VS project
@@ -134,9 +135,12 @@ FetchContent_MakeAvailable(stb)
 FetchContent_MakeAvailable(tinygltf)
 FetchContent_MakeAvailable(toml)
 FetchContent_MakeAvailable(vma)
+FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(Vulkan)
 
-find_package(Vulkan)
+if (WIN32)
+   set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+endif()
 
 target_link_libraries(inexor-vulkan-renderer
     PUBLIC
@@ -144,8 +148,9 @@ target_link_libraries(inexor-vulkan-renderer
     glfw
     glm::glm
     imgui
-    spdlog
+    spdlog::spdlog
     tinygltf
     toml11::toml11
+    volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)

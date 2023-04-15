@@ -25,7 +25,7 @@
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include <cstdint>
 #include <memory>

@@ -319,6 +319,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
+    spdlog::trace("Loading Vulkan entrypoints directly from driver (bypass Vulkan loader dispatch code)");
+    volkLoadDevice(m_device);
+
     const bool enable_debug_markers =
         std::find_if(required_extensions.begin(), required_extensions.end(), [&](const char *extension) {
             return std::string(extension) == std::string(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);

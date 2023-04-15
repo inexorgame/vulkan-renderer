@@ -6,7 +6,7 @@
 #include "inexor/vulkan-renderer/world/cube.hpp"
 
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include <cstdint>
 #include <memory>

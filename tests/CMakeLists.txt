@@ -25,5 +25,5 @@ target_link_libraries(
     inexor-vulkan-renderer
 
     PUBLIC
-    gtest
+    GTest::gtest
 )

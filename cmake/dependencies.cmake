@@ -79,8 +79,14 @@ FetchContent_Declare(vma
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 3.0.1)
 
+FetchContent_Declare(volk
+    GIT_REPOSITORY https://github.com/zeux/volk
+    GIT_TAG 1.3.215
+    GIT_PROGRESS ON
+    FIND_PACKAGE_ARGS 1.3.215)
+
 FetchContent_Declare(Vulkan
     GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers
-    GIT_TAG v1.3.247
+    GIT_TAG v1.3.215
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.3.247)
+    FIND_PACKAGE_ARGS 1.3.215)
