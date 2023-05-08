@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <string>
 #include <vector>
 

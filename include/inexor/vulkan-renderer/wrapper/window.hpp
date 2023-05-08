@@ -4,6 +4,7 @@
 #include <volk.h>
 
 #include <array>
+#include <cstdint>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
