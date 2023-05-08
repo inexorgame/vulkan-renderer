@@ -138,6 +138,9 @@ FetchContent_MakeAvailable(vma)
 FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(Vulkan)
 
+# Work around a VMA compile error from its use of snprintf
+target_compile_definitions(VulkanMemoryAllocator PRIVATE VMA_STATS_STRING_ENABLED=0)
+
 if (WIN32)
    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 endif()
