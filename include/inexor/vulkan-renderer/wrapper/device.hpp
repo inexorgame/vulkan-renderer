@@ -325,6 +325,10 @@ public:
     /// @param usage The requested image usage
     /// @return ``true`` if the format feature is supported
     [[nodiscard]] bool surface_supports_usage(VkSurfaceKHR surface, VkImageUsageFlagBits usage) const;
+
+    /// Call vkDeviceWaitIdle
+    /// @exception VulkanException vkDeviceWaitIdle call failed
+    void wait_idle() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

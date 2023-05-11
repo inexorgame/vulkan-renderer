@@ -17,7 +17,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(Device &device, VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
+Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
@@ -42,7 +42,7 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain
-            recreate(m_extent.width, m_extent.height, m_vsync_enabled);
+            setup_swapchain(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
             throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
         }
@@ -170,9 +170,9 @@ void Swapchain::present(const std::uint32_t img_index) {
         .pImageIndices = &img_index,
     });
     if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
-        if (result == VK_SUBOPTIMAL_KHR) {
+        if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
-            recreate(m_extent.width, m_extent.height, m_vsync_enabled);
+            setup_swapchain(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
             // Exception is thrown if result is not VK_SUCCESS but also not VK_SUBOPTIMAL_KHR
             throw VulkanException("Error: vkQueuePresentKHR failed!", result);
@@ -180,19 +180,7 @@ void Swapchain::present(const std::uint32_t img_index) {
     }
 }
 
-void Swapchain::recreate(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
-    // Store the old swapchain to speed up recreation later
-    auto *const old_swapchain = m_swapchain;
-    for (auto *const img_view : m_img_views) {
-        vkDestroyImageView(m_device.device(), img_view, nullptr);
-    }
-    m_imgs.clear();
-    m_img_views.clear();
-    setup_swapchain(width, height, vsync_enabled, old_swapchain);
-}
-
-void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled,
-                                const VkSwapchainKHR old_swapchain) {
+void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
     const auto caps = m_device.get_surface_capabilities(m_surface);
     m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.physical_device(), m_surface));
     const VkExtent2D requested_extent{.width = width, .height = height};
@@ -211,6 +199,8 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         throw std::runtime_error(
             "Error: Swapchain image usage flag bit VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT is not supported!");
     }
+
+    const VkSwapchainKHR old_swapchain = m_swapchain;
 
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
         .surface = m_surface,
@@ -239,6 +229,16 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
     if (const auto result = vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
+    }
+
+    // We need to destroy the old swapchain if specified
+    if (old_swapchain != VK_NULL_HANDLE) {
+        for (auto *const img_view : m_img_views) {
+            vkDestroyImageView(m_device.device(), img_view, nullptr);
+        }
+        m_imgs.clear();
+        m_img_views.clear();
+        vkDestroySwapchainKHR(m_device.device(), old_swapchain, nullptr);
     }
 
     m_extent.width = width;

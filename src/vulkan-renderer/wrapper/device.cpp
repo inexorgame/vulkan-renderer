@@ -699,4 +699,10 @@ const CommandBuffer &Device::request_command_buffer(const std::string &name) {
     return thread_graphics_pool().request_command_buffer(name);
 }
 
+void Device::wait_idle() const {
+    if (const auto result = vkDeviceWaitIdle(m_device); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkDeviceWaitIdle failed!", result);
+    }
+}
+
 } // namespace inexor::vulkan_renderer::wrapper

@@ -72,11 +72,19 @@ void VulkanRenderer::generate_octree_indices() {
 
 void VulkanRenderer::recreate_swapchain() {
     m_window->wait_for_focus();
-    vkDeviceWaitIdle(m_device->device());
+    m_device->wait_idle();
+
+    // Query the framebuffer size here again although the window width is set during framebuffer resize callback
+    // The reason for this is that the framebuffer size could already be different again because we missed a poll
+    // This seems to be an issue on Linux only though
+    int window_width = 0;
+    int window_height = 0;
+    glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
-    m_swapchain->recreate(m_window->width(), m_window->height(), m_vsync_enabled);
+    // Recreate the swapchain
+    m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
@@ -113,15 +121,7 @@ void VulkanRenderer::render_frame() {
         .pCommandBuffers = cmd_buf.ptr(),
     }));
 
-    const auto present_info = wrapper::make_info<VkPresentInfoKHR>({
-        .swapchainCount = 1,
-        .pSwapchains = m_swapchain->swapchain(),
-        .pImageIndices = &image_index,
-    });
-
-    if (const auto result = vkQueuePresentKHR(m_device->present_queue(), &present_info); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkQueuePresentKHR failed!", result);
-    }
+    m_swapchain->present(image_index);
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
@@ -136,7 +136,7 @@ VulkanRenderer::~VulkanRenderer() {
         return;
     }
 
-    vkDeviceWaitIdle(m_device->device());
+    m_device->wait_idle();
 
     if (!m_debug_report_callback_initialised) {
         return;
