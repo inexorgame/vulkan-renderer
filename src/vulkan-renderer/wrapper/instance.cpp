@@ -77,6 +77,12 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     assert(!application_name.empty());
     assert(!engine_name.empty());
 
+    spdlog::trace("Initializing Vulkan metaloader");
+    if (const auto result = volkInitialize(); result != VK_SUCCESS) {
+        throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader! Make sure to update the "
+                                 "drivers of your graphics card!");
+    }
+
     spdlog::trace("Initialising Vulkan instance");
     spdlog::trace("Application name: {}", application_name);
     spdlog::trace("Application version: {}.{}.{}", VK_API_VERSION_MAJOR(application_version),
@@ -228,6 +234,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);
     }
+
+    volkLoadInstanceOnly(m_instance);
 }
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,

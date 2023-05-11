@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 

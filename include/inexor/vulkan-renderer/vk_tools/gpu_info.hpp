@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 namespace inexor::vulkan_renderer::vk_tools {
 

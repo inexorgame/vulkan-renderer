@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include <string>
 

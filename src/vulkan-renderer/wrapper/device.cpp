@@ -8,11 +8,6 @@
 
 #define VMA_IMPLEMENTATION
 
-// It makes memory of all new allocations initialized to bit pattern 0xDCDCDCDC.
-// Before an allocation is destroyed, its memory is filled with bit pattern 0xEFEFEFEF.
-// Memory is automatically mapped and unmapped if necessary.
-#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1 // NOLINT
-
 // Enforce specified number of bytes as a margin before and after every allocation.
 #define VMA_DEBUG_MARGIN 16 // NOLINT
 
@@ -318,6 +313,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
+
+    spdlog::trace("Loading Vulkan entrypoints directly from driver (bypass Vulkan loader dispatch code)");
+    volkLoadDevice(m_device);
 
     const bool enable_debug_markers =
         std::find_if(required_extensions.begin(), required_extensions.end(), [&](const char *extension) {

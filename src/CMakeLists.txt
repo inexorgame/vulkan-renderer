@@ -81,6 +81,7 @@ target_compile_definitions(
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
+    VK_NO_PROTOTYPES # Required by volk metaloader
 )
 
 # enable multi processor building if VS project
@@ -95,6 +96,15 @@ if(MSVC)
     target_compile_options(inexor-vulkan-renderer PRIVATE "/Zc:__cplusplus")
 endif()
 
+# Extract the current git sha
+find_package(Git REQUIRED)
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=7
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE INEXOR_GIT_SHA
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 # Replace variables in header file with CMake values
 configure_file(
     ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta.hpp
@@ -105,33 +115,45 @@ target_include_directories(
 
     PUBLIC
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/third_party
     # Include configured header file which contains engine metadata
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
-if(CONAN_LIBS)
-    target_link_libraries(
-        inexor-vulkan-renderer
+# Declare use of dependencies
+FetchContent_MakeAvailable(fmt)
+FetchContent_MakeAvailable(glfw)
+FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(imgui)
+add_library(imgui
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
+FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(stb)
+FetchContent_MakeAvailable(tinygltf)
+FetchContent_MakeAvailable(toml)
+FetchContent_MakeAvailable(vma)
+FetchContent_MakeAvailable(volk)
+FetchContent_MakeAvailable(Vulkan)
 
-        PUBLIC
-        ${CONAN_LIBS}
-    )
-else()
-    foreach(_LIB ${CONAN_LIBS_RELEASE})
-        target_link_libraries(
-            inexor-vulkan-renderer
-            optimized
+# Work around a VMA compile error from its use of snprintf
+target_compile_definitions(VulkanMemoryAllocator PRIVATE VMA_STATS_STRING_ENABLED=0)
 
-            ${_LIB}
-        )
-    endforeach()
-    foreach(_LIB ${CONAN_LIBS_DEBUG})
-        target_link_libraries(
-            inexor-vulkan-renderer
-            debug
-
-            ${_LIB}
-        )
-    endforeach()
+if (WIN32)
+   set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 endif()
+
+target_link_libraries(inexor-vulkan-renderer
+    PUBLIC
+    fmt::fmt
+    glfw
+    glm::glm
+    imgui
+    spdlog::spdlog
+    tinygltf
+    toml11::toml11
+    volk::volk
+    Vulkan::Headers
+    VulkanMemoryAllocator)

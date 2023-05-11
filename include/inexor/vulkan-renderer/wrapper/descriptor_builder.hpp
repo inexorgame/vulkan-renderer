@@ -1,10 +1,11 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <string>
 #include <vector>
 

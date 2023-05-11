@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <vk_mem_alloc.h>
-#include <vulkan/vulkan_core.h>
+#include <volk.h>
 
 #include <array>
 #include <cassert>

@@ -1,10 +1,15 @@
 name: Build Documentation
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
+    types: [opened]
 
 jobs:
   build_documentation:
     name: Build Documentation
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.merged || github.event_name == 'push' }}
     container: ubuntu:rolling
     env:
       DEBIAN_FRONTEND: "noninteractive"
@@ -44,7 +49,7 @@ jobs:
           tar cfz documentation.tar.xz build/html/*
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ${{ github.workspace }}/documentation/documentation.tar.xz
           name: documentation.tar.xz

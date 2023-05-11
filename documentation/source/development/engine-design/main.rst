@@ -22,7 +22,6 @@ Source code
     ├── CHANGELOG.rst
     ├── CMakeLists.txt
     ├── CODE_OF_CONDUCT.md
-    ├── conanfile.py  «Conan configuration»
     ├── CONTRIBUTING.md
     ├── LICENSE.md
     ├── README.rst
@@ -63,21 +62,8 @@ Dependency management
 =====================
 
 - In general we try to keep the number of dependencies at a minimum.
-- We avoid to add dependencies directly to the project repository because they increase the size of the repository and we have to update them manually.
+- Dependencies are downloaded directly by CMake.
 
-- Instead, we prefer to use `conan package manager <https://conan.io/>`__ which allows us to get most dependencies from `conan center <https://conan.io/center/>`__.
-
-Conan package manager
----------------------
-
-- The list of currently used dependencies can be found in ``conanfile.py`` in the root folder of the repository.
-- You must have installed `CMake <https://cmake.org/>`__ and `conan package manager <https://conan.io/>`__ in oder to download the dependencies automatically from conan center when running CMake.
-- For details please read :ref:`building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref:`BUILDING Linux`).
-
-Dependency folder
------------------
-
-- If we really need a dependency which is not yet available through conan center, we add it manually to the ``third_party`` folder.
 
 Criteria for library selection
 ------------------------------

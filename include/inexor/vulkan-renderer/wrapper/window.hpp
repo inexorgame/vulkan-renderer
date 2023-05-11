@@ -1,9 +1,10 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
+#include <volk.h>
 
 #include <array>
+#include <cstdint>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {

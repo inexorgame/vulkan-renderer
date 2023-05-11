@@ -14,9 +14,6 @@ Required Software
 `Python <https://www.python.org/>`__ with `pip <https://pypi.org/project/pip/>`__
     Required for generating the documentation and the C++ package manager.
 
-`Conan <https://conan.io/>`__
-    C++ package manager to get the required libraries (dependencies).
-
 `CMake <https://cmake.org/>`__
     The build generator which generates project files for various IDEs.
 
