@@ -2,13 +2,13 @@
 
 #include <volk.h>
 
-#include <cassert>
 #include <cstdint>
 #include <limits>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief A RAII wrapper for VkFences.

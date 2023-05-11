@@ -2,11 +2,11 @@
 
 #include <vk_mem_alloc.h>
 
-#include <cassert>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for VkImage.

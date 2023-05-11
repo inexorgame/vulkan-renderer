@@ -1,11 +1,9 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <spdlog/spdlog.h>
-
+#include <cassert>
 #include <stdexcept>
 #include <utility>
 

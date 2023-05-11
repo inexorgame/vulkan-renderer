@@ -5,15 +5,7 @@
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 
-#include <GLFW/glfw3.h>
-#include <volk.h>
-
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-
-// forward declarations
+// Forward declarations
 namespace inexor::vulkan_renderer::input {
 class KeyboardMouseInputData;
 } // namespace inexor::vulkan_renderer::input

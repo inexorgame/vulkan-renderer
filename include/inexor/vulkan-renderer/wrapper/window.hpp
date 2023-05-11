@@ -1,9 +1,7 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <volk.h>
 
-#include <array>
 #include <cstdint>
 #include <string>
 

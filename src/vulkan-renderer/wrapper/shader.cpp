@@ -1,11 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/tools/file.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-
-#include <spdlog/spdlog.h>
 
 #include <cassert>
 #include <stdexcept>

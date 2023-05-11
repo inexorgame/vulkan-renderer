@@ -1,11 +1,11 @@
 ﻿#include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
-
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+
+#include <stdexcept>
 
 int main(int argc, char *argv[]) {
     spdlog::init_thread_pool(8192, 2);

@@ -1,10 +1,8 @@
 ﻿#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <spdlog/spdlog.h>
 #include <vk_mem_alloc.h>
 
 #include <utility>

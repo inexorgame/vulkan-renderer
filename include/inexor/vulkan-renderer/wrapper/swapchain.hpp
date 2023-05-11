@@ -2,14 +2,10 @@
 
 #include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
 
-#include <volk.h>
-
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <optional>
-#include <set>
-#include <span>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {

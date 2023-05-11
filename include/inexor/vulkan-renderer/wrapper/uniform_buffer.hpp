@@ -2,12 +2,9 @@
 
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
-#include <volk.h>
-
-#include <string>
-
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for uniform buffers.

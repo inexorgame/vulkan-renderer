@@ -1,8 +1,7 @@
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 
-#include <inexor/vulkan-renderer/world/cube.hpp>
+#include "inexor/vulkan-renderer/world/cube.hpp"
 
-#include <array>
 #include <glm/gtx/intersect.hpp>
 
 namespace inexor::vulkan_renderer::world {

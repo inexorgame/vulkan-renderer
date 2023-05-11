@@ -1,8 +1,5 @@
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
-
-#include <cassert>
 #include <cstring>
 #include <utility>
 

@@ -12,11 +12,10 @@
 #include <memory>
 #include <vector>
 
+// Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
-
 class Device;
 class Swapchain;
-
 } // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer {

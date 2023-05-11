@@ -2,25 +2,21 @@
 
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
-#include <glm/geometric.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/vec3.hpp>
-#include <spdlog/spdlog.h>
 
 #include <array>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
-#include <utility>
 #include <vector>
 
-// forward declaration
+// Forward declaration
 namespace inexor::vulkan_renderer::world {
 class Cube;
 } // namespace inexor::vulkan_renderer::world
 
-// forward declaration
+// Forward declarations
 namespace inexor::vulkan_renderer::io {
 class ByteStream;
 class NXOCParser;

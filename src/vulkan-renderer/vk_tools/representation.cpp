@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 
+#include <array>
 #include <cassert>
 
 namespace inexor::vulkan_renderer::vk_tools {

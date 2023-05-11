@@ -7,6 +7,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declarations
 class Device;
 class Swapchain;
 

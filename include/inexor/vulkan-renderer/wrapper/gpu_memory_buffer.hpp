@@ -1,12 +1,12 @@
 ﻿#pragma once
 
 #include <vk_mem_alloc.h>
-#include <volk.h>
 
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for GPU Memory buffers.
