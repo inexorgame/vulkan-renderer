@@ -35,6 +35,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/pipeline.cpp
+    vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/sampler.cpp
     vulkan-renderer/wrapper/semaphore.cpp
