@@ -1,7 +1,9 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
 #include <vk_mem_alloc.h>
@@ -11,8 +13,7 @@
 #include <cassert>
 #include <functional>
 #include <stdexcept>
-#include <unordered_map>
-#include <vector>
+#include <utility>
 
 namespace inexor::vulkan_renderer {
 

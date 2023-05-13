@@ -1,18 +1,8 @@
 ﻿#include "inexor/vulkan-renderer/renderer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-
-#include <imgui.h>
-#include <spdlog/spdlog.h>
-
-#include <array>
-#include <cassert>
-#include <fstream>
-#include <limits>
-#include <unordered_map>
 
 namespace inexor::vulkan_renderer {
 

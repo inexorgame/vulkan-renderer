@@ -2,18 +2,18 @@
 
 #include <volk.h>
 
-#include <cassert>
 #include <cstdint>
 #include <limits>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief A RAII wrapper for VkFences.
 class Fence {
-    const wrapper::Device &m_device;
+    const Device &m_device;
     std::string m_name;
     VkFence m_fence{VK_NULL_HANDLE};
 
@@ -23,7 +23,7 @@ public:
     /// @param name The internal debug marker name of the VkFence.
     /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
-    Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state);
+    Fence(const Device &device, const std::string &name, bool in_signaled_state);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;

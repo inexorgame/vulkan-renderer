@@ -5,30 +5,12 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
-#include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/fence.hpp"
-#include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
-
-#include <volk.h>
-
-#include <cstdint>
-#include <memory>
-#include <vector>
 
 namespace inexor::vulkan_renderer {
 

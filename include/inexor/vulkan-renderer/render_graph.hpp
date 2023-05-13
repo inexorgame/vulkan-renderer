@@ -1,31 +1,30 @@
 #pragma once
 
-// TODO: Forward declare.
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
-#include <vk_mem_alloc.h>
-#include <volk.h>
 
 #include <functional>
 #include <memory>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 // TODO: Compute stages.
 // TODO: Uniform buffers.
 
+// Forward declarations
+namespace inexor::vulkan_renderer::wrapper {
+class CommandBuffer;
+class Shader;
+}; // namespace inexor::vulkan_renderer::wrapper
+
 namespace inexor::vulkan_renderer {
 
+// Forward declarations
 class PhysicalResource;
 class PhysicalStage;
 class RenderGraph;

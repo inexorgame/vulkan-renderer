@@ -2,6 +2,9 @@
 
 #include "inexor/vulkan-renderer/exception.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {

@@ -4,8 +4,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <spdlog/spdlog.h>
-
 #include <cassert>
 #include <utility>
 
@@ -45,7 +43,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
         pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, 1});
     }
 
-    m_device.create_descriptor_pool(wrapper::make_info<VkDescriptorPoolCreateInfo>({
+    m_device.create_descriptor_pool(make_info<VkDescriptorPoolCreateInfo>({
                                         .maxSets = 1,
                                         .poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size()),
                                         .pPoolSizes = pool_sizes.data(),
@@ -61,7 +59,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
 
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(1, m_descriptor_set_layout);
 
-    const auto descriptor_set_ai = wrapper::make_info<VkDescriptorSetAllocateInfo>({
+    const auto descriptor_set_ai = make_info<VkDescriptorSetAllocateInfo>({
         .descriptorPool = m_descriptor_pool,
         .descriptorSetCount = 1,
         .pSetLayouts = descriptor_set_layouts.data(),

@@ -2,16 +2,14 @@
 
 #include "inexor/vulkan-renderer/io/octree_parser.hpp"
 
-#include <cstdint>
 #include <memory>
-#include <utility>
 
-// forward declaration
+// Forward declaration
 namespace inexor::vulkan_renderer::world {
 class Cube;
 } // namespace inexor::vulkan_renderer::world
 
-// forward declaration
+// Forward declaration
 namespace inexor::vulkan_renderer::io {
 class ByteStream;
 } // namespace inexor::vulkan_renderer::io

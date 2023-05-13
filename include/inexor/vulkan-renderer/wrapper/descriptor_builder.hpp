@@ -1,8 +1,8 @@
 #pragma once
 
-#include <volk.h>
-
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+
+#include <volk.h>
 
 #include <cassert>
 #include <cstdint>
@@ -11,7 +11,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-// forward declarations
+// Forward declarations
 class Device;
 class ResourceDescriptor;
 

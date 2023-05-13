@@ -2,16 +2,16 @@
 
 #include <vk_mem_alloc.h>
 
-#include <cassert>
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
 class Device;
 
 /// @brief RAII wrapper class for VkImage.
 class Image {
-    const wrapper::Device &m_device;
+    const Device &m_device;
     VmaAllocation m_allocation{VK_NULL_HANDLE};
     VmaAllocationInfo m_allocation_info{};
     VkImage m_image{VK_NULL_HANDLE};

@@ -1,17 +1,15 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <spdlog/spdlog.h>
-
+#include <cassert>
 #include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Fence::Fence(const wrapper::Device &device, const std::string &name, const bool in_signaled_state)
+Fence::Fence(const Device &device, const std::string &name, const bool in_signaled_state)
     : m_device(device), m_name(name) {
     assert(!name.empty());
     assert(device.device());
