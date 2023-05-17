@@ -54,11 +54,6 @@ PhysicalImage::~PhysicalImage() {
     vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
 }
 
-PhysicalStage::~PhysicalStage() {
-    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
-    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
-}
-
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
 }
@@ -152,19 +147,10 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
-    const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({
-        .setLayoutCount = static_cast<std::uint32_t>(stage->m_descriptor_layouts.size()),
-        .pSetLayouts = stage->m_descriptor_layouts.data(),
-        .pushConstantRangeCount = static_cast<std::uint32_t>(stage->m_push_constant_ranges.size()),
-        .pPushConstantRanges = stage->m_push_constant_ranges.data(),
-    });
-
-    if (const auto result =
-            vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + stage->name() + "!",
-                              result);
-    }
+    physical.m_pipeline_layout =
+        std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, stage->m_push_constant_ranges,
+                                                  // TODO: Apply internal debug name to the pipeline layouts
+                                                  "graphics pipeline layout");
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
@@ -216,7 +202,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         cmd_buf.bind_vertex_buffers(vertex_buffers);
     }
 
-    cmd_buf.bind_pipeline(physical.m_pipeline);
+    cmd_buf.bind_pipeline(physical.m_pipeline->pipeline());
     stage->m_on_record(physical, cmd_buf);
 
     if (graphics_stage != nullptr) {
@@ -397,26 +383,24 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
         .pScissors = &scissor,
     });
 
-    const auto pipeline_ci = wrapper::make_info<VkGraphicsPipelineCreateInfo>({
-        .stageCount = static_cast<std::uint32_t>(stage->m_shaders.size()),
-        .pStages = stage->m_shaders.data(),
-        .pVertexInputState = &vertex_input,
-        .pInputAssemblyState = &input_assembly,
-        .pViewportState = &viewport_state,
-        .pRasterizationState = &rasterization_state,
-        .pMultisampleState = &multisample_state,
-        .pDepthStencilState = &depth_stencil,
-        .pColorBlendState = &blend_state,
-        .layout = physical.m_pipeline_layout,
-        .renderPass = physical.m_render_pass,
-    });
-
     // TODO: Pipeline caching (basically load the render graph from a file)
-    if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + stage->name() + " !", result);
-    }
+    physical.m_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
+        m_device,
+        wrapper::make_info<VkGraphicsPipelineCreateInfo>({
+            .stageCount = static_cast<std::uint32_t>(stage->m_shaders.size()),
+            .pStages = stage->m_shaders.data(),
+            .pVertexInputState = &vertex_input,
+            .pInputAssemblyState = &input_assembly,
+            .pViewportState = &viewport_state,
+            .pRasterizationState = &rasterization_state,
+            .pMultisampleState = &multisample_state,
+            .pDepthStencilState = &depth_stencil,
+            .pColorBlendState = &blend_state,
+            .layout = physical.m_pipeline_layout->pipeline_layout(),
+            .renderPass = physical.m_render_pass,
+        }),
+        // TODO: Apply internal debug name to the graphics pipeline
+        "graphics pipeline");
 }
 
 void RenderGraph::compile(const RenderResource *target) {
