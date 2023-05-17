@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
+#include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
 #include <memory>
 
@@ -18,7 +19,7 @@ class GPUMemoryBuffer;
 /// @todo Support 3D textures and cube maps (implement new and separate wrappers though).
 class GpuTexture {
     std::unique_ptr<Image> m_texture_image;
-    VkSampler m_sampler{VK_NULL_HANDLE};
+    std::unique_ptr<Sampler> m_sampler;
 
     int m_texture_width{0};
     int m_texture_height{0};
@@ -39,9 +40,6 @@ class GpuTexture {
     /// @param old_layout The old image layout.
     /// @param new_layout The new image layout.
     void transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
-
-    /// @brief Create the texture sampler.
-    void create_texture_sampler();
 
 public:
     /// @brief Construct a texture from a file.
@@ -64,7 +62,7 @@ public:
     GpuTexture(const GpuTexture &) = delete;
     GpuTexture(GpuTexture &&) noexcept;
 
-    ~GpuTexture();
+    ~GpuTexture() = default;
 
     GpuTexture &operator=(const GpuTexture &) = delete;
     GpuTexture &operator=(GpuTexture &&) = delete;
@@ -82,7 +80,7 @@ public:
     }
 
     [[nodiscard]] VkSampler sampler() const {
-        return m_sampler;
+        return m_sampler->sampler();
     }
 };
 

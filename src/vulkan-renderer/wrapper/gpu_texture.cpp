@@ -33,10 +33,6 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
     m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
-GpuTexture::~GpuTexture() {
-    vkDestroySampler(m_device.device(), m_sampler, nullptr);
-}
-
 void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
     const VkExtent2D extent{
         // Because stb_image stored the texture's width and height as a normal int, we need a cast here
@@ -68,35 +64,25 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
-    create_texture_sampler();
-}
-
-void GpuTexture::create_texture_sampler() {
-    VkPhysicalDeviceFeatures device_features;
-    vkGetPhysicalDeviceFeatures(m_device.physical_device(), &device_features);
-
-    VkPhysicalDeviceProperties graphics_card_properties;
-    vkGetPhysicalDeviceProperties(m_device.physical_device(), &graphics_card_properties);
-
-    const auto sampler_ci = make_info<VkSamplerCreateInfo>({
-        .magFilter = VK_FILTER_LINEAR,
-        .minFilter = VK_FILTER_LINEAR,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .mipLodBias = 0.0f,
-        .anisotropyEnable = VK_FALSE,
-        .maxAnisotropy = 1.0f,
-        .compareEnable = VK_FALSE,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
-        .minLod = 0.0f,
-        .maxLod = 0.0f,
-        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE,
-    });
-
-    m_device.create_sampler(sampler_ci, &m_sampler, m_name);
+    m_sampler = std::make_unique<Sampler>(m_device,
+                                          make_info<VkSamplerCreateInfo>({
+                                              .magFilter = VK_FILTER_LINEAR,
+                                              .minFilter = VK_FILTER_LINEAR,
+                                              .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                                              .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                              .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                              .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                              .mipLodBias = 0.0f,
+                                              .anisotropyEnable = VK_FALSE,
+                                              .maxAnisotropy = 1.0f,
+                                              .compareEnable = VK_FALSE,
+                                              .compareOp = VK_COMPARE_OP_ALWAYS,
+                                              .minLod = 0.0f,
+                                              .maxLod = 0.0f,
+                                              .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+                                              .unnormalizedCoordinates = VK_FALSE,
+                                          }),
+                                          "default sampler");
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
