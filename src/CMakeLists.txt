@@ -22,6 +22,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/vk_tools/gpu_info.cpp
     vulkan-renderer/vk_tools/representation.cpp
 
+    vulkan-renderer/wrapper/buffer.cpp
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/cpu_texture.cpp
@@ -30,7 +31,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
-    vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
@@ -41,7 +41,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
-    vulkan-renderer/wrapper/uniform_buffer.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
 

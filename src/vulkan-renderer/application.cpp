@@ -493,7 +493,8 @@ Application::Application(int argc, char **argv) {
     load_textures();
     load_shaders();
 
-    m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
+    m_uniform_buffers.emplace_back(*m_device, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                   VMA_MEMORY_USAGE_CPU_TO_GPU, "matrices uniform buffer");
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
@@ -520,7 +521,7 @@ void Application::update_uniform_buffers() {
     ubo.proj[1][1] *= -1;
 
     // TODO: Embed this into the render graph.
-    m_uniform_buffers[0].update(&ubo, sizeof(ubo));
+    std::memcpy(m_uniform_buffers[0].memory(), &ubo, sizeof(ubo));
 }
 
 void Application::update_imgui_overlay() {

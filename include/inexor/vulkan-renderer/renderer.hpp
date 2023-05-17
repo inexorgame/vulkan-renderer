@@ -6,8 +6,8 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
@@ -45,7 +45,7 @@ protected:
 
     std::vector<wrapper::Shader> m_shaders;
     std::vector<wrapper::GpuTexture> m_textures;
-    std::vector<wrapper::UniformBuffer> m_uniform_buffers;
+    std::vector<wrapper::Buffer> m_uniform_buffers;
     std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;

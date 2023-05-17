@@ -1,7 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <cassert>
 #include <memory>
@@ -29,7 +29,7 @@ class CommandBuffer {
     /// @note We are not recycling staging buffers. Once they are used and the command buffer handle has reached the end
     /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator (VMA) in managing the
     /// memory for staging buffers.
-    mutable std::vector<GPUMemoryBuffer> m_staging_bufs;
+    mutable std::vector<Buffer> m_staging_bufs;
 
     friend class CommandPool;
 
@@ -50,8 +50,8 @@ class CommandBuffer {
         assert(!name.empty());
 
         // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
-        m_staging_bufs.emplace_back(m_device, name, data_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                    VMA_MEMORY_USAGE_CPU_ONLY);
+        m_staging_bufs.emplace_back(m_device, data_size, data, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                    VMA_MEMORY_USAGE_CPU_ONLY, name);
 
         return m_staging_bufs.back().buffer();
     }
