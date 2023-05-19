@@ -34,15 +34,25 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
 }
 
 void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
-    const VkExtent2D extent{
-        // Because stb_image stored the texture's width and height as a normal int, we need a cast here
-        .width = static_cast<uint32_t>(m_texture_width),
-        .height = static_cast<uint32_t>(m_texture_height),
-    };
-
-    m_texture_image = std::make_unique<Image>(m_device, m_texture_image_format,
-                                              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                              VK_IMAGE_ASPECT_COLOR_BIT, VK_SAMPLE_COUNT_1_BIT, m_name, extent);
+    m_texture_image = std::make_unique<Image>(
+        m_device,
+        make_info<VkImageCreateInfo>({.imageType = VK_IMAGE_TYPE_2D,
+                                      .format = m_texture_image_format,
+                                      .extent =
+                                          {
+                                              // Because stb_image stored the texture's width and height as a no
+                                              .width = static_cast<uint32_t>(m_texture_width),
+                                              .height = static_cast<uint32_t>(m_texture_height),
+                                              .depth = 1,
+                                          },
+                                      .mipLevels = 1,
+                                      .arrayLayers = 1,
+                                      .samples = VK_SAMPLE_COUNT_1_BIT,
+                                      .tiling = VK_IMAGE_TILING_OPTIMAL,
+                                      .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                                      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED}),
+        m_name);
 
     const VkBufferImageCopy copy_region{
         .bufferOffset = 0,
@@ -56,33 +66,15 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
 
     m_device.execute(m_name, [&](const CommandBuffer &cmd_buf) {
         cmd_buf
-            .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED,
+            .change_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-            .copy_buffer_to_image(texture_data, static_cast<VkDeviceSize>(texture_size), m_texture_image->get(),
+            .copy_buffer_to_image(texture_data, static_cast<VkDeviceSize>(texture_size), m_texture_image->image(),
                                   copy_region, m_name)
-            .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .change_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
-    m_sampler = std::make_unique<Sampler>(m_device,
-                                          make_info<VkSamplerCreateInfo>({
-                                              .magFilter = VK_FILTER_LINEAR,
-                                              .minFilter = VK_FILTER_LINEAR,
-                                              .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-                                              .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                              .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                              .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                              .mipLodBias = 0.0f,
-                                              .anisotropyEnable = VK_FALSE,
-                                              .maxAnisotropy = 1.0f,
-                                              .compareEnable = VK_FALSE,
-                                              .compareOp = VK_COMPARE_OP_ALWAYS,
-                                              .minLod = 0.0f,
-                                              .maxLod = 0.0f,
-                                              .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-                                              .unnormalizedCoordinates = VK_FALSE,
-                                          }),
-                                          "default sampler");
+    m_sampler = std::make_unique<Sampler>(m_device, m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

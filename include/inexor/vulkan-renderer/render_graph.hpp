@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -301,17 +302,20 @@ class PhysicalImage : public PhysicalResource {
     friend RenderGraph;
 
 private:
-    VkImage m_image{VK_NULL_HANDLE};
-    VkImageView m_image_view{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::Image> m_img;
 
 public:
     explicit PhysicalImage(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalImage(const PhysicalImage &) = delete;
     PhysicalImage(PhysicalImage &&) = delete;
-    ~PhysicalImage() override;
+    ~PhysicalImage() override = default;
 
     PhysicalImage &operator=(const PhysicalImage &) = delete;
     PhysicalImage &operator=(PhysicalImage &&) = delete;
+
+    [[nodiscard]] VkImageView image_view() const noexcept {
+        return m_img->image_view();
+    }
 };
 
 class PhysicalBackBuffer : public PhysicalResource {
@@ -390,8 +394,7 @@ private:
 
     // Functions for building resource related vulkan objects.
     void build_buffer(const BufferResource &, PhysicalBuffer &) const;
-    void build_image(const TextureResource &, PhysicalImage &, VmaAllocationCreateInfo *) const;
-    void build_image_view(const TextureResource &, PhysicalImage &) const;
+    void build_image(const TextureResource &, PhysicalImage &) const;
 
     // Functions for building stage related vulkan objects.
     void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;

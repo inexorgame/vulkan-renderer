@@ -49,11 +49,6 @@ PhysicalBuffer::~PhysicalBuffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
 }
 
-PhysicalImage::~PhysicalImage() {
-    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
-    vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
-}
-
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
 }
@@ -91,59 +86,33 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
     vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph buffer");
 }
 
-void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical,
-                              VmaAllocationCreateInfo *alloc_ci) const {
-    const auto image_ci = wrapper::make_info<VkImageCreateInfo>({
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = texture_resource.m_format,
-        .extent{
-            // TODO: Support textures with dimensions not equal to back buffer size.
-            .width = m_swapchain.extent().width,
-            .height = m_swapchain.extent().height,
-            .depth = 1,
-        },
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                     ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                     : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    });
-
-    VmaAllocationInfo alloc_info;
-    // TODO: Assign proper name to this image inside of rendergraph
-    if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &physical.m_image,
-                                           &physical.m_allocation, &alloc_info);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImage failed for rendergraph image", result);
-    }
-
-    // TODO: Use a better naming system for memory resources inside of rendergraph
-    vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph image");
-}
-
-void RenderGraph::build_image_view(const TextureResource &texture_resource, PhysicalImage &physical) const {
-    const auto image_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
-        .image = physical.m_image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = texture_resource.m_format,
-        .subresourceRange{
-            .aspectMask = static_cast<VkImageAspectFlags>(texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                                                              ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                                                              : VK_IMAGE_ASPECT_COLOR_BIT),
-            .levelCount = 1,
-            .layerCount = 1,
-        },
-    });
-
-    if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + texture_resource.m_name + "!",
-                              result);
-    }
+void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical) const {
+    physical.m_img = std::make_unique<wrapper::Image>(
+        m_device,
+        wrapper::make_info<VkImageCreateInfo>({
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = texture_resource.m_format,
+            .extent{
+                // TODO: Support textures with dimensions not equal to back buffer size.
+                .width = m_swapchain.extent().width,
+                .height = m_swapchain.extent().height,
+                .depth = 1,
+            },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                         ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                         : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        }),
+        static_cast<VkImageAspectFlags>(texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                                            ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                                            : VK_IMAGE_ASPECT_COLOR_BIT),
+        // TODO: Apply internal debug name to the images
+        "Rendergraph image");
 }
 
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
@@ -458,14 +427,9 @@ void RenderGraph::compile(const RenderResource *target) {
             continue;
         }
 
-        // TODO: Use a constexpr bool.
-        VmaAllocationCreateInfo alloc_ci{};
-        alloc_ci.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
         auto physical = std::make_shared<PhysicalImage>(m_device);
         texture_resource->m_physical = physical;
-        build_image(*texture_resource, *physical, &alloc_ci);
-        build_image_view(*texture_resource, *physical);
+        build_image(*texture_resource, *physical);
     }
 
     // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
@@ -501,7 +465,7 @@ void RenderGraph::compile(const RenderResource *target) {
                 for (auto *const img_view : m_swapchain.image_views()) {
                     std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
                     for (const auto *image : images) {
-                        image_views.push_back(image->m_image_view);
+                        image_views.push_back(image->image_view());
                     }
                     physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
                                                          "Framebuffer");

@@ -4,82 +4,75 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
-             const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,
-             const VkExtent2D image_extent)
-    : m_device(device), m_format(format), m_name(name) {
-    assert(device.device());
-    assert(device.physical_device());
-    assert(device.allocator());
-    assert(image_extent.width > 0);
-    assert(image_extent.height > 0);
-    assert(!name.empty());
+Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
+             const VmaAllocationCreateInfo &alloc_ci, std::string name)
+    : m_device(device), m_format(img_ci.format), m_name(std::move(name)) {
+    if (m_name.empty()) {
+        throw std::invalid_argument("Error: image name must not be empty!");
+    }
 
-    const auto image_ci = make_info<VkImageCreateInfo>({
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = format,
-        .extent{
-            .width = image_extent.width,
-            .height = image_extent.height,
-            .depth = 1,
-        },
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = sample_count,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = image_usage,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    });
-
-    const VmaAllocationCreateInfo vma_allocation_ci{
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
-        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
-    };
-
-    if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
-                                           &m_allocation_info);
+    if (const auto result = vmaCreateImage(m_device.allocator(), &img_ci, &alloc_ci, &m_img, &m_alloc, &m_alloc_info);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
+    m_device.set_debug_marker_name(&m_img, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
+    vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
 
-    vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
+    // Fill in the image that was created and the format of the image
+    auto filled_img_view_ci = img_view_ci;
+    filled_img_view_ci.image = m_img;
+    filled_img_view_ci.format = img_ci.format;
 
-    // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
-
-    m_device.create_image_view(make_info<VkImageViewCreateInfo>({
-                                   .image = m_image,
-                                   .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                                   .format = format,
-                                   .subresourceRange{
-                                       .aspectMask = aspect_flags,
-                                       .baseMipLevel = 0,
-                                       .levelCount = 1,
-                                       .baseArrayLayer = 0,
-                                       .layerCount = 1,
-                                   },
-                               }),
-                               &m_image_view, m_name);
+    if (const auto result = vkCreateImageView(m_device.device(), &filled_img_view_ci, nullptr, &m_img_view);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
+    }
+    m_device.set_debug_marker_name(&m_img_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
+Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
+             std::string name)
+    : Image(device, img_ci, img_view_ci,
+            {
+                .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+                .usage = VMA_MEMORY_USAGE_GPU_ONLY,
+            },
+            name) {}
+
+Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageAspectFlags aspect_flags,
+             std::string name)
+    : Image(device, img_ci,
+            make_info<VkImageViewCreateInfo>({
+                .image = m_img,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = img_ci.format,
+                .subresourceRange{
+                    .aspectMask = aspect_flags,
+                    .levelCount = 1,
+                    .layerCount = 1,
+                },
+            }),
+            std::move(name)) {}
+
+Image::Image(const Device &device, const VkImageCreateInfo &img_ci, std::string name)
+    : Image(device, img_ci, VK_IMAGE_ASPECT_COLOR_BIT, std::move(name)) {}
+
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
-    m_allocation = other.m_allocation;
-    m_allocation_info = other.m_allocation_info;
-    m_image = other.m_image;
     m_format = other.m_format;
-    m_image_view = other.m_image_view;
+    m_alloc = other.m_alloc;
+    m_alloc_info = other.m_alloc_info;
+    m_img = std::exchange(other.m_img, VK_NULL_HANDLE);
+    m_img_view = std::exchange(other.m_img_view, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
 }
 
 Image::~Image() {
-    vkDestroyImageView(m_device.device(), m_image_view, nullptr);
-    vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
+    vkDestroyImageView(m_device.device(), m_img_view, nullptr);
+    vmaDestroyImage(m_device.allocator(), m_img, m_alloc);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
