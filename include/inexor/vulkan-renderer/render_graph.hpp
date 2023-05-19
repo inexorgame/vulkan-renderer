@@ -390,9 +390,6 @@ private:
     // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
 
-    // Functions for building resource related vulkan objects.
-    void build_image(const TextureResource &, PhysicalImage &) const;
-
     // Functions for building stage related vulkan objects.
     void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf,

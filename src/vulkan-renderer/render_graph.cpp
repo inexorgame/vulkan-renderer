@@ -49,35 +49,6 @@ PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
 }
 
-void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical) const {
-    physical.m_img = std::make_unique<wrapper::Image>(
-        m_device,
-        wrapper::make_info<VkImageCreateInfo>({
-            .imageType = VK_IMAGE_TYPE_2D,
-            .format = texture_resource.m_format,
-            .extent{
-                // TODO: Support textures with dimensions not equal to back buffer size.
-                .width = m_swapchain.extent().width,
-                .height = m_swapchain.extent().height,
-                .depth = 1,
-            },
-            .mipLevels = 1,
-            .arrayLayers = 1,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                         ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                         : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        }),
-        static_cast<VkImageAspectFlags>(texture_resource.m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                                            ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                                            : VK_IMAGE_ASPECT_COLOR_BIT),
-        // TODO: Apply internal debug name to the images
-        "Rendergraph image");
-}
-
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
     physical.m_pipeline_layout =
         std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, stage->m_push_constant_ranges,
@@ -392,7 +363,33 @@ void RenderGraph::compile(const RenderResource *target) {
 
         auto physical = std::make_shared<PhysicalImage>(m_device);
         texture_resource->m_physical = physical;
-        build_image(*texture_resource, *physical);
+
+        physical->m_img = std::make_unique<wrapper::Image>(
+            m_device,
+            wrapper::make_info<VkImageCreateInfo>({
+                .imageType = VK_IMAGE_TYPE_2D,
+                .format = texture_resource->m_format,
+                .extent{
+                    // TODO: Support textures with dimensions not equal to back buffer size.
+                    .width = m_swapchain.extent().width,
+                    .height = m_swapchain.extent().height,
+                    .depth = 1,
+                },
+                .mipLevels = 1,
+                .arrayLayers = 1,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .usage = texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                             ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                             : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            }),
+            static_cast<VkImageAspectFlags>(texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                                                ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                                                : VK_IMAGE_ASPECT_COLOR_BIT),
+            // TODO: Apply internal debug name to the images
+            "Rendergraph image");
     }
 
     // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
