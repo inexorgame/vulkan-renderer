@@ -268,7 +268,6 @@ class PhysicalResource : public RenderGraphObject {
 
 protected:
     const wrapper::Device &m_device;
-    VmaAllocation m_allocation{VK_NULL_HANDLE};
 
     explicit PhysicalResource(const wrapper::Device &device) : m_device(device) {}
 
@@ -285,14 +284,13 @@ class PhysicalBuffer : public PhysicalResource {
     friend RenderGraph;
 
 private:
-    VmaAllocationInfo m_alloc_info{};
-    VkBuffer m_buffer{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::Buffer> m_buffer;
 
 public:
     explicit PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalBuffer(const PhysicalBuffer &) = delete;
     PhysicalBuffer(PhysicalBuffer &&) = delete;
-    ~PhysicalBuffer() override;
+    ~PhysicalBuffer() override = default;
 
     PhysicalBuffer &operator=(const PhysicalBuffer &) = delete;
     PhysicalBuffer &operator=(PhysicalBuffer &&) = delete;
@@ -393,7 +391,6 @@ private:
     std::vector<RenderStage *> m_stage_stack;
 
     // Functions for building resource related vulkan objects.
-    void build_buffer(const BufferResource &, PhysicalBuffer &) const;
     void build_image(const TextureResource &, PhysicalImage &) const;
 
     // Functions for building stage related vulkan objects.

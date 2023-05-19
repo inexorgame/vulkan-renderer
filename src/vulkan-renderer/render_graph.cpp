@@ -45,45 +45,8 @@ void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     }));
 }
 
-PhysicalBuffer::~PhysicalBuffer() {
-    vmaDestroyBuffer(m_device.allocator(), m_buffer, m_allocation);
-}
-
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
     vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
-}
-
-void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBuffer &physical) const {
-    // TODO: Don't always create mapped.
-    const VmaAllocationCreateInfo alloc_ci{
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
-        .usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
-    };
-
-    auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
-        .size = buffer_resource.m_data_size,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-    });
-
-    switch (buffer_resource.m_usage) {
-    case BufferUsage::INDEX_BUFFER:
-        buffer_ci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        break;
-    case BufferUsage::VERTEX_BUFFER:
-        buffer_ci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        break;
-    default:
-        assert(false);
-    }
-
-    if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
-                                            &physical.m_allocation, &physical.m_alloc_info);
-        result != VK_SUCCESS) {
-        throw VulkanException("Failed to create buffer!", result);
-    }
-
-    // TODO: Use a better naming system for memory resources inside of rendergraph
-    vmaSetAllocationName(m_device.allocator(), physical.m_allocation, "rendergraph buffer");
 }
 
 void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalImage &physical) const {
@@ -161,9 +124,9 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
             continue;
         }
         if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
-            cmd_buf.bind_index_buffer(physical_buffer->m_buffer);
+            cmd_buf.bind_index_buffer(physical_buffer->m_buffer->buffer());
         } else if (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) {
-            vertex_buffers.push_back(physical_buffer->m_buffer);
+            vertex_buffers.push_back(physical_buffer->m_buffer->buffer());
         }
     }
 
@@ -483,14 +446,18 @@ void RenderGraph::render(const std::uint32_t image_index, const wrapper::Command
             auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
 
             if (physical.m_buffer != nullptr) {
-                vmaDestroyBuffer(m_device.allocator(), physical.m_buffer, physical.m_allocation);
+                // Call the destructor
+                physical.m_buffer.reset();
             }
+            // Create the buffer and upload the buffer data
+            physical.m_buffer = std::make_unique<wrapper::Buffer>(
+                m_device, buffer_resource->m_data_size, buffer_resource->m_data,
+                (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+                                                                         : VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                VMA_MEMORY_USAGE_CPU_TO_GPU,
+                // TODO: Apply internal debug name to the buffer
+                "Rendergraph buffer");
 
-            build_buffer(*buffer_resource, physical);
-
-            // Upload new data.
-            assert(physical.m_alloc_info.pMappedData != nullptr);
-            std::memcpy(physical.m_alloc_info.pMappedData, buffer_resource->m_data, buffer_resource->m_data_size);
             buffer_resource->m_data_upload_needed = false;
         }
     }
