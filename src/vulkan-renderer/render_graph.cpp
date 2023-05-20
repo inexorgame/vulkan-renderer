@@ -436,8 +436,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(const std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf) {
-    // Update dynamic buffers.
+void RenderGraph::update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf) {
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
             auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
@@ -458,7 +457,10 @@ void RenderGraph::render(const std::uint32_t image_index, const wrapper::Command
             buffer_resource->m_data_upload_needed = false;
         }
     }
+}
 
+void RenderGraph::render(const std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf) {
+    update_dynamic_buffers(cmd_buf);
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);
     }
