@@ -224,86 +224,34 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
         });
     }
 
-    const auto vertex_input = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>({
-        .vertexBindingDescriptionCount = static_cast<std::uint32_t>(vertex_bindings.size()),
-        .pVertexBindingDescriptions = vertex_bindings.data(),
-        .vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_bindings.size()),
-        .pVertexAttributeDescriptions = attribute_bindings.data(),
-    });
-
-    // TODO: Support primitives other than triangles.
-    const auto input_assembly = wrapper::make_info<VkPipelineInputAssemblyStateCreateInfo>({
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        .primitiveRestartEnable = VK_FALSE,
-    });
-
-    // TODO: Also allow depth compare func to be changed?
-    const auto depth_stencil = wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
-        .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
-        .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
-        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-    });
-
-    // TODO: Allow culling to be disabled.
-    // TODO: Wireframe rendering.
-    const auto rasterization_state = wrapper::make_info<VkPipelineRasterizationStateCreateInfo>({
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
-        .lineWidth = 1.0f,
-    });
-
-    // TODO(GH-203): Support multisampling again.
-    const auto multisample_state = wrapper::make_info<VkPipelineMultisampleStateCreateInfo>({
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .minSampleShading = 1.0f,
-    });
-
+    // Note that at the beginning of this method, m_graphics_pipeline_builder is always in reset state
     auto blend_attachment = stage->m_blend_attachment;
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    const auto blend_state = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
-        .attachmentCount = 1,
-        .pAttachments = &blend_attachment,
-    });
+    // Build the graphics pipeline with the help of the graphics pipeline builder
+    physical.m_pipeline = m_graphics_pipeline_builder
+                              .set_color_blend({
+                                  .attachmentCount = 1,
+                                  .pAttachments = &blend_attachment,
+                              })
+                              .set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
+                                  .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
+                                  .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
+                                  .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+                              }))
+                              .set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
+                              .set_render_pass(physical.m_render_pass)
+                              .set_scissor(m_swapchain.extent())
+                              .set_shaders(stage->m_shaders)
+                              .set_vertex_input_attributes(attribute_bindings)
+                              .set_vertex_input_bindings(vertex_bindings)
+                              .set_viewport(m_swapchain.extent())
+                              // TODO: Apply internal debug name to the graphics pipeline
+                              .build("graphics pipeline");
 
-    const VkRect2D scissor{
-        .extent = m_swapchain.extent(),
-    };
-
-    const VkViewport viewport{
-        .width = static_cast<float>(m_swapchain.extent().width),
-        .height = static_cast<float>(m_swapchain.extent().height),
-        .maxDepth = 1.0f,
-    };
-
-    // TODO: Custom scissors?
-    const auto viewport_state = wrapper::make_info<VkPipelineViewportStateCreateInfo>({
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor,
-    });
-
-    // TODO: Pipeline caching (basically load the render graph from a file)
-    physical.m_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
-        m_device,
-        wrapper::make_info<VkGraphicsPipelineCreateInfo>({
-            .stageCount = static_cast<std::uint32_t>(stage->m_shaders.size()),
-            .pStages = stage->m_shaders.data(),
-            .pVertexInputState = &vertex_input,
-            .pInputAssemblyState = &input_assembly,
-            .pViewportState = &viewport_state,
-            .pRasterizationState = &rasterization_state,
-            .pMultisampleState = &multisample_state,
-            .pDepthStencilState = &depth_stencil,
-            .pColorBlendState = &blend_state,
-            .layout = physical.m_pipeline_layout->pipeline_layout(),
-            .renderPass = physical.m_render_pass,
-        }),
-        // TODO: Apply internal debug name to the graphics pipeline
-        "graphics pipeline");
+    // After using the graphics pipeline builder, reset it so it can be re-used when building the next pipeline
+    m_graphics_pipeline_builder.reset();
 }
 
 void RenderGraph::compile(const RenderResource *target) {

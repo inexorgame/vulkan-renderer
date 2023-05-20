@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
@@ -390,6 +391,8 @@ private:
     // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
 
+    mutable wrapper::GraphicsPipelineBuilder m_graphics_pipeline_builder;
+
     void update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf);
 
     // Functions for building stage related vulkan objects.
@@ -403,7 +406,7 @@ private:
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
-        : m_device(device), m_swapchain(swapchain) {}
+        : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device) {}
 
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
