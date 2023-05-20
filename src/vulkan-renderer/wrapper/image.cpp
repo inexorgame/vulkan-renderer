@@ -8,6 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Constructor 1 (the most powerful constructor which exposes all parameters, rarely used)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
              const VmaAllocationCreateInfo &alloc_ci, std::string name)
     : m_device(device), m_format(img_ci.format), m_name(std::move(name)) {
@@ -34,6 +35,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
     m_device.set_debug_marker_name(&m_img_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
+// Constructor 2 (calls constructor 1 internally)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
              std::string name)
     : Image(device, img_ci, img_view_ci,
@@ -43,11 +45,11 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
             },
             name) {}
 
+// Constructor 3 (calls constructor 2 internally)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageAspectFlags aspect_flags,
              std::string name)
     : Image(device, img_ci,
             make_info<VkImageViewCreateInfo>({
-                .image = m_img,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
                 .format = img_ci.format,
                 .subresourceRange{
@@ -58,8 +60,31 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
             }),
             std::move(name)) {}
 
+// Constructor 4 (calls constructor 3 internally)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, std::string name)
     : Image(device, img_ci, VK_IMAGE_ASPECT_COLOR_BIT, std::move(name)) {}
+
+// Constructor 5 (calls constructor 3 (not 4!) internally)
+Image::Image(const Device &device, const VkFormat format, std::uint32_t width, std::uint32_t height,
+             const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, std::string name)
+    : Image(device,
+            wrapper::make_info<VkImageCreateInfo>({
+                .imageType = VK_IMAGE_TYPE_2D,
+                .format = format,
+                .extent{
+                    .width = width,
+                    .height = height,
+                    .depth = 1,
+                },
+                .mipLevels = 1,
+                .arrayLayers = 1,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .usage = usage,
+                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            }),
+            aspect_flags, std::move(name)) {}
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
     m_format = other.m_format;

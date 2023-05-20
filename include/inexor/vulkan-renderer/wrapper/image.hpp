@@ -47,11 +47,17 @@ public:
           std::string name);
 
     /// Constructor 3 (calls constructor 2 internally)
-    /// @note This constructor does not expose image aspect flags (use ``VK_IMAGE_ASPECT_COLOR_BIT`` as default)
+    /// @param device The device wrapper
     /// @param img_ci The image create info
+    /// @param aspect_flags The image aspect flags
+    /// @param name The internal debug name of the image and the image view (must not be empty)
+    /// @exception std::invalid_argument The internal debug name is empty
+    /// @exception VulkanException vmaCreateImage call failed
+    /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, const VkImageCreateInfo &img_ci, VkImageAspectFlags aspect_flags, std::string name);
 
     /// Constructor 4 (calls constructor 3 internally)
+    /// @note This constructor does not expose image aspect flags (use ``VK_IMAGE_ASPECT_COLOR_BIT`` as default)
     /// @param device The device wrapper
     /// @param img_ci The image create info
     /// @param name The internal debug name of the image and the image view (must not be empty)
@@ -59,6 +65,20 @@ public:
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, const VkImageCreateInfo &img_ci, std::string name);
+
+    /// Constructor 5 (calls constructor 3 (not 4!) internally)
+    /// @param device The device wrapper
+    /// @param format The image format
+    /// @param width The image width in pixels
+    /// @param height The image height in pixels
+    /// @param usage The image usage
+    /// @param aspect_flags The image aspect flags
+    /// @param name The internal debug name of the image and the image view (must not be empty)
+    /// @exception std::invalid_argument The internal debug name is empty
+    /// @exception VulkanException vmaCreateImage call failed
+    /// @exception VulkanException vkCreateImageView call failed
+    Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
+          VkImageAspectFlags aspect_flags, std::string name);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
