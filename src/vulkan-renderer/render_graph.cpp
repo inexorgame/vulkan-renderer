@@ -45,10 +45,6 @@ void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     }));
 }
 
-PhysicalGraphicsStage::~PhysicalGraphicsStage() {
-    vkDestroyRenderPass(m_device.device(), m_render_pass, nullptr);
-}
-
 void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
     physical.m_pipeline_layout =
         std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, stage->m_push_constant_ranges,
@@ -73,7 +69,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         }
 
         cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
-            .renderPass = phys_graphics_stage->m_render_pass,
+            .renderPass = phys_graphics_stage->m_render_pass->render_pass(),
             .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
             .renderArea{
                 .extent = m_swapchain.extent(),
@@ -121,10 +117,9 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
     std::vector<VkAttachmentReference> colour_refs;
     std::vector<VkAttachmentReference> depth_refs;
 
-    // Build vulkan attachments. For every texture resource that stage writes to, we create a corresponding
+    // Build vulkan attachments: For every texture resource that stage writes to, we create a corresponding
     // VkAttachmentDescription and attach it to the render pass.
-    // TODO(GH-203): Support multisampled attachments.
-    // TODO: Use range-based for loop initialization statements when we switch to C++ 20.
+    // TODO(GH-203): Support multisampled attachments
     for (std::size_t i = 0; i < stage->m_writes.size(); i++) {
         const auto *resource = stage->m_writes[i];
         const auto *texture = resource->as<TextureResource>();
@@ -163,35 +158,27 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         attachments.push_back(attachment);
     }
 
-    // Build a simple subpass that just waits for the output colour vector to be written by the fragment shader. In the
-    // future, we may want to make use of subpasses more.
-    const VkSubpassDependency subpass_dependency{
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    const std::vector<VkSubpassDescription> subpasses{
+        {
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size()),
+            .pColorAttachments = colour_refs.data(),
+            .pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr,
+        },
     };
 
-    const VkSubpassDescription subpass_description{
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size()),
-        .pColorAttachments = colour_refs.data(),
-        .pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr,
+    // Build a simple subpass that just waits for the output colour vector to be written by the fragment shader
+    const std::vector<VkSubpassDependency> dependencies{
+        {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        },
     };
 
-    const auto render_pass_ci = wrapper::make_info<VkRenderPassCreateInfo>({
-        .attachmentCount = static_cast<std::uint32_t>(attachments.size()),
-        .pAttachments = attachments.data(),
-        .subpassCount = 1,
-        .pSubpasses = &subpass_description,
-        .dependencyCount = 1,
-        .pDependencies = &subpass_dependency,
-    });
-
-    if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateRenderPass failed for renderpass " + stage->name() + " !", result);
-    }
+    physical.m_render_pass =
+        std::make_unique<wrapper::RenderPass>(m_device, attachments, subpasses, dependencies, stage->name());
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -241,7 +228,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
                                   .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
                               }))
                               .set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
-                              .set_render_pass(physical.m_render_pass)
+                              .set_render_pass(physical.m_render_pass->render_pass())
                               .set_scissor(m_swapchain.extent())
                               .set_shaders(stage->m_shaders)
                               .set_vertex_input_attributes(attribute_bindings)
@@ -358,8 +345,8 @@ void RenderGraph::compile(const RenderResource *target) {
                     for (const auto *image : images) {
                         image_views.push_back(image->image_view());
                     }
-                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass, image_views, m_swapchain,
-                                                         "Framebuffer");
+                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass->render_pass(), image_views,
+                                                         m_swapchain, "Framebuffer");
                     image_views.clear();
                 }
             }

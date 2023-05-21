@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/render_pass.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
@@ -364,14 +365,14 @@ class PhysicalGraphicsStage : public PhysicalStage {
     friend RenderGraph;
 
 private:
-    VkRenderPass m_render_pass{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::RenderPass> m_render_pass;
     std::vector<wrapper::Framebuffer> m_framebuffers;
 
 public:
     explicit PhysicalGraphicsStage(const wrapper::Device &device) : PhysicalStage(device) {}
     PhysicalGraphicsStage(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage(PhysicalGraphicsStage &&) = delete;
-    ~PhysicalGraphicsStage() override;
+    ~PhysicalGraphicsStage() override = default;
 
     PhysicalGraphicsStage &operator=(const PhysicalGraphicsStage &) = delete;
     PhysicalGraphicsStage &operator=(PhysicalGraphicsStage &&) = delete;

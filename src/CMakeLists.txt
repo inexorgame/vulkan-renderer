@@ -38,6 +38,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipeline_builder.cpp
     vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/make_info.cpp
+    vulkan-renderer/wrapper/render_pass.cpp
     vulkan-renderer/wrapper/sampler.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
