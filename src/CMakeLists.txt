@@ -1,4 +1,6 @@
 set(INEXOR_SOURCE_FILES
+    vulkan-renderer/audio/setup.cpp
+
     vulkan-renderer/application.cpp
     vulkan-renderer/bezier_curve.cpp
     vulkan-renderer/camera.cpp
@@ -130,6 +132,7 @@ add_library(imgui
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
+FetchContent_MakeAvailable(OpenAL)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(stb)
 FetchContent_MakeAvailable(tinygltf)
@@ -151,6 +154,7 @@ target_link_libraries(inexor-vulkan-renderer
     glfw
     glm::glm
     imgui
+    OpenAL
     spdlog::spdlog
     tinygltf
     toml11::toml11

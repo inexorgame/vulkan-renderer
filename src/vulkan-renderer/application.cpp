@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
+#include "inexor/vulkan-renderer/audio/setup.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -332,6 +333,9 @@ void Application::setup_vulkan_debug_callback() {
 }
 
 Application::Application(int argc, char **argv) {
+    spdlog::trace("Testing OpenAL audio");
+    audio::AudioTest audio_test1;
+
     spdlog::trace("Initialising vulkan-renderer");
 
     tools::CommandLineArgumentParser cla_parser;
