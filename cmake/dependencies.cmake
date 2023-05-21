@@ -48,6 +48,13 @@ FetchContent_Declare(imgui
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.89.4)
 
+FetchContent_Declare(OpenAL
+    GIT_REPOSITORY https://github.com/kcat/openal-soft
+    GIT_TAG 1.21.1
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON
+    FIND_PACKAGE_ARGS 1.21.1)
+
 FetchContent_Declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
     GIT_TAG v1.11.0
