@@ -552,21 +552,21 @@ void Application::setup_render_graph() {
     m_vertex_buffer->upload_data(m_octree_vertices);
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
-    main_stage->writes_to(m_back_buffer);
-    main_stage->writes_to(depth_buffer);
-    main_stage->reads_from(m_index_buffer);
-    main_stage->reads_from(m_vertex_buffer);
-    main_stage->bind_buffer(m_vertex_buffer, 0);
-    main_stage->set_clears_screen(true);
-    main_stage->set_depth_options(true, true);
-    main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
-        cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-    });
 
-    main_stage->uses_shader(*m_vertex_shader);
-    main_stage->uses_shader(*m_fragment_shader);
-    main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
+    main_stage->bind_buffer(m_vertex_buffer, 0)
+        ->set_clears_screen(true)
+        ->set_depth_options(true, true)
+        ->uses_shader(*m_vertex_shader)
+        ->uses_shader(*m_fragment_shader)
+        ->writes_to(m_back_buffer)
+        ->writes_to(depth_buffer)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
+        ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+            cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
+            cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+        })
+        ->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
 }
 
 void Application::update_uniform_buffers() {

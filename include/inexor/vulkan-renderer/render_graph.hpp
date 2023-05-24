@@ -187,28 +187,30 @@ public:
     RenderStage &operator=(const RenderStage &) = delete;
     RenderStage &operator=(RenderStage &&) = delete;
 
-    /// @brief Specifies that this stage writes to `resource`.
-    void writes_to(const RenderResource *resource);
+    /// Specifies that this stage writes to `resource`
+    RenderStage *writes_to(const RenderResource *resource);
 
-    /// @brief Specifies that this stage reads from `resource`.
-    void reads_from(const RenderResource *resource);
+    /// Specifies that this stage reads from `resource`
+    RenderStage *reads_from(const RenderResource *resource);
 
-    /// @brief Binds a descriptor set layout to this render stage.
+    /// Binds a descriptor set layout to this render stage
     /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
     /// deal with descriptors at all.
     // TODO: Refactor descriptor management in the render graph
-    void add_descriptor_layout(VkDescriptorSetLayout layout) {
+    RenderStage *add_descriptor_layout(VkDescriptorSetLayout layout) {
         m_descriptor_layouts.push_back(layout);
+        return this;
     }
 
-    /// @brief Add a push constant range to this render stage.
+    /// Add a push constant range to this render stage
     /// @param range The push constant range
-    void add_push_constant_range(VkPushConstantRange range) {
+    RenderStage *add_push_constant_range(VkPushConstantRange range) {
         m_push_constant_ranges.push_back(range);
+        return this;
     }
 
     template <typename PushConstantDataType>
-    void add_push_constant_range() {
+    RenderStage *add_push_constant_range() {
         return add_push_constant_range({
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
             .offset = 0,
@@ -220,15 +222,17 @@ public:
         return m_name;
     }
 
-    void set_on_update(std::function<void(void)> on_update) {
+    RenderStage *set_on_update(std::function<void(void)> on_update) {
         m_on_update = std::move(on_update);
+        return this;
     }
 
-    /// @brief Specifies a function that will be called during command buffer recording for this stage
-    /// @details This function can be used to specify other vulkan commands during command buffer recording. The most
-    /// common use for this is for draw commands.
-    void set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
+    /// Specifies a function that will be called during command buffer recording for this stage
+    /// @details This function can be used to specify other vulkan commands during command buffer recording.
+    /// The most common use for this is for draw commands.
+    RenderStage *set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
+        return this;
     }
 };
 
@@ -252,31 +256,34 @@ public:
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
 
-    /// @brief Specifies that this stage should clear the screen before rendering.
-    void set_clears_screen(bool clears_screen) {
+    /// Specifies that this stage should clear the screen before rendering
+    GraphicsStage *set_clears_screen(bool clears_screen) {
         m_clears_screen = clears_screen;
+        return this;
     }
 
-    /// @brief Specifies the depth options for this stage.
+    /// Specifies the depth options for this stage
     /// @param depth_test Whether depth testing should be performed
     /// @param depth_write Whether depth writing should be performed
-    void set_depth_options(bool depth_test, bool depth_write) {
+    GraphicsStage *set_depth_options(bool depth_test, bool depth_write) {
         m_depth_test = depth_test;
         m_depth_write = depth_write;
+        return this;
     }
 
-    /// @brief Set the blend attachment for this stage.
+    /// Set the blend attachment for this stage
     /// @param blend_attachment The blend attachment
-    void set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
+    GraphicsStage *set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
         m_blend_attachment = blend_attachment;
+        return this;
     }
 
-    /// @brief Specifies that `buffer` should map to `binding` in the shaders of this stage.
-    void bind_buffer(const BufferResource *buffer, std::uint32_t binding);
+    /// Specifies that `buffer` should map to `binding` in the shaders of this stage
+    GraphicsStage *bind_buffer(const BufferResource *buffer, std::uint32_t binding);
 
-    /// @brief Specifies that `shader` should be used during the pipeline of this stage.
+    /// Specifies that `shader` should be used during the pipeline of this stage
     /// @note Binding two shaders of same type (e.g. two vertex shaders) is undefined behaviour.
-    void uses_shader(const wrapper::Shader &shader);
+    GraphicsStage *uses_shader(const wrapper::Shader &shader);
 };
 
 // TODO: Add wrapper::Allocation that can be made by doing `device->make<Allocation>(...)`.
@@ -426,7 +433,7 @@ public:
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
-    T *add(Args &&...args) {
+    T *add(Args &&... args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         if constexpr (std::is_same_v<T, BufferResource>) {
             return static_cast<T *>(m_buffer_resources.emplace_back(std::move(ptr)).get());

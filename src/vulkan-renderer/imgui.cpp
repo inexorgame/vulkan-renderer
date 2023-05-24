@@ -92,82 +92,75 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
     m_vertex_buffer->set_element_size(sizeof(ImDrawVert));
 
     m_stage = render_graph->add<GraphicsStage>("imgui stage");
-    m_stage->writes_to(back_buffer);
-    m_stage->reads_from(m_index_buffer);
-    m_stage->reads_from(m_vertex_buffer);
-    m_stage->bind_buffer(m_vertex_buffer, 0);
-    m_stage->uses_shader(m_vertex_shader);
-    m_stage->uses_shader(m_fragment_shader);
-
-    m_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-        ImDrawData *imgui_draw_data = ImGui::GetDrawData();
-        if (imgui_draw_data == nullptr) {
-            return;
-        }
-
-        const ImGuiIO &io = ImGui::GetIO();
-        m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-        m_push_const_block.translate = glm::vec2(-1.0f);
-        cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.pipeline_layout());
-        cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
-                               &m_push_const_block);
-
-        std::uint32_t index_offset = 0;
-        std::int32_t vertex_offset = 0;
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-                const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                vkCmdDrawIndexed(cmd_buf.get(), draw_cmd.ElemCount, 1, index_offset, vertex_offset, 0);
-                index_offset += draw_cmd.ElemCount;
+    m_stage
+        ->set_blend_attachment({
+            .blendEnable = VK_TRUE,
+            .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+            .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+            .colorBlendOp = VK_BLEND_OP_ADD,
+            .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+            .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .alphaBlendOp = VK_BLEND_OP_ADD,
+        })
+        ->uses_shader(m_vertex_shader)
+        ->uses_shader(m_fragment_shader)
+        ->bind_buffer(m_vertex_buffer, 0)
+        ->writes_to(back_buffer)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
+        ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+            ImDrawData *imgui_draw_data = ImGui::GetDrawData();
+            if (imgui_draw_data == nullptr) {
+                return;
             }
-            vertex_offset += cmd_list->VtxBuffer.Size;
-        }
-    });
-
-    m_stage->set_on_update([&]() {
-        // Call the external update function
-        m_update_overlay();
-
-        ImDrawData *imgui_draw_data = ImGui::GetDrawData();
-        if (imgui_draw_data == nullptr || imgui_draw_data->TotalIdxCount == 0 || imgui_draw_data->TotalVtxCount == 0) {
-            return;
-        }
-        if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
-            m_index_data.clear();
+            const ImGuiIO &io = ImGui::GetIO();
+            m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+            m_push_const_block.translate = glm::vec2(-1.0f);
+            cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.pipeline_layout());
+            cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
+                                   &m_push_const_block);
+            std::uint32_t index_offset = 0;
+            std::int32_t vertex_offset = 0;
             for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
                 const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-                for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
-                    m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
+                for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                    const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                    vkCmdDrawIndexed(cmd_buf.get(), draw_cmd.ElemCount, 1, index_offset, vertex_offset, 0);
+                    index_offset += draw_cmd.ElemCount;
                 }
+                vertex_offset += cmd_list->VtxBuffer.Size;
             }
-            m_index_buffer->upload_data(m_index_data);
-        }
-        if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
-            m_vertex_data.clear();
-            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-                for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
-                    m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
+        })
+        ->set_on_update([&]() {
+            m_update_overlay();
+            ImDrawData *imgui_draw_data = ImGui::GetDrawData();
+            if (imgui_draw_data == nullptr || imgui_draw_data->TotalIdxCount == 0 ||
+                imgui_draw_data->TotalVtxCount == 0) {
+                return;
+            }
+            if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
+                m_index_data.clear();
+                for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+                    const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                    for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
+                        m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
+                    }
                 }
+                m_index_buffer->upload_data(m_index_data);
             }
-            m_vertex_buffer->upload_data(m_vertex_data);
-        }
-    });
-
-    m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-    m_stage->add_push_constant_range<PushConstBlock>();
-
-    // Setup blend attachment.
-    m_stage->set_blend_attachment({
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
-    });
+            if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
+                m_vertex_data.clear();
+                for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+                    const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                    for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
+                        m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
+                    }
+                }
+                m_vertex_buffer->upload_data(m_vertex_data);
+            }
+        })
+        ->add_descriptor_layout(m_descriptor->descriptor_set_layout())
+        ->add_push_constant_range<PushConstBlock>();
 }
 
 ImGUIOverlay::~ImGUIOverlay() {
