@@ -45,13 +45,6 @@ void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     }));
 }
 
-void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage &physical) const {
-    physical.m_pipeline_layout =
-        std::make_unique<wrapper::PipelineLayout>(m_device, stage->m_descriptor_layouts, stage->m_push_constant_ranges,
-                                                  // TODO: Apply internal debug name to the pipeline layouts
-                                                  "graphics pipeline layout");
-}
-
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
                                         const std::uint32_t image_index) const {
     const PhysicalStage &physical = *stage->m_physical;
@@ -321,7 +314,12 @@ void RenderGraph::compile(const RenderResource *target) {
             graphics_stage->m_physical = std::move(physical_ptr);
 
             build_render_pass(graphics_stage, physical);
-            build_pipeline_layout(graphics_stage, physical);
+
+            physical.m_pipeline_layout = std::make_unique<wrapper::PipelineLayout>(
+                m_device, graphics_stage->m_descriptor_layouts, graphics_stage->m_push_constant_ranges,
+                // TODO: Apply internal debug name to the pipeline layouts
+                "graphics pipeline layout");
+
             build_graphics_pipeline(graphics_stage, physical);
 
             // If we write to at least one texture, we need to make framebuffers.

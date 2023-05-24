@@ -412,7 +412,6 @@ private:
     void update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf);
 
     // Functions for building stage related vulkan objects.
-    void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf,
                                std::uint32_t image_index) const;
 
