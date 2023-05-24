@@ -559,13 +559,11 @@ void Application::update_imgui_overlay() {
     ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
     const auto cam_fov = m_camera->fov();
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
-    ImGui::PushItemWidth(150.0f * m_imgui_overlay->scale());
+    ImGui::PushItemWidth(150.0f);
     ImGui::PopItemWidth();
     ImGui::End();
     ImGui::PopStyleVar();
     ImGui::Render();
-
-    m_imgui_overlay->update();
 }
 
 void Application::process_mouse_input() {

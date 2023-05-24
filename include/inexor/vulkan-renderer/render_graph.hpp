@@ -172,6 +172,8 @@ private:
 
     std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
     std::vector<VkPushConstantRange> m_push_constant_ranges;
+
+    std::function<void(void)> m_on_update{[]() {}};
     std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> m_on_record{[](auto &, auto &) {}};
 
 protected:
@@ -207,6 +209,10 @@ public:
 
     [[nodiscard]] const std::string &name() const {
         return m_name;
+    }
+
+    void set_on_update(std::function<void(void)> on_update) {
+        m_on_update = std::move(on_update);
     }
 
     /// @brief Specifies a function that will be called during command buffer recording for this stage

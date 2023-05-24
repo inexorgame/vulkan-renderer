@@ -6,12 +6,17 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <utility>
 
 namespace inexor::vulkan_renderer {
 
-ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
-                           RenderGraph *render_graph, TextureResource *back_buffer)
-    : m_device(device), m_swapchain(swapchain) {
+ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
+                           std::function<void()> update_overlay)
+    : m_device(device), m_vertex_shader(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI", "shaders/ui.vert.spv"),
+      m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI", "shaders/ui.frag.spv") {
+    // In this callback, the ImGui overlay is updated
+    m_update_overlay = std::move(update_overlay);
+
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
 
@@ -34,13 +39,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 
     ImGuiIO &io = ImGui::GetIO();
-    io.FontGlobalScale = m_scale;
-
-    spdlog::trace("Loading ImGUI shaders");
-    m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
-                                                        "shaders/ui.vert.spv");
-    m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                                          "ImGUI fragment shader", "shaders/ui.frag.spv");
+    io.FontGlobalScale = 1.0f;
 
     // Load font texture
 
@@ -97,74 +96,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     m_stage->reads_from(m_index_buffer);
     m_stage->reads_from(m_vertex_buffer);
     m_stage->bind_buffer(m_vertex_buffer, 0);
-    m_stage->uses_shader(*m_vertex_shader);
-    m_stage->uses_shader(*m_fragment_shader);
+    m_stage->uses_shader(m_vertex_shader);
+    m_stage->uses_shader(m_fragment_shader);
 
-    m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-
-    // Setup push constant range for global translation and scale.
-    m_stage->add_push_constant_range({
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .offset = 0,
-        .size = sizeof(PushConstBlock),
-    });
-
-    // Setup blend attachment.
-    m_stage->set_blend_attachment({
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
-    });
-}
-
-ImGUIOverlay::~ImGUIOverlay() {
-    ImGui::DestroyContext();
-}
-
-void ImGUIOverlay::update() {
-    ImDrawData *imgui_draw_data = ImGui::GetDrawData();
-    if (imgui_draw_data == nullptr) {
-        return;
-    }
-
-    if (imgui_draw_data->TotalIdxCount == 0 || imgui_draw_data->TotalVtxCount == 0) {
-        return;
-    }
-
-    bool should_update = false;
-    if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
-        m_index_data.clear();
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
-                m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
-            }
-        }
-        m_index_buffer->upload_data(m_index_data);
-        should_update = true;
-    }
-
-    if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
-        m_vertex_data.clear();
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
-                m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
-            }
-        }
-        m_vertex_buffer->upload_data(m_vertex_data);
-        should_update = true;
-    }
-
-    if (!should_update) {
-        return;
-    }
-
-    m_stage->set_on_record([this](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+    m_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
         ImDrawData *imgui_draw_data = ImGui::GetDrawData();
         if (imgui_draw_data == nullptr) {
             return;
@@ -189,6 +124,58 @@ void ImGUIOverlay::update() {
             vertex_offset += cmd_list->VtxBuffer.Size;
         }
     });
+
+    m_stage->set_on_update([&]() {
+        // Call the external update function
+        m_update_overlay();
+
+        ImDrawData *imgui_draw_data = ImGui::GetDrawData();
+        if (imgui_draw_data == nullptr || imgui_draw_data->TotalIdxCount == 0 || imgui_draw_data->TotalVtxCount == 0) {
+            return;
+        }
+        if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
+            m_index_data.clear();
+            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
+                    m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
+                }
+            }
+            m_index_buffer->upload_data(m_index_data);
+        }
+        if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
+            m_vertex_data.clear();
+            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
+                    m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
+                }
+            }
+            m_vertex_buffer->upload_data(m_vertex_data);
+        }
+    });
+
+    m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
+    m_stage->add_push_constant_range({
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof(PushConstBlock),
+    });
+
+    // Setup blend attachment.
+    m_stage->set_blend_attachment({
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+    });
+}
+
+ImGUIOverlay::~ImGUIOverlay() {
+    ImGui::DestroyContext();
 }
 
 } // namespace inexor::vulkan_renderer

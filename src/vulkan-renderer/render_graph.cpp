@@ -56,6 +56,8 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
                                         const std::uint32_t image_index) const {
     const PhysicalStage &physical = *stage->m_physical;
 
+    stage->m_on_update();
+
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
     if (graphics_stage != nullptr) {
