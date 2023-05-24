@@ -1,9 +1,18 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/camera.hpp"
+#include "inexor/vulkan-renderer/fps_counter.hpp"
+#include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
-#include "inexor/vulkan-renderer/renderer.hpp"
+#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
+#include "inexor/vulkan-renderer/time_step.hpp"
+#include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/wrapper/buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/window.hpp"
+#include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
 // Forward declarations
 namespace inexor::vulkan_renderer::input {
@@ -12,16 +21,54 @@ class KeyboardMouseInputData;
 
 namespace inexor::vulkan_renderer {
 
-class Application : public VulkanRenderer {
-    std::vector<std::string> m_vertex_shader_files;
-    std::vector<std::string> m_fragment_shader_files;
-    std::vector<std::string> m_texture_files;
-    std::vector<std::string> m_gltf_model_files;
+class Application {
+private:
+    TimeStep m_stopwatch;
+    FPSCounter m_fps_counter;
+    bool m_vsync_enabled{false};
 
+    VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
+
+    bool m_debug_report_callback_initialised{false};
+
+    std::unique_ptr<wrapper::Shader> m_vertex_shader;
+    std::unique_ptr<wrapper::Shader> m_fragment_shader;
+
+    std::unique_ptr<Camera> m_camera;
+    std::unique_ptr<wrapper::Window> m_window;
+    std::unique_ptr<wrapper::Instance> m_instance;
+    std::unique_ptr<wrapper::Device> m_device;
+    std::unique_ptr<wrapper::WindowSurface> m_surface;
+    std::unique_ptr<wrapper::Swapchain> m_swapchain;
+    std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
+
+    std::vector<wrapper::Buffer> m_uniform_buffers;
+    std::vector<wrapper::ResourceDescriptor> m_descriptors;
+    std::vector<OctreeGpuVertex> m_octree_vertices;
+    std::vector<std::uint32_t> m_octree_indices;
+
+    std::unique_ptr<RenderGraph> m_render_graph;
+    TextureResource *m_back_buffer{nullptr};
+    BufferResource *m_index_buffer{nullptr};
+    BufferResource *m_vertex_buffer{nullptr};
+
+    void setup_render_graph();
+    void generate_octree_indices();
+    void recreate_swapchain();
+    void render_frame();
+
+    float m_time_passed{0.0f};
+
+    std::uint32_t m_window_width{0};
+    std::uint32_t m_window_height{0};
+    std::string m_window_title;
+    wrapper::Window::Mode m_window_mode{wrapper::Window::Mode::WINDOWED};
+    bool m_window_resized{false};
+
+    std::vector<std::string> m_gltf_model_files;
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 
     bool m_enable_validation_layers{true};
-    /// Inexor engine supports a variable number of octrees.
     std::vector<std::shared_ptr<world::Cube>> m_worlds;
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call
@@ -32,20 +79,24 @@ class Application : public VulkanRenderer {
     /// @brief file_name The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
     void load_toml_configuration_file(const std::string &file_name);
-    void load_textures();
-    void load_shaders();
     /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
     void load_octree_geometry(bool initialize);
     void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
     void update_uniform_buffers();
-    /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
     void process_mouse_input();
+    void process_keyboard_input();
 
 public:
     Application(int argc, char **argv);
+    Application(const Application &) = delete;
+    Application(Application &&) = delete;
+    ~Application();
+
+    Application &operator=(const Application &) = delete;
+    Application &operator=(Application &&) = delete;
 
     /// @brief Call glfwSetKeyCallback.
     /// @param window The window that received the event.

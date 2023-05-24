@@ -6,7 +6,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/imgui.cpp
     vulkan-renderer/render_graph.cpp
-    vulkan-renderer/renderer.cpp
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp

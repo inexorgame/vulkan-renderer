@@ -98,14 +98,6 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
     spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
 
-    m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
-
-    spdlog::trace("Textures:");
-
-    for (const auto &texture_file : m_texture_files) {
-        spdlog::trace("   - {}", texture_file);
-    }
-
     m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
 
     spdlog::trace("glTF 2.0 models:");
@@ -114,77 +106,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
         spdlog::trace("   - {}", gltf_model_file);
     }
 
-    m_vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
-
-    spdlog::trace("Vertex shaders:");
-
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
-        spdlog::trace("   - {}", vertex_shader_file);
-    }
-
-    m_fragment_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
-
-    spdlog::trace("Fragment shaders:");
-
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
-        spdlog::trace("   - {}", fragment_shader_file);
-    }
-
     // TODO: Load more info from TOML file.
-}
-
-void Application::load_textures() {
-    assert(m_device->device());
-    assert(m_device->physical_device());
-    assert(m_device->allocator());
-
-    // Insert the new texture into the list of textures.
-    std::string texture_name = "unnamed texture";
-
-    spdlog::trace("Loading texture files:");
-
-    for (const auto &texture_file : m_texture_files) {
-        spdlog::trace("   - {}", texture_file);
-
-        wrapper::CpuTexture cpu_texture(texture_file, texture_name);
-        m_textures.emplace_back(*m_device, cpu_texture);
-    }
-}
-
-void Application::load_shaders() {
-    assert(m_device->device());
-
-    spdlog::trace("Loading vertex shaders:");
-
-    if (m_vertex_shader_files.empty()) {
-        spdlog::error("No vertex shaders to load!");
-    }
-
-    // Loop through the list of vertex shaders and initialise all of them.
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
-        spdlog::trace("   - {}", vertex_shader_file);
-
-        // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
-    }
-
-    spdlog::trace("Loading fragment shaders:");
-
-    if (m_fragment_shader_files.empty()) {
-        spdlog::error("No fragment shaders to load!");
-    }
-
-    // Loop through the list of fragment shaders and initialise all of them.
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
-        spdlog::trace("   - {}", fragment_shader_file);
-
-        // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
-                               fragment_shader_file);
-    }
-
-    spdlog::trace("Loading shaders finished");
 }
 
 void Application::load_octree_geometry(bool initialize) {
@@ -490,9 +412,6 @@ Application::Application(int argc, char **argv) {
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
-    load_textures();
-    load_shaders();
-
     m_uniform_buffers.emplace_back(*m_device, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                    VMA_MEMORY_USAGE_CPU_TO_GPU, "matrices uniform buffer");
 
@@ -508,8 +427,146 @@ Application::Application(int argc, char **argv) {
     load_octree_geometry(true);
     generate_octree_indices();
 
+    m_vertex_shader =
+        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI", "shaders/main.vert.spv");
+    m_fragment_shader =
+        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI", "shaders/main.frag.spv");
+
     m_window->show();
     recreate_swapchain();
+}
+
+Application::~Application() {
+    spdlog::trace("Shutting down vulkan renderer");
+
+    if (m_device == nullptr) {
+        return;
+    }
+
+    m_device->wait_idle();
+
+    if (!m_debug_report_callback_initialised) {
+        return;
+    }
+
+    // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
+    auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>( // NOLINT
+        vkGetInstanceProcAddr(m_instance->instance(), "vkDestroyDebugReportCallbackEXT"));
+    if (vk_destroy_debug_report_callback != nullptr) {
+        vk_destroy_debug_report_callback(m_instance->instance(), m_debug_report_callback, nullptr);
+    }
+}
+
+void Application::generate_octree_indices() {
+    auto old_vertices = std::move(m_octree_vertices);
+    m_octree_indices.clear();
+    m_octree_vertices.clear();
+    std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
+    for (auto &vertex : old_vertices) {
+        // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
+        if (vertex_map.count(vertex) == 0) {
+            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
+            vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
+            m_octree_vertices.push_back(vertex);
+        }
+        m_octree_indices.push_back(vertex_map.at(vertex));
+    }
+    spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
+                  old_vertices.size(), m_octree_vertices.size());
+    spdlog::trace("Total indices {} ", m_octree_indices.size());
+}
+
+void Application::recreate_swapchain() {
+    m_window->wait_for_focus();
+    m_device->wait_idle();
+
+    // Query the framebuffer size here again although the window width is set during framebuffer resize callback
+    // The reason for this is that the framebuffer size could already be different again because we missed a poll
+    // This seems to be an issue on Linux only though
+    int window_width = 0;
+    int window_height = 0;
+    glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
+
+    // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
+    m_render_graph.reset();
+    // Recreate the swapchain
+    m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
+    setup_render_graph();
+
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+
+    m_camera->set_movement_speed(5.0f);
+    m_camera->set_rotation_speed(0.5f);
+
+    m_imgui_overlay.reset();
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, m_render_graph.get(), m_back_buffer,
+                                                     [&]() { update_imgui_overlay(); });
+    m_render_graph->compile(m_back_buffer);
+}
+
+void Application::render_frame() {
+    if (m_window_resized) {
+        m_window_resized = false;
+        recreate_swapchain();
+        return;
+    }
+
+    const auto image_index = m_swapchain->acquire_next_image_index();
+    const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
+
+    m_render_graph->render(image_index, cmd_buf);
+
+    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = m_swapchain->image_available_semaphore(),
+        .pWaitDstStageMask = stage_mask.data(),
+        .commandBufferCount = 1,
+        .pCommandBuffers = cmd_buf.ptr(),
+    }));
+
+    m_swapchain->present(image_index);
+
+    if (auto fps_value = m_fps_counter.update()) {
+        m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
+        spdlog::trace("FPS: {}, window size: {} x {}", *fps_value, m_window->width(), m_window->height());
+    }
+}
+
+void Application::setup_render_graph() {
+    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
+    m_back_buffer->set_format(m_swapchain->image_format());
+
+    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
+    depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
+
+    m_index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
+    m_index_buffer->upload_data(m_octree_indices);
+
+    m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
+    m_vertex_buffer->upload_data(m_octree_vertices);
+
+    auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
+    main_stage->writes_to(m_back_buffer);
+    main_stage->writes_to(depth_buffer);
+    main_stage->reads_from(m_index_buffer);
+    main_stage->reads_from(m_vertex_buffer);
+    main_stage->bind_buffer(m_vertex_buffer, 0);
+    main_stage->set_clears_screen(true);
+    main_stage->set_depth_options(true, true);
+    main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+        cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
+        cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+    });
+
+    main_stage->uses_shader(*m_vertex_shader);
+    main_stage->uses_shader(*m_fragment_shader);
+    main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
 }
 
 void Application::update_uniform_buffers() {
@@ -525,10 +582,9 @@ void Application::update_uniform_buffers() {
 }
 
 void Application::update_imgui_overlay() {
-    auto cursor_pos = m_input_data->get_cursor_pos();
-
     ImGuiIO &io = ImGui::GetIO();
     io.DeltaTime = m_time_passed;
+    auto cursor_pos = m_input_data->get_cursor_pos();
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
     io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
     io.MouseDown[1] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
@@ -564,6 +620,15 @@ void Application::update_imgui_overlay() {
     ImGui::End();
     ImGui::PopStyleVar();
     ImGui::Render();
+}
+
+void Application::process_keyboard_input() {
+    if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+        load_octree_geometry(false);
+        generate_octree_indices();
+        m_index_buffer->upload_data(m_octree_indices);
+        m_vertex_buffer->upload_data(m_octree_vertices);
+    }
 }
 
 void Application::process_mouse_input() {
@@ -606,15 +671,9 @@ void Application::run() {
     while (!m_window->should_close()) {
         m_window->poll();
         update_uniform_buffers();
-        update_imgui_overlay();
         render_frame();
+        process_keyboard_input();
         process_mouse_input();
-        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
-            load_octree_geometry(false);
-            generate_octree_indices();
-            m_index_buffer->upload_data(m_octree_indices);
-            m_vertex_buffer->upload_data(m_octree_vertices);
-        }
         m_camera->update(m_time_passed);
         m_time_passed = m_stopwatch.time_step();
         check_octree_collisions();
