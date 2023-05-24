@@ -156,11 +156,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
     });
 
     m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
-    m_stage->add_push_constant_range({
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .offset = 0,
-        .size = sizeof(PushConstBlock),
-    });
+    m_stage->add_push_constant_range<PushConstBlock>();
 
     // Setup blend attachment.
     m_stage->set_blend_attachment({

@@ -207,6 +207,15 @@ public:
         m_push_constant_ranges.push_back(range);
     }
 
+    template <typename PushConstantDataType>
+    void add_push_constant_range() {
+        return add_push_constant_range({
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0,
+            .size = sizeof(PushConstantDataType),
+        });
+    }
+
     [[nodiscard]] const std::string &name() const {
         return m_name;
     }
