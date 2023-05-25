@@ -547,17 +547,16 @@ void Application::setup_render_graph() {
     m_index_buffer->upload_data(m_octree_indices);
 
     m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
     m_vertex_buffer->upload_data(m_octree_vertices);
 
-    auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
-
-    main_stage->bind_buffer(m_vertex_buffer, 0)
-        ->set_clears_screen(true)
-        ->set_depth_options(true, true)
-        ->uses_shader(*m_vertex_shader)
-        ->uses_shader(*m_fragment_shader)
+    auto *main_stage = m_render_graph->add<GraphicsStage>("Octree");
+    main_stage->add_shader(*m_vertex_shader)
+        ->add_shader(*m_fragment_shader)
+        ->set_vertex_input_attributes({
+            {VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)},
+            {VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color)},
+        })
+        ->set_vertex_input_bindings<OctreeGpuVertex>() // TODO: Simplify using that
         ->writes_to(m_back_buffer)
         ->writes_to(depth_buffer)
         ->reads_from(m_index_buffer)

@@ -86,14 +86,11 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
 
     m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
     m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv));
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col));
-    m_vertex_buffer->set_element_size(sizeof(ImDrawVert));
 
-    m_stage = render_graph->add<GraphicsStage>("imgui stage");
-    m_stage
-        ->set_blend_attachment({
+    m_stage = render_graph->add<GraphicsStage>("ImGui");
+    m_stage->add_shader(m_vertex_shader)
+        ->add_shader(m_fragment_shader)
+        ->add_color_blend_attachment({
             .blendEnable = VK_TRUE,
             .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
             .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
@@ -102,9 +99,12 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
             .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
             .alphaBlendOp = VK_BLEND_OP_ADD,
         })
-        ->uses_shader(m_vertex_shader)
-        ->uses_shader(m_fragment_shader)
-        ->bind_buffer(m_vertex_buffer, 0)
+        ->set_vertex_input_attributes({
+            {VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos)},
+            {VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv)},
+            {VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col)},
+        })
+        ->set_vertex_input_bindings<ImDrawVert>() // TODO: Simplify using that
         ->writes_to(back_buffer)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)

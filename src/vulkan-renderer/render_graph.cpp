@@ -17,14 +17,6 @@
 
 namespace inexor::vulkan_renderer {
 
-void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
-    m_vertex_attributes.push_back({
-        .location = static_cast<std::uint32_t>(m_vertex_attributes.size()),
-        .format = format,
-        .offset = offset,
-    });
-}
-
 RenderStage *RenderStage::writes_to(const RenderResource *resource) {
     m_writes.push_back(resource);
     return this;
@@ -35,22 +27,215 @@ RenderStage *RenderStage::reads_from(const RenderResource *resource) {
     return this;
 }
 
-GraphicsStage *GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_t binding) {
-    m_buffer_bindings.emplace(buffer, binding);
+GraphicsStage *GraphicsStage::add_shader(const VkPipelineShaderStageCreateInfo &shader_stage) {
+    m_shader_stages.push_back(shader_stage);
     return this;
 }
 
-GraphicsStage *GraphicsStage::uses_shader(const wrapper::Shader &shader) {
-    m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
+GraphicsStage *GraphicsStage::add_shader(const wrapper::Shader &shader) {
+    return add_shader(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
         .stage = shader.type(),
         .module = shader.module(),
         .pName = shader.entry_point().c_str(),
     }));
+}
+
+GraphicsStage *GraphicsStage::add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment) {
+    m_color_blend_attachment_states.push_back(attachment);
+    return this;
+}
+
+GraphicsStage *GraphicsStage::add_vertex_input_attribute(const VkVertexInputAttributeDescription &description) {
+    m_vertex_input_attribute_descriptions.push_back(description);
+    return this;
+}
+
+GraphicsStage *GraphicsStage::add_vertex_input_binding(const VkVertexInputBindingDescription &description) {
+    m_vertex_input_binding_descriptions.push_back(description);
+    return this;
+}
+
+VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info() {
+    m_vertex_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>({
+        .vertexBindingDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_binding_descriptions.size()),
+        .pVertexBindingDescriptions = m_vertex_input_binding_descriptions.data(),
+        .vertexAttributeDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_attribute_descriptions.size()),
+        .pVertexAttributeDescriptions = m_vertex_input_attribute_descriptions.data(),
+
+    });
+
+    m_viewport_sci = wrapper::make_info<VkPipelineViewportStateCreateInfo>({
+        .viewportCount = static_cast<uint32_t>(m_viewports.size()),
+        .pViewports = m_viewports.data(),
+        .scissorCount = static_cast<uint32_t>(m_scissors.size()),
+        .pScissors = m_scissors.data(),
+    });
+
+    if (!m_dynamic_states.empty()) {
+        m_dynamic_states_sci = wrapper::make_info<VkPipelineDynamicStateCreateInfo>({
+            .dynamicStateCount = static_cast<std::uint32_t>(m_dynamic_states.size()),
+            .pDynamicStates = m_dynamic_states.data(),
+        });
+    }
+
+    return wrapper::make_info<VkGraphicsPipelineCreateInfo>({
+        .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
+        .pStages = m_shader_stages.data(),
+        .pVertexInputState = &m_vertex_input_sci,
+        .pInputAssemblyState = &m_input_assembly_sci,
+        .pTessellationState = &m_tesselation_sci,
+        .pViewportState = &m_viewport_sci,
+        .pRasterizationState = &m_rasterization_sci,
+        .pMultisampleState = &m_multisample_sci,
+        .pDepthStencilState = &m_depth_stencil_sci,
+        .pColorBlendState = &m_color_blend_sci,
+        .pDynamicState = &m_dynamic_states_sci,
+        .layout = m_pipeline_layout,
+        .renderPass = m_render_pass,
+    });
+}
+
+GraphicsStage *GraphicsStage::set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend) {
+    m_color_blend_sci = color_blend;
+    return this;
+}
+
+GraphicsStage *
+GraphicsStage::set_color_blend_attachments(const std::vector<VkPipelineColorBlendAttachmentState> &attachments) {
+    assert(!attachments.empty());
+    m_color_blend_attachment_states = attachments;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_culling_mode(const VkBool32 culling_enabled) {
+    spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
+    m_rasterization_sci.cullMode = culling_enabled ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_depth_stencil(const VkPipelineDepthStencilStateCreateInfo &depth_stencil) {
+    m_depth_stencil_sci = depth_stencil;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_dynamic_states(const std::vector<VkDynamicState> &dynamic_states) {
+    assert(!dynamic_states.empty());
+    m_dynamic_states = dynamic_states;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_line_width(const float width) {
+    m_rasterization_sci.lineWidth = width;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_multisampling(const VkSampleCountFlagBits sample_count,
+                                                const float min_sample_shading) {
+    m_multisample_sci.rasterizationSamples = sample_count;
+    m_multisample_sci.minSampleShading = min_sample_shading;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_pipeline_layout(const VkPipelineLayout layout) {
+    assert(layout);
+    m_pipeline_layout = layout;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_primitive_topology(const VkPrimitiveTopology topology) {
+    m_input_assembly_sci.topology = topology;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization) {
+    m_rasterization_sci = rasterization;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_render_pass(const VkRenderPass render_pass) {
+    assert(render_pass);
+    m_render_pass = render_pass;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_scissor(const VkRect2D &scissor) {
+    m_scissors = {scissor};
+    m_viewport_sci.scissorCount = 1;
+    m_viewport_sci.pScissors = m_scissors.data();
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_scissor(const VkExtent2D &extent) {
+    return set_scissor({
+        // Convert VkExtent2D to VkRect2D
+        .extent = extent,
+    });
+}
+
+GraphicsStage *GraphicsStage::set_scissors(const std::vector<VkRect2D> &scissors) {
+    assert(!scissors.empty());
+    m_scissors = scissors;
+    m_viewport_sci.scissorCount = static_cast<std::uint32_t>(scissors.size());
+    m_viewport_sci.pScissors = scissors.data();
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages) {
+    assert(!shader_stages.empty());
+    m_shader_stages = shader_stages;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_tesselation_control_point_count(const std::uint32_t control_point_count) {
+    m_tesselation_sci.patchControlPoints = control_point_count;
+    return this;
+}
+
+GraphicsStage *
+GraphicsStage::set_vertex_input_attributes(const std::vector<VkVertexInputAttributeDescription> &descriptions) {
+    assert(!descriptions.empty());
+    m_vertex_input_attribute_descriptions = descriptions;
+    return this;
+}
+
+GraphicsStage *
+GraphicsStage::set_vertex_input_bindings(const std::vector<VkVertexInputBindingDescription> &descriptions) {
+    assert(!descriptions.empty());
+    m_vertex_input_binding_descriptions = descriptions;
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_viewport(const VkViewport &viewport) {
+    m_viewports = {viewport};
+    m_viewport_sci.viewportCount = 1;
+    m_viewport_sci.pViewports = m_viewports.data();
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_viewport(const VkExtent2D &extent) {
+    return set_viewport({
+        // Convert VkExtent2D to VkViewport
+        .width = static_cast<float>(extent.width),
+        .height = static_cast<float>(extent.height),
+        .maxDepth = 1.0f,
+    });
+}
+
+GraphicsStage *GraphicsStage::set_viewports(const std::vector<VkViewport> &viewports) {
+    assert(!viewports.empty());
+    m_viewports = viewports;
+    m_viewport_sci.viewportCount = static_cast<std::uint32_t>(m_viewports.size());
+    m_viewport_sci.pViewports = m_viewports.data();
+    return this;
+}
+
+GraphicsStage *GraphicsStage::set_wireframe(const VkBool32 wireframe) {
+    m_rasterization_sci.polygonMode = (wireframe == VK_TRUE) ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
     return this;
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
-                                        const std::uint32_t image_index) const {
+                                        const std::uint32_t image_index) {
     const PhysicalStage &physical = *stage->m_physical;
 
     stage->m_on_update();
@@ -111,7 +296,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
     cmd_buf.full_barrier();
 }
 
-void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
+void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) {
     std::vector<VkAttachmentDescription> attachments;
     std::vector<VkAttachmentReference> colour_refs;
     std::vector<VkAttachmentReference> depth_refs;
@@ -180,64 +365,30 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         std::make_unique<wrapper::RenderPass>(m_device, attachments, subpasses, dependencies, stage->name());
 }
 
-void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
-    // Build buffer and vertex layout bindings. For every buffer resource that stage reads from, we create a
-    // corresponding attribute binding and vertex binding description.
-    std::vector<VkVertexInputAttributeDescription> attribute_bindings;
-    std::vector<VkVertexInputBindingDescription> vertex_bindings;
-    for (const auto *resource : stage->m_reads) {
-        const auto *buffer_resource = resource->as<BufferResource>();
-        if (buffer_resource == nullptr) {
-            continue;
-        }
-
-        // Don't mess with index buffers here.
-        if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
-            continue;
-        }
-
-        // We use std::unordered_map::at() here to ensure that a binding value exists for buffer_resource.
-        const std::uint32_t binding = stage->m_buffer_bindings.at(buffer_resource);
-        for (auto attribute_binding : buffer_resource->m_vertex_attributes) {
-            attribute_binding.binding = binding;
-            attribute_bindings.push_back(attribute_binding);
-        }
-
-        vertex_bindings.push_back({
-            .binding = binding,
-            .stride = static_cast<std::uint32_t>(buffer_resource->m_element_size),
-            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-        });
-    }
-
+void RenderGraph::build_graphics_pipeline(GraphicsStage *stage, PhysicalGraphicsStage &physical) {
     // Note that at the beginning of this method, m_graphics_pipeline_builder is always in reset state
     auto blend_attachment = stage->m_blend_attachment;
     blend_attachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    // Build the graphics pipeline with the help of the graphics pipeline builder
-    physical.m_pipeline = m_graphics_pipeline_builder
-                              .set_color_blend({
-                                  .attachmentCount = 1,
-                                  .pAttachments = &blend_attachment,
-                              })
-                              .set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
-                                  .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
-                                  .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
-                                  .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-                              }))
-                              .set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
-                              .set_render_pass(physical.m_render_pass->render_pass())
-                              .set_scissor(m_swapchain.extent())
-                              .set_shaders(stage->m_shaders)
-                              .set_vertex_input_attributes(attribute_bindings)
-                              .set_vertex_input_bindings(vertex_bindings)
-                              .set_viewport(m_swapchain.extent())
-                              // TODO: Apply internal debug name to the graphics pipeline
-                              .build("graphics pipeline");
+    stage
+        ->set_color_blend({
+            .attachmentCount = 1,
+            .pAttachments = &blend_attachment,
+        })
+        ->set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
+            .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
+            .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
+            .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+        }))
+        ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
+        ->set_render_pass(physical.m_render_pass->render_pass())
+        ->set_scissor(m_swapchain.extent())
+        ->set_viewport(m_swapchain.extent());
 
-    // After using the graphics pipeline builder, reset it so it can be re-used when building the next pipeline
-    m_graphics_pipeline_builder.reset();
+    // Build the graphics pipeline with the help of the graphics pipeline builder
+    physical.m_pipeline =
+        std::make_unique<wrapper::GraphicsPipeline>(m_device, stage->make_create_info(), "graphics pipeline");
 }
 
 void RenderGraph::compile(const RenderResource *target) {
