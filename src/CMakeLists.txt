@@ -154,7 +154,7 @@ target_link_libraries(inexor-vulkan-renderer
     glfw
     glm::glm
     imgui
-    OpenAL
+    OpenAL::OpenAL
     spdlog::spdlog
     tinygltf
     toml11::toml11
