@@ -48,11 +48,15 @@ struct RenderGraphObject {
     /// @brief Casts this object to type `T`
     /// @return The object as type `T` or `nullptr` if the cast failed
     template <typename T>
-    [[nodiscard]] T *as();
+    [[nodiscard]] T *as() {
+        return dynamic_cast<T *>(this);
+    }
 
     /// @copydoc as
     template <typename T>
-    [[nodiscard]] const T *as() const;
+    [[nodiscard]] const T *as() const{
+        return dynamic_cast<const T *>(this);
+    }
 };
 
 /// @brief A single resource in the render graph.
@@ -645,14 +649,5 @@ public:
     void render(std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf);
 };
 
-template <typename T>
-[[nodiscard]] T *RenderGraphObject::as() {
-    return dynamic_cast<T *>(this);
-}
-
-template <typename T>
-[[nodiscard]] const T *RenderGraphObject::as() const {
-    return dynamic_cast<const T *>(this);
-}
 
 } // namespace inexor::vulkan_renderer
