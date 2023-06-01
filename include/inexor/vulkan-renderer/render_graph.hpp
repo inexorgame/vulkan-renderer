@@ -227,7 +227,8 @@ private:
     bool m_clears_screen{false};
     bool m_depth_test{false};
     bool m_depth_write{false};
-    VkPipelineColorBlendAttachmentState m_blend_attachment{};
+    VkClearValue m_clear_value{};
+    VkPipelineColorBlendAttachmentState m_color_blend_attachment{};
 
     std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions;
     std::vector<VkVertexInputAttributeDescription> m_vertex_input_attribute_descriptions;
@@ -276,7 +277,6 @@ private:
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
     VkRenderPass m_render_pass{VK_NULL_HANDLE};
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
-    std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
 
 public:
     explicit GraphicsStage(std::string &&name) : RenderStage(name) {}
@@ -315,6 +315,11 @@ public:
         return this;
     }
 
+    [[nodiscard]] GraphicsStage *set_clears_screen_color(const VkClearValue clear_value) {
+        m_clear_value = clear_value;
+        return this;
+    }
+
     /// Specifies the depth options for this stage
     /// @param depth_test Whether depth testing should be performed
     /// @param depth_write Whether depth writing should be performed
@@ -327,7 +332,7 @@ public:
     /// Set the blend attachment for this stage
     /// @param blend_attachment The blend attachment
     [[nodiscard]] GraphicsStage *set_blend_attachment(VkPipelineColorBlendAttachmentState blend_attachment) {
-        m_blend_attachment = blend_attachment;
+        m_color_blend_attachment = blend_attachment;
         return this;
     }
 
@@ -434,26 +439,27 @@ public:
     /// @param descriptions The vertex input attribute descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsStage *
-    set_vertex_input_attributes(const std::vector<VkVertexInputAttributeDescription> &descriptions);
+    set_vertex_input_attribute_descriptions(const std::vector<VkVertexInputAttributeDescription> &descriptions);
 
     /// Set the vertex input binding descriptions manually
     /// You should prefer to use ``add_vertex_input_binding`` instead
     /// @param descriptions The vertex input binding descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsStage *
-    set_vertex_input_bindings(const std::vector<VkVertexInputBindingDescription> &descriptions);
+    set_vertex_input_binding_descriptions(const std::vector<VkVertexInputBindingDescription> &descriptions);
 
     /// Add a vertex input binding description
     /// @tparam T The vertex structure
     /// @param binding The vertex input binding descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     template <typename T>
-    [[nodiscard]] GraphicsStage *set_vertex_input_bindings() {
-        return add_vertex_input_binding({
-            .binding = 0,
+    [[nodiscard]] GraphicsStage *set_vertex_input_binding_descriptions(std::uint32_t binding = 0) {
+        m_vertex_input_binding_descriptions.push_back({
+            .binding = binding,
             .stride = sizeof(T),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
         });
+        return this;
     }
 
     /// Set the viewport in VkPipelineViewportStateCreateInfo
@@ -622,7 +628,7 @@ public:
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
     template <typename T, typename... Args>
-    T *add(Args &&... args) {
+    T *add(Args &&...args) {
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         if constexpr (std::is_same_v<T, BufferResource>) {
             return static_cast<T *>(m_buffer_resources.emplace_back(std::move(ptr)).get());

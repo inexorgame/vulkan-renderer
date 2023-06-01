@@ -428,9 +428,9 @@ Application::Application(int argc, char **argv) {
     generate_octree_indices();
 
     m_vertex_shader =
-        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI", "shaders/main.vert.spv");
+        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
     m_fragment_shader =
-        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI", "shaders/main.frag.spv");
+        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Octree", "shaders/main.frag.spv");
 
     m_window->show();
     recreate_swapchain();
@@ -438,10 +438,6 @@ Application::Application(int argc, char **argv) {
 
 Application::~Application() {
     spdlog::trace("Shutting down vulkan renderer");
-
-    if (m_device == nullptr) {
-        return;
-    }
 
     m_device->wait_idle();
 
@@ -543,20 +539,38 @@ void Application::setup_render_graph() {
     auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
     depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
+    m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
     m_index_buffer->upload_data(m_octree_indices);
 
-    m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER);
     m_vertex_buffer->upload_data(m_octree_vertices);
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("Octree");
     main_stage->add_shader(*m_vertex_shader)
         ->add_shader(*m_fragment_shader)
-        ->set_vertex_input_attributes({
-            {VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)},
-            {VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color)},
+        ->add_color_blend_attachment({
+            .blendEnable = VK_FALSE,
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+                              VK_COLOR_COMPONENT_A_BIT,
         })
-        ->set_vertex_input_bindings<OctreeGpuVertex>() // TODO: Simplify using that
+        ->set_clears_screen(true)
+        ->set_clears_screen_color({0.0f, 0.0f, 0.0f})
+        ->set_depth_options(true, true)
+        ->set_vertex_input_attribute_descriptions({
+            {
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(OctreeGpuVertex, position),
+            },
+            {
+                .location = 1,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(OctreeGpuVertex, color),
+            },
+        })
+        ->set_vertex_input_binding_descriptions<OctreeGpuVertex>()
         ->writes_to(m_back_buffer)
         ->writes_to(depth_buffer)
         ->reads_from(m_index_buffer)

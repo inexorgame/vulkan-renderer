@@ -11,11 +11,10 @@
 namespace inexor::vulkan_renderer {
 
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
-                           std::function<void()> update_overlay)
+                           std::function<void()> on_update_user_data)
     : m_device(device), m_vertex_shader(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI", "shaders/ui.vert.spv"),
-      m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI", "shaders/ui.frag.spv") {
-    // In this callback, the ImGui overlay is updated
-    m_update_overlay = std::move(update_overlay);
+      m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI", "shaders/ui.frag.spv"),
+      m_on_update_user_data(std::move(on_update_user_data)) {
 
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
@@ -84,8 +83,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
         descriptor_builder.add_combined_image_sampler(m_imgui_texture->sampler(), m_imgui_texture->image_view(), 0)
             .build("ImGUI"));
 
-    m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
-    m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_index_buffer = render_graph->add<BufferResource>("ImGui", BufferUsage::INDEX_BUFFER);
+    m_vertex_buffer = render_graph->add<BufferResource>("ImGui", BufferUsage::VERTEX_BUFFER);
 
     m_stage = render_graph->add<GraphicsStage>("ImGui");
     m_stage->add_shader(m_vertex_shader)
@@ -98,60 +97,78 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
             .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
             .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
             .alphaBlendOp = VK_BLEND_OP_ADD,
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+                              VK_COLOR_COMPONENT_A_BIT,
         })
-        ->set_vertex_input_attributes({
-            {VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos)},
-            {VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv)},
-            {VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col)},
+        ->set_vertex_input_attribute_descriptions({
+            {
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32_SFLOAT,
+                .offset = offsetof(ImDrawVert, pos),
+            },
+            {
+                .location = 1,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32_SFLOAT,
+                .offset = offsetof(ImDrawVert, uv),
+            },
+            {
+                .location = 2,
+                .binding = 0,
+                .format = VK_FORMAT_R8G8B8A8_UNORM,
+                .offset = offsetof(ImDrawVert, col),
+            },
         })
-        ->set_vertex_input_bindings<ImDrawVert>() // TODO: Simplify using that
+        ->set_vertex_input_binding_descriptions<ImDrawVert>()
         ->writes_to(back_buffer)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-            ImDrawData *imgui_draw_data = ImGui::GetDrawData();
-            if (imgui_draw_data == nullptr) {
+            ImDrawData *draw_data = ImGui::GetDrawData();
+            if (draw_data == nullptr) {
                 return;
             }
             const ImGuiIO &io = ImGui::GetIO();
             m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-            m_push_const_block.translate = glm::vec2(-1.0f);
+
             cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.pipeline_layout());
-            cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
-                                   &m_push_const_block);
+            cmd_buf.push_constant(physical.pipeline_layout(), m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
+
             std::uint32_t index_offset = 0;
             std::int32_t vertex_offset = 0;
-            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-                const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+            for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
                 for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                     const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                    vkCmdDrawIndexed(cmd_buf.get(), draw_cmd.ElemCount, 1, index_offset, vertex_offset, 0);
+                    cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
                     index_offset += draw_cmd.ElemCount;
                 }
                 vertex_offset += cmd_list->VtxBuffer.Size;
             }
         })
         ->set_on_update([&]() {
-            m_update_overlay();
-            ImDrawData *imgui_draw_data = ImGui::GetDrawData();
-            if (imgui_draw_data == nullptr || imgui_draw_data->TotalIdxCount == 0 ||
-                imgui_draw_data->TotalVtxCount == 0) {
+            // TODO: How to account for updates which are bound to a buffer, but not a stage?
+            // TOOD: How to account for async updates (which do not require sync/coherency?)
+            m_on_update_user_data();
+            ImDrawData *draw_data = ImGui::GetDrawData();
+            if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
                 return;
             }
-            if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
+            if (m_index_data.size() != draw_data->TotalIdxCount) {
                 m_index_data.clear();
-                for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-                    const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                    const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
                     for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
                         m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
                     }
                 }
                 m_index_buffer->upload_data(m_index_data);
             }
-            if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
+            if (m_vertex_data.size() != draw_data->TotalVtxCount) {
                 m_vertex_data.clear();
-                for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-                    const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                    const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
                     for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
                         m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
                     }

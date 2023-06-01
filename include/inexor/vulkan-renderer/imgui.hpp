@@ -33,21 +33,25 @@ class ImGUIOverlay {
     std::vector<std::uint32_t> m_index_data;
     std::vector<ImDrawVert> m_vertex_data;
 
+    // Neither scale nor translation change
     struct PushConstBlock {
-        glm::vec2 scale;
-        glm::vec2 translate;
-    } m_push_const_block{};
+        glm::vec2 scale{-1.0f};
+        glm::vec2 translate{-1.0f};
+    } m_push_const_block;
 
-    std::function<void()> m_update_overlay{[]() {}};
+    /// This function will be called at the beginning of set_on_update
+    /// The user's ImGui data will be updated in this function
+    std::function<void()> m_on_update_user_data{[]() {}};
 
 public:
-    /// @brief Construct a new ImGUI overlay.
+    /// Default constructor
     /// @param device A reference to the device wrapper
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer A pointer to the target of the ImGUI rendering
+    /// @param on_update_user_data The function in which the user's ImGui data is updated
     ImGUIOverlay(
         const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
-        std::function<void()> update_overlay = []() {});
+        std::function<void()> on_update_user_data = []() {});
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

@@ -41,7 +41,7 @@ GraphicsStage *GraphicsStage::add_shader(const wrapper::Shader &shader) {
 }
 
 GraphicsStage *GraphicsStage::add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment) {
-    m_color_blend_attachment_states.push_back(attachment);
+    m_color_blend_attachment = attachment;
     return this;
 }
 
@@ -97,13 +97,6 @@ VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info() {
 
 GraphicsStage *GraphicsStage::set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend) {
     m_color_blend_sci = color_blend;
-    return this;
-}
-
-GraphicsStage *
-GraphicsStage::set_color_blend_attachments(const std::vector<VkPipelineColorBlendAttachmentState> &attachments) {
-    assert(!attachments.empty());
-    m_color_blend_attachment_states = attachments;
     return this;
 }
 
@@ -191,15 +184,15 @@ GraphicsStage *GraphicsStage::set_tesselation_control_point_count(const std::uin
     return this;
 }
 
-GraphicsStage *
-GraphicsStage::set_vertex_input_attributes(const std::vector<VkVertexInputAttributeDescription> &descriptions) {
+GraphicsStage *GraphicsStage::set_vertex_input_attribute_descriptions(
+    const std::vector<VkVertexInputAttributeDescription> &descriptions) {
     assert(!descriptions.empty());
     m_vertex_input_attribute_descriptions = descriptions;
     return this;
 }
 
 GraphicsStage *
-GraphicsStage::set_vertex_input_bindings(const std::vector<VkVertexInputBindingDescription> &descriptions) {
+GraphicsStage::set_vertex_input_binding_descriptions(const std::vector<VkVertexInputBindingDescription> &descriptions) {
     assert(!descriptions.empty());
     m_vertex_input_binding_descriptions = descriptions;
     return this;
@@ -238,8 +231,6 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
                                         const std::uint32_t image_index) {
     const PhysicalStage &physical = *stage->m_physical;
 
-    stage->m_on_update();
-
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
     if (graphics_stage != nullptr) {
@@ -248,7 +239,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
         std::array<VkClearValue, 2> clear_values{};
         if (graphics_stage->m_clears_screen) {
-            clear_values[0].color = {0, 0, 0, 0};
+            clear_values[0].color = graphics_stage->m_clear_value.color;
             clear_values[1].depthStencil = {1.0f, 0};
         }
 
@@ -365,32 +356,6 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         std::make_unique<wrapper::RenderPass>(m_device, attachments, subpasses, dependencies, stage->name());
 }
 
-void RenderGraph::build_graphics_pipeline(GraphicsStage *stage, PhysicalGraphicsStage &physical) {
-    // Note that at the beginning of this method, m_graphics_pipeline_builder is always in reset state
-    auto blend_attachment = stage->m_blend_attachment;
-    blend_attachment.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-    stage
-        ->set_color_blend({
-            .attachmentCount = 1,
-            .pAttachments = &blend_attachment,
-        })
-        ->set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
-            .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
-            .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
-            .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-        }))
-        ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
-        ->set_render_pass(physical.m_render_pass->render_pass())
-        ->set_scissor(m_swapchain.extent())
-        ->set_viewport(m_swapchain.extent());
-
-    // Build the graphics pipeline with the help of the graphics pipeline builder
-    physical.m_pipeline =
-        std::make_unique<wrapper::GraphicsPipeline>(m_device, stage->make_create_info(), "graphics pipeline");
-}
-
 void RenderGraph::compile(const RenderResource *target) {
     // TODO(GH-204): Better logging and input validation.
     // TODO: Many opportunities for optimisation.
@@ -475,7 +440,25 @@ void RenderGraph::compile(const RenderResource *target) {
                 // TODO: Apply internal debug name to the pipeline layouts
                 "graphics pipeline layout");
 
-            build_graphics_pipeline(graphics_stage, physical);
+            physical.m_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
+                m_device,
+                graphics_stage
+                    ->set_color_blend(wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
+                        .attachmentCount = 1,
+                        .pAttachments = &graphics_stage->m_color_blend_attachment,
+                    }))
+                    ->set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
+                        .depthTestEnable = graphics_stage->m_depth_test ? VK_TRUE : VK_FALSE,
+                        .depthWriteEnable = graphics_stage->m_depth_write ? VK_TRUE : VK_FALSE,
+                        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+                    }))
+                    ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
+                    ->set_render_pass(physical.m_render_pass->render_pass())
+                    ->set_scissor(m_swapchain.extent())
+                    ->set_viewport(m_swapchain.extent())
+                    ->make_create_info(),
+                // TODO: Apply internal debug name to the pipelines
+                "graphics pipeline");
 
             // If we write to at least one texture, we need to make framebuffers.
             if (!stage->m_writes.empty()) {
@@ -533,6 +516,11 @@ void RenderGraph::update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf) 
 }
 
 void RenderGraph::render(const std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf) {
+    // TODO: This is a waste of performance
+    for (const auto &stage : m_stage_stack) {
+        stage->m_on_update();
+    }
+    // TODO: This is a waste of performance
     update_dynamic_buffers(cmd_buf);
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);

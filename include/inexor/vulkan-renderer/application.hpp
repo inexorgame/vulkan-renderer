@@ -31,9 +31,6 @@ private:
 
     bool m_debug_report_callback_initialised{false};
 
-    std::unique_ptr<wrapper::Shader> m_vertex_shader;
-    std::unique_ptr<wrapper::Shader> m_fragment_shader;
-
     std::unique_ptr<Camera> m_camera;
     std::unique_ptr<wrapper::Window> m_window;
     std::unique_ptr<wrapper::Instance> m_instance;
@@ -51,6 +48,9 @@ private:
     TextureResource *m_back_buffer{nullptr};
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
+
+    std::unique_ptr<wrapper::Shader> m_vertex_shader;
+    std::unique_ptr<wrapper::Shader> m_fragment_shader;
 
     void setup_render_graph();
     void generate_octree_indices();
