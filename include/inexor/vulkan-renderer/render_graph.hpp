@@ -617,7 +617,6 @@ private:
 
     // Functions for building graphics stage related vulkan objects.
     void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage &);
-    void build_graphics_pipeline(GraphicsStage *, PhysicalGraphicsStage &);
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
