@@ -533,11 +533,12 @@ void Application::render_frame() {
 }
 
 void Application::setup_render_graph() {
-    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
-    m_back_buffer->set_format(m_swapchain->image_format());
+    m_back_buffer =
+        m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "back buffer");
 
-    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
-    depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
+    auto *depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
+                                                              VK_FORMAT_D32_SFLOAT_S8_UINT, "depth buffer");
+                               
 
     m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
     m_index_buffer->upload_data(m_octree_indices);

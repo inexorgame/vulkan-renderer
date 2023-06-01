@@ -133,14 +133,11 @@ private:
     VkFormat m_format{VK_FORMAT_UNDEFINED};
 
 public:
-    TextureResource(std::string &&name, TextureUsage usage) : RenderResource(name), m_usage(usage) {}
-
-    /// @brief Specifies the format of this texture that is required when the physical texture is made.
-    /// @details For TextureUsage::BACK_BUFFER textures, using the swapchain image format is preferable in most cases.
-    /// For TextureUsage::DEPTH_STENCIL_BUFFER textures, a VK_FORMAT_D* must be used.
-    void set_format(VkFormat format) {
-        m_format = format;
-    }
+    /// Default constructor
+    /// @param usage The internal usage of the texture inside of rendergraph
+    /// @param format The image format
+    /// @param name The internal debug name of the texture
+    TextureResource(TextureUsage usage, VkFormat format, std::string &&name) : RenderResource(name), m_usage(usage), m_format(format) {}
 };
 
 /// @brief A single render stage in the render graph.
