@@ -16,63 +16,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
       m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGUI", "shaders/ui.frag.spv"),
       m_on_update_user_data(std::move(on_update_user_data)) {
 
-    spdlog::trace("Creating ImGUI context");
-    ImGui::CreateContext();
-
-    ImGuiStyle &style = ImGui::GetStyle();
-    style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.0f, 0.0f, 0.0f, 0.1f);
-    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_Header] = ImVec4(0.8f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.8f);
-    style.Colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
-    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.1f);
-    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
-    style.Colors[ImGuiCol_Button] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
-    style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
-
-    ImGuiIO &io = ImGui::GetIO();
-    io.FontGlobalScale = 1.0f;
-
-    // Load font texture
-
-    // TODO: Move this data into a container class; have container class also support bold and italic.
-    constexpr const char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
-    constexpr float FONT_SIZE = 18.0f;
-
-    spdlog::trace("Loading front {}", FONT_FILE_PATH);
-
-    ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
-
-    unsigned char *font_texture_data{};
-    int font_texture_width{0};
-    int font_texture_height{0};
-    io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
-
-    if (font == nullptr || font_texture_data == nullptr) {
-        spdlog::error("Unable to load font {}.  Falling back to error texture", FONT_FILE_PATH);
-        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
-    } else {
-        spdlog::trace("Creating ImGUI font texture");
-
-        // Our font textures always have 4 channels and a single mip level by definition.
-        constexpr int FONT_TEXTURE_CHANNELS{4};
-        constexpr int FONT_MIP_LEVELS{1};
-
-        VkDeviceSize upload_size = static_cast<VkDeviceSize>(font_texture_width) *
-                                   static_cast<VkDeviceSize>(font_texture_height) *
-                                   static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
-
-        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
-            m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
-            FONT_MIP_LEVELS, "ImGUI font texture");
-    }
+    initialize_imgui();
+    set_imgui_style();
+    load_font_texture();
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
@@ -103,19 +49,16 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
         ->set_vertex_input_attribute_descriptions({
             {
                 .location = 0,
-                .binding = 0,
                 .format = VK_FORMAT_R32G32_SFLOAT,
                 .offset = offsetof(ImDrawVert, pos),
             },
             {
                 .location = 1,
-                .binding = 0,
                 .format = VK_FORMAT_R32G32_SFLOAT,
                 .offset = offsetof(ImDrawVert, uv),
             },
             {
                 .location = 2,
-                .binding = 0,
                 .format = VK_FORMAT_R8G8B8A8_UNORM,
                 .offset = offsetof(ImDrawVert, col),
             },
@@ -148,36 +91,95 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
             }
         })
         ->set_on_update([&]() {
-            // TODO: How to account for updates which are bound to a buffer, but not a stage?
-            // TOOD: How to account for async updates (which do not require sync/coherency?)
             m_on_update_user_data();
-            ImDrawData *draw_data = ImGui::GetDrawData();
+
+            const ImDrawData *draw_data = ImGui::GetDrawData();
             if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
+                // Prevent reading from nullpointer and creating buffers of size 0, because both would throw an exception
                 return;
             }
-            if (m_index_data.size() != draw_data->TotalIdxCount) {
-                m_index_data.clear();
-                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                    const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
-                    for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
-                        m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
-                    }
+
+            m_index_data.clear();
+            m_vertex_data.clear();
+
+            // We need to collect the vertices and indices generated by ImGui
+            // because it does not store them in one array, but rather in chunks (command lists)
+            for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
+                for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
+                    m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
                 }
-                m_index_buffer->upload_data(m_index_data);
-            }
-            if (m_vertex_data.size() != draw_data->TotalVtxCount) {
-                m_vertex_data.clear();
-                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                    const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
-                    for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
-                        m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
-                    }
+                for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
+                    m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
                 }
-                m_vertex_buffer->upload_data(m_vertex_data);
             }
+            m_index_buffer->upload_data(m_index_data);
+            m_vertex_buffer->upload_data(m_vertex_data);
         })
         ->add_descriptor_layout(m_descriptor->descriptor_set_layout())
         ->add_push_constant_range<PushConstBlock>();
+}
+
+void ImGUIOverlay::initialize_imgui() {
+    spdlog::trace("Creating ImGUI context");
+    ImGui::CreateContext();
+}
+
+void ImGUIOverlay::load_font_texture() {
+    ImGuiIO &io = ImGui::GetIO();
+    io.FontGlobalScale = 1.0f;
+
+    // TODO: Move this data into a container class; have container class also support bold and italic.
+    constexpr const char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
+    constexpr float FONT_SIZE = 18.0f;
+
+    spdlog::trace("Loading front {}", FONT_FILE_PATH);
+
+    ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
+
+    unsigned char *font_texture_data{};
+    int font_texture_width{0};
+    int font_texture_height{0};
+    io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
+
+    if (font == nullptr || font_texture_data == nullptr) {
+        spdlog::error("Unable to load font {}.  Falling back to error texture", FONT_FILE_PATH);
+        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
+    } else {
+        spdlog::trace("Creating ImGUI font texture");
+
+        // Our font textures always have 4 channels and a single mip level by definition.
+        constexpr int FONT_TEXTURE_CHANNELS{4};
+        constexpr int FONT_MIP_LEVELS{1};
+
+        VkDeviceSize upload_size = static_cast<VkDeviceSize>(font_texture_width) *
+                                   static_cast<VkDeviceSize>(font_texture_height) *
+                                   static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
+
+        m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
+            m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
+            FONT_MIP_LEVELS, "ImGUI font texture");
+    }
+}
+
+void ImGUIOverlay::set_imgui_style() {
+    ImGuiStyle &style = ImGui::GetStyle();
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.0f, 0.0f, 0.0f, 0.1f);
+    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
+    style.Colors[ImGuiCol_Header] = ImVec4(0.8f, 0.0f, 0.0f, 0.4f);
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.8f);
+    style.Colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.1f);
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
+    style.Colors[ImGuiCol_Button] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 }
 
 ImGUIOverlay::~ImGUIOverlay() {

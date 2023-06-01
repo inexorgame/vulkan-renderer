@@ -19,8 +19,6 @@ Buffer::Buffer(const Device &device, const VkDeviceSize buffer_size, const VkBuf
         throw std::invalid_argument("Error: Buffer name must not be empty!");
     }
 
-    spdlog::trace("Creating buffer '{}' (size: {} bytes)", m_name, buffer_size);
-
     const auto buffer_ci = make_info<VkBufferCreateInfo>({
         .size = buffer_size,
         .usage = buffer_usage,
