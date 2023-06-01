@@ -552,18 +552,15 @@ public:
     PhysicalBackBuffer &operator=(PhysicalBackBuffer &&) = delete;
 };
 
-class PhysicalStage : public RenderGraphObject {
+class PhysicalStage : public PhysicalResource {
     friend RenderGraph;
 
 private:
     std::unique_ptr<wrapper::GraphicsPipeline> m_pipeline;
     std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
 
-protected:
-    const wrapper::Device &m_device;
-
 public:
-    explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
+    explicit PhysicalStage(const wrapper::Device &device) : PhysicalResource(device) {}
     PhysicalStage(const PhysicalStage &) = delete;
     PhysicalStage(PhysicalStage &&) = delete;
     ~PhysicalStage() override = default;
