@@ -401,6 +401,7 @@ Device::Device(Device &&other) noexcept {
 
 Device::~Device() {
     std::scoped_lock locker(m_mutex);
+    wait_idle();
 
     // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
     // we must destroy the command pools manually here in order to ensure the right order of destruction

@@ -439,8 +439,6 @@ Application::Application(int argc, char **argv) {
 Application::~Application() {
     spdlog::trace("Shutting down vulkan renderer");
 
-    m_device->wait_idle();
-
     if (!m_debug_report_callback_initialised) {
         return;
     }
