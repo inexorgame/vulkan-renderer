@@ -277,6 +277,13 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
     }
 
     cmd_buf.bind_pipeline(physical.m_pipeline->pipeline());
+
+    // Add push constants
+    for (auto &push_constant : stage->m_push_constants) {
+        cmd_buf.push_constants(physical.m_pipeline_layout->pipeline_layout(),
+                               push_constant.m_push_constant.stageFlags, push_constant.m_push_constant.size, push_constant.m_push_constant_data);
+    }
+
     stage->m_on_record(physical, cmd_buf);
 
     if (graphics_stage != nullptr) {
@@ -435,6 +442,11 @@ void RenderGraph::compile(const RenderResource *target) {
 
             build_render_pass(graphics_stage, physical);
 
+            // Collect the push constant ranges of this stage into one std::vector
+            for (const auto &push_constant : graphics_stage->m_push_constants) {
+                graphics_stage->m_push_constant_ranges.push_back(push_constant.m_push_constant);
+            }
+
             physical.m_pipeline_layout = std::make_unique<wrapper::PipelineLayout>(
                 m_device, graphics_stage->m_descriptor_layouts, graphics_stage->m_push_constant_ranges,
                 // TODO: Apply internal debug name to the pipeline layouts
@@ -492,6 +504,12 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
+void RenderGraph::update_push_constant_ranges(RenderStage* stage) {
+    for (auto &push_constant : stage->m_push_constants) {
+        push_constant.m_on_update();
+    }
+}
+
 void RenderGraph::update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf) {
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {
@@ -519,6 +537,7 @@ void RenderGraph::render(const std::uint32_t image_index, const wrapper::Command
     // TODO: This is a waste of performance
     for (const auto &stage : m_stage_stack) {
         stage->m_on_update();
+        update_push_constant_ranges(stage);
     }
     // TODO: This is a waste of performance
     update_dynamic_buffers(cmd_buf);

@@ -144,6 +144,30 @@ public:
     TextureResource(TextureUsage usage, VkFormat format, std::string &&name) : RenderResource(name), m_usage(usage), m_format(format) {}
 };
 
+class PushConstantResource {
+    friend RenderGraph;
+
+private:
+    VkPushConstantRange m_push_constant;
+    std::function<void()> m_on_update{[]() {}};
+    const void *m_push_constant_data{nullptr};
+
+public:
+    PushConstantResource(const VkPushConstantRange push_constant, const void *push_constant_data, std::function<void()> on_update)
+        : m_push_constant(push_constant), m_push_constant_data(push_constant_data), m_on_update(std::move(on_update)) {}
+
+    PushConstantResource(const PushConstantResource &) = delete;
+    PushConstantResource(PushConstantResource &&other) noexcept : m_push_constant_data(other.m_push_constant_data) {
+        m_push_constant = std::move(other.m_push_constant);
+        m_on_update = std::move(other.m_on_update);
+    };
+
+    ~PushConstantResource() = default;
+
+    PushConstantResource &operator=(const PushConstantResource &) = delete;
+    PushConstantResource &operator=(PushConstantResource &&) = delete;
+};
+
 /// @brief A single render stage in the render graph.
 /// @note Not to be confused with a vulkan render pass.
 class RenderStage : public RenderGraphObject {
@@ -156,6 +180,9 @@ private:
     std::vector<const RenderResource *> m_reads;
 
     std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
+
+    std::vector<PushConstantResource> m_push_constants;
+    // We need to collect the push constant ranges into one vector
     std::vector<VkPushConstantRange> m_push_constant_ranges;
 
     std::function<void(void)> m_on_update{[]() {}};
@@ -187,20 +214,16 @@ public:
         return this;
     }
 
-    /// Add a push constant range to this render stage
-    /// @param range The push constant range
-    RenderStage *add_push_constant_range(VkPushConstantRange range) {
-        m_push_constant_ranges.push_back(range);
+    template <typename PushConstantRangeDataType>
+    RenderStage *add_push_constant_range(
+        const PushConstantRangeDataType *data, std::function<void()> on_update = []() {},
+                                         const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT, const std::uint32_t offset = 0) {
+        m_push_constants.emplace_back(VkPushConstantRange{
+            .stageFlags = stage_flags,
+            .offset = offset,
+            .size = sizeof(PushConstantRangeDataType),
+        }, data, std::move(on_update));
         return this;
-    }
-
-    template <typename PushConstantDataType>
-    RenderStage *add_push_constant_range() {
-        return add_push_constant_range({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0,
-            .size = sizeof(PushConstantDataType),
-        });
     }
 
     [[nodiscard]] const std::string &name() const {
@@ -611,6 +634,8 @@ private:
     std::vector<RenderStage *> m_stage_stack;
 
     void update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf);
+
+    void update_push_constant_ranges(RenderStage *stage);
 
     // Functions for building stage related vulkan objects.
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);

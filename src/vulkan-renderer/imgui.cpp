@@ -72,11 +72,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
             if (draw_data == nullptr) {
                 return;
             }
-            const ImGuiIO &io = ImGui::GetIO();
-            m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
             cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.pipeline_layout());
-            cmd_buf.push_constant(physical.pipeline_layout(), m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
 
             std::uint32_t index_offset = 0;
             std::int32_t vertex_offset = 0;
@@ -117,7 +114,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
             m_vertex_buffer->upload_data(m_vertex_data);
         })
         ->add_descriptor_layout(m_descriptor->descriptor_set_layout())
-        ->add_push_constant_range<PushConstBlock>();
+        ->add_push_constant_range(&m_push_const_block, [&]() {
+            const ImGuiIO &io = ImGui::GetIO();
+            m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+        });
 }
 
 void ImGUIOverlay::initialize_imgui() {
