@@ -392,6 +392,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
+
+    // Store the properties of this physical device
+    vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
 }
 
 Device::Device(Device &&other) noexcept {
