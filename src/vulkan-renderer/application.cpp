@@ -534,7 +534,7 @@ void Application::setup_render_graph() {
     m_back_buffer =
         m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "back buffer");
 
-    auto *depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
+    m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
                                                               VK_FORMAT_D32_SFLOAT_S8_UINT, "depth buffer");
                                
 
@@ -571,7 +571,7 @@ void Application::setup_render_graph() {
         })
         ->set_vertex_input_binding_descriptions<OctreeGpuVertex>()
         ->writes_to(m_back_buffer)
-        ->writes_to(depth_buffer)
+        ->writes_to(m_depth_buffer)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)
         ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {

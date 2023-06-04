@@ -46,6 +46,7 @@ private:
 
     std::unique_ptr<RenderGraph> m_render_graph;
     TextureResource *m_back_buffer{nullptr};
+    TextureResource *m_depth_buffer{nullptr};
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
 
