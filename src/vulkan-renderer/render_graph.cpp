@@ -621,10 +621,13 @@ void RenderGraph::create_buffer(PhysicalBuffer &physical, const BufferResource *
     physical.m_buffer = std::make_unique<wrapper::Buffer>(
         m_device, buffer_resource->m_data_size, buffer_resource->m_data,
         // TODO: This does not support staging buffers yet because of VMA_MEMORY_USAGE_CPU_TO_GPU!
-        buffer_usage.at(buffer_resource->m_usage), VMA_MEMORY_USAGE_CPU_TO_GPU, "Rendergraph buffer");
+        buffer_usage.at(buffer_resource->m_usage), VMA_MEMORY_USAGE_CPU_TO_GPU, buffer_resource->name());
 }
 
 void RenderGraph::update_dynamic_buffers() {
+    // If a uniform buffer is recreated, we need to update the descriptor sets for that stage
+    bool update_stage_descriptor_sets = false;
+
     for (auto &buffer_resource : m_buffer_resources) {
         auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
 
@@ -634,30 +637,38 @@ void RenderGraph::update_dynamic_buffers() {
         if (buffer_resource->m_data_upload_needed) {
             // Check if this buffer has already been created
             if (physical.m_buffer != nullptr) {
-                // If the size has not increased, we don't need to destroy the buffer
-                if (buffer_resource->m_data_size > physical.m_buffer->allocation_info().size) {
-                    // Since we need to recreate the buffer, don't forget to destroy it first!
-                    // Calling make_unique on m_buffer twice without a .reset() would cause a memory leak!
-                    physical.m_buffer.reset();
-                    create_buffer(physical, buffer_resource.get());
-
-                    // If it's a uniform buffer, we need to update descriptors!
-                    if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
-                        // TODO: Update descriptor(s)
-                    }
-                }
-                // If the new buffer is not bigger than the old one, don't reallocate
-            } else {
-                // The buffer is not created yet, so create it
-                create_buffer(physical, buffer_resource.get());
+                physical.m_buffer.reset();
+                physical.m_buffer = nullptr;
 
                 // If it's a uniform buffer, we need to update descriptors!
                 if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
-                    // TODO: Update descriptor(s)
+                    update_stage_descriptor_sets = true;
                 }
             }
+            create_buffer(physical, buffer_resource.get());
+
             // TODO: Implement updates which requires staging buffers!
             std::memcpy(physical.m_buffer->memory(), buffer_resource->m_data, buffer_resource->m_data_size);
+
+            // Check if any descriptor set update is necessary
+            if (update_stage_descriptor_sets) {
+                for (auto &stage : m_stage_stack) {
+                    auto *graphics_stage = stage->as<GraphicsStage>();
+                    if (graphics_stage == nullptr) {
+                        continue;
+                    }
+                    for (auto &[key, value] : graphics_stage->m_reads) {
+                        auto *stage_physical = key->m_physical->as<PhysicalBuffer>();
+                        // Check if this stage is reading from this buffer
+                        if (key == buffer_resource.get()) {
+                            stage_physical->m_descriptor_buffer_info.buffer = physical.m_buffer->buffer();
+                            build_descriptor_sets(graphics_stage);
+                        }
+                    }
+                }
+                // Descriptor update is done
+                update_stage_descriptor_sets = false;
+            }
         }
     }
 }
