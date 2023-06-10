@@ -400,8 +400,16 @@ void RenderGraph::create_texture_resources() {
                  m_texture_resources.size() > 1 ? "s" : "");
 
     for (auto &texture_resource : m_texture_resources) {
-        m_log->trace("   - {}\t [format: {}]", texture_resource->m_name,
-                     vk_tools::as_string(texture_resource->m_format));
+        // TODO: Move this to representation header
+        const std::unordered_map<TextureUsage, std::string> texture_usage_name{
+            {TextureUsage::BACK_BUFFER, "BACK_BUFFER"},
+            {TextureUsage::DEPTH_STENCIL_BUFFER, "DEPTH_STENCIL_BUFFER"},
+            {TextureUsage::NORMAL, "NORMAL"},
+        };
+
+        m_log->trace("   - {}\t [format: {}, usage: {}]", texture_resource->m_name,
+                     vk_tools::as_string(texture_resource->m_format), texture_usage_name.at(texture_resource->m_usage));
+
         // Back buffer gets special handling.
         if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
             // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
@@ -424,9 +432,9 @@ void RenderGraph::create_texture_resources() {
     }
 }
 
-void RenderGraph::build_descriptor_sets(GraphicsStage *graphics_stage) {
+void RenderGraph::build_descriptor_sets(GraphicsStage *stage) {
     // Use the descriptor builder to assemble the descriptor
-    for (auto &read_resource : graphics_stage->m_reads) {
+    for (auto &read_resource : stage->m_reads) {
         // For simplicity reasons, check if it's an external texture resource first
         auto *external_texture = read_resource.first->as<ExternalTextureResource>();
         if (external_texture != nullptr) {
@@ -459,40 +467,40 @@ void RenderGraph::build_descriptor_sets(GraphicsStage *graphics_stage) {
     }
 
     // Don't forget to clear the previous descriptor sets and descriptor set layouts
-    graphics_stage->m_physical->m_descriptor_sets.clear();
-    graphics_stage->m_physical->m_descriptor_set_layouts.clear();
+    stage->m_physical->m_descriptor_sets.clear();
+    stage->m_physical->m_descriptor_set_layouts.clear();
 
     // Build the descriptor and store descriptor set and descriptor set layout
     const auto descriptor = descriptor_builder.build();
-    graphics_stage->m_physical->m_descriptor_sets.push_back(descriptor.first);
-    graphics_stage->m_physical->m_descriptor_set_layouts.push_back(descriptor.second);
+    stage->m_physical->m_descriptor_sets.push_back(descriptor.first);
+    stage->m_physical->m_descriptor_set_layouts.push_back(descriptor.second);
 }
 
-void RenderGraph::create_push_constant_ranges(GraphicsStage *graphics_stage) {
+void RenderGraph::create_push_constant_ranges(GraphicsStage *stage) {
     // Collect the push constant ranges of this stage into one std::vector
-    graphics_stage->m_push_constant_ranges.reserve(graphics_stage->m_push_constants.size());
-    for (const auto &push_constant : graphics_stage->m_push_constants) {
-        graphics_stage->m_push_constant_ranges.push_back(push_constant.m_push_constant);
+    stage->m_push_constant_ranges.reserve(stage->m_push_constants.size());
+    for (const auto &push_constant : stage->m_push_constants) {
+        stage->m_push_constant_ranges.push_back(push_constant.m_push_constant);
     }
 }
 
-void RenderGraph::create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *graphics_stage) {
-    physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
-        m_device, graphics_stage->m_physical->m_descriptor_set_layouts, graphics_stage->m_push_constant_ranges,
-        "graphics pipeline layout");
+void RenderGraph::create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
+    physical.m_pipeline_layout =
+        std::make_unique<wrapper::pipelines::PipelineLayout>(m_device, stage->m_physical->m_descriptor_set_layouts,
+                                                             stage->m_push_constant_ranges, "graphics pipeline layout");
 }
 
-void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *graphics_stage) {
+void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
     physical.m_pipeline = std::make_unique<wrapper::pipelines::GraphicsPipeline>(
         m_device,
-        graphics_stage
+        stage
             ->set_color_blend(wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
                 .attachmentCount = 1,
-                .pAttachments = &graphics_stage->m_color_blend_attachment,
+                .pAttachments = &stage->m_color_blend_attachment,
             }))
             ->set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
-                .depthTestEnable = graphics_stage->m_depth_test ? VK_TRUE : VK_FALSE,
-                .depthWriteEnable = graphics_stage->m_depth_write ? VK_TRUE : VK_FALSE,
+                .depthTestEnable = stage->m_depth_test ? VK_TRUE : VK_FALSE,
+                .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
                 .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
             }))
             ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
@@ -503,12 +511,7 @@ void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, Grap
         "graphics pipeline");
 }
 
-void RenderGraph::compile(const RenderResource *target) {
-    // TODO(GH-204): Better logging and input validation.
-    // TODO: Many opportunities for optimisation.
-
-    // TODO: Move to determine_stage_order();
-
+void RenderGraph::determine_stage_order(const RenderResource *target) {
     // Build a simple helper map to lookup a resource's writers.
     std::unordered_map<const RenderResource *, std::vector<RenderStage *>> writers;
     for (auto &stage : m_stages) {
@@ -541,7 +544,43 @@ void RenderGraph::compile(const RenderResource *target) {
         m_log->trace("   - {}\t [reads: {}, writes: {}, push constant ranges: {}]", stage->m_name,
                      stage->m_reads.size(), stage->m_writes.size(), stage->m_push_constants.size());
     }
+}
 
+void RenderGraph::create_framebuffers(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
+    // If we write to at least one texture, we need to make framebuffers.
+    if (!stage->m_writes.empty()) {
+        // For every texture that this stage writes to, we need to attach it to the framebuffer.
+        std::vector<const PhysicalBackBuffer *> back_buffers;
+        std::vector<const PhysicalImage *> images;
+        for (const auto *resource : stage->m_writes) {
+            if (const auto *texture = resource->as<TextureResource>()) {
+                const auto &physical_texture = *texture->m_physical;
+                if (const auto *back_buffer = physical_texture.as<PhysicalBackBuffer>()) {
+                    back_buffers.push_back(back_buffer);
+                } else if (const auto *image = physical_texture.as<PhysicalImage>()) {
+                    images.push_back(image);
+                }
+            }
+        }
+
+        std::vector<VkImageView> image_views;
+        image_views.reserve(back_buffers.size() + images.size());
+        for (auto *const img_view : m_swapchain.image_views()) {
+            std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
+            for (const auto *image : images) {
+                image_views.push_back(image->image_view());
+            }
+            physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass->render_pass(), image_views,
+                                                 m_swapchain, "Framebuffer");
+            image_views.clear();
+        }
+    }
+}
+
+void RenderGraph::compile(const RenderResource *target) {
+    // TODO(GH-204): Better logging and input validation.
+    // TODO: Many opportunities for optimisation.
+    determine_stage_order(target);
     create_buffer_resources();
     update_dynamic_buffers();
     create_texture_resources();
@@ -550,6 +589,7 @@ void RenderGraph::compile(const RenderResource *target) {
     // command buffers. Each graphics stage also maps to a vulkan render pass.
     for (auto *stage : m_stage_stack) {
         if (auto *graphics_stage = stage->as<GraphicsStage>()) {
+            // TODO: Can't we simplify this?
             auto physical_ptr = std::make_unique<PhysicalGraphicsStage>(m_device);
             auto &physical = *physical_ptr;
             graphics_stage->m_physical = std::move(physical_ptr);
@@ -559,36 +599,7 @@ void RenderGraph::compile(const RenderResource *target) {
             create_push_constant_ranges(graphics_stage);
             create_pipeline_layout(physical, graphics_stage);
             create_graphics_pipeline(physical, graphics_stage);
-
-            // TODO: Move to ...?
-            // If we write to at least one texture, we need to make framebuffers.
-            if (!stage->m_writes.empty()) {
-                // For every texture that this stage writes to, we need to attach it to the framebuffer.
-                std::vector<const PhysicalBackBuffer *> back_buffers;
-                std::vector<const PhysicalImage *> images;
-                for (const auto *resource : stage->m_writes) {
-                    if (const auto *texture = resource->as<TextureResource>()) {
-                        const auto &physical_texture = *texture->m_physical;
-                        if (const auto *back_buffer = physical_texture.as<PhysicalBackBuffer>()) {
-                            back_buffers.push_back(back_buffer);
-                        } else if (const auto *image = physical_texture.as<PhysicalImage>()) {
-                            images.push_back(image);
-                        }
-                    }
-                }
-
-                std::vector<VkImageView> image_views;
-                image_views.reserve(back_buffers.size() + images.size());
-                for (auto *const img_view : m_swapchain.image_views()) {
-                    std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
-                    for (const auto *image : images) {
-                        image_views.push_back(image->image_view());
-                    }
-                    physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass->render_pass(), image_views,
-                                                         m_swapchain, "Framebuffer");
-                    image_views.clear();
-                }
-            }
+            create_framebuffers(physical, graphics_stage);
         }
     }
 }
@@ -610,9 +621,7 @@ void RenderGraph::create_buffer(PhysicalBuffer &physical, const BufferResource *
     physical.m_buffer = std::make_unique<wrapper::Buffer>(
         m_device, buffer_resource->m_data_size, buffer_resource->m_data,
         // TODO: This does not support staging buffers yet because of VMA_MEMORY_USAGE_CPU_TO_GPU!
-        buffer_usage.at(buffer_resource->m_usage), VMA_MEMORY_USAGE_CPU_TO_GPU,
-        // TODO: Apply internal debug name to the buffer
-        "Rendergraph buffer");
+        buffer_usage.at(buffer_resource->m_usage), VMA_MEMORY_USAGE_CPU_TO_GPU, "Rendergraph buffer");
 }
 
 void RenderGraph::update_dynamic_buffers() {
