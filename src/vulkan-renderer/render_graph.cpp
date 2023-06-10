@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
@@ -374,14 +375,15 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
 }
 
 void RenderGraph::create_buffer_resources() {
-    m_log->trace("Allocating physical resource for buffers:");
+    m_log->trace("Allocating {} physical buffer{}:", m_buffer_resources.size(),
+                 m_buffer_resources.size() > 1 ? "s" : "");
 
     for (auto &buffer_resource : m_buffer_resources) {
         // TODO: Move this to representation header
         const std::unordered_map<BufferUsage, std::string> buffer_usage_name{
-            {BufferUsage::VERTEX_BUFFER, "vertex buffer"},
-            {BufferUsage::INDEX_BUFFER, "index buffer"},
-            {BufferUsage::UNIFORM_BUFFER, "uniform buffer"},
+            {BufferUsage::VERTEX_BUFFER, "VERTEX_BUFFER"},
+            {BufferUsage::INDEX_BUFFER, "INDEX_BUFFER"},
+            {BufferUsage::UNIFORM_BUFFER, "UNIFORM_BUFFER"},
         };
 
         m_log->trace("   - {}\t [type: {},\t size: {} bytes]", buffer_resource->m_name,
@@ -391,10 +393,12 @@ void RenderGraph::create_buffer_resources() {
 }
 
 void RenderGraph::create_texture_resources() {
-    m_log->trace("Allocating physical resource for texture:");
+    m_log->trace("Allocating {} physical texture{}:", m_texture_resources.size(),
+                 m_texture_resources.size() > 1 ? "s" : "");
 
     for (auto &texture_resource : m_texture_resources) {
-        m_log->trace("   - {}", texture_resource->m_name);
+        m_log->trace("   - {}\t [format: {}]", texture_resource->m_name,
+                     vk_tools::as_string(texture_resource->m_format));
         // Back buffer gets special handling.
         if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
             // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
@@ -525,9 +529,10 @@ void RenderGraph::compile(const RenderResource *target) {
         dfs(stage);
     }
 
-    m_log->trace("Final stage order:");
+    m_log->trace("Final order of {} stages:", m_stage_stack.size());
     for (auto *stage : m_stage_stack) {
-        m_log->trace("  - {}", stage->m_name);
+        m_log->trace("   - {}\t [reads: {}, writes: {}, push constant ranges: {}]", stage->m_name,
+                     stage->m_reads.size(), stage->m_writes.size(), stage->m_push_constants.size());
     }
 
     create_buffer_resources();

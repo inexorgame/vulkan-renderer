@@ -54,7 +54,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
     // This is required for creating a descriptor for a resource that is not (yet) inside of rendergraph
     imgui_texture = std::make_unique<ExternalTextureResource>(*m_imgui_texture);
 
-    m_stage = render_graph->add<GraphicsStage>("ImGui");
+    m_stage = render_graph->add<GraphicsStage>("ImGui UI");
     m_stage->add_shader(m_vertex_shader)
         ->add_shader(m_fragment_shader)
         ->add_color_blend_attachment({
