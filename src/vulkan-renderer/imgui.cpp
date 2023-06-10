@@ -48,7 +48,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
         m_index_buffer->announce_update(m_index_data);
     });
 
-    // Note that the index buffer updates is merged into the vertex buffer update for simplicity
+    // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     m_index_buffer = render_graph->add<BufferResource>("ImGui", BufferUsage::INDEX_BUFFER);
 
     // This is required for creating a descriptor for a resource that is not (yet) inside of rendergraph
@@ -91,6 +91,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
         ->reads_from(m_vertex_buffer)
         ->reads_from(imgui_texture.get(), VK_SHADER_STAGE_FRAGMENT_BIT)
         ->set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
+            // TODO: Set viewport to ImGui viewport for better performance
             ImDrawData *draw_data = ImGui::GetDrawData();
             if (draw_data == nullptr) {
                 return;
@@ -102,6 +103,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
                 const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
                 for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                     const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                    // TODO: Set scissor to ImGui extent of the current ImGui element for performance
                     cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
                     index_offset += draw_cmd.ElemCount;
                 }

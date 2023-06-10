@@ -406,9 +406,6 @@ Application::Application(int argc, char **argv) {
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
-    m_uniform_buffers.emplace_back(*m_device, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                   VMA_MEMORY_USAGE_CPU_TO_GPU, "matrices uniform buffer");
-
     load_octree_geometry(true);
     generate_octree_indices();
 
@@ -523,26 +520,25 @@ void Application::setup_render_graph() {
     m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
                                                           VK_FORMAT_D32_SFLOAT_S8_UINT, "depth buffer");
 
-    // Note that the index buffer is updated together with the vertex buffer to keep data consistent
-    m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
-
     m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER, [&]() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
         }
+        // TODO: This is a waste of performance!
         // Make sure to update vertices together with indices to keep data consistent!
         m_vertex_buffer->announce_update(m_octree_vertices);
         m_index_buffer->announce_update(m_octree_indices);
     });
 
+    // Note that the index buffer is updated together with the vertex buffer to keep data consistent
+    m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
+
     m_uniform_buffer = m_render_graph->add<BufferResource>("Matrices", BufferUsage::UNIFORM_BUFFER, [&]() {
-        ModelViewPerspectiveMatrices matrix{
-            .view = m_camera->view_matrix(),
-            .proj = m_camera->perspective_matrix(),
-        };
-        matrix.proj[1][1] *= -1;
-        m_uniform_buffer->announce_update(&matrix);
+        m_mvp_matrices.view = m_camera->view_matrix();
+        m_mvp_matrices.proj = m_camera->perspective_matrix();
+        m_mvp_matrices.proj[1][1] *= -1;
+        m_uniform_buffer->announce_update(&m_mvp_matrices);
     });
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("Octree");

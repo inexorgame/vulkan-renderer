@@ -39,7 +39,6 @@ private:
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
 
-    std::vector<wrapper::Buffer> m_uniform_buffers;
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 

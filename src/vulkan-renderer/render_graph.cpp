@@ -268,7 +268,6 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         if (buffer_resource == nullptr) {
             continue;
         }
-
         auto *physical_buffer = buffer_resource->m_physical->as<PhysicalBuffer>();
         if (physical_buffer->m_buffer == nullptr) {
             continue;
@@ -618,6 +617,7 @@ void RenderGraph::create_buffer(PhysicalBuffer &physical, const BufferResource *
         {BufferUsage::UNIFORM_BUFFER, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT},
     };
 
+    // TODO: Implement a buffer.recreate(); method (No need to destroy the unique pointer!)
     physical.m_buffer = std::make_unique<wrapper::Buffer>(
         m_device, buffer_resource->m_data_size, buffer_resource->m_data,
         // TODO: This does not support staging buffers yet because of VMA_MEMORY_USAGE_CPU_TO_GPU!
@@ -640,10 +640,21 @@ void RenderGraph::update_dynamic_buffers() {
                     // Calling make_unique on m_buffer twice without a .reset() would cause a memory leak!
                     physical.m_buffer.reset();
                     create_buffer(physical, buffer_resource.get());
+
+                    // If it's a uniform buffer, we need to update descriptors!
+                    if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
+                        // TODO: Update descriptor(s)
+                    }
                 }
+                // If the new buffer is not bigger than the old one, don't reallocate
             } else {
                 // The buffer is not created yet, so create it
                 create_buffer(physical, buffer_resource.get());
+
+                // If it's a uniform buffer, we need to update descriptors!
+                if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
+                    // TODO: Update descriptor(s)
+                }
             }
             // TODO: Implement updates which requires staging buffers!
             std::memcpy(physical.m_buffer->memory(), buffer_resource->m_data, buffer_resource->m_data_size);
