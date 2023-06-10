@@ -4,10 +4,12 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
+namespace inexor::vulkan_renderer::wrapper {
 class Device;
+}
+
+namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // TODO: Compute pipelines
 
@@ -36,4 +38,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::pipelines

@@ -522,14 +522,14 @@ void RenderGraph::compile(const RenderResource *target) {
 
             // TODO: create_pipeline_layout()
 
-            physical.m_pipeline_layout = std::make_unique<wrapper::PipelineLayout>(
+            physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
                 m_device, graphics_stage->m_physical->m_descriptor_set_layouts, graphics_stage->m_push_constant_ranges,
                 // TODO: Apply internal debug name to the pipeline layouts
                 "graphics pipeline layout");
 
             // TODO: create_graphics_pipeline()
 
-            physical.m_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
+            physical.m_pipeline = std::make_unique<wrapper::pipelines::GraphicsPipeline>(
                 m_device,
                 graphics_stage
                     ->set_color_blend(wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({

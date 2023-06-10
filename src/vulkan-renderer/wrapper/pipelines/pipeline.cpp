@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 GraphicsPipeline::GraphicsPipeline(const Device &device, const VkGraphicsPipelineCreateInfo &pipeline_ci,
                                    std::string name)
@@ -27,4 +27,4 @@ GraphicsPipeline::~GraphicsPipeline() {
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::pipelines

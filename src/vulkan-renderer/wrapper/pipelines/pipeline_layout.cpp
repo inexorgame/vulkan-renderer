@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 PipelineLayout::PipelineLayout(const Device &device, const VkPipelineLayoutCreateInfo &pipeline_layout_ci,
                                std::string name)

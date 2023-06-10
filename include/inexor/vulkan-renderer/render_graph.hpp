@@ -9,8 +9,8 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipeline_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/render_pass.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
@@ -611,8 +611,8 @@ private:
     std::vector<VkDescriptorSet> m_descriptor_sets;
     std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
 
-    std::unique_ptr<wrapper::GraphicsPipeline> m_pipeline;
-    std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
+    std::unique_ptr<wrapper::pipelines::GraphicsPipeline> m_pipeline;
+    std::unique_ptr<wrapper::pipelines::PipelineLayout> m_pipeline_layout;
 
 public:
     explicit PhysicalStage(const wrapper::Device &device) : PhysicalResource(device) {}

@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
@@ -7,7 +7,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_device(device) {
     reset();

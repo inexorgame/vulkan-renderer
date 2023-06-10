@@ -3,16 +3,18 @@
 #include <vulkan/vulkan_core.h>
 
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declarations
+namespace inexor::vulkan_renderer::wrapper {
 class Device;
+}
+
+namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 /// Builder class for VkPipelineCreateInfo
 /// @note that all members are initialized in the method ``reset()`` (This method is also called by the constructor)
@@ -242,4 +244,4 @@ public:
     [[nodiscard]] GraphicsPipelineBuilder &set_wireframe(VkBool32 wireframe);
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::pipelines

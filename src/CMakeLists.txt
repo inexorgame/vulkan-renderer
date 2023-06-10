@@ -8,13 +8,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/render_graph.cpp
     vulkan-renderer/time_step.cpp
 
-    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
-
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
@@ -38,9 +31,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
-    vulkan-renderer/wrapper/pipeline.cpp
-    vulkan-renderer/wrapper/pipeline_builder.cpp
-    vulkan-renderer/wrapper/pipeline_layout.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/render_pass.cpp
     vulkan-renderer/wrapper/sampler.cpp
@@ -49,6 +39,18 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
+
+    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+
+    vulkan-renderer/wrapper/pipelines/pipeline.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
+
 
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp
