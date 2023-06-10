@@ -373,6 +373,125 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         std::make_unique<wrapper::RenderPass>(m_device, attachments, subpasses, dependencies, stage->name());
 }
 
+void RenderGraph::create_buffer_resources() {
+    m_log->trace("Allocating physical resource for buffers:");
+
+    for (auto &buffer_resource : m_buffer_resources) {
+        // TODO: Move this to representation header
+        const std::unordered_map<BufferUsage, std::string> buffer_usage_name{
+            {BufferUsage::VERTEX_BUFFER, "vertex buffer"},
+            {BufferUsage::INDEX_BUFFER, "index buffer"},
+            {BufferUsage::UNIFORM_BUFFER, "uniform buffer"},
+        };
+
+        m_log->trace("   - {}\t [type: {},\t size: {} bytes]", buffer_resource->m_name,
+                     buffer_usage_name.at(buffer_resource->m_usage), buffer_resource->m_data_size);
+        buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device);
+    }
+}
+
+void RenderGraph::create_texture_resources() {
+    m_log->trace("Allocating physical resource for texture:");
+
+    for (auto &texture_resource : m_texture_resources) {
+        m_log->trace("   - {}", texture_resource->m_name);
+        // Back buffer gets special handling.
+        if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
+            // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
+            texture_resource->m_physical = std::make_shared<PhysicalBackBuffer>(m_device, m_swapchain);
+        } else {
+            auto physical = std::make_shared<PhysicalImage>(m_device);
+            texture_resource->m_physical = physical;
+
+            physical->m_img = std::make_unique<wrapper::Image>(
+                m_device, texture_resource->m_format, m_swapchain.extent().width, m_swapchain.extent().height,
+                texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                    ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                    : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+                static_cast<VkImageAspectFlags>(texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
+                                                    ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+                                                    : VK_IMAGE_ASPECT_COLOR_BIT),
+                // TODO: Apply internal debug name to the images
+                "Rendergraph image");
+        }
+    }
+}
+
+void RenderGraph::build_descriptor_sets(GraphicsStage *graphics_stage) {
+    // Use the descriptor builder to assemble the descriptor
+    for (auto &read_resource : graphics_stage->m_reads) {
+        // For simplicity reasons, check if it's an external texture resource first
+        auto *external_texture = read_resource.first->as<ExternalTextureResource>();
+        if (external_texture != nullptr) {
+            external_texture->m_descriptor_image_info = VkDescriptorImageInfo{
+                .sampler = external_texture->m_texture.sampler(),
+                .imageView = external_texture->m_texture.image_view(),
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            };
+            // Add combined image sampler to builder
+            descriptor_builder.bind_image(&external_texture->m_descriptor_image_info, read_resource.second.value());
+        }
+        auto *physical = read_resource.first->m_physical->as<PhysicalBuffer>();
+        if (physical != nullptr) {
+            // This is a buffer, so check if it's a uniform buffer
+            auto *buffer = read_resource.first->as<BufferResource>();
+            if (buffer != nullptr) {
+                if (buffer->m_usage == BufferUsage::UNIFORM_BUFFER) {
+                    // Build the buffer's descriptor buffer info
+                    physical->m_descriptor_buffer_info = VkDescriptorBufferInfo{
+                        .buffer = physical->m_buffer->buffer(),
+                        .offset = 0,
+                        .range = buffer->m_data_size,
+                    };
+                    // Add uniform buffer to builder
+                    descriptor_builder.bind_uniform_buffer(&physical->m_descriptor_buffer_info,
+                                                           read_resource.second.value());
+                }
+            }
+        }
+    }
+
+    // Build the descriptor and store descriptor set and descriptor set layout
+    const auto descriptor = descriptor_builder.build();
+    graphics_stage->m_physical->m_descriptor_sets.push_back(descriptor.first);
+    graphics_stage->m_physical->m_descriptor_set_layouts.push_back(descriptor.second);
+}
+
+void RenderGraph::create_push_constant_ranges(GraphicsStage *graphics_stage) {
+    // Collect the push constant ranges of this stage into one std::vector
+    graphics_stage->m_push_constant_ranges.reserve(graphics_stage->m_push_constants.size());
+    for (const auto &push_constant : graphics_stage->m_push_constants) {
+        graphics_stage->m_push_constant_ranges.push_back(push_constant.m_push_constant);
+    }
+}
+
+void RenderGraph::create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *graphics_stage) {
+    physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
+        m_device, graphics_stage->m_physical->m_descriptor_set_layouts, graphics_stage->m_push_constant_ranges,
+        "graphics pipeline layout");
+}
+
+void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *graphics_stage) {
+    physical.m_pipeline = std::make_unique<wrapper::pipelines::GraphicsPipeline>(
+        m_device,
+        graphics_stage
+            ->set_color_blend(wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
+                .attachmentCount = 1,
+                .pAttachments = &graphics_stage->m_color_blend_attachment,
+            }))
+            ->set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
+                .depthTestEnable = graphics_stage->m_depth_test ? VK_TRUE : VK_FALSE,
+                .depthWriteEnable = graphics_stage->m_depth_write ? VK_TRUE : VK_FALSE,
+                .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+            }))
+            ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
+            ->set_render_pass(physical.m_render_pass->render_pass())
+            ->set_scissor(m_swapchain.extent())
+            ->set_viewport(m_swapchain.extent())
+            ->make_create_info(),
+        "graphics pipeline");
+}
+
 void RenderGraph::compile(const RenderResource *target) {
     // TODO(GH-204): Better logging and input validation.
     // TODO: Many opportunities for optimisation.
@@ -411,54 +530,9 @@ void RenderGraph::compile(const RenderResource *target) {
         m_log->trace("  - {}", stage->m_name);
     }
 
-    // Create physical resources. For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage
-    // respectively. Every physical resource also has a VmaAllocation.
-    // TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources).
-    m_log->trace("Allocating physical resource for buffers:");
-
-    // TODO: create_buffer_resources();
-
-    for (auto &buffer_resource : m_buffer_resources) {
-        // TODO: Move this to representation header
-        const std::unordered_map<BufferUsage, std::string> buffer_usage_name{
-            {BufferUsage::VERTEX_BUFFER, "vertex buffer"},
-            {BufferUsage::INDEX_BUFFER, "index buffer"},
-            {BufferUsage::UNIFORM_BUFFER, "uniform buffer"},
-        };
-
-        m_log->trace("   - {}\t [type: {},\t size: {} bytes]", buffer_resource->m_name,
-                     buffer_usage_name.at(buffer_resource->m_usage), buffer_resource->m_data_size);
-        buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device);
-    }
-
+    create_buffer_resources();
     update_dynamic_buffers();
-
-    // TODO: create_texture_resources();
-
-    m_log->trace("Allocating physical resource for texture:");
-
-    for (auto &texture_resource : m_texture_resources) {
-        m_log->trace("   - {}", texture_resource->m_name);
-        // Back buffer gets special handling.
-        if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
-            // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
-            texture_resource->m_physical = std::make_shared<PhysicalBackBuffer>(m_device, m_swapchain);
-        } else {
-            auto physical = std::make_shared<PhysicalImage>(m_device);
-            texture_resource->m_physical = physical;
-
-            physical->m_img = std::make_unique<wrapper::Image>(
-                m_device, texture_resource->m_format, m_swapchain.extent().width, m_swapchain.extent().height,
-                texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                    ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                    : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
-                static_cast<VkImageAspectFlags>(texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                                                    ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                                                    : VK_IMAGE_ASPECT_COLOR_BIT),
-                // TODO: Apply internal debug name to the images
-                "Rendergraph image");
-        }
-    }
+    create_texture_resources();
 
     // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
     // command buffers. Each graphics stage also maps to a vulkan render pass.
@@ -469,88 +543,12 @@ void RenderGraph::compile(const RenderResource *target) {
             graphics_stage->m_physical = std::move(physical_ptr);
 
             build_render_pass(graphics_stage, physical);
-
-            // TODO: Move this to build_descriptor_set();
-
-            // Use the descriptor builder to assemble the descriptor
-            for (auto &read_resource : graphics_stage->m_reads) {
-                // For simplicity reasons, check if it's an external texture resource first
-                auto *external_texture = read_resource.first->as<ExternalTextureResource>();
-                if (external_texture != nullptr) {
-                    external_texture->m_descriptor_image_info = VkDescriptorImageInfo{
-                        .sampler = external_texture->m_texture.sampler(),
-                        .imageView = external_texture->m_texture.image_view(),
-                        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                    };
-                    // Add combined image sampler to builder
-                    descriptor_builder.bind_image(&external_texture->m_descriptor_image_info,
-                                                  read_resource.second.value());
-                }
-
-                auto *physical = read_resource.first->m_physical->as<PhysicalBuffer>();
-                if (physical != nullptr) {
-                    // This is a buffer, so check if it's a uniform buffer
-                    auto *buffer = read_resource.first->as<BufferResource>();
-                    if (buffer != nullptr) {
-                        if (buffer->m_usage == BufferUsage::UNIFORM_BUFFER) {
-                            // Build the buffer's descriptor buffer info
-                            physical->m_descriptor_buffer_info = VkDescriptorBufferInfo{
-                                .buffer = physical->m_buffer->buffer(),
-                                .offset = 0,
-                                .range = buffer->m_data_size,
-                            };
-                            // Add uniform buffer to builder
-                            descriptor_builder.bind_uniform_buffer(&physical->m_descriptor_buffer_info,
-                                                                   read_resource.second.value());
-                        }
-                    }
-                }
-            }
-
-            // Build the descriptor and store descriptor set and descriptor set layout
-            const auto descriptor = descriptor_builder.build();
-            graphics_stage->m_physical->m_descriptor_sets.push_back(descriptor.first);
-            graphics_stage->m_physical->m_descriptor_set_layouts.push_back(descriptor.second);
-
-            // TODO: create_push_constant_ranges();
-
-            // Collect the push constant ranges of this stage into one std::vector
-            graphics_stage->m_push_constant_ranges.reserve(graphics_stage->m_push_constants.size());
-            for (const auto &push_constant : graphics_stage->m_push_constants) {
-                graphics_stage->m_push_constant_ranges.push_back(push_constant.m_push_constant);
-            }
-
-            // TODO: create_pipeline_layout()
-
-            physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
-                m_device, graphics_stage->m_physical->m_descriptor_set_layouts, graphics_stage->m_push_constant_ranges,
-                // TODO: Apply internal debug name to the pipeline layouts
-                "graphics pipeline layout");
-
-            // TODO: create_graphics_pipeline()
-
-            physical.m_pipeline = std::make_unique<wrapper::pipelines::GraphicsPipeline>(
-                m_device,
-                graphics_stage
-                    ->set_color_blend(wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
-                        .attachmentCount = 1,
-                        .pAttachments = &graphics_stage->m_color_blend_attachment,
-                    }))
-                    ->set_depth_stencil(wrapper::make_info<VkPipelineDepthStencilStateCreateInfo>({
-                        .depthTestEnable = graphics_stage->m_depth_test ? VK_TRUE : VK_FALSE,
-                        .depthWriteEnable = graphics_stage->m_depth_write ? VK_TRUE : VK_FALSE,
-                        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-                    }))
-                    ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
-                    ->set_render_pass(physical.m_render_pass->render_pass())
-                    ->set_scissor(m_swapchain.extent())
-                    ->set_viewport(m_swapchain.extent())
-                    ->make_create_info(),
-                // TODO: Apply internal debug name to the pipelines
-                "graphics pipeline");
+            build_descriptor_sets(graphics_stage);
+            create_push_constant_ranges(graphics_stage);
+            create_pipeline_layout(physical, graphics_stage);
+            create_graphics_pipeline(physical, graphics_stage);
 
             // TODO: Move to ...?
-
             // If we write to at least one texture, we need to make framebuffers.
             if (!stage->m_writes.empty()) {
                 // For every texture that this stage writes to, we need to attach it to the framebuffer.

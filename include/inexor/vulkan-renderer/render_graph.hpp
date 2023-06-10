@@ -668,6 +668,17 @@ private:
 
     void create_buffer(PhysicalBuffer &physical, const BufferResource *buffer_resource);
 
+    /// Create physical resources
+    /// For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage respectively
+    /// Every physical resource also has a VmaAllocation.
+    /// TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources)
+    void create_buffer_resources();
+    void create_texture_resources();
+    void build_descriptor_sets(GraphicsStage *graphics_stage);
+    void create_push_constant_ranges(GraphicsStage *graphics_stage);
+    void create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *graphics_stage);
+    void create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *graphics_stage);
+
     void update_dynamic_buffers();
 
     void update_push_constant_ranges(RenderStage *stage);
