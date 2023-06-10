@@ -52,6 +52,10 @@ public:
     Buffer &operator=(const Buffer &) = delete;
     Buffer &operator=(Buffer &&) = delete;
 
+    [[nodiscard]] VmaAllocationInfo allocation_info() const noexcept {
+        return m_allocation_info;
+    }
+
     [[nodiscard]] VkBuffer buffer() const noexcept {
         return m_buffer;
     }

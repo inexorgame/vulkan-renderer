@@ -29,7 +29,7 @@ private:
     std::size_t m_pool_use_counter{0};
 
     /// Default constructor
-    DescriptorPoolAllocator(const Device &device);
+    explicit DescriptorPoolAllocator(const Device &device);
 
     /// Return a descriptor pool from ``m_pools``. If all pools are used up, create a new one
     /// @note If we run out of descriptor pools, we simply create one new descriptor pool (not multiple ones!)

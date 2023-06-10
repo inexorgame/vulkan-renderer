@@ -2,6 +2,7 @@
 
 #include <volk.h>
 
+#include <utility>
 #include <vector>
 
 // Forward declaration
@@ -16,7 +17,7 @@ class Device;
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-// Forward declaration
+// Forward declarations
 class DescriptorSetAllocator;
 class DescriptorSetLayoutCache;
 
@@ -28,9 +29,9 @@ private:
     const Device &m_device;
     DescriptorSetAllocator &m_descriptor_set_allocator;
     DescriptorSetLayoutCache &m_descriptor_set_layout_cache;
-
     std::vector<VkWriteDescriptorSet> m_writes;
     std::vector<VkDescriptorSetLayoutBinding> m_bindings;
+    std::uint32_t m_binding{0};
 
 public:
     /// Default constructor
@@ -51,21 +52,19 @@ public:
 
     /// Bind a combined image sampler to the descriptor set
     /// @param image_info The descriptor image info
-    /// @param binding The binding index
     /// @param shader_stage The shader stage
     /// @return The dereferenced this pointer
-    DescriptorBuilder &bind_image(const VkDescriptorImageInfo *image_info, std::uint32_t binding,
-                                  VkShaderStageFlags shader_stage);
+    DescriptorBuilder &bind_image(const VkDescriptorImageInfo *image_info, VkShaderStageFlags shader_stage);
 
     /// Bind a uniform buffer to the descriptor set
     /// @param buffer_info The descriptor buffer info
-    /// @param binding The binding index
     /// @param shader_stage The shader stage
     /// @return The dereferenced this pointer
-    DescriptorBuilder &bind_uniform_buffer(const VkDescriptorBufferInfo *buffer_info, std::uint32_t binding,
-                                           VkShaderStageFlags shader_stage);
+    DescriptorBuilder &bind_uniform_buffer(const VkDescriptorBufferInfo *buffer_info, VkShaderStageFlags shader_stage);
 
-    [[nodiscard]] VkDescriptorSet build();
+    /// Build the descriptor set layout and allocate the descriptor set
+    /// @return A std::pair of the descriptor set and the descriptor set layout
+    [[nodiscard]] std::pair<VkDescriptorSet, VkDescriptorSetLayout> build();
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

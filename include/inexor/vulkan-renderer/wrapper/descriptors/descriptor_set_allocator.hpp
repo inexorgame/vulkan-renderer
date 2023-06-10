@@ -35,7 +35,7 @@ public:
     /// Default constructor
     /// @note This is private because descriptor allocators are for internal use in rendergraph only!
     /// @param device The device wrapper
-    DescriptorSetAllocator(const Device &device);
+    explicit DescriptorSetAllocator(const Device &device);
 
     /// Allocate a new descriptor set
     /// @note We are currently not batching calls vkAllocateDescriptorSets, which would allow multiple descriptor sets

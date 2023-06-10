@@ -8,6 +8,13 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/render_graph.cpp
     vulkan-renderer/time_step.cpp
 
+    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
@@ -25,8 +32,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/cpu_texture.cpp
-    vulkan-renderer/wrapper/descriptor.cpp
-    vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp

@@ -22,8 +22,13 @@ RenderStage *RenderStage::writes_to(const RenderResource *resource) {
     return this;
 }
 
-RenderStage *RenderStage::reads_from(const RenderResource *resource) {
-    m_reads.push_back(resource);
+RenderStage *RenderStage::reads_from(RenderResource *resource, const VkShaderStageFlags shader_stage) {
+    m_reads.push_back(std::make_pair(resource, shader_stage));
+    return this;
+}
+
+RenderStage *RenderStage::reads_from(RenderResource *resource) {
+    m_reads.push_back(std::make_pair(resource, std::nullopt));
     return this;
 }
 
@@ -233,6 +238,8 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
+
+    // TODO: graphics_stage == nullptr should throw an exception?
     if (graphics_stage != nullptr) {
         const auto *phys_graphics_stage = physical.as<PhysicalGraphicsStage>();
         assert(phys_graphics_stage != nullptr);
@@ -255,8 +262,8 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
     }
 
     std::vector<VkBuffer> vertex_buffers;
-    for (const auto *resource : stage->m_reads) {
-        const auto *buffer_resource = resource->as<BufferResource>();
+    for (const auto &resource : stage->m_reads) {
+        const auto *buffer_resource = resource.first->as<BufferResource>();
         if (buffer_resource == nullptr) {
             continue;
         }
@@ -266,6 +273,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
             continue;
         }
         if (buffer_resource->m_usage == BufferUsage::INDEX_BUFFER) {
+            // Note that in Vulkan you can bind multiple vertex buffers, but only one index buffer
             cmd_buf.bind_index_buffer(physical_buffer->m_buffer->buffer());
         } else if (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) {
             vertex_buffers.push_back(physical_buffer->m_buffer->buffer());
@@ -273,18 +281,20 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
     }
 
     if (!vertex_buffers.empty()) {
+        // Note that in Vulkan you can bind multiple vertex buffers, but only one index buffer
         cmd_buf.bind_vertex_buffers(vertex_buffers);
     }
 
     cmd_buf.bind_pipeline(physical.m_pipeline->pipeline());
 
-    // Add push constants
     for (auto &push_constant : stage->m_push_constants) {
-        cmd_buf.push_constants(physical.m_pipeline_layout->pipeline_layout(),
-                               push_constant.m_push_constant.stageFlags, push_constant.m_push_constant.size, push_constant.m_push_constant_data);
+        cmd_buf.push_constants(physical.m_pipeline_layout->pipeline_layout(), push_constant.m_push_constant.stageFlags,
+                               push_constant.m_push_constant.size, push_constant.m_push_constant_data);
     }
 
-    stage->m_on_record(physical, cmd_buf);
+    cmd_buf.bind_descriptor_sets(physical.m_descriptor_sets, physical.m_pipeline_layout->pipeline_layout());
+
+    stage->m_on_record(cmd_buf);
 
     if (graphics_stage != nullptr) {
         cmd_buf.end_render_pass();
@@ -367,6 +377,8 @@ void RenderGraph::compile(const RenderResource *target) {
     // TODO(GH-204): Better logging and input validation.
     // TODO: Many opportunities for optimisation.
 
+    // TODO: Move to determine_stage_order();
+
     // Build a simple helper map to lookup a resource's writers.
     std::unordered_map<const RenderResource *, std::vector<RenderStage *>> writers;
     for (auto &stage : m_stages) {
@@ -375,12 +387,14 @@ void RenderGraph::compile(const RenderResource *target) {
         }
     }
 
+    // TODO: Implement check_for_cycles_in_graph();
+
     // Post order depth first search. Note that this doesn't do any colouring, so it only works on acyclic graphs.
     // TODO(GH-204): Stage graph validation (ensuring no cycles, etc.).
     // TODO: Move away from recursive dfs algo.
     std::function<void(RenderStage *)> dfs = [&](RenderStage *stage) {
-        for (const auto *resource : stage->m_reads) {
-            for (auto *writer : writers[resource]) {
+        for (const auto &resource : stage->m_reads) {
+            for (auto *writer : writers[resource.first]) {
                 dfs(writer);
             }
         }
@@ -402,10 +416,24 @@ void RenderGraph::compile(const RenderResource *target) {
     // TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources).
     m_log->trace("Allocating physical resource for buffers:");
 
+    // TODO: create_buffer_resources();
+
     for (auto &buffer_resource : m_buffer_resources) {
-        m_log->trace("   - {}", buffer_resource->m_name);
+        // TODO: Move this to representation header
+        const std::unordered_map<BufferUsage, std::string> buffer_usage_name{
+            {BufferUsage::VERTEX_BUFFER, "vertex buffer"},
+            {BufferUsage::INDEX_BUFFER, "index buffer"},
+            {BufferUsage::UNIFORM_BUFFER, "uniform buffer"},
+        };
+
+        m_log->trace("   - {}\t [type: {},\t size: {} bytes]", buffer_resource->m_name,
+                     buffer_usage_name.at(buffer_resource->m_usage), buffer_resource->m_data_size);
         buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device);
     }
+
+    update_dynamic_buffers();
+
+    // TODO: create_texture_resources();
 
     m_log->trace("Allocating physical resource for texture:");
 
@@ -442,15 +470,64 @@ void RenderGraph::compile(const RenderResource *target) {
 
             build_render_pass(graphics_stage, physical);
 
+            // TODO: Move this to build_descriptor_set();
+
+            // Use the descriptor builder to assemble the descriptor
+            for (auto &read_resource : graphics_stage->m_reads) {
+                // For simplicity reasons, check if it's an external texture resource first
+                auto *external_texture = read_resource.first->as<ExternalTextureResource>();
+                if (external_texture != nullptr) {
+                    external_texture->m_descriptor_image_info = VkDescriptorImageInfo{
+                        .sampler = external_texture->m_texture.sampler(),
+                        .imageView = external_texture->m_texture.image_view(),
+                        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    };
+                    // Add combined image sampler to builder
+                    descriptor_builder.bind_image(&external_texture->m_descriptor_image_info,
+                                                  read_resource.second.value());
+                }
+
+                auto *physical = read_resource.first->m_physical->as<PhysicalBuffer>();
+                if (physical != nullptr) {
+                    // This is a buffer, so check if it's a uniform buffer
+                    auto *buffer = read_resource.first->as<BufferResource>();
+                    if (buffer != nullptr) {
+                        if (buffer->m_usage == BufferUsage::UNIFORM_BUFFER) {
+                            // Build the buffer's descriptor buffer info
+                            physical->m_descriptor_buffer_info = VkDescriptorBufferInfo{
+                                .buffer = physical->m_buffer->buffer(),
+                                .offset = 0,
+                                .range = buffer->m_data_size,
+                            };
+                            // Add uniform buffer to builder
+                            descriptor_builder.bind_uniform_buffer(&physical->m_descriptor_buffer_info,
+                                                                   read_resource.second.value());
+                        }
+                    }
+                }
+            }
+
+            // Build the descriptor and store descriptor set and descriptor set layout
+            const auto descriptor = descriptor_builder.build();
+            graphics_stage->m_physical->m_descriptor_sets.push_back(descriptor.first);
+            graphics_stage->m_physical->m_descriptor_set_layouts.push_back(descriptor.second);
+
+            // TODO: create_push_constant_ranges();
+
             // Collect the push constant ranges of this stage into one std::vector
+            graphics_stage->m_push_constant_ranges.reserve(graphics_stage->m_push_constants.size());
             for (const auto &push_constant : graphics_stage->m_push_constants) {
                 graphics_stage->m_push_constant_ranges.push_back(push_constant.m_push_constant);
             }
 
+            // TODO: create_pipeline_layout()
+
             physical.m_pipeline_layout = std::make_unique<wrapper::PipelineLayout>(
-                m_device, graphics_stage->m_descriptor_layouts, graphics_stage->m_push_constant_ranges,
+                m_device, graphics_stage->m_physical->m_descriptor_set_layouts, graphics_stage->m_push_constant_ranges,
                 // TODO: Apply internal debug name to the pipeline layouts
                 "graphics pipeline layout");
+
+            // TODO: create_graphics_pipeline()
 
             physical.m_pipeline = std::make_unique<wrapper::GraphicsPipeline>(
                 m_device,
@@ -471,6 +548,8 @@ void RenderGraph::compile(const RenderResource *target) {
                     ->make_create_info(),
                 // TODO: Apply internal debug name to the pipelines
                 "graphics pipeline");
+
+            // TODO: Move to ...?
 
             // If we write to at least one texture, we need to make framebuffers.
             if (!stage->m_writes.empty()) {
@@ -504,31 +583,51 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::update_push_constant_ranges(RenderStage* stage) {
+void RenderGraph::update_push_constant_ranges(RenderStage *stage) {
     for (auto &push_constant : stage->m_push_constants) {
         push_constant.m_on_update();
     }
 }
 
-void RenderGraph::update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf) {
+void RenderGraph::create_buffer(PhysicalBuffer &physical, const BufferResource *buffer_resource) {
+    // This translates the rendergraph's internal buffer usage to Vulkam buffer usage flags
+    const std::unordered_map<BufferUsage, VkBufferUsageFlags> buffer_usage{
+        {BufferUsage::VERTEX_BUFFER, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT},
+        {BufferUsage::INDEX_BUFFER, VK_BUFFER_USAGE_INDEX_BUFFER_BIT},
+        {BufferUsage::UNIFORM_BUFFER, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT},
+    };
+
+    physical.m_buffer = std::make_unique<wrapper::Buffer>(
+        m_device, buffer_resource->m_data_size, buffer_resource->m_data,
+        // TODO: This does not support staging buffers yet because of VMA_MEMORY_USAGE_CPU_TO_GPU!
+        buffer_usage.at(buffer_resource->m_usage), VMA_MEMORY_USAGE_CPU_TO_GPU,
+        // TODO: Apply internal debug name to the buffer
+        "Rendergraph buffer");
+}
+
+void RenderGraph::update_dynamic_buffers() {
     for (auto &buffer_resource : m_buffer_resources) {
+        auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
+
+        // Call the buffer's update function
+        buffer_resource->m_on_update();
+
         if (buffer_resource->m_data_upload_needed) {
-            auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
-
+            // Check if this buffer has already been created
             if (physical.m_buffer != nullptr) {
-                // Call the destructor
-                physical.m_buffer.reset();
+                // If the size has not increased, we don't need to destroy the buffer
+                if (buffer_resource->m_data_size > physical.m_buffer->allocation_info().size) {
+                    // Since we need to recreate the buffer, don't forget to destroy it first!
+                    // Calling make_unique on m_buffer twice without a .reset() would cause a memory leak!
+                    physical.m_buffer.reset();
+                    create_buffer(physical, buffer_resource.get());
+                }
+            } else {
+                // The buffer is not created yet, so create it
+                create_buffer(physical, buffer_resource.get());
             }
-            // Create the buffer and upload the buffer data
-            physical.m_buffer = std::make_unique<wrapper::Buffer>(
-                m_device, buffer_resource->m_data_size, buffer_resource->m_data,
-                (buffer_resource->m_usage == BufferUsage::VERTEX_BUFFER) ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-                                                                         : VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU,
-                // TODO: Apply internal debug name to the buffer
-                "Rendergraph buffer");
-
-            buffer_resource->m_data_upload_needed = false;
+            // TODO: Implement updates which requires staging buffers!
+            std::memcpy(physical.m_buffer->memory(), buffer_resource->m_data, buffer_resource->m_data_size);
         }
     }
 }
@@ -540,7 +639,7 @@ void RenderGraph::render(const std::uint32_t image_index, const wrapper::Command
         update_push_constant_ranges(stage);
     }
     // TODO: This is a waste of performance
-    update_dynamic_buffers(cmd_buf);
+    update_dynamic_buffers();
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);
     }

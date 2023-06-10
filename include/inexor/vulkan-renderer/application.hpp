@@ -40,7 +40,6 @@ private:
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
 
     std::vector<wrapper::Buffer> m_uniform_buffers;
-    std::vector<wrapper::ResourceDescriptor> m_descriptors;
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
@@ -49,6 +48,13 @@ private:
     TextureResource *m_depth_buffer{nullptr};
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
+    BufferResource *m_uniform_buffer{nullptr};
+
+    struct ModelViewPerspectiveMatrices {
+        glm::mat4 model{1.0f};
+        glm::mat4 view{1.0f};
+        glm::mat4 proj{1.0f};
+    } m_mvp_matrices;
 
     std::unique_ptr<wrapper::Shader> m_vertex_shader;
     std::unique_ptr<wrapper::Shader> m_fragment_shader;
@@ -85,7 +91,6 @@ private:
     void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
-    void update_uniform_buffers();
     void check_octree_collisions();
     void process_mouse_input();
     void process_keyboard_input();

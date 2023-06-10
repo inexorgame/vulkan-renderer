@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
@@ -20,15 +21,15 @@ DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayo
     DescriptorSetLayoutInfo layout_info;
     layout_info.bindings.reserve(descriptor_set_layout_ci.bindingCount);
     bool is_sorted = true;
-    std::int32_t last_binding = -1;
+    int last_binding = -1;
 
-    // Copy the bindings into layout_info
-    std::memcpy(layout_info.bindings.data(), descriptor_set_layout_ci.pBindings,
-                sizeof(VkDescriptorSetLayoutBinding) * descriptor_set_layout_ci.bindingCount);
-
-    // Ensure that the bindings are in increasing order
+    // Loop through all bindings and ensure that the bindings are in increasing order
     for (std::size_t i = 0; i < descriptor_set_layout_ci.bindingCount; i++) {
-        if (descriptor_set_layout_ci.pBindings[i].binding > last_binding) {
+        // Copy the bindings into layout_info
+        layout_info.bindings.push_back(descriptor_set_layout_ci.pBindings[i]);
+
+        // Check if the descriptor set layout bindings are sorted by binding
+        if (descriptor_set_layout_ci.pBindings[i].binding < last_binding) {
             last_binding = descriptor_set_layout_ci.pBindings[i].binding;
         } else {
             is_sorted = false;
@@ -38,20 +39,17 @@ DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayo
     }
     // We need to make sure the bindings are sorted because this is important for the hash!
     if (!is_sorted) {
-        std::sort(layout_info.bindings.begin(), layout_info.bindings.end(),
-                  [](auto &a, auto &b) { return a.binding < b.binding; });
+        std::sort(layout_info.bindings.begin(), layout_info.bindings.end(), [](auto &a, auto &b) {
+            return a.binding < b.binding; // Sort by binding
+        });
     }
-    // Lookup this descriptor set layout in cache
-    auto descriptor_set_layout = m_cache.find(layout_info);
-    if (descriptor_set_layout != m_cache.end()) {
-        // This descriptor set layout already exist in the cache, so we don't need to create it again
-        return descriptor_set_layout->second.descriptor_set_layout();
-    } else {
-        // The descriptor set layout does not already exist in the cache, so create it
-        m_cache.emplace(layout_info,
-                        std::move(DescriptorSetLayout(m_device, descriptor_set_layout_ci, "descriptor set layout")));
-        return m_cache.at(layout_info).descriptor_set_layout();
+
+    // Check if this descriptor set layout does already exist in the cache
+    if (!m_cache.contains(layout_info)) {
+        // TODO: Take name when creating descriptor set layout and pass it to DescriptorSetLayout wrapper!
+        m_cache.emplace(layout_info, DescriptorSetLayout(m_device, descriptor_set_layout_ci, "descriptor set layout"));
     }
+    return m_cache.at(layout_info).descriptor_set_layout();
 }
 
 bool DescriptorSetLayoutInfo::operator==(const DescriptorSetLayoutInfo &other) const {
@@ -78,10 +76,12 @@ bool DescriptorSetLayoutInfo::operator==(const DescriptorSetLayoutInfo &other) c
 }
 
 std::size_t DescriptorSetLayoutInfo::hash() const {
+    assert(!bindings.empty());
     std::size_t result = std::hash<std::size_t>()(bindings.size());
     for (const auto &binding : bindings) {
         // Pack binding data into 64 bits
-        std::size_t binding_hash = binding.binding | binding.descriptorType << 8 | binding.descriptorCount << 16 | 24;
+        std::size_t binding_hash =
+            binding.binding | binding.descriptorType << 8 | binding.descriptorCount << 16 | binding.stageFlags << 24;
         // shuffle the packed binding data and xor it with the main hash
         result ^= std::hash<std::size_t>()(binding_hash);
     }

@@ -4,6 +4,7 @@
 
 #include <volk.h>
 
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -42,12 +43,15 @@ private:
 
     /// The actual descriptor set layout cache
     /// Note that std::unordered_map can accept a third template parameter which is the hash function
+    /// Also note that the lifetime of the VkDescriptorSetLayout objects is bound to the lifetime of this unordered_map
+    /// The destructor of the DescriptorSetLayout wrapper instances will be called when DescriptorSetLayoutCache's
+    /// destructor is called
     std::unordered_map<DescriptorSetLayoutInfo, DescriptorSetLayout, DescriptorSetLayoutHash> m_cache;
 
 public:
     /// Default constructor
     /// @param device The device wrapper
-    DescriptorSetLayoutCache(const Device &device);
+    explicit DescriptorSetLayoutCache(const Device &device);
 
     /// Create a descriptor set layout with the help of the cache
     /// @param descriptor_set_layout_ci The descriptor set layout create info
@@ -57,7 +61,7 @@ public:
 
     DescriptorSetLayoutCache(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache(DescriptorSetLayoutCache &&) noexcept;
-    ~DescriptorSetLayoutCache();
+    ~DescriptorSetLayoutCache() = default;
 
     DescriptorSetLayoutCache &operator=(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache &operator=(DescriptorSetLayoutCache &&) = delete;

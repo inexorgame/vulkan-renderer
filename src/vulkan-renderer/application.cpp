@@ -8,7 +8,6 @@
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -210,7 +209,7 @@ void Application::setup_vulkan_debug_callback() {
                     } else if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0) {
                         spdlog::debug(message);
                     } else if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0) {
-                        spdlog::error(message);
+                        spdlog::critical(message);
                     } else {
                         // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
                         spdlog::warn(message);
@@ -218,11 +217,6 @@ void Application::setup_vulkan_debug_callback() {
 
                     // Check if --stop-on-validation-message is enabled.
                     if (user_data != nullptr) {
-                        // This feature stops command lines from overflowing with messages in case many validation
-                        // layer messages are reported in a short amount of time.
-                        spdlog::critical("Command line argument --stop-on-validation-message is enabled");
-                        spdlog::critical("Application will cause a break point now!");
-
                         // Wait for spdlog to shut down before aborting.
                         spdlog::shutdown();
                         std::abort();
@@ -415,15 +409,6 @@ Application::Application(int argc, char **argv) {
     m_uniform_buffers.emplace_back(*m_device, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                    VMA_MEMORY_USAGE_CPU_TO_GPU, "matrices uniform buffer");
 
-    // Create an instance of the resource descriptor builder.
-    // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device);
-
-    // Make use of the builder to create a resource descriptor for the uniform buffer.
-    m_descriptors.emplace_back(
-        descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
-            .build("Default uniform buffer"));
-
     load_octree_geometry(true);
     generate_octree_indices();
 
@@ -497,6 +482,7 @@ void Application::recreate_swapchain() {
     m_imgui_overlay.reset();
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, m_render_graph.get(), m_back_buffer,
                                                      [&]() { update_imgui_overlay(); });
+
     m_render_graph->compile(m_back_buffer);
 }
 
@@ -535,14 +521,27 @@ void Application::setup_render_graph() {
         m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "back buffer");
 
     m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
-                                                              VK_FORMAT_D32_SFLOAT_S8_UINT, "depth buffer");
-                               
+                                                          VK_FORMAT_D32_SFLOAT_S8_UINT, "depth buffer");
 
-    m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
-    m_index_buffer->upload_data(m_octree_indices);
+    m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER,
+                                                         [&]() { m_index_buffer->announce_update(m_octree_indices); });
 
-    m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->upload_data(m_octree_vertices);
+    m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER, [&]() {
+        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+            load_octree_geometry(false);
+            generate_octree_indices();
+        }
+        m_vertex_buffer->announce_update(m_octree_vertices);
+    });
+
+    m_uniform_buffer = m_render_graph->add<BufferResource>("Matrices", BufferUsage::UNIFORM_BUFFER, [&]() {
+        ModelViewPerspectiveMatrices matrix{
+            .view = m_camera->view_matrix(),
+            .proj = m_camera->perspective_matrix(),
+        };
+        matrix.proj[1][1] *= -1;
+        m_uniform_buffer->announce_update(&matrix);
+    });
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("Octree");
     main_stage->add_shader(*m_vertex_shader)
@@ -572,30 +571,17 @@ void Application::setup_render_graph() {
         ->set_vertex_input_binding_descriptions<OctreeGpuVertex>()
         ->writes_to(m_back_buffer)
         ->writes_to(m_depth_buffer)
-        ->reads_from(m_index_buffer)
-        ->reads_from(m_vertex_buffer)
-        ->set_on_record([&](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
-            cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
+        ->reads_from(m_index_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+        ->reads_from(m_vertex_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+        ->reads_from(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+        ->set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
             cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-        })
-        ->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
-}
-
-void Application::update_uniform_buffers() {
-    UniformBufferObject ubo{};
-
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = m_camera->view_matrix();
-    ubo.proj = m_camera->perspective_matrix();
-    ubo.proj[1][1] *= -1;
-
-    // TODO: Embed this into the render graph.
-    std::memcpy(m_uniform_buffers[0].memory(), &ubo, sizeof(ubo));
+        });
 }
 
 void Application::update_imgui_overlay() {
     ImGuiIO &io = ImGui::GetIO();
-    io.DeltaTime = m_time_passed;
+    io.DeltaTime = m_time_passed + 0.00001f;
     auto cursor_pos = m_input_data->get_cursor_pos();
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
     io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
@@ -634,14 +620,7 @@ void Application::update_imgui_overlay() {
     ImGui::Render();
 }
 
-void Application::process_keyboard_input() {
-    if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
-        load_octree_geometry(false);
-        generate_octree_indices();
-        m_index_buffer->upload_data(m_octree_indices);
-        m_vertex_buffer->upload_data(m_octree_vertices);
-    }
-}
+void Application::process_keyboard_input() {}
 
 void Application::process_mouse_input() {
     const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
@@ -682,7 +661,6 @@ void Application::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
-        update_uniform_buffers();
         render_frame();
         process_keyboard_input();
         process_mouse_input();

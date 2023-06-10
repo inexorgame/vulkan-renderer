@@ -1,7 +1,12 @@
 #pragma once
+#pragma once
 
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipeline.hpp"
@@ -19,7 +24,6 @@
 #include <vector>
 
 // TODO: Compute stages.
-// TODO: Uniform buffers.
 
 // Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
@@ -54,7 +58,7 @@ struct RenderGraphObject {
 
     /// @copydoc as
     template <typename T>
-    [[nodiscard]] const T *as() const{
+    [[nodiscard]] const T *as() const {
         return dynamic_cast<const T *>(this);
     }
 };
@@ -84,12 +88,11 @@ public:
     }
 };
 
+/// The internal buffer usage inside of rendergraph
 enum class BufferUsage {
-    /// @brief Specifies that the buffer will be used to input index data.
     INDEX_BUFFER,
-
-    /// @brief Specifies that the buffer will be used to input per vertex data to a vertex shader.
     VERTEX_BUFFER,
+    UNIFORM_BUFFER,
 };
 
 class BufferResource : public RenderResource {
@@ -99,20 +102,28 @@ private:
     const BufferUsage m_usage;
     const void *m_data{nullptr};
     std::size_t m_data_size{0};
+    std::function<void()> m_on_update{[]() {}};
     bool m_data_upload_needed{false};
 
 public:
-    BufferResource(std::string &&name, BufferUsage usage) : RenderResource(name), m_usage(usage) {}
+    BufferResource(
+        std::string &&name, BufferUsage usage, std::function<void()> on_update = []() {})
+        : RenderResource(name), m_usage(usage), m_on_update(std::move(on_update)) {}
 
-    void upload_data(const void *data, std::size_t size) {
+    void announce_update(const void *data, std::size_t size) {
         m_data = data;
         m_data_size = size;
         m_data_upload_needed = true;
     }
 
     template <typename T>
-    void upload_data(const std::vector<T> &data) {
-        upload_data(data.data(), sizeof(T) * data.size());
+    void announce_update(const T *data) {
+        announce_update(data, sizeof(T));
+    }
+
+    template <typename T>
+    void announce_update(const std::vector<T> &data) {
+        announce_update(data.data(), sizeof(T) * data.size());
     }
 };
 
@@ -141,7 +152,20 @@ public:
     /// @param usage The internal usage of the texture inside of rendergraph
     /// @param format The image format
     /// @param name The internal debug name of the texture
-    TextureResource(TextureUsage usage, VkFormat format, std::string &&name) : RenderResource(name), m_usage(usage), m_format(format) {}
+    TextureResource(TextureUsage usage, VkFormat format, std::string &&name)
+        : RenderResource(name), m_usage(usage), m_format(format) {}
+};
+
+/// An external texture resoruce is a texture which already has gpu memory created for it
+class ExternalTextureResource : public RenderResource {
+    friend RenderGraph;
+
+private:
+    const wrapper::GpuTexture &m_texture;
+    VkDescriptorImageInfo m_descriptor_image_info{};
+
+public:
+    ExternalTextureResource(const wrapper::GpuTexture &texture) : RenderResource(texture.name()), m_texture(texture) {}
 };
 
 class PushConstantResource {
@@ -153,12 +177,13 @@ private:
     const void *m_push_constant_data{nullptr};
 
 public:
-    PushConstantResource(const VkPushConstantRange push_constant, const void *push_constant_data, std::function<void()> on_update)
+    PushConstantResource(const VkPushConstantRange push_constant, const void *push_constant_data,
+                         std::function<void()> on_update)
         : m_push_constant(push_constant), m_push_constant_data(push_constant_data), m_on_update(std::move(on_update)) {}
 
     PushConstantResource(const PushConstantResource &) = delete;
     PushConstantResource(PushConstantResource &&other) noexcept : m_push_constant_data(other.m_push_constant_data) {
-        m_push_constant = std::move(other.m_push_constant);
+        m_push_constant = other.m_push_constant;
         m_on_update = std::move(other.m_on_update);
     };
 
@@ -177,16 +202,15 @@ private:
     const std::string m_name;
     std::unique_ptr<PhysicalStage> m_physical;
     std::vector<const RenderResource *> m_writes;
-    std::vector<const RenderResource *> m_reads;
-
-    std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
+    // TODO: Incorporate gpu textures into rendergraph and make this a const* RenderResource* again!
+    std::vector<std::pair<RenderResource *, std::optional<VkShaderStageFlags>>> m_reads;
 
     std::vector<PushConstantResource> m_push_constants;
     // We need to collect the push constant ranges into one vector
     std::vector<VkPushConstantRange> m_push_constant_ranges;
 
     std::function<void(void)> m_on_update{[]() {}};
-    std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> m_on_record{[](auto &, auto &) {}};
+    std::function<void(const wrapper::CommandBuffer &)> m_on_record{[](auto &) {}};
 
 protected:
     explicit RenderStage(std::string name) : m_name(std::move(name)) {}
@@ -203,26 +227,24 @@ public:
     RenderStage *writes_to(const RenderResource *resource);
 
     /// Specifies that this stage reads from `resource`
-    RenderStage *reads_from(const RenderResource *resource);
+    // TODO: Incorporate gpu textures into rendergraph and make this a const* RenderResource* again!
+    RenderStage *reads_from(RenderResource *resource);
 
-    /// Binds a descriptor set layout to this render stage
-    /// @note This function will be removed in the near future, as we are aiming for users of the API to not have to
-    /// deal with descriptors at all.
-    // TODO: Refactor descriptor management in the render graph
-    RenderStage *add_descriptor_layout(VkDescriptorSetLayout layout) {
-        m_descriptor_layouts.push_back(layout);
-        return this;
-    }
+    /// Specifies that this stage reads from `resource`
+    // TODO: Incorporate gpu textures into rendergraph and make this a const* RenderResource* again!
+    RenderStage *reads_from(RenderResource *resource, VkShaderStageFlags shader_stage);
 
     template <typename PushConstantRangeDataType>
     RenderStage *add_push_constant_range(
         const PushConstantRangeDataType *data, std::function<void()> on_update = []() {},
-                                         const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT, const std::uint32_t offset = 0) {
-        m_push_constants.emplace_back(VkPushConstantRange{
-            .stageFlags = stage_flags,
-            .offset = offset,
-            .size = sizeof(PushConstantRangeDataType),
-        }, data, std::move(on_update));
+        const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT, const std::uint32_t offset = 0) {
+        m_push_constants.emplace_back(
+            VkPushConstantRange{
+                .stageFlags = stage_flags,
+                .offset = offset,
+                .size = sizeof(PushConstantRangeDataType),
+            },
+            data, std::move(on_update));
         return this;
     }
 
@@ -238,7 +260,7 @@ public:
     /// Specifies a function that will be called during command buffer recording for this stage
     /// @details This function can be used to specify other vulkan commands during command buffer recording.
     /// The most common use for this is for draw commands.
-    RenderStage *set_on_record(std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> on_record) {
+    RenderStage *set_on_record(std::function<void(const wrapper::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
         return this;
     }
@@ -310,6 +332,8 @@ public:
 
     GraphicsStage &operator=(const GraphicsStage &) = delete;
     GraphicsStage &operator=(GraphicsStage &&) = delete;
+
+    // TODO: Use graphics pipeline builder directly and expose it to the front
 
     [[nodiscard]] VkGraphicsPipelineCreateInfo make_create_info();
 
@@ -531,6 +555,7 @@ class PhysicalBuffer : public PhysicalResource {
 
 private:
     std::unique_ptr<wrapper::Buffer> m_buffer;
+    VkDescriptorBufferInfo m_descriptor_buffer_info{};
 
 public:
     explicit PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
@@ -583,6 +608,9 @@ class PhysicalStage : public PhysicalResource {
     friend RenderGraph;
 
 private:
+    std::vector<VkDescriptorSet> m_descriptor_sets;
+    std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
+
     std::unique_ptr<wrapper::GraphicsPipeline> m_pipeline;
     std::unique_ptr<wrapper::PipelineLayout> m_pipeline_layout;
 
@@ -630,10 +658,17 @@ private:
     std::vector<std::unique_ptr<TextureResource>> m_texture_resources;
     std::vector<std::unique_ptr<RenderStage>> m_stages;
 
+    // Descriptor management
+    wrapper::descriptors::DescriptorSetAllocator descriptor_set_allocator;
+    wrapper::descriptors::DescriptorSetLayoutCache descriptor_set_layout_cache;
+    wrapper::descriptors::DescriptorBuilder descriptor_builder;
+
     // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
 
-    void update_dynamic_buffers(const wrapper::CommandBuffer &cmd_buf);
+    void create_buffer(PhysicalBuffer &physical, const BufferResource *buffer_resource);
+
+    void update_dynamic_buffers();
 
     void update_push_constant_ranges(RenderStage *stage);
 
@@ -645,7 +680,9 @@ private:
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
-        : m_device(device), m_swapchain(swapchain) {}
+        : m_device(device), m_swapchain(swapchain), descriptor_set_allocator(m_device),
+          descriptor_set_layout_cache(device),
+          descriptor_builder(device, descriptor_set_allocator, descriptor_set_layout_cache) {}
 
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
@@ -672,6 +709,5 @@ public:
     /// @param cmd_buf The command buffer
     void render(std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf);
 };
-
 
 } // namespace inexor::vulkan_renderer

@@ -5,8 +5,6 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <utility>
-
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 DescriptorBuilder::DescriptorBuilder(const Device &device, DescriptorSetAllocator &descriptor_set_allocator,
@@ -19,50 +17,57 @@ DescriptorBuilder::DescriptorBuilder(DescriptorBuilder &&other) noexcept
       m_descriptor_set_layout_cache(other.m_descriptor_set_layout_cache) {
     m_writes = std::move(other.m_writes);
     m_bindings = std::move(other.m_bindings);
+    m_binding = other.m_binding;
 }
 
 DescriptorBuilder &DescriptorBuilder::bind_uniform_buffer(const VkDescriptorBufferInfo *buffer_info,
-                                                          const std::uint32_t binding,
                                                           const VkShaderStageFlags shader_stage) {
     m_bindings.emplace_back(VkDescriptorSetLayoutBinding{
-        .binding = binding,
+        .binding = m_binding,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
         .stageFlags = shader_stage,
     });
 
-    // The dstSet member of VkWriteDescriptorSet will be set in the build method
     m_writes.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
-        .dstBinding = binding,
+        .dstSet = nullptr, // This will be set in the build() method
+        .dstBinding = m_binding,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        // It is the responsibility of the caller to keep buffer_info a valid pointer
         .pBufferInfo = buffer_info,
     }));
 
+    // Let's automatically increase the binding index because bindings are unique
+    m_binding++;
     return *this;
 }
 
-DescriptorBuilder &DescriptorBuilder::bind_image(const VkDescriptorImageInfo *image_info, const std::uint32_t binding,
+DescriptorBuilder &DescriptorBuilder::bind_image(const VkDescriptorImageInfo *image_info,
                                                  const VkShaderStageFlags shader_stage) {
     m_bindings.emplace_back(VkDescriptorSetLayoutBinding{
-        .binding = binding,
+        .binding = m_binding,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .descriptorCount = 1,
         .stageFlags = shader_stage,
     });
 
-    // The dstSet member of VkWriteDescriptorSet will be set in the build method
     m_writes.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
-        .dstBinding = binding,
+        .dstSet = nullptr, // This will be set in the build() method
+        .dstBinding = m_binding,
+        .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        // It is the responsibility of the caller to keep image_info a valid pointer
         .pImageInfo = image_info,
     }));
 
+    // Let's automatically increase the binding index because bindings are unique
+    m_binding++;
     return *this;
 }
 
-VkDescriptorSet DescriptorBuilder::build() {
+std::pair<VkDescriptorSet, VkDescriptorSetLayout> DescriptorBuilder::build() {
     const auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>({
         .bindingCount = static_cast<std::uint32_t>(m_bindings.size()),
         .pBindings = m_bindings.data(),
@@ -81,7 +86,14 @@ VkDescriptorSet DescriptorBuilder::build() {
     }
 
     vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_writes.size()), m_writes.data(), 0, nullptr);
-    return descriptor_set;
+
+    // Clear the builder's data so the builder can be re-used
+    m_bindings.clear();
+    m_writes.clear();
+    m_binding = 0;
+
+    // Return the created descriptor set and the descriptor set layout as a pair
+    return std::make_pair(descriptor_set, descriptor_set_layout);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
