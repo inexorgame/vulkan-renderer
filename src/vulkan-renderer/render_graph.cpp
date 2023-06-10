@@ -386,6 +386,9 @@ void RenderGraph::create_buffer_resources() {
             {BufferUsage::UNIFORM_BUFFER, "UNIFORM_BUFFER"},
         };
 
+        // Call the buffer's update function
+        buffer_resource->m_on_update();
+
         m_log->trace("   - {}\t [type: {},\t size: {} bytes]", buffer_resource->m_name,
                      buffer_usage_name.at(buffer_resource->m_usage), buffer_resource->m_data_size);
         buffer_resource->m_physical = std::make_shared<PhysicalBuffer>(m_device);
@@ -454,6 +457,10 @@ void RenderGraph::build_descriptor_sets(GraphicsStage *graphics_stage) {
             }
         }
     }
+
+    // Don't forget to clear the previous descriptor sets and descriptor set layouts
+    graphics_stage->m_physical->m_descriptor_sets.clear();
+    graphics_stage->m_physical->m_descriptor_set_layouts.clear();
 
     // Build the descriptor and store descriptor set and descriptor set layout
     const auto descriptor = descriptor_builder.build();
