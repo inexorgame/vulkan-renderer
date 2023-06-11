@@ -42,8 +42,7 @@ Source code
     ├── src/  «source code»
     ├── tests/
     ├── third_party/  «third party dependencies»
-    ├── vma-dumps/
-    └── vma-replays/
+    └── vma-dumps/
 
 
 Application
