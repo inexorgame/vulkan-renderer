@@ -29,7 +29,14 @@ RenderStage *RenderStage::reads_from(RenderResource *resource, const VkShaderSta
 }
 
 RenderStage *RenderStage::reads_from(RenderResource *resource) {
-    m_reads.push_back(std::make_pair(resource, std::nullopt));
+    auto *buffer_resource = resource->as<BufferResource>();
+    if (buffer_resource != nullptr) {
+        // Omitting the shader stage is only allowed for vertex buffers and index buffers!
+        m_reads.push_back(std::make_pair(resource, std::nullopt));
+    } else {
+        throw std::invalid_argument("Error: Omitting the shader stage when specifying reads_from is only alowed for "
+                                    "vertex buffers and index buffers!");
+    }
     return this;
 }
 

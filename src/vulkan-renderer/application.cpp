@@ -569,8 +569,8 @@ void Application::setup_render_graph() {
         ->set_vertex_input_binding_descriptions<OctreeGpuVertex>()
         ->writes_to(m_back_buffer)
         ->writes_to(m_depth_buffer)
-        ->reads_from(m_index_buffer, VK_SHADER_STAGE_VERTEX_BIT)
-        ->reads_from(m_vertex_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+        ->reads_from(m_index_buffer)
+        ->reads_from(m_vertex_buffer)
         ->reads_from(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
         ->set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
             cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
