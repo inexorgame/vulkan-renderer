@@ -1,4 +1,0 @@
-The folder 'vma-dumps' contains memory dumps which will be created by Vulkan memory allocator library at runtime.
-https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-
-Those dumps contain data in .JSON format which can be converted into an image using VmaDumpVis.py
