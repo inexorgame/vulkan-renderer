@@ -25,8 +25,6 @@ private:
     const Device &m_device;
     /// The descriptor pools
     std::vector<DescriptorPool> m_pools;
-    /// We count how many pools are in use and it we run out of pools, we just allocate more!
-    std::size_t m_pool_use_counter{0};
 
     /// Default constructor
     explicit DescriptorPoolAllocator(const Device &device);
@@ -34,7 +32,7 @@ private:
     /// Return a descriptor pool from ``m_pools``. If all pools are used up, create a new one
     /// @note If we run out of descriptor pools, we simply create one new descriptor pool (not multiple ones!)
     /// @return A descriptor pool that has not been used yet
-    [[nodiscard]] VkDescriptorPool request_descriptor_pool();
+    [[nodiscard]] VkDescriptorPool request_new_descriptor_pool();
 
 public:
     DescriptorPoolAllocator(const DescriptorPoolAllocator &) = delete;

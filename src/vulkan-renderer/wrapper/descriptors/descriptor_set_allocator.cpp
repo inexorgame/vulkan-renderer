@@ -12,7 +12,7 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 DescriptorSetAllocator::DescriptorSetAllocator(const Device &device)
     : m_device(device), m_descriptor_pool_allocator(device) {
-    m_current_pool = m_descriptor_pool_allocator.request_descriptor_pool();
+    m_current_pool = m_descriptor_pool_allocator.request_new_descriptor_pool();
     if (m_current_pool == VK_NULL_HANDLE) {
         throw std::runtime_error("Error: Could not create initial descriptor pool!");
     }
@@ -24,7 +24,7 @@ DescriptorSetAllocator::DescriptorSetAllocator(DescriptorSetAllocator &&other) n
 }
 
 VkDescriptorSet DescriptorSetAllocator::allocate_descriptor_set(const VkDescriptorSetLayout descriptor_set_layout) {
-    const auto descriptor_set_ai = make_info<VkDescriptorSetAllocateInfo>({
+    auto descriptor_set_ai = make_info<VkDescriptorSetAllocateInfo>({
         .descriptorPool = m_current_pool,
         .descriptorSetCount = 1,
         .pSetLayouts = &descriptor_set_layout,
@@ -36,7 +36,9 @@ VkDescriptorSet DescriptorSetAllocator::allocate_descriptor_set(const VkDescript
     if (result == VK_ERROR_OUT_OF_POOL_MEMORY || result == VK_ERROR_FRAGMENTED_POOL) {
         // The allocation failed in the first attempt because we did run out of descriptor pool memory!
         // Create a new descriptor pool and then try again!
-        m_current_pool = m_descriptor_pool_allocator.request_descriptor_pool();
+        m_current_pool = m_descriptor_pool_allocator.request_new_descriptor_pool();
+        // Don't forget we are using the new descriptor pool here!
+        descriptor_set_ai.descriptorPool = m_current_pool;
         // Try again with the new descriptor pool that was just created
         result = vkAllocateDescriptorSets(m_device.device(), &descriptor_set_ai, &new_descriptor_set);
     }
