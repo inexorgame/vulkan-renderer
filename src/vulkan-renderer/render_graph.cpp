@@ -431,7 +431,7 @@ void RenderGraph::create_texture_resources() {
     }
 }
 
-void RenderGraph::build_descriptor_sets(GraphicsStage *stage) {
+void RenderGraph::build_descriptor_sets(RenderStage *stage) {
     // Use the descriptor builder to assemble the descriptor
     for (auto &read_resource : stage->m_reads) {
         // For simplicity reasons, check if it's an external texture resource first

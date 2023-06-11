@@ -676,7 +676,7 @@ private:
     /// TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources)
     void create_buffer_resources();
     void create_texture_resources();
-    void build_descriptor_sets(GraphicsStage *stage);
+    void build_descriptor_sets(RenderStage *stage);
     void create_push_constant_ranges(GraphicsStage *stage);
     void create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage);
     void create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage);
