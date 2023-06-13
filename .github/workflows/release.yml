@@ -15,7 +15,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.10.0
+        uses: styfle/cancel-workflow-action@0.11.0
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           mkdir archives
-          unzip 'release_*.zip' -d archives
+          unzip 'build_*.zip' -d archives
           cd archives
           for f in *; do mv "$f" "${f/release_/}";done
 
