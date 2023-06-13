@@ -9,4 +9,3 @@ Debugging
     cla
     renderdoc
     vma-dumps
-    vma-replays
