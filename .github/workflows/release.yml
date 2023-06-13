@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           mkdir archives
-          unzip "{{ env.GITHUB_WORKSPACE }}/*.zip" -d archives
+          unzip "${process.env.GITHUB_WORKSPACE}/*.zip" -d archives
           cd archives
           for f in *; do mv "$f" "${f/release_/}";done
 
