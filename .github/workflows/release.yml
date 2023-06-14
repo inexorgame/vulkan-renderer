@@ -47,11 +47,7 @@ jobs:
         shell: bash
         run: |
           mkdir archives
-          ls
           unzip '*.zip' -d archives
-          ls
-          cd archives
-          for f in *; do mv "$f" "${f/release_/}";done
 
       - name: Prepare Release
         run: |
