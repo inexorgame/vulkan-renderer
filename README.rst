@@ -4,7 +4,7 @@ vulkan-renderer
 
 |language| |platforms| |github actions| |readthedocs| |discord| |license|
 
-.. image:: documentation/source/images/inexor2.png
+.. image:: documentation/source/images/inexor-banner.svg
 
 
 FAQ and documentation
@@ -43,8 +43,8 @@ Special thanks to `JetBrains <https://www.jetbrains.com/?from=github.com/inexorg
 
 .. |platforms| image:: https://img.shields.io/badge/platforms-Linux%20%26%20Windows-brightgreen
 
-.. |github actions| image:: https://img.shields.io/github/workflow/status/inexorgame/vulkan-renderer/Build
-   :target: https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3A%22Build%22
+.. |github actions| image:: https://img.shields.io/github/actions/workflow/status/inexorgame/vulkan-renderer/build.yml?branch=main
+   :target: https://github.com/inexorgame/vulkan-renderer/actions?query=build.yml
 
 .. |discord| image:: https://img.shields.io/discord/698219248954376256?logo=discord
    :target: https://discord.com/invite/acUW8k7
