@@ -237,7 +237,7 @@ jobs:
       - name: Prepare build artifacts
         shell: pwsh
         run: |
-          7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./build/*
+          7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./build/*
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
@@ -254,7 +254,7 @@ jobs:
           cp -r ./assets/. release
           mkdir -P ./release/shaders
           cp ./shaders/*.spv ./release/shaders/
-          7z a -tzip "devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./release/*
+          7z a -tzip "devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./release/*
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
