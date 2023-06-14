@@ -141,13 +141,13 @@ jobs:
           mkdir -p ./artifacts/shaders
           cp ./shaders/*.spv ./artifacts/shaders/
           cd artifacts
-          tar -zcvf "../linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
+          tar -zcvf "../devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
-          path: linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          name: devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          path: devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           retention-days: 7
 
   windows:
@@ -254,11 +254,11 @@ jobs:
           cp -r ./assets/. release
           mkdir -P ./release/shaders
           cp ./shaders/*.spv ./release/shaders/
-          7z a -tzip "windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./release/*
+          7z a -tzip "devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./release/*
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
-          path: windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          name: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          path: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
           retention-days: 7
