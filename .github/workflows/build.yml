@@ -243,13 +243,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
 
       - name: Prepare Devel Artifacts
         shell: pwsh
         run: |
           mkdir artifacts
-          cp -r ./build/example/${{ matrix.config.build_type }}/inexor-vulkan-renderer-example/. artifacts
+          cp -r ./build/example/${{ matrix.config.build_type }}/inexor-vulkan-renderer-example.exe artifacts
           cp -r ./configuration/. artifacts
           cp -r ./assets/. artifacts
           mkdir -P ./artifacts/shaders
@@ -260,5 +260,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
           retention-days: 7
