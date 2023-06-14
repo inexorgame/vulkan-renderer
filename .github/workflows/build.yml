@@ -119,19 +119,19 @@ jobs:
         run: |
           cmake --build build
 
-      - name: Prepare build artifacts
+      - name: Prepare Build Artifacts
         shell: bash
         run: |
           cd build
           tar -zcvf "../build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
-      - name: Upload Artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           path: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
 
-      - name: Prepare Artifacts
+      - name: Prepare Devel Artifacts
         shell: bash
         run: |
           mkdir artifacts
@@ -143,7 +143,7 @@ jobs:
           cd artifacts
           tar -zcvf "../devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
-      - name: Upload Artifacts
+      - name: Upload Devel Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
@@ -234,31 +234,31 @@ jobs:
         run: |
           cmake --build build ${{ matrix.config.cmake_build_options }}
 
-      - name: Prepare build artifacts
+      - name: Prepare Build Artifacts
         shell: pwsh
         run: |
           7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./build/*
 
-      - name: Upload build artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
-          path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
 
-      - name: Prepare release artifacts
+      - name: Prepare Devel Artifacts
         shell: pwsh
         run: |
-          mkdir release
-          cp -r ./build/example/${{ matrix.config.build_type }}/. release
-          cp -r ./configuration/. release
-          cp -r ./assets/. release
-          mkdir -P ./release/shaders
-          cp ./shaders/*.spv ./release/shaders/
-          7z a -tzip "devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./release/*
+          mkdir artifacts
+          cp -r ./build/example/${{ matrix.config.build_type }}/inexor-vulkan-renderer-example/. artifacts
+          cp -r ./configuration/. artifacts
+          cp -r ./assets/. artifacts
+          mkdir -P ./artifacts/shaders
+          cp ./shaders/*.spv ./artifacts/shaders/
+          7z a -tzip "devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./artifacts/*
 
-      - name: Upload release artifacts
+      - name: Upload Devel Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
-          path: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          name: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
           retention-days: 7
