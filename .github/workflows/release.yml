@@ -30,7 +30,7 @@ jobs:
                run_id: context.payload.workflow_run.id,
             });
             let matchArtifacts = allArtifacts.data.artifacts.filter((artifact) => {
-              return !artifact.name.startsWith("build_");
+              return artifact.name.startsWith("devel_");
             });
             let fs = require('fs');
             for (const artifact of matchArtifacts) {
@@ -47,8 +47,9 @@ jobs:
         shell: bash
         run: |
           mkdir archives
-          cd "${process.env.GITHUB_WORKSPACE}"
+          ls
           unzip '*.zip' -d archives
+          ls
           cd archives
           for f in *; do mv "$f" "${f/release_/}";done
 
