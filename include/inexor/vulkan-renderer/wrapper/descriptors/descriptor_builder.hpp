@@ -52,12 +52,14 @@ public:
 
     /// Bind a combined image sampler to the descriptor set
     /// @param image_info The descriptor image info
+    /// @note It is the responsibility of the caller to keep the memory of the descriptor image info alive!
     /// @param shader_stage The shader stage
     /// @return The dereferenced this pointer
     DescriptorBuilder &bind_image(const VkDescriptorImageInfo *image_info, VkShaderStageFlags shader_stage);
 
     /// Bind a uniform buffer to the descriptor set
     /// @param buffer_info The descriptor buffer info
+    /// @note It is the responsibility of the caller to keep the memory of the descriptor buffer info alive!
     /// @param shader_stage The shader stage
     /// @return The dereferenced this pointer
     DescriptorBuilder &bind_uniform_buffer(const VkDescriptorBufferInfo *buffer_info, VkShaderStageFlags shader_stage);

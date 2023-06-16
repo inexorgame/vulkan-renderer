@@ -53,18 +53,18 @@ public:
     /// @param device The device wrapper
     explicit DescriptorSetLayoutCache(const Device &device);
 
-    /// Create a descriptor set layout with the help of the cache
-    /// @param descriptor_set_layout_ci The descriptor set layout create info
-    /// @return The descriptor set layout that was created
-    [[nodiscard]] VkDescriptorSetLayout
-    create_descriptor_set_layout(VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci);
-
     DescriptorSetLayoutCache(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache(DescriptorSetLayoutCache &&) noexcept;
     ~DescriptorSetLayoutCache() = default;
 
     DescriptorSetLayoutCache &operator=(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache &operator=(DescriptorSetLayoutCache &&) = delete;
+
+    /// Create a descriptor set layout with the help of the cache
+    /// @param descriptor_set_layout_ci The descriptor set layout create info
+    /// @return The descriptor set layout that was created
+    [[nodiscard]] VkDescriptorSetLayout
+    create_descriptor_set_layout(VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

@@ -27,11 +27,12 @@ private:
     std::vector<DescriptorPool> m_pools;
 
     /// Default constructor
+    /// @param device The device wrapper
     explicit DescriptorPoolAllocator(const Device &device);
 
-    /// Return a descriptor pool from ``m_pools``. If all pools are used up, create a new one
+    /// Return a descriptor pool from ``m_pools`` and in case all pools are used up, create a new one
     /// @note If we run out of descriptor pools, we simply create one new descriptor pool (not multiple ones!)
-    /// @return A descriptor pool that has not been used yet
+    /// @return A new descriptor pool that has not been used yet
     [[nodiscard]] VkDescriptorPool request_new_descriptor_pool();
 
 public:

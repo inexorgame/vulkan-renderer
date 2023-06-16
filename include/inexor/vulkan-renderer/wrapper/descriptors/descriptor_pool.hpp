@@ -40,16 +40,16 @@ public:
     DescriptorPool(const Device &device, std::vector<VkDescriptorPoolSize> pool_sizes, std::uint32_t max_sets,
                    std::string name);
 
-    [[nodiscard]] VkDescriptorPool descriptor_pool() const noexcept {
-        return m_descriptor_pool;
-    }
-
     DescriptorPool(const DescriptorPool &) = delete;
     DescriptorPool(DescriptorPool &&) noexcept;
     ~DescriptorPool();
 
     DescriptorPool &operator=(const DescriptorPool &) = delete;
     DescriptorPool &operator=(DescriptorPool &&) = delete;
+
+    [[nodiscard]] VkDescriptorPool descriptor_pool() const noexcept {
+        return m_descriptor_pool;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
