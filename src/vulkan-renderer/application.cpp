@@ -524,20 +524,25 @@ void Application::setup_render_graph() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
+            // Note that we update the vertex buffer together with the index buffer to keep data consistent
+            m_vertex_buffer->announce_update(m_octree_vertices);
+            m_index_buffer->announce_update(m_octree_indices);
         }
-        // TODO: This is a waste of performance!
-        // Make sure to update vertices together with indices to keep data consistent!
-        m_vertex_buffer->announce_update(m_octree_vertices);
-        m_index_buffer->announce_update(m_octree_indices);
     });
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
 
+    // Update the vertex buffer and index buffer at initialization
+    // Note that we update the vertex buffer together with the index buffer to keep data consistent
+    m_vertex_buffer->announce_update(m_octree_vertices);
+    m_index_buffer->announce_update(m_octree_indices);
+
     m_uniform_buffer = m_render_graph->add<BufferResource>("Matrices", BufferUsage::UNIFORM_BUFFER, [&]() {
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
+        // Update the matrices every frame
         m_uniform_buffer->announce_update(&m_mvp_matrices);
     });
 
