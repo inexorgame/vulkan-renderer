@@ -438,7 +438,7 @@ void RenderGraph::create_texture_resources() {
     }
 }
 
-void RenderGraph::build_descriptor_sets(RenderStage *stage) {
+void RenderGraph::build_descriptor_sets(const RenderStage *stage) {
     // Use the descriptor builder to assemble the descriptor
     for (auto &read_resource : stage->m_reads) {
         // For simplicity reasons, check if it's an external texture resource first
@@ -552,7 +552,7 @@ void RenderGraph::determine_stage_order(const RenderResource *target) {
     }
 }
 
-void RenderGraph::create_framebuffers(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
+void RenderGraph::create_framebuffers(PhysicalGraphicsStage &physical, const GraphicsStage *stage) {
     // If we write to at least one texture, we need to make framebuffers.
     if (!stage->m_writes.empty()) {
         // For every texture that this stage writes to, we need to attach it to the framebuffer.
@@ -610,7 +610,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::update_push_constant_ranges(RenderStage *stage) {
+void RenderGraph::update_push_constant_ranges(const RenderStage *stage) {
     for (auto &push_constant : stage->m_push_constants) {
         push_constant.m_on_update();
     }

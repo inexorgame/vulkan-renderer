@@ -668,7 +668,7 @@ private:
 
     void create_buffer(PhysicalBuffer &physical, const BufferResource *buffer_resource);
 
-    void create_framebuffers(PhysicalGraphicsStage &physical, GraphicsStage *stage);
+    void create_framebuffers(PhysicalGraphicsStage &physical, const GraphicsStage *stage);
     void determine_stage_order(const RenderResource *target);
     /// Create physical resources
     /// For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage respectively
@@ -676,14 +676,14 @@ private:
     /// TODO: Resource aliasing (i.e. reusing the same physical resource for multiple resources)
     void create_buffer_resources();
     void create_texture_resources();
-    void build_descriptor_sets(RenderStage *stage);
+    void build_descriptor_sets(const RenderStage *stage);
     void create_push_constant_ranges(GraphicsStage *stage);
     void create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage);
     void create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage);
 
     void update_dynamic_buffers();
 
-    void update_push_constant_ranges(RenderStage *stage);
+    void update_push_constant_ranges(const RenderStage *stage);
 
     // Functions for building stage related vulkan objects.
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);
