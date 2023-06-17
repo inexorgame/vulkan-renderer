@@ -623,6 +623,28 @@ void RenderGraph::compile(const RenderResource *target) {
     }
     collect_render_stages_reading_from_uniform_buffers();
     update_uniform_buffer_descriptor_sets();
+    update_texture_descriptor_sets();
+}
+
+void RenderGraph::update_texture_descriptor_sets() {
+    // Loop through all stages
+    for (const auto &stage : m_stage_stack) {
+        // Go through all external texture resources
+        for (auto &read_resource : stage->m_reads) {
+            auto *external_texture = read_resource.first->as<ExternalTextureResource>();
+            if (external_texture != nullptr) {
+                external_texture->m_descriptor_image_info = VkDescriptorImageInfo{
+                    .sampler = external_texture->m_texture.sampler(),
+                    .imageView = external_texture->m_texture.image_view(),
+                    .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                };
+                // Add the combined image sampler to the descriptor set update builder
+                m_descriptor_set_updater.add_combined_image_sampler_update(stage->m_physical->m_descriptor_set,
+                                                                           &external_texture->m_descriptor_image_info);
+            }
+        }
+    }
+    m_descriptor_set_updater.update_descriptor_sets();
 }
 
 void RenderGraph::update_uniform_buffer_descriptor_sets() {
@@ -638,8 +660,6 @@ void RenderGraph::update_uniform_buffer_descriptor_sets() {
                 &m_buffer_resources[index_of_updated_buffer]->m_physical_buffer->m_descriptor_buffer_info);
         }
     }
-    // TODO: Update texture resources!
-
     // Note that we batch all descriptor set updates into one call to vkUpdateDescriptorSets for performance reasons
     m_descriptor_set_updater.update_descriptor_sets();
     // All descriptor sets have been updated
@@ -690,12 +710,15 @@ void RenderGraph::update_dynamic_buffers() {
                 physical.m_buffer.reset();
                 physical.m_buffer = nullptr;
             }
+            // TODO: Should we check if the size is smaller than the current size and not recreate?
+            // TODO: When implementing .recreate, move the line below to an else {} block!
             create_buffer(physical, buffer_resource.get());
 
             // If it's a uniform buffer, we need to update descriptors!
             if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
                 // Remember that this uniform buffer has been updated
                 m_indices_of_updated_uniform_buffers.push_back(index);
+
                 // TODO: Wait a minute... do we really even need this here?
                 // Update the descriptor buffer info
                 buffer_resource->m_physical_buffer->m_descriptor_buffer_info = VkDescriptorBufferInfo{

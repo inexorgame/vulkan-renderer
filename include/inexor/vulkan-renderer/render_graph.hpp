@@ -706,9 +706,12 @@ private:
     /// Update the push constant range
     void update_push_constant_ranges();
 
-    /// Update the descriptor sets
+    /// Update the descriptor sets for uniform buffers
     /// @note Keep in mind this function will be called once every frame
     void update_uniform_buffer_descriptor_sets();
+
+    /// Update the descriptor sets for textures
+    void update_texture_descriptor_sets();
 
     // Functions for building stage related vulkan objects.
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);
