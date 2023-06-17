@@ -30,8 +30,8 @@ RenderStage *RenderStage::reads_from(RenderResource *resource, const VkShaderSta
 
 RenderStage *RenderStage::reads_from(RenderResource *resource) {
     auto *buffer_resource = resource->as<BufferResource>();
+    // Omitting the shader stage is only allowed for vertex buffers and index buffers!
     if (buffer_resource != nullptr) {
-        // Omitting the shader stage is only allowed for vertex buffers and index buffers!
         m_reads.push_back(std::make_pair(resource, std::nullopt));
     } else {
         throw std::invalid_argument("Error: Omitting the shader stage when specifying reads_from is only alowed for "
@@ -299,7 +299,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
                                push_constant.m_push_constant.size, push_constant.m_push_constant_data);
     }
 
-    cmd_buf.bind_descriptor_sets(physical.m_descriptor_sets, physical.m_pipeline_layout->pipeline_layout());
+    cmd_buf.bind_descriptor_set(physical.m_descriptor_set, physical.m_pipeline_layout->pipeline_layout());
 
     stage->m_on_record(cmd_buf);
 
@@ -444,13 +444,8 @@ void RenderGraph::build_descriptor_sets(const RenderStage *stage) {
         // For simplicity reasons, check if it's an external texture resource first
         auto *external_texture = read_resource.first->as<ExternalTextureResource>();
         if (external_texture != nullptr) {
-            external_texture->m_descriptor_image_info = VkDescriptorImageInfo{
-                .sampler = external_texture->m_texture.sampler(),
-                .imageView = external_texture->m_texture.image_view(),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            };
-            // Add combined image sampler to builder
-            descriptor_builder.bind_image(&external_texture->m_descriptor_image_info, read_resource.second.value());
+            // Add combined image sampler to the descriptor set layout builder
+            m_descriptor_set_layout_builder.add_combined_image_sampler(read_resource.second.value());
         }
         auto *physical = read_resource.first->m_physical->as<PhysicalBuffer>();
         if (physical != nullptr) {
@@ -458,28 +453,17 @@ void RenderGraph::build_descriptor_sets(const RenderStage *stage) {
             auto *buffer = read_resource.first->as<BufferResource>();
             if (buffer != nullptr) {
                 if (buffer->m_usage == BufferUsage::UNIFORM_BUFFER) {
-                    // Build the buffer's descriptor buffer info
-                    physical->m_descriptor_buffer_info = VkDescriptorBufferInfo{
-                        .buffer = physical->m_buffer->buffer(),
-                        .offset = 0,
-                        .range = buffer->m_data_size,
-                    };
-                    // Add uniform buffer to builder
-                    descriptor_builder.bind_uniform_buffer(&physical->m_descriptor_buffer_info,
-                                                           read_resource.second.value());
+                    // Add uniform buffer to the descriptor set layout builder
+                    m_descriptor_set_layout_builder.add_uniform_buffer(read_resource.second.value());
                 }
             }
         }
     }
-
-    // Don't forget to clear the previous descriptor sets and descriptor set layouts
-    stage->m_physical->m_descriptor_sets.clear();
-    stage->m_physical->m_descriptor_set_layouts.clear();
-
-    // Build the descriptor and store descriptor set and descriptor set layout
-    const auto descriptor = descriptor_builder.build();
-    stage->m_physical->m_descriptor_sets.push_back(descriptor.first);
-    stage->m_physical->m_descriptor_set_layouts.push_back(descriptor.second);
+    // Build the descriptor set layout
+    const auto descriptor_set_layout = m_descriptor_set_layout_builder.build();
+    stage->m_physical->m_descriptor_set_layout = descriptor_set_layout;
+    // Allocate the descriptor set using the descriptor set allocator
+    stage->m_physical->m_descriptor_set = m_descriptor_set_allocator.allocate_descriptor_set(descriptor_set_layout);
 }
 
 void RenderGraph::create_push_constant_ranges(GraphicsStage *stage) {
@@ -491,9 +475,9 @@ void RenderGraph::create_push_constant_ranges(GraphicsStage *stage) {
 }
 
 void RenderGraph::create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
-    physical.m_pipeline_layout =
-        std::make_unique<wrapper::pipelines::PipelineLayout>(m_device, stage->m_physical->m_descriptor_set_layouts,
-                                                             stage->m_push_constant_ranges, "graphics pipeline layout");
+    physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
+        m_device, std::vector{stage->m_physical->m_descriptor_set_layout}, stage->m_push_constant_ranges,
+        "graphics pipeline layout");
 }
 
 void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
@@ -583,6 +567,34 @@ void RenderGraph::create_framebuffers(PhysicalGraphicsStage &physical, const Gra
     }
 }
 
+void RenderGraph::collect_render_stages_reading_from_uniform_buffers() {
+    m_log->trace("Connecting render stages to render resources");
+
+    // Here we sacrifice a little more memory for the sake of performance
+    m_uniform_buffer_reading_stages.resize(m_buffer_resources.size());
+
+    // First loop through all buffer resources and store their index in the m_buffer_resources vector
+    for (std::size_t index = 0; index < m_buffer_resources.size(); index++) {
+        m_buffer_resources[index]->m_my_buffer_index = index;
+    }
+    // Now loop through all stages and analyze which stage is reading from which uniform buffer
+    for (auto &stage : m_stage_stack) {
+        for (auto &render_resource : stage->m_reads) {
+            auto buffer_resource = render_resource.first->as<BufferResource>();
+            // Check if the dynamic cast has worked
+            if (buffer_resource != nullptr) {
+                // Check if this is a uniform buffer
+                if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
+                    // Remember that this uniform buffer is read by this stage
+                    m_uniform_buffer_reading_stages[buffer_resource->m_my_buffer_index].push_back(stage);
+                    m_log->trace("   - Stage '{}' is reading from uniform buffer '{}' [buffer resource index {}]",
+                                 stage->m_name, buffer_resource->name(), buffer_resource->m_my_buffer_index);
+                }
+            }
+        }
+    }
+}
+
 void RenderGraph::compile(const RenderResource *target) {
     // TODO(GH-204): Better logging and input validation.
     // TODO: Many opportunities for optimisation.
@@ -591,8 +603,9 @@ void RenderGraph::compile(const RenderResource *target) {
     update_dynamic_buffers();
     create_texture_resources();
 
-    // Create physical stages. Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of
-    // command buffers. Each graphics stage also maps to a vulkan render pass.
+    // Create physical stages
+    //  - Each render stage maps to a vulkan pipeline (either compute or graphics) and a list of command buffers
+    //  - Each graphics stage also maps to one vulkan render pass
     for (auto *stage : m_stage_stack) {
         if (auto *graphics_stage = stage->as<GraphicsStage>()) {
             // TODO: Can't we simplify this?
@@ -608,15 +621,41 @@ void RenderGraph::compile(const RenderResource *target) {
             create_framebuffers(physical, graphics_stage);
         }
     }
+    collect_render_stages_reading_from_uniform_buffers();
+    update_uniform_buffer_descriptor_sets();
 }
 
-void RenderGraph::update_push_constant_ranges(const RenderStage *stage) {
-    for (auto &push_constant : stage->m_push_constants) {
-        push_constant.m_on_update();
+void RenderGraph::update_uniform_buffer_descriptor_sets() {
+    // Loop through all indices of updated uniform buffer resources
+    for (auto &index_of_updated_buffer : m_indices_of_updated_uniform_buffers) {
+        // Now for that uniform buffer, get all the render stages which read from it
+        for (const auto &render_stage : m_uniform_buffer_reading_stages[index_of_updated_buffer]) {
+            // Add this uniform buffer update to the descriptor set update builder
+            m_descriptor_set_updater.add_uniform_buffer_update(
+                // TODO: We have a vector of descriptor sets per stage, but yet we only use and update index 0
+                render_stage->m_physical->m_descriptor_set,
+                // The descriptor buffer info has already been updated in update_dynamic_buffers()
+                &m_buffer_resources[index_of_updated_buffer]->m_physical_buffer->m_descriptor_buffer_info);
+        }
+    }
+    // TODO: Update texture resources!
+
+    // Note that we batch all descriptor set updates into one call to vkUpdateDescriptorSets for performance reasons
+    m_descriptor_set_updater.update_descriptor_sets();
+    // All descriptor sets have been updated
+    m_indices_of_updated_uniform_buffers.clear();
+}
+
+void RenderGraph::update_push_constant_ranges() {
+    for (const auto &stage : m_stage_stack) {
+        stage->m_on_update();
+        for (auto &push_constant : stage->m_push_constants) {
+            push_constant.m_on_update();
+        }
     }
 }
 
-void RenderGraph::create_buffer(PhysicalBuffer &physical, const BufferResource *buffer_resource) {
+void RenderGraph::create_buffer(PhysicalBuffer &physical, BufferResource *buffer_resource) {
     // This translates the rendergraph's internal buffer usage to Vulkam buffer usage flags
     const std::unordered_map<BufferUsage, VkBufferUsageFlags> buffer_usage{
         {BufferUsage::VERTEX_BUFFER, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT},
@@ -629,13 +668,15 @@ void RenderGraph::create_buffer(PhysicalBuffer &physical, const BufferResource *
         m_device, buffer_resource->m_data_size, buffer_resource->m_data,
         // TODO: This does not support staging buffers yet because of VMA_MEMORY_USAGE_CPU_TO_GPU!
         buffer_usage.at(buffer_resource->m_usage), VMA_MEMORY_USAGE_CPU_TO_GPU, buffer_resource->name());
+
+    // Let's just store a pointer from the buffer resource to the physical buffer
+    // TODO: We should not do this in the future!
+    buffer_resource->m_physical_buffer = &physical;
 }
 
 void RenderGraph::update_dynamic_buffers() {
-    // If a uniform buffer is recreated, we need to update the descriptor sets for that stage
-    bool update_stage_descriptor_sets = false;
-
-    for (auto &buffer_resource : m_buffer_resources) {
+    for (std::size_t index = 0; index < m_buffer_resources.size(); index++) {
+        auto &buffer_resource = m_buffer_resources[index];
         auto &physical = *buffer_resource->m_physical->as<PhysicalBuffer>();
 
         // Call the buffer's update function
@@ -644,50 +685,40 @@ void RenderGraph::update_dynamic_buffers() {
         if (buffer_resource->m_data_upload_needed) {
             // Check if this buffer has already been created
             if (physical.m_buffer != nullptr) {
+                // TODO: Implement a recreate() command (don't reset the unique ptr!)
+                // physical.m_buffer->recreate(..);
                 physical.m_buffer.reset();
                 physical.m_buffer = nullptr;
-
-                // If it's a uniform buffer, we need to update descriptors!
-                if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
-                    update_stage_descriptor_sets = true;
-                }
             }
             create_buffer(physical, buffer_resource.get());
 
+            // If it's a uniform buffer, we need to update descriptors!
+            if (buffer_resource->m_usage == BufferUsage::UNIFORM_BUFFER) {
+                // Remember that this uniform buffer has been updated
+                m_indices_of_updated_uniform_buffers.push_back(index);
+                // TODO: Wait a minute... do we really even need this here?
+                // Update the descriptor buffer info
+                buffer_resource->m_physical_buffer->m_descriptor_buffer_info = VkDescriptorBufferInfo{
+                    .buffer = physical.m_buffer->buffer(),
+                    .offset = 0,
+                    .range = physical.m_buffer->allocation_info().size,
+                };
+            }
             // TODO: Implement updates which requires staging buffers!
             std::memcpy(physical.m_buffer->memory(), buffer_resource->m_data, buffer_resource->m_data_size);
-
-            // Check if any descriptor set update is necessary
-            if (update_stage_descriptor_sets) {
-                for (auto &stage : m_stage_stack) {
-                    auto *graphics_stage = stage->as<GraphicsStage>();
-                    if (graphics_stage == nullptr) {
-                        continue;
-                    }
-                    for (auto &[key, value] : graphics_stage->m_reads) {
-                        auto *stage_physical = key->m_physical->as<PhysicalBuffer>();
-                        // Check if this stage is reading from this buffer
-                        if (key == buffer_resource.get()) {
-                            stage_physical->m_descriptor_buffer_info.buffer = physical.m_buffer->buffer();
-                            build_descriptor_sets(graphics_stage);
-                        }
-                    }
-                }
-                // Descriptor update is done
-                update_stage_descriptor_sets = false;
-            }
         }
     }
 }
 
 void RenderGraph::render(const std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf) {
-    // TODO: This is a waste of performance
-    for (const auto &stage : m_stage_stack) {
-        stage->m_on_update();
-        update_push_constant_ranges(stage);
-    }
-    // TODO: This is a waste of performance
+    // TODO: Updating push constant ranges can be done in parallel using taskflow library
+    update_push_constant_ranges();
+    // TODO: Updating dynamic buffers can be done in parallel using taskflow library
     update_dynamic_buffers();
+    // TODO: Updating both the dynamic buffers and push constant range can be done at the same time
+    // Everything must have finished updating before we can update descriptor sets
+    update_uniform_buffer_descriptor_sets();
+    // TODO: Command buffer recording can be done in parallel using taskflow library
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);
     }

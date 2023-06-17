@@ -93,6 +93,18 @@ public:
                                            VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
 
     /// Call vkCmdBindDescriptorSets
+    /// @param desc_sets The descriptor set to bind
+    /// @param layout The pipeline layout
+    /// @param bind_point the pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
+    /// @param first_set The first descriptor set (``0`` by default)
+    /// @param dyn_offsets The dynamic offset values (empty by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set, VkPipelineLayout layout,
+                                             VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                             std::uint32_t first_set = 0,
+                                             std::span<const std::uint32_t> dyn_offsets = {}) const;
+
+    /// Call vkCmdBindDescriptorSets
     /// @param desc_sets The descriptor sets to bind
     /// @param layout The pipeline layout
     /// @param bind_point the pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)

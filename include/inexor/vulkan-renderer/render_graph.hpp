@@ -1,9 +1,10 @@
 #pragma once
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_updater.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
@@ -95,6 +96,9 @@ enum class BufferUsage {
     UNIFORM_BUFFER,
 };
 
+// Forward declaration
+class PhysicalBuffer;
+
 class BufferResource : public RenderResource {
     friend RenderGraph;
 
@@ -104,6 +108,11 @@ private:
     std::size_t m_data_size{0};
     std::function<void()> m_on_update{[]() {}};
     bool m_data_upload_needed{false};
+
+    // This is required for uniform buffer updates
+    // TODO: We should not do this in the future!
+    PhysicalBuffer *m_physical_buffer{nullptr};
+    std::size_t m_my_buffer_index{0};
 
 public:
     BufferResource(
@@ -608,8 +617,8 @@ class PhysicalStage : public PhysicalResource {
     friend RenderGraph;
 
 private:
-    std::vector<VkDescriptorSet> m_descriptor_sets;
-    std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
+    VkDescriptorSet m_descriptor_set;
+    VkDescriptorSetLayout m_descriptor_set_layout;
 
     std::unique_ptr<wrapper::pipelines::GraphicsPipeline> m_pipeline;
     std::unique_ptr<wrapper::pipelines::PipelineLayout> m_pipeline_layout;
@@ -659,14 +668,19 @@ private:
     std::vector<std::unique_ptr<RenderStage>> m_stages;
 
     // Descriptor management
-    wrapper::descriptors::DescriptorSetAllocator descriptor_set_allocator;
-    wrapper::descriptors::DescriptorSetLayoutCache descriptor_set_layout_cache;
-    wrapper::descriptors::DescriptorBuilder descriptor_builder;
+    wrapper::descriptors::DescriptorSetAllocator m_descriptor_set_allocator;
+    wrapper::descriptors::DescriptorSetLayoutCache m_descriptor_set_layout_cache;
+    wrapper::descriptors::DescriptorSetLayoutBuilder m_descriptor_set_layout_builder;
+    wrapper::descriptors::DescriptorSetUpdater m_descriptor_set_updater;
+    // We only store the indices of the uniform buffer resources which have been updated
+    std::vector<std::size_t> m_indices_of_updated_uniform_buffers;
+    // Each uniform buffer resource can be read from multiple render stages
+    std::vector<std::vector<RenderStage *>> m_uniform_buffer_reading_stages;
 
     // Stage execution order.
     std::vector<RenderStage *> m_stage_stack;
 
-    void create_buffer(PhysicalBuffer &physical, const BufferResource *buffer_resource);
+    void create_buffer(PhysicalBuffer &physical, BufferResource *buffer_resource);
 
     void create_framebuffers(PhysicalGraphicsStage &physical, const GraphicsStage *stage);
     void determine_stage_order(const RenderResource *target);
@@ -681,9 +695,20 @@ private:
     void create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage);
     void create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage);
 
+    /// We associate each uniform buffer to the stages which read from it so we know which descriptors in which stages
+    /// need to be updated if the uniform buffer has been updated/recreated
+    void collect_render_stages_reading_from_uniform_buffers();
+
+    /// Update the dynamic uniform buffers
+    /// @note Keep in mind this function will be called once every frame
     void update_dynamic_buffers();
 
-    void update_push_constant_ranges(const RenderStage *stage);
+    /// Update the push constant range
+    void update_push_constant_ranges();
+
+    /// Update the descriptor sets
+    /// @note Keep in mind this function will be called once every frame
+    void update_uniform_buffer_descriptor_sets();
 
     // Functions for building stage related vulkan objects.
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);
@@ -693,9 +718,9 @@ private:
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
-        : m_device(device), m_swapchain(swapchain), descriptor_set_allocator(m_device),
-          descriptor_set_layout_cache(device),
-          descriptor_builder(device, descriptor_set_allocator, descriptor_set_layout_cache) {}
+        : m_device(device), m_swapchain(swapchain), m_descriptor_set_allocator(m_device),
+          m_descriptor_set_layout_cache(device), m_descriptor_set_layout_builder(device, m_descriptor_set_layout_cache),
+          m_descriptor_set_updater(device) {}
 
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage
