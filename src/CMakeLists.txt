@@ -13,6 +13,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
 
+    vulkan-renderer/render-graph/buffer_resource.cpp
+    vulkan-renderer/render-graph/push_constant_range_resource.cpp
+    vulkan-renderer/render-graph/render_graph.cpp
+
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
 
