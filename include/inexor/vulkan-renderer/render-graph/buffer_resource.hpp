@@ -30,7 +30,7 @@ private:
     std::string m_name;
     /// The internal buffer usage of this buffer resource inside of the rendergraph
     BufferUsage m_usage;
-    /// The buffer estimated buffer update frequency, which will be used if this is a uniform buffer resource and we
+    /// The estimated buffer update frequency, which will be used if this is a uniform buffer resource and we
     /// need to group the descriptor for this uniform buffer into a descriptor set of the rendergraph which fits the
     /// update frequency (Note that descriptor sets should be grouped by udpate frequency for optimal performance)
     DescriptorSetUpdateFrequencyCategory m_update_frequency;

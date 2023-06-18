@@ -16,6 +16,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/render-graph/buffer_resource.cpp
     vulkan-renderer/render-graph/push_constant_range_resource.cpp
     vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/texture_resource.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp

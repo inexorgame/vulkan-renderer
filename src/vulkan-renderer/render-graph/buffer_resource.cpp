@@ -10,9 +10,9 @@ BufferResource::BufferResource(std::string name, BufferUsage usage,
                                DescriptorSetUpdateFrequencyCategory update_frequency, std::function<void()> on_update)
     : m_name(std::move(name)), m_usage(usage), m_update_frequency(m_update_frequency),
       m_on_update(std::move(on_update)) {
-
-    // TODO: Fix me..
-    m_requires_staging_buffer_update = false;
+    if (usage != BufferUsage::UNIFORM_BUFFER) {
+        m_requires_staging_buffer_update = true;
+    }
 }
 
 BufferResource::BufferResource(BufferResource &&other) noexcept {
