@@ -601,8 +601,9 @@ void Application::update_imgui_overlay() {
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
                 BUILD_GIT);
-    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(VK_API_VERSION_1_2),
-                VK_API_VERSION_MINOR(VK_API_VERSION_1_2), VK_API_VERSION_PATCH(VK_API_VERSION_1_2));
+    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(wrapper::Instance::REQUIRED_VK_API_VERSION),
+                VK_API_VERSION_MINOR(wrapper::Instance::REQUIRED_VK_API_VERSION),
+                VK_API_VERSION_PATCH(wrapper::Instance::REQUIRED_VK_API_VERSION));
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
