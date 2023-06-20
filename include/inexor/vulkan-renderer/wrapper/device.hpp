@@ -33,6 +33,7 @@ class Device {
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
+    VkPhysicalDeviceProperties m_properties{};
 
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
@@ -178,6 +179,10 @@ public:
 
     [[nodiscard]] std::uint32_t present_queue_family_index() const {
         return m_present_queue_family_index;
+    }
+
+    [[nodiscard]] VkPhysicalDeviceProperties physical_device_properties() const noexcept {
+        return m_properties;
     }
 
     [[nodiscard]] std::uint32_t transfer_queue_family_index() const {

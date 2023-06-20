@@ -12,9 +12,10 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
-    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_2};
 
 public:
+    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_3};
+
     /// @brief Check if a certain instance layer is available on the system.
     /// @param layer_name The name of the instance layer.
     /// @return ``true`` if the instance layer is supported.

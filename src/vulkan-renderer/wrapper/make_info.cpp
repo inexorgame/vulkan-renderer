@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <volk.h>
+#include <vulkan/vulkan_core.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -149,6 +149,12 @@ VkPipelineDepthStencilStateCreateInfo make_info(VkPipelineDepthStencilStateCreat
 }
 
 template <>
+VkPipelineDynamicStateCreateInfo make_info(VkPipelineDynamicStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    return info;
+}
+
+template <>
 VkPipelineInputAssemblyStateCreateInfo make_info(VkPipelineInputAssemblyStateCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     return info;
@@ -175,6 +181,12 @@ VkPipelineRasterizationStateCreateInfo make_info(VkPipelineRasterizationStateCre
 template <>
 VkPipelineShaderStageCreateInfo make_info(VkPipelineShaderStageCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    return info;
+}
+
+template <>
+VkPipelineTessellationStateCreateInfo make_info(VkPipelineTessellationStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
     return info;
 }
 

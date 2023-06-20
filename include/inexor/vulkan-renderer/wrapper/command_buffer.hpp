@@ -1,7 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
 #include <cassert>
 #include <memory>
@@ -29,7 +29,7 @@ class CommandBuffer {
     /// @note We are not recycling staging buffers. Once they are used and the command buffer handle has reached the end
     /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator (VMA) in managing the
     /// memory for staging buffers.
-    mutable std::vector<GPUMemoryBuffer> m_staging_bufs;
+    mutable std::vector<Buffer> m_staging_bufs;
 
     friend class CommandPool;
 
@@ -50,8 +50,8 @@ class CommandBuffer {
         assert(!name.empty());
 
         // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
-        m_staging_bufs.emplace_back(m_device, name, data_size, data, data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                    VMA_MEMORY_USAGE_CPU_ONLY);
+        m_staging_bufs.emplace_back(m_device, data_size, data, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                    VMA_MEMORY_USAGE_CPU_ONLY, name);
 
         return m_staging_bufs.back().buffer();
     }
@@ -91,6 +91,18 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi, // NOLINT
                                            VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
+
+    /// Call vkCmdBindDescriptorSets
+    /// @param desc_sets The descriptor set to bind
+    /// @param layout The pipeline layout
+    /// @param bind_point the pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
+    /// @param first_set The first descriptor set (``0`` by default)
+    /// @param dyn_offsets The dynamic offset values (empty by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set, VkPipelineLayout layout,
+                                             VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                             std::uint32_t first_set = 0,
+                                             std::span<const std::uint32_t> dyn_offsets = {}) const;
 
     /// Call vkCmdBindDescriptorSets
     /// @param desc_sets The descriptor sets to bind

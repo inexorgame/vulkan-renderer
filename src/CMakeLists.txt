@@ -6,13 +6,17 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/imgui.cpp
     vulkan-renderer/render_graph.cpp
-    vulkan-renderer/renderer.cpp
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
+
+    vulkan-renderer/render-graph/buffer_resource.cpp
+    vulkan-renderer/render-graph/push_constant_range_resource.cpp
+    vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/texture_resource.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
@@ -22,25 +26,37 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/vk_tools/gpu_info.cpp
     vulkan-renderer/vk_tools/representation.cpp
 
+    vulkan-renderer/wrapper/buffer.cpp
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/cpu_texture.cpp
-    vulkan-renderer/wrapper/descriptor.cpp
-    vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
-    vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
+    vulkan-renderer/wrapper/render_pass.cpp
+    vulkan-renderer/wrapper/sampler.cpp
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
-    vulkan-renderer/wrapper/uniform_buffer.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
+
+    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_updater.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+
+    vulkan-renderer/wrapper/pipelines/pipeline.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
+
 
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp
