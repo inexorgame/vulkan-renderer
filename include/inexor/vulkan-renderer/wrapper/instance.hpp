@@ -32,11 +32,10 @@ public:
     /// @param application_version The Vulkan application's internal version
     /// @param engine_version The Vulkan application's internal engine version
     /// @param enable_validation_layers True if validation layers should be enabled
-    /// @param enable_renderdoc_layer True if renderdoc layer should be enabled
     /// @param requested_instance_extensions The instance extensions which are requested
     /// @param requested_instance_layers The instance layers which are requested
     Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
-             std::uint32_t engine_version, bool enable_validation_layers, bool enable_renderdoc_layer,
+             std::uint32_t engine_version, bool enable_validation_layers,
              const std::vector<std::string> &requested_instance_extensions,
              const std::vector<std::string> &requested_instance_layers);
 
@@ -46,9 +45,8 @@ public:
     /// @param application_version The Vulkan application's internal version
     /// @param engine_version The Vulkan application's internal engine version
     /// @param enable_validation_layers True if validation layers should be enabled, false otherwise
-    /// @param enable_renderdoc_layer True if renderdoc layer should be enabled, false otherwise
     Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
-             std::uint32_t engine_version, bool enable_validation_layers, bool enable_renderdoc_layer);
+             std::uint32_t engine_version, bool enable_validation_layers);
 
     Instance(const Instance &) = delete;
     Instance(Instance &&) noexcept;

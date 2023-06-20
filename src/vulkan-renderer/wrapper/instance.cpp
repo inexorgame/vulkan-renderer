@@ -71,8 +71,7 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   bool enable_validation_layers, bool enable_renderdoc_layer,
-                   const std::vector<std::string> &requested_instance_extensions,
+                   bool enable_validation_layers, const std::vector<std::string> &requested_instance_extensions,
                    const std::vector<std::string> &requested_instance_layers) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
@@ -173,14 +172,6 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     spdlog::trace("Instance layer wishlist:");
 
 #ifndef NDEBUG
-    // RenderDoc is a very useful open source graphics debugger for Vulkan and other APIs.
-    // Not using it all the time during development is fine, but as soon as something crashes
-    // you should enable it, take a snapshot and look up what's wrong.
-    if (enable_renderdoc_layer) {
-        spdlog::trace("   - VK_LAYER_RENDERDOC_Capture");
-        instance_layers_wishlist.push_back("VK_LAYER_RENDERDOC_Capture");
-    }
-
     // We can't stress enough how important it is to use validation layers during development!
     // Validation layers in Vulkan are in-depth error checks for the application's use of the API.
     // They check for a multitude of possible errors. They can be disabled easily for releases.
@@ -210,13 +201,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
             spdlog::trace("   - {}", current_layer);
             enabled_instance_layers.push_back(current_layer);
         } else {
-#ifdef NDEBUG
-            if (std::string(current_layer) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME) {
-                spdlog::error("You can't use command line argument -renderdoc in release mode");
-            }
-#else
-            spdlog::trace("Requested instance layer {} is not available on this system!", current_layer);
-#endif
+            spdlog::warn("Requested instance layer {} is not available on this system!", current_layer);
         }
     }
 
@@ -237,9 +222,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   bool enable_validation_layers, bool enable_renderdoc_layer)
-    : Instance(application_name, engine_name, application_version, engine_version, enable_validation_layers,
-               enable_renderdoc_layer, {}, {}) {}
+                   bool enable_validation_layers)
+    : Instance(application_name, engine_name, application_version, engine_version, enable_validation_layers, {}, {}) {}
 
 Instance::Instance(Instance &&other) noexcept {
     m_instance = std::exchange(other.m_instance, nullptr);
