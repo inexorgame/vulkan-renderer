@@ -338,16 +338,6 @@ Application::Application(int argc, char **argv) {
         use_distinct_data_transfer_queue = false;
     }
 
-    bool enable_debug_marker_device_extension = true;
-
-    // Check if Vulkan debug markers should be disabled.
-    // Those are only available if RenderDoc instance layer is enabled!
-    const auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");
-    if (no_vulkan_debug_markers.value_or(false)) {
-        spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
-        enable_debug_marker_device_extension = false;
-    }
-
     const auto physical_devices = vk_tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
@@ -366,12 +356,6 @@ Application::Application(int argc, char **argv) {
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
-
-#ifndef NDEBUG
-    if (enable_debug_marker_device_extension) {
-        required_extensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-    }
-#endif
 
     const VkPhysicalDevice physical_device =
         preferred_graphics_card ? physical_devices[*preferred_graphics_card]
