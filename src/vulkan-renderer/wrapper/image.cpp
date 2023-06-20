@@ -65,7 +65,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, std::string 
     : Image(device, img_ci, VK_IMAGE_ASPECT_COLOR_BIT, std::move(name)) {}
 
 // Constructor 5 (calls constructor 3 (not 4!) internally)
-Image::Image(const Device &device, const VkFormat format, std::uint32_t width, std::uint32_t height,
+Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
              const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, std::string name)
     : Image(device,
             wrapper::make_info<VkImageCreateInfo>({
@@ -83,6 +83,28 @@ Image::Image(const Device &device, const VkFormat format, std::uint32_t width, s
                 .usage = usage,
                 .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
                 .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            }),
+            aspect_flags, std::move(name)) {}
+
+Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
+             const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, const VkImageLayout initial_layout,
+             std::string name)
+    : Image(device,
+            wrapper::make_info<VkImageCreateInfo>({
+                .imageType = VK_IMAGE_TYPE_2D,
+                .format = format,
+                .extent{
+                    .width = width,
+                    .height = height,
+                    .depth = 1,
+                },
+                .mipLevels = 1,
+                .arrayLayers = 1,
+                .samples = VK_SAMPLE_COUNT_1_BIT,
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .usage = usage,
+                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                .initialLayout = initial_layout,
             }),
             aspect_flags, std::move(name)) {}
 

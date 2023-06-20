@@ -66,11 +66,11 @@ public:
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, const VkImageCreateInfo &img_ci, std::string name);
 
-    /// Constructor 5 (calls constructor 3 (not 4!) internally)
+    /// Constructor 5 (calls constructor 3 internally)
     /// @param device The device wrapper
     /// @param format The image format
-    /// @param width The image width in pixels
-    /// @param height The image height in pixels
+    /// @param width The image width
+    /// @param height The image height
     /// @param usage The image usage
     /// @param aspect_flags The image aspect flags
     /// @param name The internal debug name of the image and the image view (must not be empty)
@@ -79,6 +79,21 @@ public:
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
           VkImageAspectFlags aspect_flags, std::string name);
+
+    /// Constructor 6 (calls constructor 3 internally)
+    /// @param device The device wrapper
+    /// @param format The image format
+    /// @param width The image width
+    /// @param height The image height
+    /// @param usage The image usage
+    /// @param aspect_flags The image aspect flags
+    /// @param initial_layout The initial layout of the image
+    /// @param name The internal debug name of the image and the image view (must not be empty)
+    /// @exception std::invalid_argument The internal debug name is empty
+    /// @exception VulkanException vmaCreateImage call failed
+    /// @exception VulkanException vkCreateImageView call failed
+    Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
+          VkImageAspectFlags aspect_flags, VkImageLayout initial_layout, std::string name);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;

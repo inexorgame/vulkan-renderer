@@ -432,8 +432,7 @@ void RenderGraph::create_texture_resources() {
                 static_cast<VkImageAspectFlags>(texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
                                                     ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
                                                     : VK_IMAGE_ASPECT_COLOR_BIT),
-                // TODO: Apply internal debug name to the images
-                "Rendergraph image");
+                VK_IMAGE_LAYOUT_UNDEFINED, texture_resource->name());
         }
     }
 }
