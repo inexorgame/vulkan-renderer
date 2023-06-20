@@ -37,7 +37,7 @@ Optional Software
     Improve your build times with ninja.
 
 `RenderDoc <https://renderdoc.org/>`__
-    Powerful open source graphics debugger. Inexor has full RenderDoc integration.
+    A very powerful open source graphics debugger.
 
 `Doxygen <http://www.doxygen.nl/download.html>`__
     Required for generating the documentation.

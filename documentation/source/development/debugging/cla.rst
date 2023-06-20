@@ -25,14 +25,6 @@ You can start vulkan-renderer with the following command line arguments:
 
 .. warning:: You should never disable validation layers because they offer extensive error checks for debugging.
 
-.. option:: --no-vk-debug-markers
-
-    Disables `Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__ (even if ``--renderdoc`` is specified).
-
-.. option:: --renderdoc
-
-    Enables the `RenderDoc <https://renderdoc.org/>`__ debug layer.
-
 .. option:: --vsync
 
 .. warning:: Vsync is currently not implemented. The command line argument will be ignored.
