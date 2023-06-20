@@ -15,10 +15,6 @@ You can start vulkan-renderer with the following command line arguments:
 
 .. warning:: Enabling this option could decrease the overall performance. Don't enable this option unless you have to.
 
-.. option:: --no-stats
-
-    Disables GPU info printing.
-
 .. option:: --no-validation
 
     Disables `Vulkan validation layers <https://github.com/KhronosGroup/Vulkan-ValidationLayers>`__.
