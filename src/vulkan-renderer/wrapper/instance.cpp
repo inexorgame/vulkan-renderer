@@ -125,11 +125,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     std::vector<const char *> instance_extension_wishlist = {
 #ifndef NDEBUG
-        // In debug mode, we use the following instance extensions:
-        // This one is for assigning internal names to Vulkan resources.
+        // VK_EXT_debug_utils
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        // This one is for setting up a Vulkan debug report callback function.
-        VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
 #endif
     };
 
