@@ -376,8 +376,6 @@ Application::Application(int argc, char **argv) {
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers,
         enable_renderdoc_instance_layer);
 
-    vk_tools::print_driver_vulkan_version();
-
     m_input_data = std::make_unique<input::KeyboardMouseInputData>();
 
     m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
@@ -402,16 +400,6 @@ Application::Application(int argc, char **argv) {
         spdlog::trace("Preferential graphics card index {} specified", *preferred_graphics_card);
     }
 
-    bool display_graphics_card_info = true;
-
-    // If the user specified command line argument "--nostats", no information will be
-    // displayed about all the graphics cards which are available on the system.
-    const auto hide_gpu_stats = cla_parser.arg<bool>("--no-stats");
-    if (hide_gpu_stats.value_or(false)) {
-        spdlog::trace("--no-stats specified, no extended information about graphics cards will be shown");
-        display_graphics_card_info = false;
-    }
-
     // If the user specified command line argument "--vsync", the presentation engine waits
     // for the next vertical blanking period to update the current image.
     const auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
@@ -421,10 +409,6 @@ Application::Application(int argc, char **argv) {
     } else {
         spdlog::trace("V-sync disabled!");
         m_vsync_enabled = false;
-    }
-
-    if (display_graphics_card_info) {
-        vk_tools::print_all_physical_devices(m_instance->instance(), m_surface->get());
     }
 
     bool use_distinct_data_transfer_queue = true;

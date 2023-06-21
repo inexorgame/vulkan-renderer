@@ -19,7 +19,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/vk_tools/device_info.cpp
     vulkan-renderer/vk_tools/enumerate.cpp
-    vulkan-renderer/vk_tools/gpu_info.cpp
     vulkan-renderer/vk_tools/representation.cpp
 
     vulkan-renderer/wrapper/command_buffer.cpp

@@ -6,7 +6,6 @@
 #include "inexor/vulkan-renderer/msaa_target.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
-#include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
