@@ -9,8 +9,8 @@ on:
       - completed
 
 jobs:
-  devel-release:
-    name: Development
+  nightly-release:
+    name: Nightly Release
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
@@ -30,7 +30,7 @@ jobs:
                run_id: context.payload.workflow_run.id,
             });
             let matchArtifacts = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name.startsWith("devel_");
+              return artifact.name.startsWith("nightly_");
             });
             let fs = require('fs');
             for (const artifact of matchArtifacts) {
@@ -53,8 +53,8 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git tag devel
-          git push -f origin tag devel
+          git tag nightly
+          git push -f origin tag nightly
 
       - name: Release
         shell: bash
@@ -65,5 +65,5 @@ jobs:
 
             This release tag is continuously updated.
         run: |         
-          gh release delete devel -y || true
-          gh release create devel ./archives/* --title "Latest Development Release" --notes "${{ env.NOTES }}" --prerelease --target ${{ github.sha }}
+          gh release delete nightly -y || true
+          gh release create nightly ./archives/* --title "Nightly Release" --notes "${{ env.NOTES }}" --prerelease --target ${{ github.sha }}
