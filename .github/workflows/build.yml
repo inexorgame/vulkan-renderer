@@ -131,7 +131,7 @@ jobs:
           name: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           path: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
 
-      - name: Prepare Devel Artifacts
+      - name: Prepare Nightly Artifacts
         shell: bash
         run: |
           mkdir artifacts
@@ -141,13 +141,13 @@ jobs:
           mkdir -p ./artifacts/shaders
           cp ./shaders/*.spv ./artifacts/shaders/
           cd artifacts
-          tar -zcvf "../devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
+          tar -zcvf "../nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
-      - name: Upload Devel Artifacts
+      - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
-          path: devel_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          name: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          path: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           retention-days: 7
 
   windows:
@@ -245,7 +245,7 @@ jobs:
           name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
           path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
 
-      - name: Prepare Devel Artifacts
+      - name: Prepare Nightly Artifacts
         shell: pwsh
         run: |
           mkdir artifacts
@@ -254,11 +254,11 @@ jobs:
           cp -r ./assets/. artifacts
           mkdir -P ./artifacts/shaders
           cp ./shaders/*.spv ./artifacts/shaders/
-          7z a -tzip "devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./artifacts/*
+          7z a -tzip "nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./artifacts/*
 
-      - name: Upload Devel Artifacts
+      - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: devel_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          name: nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
           retention-days: 7
