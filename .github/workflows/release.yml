@@ -64,6 +64,6 @@ jobs:
             Latest development release, ready to install.
 
             This release tag is continuously updated.
-        run: |         
-          gh release delete nightly -y || true
+        run: |
+          output=$(gh release delete nightly -y 2>&1) || [[ "${output}" == "release not found" ]]
           gh release create nightly ./archives/* --title "Nightly Release" --notes "${{ env.NOTES }}" --prerelease --target ${{ github.sha }}
