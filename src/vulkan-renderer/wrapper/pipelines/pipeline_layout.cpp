@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -10,7 +11,10 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 PipelineLayout::PipelineLayout(const Device &device, const VkPipelineLayoutCreateInfo &pipeline_layout_ci,
                                std::string name)
     : m_device(device), m_name(std::move(name)) {
-    m_device.create_pipeline_layout(pipeline_layout_ci, &m_pipeline_layout, m_name);
+    if (const auto result = vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + name + "!", result);
+    }
 }
 
 PipelineLayout::PipelineLayout(const Device &device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
@@ -33,4 +37,4 @@ PipelineLayout::~PipelineLayout() {
     vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::pipelines

@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -12,13 +13,14 @@ namespace inexor::vulkan_renderer::wrapper {
 Fence::Fence(const Device &device, const std::string &name, const bool in_signaled_state)
     : m_device(device), m_name(name) {
     assert(!name.empty());
-    assert(device.device());
 
-    m_device.create_fence(
-        make_info<VkFenceCreateInfo>({
-            .flags = static_cast<VkFenceCreateFlags>(in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0),
-        }),
-        &m_fence, m_name);
+    const auto fence_ci = make_info<VkFenceCreateInfo>({
+        .flags = static_cast<VkFenceCreateFlags>(in_signaled_state ? VK_FENCE_CREATE_SIGNALED_BIT : 0),
+    });
+
+    if (const auto result = vkCreateFence(m_device.device(), &fence_ci, nullptr, &m_fence); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateFence failed for fence " + name + "!", result);
+    }
 }
 
 Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {

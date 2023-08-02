@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
+#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -9,7 +10,10 @@ namespace inexor::vulkan_renderer::wrapper {
 
 Sampler::Sampler(const Device &device, const VkSamplerCreateInfo &sampler_ci, std::string name)
     : m_device(device), m_name(std::move(name)) {
-    m_device.create_sampler(sampler_ci, &m_sampler, m_name);
+    if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateSampler failed for sampler " + m_name + " !", result);
+    }
 }
 
 Sampler::Sampler(const Device &device, std::string name)
