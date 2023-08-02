@@ -8,11 +8,11 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// @brief RAII wrapper class for VkInstances.
+/// RAII wrapper class for VkInstance
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
-    VkDebugUtilsMessengerEXT m_callback{VK_NULL_HANDLE};
+    VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
 
 public:
     static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_3};

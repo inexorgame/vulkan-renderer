@@ -319,42 +319,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     spdlog::trace("Loading Vulkan entrypoints directly from driver (bypass Vulkan loader dispatch code)");
     volkLoadDevice(m_device);
 
-    const bool enable_debug_markers =
-        std::find_if(required_extensions.begin(), required_extensions.end(), [&](const char *extension) {
-            return std::string(extension) == std::string(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-        }) != required_extensions.end();
-
-#ifndef NDEBUG
-    if (enable_debug_markers) {
-        spdlog::trace("Initializing Vulkan debug markers");
-
-        // The debug marker extension is not part of the core, so function pointers need to be loaded manually.
-        m_vk_debug_marker_set_object_tag = reinterpret_cast<PFN_vkDebugMarkerSetObjectTagEXT>( // NOLINT
-            vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectTagEXT"));
-        assert(m_vk_debug_marker_set_object_tag);
-
-        m_vk_debug_marker_set_object_name = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>( // NOLINT
-            vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectNameEXT"));
-        assert(m_vk_debug_marker_set_object_name);
-
-        m_vk_cmd_debug_marker_begin = reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>( // NOLINT
-            vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerBeginEXT"));
-        assert(m_vk_cmd_debug_marker_begin);
-
-        m_vk_cmd_debug_marker_end = reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>( // NOLINT
-            vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerEndEXT"));
-        assert(m_vk_cmd_debug_marker_end);
-
-        m_vk_cmd_debug_marker_insert = reinterpret_cast<PFN_vkCmdDebugMarkerInsertEXT>( // NOLINT
-            vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerInsertEXT"));
-        assert(m_vk_cmd_debug_marker_insert);
-
-        m_vk_set_debug_utils_object_name = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>( // NOLINT
-            vkGetDeviceProcAddr(m_device, "vkSetDebugUtilsObjectNameEXT"));
-        assert(m_vk_set_debug_utils_object_name);
-    }
-#endif
-
     spdlog::trace("Queue family indices:");
     spdlog::trace("   - Graphics: {}", m_graphics_queue_family_index);
     spdlog::trace("   - Present: {}", m_present_queue_family_index);
@@ -465,116 +429,12 @@ std::optional<std::uint32_t> Device::find_queue_family_index_if(
     return std::nullopt;
 }
 
-void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type,
-                                   const std::string &name) const {
-#ifndef NDEBUG
-    if (m_vk_debug_marker_set_object_name == nullptr) {
-        return;
-    }
-
-    assert(object);
-    assert(!name.empty());
-    assert(m_vk_debug_marker_set_object_name);
-
-    const auto name_info = make_info<VkDebugMarkerObjectNameInfoEXT>({
-        .objectType = object_type,
-        .object = reinterpret_cast<std::uint64_t>(object), // NOLINT
-        .pObjectName = name.c_str(),
-    });
-
-    if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
-        throw VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
-    }
-#endif
-}
-
-void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, const std::uint64_t name,
-                                         const std::size_t memory_size, const void *memory_block) const {
-#ifndef NDEBUG
-    if (m_vk_debug_marker_set_object_tag == nullptr) {
-        return;
-    }
-
-    assert(name);
-    assert(memory_size > 0);
-    assert(memory_block);
-    assert(m_vk_debug_marker_set_object_tag);
-
-    const auto tag_info = make_info<VkDebugMarkerObjectTagInfoEXT>({
-        .objectType = object_type,
-        .object = reinterpret_cast<std::uint64_t>(object), // NOLINT
-        .tagName = name,
-        .tagSize = memory_size,
-        .pTag = memory_block,
-    });
-
-    if (const auto result = m_vk_debug_marker_set_object_tag(m_device, &tag_info); result != VK_SUCCESS) {
-        throw VulkanException("Failed to assign Vulkan debug marker memory block!", result);
-    }
-#endif
-}
-
-void Device::bind_debug_region(const VkCommandBuffer command_buffer, const std::string &name,
-                               const std::array<float, 4> color) const {
-#ifndef NDEBUG
-    if (m_vk_cmd_debug_marker_begin == nullptr) {
-        return;
-    }
-
-    assert(command_buffer);
-    assert(!name.empty());
-    assert(m_vk_cmd_debug_marker_begin);
-
-    auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
-
-    std::copy(color.begin(), color.end(), debug_marker.color);
-
-    debug_marker.pMarkerName = name.c_str();
-
-    m_vk_cmd_debug_marker_begin(command_buffer, &debug_marker);
-#endif
-}
-
-void Device::insert_debug_marker(const VkCommandBuffer command_buffer, const std::string &name,
-                                 const std::array<float, 4> color) const {
-#ifndef NDEBUG
-    if (m_vk_cmd_debug_marker_insert == nullptr) {
-        return;
-    }
-
-    assert(command_buffer);
-    assert(!name.empty());
-    assert(m_vk_cmd_debug_marker_insert);
-
-    auto debug_marker = make_info<VkDebugMarkerMarkerInfoEXT>();
-
-    std::copy(color.begin(), color.end(), debug_marker.color);
-
-    debug_marker.pMarkerName = name.c_str();
-
-    m_vk_cmd_debug_marker_insert(command_buffer, &debug_marker);
-#endif
-}
-
-void Device::end_debug_region(const VkCommandBuffer command_buffer) const {
-#ifndef NDEBUG
-    if (m_vk_cmd_debug_marker_end == nullptr) {
-        return;
-    }
-
-    assert(m_vk_cmd_debug_marker_end);
-    m_vk_cmd_debug_marker_end(command_buffer);
-#endif
-}
-
 void Device::create_command_pool(const VkCommandPoolCreateInfo &command_pool_ci, VkCommandPool *command_pool,
                                  const std::string &name) const {
     if (const auto result = vkCreateCommandPool(m_device, &command_pool_ci, nullptr, command_pool);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateCommandPool failed for command pool " + name + "!", result);
     }
-
-    set_debug_marker_name(&command_pool, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, name);
 }
 
 void Device::create_descriptor_pool(const VkDescriptorPoolCreateInfo &descriptor_pool_ci,
@@ -583,8 +443,6 @@ void Device::create_descriptor_pool(const VkDescriptorPoolCreateInfo &descriptor
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + name + " !", result);
     }
-
-    set_debug_marker_name(&descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, name);
 }
 
 void Device::create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo &descriptor_set_layout_ci,
@@ -594,16 +452,12 @@ void Device::create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo 
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + name + " !", result);
     }
-
-    set_debug_marker_name(&descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, name);
 }
 
 void Device::create_fence(const VkFenceCreateInfo &fence_ci, VkFence *fence, const std::string &name) const {
     if (const auto result = vkCreateFence(m_device, &fence_ci, nullptr, fence); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateFence failed for fence " + name + "!", result);
     }
-
-    set_debug_marker_name(&fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, name);
 }
 
 void Device::create_framebuffer(const VkFramebufferCreateInfo &framebuffer_ci, VkFramebuffer *framebuffer,
@@ -612,8 +466,6 @@ void Device::create_framebuffer(const VkFramebufferCreateInfo &framebuffer_ci, V
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateFramebuffer failed for framebuffer " + name + "!", result);
     }
-
-    set_debug_marker_name(&framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, name);
 }
 
 void Device::create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeline_ci, VkPipeline *pipeline,
@@ -622,8 +474,6 @@ void Device::create_graphics_pipeline(const VkGraphicsPipelineCreateInfo &pipeli
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + name + " !", result);
     }
-
-    set_debug_marker_name(&pipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, name);
 }
 
 void Device::create_image_view(const VkImageViewCreateInfo &image_view_ci, VkImageView *image_view,
@@ -631,8 +481,6 @@ void Device::create_image_view(const VkImageViewCreateInfo &image_view_ci, VkIma
     if (const auto result = vkCreateImageView(m_device, &image_view_ci, nullptr, image_view); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + name + "!", result);
     }
-
-    set_debug_marker_name(&image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, name);
 }
 
 void Device::create_pipeline_layout(const VkPipelineLayoutCreateInfo &pipeline_layout_ci,
@@ -641,8 +489,6 @@ void Device::create_pipeline_layout(const VkPipelineLayoutCreateInfo &pipeline_l
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + name + "!", result);
     }
-
-    set_debug_marker_name(&pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, name);
 }
 
 void Device::create_render_pass(const VkRenderPassCreateInfo &render_pass_ci, VkRenderPass *render_pass,
@@ -650,16 +496,12 @@ void Device::create_render_pass(const VkRenderPassCreateInfo &render_pass_ci, Vk
     if (const auto result = vkCreateRenderPass(m_device, &render_pass_ci, nullptr, render_pass); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateRenderPass failed for renderpass " + name + " !", result);
     }
-
-    set_debug_marker_name(&render_pass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, name);
 }
 
 void Device::create_sampler(const VkSamplerCreateInfo &sampler_ci, VkSampler *sampler, const std::string &name) const {
     if (const auto result = vkCreateSampler(m_device, &sampler_ci, nullptr, sampler); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateSampler failed for sampler " + name + " !", result);
     }
-
-    set_debug_marker_name(&sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, name);
 }
 
 void Device::create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemaphore *semaphore,
@@ -667,8 +509,6 @@ void Device::create_semaphore(const VkSemaphoreCreateInfo &semaphore_ci, VkSemap
     if (const auto result = vkCreateSemaphore(m_device, &semaphore_ci, nullptr, semaphore); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateSemaphore failed for " + name + " !", result);
     }
-
-    set_debug_marker_name(&semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, name);
 }
 
 void Device::create_shader_module(const VkShaderModuleCreateInfo &shader_module_ci, VkShaderModule *shader_module,
@@ -677,8 +517,6 @@ void Device::create_shader_module(const VkShaderModuleCreateInfo &shader_module_
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateShaderModule failed for shader module " + name + "!", result);
     }
-
-    set_debug_marker_name(&shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, name);
 }
 
 void Device::create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSwapchainKHR *swapchain,
@@ -686,8 +524,6 @@ void Device::create_swapchain(const VkSwapchainCreateInfoKHR &swapchain_ci, VkSw
     if (const auto result = vkCreateSwapchainKHR(m_device, &swapchain_ci, nullptr, swapchain); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateSwapchainKHR failed for swapchain " + name + "!", result);
     }
-
-    set_debug_marker_name(&swapchain, VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, name);
 }
 
 CommandPool &Device::thread_graphics_pool() const {

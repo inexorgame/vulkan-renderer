@@ -20,7 +20,6 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
-    m_device.set_debug_marker_name(&m_img, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
 
     // Fill in the image that was created and the format of the image
@@ -32,7 +31,6 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
-    m_device.set_debug_marker_name(&m_img_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
 // Constructor 2 (calls constructor 1 internally)

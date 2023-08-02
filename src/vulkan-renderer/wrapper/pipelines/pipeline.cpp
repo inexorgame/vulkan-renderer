@@ -15,7 +15,6 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkGraphicsPipelin
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + m_name + " !", result);
     }
-    m_device.set_debug_marker_name(&m_pipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_name);
 }
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept : m_device(other.m_device) {

@@ -238,12 +238,13 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
                            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
         .pfnUserCallback = debug_callback,
         .pUserData = nullptr,
     });
 
-    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_callback);
+    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_debug_callback);
         result != VK_SUCCESS) {
         // Don't forget to destroy the instance before throwing the exception!
         vkDestroyInstance(m_instance, nullptr);
@@ -261,10 +262,11 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
 Instance::Instance(Instance &&other) noexcept {
     m_instance = std::exchange(other.m_instance, nullptr);
+    m_debug_callback = std::exchange(other.m_debug_callback, nullptr);
 }
 
 Instance::~Instance() {
-    vkDestroyDebugUtilsMessengerEXT(m_instance, m_callback, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_callback, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }
 

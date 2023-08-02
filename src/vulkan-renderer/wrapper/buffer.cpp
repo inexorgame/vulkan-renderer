@@ -37,8 +37,6 @@ Buffer::Buffer(const Device &device, const VkDeviceSize buffer_size, const VkBuf
         throw VulkanException("Error: vmaCreateBuffer failed for buffer " + m_name + " !", result);
     }
 
-    // Assign an internal debug name to this buffer to make debugging easier
-    m_device.set_debug_marker_name(m_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_name);
     vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
 }
 

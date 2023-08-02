@@ -18,7 +18,6 @@ RenderPass::RenderPass(const Device &device, const VkRenderPassCreateInfo &rende
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateRenderPass failed for renderpass " + m_name + " !", result);
     }
-    m_device.set_debug_marker_name(&m_render_pass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_name);
 }
 
 RenderPass::RenderPass(const Device &device, const std::vector<VkAttachmentDescription> &attachments,

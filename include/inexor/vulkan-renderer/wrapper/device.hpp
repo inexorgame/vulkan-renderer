@@ -189,43 +189,6 @@ public:
         return m_transfer_queue_family_index;
     }
 
-    /// Assign an internal Vulkan debug marker name to a Vulkan object.
-    /// This internal name can be seen in external debuggers like RenderDoc.
-    /// @note This method is only available in debug mode with ``VK_EXT_debug_marker`` device extension enabled.
-    /// @param object The Vulkan object
-    /// @param object_type The Vulkan debug report object type
-    /// @param name The internal name of the Vulkan object
-    void set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT object_type, const std::string &name) const;
-
-    /// Assigns a block of memory to a Vulkan resource.
-    /// This memory block can be seen in external debuggers like RenderDoc.
-    /// @note This method is only available in debug mode with ``VK_EXT_debug_marker`` device extension enabled.
-    /// @param object The Vulkan object
-    /// @param object_type The Vulkan debug report object type
-    /// @param name The name of the memory block which will be connected to this object
-    /// @param memory_size The size of the memory block in bytes
-    /// @param memory_block The memory block to read from
-    void set_memory_block_attachment(void *object, VkDebugReportObjectTypeEXT object_type, std::uint64_t name,
-                                     std::size_t memory_size, const void *memory_block) const;
-
-    /// Annotate a rendering region in Vulkan debug markers.
-    /// The rendering region will be visible in external debuggers like RenderDoc.
-    /// @param command_buffer The command buffer
-    /// @param name The name of the rendering region
-    /// @param color The rgba color of the rendering region
-    void bind_debug_region(VkCommandBuffer command_buffer, const std::string &name, std::array<float, 4> color) const;
-
-    /// Insert a debug markers into the current renderpass using vkCmdDebugMarkerInsertEXT.
-    /// This debug markers can be seen in external debuggers like RenderDoc.
-    /// @param command_buffer The command buffer which is associated to the debug marker
-    /// @param name The name of the debug marker
-    /// @param color An array of red, green, blue and alpha values for the debug region's color
-    void insert_debug_marker(VkCommandBuffer command_buffer, const std::string &name, std::array<float, 4> color) const;
-
-    /// End the debug region of the current renderpass using vkCmdDebugMarkerEndEXT.
-    /// @param command_buffer The command buffer which is associated to the debug marker
-    void end_debug_region(VkCommandBuffer command_buffer) const;
-
     /// Call vkCreateCommandPool
     /// @param command_pool_ci The command pool create info structure
     /// @param command_pool The command pool to create
