@@ -93,7 +93,7 @@ public:
            const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features = {});
 
     Device(const Device &) = delete;
-    Device(Device &&) noexcept;
+    Device(Device &&) = delete;
 
     ~Device();
 

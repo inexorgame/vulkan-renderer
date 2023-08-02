@@ -364,11 +364,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     set_debug_utils_object_name(VK_OBJECT_TYPE_INSTANCE, reinterpret_cast<std::uint64_t>(inst.instance()), "Johannes1");
 }
 
-Device::Device(Device &&other) noexcept {
-    m_device = std::exchange(other.m_device, nullptr);
-    m_physical_device = std::exchange(other.m_physical_device, nullptr);
-}
-
 Device::~Device() {
     std::scoped_lock locker(m_mutex);
     wait_idle();
