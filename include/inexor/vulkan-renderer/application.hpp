@@ -11,7 +11,6 @@
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "inexor/vulkan-renderer/wrapper/validation_callback.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
@@ -29,7 +28,6 @@ private:
     bool m_vsync_enabled{false};
 
     PFN_vkDebugUtilsMessengerCallbackEXT m_debug_callbacks{VK_NULL_HANDLE};
-    std::unique_ptr<wrapper::ValidationCallback> m_validation_callback;
 
     bool m_debug_report_callback_initialised{false};
 
@@ -89,7 +87,6 @@ private:
     void load_toml_configuration_file(const std::string &file_name);
     /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
     void load_octree_geometry(bool initialize);
-    void setup_vulkan_debug_callback();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
     void check_octree_collisions();

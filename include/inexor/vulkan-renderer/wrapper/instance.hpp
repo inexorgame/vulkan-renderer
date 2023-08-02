@@ -12,6 +12,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
+    VkDebugUtilsMessengerEXT m_callback{VK_NULL_HANDLE};
 
 public:
     static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_3};
@@ -34,10 +35,12 @@ public:
     /// @param enable_validation_layers True if validation layers should be enabled
     /// @param requested_instance_extensions The instance extensions which are requested
     /// @param requested_instance_layers The instance layers which are requested
+    /// @param debug_callback The debug utils messenger callback (VK_EXT_debug_utils)
     Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
              std::uint32_t engine_version, bool enable_validation_layers,
              const std::vector<std::string> &requested_instance_extensions,
-             const std::vector<std::string> &requested_instance_layers);
+             const std::vector<std::string> &requested_instance_layers,
+             PFN_vkDebugUtilsMessengerCallbackEXT debug_callback);
 
     /// @brief Construct the Vulkan instance without the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name
@@ -45,8 +48,10 @@ public:
     /// @param application_version The Vulkan application's internal version
     /// @param engine_version The Vulkan application's internal engine version
     /// @param enable_validation_layers True if validation layers should be enabled, false otherwise
+    /// @param debug_callback The debug utils messenger callback (VK_EXT_debug_utils)
     Instance(const std::string &application_name, const std::string &engine_name, std::uint32_t application_version,
-             std::uint32_t engine_version, bool enable_validation_layers);
+             std::uint32_t engine_version, bool enable_validation_layers,
+             PFN_vkDebugUtilsMessengerCallbackEXT debug_callback);
 
     Instance(const Instance &) = delete;
     Instance(Instance &&) noexcept;

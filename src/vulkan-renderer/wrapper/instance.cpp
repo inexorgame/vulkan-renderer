@@ -72,9 +72,17 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
                    bool enable_validation_layers, const std::vector<std::string> &requested_instance_extensions,
-                   const std::vector<std::string> &requested_instance_layers) {
-    assert(!application_name.empty());
-    assert(!engine_name.empty());
+                   const std::vector<std::string> &requested_instance_layers,
+                   const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback) {
+    if (application_name.empty()) {
+        throw std::invalid_argument("Error: Application name is empty!");
+    }
+    if (engine_name.empty()) {
+        throw std::invalid_argument("Error: Engine name is empty!");
+    }
+    if (debug_callback == nullptr) {
+        throw std::invalid_argument("Error: Invalid debug utils messenger callback!");
+    }
 
     spdlog::trace("Initializing Vulkan metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
@@ -218,18 +226,45 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     }
 
     volkLoadInstanceOnly(m_instance);
+
+    // Note that we can only call is_extension_supported afer volkLoadInstanceOnly!
+    if (!is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+        // Don't forget to destroy the instance before throwing the exception!
+        vkDestroyInstance(m_instance, nullptr);
+        throw std::runtime_error("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
+    }
+
+    const auto dbg_messenger_ci = make_info<VkDebugUtilsMessengerCreateInfoEXT>({
+        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+        .pfnUserCallback = debug_callback,
+        .pUserData = nullptr,
+    });
+
+    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_callback);
+        result != VK_SUCCESS) {
+        // Don't forget to destroy the instance before throwing the exception!
+        vkDestroyInstance(m_instance, nullptr);
+        throw VulkanException(
+            "Error: Could not create Vulkan validation layer debug callback! (vkCreateDebugUtilsMessengerEXT failed!)",
+            result);
+    }
 }
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   bool enable_validation_layers)
-    : Instance(application_name, engine_name, application_version, engine_version, enable_validation_layers, {}, {}) {}
+                   const bool enable_validation_layers, const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback)
+    : Instance(application_name, engine_name, application_version, engine_version, enable_validation_layers, {}, {},
+               debug_callback) {}
 
 Instance::Instance(Instance &&other) noexcept {
     m_instance = std::exchange(other.m_instance, nullptr);
 }
 
 Instance::~Instance() {
+    vkDestroyDebugUtilsMessengerEXT(m_instance, m_callback, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }
 

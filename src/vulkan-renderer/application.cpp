@@ -204,21 +204,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSever
     return false;
 }
 
-void Application::setup_vulkan_debug_callback() {
-    if (m_enable_validation_layers) {
-        if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
-            spdlog::trace("Setting up Vulkan validation layers with VK_EXT_debug_utils");
-
-            m_validation_callback =
-                std::make_unique<wrapper::ValidationCallback>(m_instance->instance(), debug_messenger_callback);
-        } else {
-            spdlog::warn("Khronos validation layer is not available!");
-        }
-    } else {
-        spdlog::warn("Khronos validation layer is DISABLED!");
-    }
-}
-
 Application::Application(int argc, char **argv) {
     spdlog::trace("Initialising vulkan-renderer");
 
@@ -246,7 +231,8 @@ Application::Application(int argc, char **argv) {
 
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
-        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers);
+        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers,
+        debug_messenger_callback);
 
     vk_tools::print_driver_vulkan_version();
 
@@ -262,8 +248,6 @@ Application::Application(int argc, char **argv) {
                      "validation layer message");
         m_stop_on_validation_message = true;
     }
-
-    setup_vulkan_debug_callback();
 #endif
 
     spdlog::trace("Creating window surface");
@@ -354,7 +338,6 @@ Application::Application(int argc, char **argv) {
 }
 
 Application::~Application() {
-    m_validation_callback.reset();
     spdlog::trace("Shutting down vulkan renderer");
 }
 
