@@ -80,6 +80,8 @@ public:
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
 
+    /// @note Command buffers are allocated from a command pool, meaning the memory required for this will be
+    /// freed if the corresponding command pool is destroyed. Command buffers are not freed in the Destructor.
     ~CommandBuffer() = default;
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;

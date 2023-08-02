@@ -221,6 +221,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         .ppEnabledExtensionNames = enabled_instance_extensions.data(),
     });
 
+    // Note that an internal debug name will be assigned to the instance inside of the device wrapper
     if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);
     }

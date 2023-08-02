@@ -21,6 +21,8 @@ Fence::Fence(const Device &device, const std::string &name, const bool in_signal
     if (const auto result = vkCreateFence(m_device.device(), &fence_ci, nullptr, &m_fence); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateFence failed for fence " + name + "!", result);
     }
+    // Set an internal debug name to this fence using Vulkan debug utils (VK_EXT_debug_utils)
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_FENCE, reinterpret_cast<std::uint64_t>(m_fence), m_name);
 }
 
 Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {

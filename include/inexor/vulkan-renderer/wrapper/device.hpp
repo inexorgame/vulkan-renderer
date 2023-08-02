@@ -190,7 +190,7 @@ public:
     /// @param obj_type The Vulkan object type
     /// @param obj_handle The Vulkan object handle
     /// @param name the internal debug name of the Vulkan object
-    void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name);
+    void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
 
     /// Check if a surface supports a certain image usage
     /// @param surface The window surface

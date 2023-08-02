@@ -18,10 +18,16 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
         .commandBufferCount = 1,
     });
 
+    // Note that command buffers are allocated from a command pool, meaning the memory required for this will be
+    // freed if the corresponding command pool is destroyed. Command buffers are not freed in the destructor.
     if (const auto result = vkAllocateCommandBuffers(m_device.device(), &cmd_buf_ai, &m_command_buffer);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkAllocateCommandBuffers failed!", result);
     }
+
+    // Assign an internal debug name to this command buffer using debug utils (VK_EXT_debug_utils)
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_COMMAND_BUFFER,
+                                         reinterpret_cast<std::uint64_t>(m_command_buffer), m_name);
 
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }

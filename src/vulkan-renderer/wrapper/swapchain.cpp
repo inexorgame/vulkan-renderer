@@ -231,6 +231,10 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
     }
 
+    // Set an internal debug name to this swapchain using Vulkan debug utils (VK_EXT_debug_utils)
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_SWAPCHAIN_KHR, reinterpret_cast<std::uint64_t>(m_swapchain),
+                                         "Swapchain");
+
     // We need to destroy the old swapchain if specified
     if (old_swapchain != VK_NULL_HANDLE) {
         for (auto *const img_view : m_img_views) {

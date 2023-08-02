@@ -27,6 +27,10 @@ Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const s
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateFramebuffer failed for framebuffer " + name + "!", result);
     }
+
+    // Set an internal debug name to this framebuffer using Vulkan debug utils (VK_EXT_debug_utils)
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_FRAMEBUFFER, reinterpret_cast<std::uint64_t>(m_framebuffer),
+                                         m_name);
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {
