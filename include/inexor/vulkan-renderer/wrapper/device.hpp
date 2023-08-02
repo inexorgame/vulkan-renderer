@@ -48,14 +48,6 @@ class Device {
     mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
     mutable std::mutex m_mutex;
 
-    // The debug marker extension is not part of the core, so function pointers need to be loaded manually
-    PFN_vkDebugMarkerSetObjectTagEXT m_vk_debug_marker_set_object_tag{nullptr};
-    PFN_vkDebugMarkerSetObjectNameEXT m_vk_debug_marker_set_object_name{nullptr};
-    PFN_vkCmdDebugMarkerBeginEXT m_vk_cmd_debug_marker_begin{nullptr};
-    PFN_vkCmdDebugMarkerEndEXT m_vk_cmd_debug_marker_end{nullptr};
-    PFN_vkCmdDebugMarkerInsertEXT m_vk_cmd_debug_marker_insert{nullptr};
-    PFN_vkSetDebugUtilsObjectNameEXT m_vk_set_debug_utils_object_name{nullptr};
-
     /// Get the thread_local command pool
     /// @note This method will create a command pool for the thread if it doesn't already exist
     CommandPool &thread_graphics_pool() const;
@@ -285,6 +277,12 @@ public:
     /// @param name The name which will be assigned to the command buffer
     /// @return A command buffer from the thread_local command pool
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
+
+    /// Set the denug name of a Vulkan object using debug utils (VK_EXT_debug_utils)
+    /// @param obj_type The Vulkan object type
+    /// @param obj_handle The Vulkan object handle
+    /// @param name the internal debug name of the Vulkan object
+    void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name);
 
     /// Check if a surface supports a certain image usage
     /// @param surface The window surface

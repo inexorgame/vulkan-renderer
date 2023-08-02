@@ -201,6 +201,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSever
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
     }
+
+    // TODO: Print data of VkDebugUtilsMessengerCallbackDataEXT
     return false;
 }
 

@@ -53,14 +53,14 @@ VkDebugMarkerObjectTagInfoEXT make_info(VkDebugMarkerObjectTagInfoEXT info) {
 }
 
 template <>
-VkDebugReportCallbackCreateInfoEXT make_info(VkDebugReportCallbackCreateInfoEXT info) {
-    info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+VkDebugUtilsMessengerCreateInfoEXT make_info(VkDebugUtilsMessengerCreateInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     return info;
 }
 
 template <>
-VkDebugUtilsMessengerCreateInfoEXT make_info(VkDebugUtilsMessengerCreateInfoEXT info) {
-    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+VkDebugUtilsObjectNameInfoEXT make_info(VkDebugUtilsObjectNameInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
     return info;
 }
 

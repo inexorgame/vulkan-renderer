@@ -359,6 +359,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     // Store the properties of this physical device
     vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
+
+    // Now that we created the device, we can finally name the instance
+    set_debug_utils_object_name(VK_OBJECT_TYPE_INSTANCE, reinterpret_cast<std::uint64_t>(inst.instance()), "Johannes1");
 }
 
 Device::Device(Device &&other) noexcept {
@@ -539,6 +542,19 @@ CommandPool &Device::thread_graphics_pool() const {
 
 const CommandBuffer &Device::request_command_buffer(const std::string &name) {
     return thread_graphics_pool().request_command_buffer(name);
+}
+
+void Device::set_debug_utils_object_name(const VkObjectType obj_type, const std::uint64_t obj_handle,
+                                         const std::string &name) {
+    const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
+        .objectType = obj_type,
+        .objectHandle = obj_handle,
+        .pObjectName = name.c_str(),
+    });
+
+    if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
+        throw VulkanException("Error: Failed to assign debug name using debug utils", result);
+    }
 }
 
 void Device::wait_idle() const {
