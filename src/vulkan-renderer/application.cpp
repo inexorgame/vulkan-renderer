@@ -185,65 +185,37 @@ void Application::setup_window_and_input_callbacks() {
     m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+                                                        VkDebugUtilsMessageTypeFlagsEXT type,
+                                                        const VkDebugUtilsMessengerCallbackDataEXT *data,
+                                                        void *user_data) {
+    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        spdlog::trace("{}", data->pMessage);
+    }
+    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        spdlog::info("{}", data->pMessage);
+    }
+    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        spdlog::warn("{}", data->pMessage);
+    }
+    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        spdlog::critical("{}", data->pMessage);
+    }
+    return false;
+}
+
 void Application::setup_vulkan_debug_callback() {
-    // Check if validation is enabled check for availability of VK_EXT_debug_utils.
     if (m_enable_validation_layers) {
-        spdlog::trace("Khronos validation layer is enabled");
+        if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+            spdlog::trace("Setting up Vulkan validation layers with VK_EXT_debug_utils");
 
-        if (wrapper::Instance::is_extension_supported(VK_EXT_DEBUG_REPORT_EXTENSION_NAME)) {
-            auto debug_report_ci = wrapper::make_info<VkDebugReportCallbackCreateInfoEXT>();
-            debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | // NOLINT
-                                    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |                     // NOLINT
-                                    VK_DEBUG_REPORT_ERROR_BIT_EXT;                                    // NOLINT
-
-            // We use this user data pointer to signal the callback if "" is specified.
-            // All other solutions to this problem either involve duplicated versions of the lambda
-            // or global variables.
-            debug_report_ci.pUserData = reinterpret_cast<void *>(&m_stop_on_validation_message); // NOLINT
-
-            debug_report_ci.pfnCallback = reinterpret_cast<PFN_vkDebugReportCallbackEXT>( // NOLINT
-                +[](VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT, std::uint64_t, std::size_t, std::int32_t,
-                    const char *, const char *message, void *user_data) {
-                    if ((flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0) {
-                        spdlog::info(message);
-                    } else if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0) {
-                        spdlog::debug(message);
-                    } else if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0) {
-                        spdlog::critical(message);
-                    } else {
-                        // This also deals with VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT.
-                        spdlog::warn(message);
-                    }
-
-                    // Check if --stop-on-validation-message is enabled.
-                    if (user_data != nullptr) {
-                        // Wait for spdlog to shut down before aborting.
-                        spdlog::shutdown();
-                        std::abort();
-                    }
-                    return VK_FALSE;
-                });
-
-            // We have to explicitly load this function.
-            auto vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>( // NOLINT
-                vkGetInstanceProcAddr(m_instance->instance(), "vkCreateDebugReportCallbackEXT"));
-
-            if (vkCreateDebugReportCallbackEXT != nullptr) {
-                if (const auto result = vkCreateDebugReportCallbackEXT(m_instance->instance(), &debug_report_ci,
-                                                                       nullptr, &m_debug_report_callback);
-                    result != VK_SUCCESS) {
-                    throw VulkanException("Error: vkCreateDebugReportCallbackEXT failed!", result);
-                }
-                spdlog::trace("Creating Vulkan debug callback");
-                m_debug_report_callback_initialised = true;
-            } else {
-                spdlog::error("vkCreateDebugReportCallbackEXT is a null-pointer! Function not available");
-            }
+            m_validation_callback =
+                std::make_unique<wrapper::ValidationCallback>(m_instance->instance(), debug_messenger_callback);
         } else {
             spdlog::warn("Khronos validation layer is not available!");
         }
     } else {
-        spdlog::warn("Khronos validation layer is DISABLED");
+        spdlog::warn("Khronos validation layer is DISABLED!");
     }
 }
 
@@ -267,10 +239,10 @@ Application::Application(int argc, char **argv) {
         m_enable_validation_layers = false;
     }
 
-    spdlog::trace("Creating Vulkan instance");
-
     m_window =
         std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
+
+    spdlog::trace("Creating Vulkan instance");
 
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
@@ -382,18 +354,8 @@ Application::Application(int argc, char **argv) {
 }
 
 Application::~Application() {
+    m_validation_callback.reset();
     spdlog::trace("Shutting down vulkan renderer");
-
-    if (!m_debug_report_callback_initialised) {
-        return;
-    }
-
-    // TODO(): Is there a better way to do this? Maybe add a helper function to wrapper::Instance?
-    auto vk_destroy_debug_report_callback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>( // NOLINT
-        vkGetInstanceProcAddr(m_instance->instance(), "vkDestroyDebugReportCallbackEXT"));
-    if (vk_destroy_debug_report_callback != nullptr) {
-        vk_destroy_debug_report_callback(m_instance->instance(), m_debug_report_callback, nullptr);
-    }
 }
 
 void Application::generate_octree_indices() {

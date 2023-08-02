@@ -11,6 +11,7 @@
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/validation_callback.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
@@ -27,7 +28,8 @@ private:
     FPSCounter m_fps_counter;
     bool m_vsync_enabled{false};
 
-    VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
+    PFN_vkDebugUtilsMessengerCallbackEXT m_debug_callbacks{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::ValidationCallback> m_validation_callback;
 
     bool m_debug_report_callback_initialised{false};
 

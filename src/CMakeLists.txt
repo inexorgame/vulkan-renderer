@@ -42,6 +42,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
+    vulkan-renderer/wrapper/validation_callback.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp
 

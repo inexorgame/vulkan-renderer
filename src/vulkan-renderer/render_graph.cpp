@@ -740,6 +740,8 @@ void RenderGraph::render(const std::uint32_t image_index, const wrapper::Command
     // TODO: Updating both the dynamic buffers and push constant range can be done at the same time
     // Everything must have finished updating before we can update descriptor sets
     update_uniform_buffer_descriptor_sets();
+    // TODO: update_texture_descriptor_sets
+
     // TODO: Command buffer recording can be done in parallel using taskflow library
     for (const auto &stage : m_stage_stack) {
         record_command_buffer(stage, cmd_buf, image_index);
