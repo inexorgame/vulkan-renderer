@@ -136,6 +136,9 @@ public:
     std::optional<std::uint32_t> find_queue_family_index_if(
         const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda);
 
+    /// Returns the maximum sample count usable by the platform
+    [[nodiscard]] VkSampleCountFlagBits get_max_usable_sample_count() const;
+
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;
     }
