@@ -330,10 +330,10 @@ Application::Application(int argc, char **argv) {
     load_octree_geometry(true);
     generate_octree_indices();
 
-    m_vertex_shader =
-        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
-    m_fragment_shader =
-        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Octree", "shaders/main.frag.spv");
+    m_vertex_shader = std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Shader Octree",
+                                                        "shaders/main.vert.spv");
+    m_fragment_shader = std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Shader Octree",
+                                                          "shaders/main.frag.spv");
 
     m_window->show();
     recreate_swapchain();
@@ -425,10 +425,10 @@ void Application::render_frame() {
 
 void Application::setup_render_graph() {
     m_back_buffer =
-        m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "back buffer");
+        m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "Back Buffer");
 
     m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
-                                                          VK_FORMAT_D32_SFLOAT_S8_UINT, "depth buffer");
+                                                          VK_FORMAT_D32_SFLOAT_S8_UINT, "Depth Buffer");
 
     m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER, [&]() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {

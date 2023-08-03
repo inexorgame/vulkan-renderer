@@ -15,6 +15,8 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkGraphicsPipelin
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + m_name + " !", result);
     }
+    // Set an internal debug name to this graphics pipeline using Vulkan debug utils (VK_EXT_debug_utils)
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_PIPELINE, reinterpret_cast<std::uint64_t>(m_pipeline), m_name);
 }
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept : m_device(other.m_device) {

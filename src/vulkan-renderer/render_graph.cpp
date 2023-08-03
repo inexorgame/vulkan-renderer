@@ -476,7 +476,7 @@ void RenderGraph::create_push_constant_ranges(GraphicsStage *stage) {
 void RenderGraph::create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
     physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
         m_device, std::vector{stage->m_physical->m_descriptor_set_layout}, stage->m_push_constant_ranges,
-        "graphics pipeline layout");
+        "Graphics Pipeline Layout " + stage->name());
 }
 
 void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
@@ -497,7 +497,7 @@ void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, Grap
             ->set_scissor(m_swapchain.extent())
             ->set_viewport(m_swapchain.extent())
             ->make_create_info(),
-        "graphics pipeline");
+        "Graphics Pipeline " + stage->name());
 }
 
 void RenderGraph::determine_stage_order(const RenderResource *target) {

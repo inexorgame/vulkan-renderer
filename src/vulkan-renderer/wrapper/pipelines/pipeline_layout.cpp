@@ -13,8 +13,11 @@ PipelineLayout::PipelineLayout(const Device &device, const VkPipelineLayoutCreat
     : m_device(device), m_name(std::move(name)) {
     if (const auto result = vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + name + "!", result);
+        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + m_name + "!", result);
     }
+    // Set an internal debug name to this pipeline layout using Vulkan debug utils (VK_EXT_debug_utils)
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+                                         reinterpret_cast<std::uint64_t>(m_pipeline_layout), m_name);
 }
 
 PipelineLayout::PipelineLayout(const Device &device, const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,

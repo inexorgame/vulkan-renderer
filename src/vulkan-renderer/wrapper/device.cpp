@@ -316,6 +316,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
+    // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
+    set_debug_utils_object_name(VK_OBJECT_TYPE_DEVICE, reinterpret_cast<std::uint64_t>(m_device), "Device");
+
     spdlog::trace("Loading Vulkan entrypoints directly from driver (bypass Vulkan loader dispatch code)");
     volkLoadDevice(m_device);
 
@@ -334,6 +337,14 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         // Use a separate queue for data transfer to GPU.
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
     }
+
+    // Set an internal debug name to the queues using Vulkan debug utils (VK_EXT_debug_utils)
+    set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_present_queue),
+                                "Present Queue");
+    set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_graphics_queue),
+                                "Graphics Queue");
+    set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_transfer_queue),
+                                "Transfer Queue");
 
     spdlog::trace("Creating VMA allocator");
 
@@ -359,9 +370,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     // Store the properties of this physical device
     vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
-
-    // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
-    set_debug_utils_object_name(VK_OBJECT_TYPE_DEVICE, reinterpret_cast<std::uint64_t>(m_device), "Device");
 }
 
 Device::~Device() {
@@ -431,7 +439,7 @@ CommandPool &Device::thread_graphics_pool() const {
     // Note that thread_graphics_pool is implicitely static!
     thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
     if (thread_graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, "graphics pool");
+        auto cmd_pool = std::make_unique<CommandPool>(*this, "Graphics Pool");
         std::scoped_lock locker(m_mutex);
         thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }
