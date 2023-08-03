@@ -53,10 +53,6 @@ public:
     [[nodiscard]] VkInstance instance() const {
         return m_instance;
     }
-
-    [[nodiscard]] const VkInstance *instance_ptr() const {
-        return &m_instance;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper
