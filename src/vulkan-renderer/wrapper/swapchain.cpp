@@ -186,7 +186,11 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
     const VkExtent2D requested_extent{.width = width, .height = height};
 
     static const std::vector<VkPresentModeKHR> default_present_mode_priorities{
-        VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR};
+        VK_PRESENT_MODE_IMMEDIATE_KHR,
+        VK_PRESENT_MODE_MAILBOX_KHR,
+        VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+        VK_PRESENT_MODE_FIFO_KHR,
+    };
 
     const auto composite_alpha =
         choose_composite_alpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, caps.supportedCompositeAlpha);
