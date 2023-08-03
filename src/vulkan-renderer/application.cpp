@@ -313,6 +313,8 @@ Application::Application(int argc, char **argv) {
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        // We are using dynamic rendering
+        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
     };
 
     const VkPhysicalDevice physical_device =

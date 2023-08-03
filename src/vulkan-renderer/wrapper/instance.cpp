@@ -163,9 +163,9 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     std::vector<const char *> enabled_instance_extensions{};
 
-    spdlog::trace("List of enabled instance extensions:");
+    spdlog::trace("Enabled instance extensions:");
 
-    // We are not checking for duplicated entries but this is no problem.
+    // We are not checking for duplicated entries but this is not a problem
     for (const auto &instance_extension : instance_extension_wishlist) {
         if (is_extension_supported(instance_extension)) {
             spdlog::trace("   - {} ", instance_extension);
@@ -177,8 +177,6 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     std::vector<const char *> instance_layers_wishlist{};
 
-    spdlog::trace("Instance layer wishlist:");
-
 #ifndef NDEBUG
     // We can't stress enough how important it is to use validation layers during development!
     // Validation layers in Vulkan are in-depth error checks for the application's use of the API.
@@ -187,7 +185,6 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     // for you! If you use Vulkan API incorrectly, your application will likely just crash.
     // To avoid this, you must use validation layers during development!
     if (enable_validation_layers) {
-        spdlog::trace("   - VK_LAYER_KHRONOS_validation");
         instance_layers_wishlist.push_back("VK_LAYER_KHRONOS_validation");
     }
 
@@ -200,7 +197,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     std::vector<const char *> enabled_instance_layers{};
 
-    spdlog::trace("List of enabled instance layers:");
+    spdlog::trace("Enabled instance layers:");
 
     // We have to check which instance layers of our wishlist are available on the current system!
     // We are not checking for duplicated entries but this is no problem.
@@ -209,7 +206,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
             spdlog::trace("   - {}", current_layer);
             enabled_instance_layers.push_back(current_layer);
         } else {
-            spdlog::warn("Requested instance layer {} is not available on this system!", current_layer);
+            spdlog::error("Requested instance layer {} is not available on this system!", current_layer);
         }
     }
 

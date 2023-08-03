@@ -75,17 +75,18 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
     for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
             if (print_info) {
-                spdlog::info("Physical device {} does not support {}!", info.name,
-                             vk_tools::get_device_feature_description(i));
+                spdlog::error("Physical device {} does not support {}!", info.name,
+                              vk_tools::get_device_feature_description(i));
             }
             return false;
         }
     }
     // Loop through all device extensions and check if an extension is required but not supported
+    // We are not checking for duplicated entries but this is not a problem
     for (const auto &extension : required_extensions) {
         if (!is_extension_supported(info.extensions, extension)) {
             if (print_info) {
-                spdlog::info("Physical device {} does not support extension {}!", info.name, extension);
+                spdlog::error("Physical device {} does not support extension {}!", info.name, extension);
             }
             return false;
         }
@@ -200,7 +201,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
                const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features)
     : m_physical_device(physical_device) {
 
-    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions)) {
+    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions, true)) {
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
 
@@ -300,6 +301,13 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         }
     }
 
+    spdlog::trace("Enabled device extensions:");
+
+    // Note that the device extensions have already been checked by is_device_suitable at the beginning of the method
+    for (const auto &extension : required_extensions) {
+        spdlog::trace("   - {}", extension);
+    }
+
     std::memcpy(&m_enabled_features, features_to_enable.data(), features_to_enable.size());
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
@@ -319,7 +327,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_utils_object_name(VK_OBJECT_TYPE_DEVICE, reinterpret_cast<std::uint64_t>(m_device), "Device");
 
-    spdlog::trace("Loading Vulkan entrypoints directly from driver (bypass Vulkan loader dispatch code)");
+    spdlog::trace("Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
     volkLoadDevice(m_device);
 
     spdlog::trace("Queue family indices:");
