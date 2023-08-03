@@ -362,9 +362,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_utils_object_name(VK_OBJECT_TYPE_DEVICE, reinterpret_cast<std::uint64_t>(m_device), "Device");
-
-    // Now that we created the device, we can finally name the instance
-    set_debug_utils_object_name(VK_OBJECT_TYPE_INSTANCE, reinterpret_cast<std::uint64_t>(inst.instance()), "Instance");
 }
 
 Device::~Device() {

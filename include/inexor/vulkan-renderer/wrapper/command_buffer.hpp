@@ -16,7 +16,7 @@ class Device;
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
-    VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
+    VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
     const Device &m_device;
     std::string m_name;
     std::unique_ptr<Fence> m_wait_fence;
@@ -341,7 +341,7 @@ public:
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
 
     [[nodiscard]] VkCommandBuffer get() const {
-        return m_command_buffer;
+        return m_cmd_buf;
     }
 
     [[nodiscard]] const Fence &get_wait_fence() const {
@@ -349,7 +349,7 @@ public:
     }
 
     [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_command_buffer;
+        return &m_cmd_buf;
     }
 
     /// Call the reset method of the Fence member
