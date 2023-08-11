@@ -87,12 +87,12 @@ public:
     CommandBuffer &operator=(const CommandBuffer &) = delete;
     CommandBuffer &operator=(CommandBuffer &&) = delete;
 
-    /// Call vkCmdBeginRenderPass
-    /// @param render_pass_bi The renderpass begin info
-    /// @param subpass_contents The subpass contents (``VK_SUBPASS_CONTENTS_INLINE`` by default)
+    /// Call vkCmdBeginRendering
+    /// @note We don't need to call it ``vkCmdBeginRenderingKHR`` anymore since it's part of Vulkan 1.3's core
+    /// @note ``begin_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
+    /// @param rendering_info The info for dynamic rendering
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi, // NOLINT
-                                           VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
+    const CommandBuffer &begin_rendering(const VkRenderingInfo *rendering_info) const;
 
     /// Call vkCmdBindDescriptorSets
     /// @param desc_sets The descriptor set to bind
@@ -268,9 +268,11 @@ public:
                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
 
-    /// Call vkCmdEndRenderPass
+    /// Call vkCmdEndRendering
+    /// @note We don't need to call it ``vkCmdEndRenderingKHR`` anymore since it's part of Vulkan 1.3's core
+    /// @note ``end_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &end_render_pass() const; // NOLINT
+    const CommandBuffer &end_rendering() const;
 
     [[nodiscard]] VkResult fence_status() const {
         return m_wait_fence->status();

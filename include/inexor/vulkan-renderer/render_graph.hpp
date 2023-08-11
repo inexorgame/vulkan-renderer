@@ -6,13 +6,11 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_updater.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
-#include "inexor/vulkan-renderer/wrapper/render_pass.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
@@ -344,7 +342,7 @@ public:
 
     // TODO: Use graphics pipeline builder directly and expose it to the front
 
-    [[nodiscard]] VkGraphicsPipelineCreateInfo make_create_info();
+    [[nodiscard]] VkGraphicsPipelineCreateInfo make_create_info(const VkFormat swapchain_img_format);
 
     /// Add a shader stage
     /// @param shader The shader stage to add
@@ -458,11 +456,6 @@ public:
     /// @param rasterization The rasterization state
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsStage *set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization);
-
-    /// Set the render pass
-    /// @param render_pass The render pass
-    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsStage *set_render_pass(VkRenderPass render_pass);
 
     /// Set the scissor data in VkPipelineViewportStateCreateInfo
     /// There is another method called set_scissors in case multiple scissors will be used
@@ -639,23 +632,6 @@ public:
     }
 };
 
-class PhysicalGraphicsStage : public PhysicalStage {
-    friend RenderGraph;
-
-private:
-    std::unique_ptr<wrapper::RenderPass> m_render_pass;
-    std::vector<wrapper::Framebuffer> m_framebuffers;
-
-public:
-    explicit PhysicalGraphicsStage(const wrapper::Device &device) : PhysicalStage(device) {}
-    PhysicalGraphicsStage(const PhysicalGraphicsStage &) = delete;
-    PhysicalGraphicsStage(PhysicalGraphicsStage &&) = delete;
-    ~PhysicalGraphicsStage() override = default;
-
-    PhysicalGraphicsStage &operator=(const PhysicalGraphicsStage &) = delete;
-    PhysicalGraphicsStage &operator=(PhysicalGraphicsStage &&) = delete;
-};
-
 class RenderGraph {
 private:
     wrapper::Device &m_device;
@@ -682,7 +658,6 @@ private:
 
     void create_buffer(PhysicalBuffer &physical, BufferResource *buffer_resource);
 
-    void create_framebuffers(PhysicalGraphicsStage &physical, const GraphicsStage *stage);
     void determine_stage_order(const RenderResource *target);
     /// Create physical resources
     /// For now, each buffer or texture resource maps directly to either a VkBuffer or VkImage respectively
@@ -692,8 +667,8 @@ private:
     void create_texture_resources();
     void build_descriptor_sets(const RenderStage *stage);
     void create_push_constant_ranges(GraphicsStage *stage);
-    void create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage);
-    void create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage);
+    void create_pipeline_layout(PhysicalStage &physical, GraphicsStage *stage);
+    void create_graphics_pipeline(PhysicalStage &physical, GraphicsStage *stage);
 
     /// We associate each uniform buffer to the stages which read from it so we know which descriptors in which stages
     /// need to be updated if the uniform buffer has been updated/recreated
@@ -715,9 +690,6 @@ private:
 
     // Functions for building stage related vulkan objects.
     void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);
-
-    // Functions for building graphics stage related vulkan objects.
-    void build_render_pass(const GraphicsStage *, PhysicalGraphicsStage &);
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)

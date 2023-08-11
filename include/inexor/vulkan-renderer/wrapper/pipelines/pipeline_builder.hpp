@@ -62,7 +62,6 @@ private:
     VkPipelineDynamicStateCreateInfo m_dynamic_states_sci;
 
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
-    VkRenderPass m_render_pass{VK_NULL_HANDLE};
 
     // With the builder we can either call add_shader or set_shaders
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
@@ -175,11 +174,6 @@ public:
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &
     set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization);
-
-    /// Set the render pass
-    /// @param render_pass The render pass
-    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_render_pass(VkRenderPass render_pass);
 
     /// Set the scissor data in VkPipelineViewportStateCreateInfo
     /// There is another method called set_scissors in case multiple scissors will be used

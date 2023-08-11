@@ -50,11 +50,11 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi,
-                                                      const VkSubpassContents subpass_contents) const {
-    vkCmdBeginRenderPass(m_cmd_buf, &render_pass_bi, subpass_contents);
+const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo *rendering_info) const {
+    assert(rendering_info);
+    vkCmdBeginRendering(m_cmd_buf, rendering_info);
     return *this;
-}
+};
 
 const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const VkDescriptorSet> desc_sets,
                                                          const VkPipelineLayout layout,
@@ -242,8 +242,8 @@ const CommandBuffer &CommandBuffer::end_command_buffer() const {
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::end_render_pass() const {
-    vkCmdEndRenderPass(m_cmd_buf);
+const CommandBuffer &CommandBuffer::end_rendering() const {
+    vkCmdEndRendering(m_cmd_buf);
     return *this;
 }
 

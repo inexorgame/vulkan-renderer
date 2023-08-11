@@ -101,12 +101,6 @@ VkFenceCreateInfo make_info(VkFenceCreateInfo info) {
 }
 
 template <>
-VkFramebufferCreateInfo make_info(VkFramebufferCreateInfo info) {
-    info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    return info;
-}
-
-template <>
 VkGraphicsPipelineCreateInfo make_info(VkGraphicsPipelineCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     return info;
@@ -139,6 +133,12 @@ VkInstanceCreateInfo make_info(VkInstanceCreateInfo info) {
 template <>
 VkMemoryBarrier make_info(VkMemoryBarrier info) {
     info.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceDynamicRenderingFeatures make_info(VkPhysicalDeviceDynamicRenderingFeatures info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
     return info;
 }
 
@@ -185,6 +185,12 @@ VkPipelineRasterizationStateCreateInfo make_info(VkPipelineRasterizationStateCre
 }
 
 template <>
+VkPipelineRenderingCreateInfo make_info(VkPipelineRenderingCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    return info;
+}
+
+template <>
 VkPipelineShaderStageCreateInfo make_info(VkPipelineShaderStageCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     return info;
@@ -215,14 +221,14 @@ VkPresentInfoKHR make_info(VkPresentInfoKHR info) {
 }
 
 template <>
-VkRenderPassBeginInfo make_info(VkRenderPassBeginInfo info) {
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+VkRenderingAttachmentInfo make_info(VkRenderingAttachmentInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     return info;
 }
 
 template <>
-VkRenderPassCreateInfo make_info(VkRenderPassCreateInfo info) {
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+VkRenderingInfo make_info(VkRenderingInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     return info;
 }
 

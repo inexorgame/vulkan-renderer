@@ -32,10 +32,6 @@ void RenderGraph::build_graphics_pipeline(const RenderStage *stage) {
     // TODO: Implement
 }
 
-void RenderGraph::build_render_pass(const RenderStage *stage) {
-    // TODO: Implement
-}
-
 void RenderGraph::check_for_cycles() {
     // TODO: Implement
     // TODO: throw std::logic_error in case the rendergraph contains cycles!

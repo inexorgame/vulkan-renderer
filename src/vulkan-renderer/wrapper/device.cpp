@@ -201,7 +201,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
                const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features)
     : m_physical_device(physical_device) {
 
-    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions, true)) {
+    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions,
+                            true)) {
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
 
@@ -310,7 +311,14 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     std::memcpy(&m_enabled_features, features_to_enable.data(), features_to_enable.size());
 
+    // We want to use dynamic rendering (VK_KHR_dynamic_rendering)
+    const auto dyn_rendering_feature = make_info<VkPhysicalDeviceDynamicRenderingFeaturesKHR>({
+        .dynamicRendering = VK_TRUE,
+    });
+
     const auto device_ci = make_info<VkDeviceCreateInfo>({
+        // We use dynamic rendering
+        .pNext = &dyn_rendering_feature,
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
         .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
@@ -327,7 +335,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_utils_object_name(VK_OBJECT_TYPE_DEVICE, reinterpret_cast<std::uint64_t>(m_device), "Device");
 
-    spdlog::trace("Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
+    spdlog::trace(
+        "Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
     volkLoadDevice(m_device);
 
     spdlog::trace("Queue family indices:");

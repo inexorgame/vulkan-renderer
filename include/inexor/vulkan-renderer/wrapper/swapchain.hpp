@@ -103,6 +103,10 @@ public:
         return m_img_available->semaphore();
     }
 
+    [[nodiscard]] VkImage image(const std::size_t img_index) const {
+        return m_imgs.at(img_index);
+    }
+
     [[nodiscard]] std::uint32_t image_count() const {
         return static_cast<std::uint32_t>(m_imgs.size());
     }
@@ -113,6 +117,10 @@ public:
 
     [[nodiscard]] const std::vector<VkImageView> &image_views() const {
         return m_img_views;
+    }
+
+    [[nodiscard]] VkImageView image_view(const std::size_t img_index) const {
+        return m_img_views.at(img_index);
     }
 
     /// Call vkQueuePresentKHR

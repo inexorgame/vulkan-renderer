@@ -68,7 +68,7 @@ GraphicsStage *GraphicsStage::add_vertex_input_binding(const VkVertexInputBindin
     return this;
 }
 
-VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info() {
+VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info(const VkFormat swapchain_img_format) {
     m_vertex_input_sci = wrapper::make_info<VkPipelineVertexInputStateCreateInfo>({
         .vertexBindingDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_binding_descriptions.size()),
         .pVertexBindingDescriptions = m_vertex_input_binding_descriptions.data(),
@@ -91,7 +91,16 @@ VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info() {
         });
     }
 
+    const auto pipeline_rendering_ci = wrapper::make_info<VkPipelineRenderingCreateInfo>({
+        // Because we use pipeline_rendering_ci as pNext parameter in VkGraphicsPipelineCreateInfo,
+        // we must end the pNext chain here by setting it to nullptr explicitely!
+        .pNext = nullptr,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &swapchain_img_format,
+    });
+
     return wrapper::make_info<VkGraphicsPipelineCreateInfo>({
+        .pNext = &pipeline_rendering_ci,
         .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
         .pStages = m_shader_stages.data(),
         .pVertexInputState = &m_vertex_input_sci,
@@ -104,7 +113,7 @@ VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info() {
         .pColorBlendState = &m_color_blend_sci,
         .pDynamicState = &m_dynamic_states_sci,
         .layout = m_pipeline_layout,
-        .renderPass = m_render_pass,
+        .renderPass = VK_NULL_HANDLE, // We use dynamic rendering
     });
 }
 
@@ -155,12 +164,6 @@ GraphicsStage *GraphicsStage::set_primitive_topology(const VkPrimitiveTopology t
 
 GraphicsStage *GraphicsStage::set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization) {
     m_rasterization_sci = rasterization;
-    return this;
-}
-
-GraphicsStage *GraphicsStage::set_render_pass(const VkRenderPass render_pass) {
-    assert(render_pass);
-    m_render_pass = render_pass;
     return this;
 }
 
@@ -247,28 +250,63 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
     // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
 
-    // TODO: graphics_stage == nullptr should throw an exception?
-    if (graphics_stage != nullptr) {
-        const auto *phys_graphics_stage = physical.as<PhysicalGraphicsStage>();
-        assert(phys_graphics_stage != nullptr);
+    // TODO: Is there a way to further abstract image layout transitions depending on type and usage?
+    // Wouldn't we simply have to iterate through all texture reads of the current stage and process them?
+    // Also, can't we just process all reads as attachments here because of dynamic rendering?
 
-        std::array<VkClearValue, 2> clear_values{};
-        if (graphics_stage->m_clears_screen) {
-            clear_values[0].color = graphics_stage->m_clear_value.color;
-            clear_values[1].depthStencil = {1.0f, 0};
-        }
+    // Before we end rendering, we must change the image layout of the swapchain and the depth buffer
+    cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                {
+                                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                    .baseMipLevel = 0,
+                                    .levelCount = 1,
+                                    .baseArrayLayer = 0,
+                                    .layerCount = 1,
+                                },
+                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-        cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
-            .renderPass = phys_graphics_stage->m_render_pass->render_pass(),
-            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
-            .renderArea{
-                .extent = m_swapchain.extent(),
-            },
-            .clearValueCount = static_cast<std::uint32_t>(clear_values.size()),
-            .pClearValues = clear_values.data(),
-        }));
+    // cmd_buf.change_image_layout();
+
+    // --------------------------------------------------------------------------------------------------
+
+    const auto *phys_graphics_stage = physical.as<PhysicalStage>();
+    assert(phys_graphics_stage != nullptr);
+
+    // TODO: Fix me!
+    std::array<VkClearValue, 2> clear_values{};
+    if (graphics_stage->m_clears_screen) {
+        clear_values[0].color = graphics_stage->m_clear_value.color;
+        clear_values[1].depthStencil = {1.0f, 0};
     }
 
+    const auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
+        .imageView = m_swapchain.image_view(image_index),
+        .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue = graphics_stage->m_clear_value,
+    });
+
+    const auto depth_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
+        // TODO
+    });
+
+    // TODO: Batch color attachments, use one depth attachment and one stencil attachment...
+    const auto rendering_info = wrapper::make_info<VkRenderingInfo>({
+        .renderArea =
+            {
+                .extent = m_swapchain.extent(),
+            },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &color_attachment,
+        .pDepthAttachment = &depth_attachment,
+    });
+
+    cmd_buf.begin_rendering(&rendering_info);
+
+    // TODO: Reserve memory here?
     std::vector<VkBuffer> vertex_buffers;
     for (const auto &resource : stage->m_reads) {
         const auto *buffer_resource = resource.first->as<BufferResource>();
@@ -301,83 +339,30 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
     cmd_buf.bind_descriptor_set(physical.m_descriptor_set, physical.m_pipeline_layout->pipeline_layout());
 
+    // Call the recording function (the custom command buffer code) that was specified by the programmer for this stage
     stage->m_on_record(cmd_buf);
 
-    if (graphics_stage != nullptr) {
-        cmd_buf.end_render_pass();
-    }
+    cmd_buf.end_rendering();
 
-    // TODO: Find a more performant solution instead of placing a full memory barrier after each stage!
-    cmd_buf.full_barrier();
-}
+    // --------------------------------------------------------------------------------------------------
 
-void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphicsStage &physical) {
-    std::vector<VkAttachmentDescription> attachments;
-    std::vector<VkAttachmentReference> colour_refs;
-    std::vector<VkAttachmentReference> depth_refs;
+    // TODO: Same here: loop through all reads
 
-    // Build vulkan attachments: For every texture resource that stage writes to, we create a corresponding
-    // VkAttachmentDescription and attach it to the render pass.
-    // TODO(GH-203): Support multisampled attachments
-    for (std::size_t i = 0; i < stage->m_writes.size(); i++) {
-        const auto *resource = stage->m_writes[i];
-        const auto *texture = resource->as<TextureResource>();
-        if (texture == nullptr) {
-            continue;
-        }
+    // for (const auto &read : m_reads) {}
 
-        VkAttachmentDescription attachment{
-            .format = texture->m_format,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        };
+    // Before we end rendering, we must change the image layout of the swapchain and the depth buffer again
+    cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                                {
+                                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                    .baseMipLevel = 0,
+                                    .levelCount = 1,
+                                    .baseArrayLayer = 0,
+                                    .layerCount = 1,
+                                },
+                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
 
-        switch (texture->m_usage) {
-        case TextureUsage::BACK_BUFFER:
-            if (!stage->m_clears_screen) {
-                attachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-                attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-            }
-            attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            colour_refs.push_back({static_cast<std::uint32_t>(i), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
-            break;
-        case TextureUsage::DEPTH_STENCIL_BUFFER:
-            attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            depth_refs.push_back({static_cast<std::uint32_t>(i), attachment.finalLayout});
-            break;
-        default:
-            attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            colour_refs.push_back({static_cast<std::uint32_t>(i), attachment.finalLayout});
-            break;
-        }
-        attachments.push_back(attachment);
-    }
-
-    const std::vector<VkSubpassDescription> subpasses{
-        {
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .colorAttachmentCount = static_cast<std::uint32_t>(colour_refs.size()),
-            .pColorAttachments = colour_refs.data(),
-            .pDepthStencilAttachment = !depth_refs.empty() ? depth_refs.data() : nullptr,
-        },
-    };
-
-    // Build a simple subpass that just waits for the output colour vector to be written by the fragment shader
-    const std::vector<VkSubpassDependency> dependencies{
-        {
-            .srcSubpass = VK_SUBPASS_EXTERNAL,
-            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        },
-    };
-
-    physical.m_render_pass =
-        std::make_unique<wrapper::RenderPass>(m_device, attachments, subpasses, dependencies, stage->name());
+    // TODO: depth buffer
 }
 
 void RenderGraph::create_buffer_resources() {
@@ -473,13 +458,13 @@ void RenderGraph::create_push_constant_ranges(GraphicsStage *stage) {
     }
 }
 
-void RenderGraph::create_pipeline_layout(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
+void RenderGraph::create_pipeline_layout(PhysicalStage &physical, GraphicsStage *stage) {
     physical.m_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>(
         m_device, std::vector{stage->m_physical->m_descriptor_set_layout}, stage->m_push_constant_ranges,
         "Graphics Pipeline Layout " + stage->name());
 }
 
-void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, GraphicsStage *stage) {
+void RenderGraph::create_graphics_pipeline(PhysicalStage &physical, GraphicsStage *stage) {
     physical.m_pipeline = std::make_unique<wrapper::pipelines::GraphicsPipeline>(
         m_device,
         stage
@@ -493,10 +478,9 @@ void RenderGraph::create_graphics_pipeline(PhysicalGraphicsStage &physical, Grap
                 .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
             }))
             ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
-            ->set_render_pass(physical.m_render_pass->render_pass())
             ->set_scissor(m_swapchain.extent())
             ->set_viewport(m_swapchain.extent())
-            ->make_create_info(),
+            ->make_create_info(m_swapchain.image_format()),
         "Graphics Pipeline " + stage->name());
 }
 
@@ -532,37 +516,6 @@ void RenderGraph::determine_stage_order(const RenderResource *target) {
     for (auto *stage : m_stage_stack) {
         m_log->trace("   - {}\t [reads: {}, writes: {}, push constant ranges: {}]", stage->m_name,
                      stage->m_reads.size(), stage->m_writes.size(), stage->m_push_constants.size());
-    }
-}
-
-void RenderGraph::create_framebuffers(PhysicalGraphicsStage &physical, const GraphicsStage *stage) {
-    // If we write to at least one texture, we need to make framebuffers.
-    if (!stage->m_writes.empty()) {
-        // For every texture that this stage writes to, we need to attach it to the framebuffer.
-        std::vector<const PhysicalBackBuffer *> back_buffers;
-        std::vector<const PhysicalImage *> images;
-        for (const auto *resource : stage->m_writes) {
-            if (const auto *texture = resource->as<TextureResource>()) {
-                const auto &physical_texture = *texture->m_physical;
-                if (const auto *back_buffer = physical_texture.as<PhysicalBackBuffer>()) {
-                    back_buffers.push_back(back_buffer);
-                } else if (const auto *image = physical_texture.as<PhysicalImage>()) {
-                    images.push_back(image);
-                }
-            }
-        }
-
-        std::vector<VkImageView> image_views;
-        image_views.reserve(back_buffers.size() + images.size());
-        for (auto *const img_view : m_swapchain.image_views()) {
-            std::fill_n(std::back_inserter(image_views), back_buffers.size(), img_view);
-            for (const auto *image : images) {
-                image_views.push_back(image->image_view());
-            }
-            physical.m_framebuffers.emplace_back(m_device, physical.m_render_pass->render_pass(), image_views,
-                                                 m_swapchain, "Framebuffer");
-            image_views.clear();
-        }
     }
 }
 
@@ -608,16 +561,14 @@ void RenderGraph::compile(const RenderResource *target) {
     for (auto *stage : m_stage_stack) {
         if (auto *graphics_stage = stage->as<GraphicsStage>()) {
             // TODO: Can't we simplify this?
-            auto physical_ptr = std::make_unique<PhysicalGraphicsStage>(m_device);
+            auto physical_ptr = std::make_unique<PhysicalStage>(m_device);
             auto &physical = *physical_ptr;
             graphics_stage->m_physical = std::move(physical_ptr);
 
-            build_render_pass(graphics_stage, physical);
             build_descriptor_sets(graphics_stage);
             create_push_constant_ranges(graphics_stage);
             create_pipeline_layout(physical, graphics_stage);
             create_graphics_pipeline(physical, graphics_stage);
-            create_framebuffers(physical, graphics_stage);
         }
     }
     collect_render_stages_reading_from_uniform_buffers();

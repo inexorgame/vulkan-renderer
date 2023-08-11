@@ -24,7 +24,6 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
     m_color_blend_sci = std::move(other.m_color_blend_sci);
     m_dynamic_states_sci = std::move(other.m_dynamic_states_sci);
     m_pipeline_layout = std::exchange(other.m_pipeline_layout, VK_NULL_HANDLE);
-    m_render_pass = std::exchange(other.m_render_pass, VK_NULL_HANDLE);
     m_dynamic_states = std::move(other.m_dynamic_states);
     m_viewports = std::move(other.m_viewports);
     m_scissors = std::move(other.m_scissors);
@@ -80,8 +79,16 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         });
     }
 
+    const auto pipeline_rendering_ci = wrapper::make_info<VkPipelineRenderingCreateInfo>({
+        // TODO: Implement!
+        // Because we use pipeline_rendering_ci as pNext parameter in VkGraphicsPipelineCreateInfo,
+        // we must end the pNext chain here by setting it to nullptr explicitely!
+        .pNext = nullptr,
+    });
+
     return std::make_unique<GraphicsPipeline>(m_device,
                                               make_info<VkGraphicsPipelineCreateInfo>({
+                                                  // .pNext = &pipeline_rendering_ci,
                                                   .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
                                                   .pStages = m_shader_stages.data(),
                                                   .pVertexInputState = &m_vertex_input_sci,
@@ -94,7 +101,7 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
                                                   .pColorBlendState = &m_color_blend_sci,
                                                   .pDynamicState = &m_dynamic_states_sci,
                                                   .layout = m_pipeline_layout,
-                                                  .renderPass = m_render_pass,
+                                                  .renderPass = VK_NULL_HANDLE, // We use dynamic rendering
                                               }),
                                               std::move(name));
 }
@@ -214,12 +221,6 @@ GraphicsPipelineBuilder::set_rasterization(const VkPipelineRasterizationStateCre
     return *this;
 }
 
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_render_pass(const VkRenderPass render_pass) {
-    assert(render_pass);
-    m_render_pass = render_pass;
-    return *this;
-}
-
 GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_scissor(const VkRect2D &scissor) {
     m_scissors = {scissor};
     m_viewport_sci.scissorCount = 1;
@@ -298,4 +299,4 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_wireframe(const VkBool32 w
     return *this;
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::pipelines
