@@ -10,6 +10,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
+    vulkan-renderer/input/gamepad_data.cpp
+    vulkan-renderer/input/input.cpp
 
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
