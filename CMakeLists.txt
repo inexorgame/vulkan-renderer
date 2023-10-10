@@ -25,7 +25,9 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # The marked constants in application.hpp will be replaced with the following values
 set(INEXOR_ENGINE_NAME "Inexor Engine")
+set(INEXOR_DEV_TEAM_NAME "Inexor Collective")
 set(INEXOR_APP_NAME "Inexor Vulkan-renderer example")
+set(INEXOR_LICENSE "MIT License")
 
 set(INEXOR_ENGINE_VERSION_MAJOR 0)
 set(INEXOR_ENGINE_VERSION_MINOR 1)
@@ -49,7 +51,12 @@ if (FORCE_COLORED_OUTPUT)
 endif()
 
 add_subdirectory(shaders)
+
 add_subdirectory(src)
+
+if(MSVC)
+    add_subdirectory(platform/windows)
+endif()
 
 if(INEXOR_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)

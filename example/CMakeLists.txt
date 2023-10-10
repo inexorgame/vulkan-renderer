@@ -1,4 +1,13 @@
-add_executable(inexor-vulkan-renderer-example main.cpp)
+if(MSVC)
+add_executable(inexor-vulkan-renderer-example
+    main.cpp
+    ${CMAKE_BINARY_DIR}/include/inexor/vulkan-renderer/win_resource_file.rc
+)
+else()
+add_executable(inexor-vulkan-renderer-example
+    main.cpp
+)
+endif()
 
 target_compile_features(inexor-vulkan-renderer-example PRIVATE cxx_std_20)
 target_link_libraries(inexor-vulkan-renderer-example PRIVATE inexor-vulkan-renderer)
