@@ -213,7 +213,7 @@ private:
     std::vector<std::pair<RenderResource *, std::optional<VkShaderStageFlags>>> m_reads;
 
     std::vector<PushConstantResource> m_push_constants;
-    // We need to collect the push constant ranges into one vector
+    // We need to collect all the push constant ranges of the stage into one vector
     std::vector<VkPushConstantRange> m_push_constant_ranges;
 
     std::function<void(void)> m_on_update{[]() {}};
@@ -281,6 +281,9 @@ private:
     bool m_depth_test{false};
     bool m_depth_write{false};
     VkClearValue m_clear_value{};
+
+    VkFormat m_swapchain_img_format;
+    VkPipelineRenderingCreateInfo m_pipeline_rendering_ci{};
     VkPipelineColorBlendAttachmentState m_color_blend_attachment{};
 
     std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions;
@@ -328,7 +331,6 @@ private:
         wrapper::make_info<VkPipelineDynamicStateCreateInfo>(),
     };
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
-    VkRenderPass m_render_pass{VK_NULL_HANDLE};
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
 public:
@@ -485,7 +487,8 @@ public:
     [[nodiscard]] GraphicsStage *set_tesselation_control_point_count(std::uint32_t control_point_count);
 
     /// Set the vertex input attribute descriptions manually
-    /// You should prefer to use ``add_vertex_input_attribute`` instead
+    /// @note As of C++23, we still don't have proper reflection, meaning we can't iterate over the items of a struct
+    /// yet sadly
     /// @param descriptions The vertex input attribute descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsStage *
@@ -689,7 +692,8 @@ private:
     void update_texture_descriptor_sets();
 
     // Functions for building stage related vulkan objects.
-    void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);
+    void record_command_buffer(bool first_stage, bool last_stage, const RenderStage *,
+                               const wrapper::CommandBuffer &cmd_buf, std::uint32_t image_index);
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)

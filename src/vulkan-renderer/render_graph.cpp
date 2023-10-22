@@ -91,16 +91,18 @@ VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info(const VkFormat swap
         });
     }
 
-    const auto pipeline_rendering_ci = wrapper::make_info<VkPipelineRenderingCreateInfo>({
+    m_swapchain_img_format = swapchain_img_format;
+
+    m_pipeline_rendering_ci = wrapper::make_info<VkPipelineRenderingCreateInfo>({
         // Because we use pipeline_rendering_ci as pNext parameter in VkGraphicsPipelineCreateInfo,
         // we must end the pNext chain here by setting it to nullptr explicitely!
         .pNext = nullptr,
         .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &swapchain_img_format,
+        .pColorAttachmentFormats = &m_swapchain_img_format,
     });
 
     return wrapper::make_info<VkGraphicsPipelineCreateInfo>({
-        .pNext = &pipeline_rendering_ci,
+        .pNext = &m_pipeline_rendering_ci,
         .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
         .pStages = m_shader_stages.data(),
         .pVertexInputState = &m_vertex_input_sci,
@@ -243,56 +245,78 @@ GraphicsStage *GraphicsStage::set_wireframe(const VkBool32 wireframe) {
     return this;
 }
 
-void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
-                                        const std::uint32_t image_index) {
+void RenderGraph::record_command_buffer(const bool first_stage, const bool last_stage, const RenderStage *stage,
+                                        const wrapper::CommandBuffer &cmd_buf, const std::uint32_t image_index) {
     const PhysicalStage &physical = *stage->m_physical;
-
-    // Record render pass for graphics stages.
     const auto *graphics_stage = stage->as<GraphicsStage>();
+
+    float color[4];
+    color[0] = 1.0f;
+    color[1] = 0.0f;
+    color[2] = 0.0f;
+    color[3] = 1.0f;
+
+    cmd_buf.begin_debug_label_region(stage->name(), color);
 
     // TODO: Is there a way to further abstract image layout transitions depending on type and usage?
     // Wouldn't we simply have to iterate through all texture reads of the current stage and process them?
     // Also, can't we just process all reads as attachments here because of dynamic rendering?
 
-    // Before we end rendering, we must change the image layout of the swapchain and the depth buffer
-    cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_UNDEFINED,
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                {
-                                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                                    .baseMipLevel = 0,
-                                    .levelCount = 1,
-                                    .baseArrayLayer = 0,
-                                    .layerCount = 1,
-                                },
-                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-    // cmd_buf.change_image_layout();
-
-    // --------------------------------------------------------------------------------------------------
+    if (first_stage) {
+        float color[4];
+        color[0] = 0.0f;
+        color[1] = 0.0f;
+        color[2] = 1.0f;
+        color[3] = 0.4f;
+        cmd_buf.insert_debug_label("Hello world", color);
+        cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_UNDEFINED,
+                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
 
     const auto *phys_graphics_stage = physical.as<PhysicalStage>();
     assert(phys_graphics_stage != nullptr);
 
-    // TODO: Fix me!
-    std::array<VkClearValue, 2> clear_values{};
-    if (graphics_stage->m_clears_screen) {
-        clear_values[0].color = graphics_stage->m_clear_value.color;
-        clear_values[1].depthStencil = {1.0f, 0};
-    }
-
     const auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
         .imageView = m_swapchain.image_view(image_index),
-        .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = graphics_stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = graphics_stage->m_clear_value,
+        .clearValue =
+            {
+                .color = graphics_stage->m_clear_value.color,
+            },
     });
+
+    VkImageView depth_buffer_img_view{VK_NULL_HANDLE};
+    VkImage depth_buffer{VK_NULL_HANDLE};
+
+    // Loop through all writes and find the depth buffer
+    for (const auto &resource : stage->m_reads) {
+        const auto *texture_resource = resource.first->as<TextureResource>();
+        if (texture_resource == nullptr) {
+            continue;
+        }
+        auto *physical_texture = texture_resource->m_physical->as<PhysicalImage>();
+        if (physical_texture->m_img == nullptr) {
+            continue;
+        }
+        if (texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER) {
+            depth_buffer_img_view = physical_texture->image_view();
+            depth_buffer = physical_texture->m_img->image();
+        }
+    }
 
     const auto depth_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        // TODO
+        .imageView = depth_buffer_img_view,
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .loadOp = graphics_stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue =
+            {
+                .depthStencil = graphics_stage->m_clear_value.depthStencil,
+            },
     });
 
-    // TODO: Batch color attachments, use one depth attachment and one stencil attachment...
     const auto rendering_info = wrapper::make_info<VkRenderingInfo>({
         .renderArea =
             {
@@ -302,6 +326,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
         .colorAttachmentCount = 1,
         .pColorAttachments = &color_attachment,
         .pDepthAttachment = &depth_attachment,
+        .pStencilAttachment = &depth_attachment,
     });
 
     cmd_buf.begin_rendering(&rendering_info);
@@ -332,6 +357,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
     cmd_buf.bind_pipeline(physical.m_pipeline->pipeline());
 
+    // TODO: Can/should we batch push constant ranges into one(?)
     for (auto &push_constant : stage->m_push_constants) {
         cmd_buf.push_constants(physical.m_pipeline_layout->pipeline_layout(), push_constant.m_push_constant.stageFlags,
                                push_constant.m_push_constant.size, push_constant.m_push_constant_data);
@@ -344,25 +370,18 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
     cmd_buf.end_rendering();
 
-    // --------------------------------------------------------------------------------------------------
+    if (last_stage) {
+        float color[4];
+        color[0] = 0.0f;
+        color[1] = 1.0f;
+        color[2] = 0.0f;
+        color[3] = 0.4f;
+        cmd_buf.insert_debug_label("Hello world", color);
+        cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    }
 
-    // TODO: Same here: loop through all reads
-
-    // for (const auto &read : m_reads) {}
-
-    // Before we end rendering, we must change the image layout of the swapchain and the depth buffer again
-    cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                                {
-                                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                                    .baseMipLevel = 0,
-                                    .levelCount = 1,
-                                    .baseArrayLayer = 0,
-                                    .layerCount = 1,
-                                },
-                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-
-    // TODO: depth buffer
+    cmd_buf.end_debug_label_region();
 }
 
 void RenderGraph::create_buffer_resources() {
@@ -674,7 +693,7 @@ void RenderGraph::update_dynamic_buffers() {
                 buffer_resource->m_physical_buffer->m_descriptor_buffer_info = VkDescriptorBufferInfo{
                     .buffer = physical.m_buffer->buffer(),
                     .offset = 0,
-                    .range = physical.m_buffer->allocation_info().size,
+                    .range = buffer_resource->m_data_size, // TODO: Is this correct?
                 };
             }
             // TODO: Implement updates which requires staging buffers!
@@ -694,8 +713,9 @@ void RenderGraph::render(const std::uint32_t image_index, const wrapper::Command
     // TODO: update_texture_descriptor_sets
 
     // TODO: Command buffer recording can be done in parallel using taskflow library
-    for (const auto &stage : m_stage_stack) {
-        record_command_buffer(stage, cmd_buf, image_index);
+    for (std::size_t stage_index = 0; stage_index < m_stage_stack.size(); stage_index++) {
+        record_command_buffer(stage_index == 0, stage_index == (m_stage_stack.size() - 1), m_stage_stack[stage_index],
+                              cmd_buf, image_index);
     }
 }
 

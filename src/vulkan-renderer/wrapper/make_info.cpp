@@ -53,6 +53,12 @@ VkDebugMarkerObjectTagInfoEXT make_info(VkDebugMarkerObjectTagInfoEXT info) {
 }
 
 template <>
+VkDebugUtilsLabelEXT make_info(VkDebugUtilsLabelEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    return info;
+}
+
+template <>
 VkDebugUtilsMessengerCreateInfoEXT make_info(VkDebugUtilsMessengerCreateInfoEXT info) {
     info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     return info;

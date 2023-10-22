@@ -50,6 +50,20 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, float color[4]) const {
+    auto label = make_info<VkDebugUtilsLabelEXT>({
+        .pLabelName = name.c_str(),
+    });
+    // TODO: Fix me :(
+    label.color[0] = color[0];
+    label.color[1] = color[1];
+    label.color[2] = color[2];
+    label.color[3] = color[3];
+
+    vkCmdBeginDebugUtilsLabelEXT(m_cmd_buf, &label);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo *rendering_info) const {
     assert(rendering_info);
     vkCmdBeginRendering(m_cmd_buf, rendering_info);
@@ -242,6 +256,11 @@ const CommandBuffer &CommandBuffer::end_command_buffer() const {
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::end_debug_label_region() const {
+    vkCmdEndDebugUtilsLabelEXT(m_cmd_buf);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::end_rendering() const {
     vkCmdEndRendering(m_cmd_buf);
     return *this;
@@ -281,6 +300,20 @@ const CommandBuffer &CommandBuffer::full_barrier() const {
                                        .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
                                        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
                                    }));
+}
+
+const CommandBuffer &CommandBuffer::insert_debug_label(std::string name, float color[4]) const {
+    auto label = make_info<VkDebugUtilsLabelEXT>({
+        .pLabelName = name.c_str(),
+    });
+    // TODO: Fix me :(
+    label.color[0] = color[0];
+    label.color[1] = color[1];
+    label.color[2] = color[2];
+    label.color[3] = color[3];
+
+    vkCmdBeginDebugUtilsLabelEXT(m_cmd_buf, &label);
+    return *this;
 }
 
 const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout, const VkShaderStageFlags stage,

@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/fence.hpp"
 
+#include <array>
 #include <cassert>
 #include <memory>
 #include <span>
@@ -86,6 +87,11 @@ public:
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;
     CommandBuffer &operator=(CommandBuffer &&) = delete;
+
+    /// Call vkCmdBeginDebugUtilsLabelEXT
+    /// @param name The name of the debug label
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &begin_debug_label_region(std::string name, float color[4]) const;
 
     /// Call vkCmdBeginRendering
     /// @note We don't need to call it ``vkCmdBeginRenderingKHR`` anymore since it's part of Vulkan 1.3's core
@@ -268,6 +274,10 @@ public:
                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
 
+    /// Call vkCmdEndDebugUtilsLabelEXT
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_debug_label_region() const;
+
     /// Call vkCmdEndRendering
     /// @note We don't need to call it ``vkCmdEndRenderingKHR`` anymore since it's part of Vulkan 1.3's core
     /// @note ``end_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
@@ -315,6 +325,11 @@ public:
     /// Call vkCmdPipelineBarrier to place a full memory barrier
     /// @warning You should avoid full barriers since they are not the most performant solution in most cases
     const CommandBuffer &full_barrier() const;
+
+    /// Call vkCmdInsertDebugUtilsLabelEXT
+    /// @param name The name of the debug label to insert
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &insert_debug_label(std::string name, float color[4]) const;
 
     /// Call vkCmdPushConstants
     /// @param layout The pipeline layout

@@ -312,9 +312,13 @@ Application::Application(int argc, char **argv) {
 
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME, // VK_KHR_swapchain
         // We are using dynamic rendering
-        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, // VK_KHR_dynamic_rendering
+        // The following is required by VK_KHR_dynamic_rendering
+        VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, // VK_KHR_depth_stencil_resolve
+        // The following is required by VK_KHR_depth_stencil_resolve
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, // VK_KHR_create_renderpass2
     };
 
     const VkPhysicalDevice physical_device =

@@ -191,7 +191,7 @@ public:
 
     /// Set the denug name of a Vulkan object using debug utils (VK_EXT_debug_utils)
     /// @param obj_type The Vulkan object type
-    /// @param obj_handle The Vulkan object handle
+    /// @param obj_handle The Vulkan object handle (must not be nullptr!)
     /// @param name the internal debug name of the Vulkan object
     void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
 

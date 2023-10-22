@@ -313,6 +313,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     // We want to use dynamic rendering (VK_KHR_dynamic_rendering)
     const auto dyn_rendering_feature = make_info<VkPhysicalDeviceDynamicRenderingFeaturesKHR>({
+        .pNext = nullptr,
         .dynamicRendering = VK_TRUE,
     });
 
@@ -349,19 +350,20 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
 
-    // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
-    if (use_distinct_data_transfer_queue) {
-        // Use a separate queue for data transfer to GPU.
-        vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
-    }
-
     // Set an internal debug name to the queues using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_present_queue),
                                 "Present Queue");
     set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_graphics_queue),
                                 "Graphics Queue");
-    set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_transfer_queue),
-                                "Transfer Queue");
+
+    // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
+    if (use_distinct_data_transfer_queue) {
+        // Use a separate queue for data transfer to GPU.
+        vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
+        // Set the debug name of the transfer queue only if it is a valid VkQueue
+        set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_transfer_queue),
+                                    "Transfer Queue");
+    }
 
     spdlog::trace("Creating VMA allocator");
 
@@ -374,9 +376,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         .device = m_device,
         .pVulkanFunctions = &vma_vulkan_functions,
         .instance = inst.instance(),
-        // Just tell Vulkan Memory Allocator to use Vulkan 1.1, even if a newer version is specified in instance wrapper
-        // This might need to be changed in the future
-        .vulkanApiVersion = VK_API_VERSION_1_1,
+        .vulkanApiVersion = VK_API_VERSION_1_3,
     };
 
     spdlog::trace("Creating Vulkan memory allocator instance");
@@ -485,6 +485,8 @@ const CommandBuffer &Device::request_command_buffer(const std::string &name) {
 
 void Device::set_debug_utils_object_name(const VkObjectType obj_type, const std::uint64_t obj_handle,
                                          const std::string &name) const {
+    assert(obj_handle);
+
     const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
         .objectType = obj_type,
         .objectHandle = obj_handle,
