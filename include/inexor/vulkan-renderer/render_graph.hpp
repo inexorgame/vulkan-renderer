@@ -117,33 +117,36 @@ public:
         std::string &&name, BufferUsage usage, std::function<void()> on_update = []() {})
         : RenderResource(name), m_usage(usage), m_on_update(std::move(on_update)) {}
 
-    void announce_update(const void *data, std::size_t size) {
+    void enqueue_update(const void *data, std::size_t size) {
         m_data = data;
         m_data_size = size;
         m_data_upload_needed = true;
     }
 
     template <typename T>
-    void announce_update(const T *data) {
-        announce_update(data, sizeof(T));
+    void enqueue_update(const T *data) {
+        enqueue_update(data, sizeof(T));
     }
 
     template <typename T>
-    void announce_update(const std::vector<T> &data) {
-        announce_update(data.data(), sizeof(T) * data.size());
+    void enqueue_update(const std::vector<T> &data) {
+        enqueue_update(data.data(), sizeof(T) * data.size());
     }
 };
 
 enum class TextureUsage {
-    /// @brief Specifies that this texture is the output of the render graph.
+    /// Specifies that this texture is the output of the render graph
     // TODO: Refactor back buffer system more (remove need for BACK_BUFFER texture usage)
     BACK_BUFFER,
 
-    /// @brief Specifies that this texture is a combined depth/stencil buffer.
+    /// A render target for multi sampling anti aliasing (MSAA)
+    MSAA_RENDER_TARGET,
+
+    /// Specifies that this texture is a combined depth/stencil buffer
     /// @note This may mean that this texture is completely GPU-sided and cannot be accessed by the CPU in any way.
     DEPTH_STENCIL_BUFFER,
 
-    /// @brief Specifies that this texture isn't used for any special purpose.
+    /// Specifies that this texture isn't used for any special purpose
     NORMAL,
 };
 

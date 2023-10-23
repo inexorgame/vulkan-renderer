@@ -189,7 +189,10 @@ public:
     /// @return A command buffer from the thread_local command pool
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
 
-    /// Set the denug name of a Vulkan object using debug utils (VK_EXT_debug_utils)
+    /// Set the debug name of a Vulkan object using debug utils extension (VK_EXT_debug_utils)
+    /// @note We thought about overloading this method several times so the obj_type is set automatically depending on
+    /// the type of the obj_handle you pass in, but it would make the code larger while being a little harder to
+    /// understand what's really going on.
     /// @param obj_type The Vulkan object type
     /// @param obj_handle The Vulkan object handle (must not be nullptr!)
     /// @param name the internal debug name of the Vulkan object

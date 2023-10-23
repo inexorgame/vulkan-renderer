@@ -125,7 +125,9 @@ GraphicsStage *GraphicsStage::set_color_blend(const VkPipelineColorBlendStateCre
 }
 
 GraphicsStage *GraphicsStage::set_culling_mode(const VkBool32 culling_enabled) {
-    spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
+    if (!culling_enabled) {
+        spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
+    }
     m_rasterization_sci.cullMode = culling_enabled ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
     return this;
 }
@@ -258,17 +260,15 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
 
     cmd_buf.begin_debug_label_region(stage->name(), color);
 
-    // TODO: Is there a way to further abstract image layout transitions depending on type and usage?
-    // Wouldn't we simply have to iterate through all texture reads of the current stage and process them?
-    // Also, can't we just process all reads as attachments here because of dynamic rendering?
-
     if (first_stage) {
         float color[4];
         color[0] = 0.0f;
         color[1] = 0.0f;
         color[2] = 1.0f;
         color[3] = 0.4f;
+        // TODO: make color palette and pass parameter to `insert_debug_label`
         cmd_buf.insert_debug_label("Hello world", color);
+
         cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_UNDEFINED,
                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     }
@@ -376,7 +376,9 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
         color[1] = 1.0f;
         color[2] = 0.0f;
         color[3] = 0.4f;
+        // TODO: make color palette and pass parameter to `insert_debug_label`
         cmd_buf.insert_debug_label("Hello world", color);
+
         cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
@@ -413,6 +415,7 @@ void RenderGraph::create_texture_resources() {
         // TODO: Move this to representation header
         const std::unordered_map<TextureUsage, std::string> texture_usage_name{
             {TextureUsage::BACK_BUFFER, "BACK_BUFFER"},
+            {TextureUsage::MSAA_RENDER_TARGET, "MSAA_RENDER_TARGET"},
             {TextureUsage::DEPTH_STENCIL_BUFFER, "DEPTH_STENCIL_BUFFER"},
             {TextureUsage::NORMAL, "NORMAL"},
         };
@@ -422,7 +425,6 @@ void RenderGraph::create_texture_resources() {
 
         // Back buffer gets special handling.
         if (texture_resource->m_usage == TextureUsage::BACK_BUFFER) {
-            // TODO: Move image views from wrapper::Swapchain to PhysicalBackBuffer.
             texture_resource->m_physical = std::make_shared<PhysicalBackBuffer>(m_device, m_swapchain);
         } else {
             auto physical = std::make_shared<PhysicalImage>(m_device);

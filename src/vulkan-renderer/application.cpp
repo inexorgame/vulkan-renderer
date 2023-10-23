@@ -433,6 +433,9 @@ void Application::setup_render_graph() {
     m_back_buffer =
         m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "Back Buffer");
 
+    m_msaa_target = m_render_graph->add<TextureResource>(TextureUsage::MSAA_RENDER_TARGET, m_swapchain->image_format(),
+                                                         "MSAA Target");
+
     m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
                                                           VK_FORMAT_D32_SFLOAT_S8_UINT, "Depth Buffer");
 
@@ -441,8 +444,8 @@ void Application::setup_render_graph() {
             load_octree_geometry(false);
             generate_octree_indices();
             // Note that we update the vertex buffer together with the index buffer to keep data consistent
-            m_vertex_buffer->announce_update(m_octree_vertices);
-            m_index_buffer->announce_update(m_octree_indices);
+            m_vertex_buffer->enqueue_update(m_octree_vertices);
+            m_index_buffer->enqueue_update(m_octree_indices);
         }
     });
 
@@ -451,15 +454,15 @@ void Application::setup_render_graph() {
 
     // Update the vertex buffer and index buffer at initialization
     // Note that we update the vertex buffer together with the index buffer to keep data consistent
-    m_vertex_buffer->announce_update(m_octree_vertices);
-    m_index_buffer->announce_update(m_octree_indices);
+    m_vertex_buffer->enqueue_update(m_octree_vertices);
+    m_index_buffer->enqueue_update(m_octree_indices);
 
     m_uniform_buffer = m_render_graph->add<BufferResource>("Matrices", BufferUsage::UNIFORM_BUFFER, [&]() {
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
         // Update the matrices every frame
-        m_uniform_buffer->announce_update(&m_mvp_matrices);
+        m_uniform_buffer->enqueue_update(&m_mvp_matrices);
     });
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("Octree");

@@ -44,8 +44,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
                 m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
             }
         }
-        m_vertex_buffer->announce_update(m_vertex_data);
-        m_index_buffer->announce_update(m_index_data);
+        m_vertex_buffer->enqueue_update(m_vertex_data);
+        m_index_buffer->enqueue_update(m_index_data);
     });
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent

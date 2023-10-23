@@ -367,7 +367,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     spdlog::trace("Creating VMA allocator");
 
-    VmaVulkanFunctions vma_vulkan_functions{
+    const VmaVulkanFunctions vma_vulkan_functions{
         .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
         .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
     };
@@ -379,7 +379,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         .vulkanApiVersion = VK_API_VERSION_1_3,
     };
 
-    spdlog::trace("Creating Vulkan memory allocator instance");
+    spdlog::trace("Creating Vulkan Memory Allocator (VMA) instance");
 
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);

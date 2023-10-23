@@ -14,7 +14,7 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
-/// @brief RAII wrapper class for VkCommandBuffer.
+/// RAII wrapper class for VkCommandBuffer
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
     VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
@@ -216,7 +216,6 @@ public:
                                               std::span<const VkBufferImageCopy> copy_regions) const;
 
     /// Call vkCmdCopyBufferToImage
-    /// copy region
     /// @param src_buf The source buffer
     /// @param dst_img The destination image
     /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL``
@@ -225,7 +224,7 @@ public:
     const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img, // NOLINT
                                               const VkBufferImageCopy &copy_region) const;
 
-    /// Call vkCmdCopyBuffer
+    /// Call vkCmdCopyBufferToImage
     /// @param data A raw pointer to the data to copy
     /// @param data_size The size of the data to copy
     /// @param dst_img The destination image (must not be ``VK_NULL_HANDLE``)
@@ -237,7 +236,7 @@ public:
                                               VkImage dst_img, const VkBufferImageCopy &copy_region,
                                               const std::string &name) const;
 
-    /// Call vkCmdCopyBuffer
+    /// Call vkCmdCopyBufferToImage
     /// @param data A std::span of the source data
     /// @note A staging buffer for the copy operation will be created automatically from ``data``
     /// @param dst_img The destination image (must not be ``VK_NULL_HANDLE``)
