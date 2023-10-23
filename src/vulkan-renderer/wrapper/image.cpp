@@ -10,8 +10,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 // Constructor 1 (the most powerful constructor which exposes all parameters, rarely used)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
-             const VmaAllocationCreateInfo &alloc_ci, std::string name)
-    : m_device(device), m_format(img_ci.format), m_name(std::move(name)) {
+             const VmaAllocationCreateInfo &alloc_ci, const std::string &name)
+    : m_device(device), m_format(img_ci.format), m_name(name) {
     if (m_name.empty()) {
         throw std::invalid_argument("Error: image name must not be empty!");
     }
@@ -22,6 +22,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
     }
     // Assign an internal debug name to this image in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
+
     // Set an internal debug name to this image using Vulkan debug utils (VK_EXT_debug_utils)
     m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_IMAGE, reinterpret_cast<std::uint64_t>(m_img), m_name);
 
@@ -34,6 +35,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
+
     // Set an internal debug name to this image using Vulkan debug utils (VK_EXT_debug_utils)
     m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_IMAGE_VIEW, reinterpret_cast<std::uint64_t>(m_img_view),
                                          m_name);
@@ -41,7 +43,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
 
 // Constructor 2 (calls constructor 1 internally)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
-             std::string name)
+             const std::string &name)
     : Image(device, img_ci, img_view_ci,
             {
                 .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
@@ -51,7 +53,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
 
 // Constructor 3 (calls constructor 2 internally)
 Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageAspectFlags aspect_flags,
-             std::string name)
+             const std::string &name)
     : Image(device, img_ci,
             make_info<VkImageViewCreateInfo>({
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
@@ -62,15 +64,15 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
                     .layerCount = 1,
                 },
             }),
-            std::move(name)) {}
+            name) {}
 
 // Constructor 4 (calls constructor 3 internally)
-Image::Image(const Device &device, const VkImageCreateInfo &img_ci, std::string name)
-    : Image(device, img_ci, VK_IMAGE_ASPECT_COLOR_BIT, std::move(name)) {}
+Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const std::string &name)
+    : Image(device, img_ci, VK_IMAGE_ASPECT_COLOR_BIT, name) {}
 
 // Constructor 5 (calls constructor 3 (not 4!) internally)
 Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
-             const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, std::string name)
+             const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, const std::string &name)
     : Image(device,
             wrapper::make_info<VkImageCreateInfo>({
                 .imageType = VK_IMAGE_TYPE_2D,
@@ -88,11 +90,11 @@ Image::Image(const Device &device, const VkFormat format, const std::uint32_t wi
                 .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
                 .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             }),
-            aspect_flags, std::move(name)) {}
+            aspect_flags, name) {}
 
 Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
              const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, const VkImageLayout initial_layout,
-             std::string name)
+             const std::string &name)
     : Image(device,
             wrapper::make_info<VkImageCreateInfo>({
                 .imageType = VK_IMAGE_TYPE_2D,
@@ -110,7 +112,7 @@ Image::Image(const Device &device, const VkFormat format, const std::uint32_t wi
                 .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
                 .initialLayout = initial_layout,
             }),
-            aspect_flags, std::move(name)) {}
+            aspect_flags, name) {}
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
     m_format = other.m_format;

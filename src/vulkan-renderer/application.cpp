@@ -461,7 +461,6 @@ void Application::setup_render_graph() {
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
-        // Update the matrices every frame
         m_uniform_buffer->enqueue_update(&m_mvp_matrices);
     });
 

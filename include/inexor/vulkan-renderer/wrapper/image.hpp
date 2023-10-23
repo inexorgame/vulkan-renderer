@@ -32,7 +32,7 @@ public:
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
-          const VmaAllocationCreateInfo &alloc_ci, std::string name);
+          const VmaAllocationCreateInfo &alloc_ci, const std::string &name);
 
     /// Constructor 2 (calls constructor 1 internally)
     /// @param device The device wrapper
@@ -44,7 +44,7 @@ public:
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImageViewCreateInfo &img_view_ci,
-          std::string name);
+          const std::string &name);
 
     /// Constructor 3 (calls constructor 2 internally)
     /// @param device The device wrapper
@@ -54,7 +54,8 @@ public:
     /// @exception std::invalid_argument The internal debug name is empty
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
-    Image(const Device &device, const VkImageCreateInfo &img_ci, VkImageAspectFlags aspect_flags, std::string name);
+    Image(const Device &device, const VkImageCreateInfo &img_ci, VkImageAspectFlags aspect_flags,
+          const std::string &name);
 
     /// Constructor 4 (calls constructor 3 internally)
     /// @note This constructor does not expose image aspect flags (use ``VK_IMAGE_ASPECT_COLOR_BIT`` as default)
@@ -64,7 +65,7 @@ public:
     /// @exception std::invalid_argument The internal debug name is empty
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
-    Image(const Device &device, const VkImageCreateInfo &img_ci, std::string name);
+    Image(const Device &device, const VkImageCreateInfo &img_ci, const std::string &name);
 
     /// Constructor 5 (calls constructor 3 internally)
     /// @param device The device wrapper
@@ -78,7 +79,7 @@ public:
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
-          VkImageAspectFlags aspect_flags, std::string name);
+          VkImageAspectFlags aspect_flags, const std::string &name);
 
     /// Constructor 6 (calls constructor 3 internally)
     /// @param device The device wrapper
@@ -93,7 +94,7 @@ public:
     /// @exception VulkanException vmaCreateImage call failed
     /// @exception VulkanException vkCreateImageView call failed
     Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
-          VkImageAspectFlags aspect_flags, VkImageLayout initial_layout, std::string name);
+          VkImageAspectFlags aspect_flags, VkImageLayout initial_layout, const std::string &name);
 
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
