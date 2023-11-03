@@ -10,7 +10,7 @@
 namespace inexor::vulkan_renderer {
 
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
-                           std::function<void()> on_update_user_data)
+                           TextureResource *msaa_color, std::function<void()> on_update_user_data)
     : m_device(device), m_vertex_shader(m_device, VK_SHADER_STAGE_VERTEX_BIT, "Shader ImGUI", "shaders/ui.vert.spv"),
       m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Shader ImGUI", "shaders/ui.frag.spv"),
       m_on_update_user_data(std::move(on_update_user_data)) {
@@ -87,6 +87,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_gr
         })
         ->set_vertex_input_binding_descriptions<ImDrawVert>()
         ->writes_to(back_buffer)
+        ->writes_to(msaa_color)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)
         ->reads_from(imgui_texture.get(), VK_SHADER_STAGE_FRAGMENT_BIT)

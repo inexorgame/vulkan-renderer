@@ -54,10 +54,10 @@ public:
     /// @param device A reference to the device wrapper
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer A pointer to the target of the ImGUI rendering
+    /// @param msaa_color A pointer to the msaa color target
     /// @param on_update_user_data The function in which the user's ImGui data is updated
-    ImGUIOverlay(
-        const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
-        std::function<void()> on_update_user_data);
+    ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
+                 TextureResource *msaa_color, std::function<void()> on_update_user_data);
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

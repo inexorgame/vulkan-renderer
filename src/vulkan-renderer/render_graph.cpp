@@ -264,18 +264,14 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
 
     cmd_buf.begin_debug_label_region(stage->name(), color);
 
-    if (first_stage) {
-        float color[4];
-        color[0] = 0.0f;
-        color[1] = 0.0f;
-        color[2] = 1.0f;
-        color[3] = 0.4f;
-        // TODO: make color palette and pass parameter to `insert_debug_label`
-        cmd_buf.insert_debug_label("Hello world", color);
-
-        cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_UNDEFINED,
-                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    }
+    color[0] = 0.0f;
+    color[1] = 0.0f;
+    color[2] = 1.0f;
+    color[3] = 0.4f;
+    // TODO: make color palette and pass parameter to `insert_debug_label`
+    cmd_buf.insert_debug_label("Hello world", color);
+    cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     const auto *phys_graphics_stage = physical.as<PhysicalStage>();
     assert(phys_graphics_stage != nullptr);
@@ -303,21 +299,19 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
         if (texture_resource->m_usage == TextureUsage::MSAA_DEPTH_STENCIL_BUFFER) {
             resolve_depth_buffer = physical_texture->image_view();
         }
-        if (first_stage) {
-            if (texture_resource->m_usage == TextureUsage::MSAA_BACK_BUFFER) {
-                resolve_color_buffer = physical_texture->image_view();
-            }
+        if (texture_resource->m_usage == TextureUsage::MSAA_BACK_BUFFER) {
+            resolve_color_buffer = physical_texture->image_view();
         }
     }
 
+    assert(resolve_color_buffer);
+
     if (first_stage) {
-        assert(resolve_color_buffer);
+        assert(depth_buffer);
+        assert(resolve_depth_buffer);
     }
 
-    assert(depth_buffer);
-    assert(resolve_depth_buffer);
-
-    const auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
+    auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
         .imageView = resolve_color_buffer,
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
@@ -327,7 +321,7 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue =
             {
-                .color = graphics_stage->m_clear_value.color,
+                .color = {0.0f, 0.0f, 0.0f, 0.0f}, // graphics_stage->m_clear_value.color,
             },
     });
 
@@ -341,11 +335,12 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue =
             {
-                .depthStencil = graphics_stage->m_clear_value.depthStencil,
+                //.depthStencil = graphics_stage->m_clear_value.depthStencil,
+                .depthStencil = {1.0f, 0},
             },
     });
 
-    const auto rendering_info = wrapper::make_info<VkRenderingInfo>({
+    auto rendering_info = wrapper::make_info<VkRenderingInfo>({
         .renderArea =
             {
                 .extent = m_swapchain.extent(),
@@ -353,9 +348,12 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &color_attachment,
-        .pDepthAttachment = &depth_attachment,
-        .pStencilAttachment = &depth_attachment,
     });
+
+    if (first_stage) {
+        rendering_info.pDepthAttachment = &depth_attachment;
+        rendering_info.pStencilAttachment = &depth_attachment;
+    }
 
     cmd_buf.begin_rendering(&rendering_info);
 
@@ -385,15 +383,16 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
 
     cmd_buf.bind_pipeline(physical.m_pipeline->pipeline());
 
-    // TODO: Can/should we batch push constant ranges into one(?)
     for (auto &push_constant : stage->m_push_constants) {
         cmd_buf.push_constants(physical.m_pipeline_layout->pipeline_layout(), push_constant.m_push_constant.stageFlags,
                                push_constant.m_push_constant.size, push_constant.m_push_constant_data);
     }
 
+    // TODO: How to abstract descriptor set handling into rendergraph efficiently?
     cmd_buf.bind_descriptor_set(physical.m_descriptor_set, physical.m_pipeline_layout->pipeline_layout());
 
-    // Call the recording function (the custom command buffer code) that was specified by the programmer for this stage
+    // Call the recording function (the custom command buffer code) that was specified by the programmer for this
+    // stage
     stage->m_on_record(cmd_buf);
 
     cmd_buf.end_rendering();
@@ -406,7 +405,6 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
         color[3] = 0.4f;
         // TODO: make color palette and pass parameter to `insert_debug_label`
         cmd_buf.insert_debug_label("Hello world", color);
-
         cmd_buf.change_image_layout(m_swapchain.image(image_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
