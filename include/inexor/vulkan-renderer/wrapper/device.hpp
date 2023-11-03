@@ -34,6 +34,7 @@ class Device {
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
     VkPhysicalDeviceProperties m_properties{};
+    VkSampleCountFlagBits m_max_usable_sample_count{VK_SAMPLE_COUNT_1_BIT};
 
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};

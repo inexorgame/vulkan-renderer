@@ -387,6 +387,24 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 
     // Store the properties of this physical device
     vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
+
+    auto determine_max_usable_sample_count = [&]() {
+        const auto sample_count =
+            m_properties.limits.framebufferColorSampleCounts & m_properties.limits.framebufferDepthSampleCounts;
+
+        const std::array<VkSampleCountFlagBits, 6> sample_count_flag_bits{
+            VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_16_BIT,
+            VK_SAMPLE_COUNT_8_BIT,  VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT};
+
+        for (const auto &sample_count_flag_bit : sample_count_flag_bits) {
+            if (sample_count & sample_count_flag_bit) {
+                return sample_count_flag_bit;
+            }
+        }
+        return VK_SAMPLE_COUNT_1_BIT;
+    };
+
+    m_max_usable_sample_count = determine_max_usable_sample_count();
 }
 
 Device::~Device() {
@@ -423,19 +441,7 @@ VkSurfaceCapabilitiesKHR Device::get_surface_capabilities(const VkSurfaceKHR sur
 }
 
 VkSampleCountFlagBits Device::get_max_usable_sample_count() const {
-    const auto sample_count =
-        m_properties.limits.framebufferColorSampleCounts & m_properties.limits.framebufferDepthSampleCounts;
-
-    const std::array<VkSampleCountFlagBits, 6> sample_count_flag_bits{VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT,
-                                                                      VK_SAMPLE_COUNT_16_BIT, VK_SAMPLE_COUNT_8_BIT,
-                                                                      VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT};
-
-    for (const auto &sample_count_flag_bit : sample_count_flag_bits) {
-        if (sample_count & sample_count_flag_bit) {
-            return sample_count_flag_bit;
-        }
-    }
-    return VK_SAMPLE_COUNT_1_BIT;
+    return m_max_usable_sample_count;
 }
 
 bool Device::format_supports_feature(const VkFormat format, const VkFormatFeatureFlagBits feature) const {

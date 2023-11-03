@@ -81,6 +81,10 @@ public:
     Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
           VkImageAspectFlags aspect_flags, const std::string &name);
 
+    // TODO
+    Image(const Device &device, VkFormat format, std::uint32_t width, std::uint32_t height, VkImageUsageFlags usage,
+          VkImageAspectFlags aspect_flags, const std::string &name, VkSampleCountFlags sample_count);
+
     /// Constructor 6 (calls constructor 3 internally)
     /// @param device The device wrapper
     /// @param format The image format

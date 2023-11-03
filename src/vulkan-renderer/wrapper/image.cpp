@@ -93,6 +93,28 @@ Image::Image(const Device &device, const VkFormat format, const std::uint32_t wi
             aspect_flags, name) {}
 
 Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
+             const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, const std::string &name,
+             VkSampleCountFlags sample_count)
+    : Image(device,
+            wrapper::make_info<VkImageCreateInfo>({
+                .imageType = VK_IMAGE_TYPE_2D,
+                .format = format,
+                .extent{
+                    .width = width,
+                    .height = height,
+                    .depth = 1,
+                },
+                .mipLevels = 1,
+                .arrayLayers = 1,
+                .samples = static_cast<VkSampleCountFlagBits>(sample_count),
+                .tiling = VK_IMAGE_TILING_OPTIMAL,
+                .usage = usage,
+                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            }),
+            aspect_flags, name) {}
+
+Image::Image(const Device &device, const VkFormat format, const std::uint32_t width, const std::uint32_t height,
              const VkImageUsageFlags usage, const VkImageAspectFlags aspect_flags, const VkImageLayout initial_layout,
              const std::string &name)
     : Image(device,

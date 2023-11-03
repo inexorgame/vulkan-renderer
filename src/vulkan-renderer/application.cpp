@@ -304,10 +304,15 @@ Application::Application(int argc, char **argv) {
 
     const VkPhysicalDeviceFeatures required_features{
         // Add required physical device features here
+        .sampleRateShading = VK_TRUE,
+        .samplerAnisotropy = VK_TRUE,
     };
 
     const VkPhysicalDeviceFeatures optional_features{
         // Add optional physical device features here
+        // TODO: Add callback on_device_feature_not_available and remove optional features
+        // Then, return true or false from the callback, indicating if you can run the app
+        // without this physical device feature being present.
     };
 
     std::vector<const char *> required_extensions{
@@ -392,9 +397,9 @@ void Application::recreate_swapchain() {
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, m_render_graph.get(), m_back_buffer,
-                                                     [&]() { update_imgui_overlay(); });
+    // m_imgui_overlay.reset();
+    //  m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, m_render_graph.get(), m_back_buffer,
+    //                                                   [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile(m_back_buffer);
 }
@@ -431,13 +436,16 @@ void Application::render_frame() {
 
 void Application::setup_render_graph() {
     m_back_buffer =
-        m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "Back Buffer");
+        m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "color");
 
-    m_msaa_target = m_render_graph->add<TextureResource>(TextureUsage::MSAA_RENDER_TARGET, m_swapchain->image_format(),
-                                                         "MSAA Target");
+    m_msaa_color =
+        m_render_graph->add<TextureResource>(TextureUsage::MSAA_BACK_BUFFER, m_swapchain->image_format(), "MSAA color");
 
     m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
                                                           VK_FORMAT_D32_SFLOAT_S8_UINT, "Depth Buffer");
+
+    m_msaa_depth = m_render_graph->add<TextureResource>(TextureUsage::MSAA_DEPTH_STENCIL_BUFFER,
+                                                        VK_FORMAT_D32_SFLOAT_S8_UINT, "MSAA depth");
 
     m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER, [&]() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
@@ -492,6 +500,8 @@ void Application::setup_render_graph() {
         ->set_vertex_input_binding_descriptions<OctreeGpuVertex>()
         ->writes_to(m_back_buffer)
         ->writes_to(m_depth_buffer)
+        ->writes_to(m_msaa_color)
+        ->writes_to(m_msaa_depth)
         ->reads_from(m_index_buffer)
         ->reads_from(m_vertex_buffer)
         ->reads_from(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)

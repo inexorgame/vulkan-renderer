@@ -135,16 +135,15 @@ public:
 };
 
 enum class TextureUsage {
-    /// Specifies that this texture is the output of the render graph
-    // TODO: Refactor back buffer system more (remove need for BACK_BUFFER texture usage)
-    BACK_BUFFER,
-
     /// A render target for multi sampling anti aliasing (MSAA)
-    MSAA_RENDER_TARGET,
+    BACK_BUFFER,
+    MSAA_BACK_BUFFER,
 
     /// Specifies that this texture is a combined depth/stencil buffer
     /// @note This may mean that this texture is completely GPU-sided and cannot be accessed by the CPU in any way.
     DEPTH_STENCIL_BUFFER,
+
+    MSAA_DEPTH_STENCIL_BUFFER,
 
     /// Specifies that this texture isn't used for any special purpose
     NORMAL,
@@ -285,7 +284,7 @@ private:
     bool m_depth_write{false};
     VkClearValue m_clear_value{};
 
-    VkFormat m_swapchain_img_format;
+    VkFormat m_swapchain_img_format{VK_FORMAT_UNDEFINED};
     VkPipelineRenderingCreateInfo m_pipeline_rendering_ci{};
     VkPipelineColorBlendAttachmentState m_color_blend_attachment{};
 
@@ -595,6 +594,7 @@ public:
     }
 };
 
+// TODO: Delete me I am useless
 class PhysicalBackBuffer : public PhysicalResource {
     friend RenderGraph;
 

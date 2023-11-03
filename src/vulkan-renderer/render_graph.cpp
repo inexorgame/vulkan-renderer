@@ -99,6 +99,10 @@ VkGraphicsPipelineCreateInfo GraphicsStage::make_create_info(const VkFormat swap
         .pNext = nullptr,
         .colorAttachmentCount = 1,
         .pColorAttachmentFormats = &m_swapchain_img_format,
+        // TODO: Implement set_depth_format() and move to pipeline builder!
+        .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
+        // TODO: Implement set_stencil_format() and move to pipeline builder!
+        .stencilAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
     });
 
     return wrapper::make_info<VkGraphicsPipelineCreateInfo>({
@@ -276,9 +280,49 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
     const auto *phys_graphics_stage = physical.as<PhysicalStage>();
     assert(phys_graphics_stage != nullptr);
 
+    VkImageView depth_buffer{VK_NULL_HANDLE};
+    VkImageView resolve_color_buffer{VK_NULL_HANDLE};
+    VkImageView resolve_depth_buffer{VK_NULL_HANDLE};
+
+    // Loop through all writes and find the depth buffer
+    for (const auto &resource : stage->m_writes) {
+        const auto *texture_resource = resource->as<TextureResource>();
+        if (texture_resource == nullptr) {
+            continue;
+        }
+        auto *physical_texture = texture_resource->m_physical->as<PhysicalImage>();
+        if (physical_texture == nullptr) {
+            continue;
+        }
+        if (physical_texture->m_img == nullptr) {
+            continue;
+        }
+        if (texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER) {
+            depth_buffer = physical_texture->image_view();
+        }
+        if (texture_resource->m_usage == TextureUsage::MSAA_DEPTH_STENCIL_BUFFER) {
+            resolve_depth_buffer = physical_texture->image_view();
+        }
+        if (first_stage) {
+            if (texture_resource->m_usage == TextureUsage::MSAA_BACK_BUFFER) {
+                resolve_color_buffer = physical_texture->image_view();
+            }
+        }
+    }
+
+    if (first_stage) {
+        assert(resolve_color_buffer);
+    }
+
+    assert(depth_buffer);
+    assert(resolve_depth_buffer);
+
     const auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        .imageView = m_swapchain.image_view(image_index),
+        .imageView = resolve_color_buffer,
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
+        .resolveImageView = m_swapchain.image_view(image_index),
+        .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .loadOp = graphics_stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue =
@@ -287,28 +331,12 @@ void RenderGraph::record_command_buffer(const bool first_stage, const bool last_
             },
     });
 
-    VkImageView depth_buffer_img_view{VK_NULL_HANDLE};
-    VkImage depth_buffer{VK_NULL_HANDLE};
-
-    // Loop through all writes and find the depth buffer
-    for (const auto &resource : stage->m_reads) {
-        const auto *texture_resource = resource.first->as<TextureResource>();
-        if (texture_resource == nullptr) {
-            continue;
-        }
-        auto *physical_texture = texture_resource->m_physical->as<PhysicalImage>();
-        if (physical_texture->m_img == nullptr) {
-            continue;
-        }
-        if (texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER) {
-            depth_buffer_img_view = physical_texture->image_view();
-            depth_buffer = physical_texture->m_img->image();
-        }
-    }
-
-    const auto depth_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        .imageView = depth_buffer_img_view,
+    auto depth_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
+        .imageView = resolve_depth_buffer,
         .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .resolveMode = VK_RESOLVE_MODE_MIN_BIT,
+        .resolveImageView = depth_buffer,
+        .resolveImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         .loadOp = graphics_stage->m_clears_screen ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue =
@@ -415,8 +443,9 @@ void RenderGraph::create_texture_resources() {
         // TODO: Move this to representation header
         const std::unordered_map<TextureUsage, std::string> texture_usage_name{
             {TextureUsage::BACK_BUFFER, "BACK_BUFFER"},
-            {TextureUsage::MSAA_RENDER_TARGET, "MSAA_RENDER_TARGET"},
+            {TextureUsage::MSAA_BACK_BUFFER, "MSAA_BACK_BUFFER"},
             {TextureUsage::DEPTH_STENCIL_BUFFER, "DEPTH_STENCIL_BUFFER"},
+            {TextureUsage::MSAA_DEPTH_STENCIL_BUFFER, "MSAA_DEPTH_STENCIL_BUFFER"},
             {TextureUsage::NORMAL, "NORMAL"},
         };
 
@@ -430,15 +459,30 @@ void RenderGraph::create_texture_resources() {
             auto physical = std::make_shared<PhysicalImage>(m_device);
             texture_resource->m_physical = physical;
 
-            physical->m_img = std::make_unique<wrapper::Image>(
-                m_device, texture_resource->m_format, m_swapchain.extent().width, m_swapchain.extent().height,
-                texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                    ? static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                    : static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
-                static_cast<VkImageAspectFlags>(texture_resource->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER
-                                                    ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-                                                    : VK_IMAGE_ASPECT_COLOR_BIT),
-                VK_IMAGE_LAYOUT_UNDEFINED, texture_resource->name());
+            switch (texture_resource->m_usage) {
+            case TextureUsage::MSAA_BACK_BUFFER: {
+                physical->m_img = std::make_unique<wrapper::Image>(
+                    m_device, texture_resource->m_format, m_swapchain.extent().width, m_swapchain.extent().height,
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, texture_resource->name(),
+                    m_device.get_max_usable_sample_count());
+                break;
+            }
+            case TextureUsage::DEPTH_STENCIL_BUFFER: {
+                physical->m_img = std::make_unique<wrapper::Image>(
+                    m_device, texture_resource->m_format, m_swapchain.extent().width, m_swapchain.extent().height,
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, texture_resource->name());
+                break;
+            }
+            case TextureUsage::MSAA_DEPTH_STENCIL_BUFFER: {
+                physical->m_img = std::make_unique<wrapper::Image>(
+                    m_device, texture_resource->m_format, m_swapchain.extent().width, m_swapchain.extent().height,
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, texture_resource->name(),
+                    m_device.get_max_usable_sample_count());
+                break;
+            }
+            }
         }
     }
 }
@@ -485,7 +529,14 @@ void RenderGraph::create_pipeline_layout(PhysicalStage &physical, GraphicsStage 
         "Graphics Pipeline Layout " + stage->name());
 }
 
+// TODO: Remove graphics pipeline construction entirely from rendergraph
 void RenderGraph::create_graphics_pipeline(PhysicalStage &physical, GraphicsStage *stage) {
+    // Ugly hack, remove me
+    bool is_first = false;
+    if (stage->name() == "Octree") {
+        is_first = true;
+    }
+
     physical.m_pipeline = std::make_unique<wrapper::pipelines::GraphicsPipeline>(
         m_device,
         stage
@@ -498,6 +549,7 @@ void RenderGraph::create_graphics_pipeline(PhysicalStage &physical, GraphicsStag
                 .depthWriteEnable = stage->m_depth_write ? VK_TRUE : VK_FALSE,
                 .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
             }))
+            ->set_multisampling(m_device.get_max_usable_sample_count(), 0.1f)
             ->set_pipeline_layout(physical.m_pipeline_layout->pipeline_layout())
             ->set_scissor(m_swapchain.extent())
             ->set_viewport(m_swapchain.extent())
