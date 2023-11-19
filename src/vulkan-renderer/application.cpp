@@ -11,6 +11,7 @@
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <toml.hpp>
@@ -472,6 +473,8 @@ void Application::setup_render_graph() {
                                                       m_uniform_buffer.lock()->enqueue_update(m_mvp_matrices);
                                                   });
 
+    auto octree_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>();
+
     // Build a graphics pipeline for octree rendering using a builder pattern
     wrapper::pipelines::GraphicsPipelineBuilder pipeline_builder(*m_device);
     const auto octree_pipeline = pipeline_builder
@@ -503,6 +506,7 @@ void Application::setup_render_graph() {
                                      })
                                      .set_viewport(m_swapchain->extent())
                                      .set_scissor(m_swapchain->extent())
+                                     .set_pipeline_layout(octree_pipeline)
                                      .add_shader(*m_vertex_shader)
                                      .add_shader(*m_fragment_shader)
                                      .build("Octree");

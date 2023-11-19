@@ -65,6 +65,10 @@ GraphicsPipelineBuilder::add_vertex_input_attribute(const VkVertexInputAttribute
 }
 
 std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
+    assert(!name.empty());
+    assert(!m_vertex_input_binding_descriptions.empty());
+    assert(!m_vertex_input_attribute_descriptions.empty());
+
     // We don't really need all the make_infos here, as we initialized it all in reset() already,
     // but it makes the code look cleaner and more consistent
     m_vertex_input_sci = make_info<VkPipelineVertexInputStateCreateInfo>({
@@ -74,6 +78,9 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pVertexAttributeDescriptions = m_vertex_input_attribute_descriptions.data(),
 
     });
+
+    assert(!m_viewports.empty());
+    assert(!m_scissors.empty());
 
     m_viewport_sci = make_info<VkPipelineViewportStateCreateInfo>({
         .viewportCount = static_cast<uint32_t>(m_viewports.size()),
@@ -98,6 +105,8 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .depthAttachmentFormat = m_depth_attachment_format,
         .stencilAttachmentFormat = m_stencil_attachment_format,
     });
+
+    assert(m_pipeline_layout);
 
     auto new_graphics_pipeline =
         std::make_unique<GraphicsPipeline>(m_device,
