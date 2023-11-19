@@ -47,7 +47,8 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const wrapper::Shad
     return add_shader(make_info<VkPipelineShaderStageCreateInfo>({
         .stage = shader.type(),
         .module = shader.module(),
-        .pName = shader.name().c_str(),
+        .pName = shader.entry_point().c_str(),
+
     }));
 }
 

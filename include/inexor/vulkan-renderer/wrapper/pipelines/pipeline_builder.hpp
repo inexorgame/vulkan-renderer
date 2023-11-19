@@ -21,6 +21,9 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 // TODO: ComputePipelineBuilder
 
 /// Builder class for VkPipelineCreateInfo for graphics pipelines which use dynamic rendering
+/// @note This builder pattern does not perform any checks which are already covered by validation layers.
+/// This means if you forget to specify viewport for example, creation of the graphics pipeline will fail.
+/// It is the reponsibility of the programmer to use validation layers to check for problems.
 class GraphicsPipelineBuilder {
 private:
     /// The device wrapper reference

@@ -501,6 +501,8 @@ void Application::setup_render_graph() {
                                              .offset = offsetof(OctreeGpuVertex, color),
                                          },
                                      })
+                                     .set_viewport(m_swapchain->extent())
+                                     .set_scissor(m_swapchain->extent())
                                      .add_shader(*m_vertex_shader)
                                      .add_shader(*m_fragment_shader)
                                      .build("Octree");

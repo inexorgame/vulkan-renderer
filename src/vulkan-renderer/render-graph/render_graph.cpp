@@ -33,7 +33,6 @@ std::weak_ptr<BufferResource> RenderGraph::add_buffer(std::string name, const Bu
 }
 
 void RenderGraph::add_graphics_stage(std::shared_ptr<GraphicsStage> graphics_stage) {
-    // This way, the constructor arguments of GraphicsStage class can be passed into add_graphics_stage directly
     m_graphics_stages.push_back(std::move(graphics_stage));
 }
 
