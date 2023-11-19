@@ -1,8 +1,10 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 
 #include <cassert>
 #include <memory>
@@ -90,26 +92,31 @@ const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet de
     return bind_descriptor_sets({&descriptor_set, 1}, layout, bind_point, first_set, dyn_offsets);
 }
 
-const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buf, const VkIndexType index_type,
-                                                      const VkDeviceSize offset) const {
-    assert(buf);
-    vkCmdBindIndexBuffer(m_cmd_buf, buf, offset, index_type);
+const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::BufferResource> buf,
+                                                      const VkIndexType index_type, const VkDeviceSize offset) const {
+    if (buf.lock()->type() != render_graph::BufferType::INDEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buf.lock()->name() +
+                                    " is not an index buffer!");
+    }
+    // CommandBuffer is a friend class of BufferResource and is thus allowed to access m_buffer
+    vkCmdBindIndexBuffer(m_cmd_buf, buf.lock()->m_buffer->buffer(), offset, index_type);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
+const CommandBuffer &CommandBuffer::bind_pipeline(const pipelines::GraphicsPipeline &pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
-    assert(pipeline);
-    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline);
+    // CommandBuffer is a friend class of GraphicsPipeline and is thus allowed to access m_pipeline
+    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.m_pipeline);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_vertex_buffers(const std::span<const VkBuffer> bufs,
-                                                        const std::uint32_t first_binding,
-                                                        const std::span<const VkDeviceSize> offsets) const {
-    assert(!bufs.empty());
-    vkCmdBindVertexBuffers(m_cmd_buf, first_binding, static_cast<std::uint32_t>(bufs.size()), bufs.data(),
-                           offsets.empty() ? std::vector<VkDeviceSize>(bufs.size(), 0).data() : offsets.data());
+const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<render_graph::BufferResource> buffer) const {
+    if (buffer.lock()->type() != render_graph::BufferType::VERTEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->name() +
+                                    " is not a vertex buffer!");
+    }
+    // CommandBuffer is a friend class of BufferResource and wrapper::Buffer and is thus allowed to access m_buffer
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->m_buffer->m_buffer, 0);
     return *this;
 }
 

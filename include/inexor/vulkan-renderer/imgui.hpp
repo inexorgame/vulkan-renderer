@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
@@ -18,14 +18,12 @@ class Device;
 
 namespace inexor::vulkan_renderer {
 
+/// A wrapper for an ImGui implementation
 class ImGUIOverlay {
     const wrapper::Device &m_device;
-
-    BufferResource *m_index_buffer{nullptr};
-    BufferResource *m_vertex_buffer{nullptr};
-    GraphicsStage *m_stage{nullptr};
-
-    std::unique_ptr<ExternalTextureResource> imgui_texture;
+    std::weak_ptr<render_graph::BufferResource> m_index_buffer;
+    std::weak_ptr<render_graph::BufferResource> m_vertex_buffer;
+    std::weak_ptr<render_graph::GraphicsStage> m_stage;
     std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
     wrapper::Shader m_vertex_shader;
     wrapper::Shader m_fragment_shader;
@@ -53,11 +51,13 @@ public:
     /// Default constructor
     /// @param device A reference to the device wrapper
     /// @param render_graph A pointer to the render graph
-    /// @param back_buffer A pointer to the target of the ImGUI rendering
-    /// @param msaa_color A pointer to the msaa color target
+    /// @param back_buffer The back buffer texture resource
+    /// @param depth_buffer The depth buffer texture resource
     /// @param on_update_user_data The function in which the user's ImGui data is updated
-    ImGUIOverlay(const wrapper::Device &device, RenderGraph *render_graph, TextureResource *back_buffer,
-                 TextureResource *msaa_color, std::function<void()> on_update_user_data);
+    ImGUIOverlay(const wrapper::Device &device, render_graph::RenderGraph &render_graph,
+                 std::weak_ptr<render_graph::TextureResource> back_buffer,
+                 std::weak_ptr<render_graph::TextureResource> depth_buffer, std::function<void()> on_update_user_data);
+
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

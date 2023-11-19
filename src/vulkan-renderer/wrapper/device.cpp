@@ -318,8 +318,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     });
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
-        // We use dynamic rendering
-        .pNext = &dyn_rendering_feature,
+        // This is one of those rare cases where pNext is actually not nullptr!
+        .pNext = &dyn_rendering_feature, // We use dynamic rendering
         .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
         .pQueueCreateInfos = queues_to_create.data(),
         .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),

@@ -15,6 +15,8 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 /// RAII wrapper for VkPipeline
 class GraphicsPipeline {
+    friend class CommandBuffer;
+
 private:
     const Device &m_device;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
@@ -32,10 +34,6 @@ public:
 
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
     GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
-
-    [[nodiscard]] VkPipeline pipeline() const noexcept {
-        return m_pipeline;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

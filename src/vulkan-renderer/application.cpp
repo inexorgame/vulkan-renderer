@@ -3,11 +3,13 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_stage_builder.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -388,7 +390,7 @@ void Application::recreate_swapchain() {
     m_render_graph.reset();
     // Recreate the swapchain
     m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
-    m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
+    m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device);
     setup_render_graph();
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
@@ -398,10 +400,10 @@ void Application::recreate_swapchain() {
     m_camera->set_rotation_speed(0.5f);
 
     m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, m_render_graph.get(), m_back_buffer, m_msaa_color,
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_render_graph.get(), m_back_buffer, m_msaa_color,
                                                      [&]() { update_imgui_overlay(); });
 
-    m_render_graph->compile(m_back_buffer);
+    m_render_graph->compile();
 }
 
 void Application::render_frame() {
@@ -411,22 +413,9 @@ void Application::render_frame() {
         return;
     }
 
-    const auto image_index = m_swapchain->acquire_next_image_index();
-    const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
-
-    m_render_graph->render(image_index, cmd_buf);
-
-    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = m_swapchain->image_available_semaphore(),
-        .pWaitDstStageMask = stage_mask.data(),
-        .commandBufferCount = 1,
-        .pCommandBuffers = cmd_buf.ptr(),
-    }));
-
-    m_swapchain->present(image_index);
+    // TODO: m_render_graph->render();
+    m_render_graph->render(m_swapchain->acquire_next_image_index(), m_swapchain->image_available_semaphore());
+    m_swapchain->present();
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
@@ -435,79 +424,109 @@ void Application::render_frame() {
 }
 
 void Application::setup_render_graph() {
-    m_back_buffer =
-        m_render_graph->add<TextureResource>(TextureUsage::BACK_BUFFER, m_swapchain->image_format(), "color");
+    // TODO: Give swapchain handle to rendergraph
+    // TODO: add_back_buffer, add_depth_buffer
+    using render_graph::TextureUsage;
+
+    m_back_buffer = m_render_graph->add_texture("Color", TextureUsage::BACK_BUFFER, m_swapchain->image_format());
 
     m_msaa_color =
-        m_render_graph->add<TextureResource>(TextureUsage::MSAA_BACK_BUFFER, m_swapchain->image_format(), "MSAA color");
+        m_render_graph->add_texture("MSAA color", TextureUsage::MSAA_BACK_BUFFER, m_swapchain->image_format());
 
-    m_depth_buffer = m_render_graph->add<TextureResource>(TextureUsage::DEPTH_STENCIL_BUFFER,
-                                                          VK_FORMAT_D32_SFLOAT_S8_UINT, "Depth Buffer");
+    m_depth_buffer =
+        m_render_graph->add_texture("Depth", TextureUsage::DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_msaa_depth = m_render_graph->add<TextureResource>(TextureUsage::MSAA_DEPTH_STENCIL_BUFFER,
-                                                        VK_FORMAT_D32_SFLOAT_S8_UINT, "MSAA depth");
+    m_msaa_depth = m_render_graph->add_texture("MSAA depth", TextureUsage::MSAA_DEPTH_STENCIL_BUFFER,
+                                               VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_vertex_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::VERTEX_BUFFER, [&]() {
-        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
-            load_octree_geometry(false);
-            generate_octree_indices();
-            // Note that we update the vertex buffer together with the index buffer to keep data consistent
-            m_vertex_buffer->enqueue_update(m_octree_vertices);
-            m_index_buffer->enqueue_update(m_octree_indices);
-        }
-    });
+    using render_graph::BufferType;
+    using wrapper::descriptors::DescriptorSetUpdateFrequency;
+
+    m_vertex_buffer =
+        m_render_graph->add_buffer("Octree", BufferType::VERTEX_BUFFER, DescriptorSetUpdateFrequency::PER_FRAME, [&]() {
+            // If the key N was pressed once, we generate a new octree
+            if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+                load_octree_geometry(false);
+                generate_octree_indices();
+                // We update the vertex buffer together with the index buffer
+                // to keep data consistent across frames
+                m_vertex_buffer.lock()->enqueue_update(m_octree_vertices);
+                m_index_buffer.lock()->enqueue_update(m_octree_indices);
+            }
+        });
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
-    m_index_buffer = m_render_graph->add<BufferResource>("Octree", BufferUsage::INDEX_BUFFER);
+    m_index_buffer =
+        m_render_graph->add_buffer("Octree", BufferType::INDEX_BUFFER, DescriptorSetUpdateFrequency::PER_FRAME);
 
     // Update the vertex buffer and index buffer at initialization
     // Note that we update the vertex buffer together with the index buffer to keep data consistent
-    m_vertex_buffer->enqueue_update(m_octree_vertices);
-    m_index_buffer->enqueue_update(m_octree_indices);
+    m_vertex_buffer.lock()->enqueue_update(m_octree_vertices);
+    m_index_buffer.lock()->enqueue_update(m_octree_indices);
 
-    m_uniform_buffer = m_render_graph->add<BufferResource>("Matrices", BufferUsage::UNIFORM_BUFFER, [&]() {
-        m_mvp_matrices.view = m_camera->view_matrix();
-        m_mvp_matrices.proj = m_camera->perspective_matrix();
-        m_mvp_matrices.proj[1][1] *= -1;
-        m_uniform_buffer->enqueue_update(&m_mvp_matrices);
-    });
+    m_uniform_buffer = m_render_graph->add_buffer("Matrices", BufferType::UNIFORM_BUFFER,
+                                                  DescriptorSetUpdateFrequency::PER_FRAME, [&]() {
+                                                      m_mvp_matrices.view = m_camera->view_matrix();
+                                                      m_mvp_matrices.proj = m_camera->perspective_matrix();
+                                                      m_mvp_matrices.proj[1][1] *= -1;
+                                                      m_uniform_buffer.lock()->enqueue_update(m_mvp_matrices);
+                                                  });
 
-    auto *main_stage = m_render_graph->add<GraphicsStage>("Octree");
-    main_stage->add_shader(*m_vertex_shader)
-        ->add_shader(*m_fragment_shader)
-        ->add_color_blend_attachment({
-            .blendEnable = VK_FALSE,
-            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
-                              VK_COLOR_COMPONENT_A_BIT,
-        })
-        ->set_clears_screen(true)
-        ->set_clears_screen_color({0.0f, 0.0f, 0.0f})
-        ->set_depth_options(true, true)
-        ->set_vertex_input_attribute_descriptions({
-            {
-                .location = 0,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(OctreeGpuVertex, position),
-            },
-            {
-                .location = 1,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(OctreeGpuVertex, color),
-            },
-        })
-        ->set_vertex_input_binding_descriptions<OctreeGpuVertex>()
-        ->writes_to(m_back_buffer)
-        ->writes_to(m_depth_buffer)
-        ->writes_to(m_msaa_color)
-        ->writes_to(m_msaa_depth)
-        ->reads_from(m_index_buffer)
-        ->reads_from(m_vertex_buffer)
-        ->reads_from(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
-        ->set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
-            cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-        });
+    // Build a graphics pipeline for octree rendering using a builder pattern
+    wrapper::pipelines::GraphicsPipelineBuilder pipeline_builder(*m_device);
+    const auto octree_pipeline = pipeline_builder
+                                     .add_color_blend_attachment({
+                                         .blendEnable = VK_FALSE,
+                                         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                                           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+                                     })
+                                     .set_vertex_input_bindings({
+                                         {
+                                             .binding = 0,
+                                             .stride = sizeof(OctreeGpuVertex),
+                                             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                         },
+                                     })
+                                     .set_vertex_input_attributes({
+                                         {
+                                             .location = 0,
+                                             .binding = 0,
+                                             .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                             .offset = offsetof(OctreeGpuVertex, position),
+                                         },
+                                         {
+                                             .location = 1,
+                                             .binding = 0,
+                                             .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                             .offset = offsetof(OctreeGpuVertex, color),
+                                         },
+                                     })
+                                     .add_shader(*m_vertex_shader)
+                                     .add_shader(*m_fragment_shader)
+                                     .build("Octree");
+
+    // Build a graphics stage for octree rendering using a builder pattern
+    render_graph::GraphicsStageBuilder graphics_stage_builder;
+    const auto octree_stage = graphics_stage_builder
+                                  .set_clear_value({
+                                      .color = {1.0f, 0.0f, 0.0f},
+                                  })
+                                  .set_depth_test(true)
+                                  .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
+                                      cmd_buf.bind_pipeline(*octree_pipeline)
+                                          .bind_vertex_buffer(m_vertex_buffer)
+                                          .bind_index_buffer(m_index_buffer)
+                                          .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+                                  })
+                                  .reads_from_buffer(m_index_buffer)
+                                  .reads_from_buffer(m_vertex_buffer)
+                                  .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+                                  .writes_to_texture(m_back_buffer)
+                                  .writes_to_texture(m_depth_buffer)
+                                  .build("Octree");
+
+    // Add the graphics stage for octree rendering
+    m_render_graph->add_graphics_stage(octree_stage);
 }
 
 void Application::update_imgui_overlay() {

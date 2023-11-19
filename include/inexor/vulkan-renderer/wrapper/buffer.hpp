@@ -11,6 +11,8 @@ class Device;
 
 /// A wrapper class for VkBuffer using Vulkan Memory Allocator (VMA)
 class Buffer {
+    friend class CommandBuffer;
+
 private:
     const Device &m_device;
     std::string m_name;

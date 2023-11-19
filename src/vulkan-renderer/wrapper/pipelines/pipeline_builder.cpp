@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -14,6 +15,10 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_devic
 }
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept : m_device(other.m_device) {
+    m_depth_attachment_format = other.m_depth_attachment_format;
+    m_stencil_attachment_format = other.m_stencil_attachment_format;
+    m_swapchain_img_format = other.m_swapchain_img_format;
+    m_pipeline_rendering_ci = std::move(other.m_pipeline_rendering_ci);
     m_vertex_input_sci = std::move(other.m_vertex_input_sci);
     m_input_assembly_sci = std::move(other.m_input_assembly_sci);
     m_tesselation_sci = std::move(other.m_tesselation_sci);
@@ -38,6 +43,14 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const VkPipelineSha
     return *this;
 }
 
+GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const wrapper::Shader &shader) {
+    return add_shader(make_info<VkPipelineShaderStageCreateInfo>({
+        .stage = shader.type(),
+        .module = shader.module(),
+        .pName = shader.name().c_str(),
+    }));
+}
+
 GraphicsPipelineBuilder &
 GraphicsPipelineBuilder::add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment) {
     m_color_blend_attachment_states.push_back(attachment);
@@ -50,13 +63,9 @@ GraphicsPipelineBuilder::add_vertex_input_attribute(const VkVertexInputAttribute
     return *this;
 }
 
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::add_vertex_input_binding(const VkVertexInputBindingDescription &description) {
-    m_vertex_input_binding_descriptions.push_back(description);
-    return *this;
-}
-
 std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
+    // We don't really need all the make_infos here, as we initialized it all in reset() already,
+    // but it makes the code look cleaner and more consistent
     m_vertex_input_sci = make_info<VkPipelineVertexInputStateCreateInfo>({
         .vertexBindingDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_binding_descriptions.size()),
         .pVertexBindingDescriptions = m_vertex_input_binding_descriptions.data(),
@@ -79,34 +88,50 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         });
     }
 
-    const auto pipeline_rendering_ci = wrapper::make_info<VkPipelineRenderingCreateInfo>({
-        // TODO: Implement!
-        // Because we use pipeline_rendering_ci as pNext parameter in VkGraphicsPipelineCreateInfo,
-        // we must end the pNext chain here by setting it to nullptr explicitely!
+    m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
+        // The pNext chain ends here!
         .pNext = nullptr,
+        // TODO: Support multiple color attachment formats in the future?
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &m_swapchain_img_format,
+        .depthAttachmentFormat = m_depth_attachment_format,
+        .stencilAttachmentFormat = m_stencil_attachment_format,
     });
 
-    return std::make_unique<GraphicsPipeline>(m_device,
-                                              make_info<VkGraphicsPipelineCreateInfo>({
-                                                  // .pNext = &pipeline_rendering_ci,
-                                                  .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
-                                                  .pStages = m_shader_stages.data(),
-                                                  .pVertexInputState = &m_vertex_input_sci,
-                                                  .pInputAssemblyState = &m_input_assembly_sci,
-                                                  .pTessellationState = &m_tesselation_sci,
-                                                  .pViewportState = &m_viewport_sci,
-                                                  .pRasterizationState = &m_rasterization_sci,
-                                                  .pMultisampleState = &m_multisample_sci,
-                                                  .pDepthStencilState = &m_depth_stencil_sci,
-                                                  .pColorBlendState = &m_color_blend_sci,
-                                                  .pDynamicState = &m_dynamic_states_sci,
-                                                  .layout = m_pipeline_layout,
-                                                  .renderPass = VK_NULL_HANDLE, // We use dynamic rendering
-                                              }),
-                                              std::move(name));
+    auto new_graphics_pipeline =
+        std::make_unique<GraphicsPipeline>(m_device,
+                                           make_info<VkGraphicsPipelineCreateInfo>({
+                                               // This is one of those rare cases where pNext is actually not nullptr!
+                                               .pNext = &m_pipeline_rendering_ci, // We use dynamic rendering
+                                               .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
+                                               .pStages = m_shader_stages.data(),
+                                               .pVertexInputState = &m_vertex_input_sci,
+                                               .pInputAssemblyState = &m_input_assembly_sci,
+                                               .pTessellationState = &m_tesselation_sci,
+                                               .pViewportState = &m_viewport_sci,
+                                               .pRasterizationState = &m_rasterization_sci,
+                                               .pMultisampleState = &m_multisample_sci,
+                                               .pDepthStencilState = &m_depth_stencil_sci,
+                                               .pColorBlendState = &m_color_blend_sci,
+                                               .pDynamicState = &m_dynamic_states_sci,
+                                               .layout = m_pipeline_layout,
+                                               .renderPass = VK_NULL_HANDLE, // We use dynamic rendering
+                                           }),
+                                           std::move(name));
+
+    // Reset the builder's data after creating the graphics pipeline
+    reset();
+
+    // TODO: Does this work?
+    return std::move(new_graphics_pipeline);
 }
 
 void GraphicsPipelineBuilder::reset() {
+    m_swapchain_img_format = VK_FORMAT_UNDEFINED;
+    m_depth_attachment_format = VK_FORMAT_UNDEFINED;
+    m_stencil_attachment_format = VK_FORMAT_UNDEFINED;
+    m_pipeline_layout = VK_NULL_HANDLE;
+
     m_vertex_input_binding_descriptions.clear();
     m_vertex_input_attribute_descriptions.clear();
     m_vertex_input_sci = {
@@ -174,8 +199,10 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_color_blend_attachments(
 }
 
 GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_culling_mode(const VkBool32 culling_enabled) {
-    spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
-    m_rasterization_sci.cullMode = culling_enabled ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
+    if (culling_enabled == VK_FALSE) {
+        spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
+    }
+    m_rasterization_sci.cullMode = culling_enabled == VK_TRUE ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
     return *this;
 }
 
@@ -198,9 +225,12 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_line_width(const float wid
 }
 
 GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_multisampling(const VkSampleCountFlagBits sample_count,
-                                                                    const float min_sample_shading) {
+                                                                    const std::optional<float> min_sample_shading) {
     m_multisample_sci.rasterizationSamples = sample_count;
-    m_multisample_sci.minSampleShading = min_sample_shading;
+
+    if (min_sample_shading) {
+        m_multisample_sci.minSampleShading = min_sample_shading.value();
+    }
     return *this;
 }
 

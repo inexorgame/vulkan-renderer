@@ -6,26 +6,40 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 // Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
 class Device;
-}
+class Shader;
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-/// Builder class for VkPipelineCreateInfo
-/// @note that all members are initialized in the method ``reset()`` (This method is also called by the constructor)
-/// Calling ``reset()`` allows you to re-use this builder for the next graphics pipeline you want to build, so you don't
-/// need to create one builder per graphics pipeline you build
+// TODO: ComputePipelineBuilder
+
+/// Builder class for VkPipelineCreateInfo for graphics pipelines which use dynamic rendering
 class GraphicsPipelineBuilder {
 private:
+    /// The device wrapper reference
     const Device &m_device;
+
+    // We are not using member initializers here:
+    // Note that all members are initialized in the reset() method
+    // This method is also called after the graphics pipeline has been created,
+    // allowing one instance of GraphicsPipelineBuilder to be reused
+
+    /// This is used for dynamic rendering
+    VkFormat m_swapchain_img_format;
+    VkFormat m_depth_attachment_format;
+    VkFormat m_stencil_attachment_format;
+    VkPipelineRenderingCreateInfo m_pipeline_rendering_ci;
 
     std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions;
     std::vector<VkVertexInputAttributeDescription> m_vertex_input_attribute_descriptions;
+
     // With the builder we can fill vertex binding descriptions and vertex attribute descriptions in here
     VkPipelineVertexInputStateCreateInfo m_vertex_input_sci;
 
@@ -58,15 +72,20 @@ private:
 
     std::vector<VkDynamicState> m_dynamic_states;
     // This will be filled in the build() method
-    // With the builder we can specify a std::vector<VkDynamicState>
     VkPipelineDynamicStateCreateInfo m_dynamic_states_sci;
 
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
+    /// The layout of the graphics pipeline
+    VkPipelineLayout m_pipeline_layout;
 
     // With the builder we can either call add_shader or set_shaders
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
+
     // With the builder we can either call add_color_blend_attachment or set_color_blend_attachments
     std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
+
+    /// Reset all data in this class so the builder can be re-used
+    /// @note This is called by the constructor
+    void reset();
 
 public:
     /// Default constructor
@@ -79,21 +98,21 @@ public:
     GraphicsPipelineBuilder &operator=(const GraphicsPipelineBuilder &) = delete;
     GraphicsPipelineBuilder &operator=(GraphicsPipelineBuilder &&) = delete;
 
-    /// Add a shader stage
+    /// Add a shader to the graphics pipeline
     /// @param shader The shader stage to add
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &add_shader(const VkPipelineShaderStageCreateInfo &shader);
+
+    /// Add a shader to the graphics pipeline
+    /// @param shader The shader
+    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
+    [[nodiscard]] GraphicsPipelineBuilder &add_shader(const wrapper::Shader &shader);
 
     /// Add a vertex input attribute description
     /// @param description The vertex input attribute description
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &
     add_vertex_input_attribute(const VkVertexInputAttributeDescription &description);
-
-    /// Add a vertex input binding description
-    /// @param description The vertex input binding descriptions
-    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &add_vertex_input_binding(const VkVertexInputBindingDescription &description);
 
     /// Add a color blend attachment
     /// @param attachment The color blend attachment
@@ -105,10 +124,6 @@ public:
     /// @param name The debug name of the graphics pipeline
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
     [[nodiscard]] std::unique_ptr<GraphicsPipeline> build(std::string name);
-
-    /// Reset all data in this class so the builder can be re-used
-    /// @note This is called by the constructor
-    void reset();
 
     /// Set the color blend manually
     /// @param color_blend The color blend
@@ -129,6 +144,7 @@ public:
     [[nodiscard]] GraphicsPipelineBuilder &set_culling_mode(VkBool32 culling_enabled);
 
     /// Set the depth stencil
+    /// @warning Disabling culling can have performance impacts!
     /// @param depth_stencil The depth stencil
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &
@@ -148,7 +164,7 @@ public:
     set_input_assembly(const VkPipelineInputAssemblyStateCreateInfo &input_assembly);
 
     /// Set the line width of rasterization
-    /// @param line_width The line width of rasterization
+    /// @param line_width The line width used in rasterization
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &set_line_width(float width);
 
@@ -157,7 +173,7 @@ public:
     /// @param min_sample_shading A minimum fraction of sample shading
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &set_multisampling(VkSampleCountFlagBits sample_count,
-                                                             float min_sample_shading);
+                                                             std::optional<float> min_sample_shading);
 
     /// Store the pipeline layout
     /// @param layout The pipeline layout
@@ -198,6 +214,7 @@ public:
     [[nodiscard]] GraphicsPipelineBuilder &set_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shaders);
 
     /// Set the tesselation control point count
+    /// @note This is not used in the code so far, because we are not using tesselation
     /// @param control_point_count The tesselation control point count
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &set_tesselation_control_point_count(std::uint32_t control_point_count);
@@ -210,7 +227,6 @@ public:
     set_vertex_input_attributes(const std::vector<VkVertexInputAttributeDescription> &descriptions);
 
     /// Set the vertex input binding descriptions manually
-    /// You should prefer to use ``add_vertex_input_binding`` instead
     /// @param descriptions The vertex input binding descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &

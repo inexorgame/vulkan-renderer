@@ -5,7 +5,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/imgui.cpp
-    vulkan-renderer/render_graph.cpp
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
@@ -14,6 +13,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/nxoc_parser.cpp
 
     vulkan-renderer/render-graph/buffer_resource.cpp
+    vulkan-renderer/render-graph/graphics_stage.cpp
+    vulkan-renderer/render-graph/graphics_stage_builder.cpp
     vulkan-renderer/render-graph/push_constant_range_resource.cpp
     vulkan-renderer/render-graph/render_graph.cpp
     vulkan-renderer/render-graph/texture_resource.cpp
@@ -50,6 +51,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.cpp
 
     vulkan-renderer/wrapper/pipelines/pipeline.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp

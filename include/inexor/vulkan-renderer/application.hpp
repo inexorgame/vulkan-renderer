@@ -5,12 +5,14 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 #include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
@@ -42,15 +44,14 @@ private:
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
-    std::unique_ptr<RenderGraph> m_render_graph;
-    TextureResource *m_back_buffer{nullptr};
-    TextureResource *m_depth_buffer{nullptr};
-    TextureResource *m_msaa_depth{nullptr};
-    TextureResource *m_msaa_color{nullptr};
-
-    BufferResource *m_index_buffer{nullptr};
-    BufferResource *m_vertex_buffer{nullptr};
-    BufferResource *m_uniform_buffer{nullptr};
+    std::unique_ptr<render_graph::RenderGraph> m_render_graph;
+    std::weak_ptr<render_graph::TextureResource> m_back_buffer;
+    std::weak_ptr<render_graph::TextureResource> m_depth_buffer;
+    std::weak_ptr<render_graph::TextureResource> m_msaa_depth;
+    std::weak_ptr<render_graph::TextureResource> m_msaa_color;
+    std::weak_ptr<render_graph::BufferResource> m_index_buffer;
+    std::weak_ptr<render_graph::BufferResource> m_vertex_buffer;
+    std::weak_ptr<render_graph::BufferResource> m_uniform_buffer;
 
     struct ModelViewPerspectiveMatrices {
         glm::mat4 model{1.0f};

@@ -26,6 +26,7 @@ private:
     VkExtent2D m_extent{};
     std::unique_ptr<Semaphore> m_img_available;
     bool m_vsync_enabled{false};
+    std::uint32_t m_img_index;
 
     /// Call vkGetSwapchainImagesKHR
     /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
@@ -123,10 +124,9 @@ public:
         return m_img_views.at(img_index);
     }
 
-    /// Call vkQueuePresentKHR
-    /// @param img_index The image index
+    /// Call vkQueuePresentKHR with the current image index
     /// @exception VulkanException vkQueuePresentKHR call failed
-    void present(std::uint32_t img_index);
+    void present();
 
     /// Setup the swapchain
     /// @param width The width of the swapchain images

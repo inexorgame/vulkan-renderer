@@ -8,14 +8,25 @@
 #include <stdexcept>
 #include <string>
 
+namespace inexor::vulkan_renderer::wrapper {
+/// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::descriptors {
+/// Forward declaration
+enum class DescriptorSetUpdateFrequency;
+} // namespace inexor::vulkan_renderer::wrapper::descriptors
+
+using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateFrequency;
+
 namespace inexor::vulkan_renderer::render_graph {
 
 // Forward delcaration
 class RenderGraph;
-enum class DescriptorSetUpdateFrequencyCategory;
 
-/// The usage of the buffer inside of the rendergraph
-enum class BufferUsage {
+/// The buffer type describes the internal usage of the buffer resource inside of the rendergraph
+enum class BufferType {
     VERTEX_BUFFER,
     INDEX_BUFFER,
     UNIFORM_BUFFER,
@@ -23,19 +34,21 @@ enum class BufferUsage {
 
 /// Wrapper for buffer resources inside of the rendergraph
 class BufferResource {
-    friend RenderGraph;
+    friend class RenderGraph;
+    // CommandBuffer is allowed to access m_buffer when binding vertex and index buffers to make API nicer
+    friend class wrapper::CommandBuffer;
 
 private:
     /// The internal name of this buffer resource inside of the rendergraph
     std::string m_name;
-    /// The internal buffer usage of this buffer resource inside of the rendergraph
-    BufferUsage m_usage;
+    /// The buffer type
+    BufferType m_type;
     /// The estimated buffer update frequency, which will be used if this is a uniform buffer resource and we
     /// need to group the descriptor for this uniform buffer into a descriptor set of the rendergraph which fits the
     /// update frequency (Note that descriptor sets should be grouped by udpate frequency for optimal performance)
-    DescriptorSetUpdateFrequencyCategory m_update_frequency;
+    DescriptorSetUpdateFrequency m_update_frequency;
     /// An optional update function to update the data of the buffer resource
-    std::function<void()> m_on_update{[]() {}};
+    std::optional<std::function<void()>> m_on_update{[]() {}};
     /// Indicates to the rendergraph if an update of this buffer resource has been announced
     bool m_update_required{false};
     /// If this is true, an update can only be carried out with the use of staging buffers
@@ -57,8 +70,8 @@ public:
     /// @param update_frequency The estimated update frequency of this buffer
     /// @note The update frequency of a buffer will only be respected when grouping uniform buffers into descriptor sets
     /// @param on_update An optional update function (``std::nullopt`` by default, meaning no updates to this buffer)
-    BufferResource(std::string name, BufferUsage usage, DescriptorSetUpdateFrequencyCategory update_frequency,
-                   std::function<void()> on_update);
+    BufferResource(std::string name, BufferType type, DescriptorSetUpdateFrequency update_frequency,
+                   std::optional<std::function<void()>> on_update);
 
     BufferResource(const BufferResource &) = delete;
     BufferResource(BufferResource &&other) noexcept;
@@ -67,17 +80,19 @@ public:
     BufferResource &operator=(const BufferResource &) = delete;
     BufferResource &operator=(BufferResource &&) = delete;
 
-    /// Announce an update for this buffer resource.
-    /// @note Announcing an update will not result in an immediate update of the buffer.
+    /// Announce an update for this buffer resource
+    /// @warning It is the responsibility of the caller to make absolutely sure that the memory is valid when the update
+    /// is performec inside of rendergraph
+    /// @note Enqueueing an update will not result in an immediate update of the buffer.
     /// Instead, the update will be carried out in update_dynamic_buffers() in the rendergraph.
     /// @param data A pointer to the data to copy the updated data from
     /// @param data_size The size of the data to copy
-    void announce_update(void *data, const std::size_t data_size) {
+    void enqueue_update(void *data, const std::size_t data_size) {
         if (data == nullptr) {
-            throw std::invalid_argument("Error: Buffer resource update announce failed (data pointer is nullptr)!");
+            throw std::invalid_argument("Error: Buffer resource update failed (data pointer is nullptr)!");
         }
         if (data_size == 0) {
-            throw std::invalid_argument("Error: buffer resource update announce failed (data size is 0)!");
+            throw std::invalid_argument("Error: Buffer resource update failed (data size is 0)!");
         }
         m_data = data;
         m_data_size = data_size;
@@ -85,15 +100,25 @@ public:
     }
 
     /// Announce an update using a const reference to an instance of a type T
-    template <typename T>
-    void announce_update(const T &data) {
-        return announce_update(&data, sizeof(T));
+    template <typename BufferDataType>
+    void enqueue_update(/*const?*/ BufferDataType &data) {
+        return enqueue_update(&data, sizeof(data));
     }
 
     // Announce an update for data contained in a std::vector<T>
-    template <typename T>
-    void announce_update(const std::vector<T> &data) {
-        return announce_update(data.data(), sizeof(T) * data.size());
+    template <typename BufferDataType>
+    void enqueue_update(/*const?*/ std::vector<BufferDataType> &data) {
+        return enqueue_update(data.data(), sizeof(data) * data.size());
+    }
+
+    // TODO: Implement a method for enforcing updates in mid-frame, like immediate_update?
+
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
+    }
+
+    [[nodiscard]] BufferType type() const {
+        return m_type;
     }
 };
 

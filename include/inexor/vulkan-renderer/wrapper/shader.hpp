@@ -10,7 +10,9 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
-/// @brief RAII wrapper class for VkShaderModules.
+// TODO: Support specialization constants
+
+/// RAII wrapper class for VkShaderModules
 class Shader {
     const Device &m_device;
     std::string m_name;

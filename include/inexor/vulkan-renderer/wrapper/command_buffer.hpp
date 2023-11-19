@@ -9,6 +9,16 @@
 #include <span>
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper::pipelines {
+// Forward declaration
+class GraphicsPipeline;
+} // namespace inexor::vulkan_renderer::wrapper::pipelines
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class BufferResource;
+} // namespace inexor::vulkan_renderer::render_graph
+
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
@@ -130,24 +140,23 @@ public:
     /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
     /// @param offset The offset (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_index_buffer(VkBuffer buf, VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
+    const CommandBuffer &bind_index_buffer(std::weak_ptr<render_graph::BufferResource> buf,
+                                           VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
                                            VkDeviceSize offset = 0) const;
 
     /// Call vkCmdBindPipeline
     /// @param pipeline The graphics pipeline to bind
     /// @param bind_point The pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_pipeline(VkPipeline pipeline, // NOLINT
+    const CommandBuffer &bind_pipeline(const pipelines::GraphicsPipeline &pipeline, // NOLINT
                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// Call vkCmdBindVertexBuffers
-    /// @param bufs The vertex buffers to bind
-    /// @param first_binding The first binding (``0`` by default)
-    /// @param offsets The device offsets (empty by default)
+    /// @note When binding only a single vertex buffer, the parameters ``firstBinding`` and ``bindingCount`` in
+    /// ``pOffsets`` in ``vkCmdBindVertexBuffers`` do not need to be exposed.
+    /// @param buf The vertex buffer to bind
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_vertex_buffers(std::span<const VkBuffer> bufs, // NOLINT
-                                             std::uint32_t first_binding = 0,
-                                             std::span<const VkDeviceSize> offsets = {}) const;
+    const CommandBuffer &bind_vertex_buffer(std::weak_ptr<render_graph::BufferResource> buf) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param image The image

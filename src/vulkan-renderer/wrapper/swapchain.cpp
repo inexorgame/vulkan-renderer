@@ -33,12 +33,12 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_extent = other.m_extent;
     m_img_available = std::exchange(other.m_img_available, nullptr);
     m_vsync_enabled = other.m_vsync_enabled;
+    m_img_index = other.m_img_index;
 }
 
 std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
-    std::uint32_t img_index = 0;
     if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout,
-                                                  *m_img_available->semaphore(), VK_NULL_HANDLE, &img_index);
+                                                  *m_img_available->semaphore(), VK_NULL_HANDLE, &m_img_index);
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain
@@ -47,7 +47,7 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
             throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
         }
     }
-    return img_index;
+    return m_img_index;
 }
 
 std::optional<VkCompositeAlphaFlagBitsKHR>
@@ -163,11 +163,11 @@ std::vector<VkImage> Swapchain::get_swapchain_images() {
     return imgs;
 }
 
-void Swapchain::present(const std::uint32_t img_index) {
+void Swapchain::present() {
     const auto present_info = make_info<VkPresentInfoKHR>({
         .swapchainCount = 1,
         .pSwapchains = &m_swapchain,
-        .pImageIndices = &img_index,
+        .pImageIndices = &m_img_index,
     });
     if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
