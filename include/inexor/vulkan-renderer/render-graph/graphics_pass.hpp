@@ -21,7 +21,7 @@ namespace inexor::vulkan_renderer::render_graph {
 class RenderGraph;
 
 /// A wrapper for graphics stages inside of rendergraph
-class GraphicsStage {
+class GraphicsPass {
     friend class RenderGraph;
 
 private:
@@ -51,19 +51,19 @@ public:
     /// @param clear_screen If specified, ``VkAttachmentLoadOp`` in ``VkRenderingAttachmentInfo`` will be set to
     /// ``VK_ATTACHMENT_LOAD_OP_CLEAR``, and the clear values specified here are used (``std::nullopt`` by default, in
     /// which case ``VK_ATTACHMENT_LOAD_OP_LOAD`` is used)
-    GraphicsStage(
+    GraphicsPass(
         std::string name,
         std::vector<std::pair<std::weak_ptr<BufferResource>, std::optional<VkShaderStageFlagBits>>> buffer_reads,
         std::vector<std::pair<std::weak_ptr<TextureResource>, std::optional<VkShaderStageFlagBits>>> texture_reads,
         std::vector<std::weak_ptr<TextureResource>> texture_writes,
         std::function<void(const wrapper::CommandBuffer &)> on_record, std::optional<VkClearValue> clear_values);
 
-    GraphicsStage(const GraphicsStage &) = delete;
-    GraphicsStage(GraphicsStage &&other) noexcept;
-    ~GraphicsStage() = default;
+    GraphicsPass(const GraphicsPass &) = delete;
+    GraphicsPass(GraphicsPass &&other) noexcept;
+    ~GraphicsPass() = default;
 
-    GraphicsStage &operator=(const GraphicsStage &) = delete;
-    GraphicsStage &operator=(GraphicsStage &&) = delete;
+    GraphicsPass &operator=(const GraphicsPass &) = delete;
+    GraphicsPass &operator=(GraphicsPass &&) = delete;
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

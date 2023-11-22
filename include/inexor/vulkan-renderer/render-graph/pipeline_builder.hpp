@@ -65,10 +65,11 @@ private:
     // With the builder we can either call add_color_blend_attachment or set_color_blend_attachments
     std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
 
-public:
-    /// Default constructor
+    /// Default constructor is private, so only rendergraph can access it
     /// @param device The device wrapper
     explicit GraphicsPipelineBuilder();
+
+public:
     GraphicsPipelineBuilder(const GraphicsPipelineBuilder &) = delete;
     GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept;
     ~GraphicsPipelineBuilder() = default;

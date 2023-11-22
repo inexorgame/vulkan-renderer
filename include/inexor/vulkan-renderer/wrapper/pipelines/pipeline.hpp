@@ -30,6 +30,8 @@ public:
     GraphicsPipeline(const Device &device, const VkGraphicsPipelineCreateInfo &pipeline_ci, std::string name);
     GraphicsPipeline(const GraphicsPipeline &) = delete;
     GraphicsPipeline(GraphicsPipeline &&) noexcept;
+
+    /// Call vkDestroyPipeline
     ~GraphicsPipeline();
 
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_stage.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -17,7 +17,7 @@ class CommandBuffer;
 namespace inexor::vulkan_renderer::render_graph {
 
 /// A builder class for graphics stages in the rendergraph
-class GraphicsStageBuilder {
+class GraphicsPassBuilder {
 private:
     /// Indicates if the screen is cleared at the beginning of this stage
     std::optional<VkClearValue> m_clear_value;
@@ -41,75 +41,17 @@ private:
     // TODO: Copy all data into one piece of memory and call vkCmdPushConstants only once! (ChatGPT says yes to this)
     void compile_push_constants();
 
-    /*
-        [[nodiscard]] GraphicsStageBuilder &finalize_push_constants(VkCommandBuffer command_buffer) {
-            // Calculate the total size needed for push constants
-            std::size_t total_size = 0;
-            for (const auto &push_constant_range : m_push_constant_ranges) {
-                total_size += push_constant_range.first.size;
-            }
-
-            // Allocate a single block of memory to hold all push constant data
-            std::vector<std::uint8_t> push_constants_data(total_size);
-
-            // Loop through push constant ranges and copy data into the combined memory block
-            std::size_t offset = 0;
-            for (const auto &push_constant_range : m_push_constant_ranges) {
-                std::memcpy(push_constants_data.data() + offset,
-                            reinterpret_cast<const void *>(&push_constant_range.second),
-                            push_constant_range.first.size);
-                offset += push_constant_range.first.size;
-            }
-
-            // Loop through push constant ranges and calculate offsets and stage flags
-            std::vector<VkPushConstantRange> vk_push_constant_ranges;
-            std::vector<VkShaderStageFlags> stage_flags;
-            std::size_t vk_offset = 0;
-            for (const auto &push_constant_range : m_push_constant_ranges) {
-                vk_push_constant_ranges.push_back({
-                    .stageFlags = push_constant_range.first.stageFlags,
-                    .offset = vk_offset,
-                    .size = push_constant_range.first.size,
-                });
-
-                // Track shader stages for combining stage flags
-                stage_flags.push_back(push_constant_range.first.stageFlags);
-
-                vk_offset += push_constant_range.first.size;
-            }
-
-            // Combine all shader stages
-            VkShaderStageFlags combined_stage_flags = 0;
-            for (auto stage : stage_flags) {
-                combined_stage_flags |= stage;
-            }
-
-            // Issue a single vkCmdPushConstants call
-            vkCmdPushConstants(command_buffer,
-                               /* pipelineLayout / your_pipeline_layout,
-                               combined_stage_flags,
-                               0, // Start offset in combined data block
-                               total_size,
-                               push_constants_data.data());
-
-            // Optionally, clear the push constant ranges if you don't need them anymore
-            m_push_constant_ranges.clear();
-
-            return *this;
-        }
-    */
-
     /// Reset all data of the graphics stage builder
     void reset();
 
 public:
-    GraphicsStageBuilder();
-    GraphicsStageBuilder(const GraphicsStageBuilder &) = delete;
-    GraphicsStageBuilder(GraphicsStageBuilder &&) noexcept;
-    ~GraphicsStageBuilder() = default;
+    GraphicsPassBuilder();
+    GraphicsPassBuilder(const GraphicsPassBuilder &) = delete;
+    GraphicsPassBuilder(GraphicsPassBuilder &&) noexcept;
+    ~GraphicsPassBuilder() = default;
 
-    GraphicsStageBuilder &operator=(const GraphicsStageBuilder &) = delete;
-    GraphicsStageBuilder &operator=(GraphicsStageBuilder &&) noexcept;
+    GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
+    GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) noexcept;
 
     /// Add a push constant range to the graphics stage
     /// @param shader_stage The shader stage for the push constant range
@@ -118,7 +60,7 @@ public:
     /// @param offset The offset in the push constant range
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename PushConstantDataType>
-    [[nodiscard]] GraphicsStageBuilder &
+    [[nodiscard]] GraphicsPassBuilder &
     add_push_constant_range(VkShaderStageFlags shader_stage, const PushConstantDataType &push_constant,
                             std::function<void()> on_update, std::uint32_t offset = 0) {
         m_push_constant_ranges.push_back(std::make_pair(
@@ -134,23 +76,23 @@ public:
     /// Build the graphics stage and reset the builder's data
     /// @param name The name of the graphics stage
     /// @return The graphics stage which was created
-    [[nodiscard]] std::shared_ptr<GraphicsStage> build(std::string name);
+    [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name);
 
-    [[nodiscard]] GraphicsStageBuilder &
+    [[nodiscard]] GraphicsPassBuilder &
     reads_from_buffer(std::weak_ptr<BufferResource> buffer,
                       std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
         m_buffer_reads.push_back(std::make_pair(std::move(buffer), shader_stage));
         return *this;
     }
 
-    [[nodiscard]] GraphicsStageBuilder &
+    [[nodiscard]] GraphicsPassBuilder &
     reads_from_texture(std::weak_ptr<TextureResource> texture,
                        std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
         m_texture_reads.push_back(std::make_pair(std::move(texture), shader_stage));
         return *this;
     }
 
-    [[nodiscard]] GraphicsStageBuilder &writes_to_texture(std::weak_ptr<TextureResource> texture) {
+    [[nodiscard]] GraphicsPassBuilder &writes_to_texture(std::weak_ptr<TextureResource> texture) {
         m_texture_writes.push_back(std::move(texture));
         return *this;
     }
@@ -158,17 +100,17 @@ public:
     /// Set the clear status for the stage
     /// @param clear_value The clear value for color and depth
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsStageBuilder &set_clear_value(VkClearValue clear_value);
+    [[nodiscard]] GraphicsPassBuilder &set_clear_value(VkClearValue clear_value);
 
     /// Enable or disable depth testing
     /// @param depth_test ``true`` if depth testing is enabled for this stage
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsStageBuilder &set_depth_test(bool depth_test);
+    [[nodiscard]] GraphicsPassBuilder &set_depth_test(bool depth_test);
 
     /// Set the function which will be called when the stage's command buffer is being recorded
     /// @param on_record The function which will be called when the stage's command buffer is being recorded
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsStageBuilder &set_on_record(std::function<void(const wrapper::CommandBuffer &)> on_record);
+    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const wrapper::CommandBuffer &)> on_record);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

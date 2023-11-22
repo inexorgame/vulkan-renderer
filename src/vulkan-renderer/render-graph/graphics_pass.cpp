@@ -1,10 +1,10 @@
-#include "inexor/vulkan-renderer/render-graph/graphics_stage.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::render_graph {
 
-GraphicsStage::GraphicsStage(
+GraphicsPass::GraphicsPass(
     std::string name,
     std::vector<std::pair<std::weak_ptr<BufferResource>, std::optional<VkShaderStageFlagBits>>> buffer_reads,
     std::vector<std::pair<std::weak_ptr<TextureResource>, std::optional<VkShaderStageFlagBits>>> texture_reads,
@@ -14,6 +14,6 @@ GraphicsStage::GraphicsStage(
       m_texture_writes(std::move(texture_writes)), m_on_record(std::move(on_record)),
       m_clear_values(std::move(clear_values)) {}
 
-GraphicsStage::GraphicsStage(GraphicsStage &&other) noexcept {}
+GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {}
 
 } // namespace inexor::vulkan_renderer::render_graph

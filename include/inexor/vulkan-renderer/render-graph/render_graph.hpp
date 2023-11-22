@@ -1,10 +1,12 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_stage.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/push_constant_range_resource.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 
 #include <volk.h>
@@ -27,7 +29,6 @@ namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 enum class BufferType;
 class BufferResource;
-class RenderStage;
 class PushConstantRangeResource;
 
 /// A rendergraph is a generic solution for rendering architecture
@@ -38,18 +39,32 @@ class RenderGraph {
 private:
     /// The device wrapper
     wrapper::Device &m_device;
+
+    GraphicsPassBuilder m_graphics_pass_builder{};
+    wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
+
     // The rendergraph has its own logger
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
-    /// Physical resources of the rendergraph
-    /// The graphics stages of the rendergraph
-    std::vector<std::shared_ptr<GraphicsStage>> m_graphics_stages;
+    /// The graphics passes of the rendergraph
+    // std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
+
+    /// A vector of shared pointers of pairs of a name and a unique pointer to a graphics pass
+    std::vector<std::shared_ptr<std::pair<std::string, std::function<std::unique_ptr<GraphicsPass>()>>>>
+        m_graphics_passes;
+
+    /// The graphics pipelines of the rendergraph
+    std::vector<std::shared_ptr<wrapper::pipelines::GraphicsPipeline>> m_graphics_pipelines;
+    // TODO: Support compute pipelines and compute passes
+
     // The buffer resources of the rendergraph (vertex-, index-, and uniform buffers)
     // Note that we must keep the data as std::vector of std::unique_ptr in order to keep entries consistent
     std::vector<std::shared_ptr<BufferResource>> m_buffer_resources;
+
     /// The push constant resources of the rendergraph
-    // TODO: Remember we need to squash all VkPushConstantRange of a stage into one std::vector in order to bind it!
+    // TODO: Remember we need to squash all VkPushConstantRange of a pass into one std::vector in order to bind it!
     std::vector<std::shared_ptr<PushConstantRangeResource>> m_push_constant_ranges;
+
     /// The texture resources of the rendergraph
     std::vector<std::shared_ptr<TextureResource>> m_texture_resources;
 
@@ -71,17 +86,8 @@ private:
     /// per-object data or per-instance data.
     VkDescriptorSet m_dynamic_descriptor_set{VK_NULL_HANDLE};
 
-    // TODO: Support compute pipelines and compute stages
-    // TODO: Graphics pipelines go here
-    // TODO: Stages go here
-
-    /// Build the graphics pipeline of a certain render stage
-    /// @param stage The stage to build the renderpass for
-    void build_graphics_pipeline(const RenderStage *stage);
-
-    /// Build the renderpass of a certain render stage
-    /// @param stage The stage to build the renderpass for
-    void build_render_pass(const RenderStage *stage);
+    /// Build the graphics pipeline of a certain render pass
+    void build_graphics_pipeline(/*TODO*/);
 
     /// The rendergraph must not have any cycles in it!
     /// @exception std::logic_error The rendergraph is not acyclic
@@ -90,21 +96,28 @@ private:
     /// Create the buffers of every buffer resource in the rendergraph
     void create_buffers();
 
+    /// Descriptor management
+    // TODO: better naming? create_descriptors?
+    void create_descriptor_sets();
+
+    /// Create the graphics pipelines
+    void create_graphics_pipelines();
+
     /// Create the textures of every texture resoruce in the rendergraph
     void create_textures();
 
-    /// Determine the order of execution of the graphics stages
-    void determine_stage_order();
+    /// Determine the order of execution of the graphics passes
+    void determine_pass_order();
 
-    /// Record a certain command buffer of a stage
-    /// @param graphics_stage The graphics stage to record the command buffer for
-    /// @param cmd_buf The command buffer to record the stage into
-    /// @param is_first_stage ``true`` if this is the first stage in the stage stack
-    /// @param is_last_stage ``true`` if this is the last stage in the stage stack
-    void record_command_buffer(std::shared_ptr<GraphicsStage> graphics_stage, const wrapper::CommandBuffer &cmd_buf,
-                               bool is_first_stage, bool is_last_stage);
+    /// Record the command buffer of a pass
+    /// @param graphics_pass The graphics pass to record the command buffer for
+    /// @param cmd_buf The command buffer to record the pass into
+    /// @param is_first_pass ``true`` if this is the first pass in the pass stack
+    /// @param is_last_pass ``true`` if this is the last pass in the pass stack
+    void record_command_buffer(std::shared_ptr<GraphicsPass> graphics_pass, const wrapper::CommandBuffer &cmd_buf,
+                               bool is_first_pass, bool is_last_pass);
 
-    /// Record all command buffers required for the stages
+    /// Record all command buffers required for the passes
     void record_command_buffers();
 
     /// Update the vertex-, index-, and uniform-buffers
@@ -141,11 +154,23 @@ public:
     add_buffer(std::string name, BufferType type, DescriptorSetUpdateFrequency category,
                std::optional<std::function<void()>> on_update = std::nullopt);
 
-    // TODO: Compute stages
+    /// Add a new graphics pass to the rendergraph
+    /// @param name The name of the graphics pass
+    /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
+    /// @return ?
+    void add_graphics_pass(std::string name, std::function<void(GraphicsPassBuilder &)> on_pass_create) {
+        // Some code here
+    }
 
-    /// Add a new graphics stage to the rendergraph
-    /// @param graphics_stage The graphics stage which will be added to the rendergraph
-    [[nodiscard]] void add_graphics_stage(std::shared_ptr<GraphicsStage> graphics_stage);
+    /// Add a new graphics pipeline to the rendergraph
+    /// @param name The name of the new graphics pipeline
+    /// @param on_pipeline_create A callable to create the graphics pipeline using GraphicsPipelineBuilder
+    /// @return ?
+    void add_graphics_pipeline(
+        std::string name,
+        std::function<void(wrapper::pipelines::GraphicsPipelineBuilder &, const VkPipelineLayout)> on_pipeline_create) {
+        // TODO: What here?
+    }
 
     /// Add a push constant range resource to the rendergraph
     /// @tparam T The data type of the push constant range
@@ -155,7 +180,7 @@ public:
     /// @param offset The offset in bytes (``0`` by default)
     /// @return The this pointer, allowing for methods to be chained as a builder pattern
     template <typename PushConstantDataType>
-    [[nodiscard]] std::weak_ptr<RenderStage> add_push_constant_range(
+    void add_push_constant_range(
         const PushConstantDataType *data, std::function<void()> on_update = []() {},
         const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT, const std::uint32_t offset = 0) {
         m_push_constant_ranges.emplace_back(
@@ -165,7 +190,6 @@ public:
                 .size = sizeof(PushConstantDataType),
             },
             data, std::move(on_update));
-        return this;
     }
 
     /// Add a texture resource to the rendergraph
@@ -175,15 +199,16 @@ public:
     /// @return A std::wek_ptr to the texture resource that was created
     [[nodiscard]] std::weak_ptr<TextureResource> add_texture(std::string name, TextureUsage usage, VkFormat format);
 
-    /// Compile the rendergraph
+    /// Compile the entire rendergraph. This is the last step before rendering can begin.
     void compile();
 
     /// Render a frame with the rendergraph
     /// @param swapchain_img_index The index of the current image in the swapchain
+    /// @param img_available A semaphore which signals if the current swapchain image is available
     void render(std::uint32_t swapchain_img_index, const VkSemaphore *img_available);
 
     /// Update the rendering data
-    // TODO: Maybe do not expose this, but call is in render()?
+    // TODO: Maybe do not expose this, but call it in render()?
     void update_data();
 };
 

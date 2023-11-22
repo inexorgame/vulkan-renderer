@@ -1,17 +1,18 @@
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_stage.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_stage_builder.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/push_constant_range_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 
 #include <unordered_map>
 
 namespace inexor::vulkan_renderer::render_graph {
 
-RenderGraph::RenderGraph(wrapper::Device &device) : m_device(device) {}
+RenderGraph::RenderGraph(wrapper::Device &device) : m_device(device), m_graphics_pipeline_builder(device) {}
 
 std::weak_ptr<BufferResource> RenderGraph::add_buffer(std::string name, const BufferType type,
                                                       const DescriptorSetUpdateFrequency category,
@@ -32,10 +33,6 @@ std::weak_ptr<BufferResource> RenderGraph::add_buffer(std::string name, const Bu
     return m_buffer_resources.back();
 }
 
-void RenderGraph::add_graphics_stage(std::shared_ptr<GraphicsStage> graphics_stage) {
-    m_graphics_stages.push_back(std::move(graphics_stage));
-}
-
 std::weak_ptr<TextureResource> RenderGraph::add_texture(std::string name, const TextureUsage usage,
                                                         const VkFormat format) {
     if (name.empty()) {
@@ -49,14 +46,15 @@ std::weak_ptr<TextureResource> RenderGraph::add_texture(std::string name, const 
 
 void RenderGraph::check_for_cycles() {
     // TODO: Implement
-    // TODO: throw std::logic_error in case the rendergraph contains cycles!
+    // TODO: throw std::logic_error in case the rendergraph contains a cycle!
 }
 
 void RenderGraph::compile() {
     check_for_cycles();
-    determine_stage_order();
+    determine_pass_order();
     create_buffers();
     create_textures();
+    create_descriptor_sets();
     record_command_buffers();
 }
 
@@ -93,6 +91,10 @@ void RenderGraph::create_buffers() {
     }
 }
 
+void RenderGraph::create_descriptor_sets() {
+    // TODO: Implement
+}
+
 void RenderGraph::create_textures() {
     // Loop through all texture resources and create them
     for (auto &texture : m_texture_resources) {
@@ -100,11 +102,11 @@ void RenderGraph::create_textures() {
     }
 }
 
-void RenderGraph::determine_stage_order() {
+void RenderGraph::determine_pass_order() {
     // TODO: Implement dfs
 }
 
-void RenderGraph::record_command_buffer(const std::shared_ptr<GraphicsStage> graphics_stage,
+void RenderGraph::record_command_buffer(const std::shared_ptr<GraphicsPass> graphics_stage,
                                         const wrapper::CommandBuffer &cmd_buf, const bool is_first_stage,
                                         const bool is_last_stage) {
     // TODO: Implement
@@ -113,7 +115,7 @@ void RenderGraph::record_command_buffer(const std::shared_ptr<GraphicsStage> gra
 void RenderGraph::record_command_buffers() {
     // TODO: Implement
     /*for () {
-        record_command_buffer(cmd_buf, stage);
+        record_command_buffer(cmd_buf, pass);
     }
     */
 }

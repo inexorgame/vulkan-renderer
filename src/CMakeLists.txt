@@ -13,8 +13,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/nxoc_parser.cpp
 
     vulkan-renderer/render-graph/buffer_resource.cpp
-    vulkan-renderer/render-graph/graphics_stage.cpp
-    vulkan-renderer/render-graph/graphics_stage_builder.cpp
+    vulkan-renderer/render-graph/graphics_pass.cpp
+    vulkan-renderer/render-graph/graphics_pass_builder.cpp
     vulkan-renderer/render-graph/push_constant_range_resource.cpp
     vulkan-renderer/render-graph/render_graph.cpp
     vulkan-renderer/render-graph/texture_resource.cpp

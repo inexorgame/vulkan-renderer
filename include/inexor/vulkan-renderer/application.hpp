@@ -53,6 +53,9 @@ private:
     std::weak_ptr<render_graph::BufferResource> m_vertex_buffer;
     std::weak_ptr<render_graph::BufferResource> m_uniform_buffer;
 
+    std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_octree_pipeline;
+    std::shared_ptr<render_graph::GraphicsPass> m_octree_pass;
+
     struct ModelViewPerspectiveMatrices {
         glm::mat4 model{1.0f};
         glm::mat4 view{1.0f};

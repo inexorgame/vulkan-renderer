@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_stage_builder.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
@@ -473,66 +473,65 @@ void Application::setup_render_graph() {
                                                       m_uniform_buffer.lock()->enqueue_update(m_mvp_matrices);
                                                   });
 
-    auto octree_pipeline_layout = std::make_unique<wrapper::pipelines::PipelineLayout>();
+    m_render_graph->add_graphics_pipeline(
+        "Octree", [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
+            // TODO: Calling the lambda twice leads to memory leak!
+            m_octree_pipeline = builder
+                                    .add_color_blend_attachment({
+                                        .blendEnable = VK_FALSE,
+                                        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                                          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+                                    })
+                                    .set_vertex_input_bindings({
+                                        {
+                                            .binding = 0,
+                                            .stride = sizeof(OctreeGpuVertex),
+                                            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                        },
+                                    })
+                                    .set_vertex_input_attributes({
+                                        {
+                                            .location = 0,
+                                            .binding = 0,
+                                            .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                            .offset = offsetof(OctreeGpuVertex, position),
+                                        },
+                                        {
+                                            .location = 1,
+                                            .binding = 0,
+                                            .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                            .offset = offsetof(OctreeGpuVertex, color),
+                                        },
+                                    })
+                                    .set_viewport(m_swapchain->extent())
+                                    .set_scissor(m_swapchain->extent())
+                                    .set_pipeline_layout(pipeline_layout)
+                                    .add_shader(*m_vertex_shader)
+                                    .add_shader(*m_fragment_shader)
+                                    .build("Octree");
+        });
 
-    // Build a graphics pipeline for octree rendering using a builder pattern
-    wrapper::pipelines::GraphicsPipelineBuilder pipeline_builder(*m_device);
-    const auto octree_pipeline = pipeline_builder
-                                     .add_color_blend_attachment({
-                                         .blendEnable = VK_FALSE,
-                                         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                                           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-                                     })
-                                     .set_vertex_input_bindings({
-                                         {
-                                             .binding = 0,
-                                             .stride = sizeof(OctreeGpuVertex),
-                                             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                         },
-                                     })
-                                     .set_vertex_input_attributes({
-                                         {
-                                             .location = 0,
-                                             .binding = 0,
-                                             .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                             .offset = offsetof(OctreeGpuVertex, position),
-                                         },
-                                         {
-                                             .location = 1,
-                                             .binding = 0,
-                                             .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                             .offset = offsetof(OctreeGpuVertex, color),
-                                         },
-                                     })
-                                     .set_viewport(m_swapchain->extent())
-                                     .set_scissor(m_swapchain->extent())
-                                     .set_pipeline_layout(octree_pipeline)
-                                     .add_shader(*m_vertex_shader)
-                                     .add_shader(*m_fragment_shader)
-                                     .build("Octree");
-
-    // Build a graphics stage for octree rendering using a builder pattern
-    render_graph::GraphicsStageBuilder graphics_stage_builder;
-    const auto octree_stage = graphics_stage_builder
-                                  .set_clear_value({
-                                      .color = {1.0f, 0.0f, 0.0f},
-                                  })
-                                  .set_depth_test(true)
-                                  .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
-                                      cmd_buf.bind_pipeline(*octree_pipeline)
-                                          .bind_vertex_buffer(m_vertex_buffer)
-                                          .bind_index_buffer(m_index_buffer)
-                                          .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-                                  })
-                                  .reads_from_buffer(m_index_buffer)
-                                  .reads_from_buffer(m_vertex_buffer)
-                                  .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
-                                  .writes_to_texture(m_back_buffer)
-                                  .writes_to_texture(m_depth_buffer)
-                                  .build("Octree");
-
-    // Add the graphics stage for octree rendering
-    m_render_graph->add_graphics_stage(octree_stage);
+    m_render_graph->add_graphics_pass("Octree", [&](render_graph::GraphicsPassBuilder &builder) {
+        // TODO: Calling the lambda twice leads to memory leak!
+        m_octree_pass = builder
+                            .set_clear_value({
+                                .color = {1.0f, 0.0f, 0.0f},
+                            })
+                            .set_depth_test(true)
+                            .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
+                                // Render the octree
+                                cmd_buf.bind_pipeline(*m_octree_pipeline)
+                                    .bind_vertex_buffer(m_vertex_buffer)
+                                    .bind_index_buffer(m_index_buffer)
+                                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+                            })
+                            .reads_from_buffer(m_index_buffer)
+                            .reads_from_buffer(m_vertex_buffer)
+                            .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+                            .writes_to_texture(m_back_buffer)
+                            .writes_to_texture(m_depth_buffer)
+                            .build("Octree");
+    });
 }
 
 void Application::update_imgui_overlay() {

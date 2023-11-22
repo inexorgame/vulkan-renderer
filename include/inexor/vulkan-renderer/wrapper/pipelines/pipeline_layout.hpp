@@ -33,6 +33,7 @@ public:
     PipelineLayout &operator=(const PipelineLayout &) = delete;
     PipelineLayout &operator=(PipelineLayout &&other) noexcept = delete;
 
+    // TODO: Switch from get method to friend class
     [[nodiscard]] VkPipelineLayout pipeline_layout() const noexcept {
         return m_pipeline_layout;
     }

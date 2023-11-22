@@ -16,6 +16,10 @@ class Device;
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
 
+namespace inexor::vulkan_renderer::render_graph {
+class RenderGraph;
+}
+
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // TODO: ComputePipelineBuilder
@@ -26,6 +30,8 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 /// It is the reponsibility of the programmer to use validation layers to check for problems.
 class GraphicsPipelineBuilder {
 private:
+    friend class render_graph::RenderGraph;
+
     /// The device wrapper reference
     const Device &m_device;
 
@@ -90,10 +96,11 @@ private:
     /// @note This is called by the constructor
     void reset();
 
-public:
-    /// Default constructor
+    /// Default constructor is private, so only rendergraph can access it
     /// @param device The device wrapper
     explicit GraphicsPipelineBuilder(const Device &device);
+
+public:
     GraphicsPipelineBuilder(const GraphicsPipelineBuilder &) = delete;
     GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept;
     ~GraphicsPipelineBuilder() = default;

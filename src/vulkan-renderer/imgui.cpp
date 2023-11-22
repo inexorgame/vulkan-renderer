@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 
-#include "inexor/vulkan-renderer/render-graph/graphics_stage_builder.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
@@ -61,83 +61,90 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, render_graph::RenderGr
     m_index_buffer =
         render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, DescriptorSetUpdateFrequency::PER_FRAME);
 
-    // Build a graphics pipeline for ImGui rendering using a builder pattern
-    wrapper::pipelines::GraphicsPipelineBuilder pipeline_builder(m_device);
-    const auto imgui_pipeline = pipeline_builder
-                                    .add_color_blend_attachment({
-                                        // TODO: Which values here are by default? (compare with application.cpp)
-                                        .blendEnable = VK_TRUE,
-                                        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-                                        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                                        .colorBlendOp = VK_BLEND_OP_ADD,
-                                        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-                                        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-                                        .alphaBlendOp = VK_BLEND_OP_ADD,
-                                        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                                          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-                                    })
-                                    .set_vertex_input_bindings({
-                                        {
-                                            .binding = 0,
-                                            .stride = sizeof(ImDrawVert),
-                                            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                        },
-                                    })
-                                    .set_vertex_input_attributes({
-                                        {
-                                            .location = 0,
-                                            .format = VK_FORMAT_R32G32_SFLOAT,
-                                            .offset = offsetof(ImDrawVert, pos),
-                                        },
-                                        {
-                                            .location = 1,
-                                            .format = VK_FORMAT_R32G32_SFLOAT,
-                                            .offset = offsetof(ImDrawVert, uv),
-                                        },
-                                        {
-                                            .location = 2,
-                                            .format = VK_FORMAT_R8G8B8A8_UNORM,
-                                            .offset = offsetof(ImDrawVert, col),
-                                        },
-                                    })
-                                    .add_shader(m_vertex_shader)
-                                    .add_shader(m_fragment_shader)
-                                    .build("ImGui");
+    render_graph.add_graphics_pipeline(
+        "ImGui", [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
+            // TODO: Calling the lambda twice leads to memory leak!
+            m_imgui_pipeline = builder
+                                   .add_color_blend_attachment({
+                                       // TODO: Which values here are by default? (compare with application.cpp)
+                                       .blendEnable = VK_TRUE,
+                                       .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+                                       .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                                       .colorBlendOp = VK_BLEND_OP_ADD,
+                                       .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+                                       .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+                                       .alphaBlendOp = VK_BLEND_OP_ADD,
+                                       .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                                         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+                                   })
+                                   .set_vertex_input_bindings({
+                                       {
+                                           .binding = 0,
+                                           .stride = sizeof(ImDrawVert),
+                                           .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                       },
+                                   })
+                                   .set_vertex_input_attributes({
+                                       {
+                                           .location = 0,
+                                           .format = VK_FORMAT_R32G32_SFLOAT,
+                                           .offset = offsetof(ImDrawVert, pos),
+                                       },
+                                       {
+                                           .location = 1,
+                                           .format = VK_FORMAT_R32G32_SFLOAT,
+                                           .offset = offsetof(ImDrawVert, uv),
+                                       },
+                                       {
+                                           .location = 2,
+                                           .format = VK_FORMAT_R8G8B8A8_UNORM,
+                                           .offset = offsetof(ImDrawVert, col),
+                                       },
+                                   })
+                                   .add_shader(m_vertex_shader)
+                                   .add_shader(m_fragment_shader)
+                                   .set_pipeline_layout(pipeline_layout)
+                                   .build("ImGui");
+        });
 
-    // Build a graphics stage for ImGui rendering using a builder pattern
-    render_graph::GraphicsStageBuilder graphics_stage_builder;
-    const auto imgui_stage = graphics_stage_builder
-                                 .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
-                                     ImDrawData *draw_data = ImGui::GetDrawData();
-                                     if (draw_data == nullptr) {
-                                         return;
-                                     }
-                                     std::uint32_t index_offset = 0;
-                                     std::int32_t vertex_offset = 0;
-                                     for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                                         const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
-                                         for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-                                             const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                                             cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
-                                             index_offset += draw_cmd.ElemCount;
-                                         }
-                                         vertex_offset += cmd_list->VtxBuffer.Size;
-                                     }
-                                 })
-                                 .reads_from_buffer(m_index_buffer)
-                                 .reads_from_buffer(m_vertex_buffer)
-                                 // .reads_from_external_texture(m_imgui_texture, VK_SHADER_STAGE_FRAGMENT_BIT)
-                                 .writes_to_texture(back_buffer)
-                                 .writes_to_texture(depth_buffer)
-                                 .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, &m_push_const_block,
-                                                          [&]() {
-                                                              const ImGuiIO &io = ImGui::GetIO();
-                                                              m_push_const_block.scale = glm::vec2(
-                                                                  2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-                                                          })
-                                 .build("ImGui");
+    render_graph.add_graphics_pass("ImGui", [&](render_graph::GraphicsPassBuilder &builder) {
+        // TODO: Return the graphics pass that was created?
+        // TODO: Calling the lambda twice leads to memory leak!
+        m_imgui_pass = builder
+                           .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
+                               // Render ImGui
+                               cmd_buf.bind_pipeline(*m_imgui_pipeline);
+                               ImDrawData *draw_data = ImGui::GetDrawData();
+                               if (draw_data == nullptr) {
+                                   return;
+                               }
+                               std::uint32_t index_offset = 0;
+                               std::int32_t vertex_offset = 0;
+                               for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                                   const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
+                                   for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                                       const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                                       cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                                       index_offset += draw_cmd.ElemCount;
+                                   }
+                                   vertex_offset += cmd_list->VtxBuffer.Size;
+                               }
+                           })
+                           .reads_from_buffer(m_index_buffer)
+                           .reads_from_buffer(m_vertex_buffer)
+                           // TODO: Fix me!
+                           //.reads_from_external_texture(m_imgui_texture, VK_SHADER_STAGE_FRAGMENT_BIT)
 
-    render_graph.add_graphics_stage(imgui_stage);
+                           .writes_to_texture(back_buffer)
+                           .writes_to_texture(depth_buffer)
+                           .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, &m_push_const_block,
+                                                    [&]() {
+                                                        const ImGuiIO &io = ImGui::GetIO();
+                                                        m_push_const_block.scale =
+                                                            glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+                                                    })
+                           .build("ImGui");
+    });
 }
 
 void ImGUIOverlay::initialize_imgui() {
