@@ -14,8 +14,7 @@ Sampler::Sampler(const Device &device, const VkSamplerCreateInfo &sampler_ci, st
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateSampler failed for sampler " + m_name + " !", result);
     }
-    // Set an internal debug name to this sampler using Vulkan debug utils (VK_EXT_debug_utils)
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_SAMPLER, reinterpret_cast<std::uint64_t>(m_sampler), m_name);
+    m_device.set_debug_name(m_sampler, m_name);
 }
 
 Sampler::Sampler(const Device &device, std::string name)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
 
 #include <array>
@@ -53,6 +54,15 @@ class Device {
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
     mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
     mutable std::mutex m_mutex;
+
+    /// Set the debug name of a Vulkan object using debug utils extension (VK_EXT_debug_utils)
+    /// @note We thought about overloading this method several times so the obj_type is set automatically depending on
+    /// the type of the obj_handle you pass in, but it would make the code larger while being a little harder to
+    /// understand what's really going on.
+    /// @param obj_type The Vulkan object type
+    /// @param obj_handle The Vulkan object handle (must not be nullptr!)
+    /// @param name the internal debug name of the Vulkan object
+    void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
 
     /// Get the thread_local command pool
     /// @note This method will create a command pool for the thread if it doesn't already exist
@@ -195,14 +205,13 @@ public:
     /// @return A command buffer from the thread_local command pool
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
 
-    /// Set the debug name of a Vulkan object using debug utils extension (VK_EXT_debug_utils)
-    /// @note We thought about overloading this method several times so the obj_type is set automatically depending on
-    /// the type of the obj_handle you pass in, but it would make the code larger while being a little harder to
-    /// understand what's really going on.
-    /// @param obj_type The Vulkan object type
-    /// @param obj_handle The Vulkan object handle (must not be nullptr!)
-    /// @param name the internal debug name of the Vulkan object
-    void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
+    template <typename VulkanObjectType>
+    void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
+        // The get_vulkan_object_type template allows us to turn the template parameter into a VK_OBJECT_TYPE
+        // There is no other trivial way in C++ to do this as far as we know
+        return set_debug_utils_object_name(vk_tools::get_vulkan_object_type(vk_object),
+                                           reinterpret_cast<std::uint64_t>(vk_object), name);
+    }
 
     /// Check if a surface supports a certain image usage
     /// @param surface The window surface

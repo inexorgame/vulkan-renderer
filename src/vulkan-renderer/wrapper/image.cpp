@@ -23,8 +23,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
     // Assign an internal debug name to this image in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
 
-    // Set an internal debug name to this image using Vulkan debug utils (VK_EXT_debug_utils)
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_IMAGE, reinterpret_cast<std::uint64_t>(m_img), m_name);
+    m_device.set_debug_name(m_img, m_name);
 
     // Fill in the image that was created and the format of the image
     auto filled_img_view_ci = img_view_ci;
@@ -35,10 +34,7 @@ Image::Image(const Device &device, const VkImageCreateInfo &img_ci, const VkImag
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
-
-    // Set an internal debug name to this image using Vulkan debug utils (VK_EXT_debug_utils)
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_IMAGE_VIEW, reinterpret_cast<std::uint64_t>(m_img_view),
-                                         m_name);
+    m_device.set_debug_name(m_img_view, m_name);
 }
 
 // Constructor 2 (calls constructor 1 internally)

@@ -24,9 +24,7 @@ PipelineLayout::PipelineLayout(const Device &device,
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + m_name + "!", result);
     }
-    // Assign an internal debug name to this pipeline layout using Vulkan debug utils (VK_EXT_debug_utils)
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-                                         reinterpret_cast<std::uint64_t>(m_pipeline_layout), m_name);
+    m_device.set_debug_name(m_pipeline_layout, m_name);
 }
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept : m_device(other.m_device) {

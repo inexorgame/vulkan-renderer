@@ -54,7 +54,7 @@ void Buffer::create_buffer(const VkDeviceSize buffer_size, const VkBufferUsageFl
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
 
     // Set the buffer's internal denug name through Vulkan debug utils
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_BUFFER, reinterpret_cast<std::uint64_t>(m_buffer), m_name);
+    m_device.set_debug_name(m_buffer, m_name);
 }
 
 void Buffer::destroy_buffer() {

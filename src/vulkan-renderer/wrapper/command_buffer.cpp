@@ -27,9 +27,7 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
         throw VulkanException("Error: vkAllocateCommandBuffers failed!", result);
     }
 
-    // Assign an internal debug name to this command buffer using debug utils (VK_EXT_debug_utils)
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_COMMAND_BUFFER, reinterpret_cast<std::uint64_t>(m_cmd_buf),
-                                         m_name);
+    m_device.set_debug_name(m_cmd_buf, m_name);
 
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }

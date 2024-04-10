@@ -770,7 +770,7 @@ std::string_view as_string(const VkSurfaceTransformFlagBitsKHR flag) {
 }
 
 std::string_view get_device_feature_description(const std::size_t index) {
-    constexpr std::array<std::string_view, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32)> FEATURE_DESCRIPTIONS{
+    std::array<std::string_view, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32)> FEATURE_DESCRIPTIONS{
         // robustBufferAccess
         "accesses to buffers which are bounds-checked against the range of the buffer descriptor",
         // fullDrawIndexUint32
@@ -886,6 +886,121 @@ std::string_view get_device_feature_description(const std::size_t index) {
 
     assert(index < FEATURE_DESCRIPTIONS.size());
     return FEATURE_DESCRIPTIONS[index];
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkBuffer buf) {
+    return VK_OBJECT_TYPE_BUFFER;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkCommandBuffer cmd_buf) {
+    return VK_OBJECT_TYPE_COMMAND_BUFFER;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkCommandPool cmd_pool) {
+    return VK_OBJECT_TYPE_COMMAND_POOL;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkInstance inst) {
+    return VK_OBJECT_TYPE_INSTANCE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkPhysicalDevice phys_device) {
+    return VK_OBJECT_TYPE_PHYSICAL_DEVICE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkDescriptorPool desc_pool) {
+    return VK_OBJECT_TYPE_DESCRIPTOR_POOL;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkDescriptorSet descriptor_set) {
+    return VK_OBJECT_TYPE_DESCRIPTOR_SET;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkDescriptorSetLayout desc_set_layout) {
+    return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkDevice device) {
+    return VK_OBJECT_TYPE_DEVICE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkEvent event) {
+    return VK_OBJECT_TYPE_EVENT;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkFence fence) {
+    return VK_OBJECT_TYPE_FENCE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkImage img) {
+    return VK_OBJECT_TYPE_IMAGE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkImageView img_view) {
+    return VK_OBJECT_TYPE_IMAGE_VIEW;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkPipeline pipeline) {
+    return VK_OBJECT_TYPE_PIPELINE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkPipelineCache pipeline_cache) {
+    return VK_OBJECT_TYPE_PIPELINE_CACHE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkPipelineLayout pipeline_layout) {
+    return VK_OBJECT_TYPE_PIPELINE_LAYOUT;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkQueryPool query_pool) {
+    return VK_OBJECT_TYPE_QUERY_POOL;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkQueue queue) {
+    return VK_OBJECT_TYPE_QUEUE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkSampler sampler) {
+    return VK_OBJECT_TYPE_SAMPLER;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkSemaphore semaphore) {
+    return VK_OBJECT_TYPE_SEMAPHORE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkShaderModule shader_module) {
+    return VK_OBJECT_TYPE_SHADER_MODULE;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkSurfaceKHR surface) {
+    return VK_OBJECT_TYPE_SURFACE_KHR;
+}
+
+template <>
+VkObjectType get_vulkan_object_type(VkSwapchainKHR swapchain) {
+    return VK_OBJECT_TYPE_SWAPCHAIN_KHR;
 }
 
 std::string_view result_to_description(const VkResult result) {

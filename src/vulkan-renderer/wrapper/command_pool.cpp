@@ -24,9 +24,7 @@ CommandPool::CommandPool(const Device &device, std::string name) : m_device(devi
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateCommandPool failed for command pool " + m_name + "!", result);
     }
-    // Assign an internal debug name to this command pool using debug utils (VK_EXT_debug_utils)
-    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_COMMAND_POOL, reinterpret_cast<std::uint64_t>(m_cmd_pool),
-                                         m_name);
+    m_device.set_debug_name(m_cmd_pool, m_name);
 }
 
 CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device) {
