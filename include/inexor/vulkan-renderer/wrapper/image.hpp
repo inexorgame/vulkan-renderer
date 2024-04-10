@@ -10,6 +10,8 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
+// TODO: Merge Image wrapper with rendergraph's Texture wrapper(?)
+
 /// RAII wrapper class for VkImage
 class Image {
     const Device &m_device;

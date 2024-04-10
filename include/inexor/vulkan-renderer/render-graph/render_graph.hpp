@@ -1,13 +1,13 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/push_constant_range_resource.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include <volk.h>
 
@@ -22,13 +22,13 @@
 namespace inexor::vulkan_renderer::wrapper {
 /// Forward declarations
 class Device;
+class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::render_graph {
 
 // Forward declarations
 enum class BufferType;
-class BufferResource;
 class PushConstantRangeResource;
 
 /// A rendergraph is a generic solution for rendering architecture
@@ -39,55 +39,64 @@ class RenderGraph {
 private:
     /// The device wrapper
     wrapper::Device &m_device;
-
-    GraphicsPassBuilder m_graphics_pass_builder{};
-    wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
+    /// The swapchain wrapper
+    wrapper::Swapchain &m_swapchain;
 
     // The rendergraph has its own logger
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
-    /// The graphics passes of the rendergraph
-    // std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
+    // ---------------------------------------------------------------------------------------------------------
+    //  GRAPHICS PASSES
+    // ---------------------------------------------------------------------------------------------------------
+    /// The graphics pass builder of the rendergraph
+    GraphicsPassBuilder m_graphics_pass_builder{};
 
-    /// A vector of shared pointers of pairs of a name and a unique pointer to a graphics pass
-    std::vector<std::shared_ptr<std::pair<std::string, std::function<std::unique_ptr<GraphicsPass>()>>>>
-        m_graphics_passes;
+    /// The callables which create the graphics passes used in the rendergraph
+    using GraphicsPassCreateCallable =
+        std::function<std::shared_ptr<render_graph::GraphicsPass>(render_graph::GraphicsPassBuilder &)>;
 
-    /// The graphics pipelines of the rendergraph
+    /// The callables to create the graphics passes used in the rendergraph
+    std::vector<GraphicsPassCreateCallable> m_on_graphics_pass_create_callables;
+
+    /// The graphics passes used in the rendergraph
+    /// This will be populated using m_on_graphics_pass_create_callables
+    std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
+
+    // ---------------------------------------------------------------------------------------------------------
+    //  GRAPHICS PIPELINES
+    // ---------------------------------------------------------------------------------------------------------
+    /// The graphics pipeline builder of the rendergraph
+    wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
+
+    /// The callables which create the graphics pipelines used in the rendergraph
+    using GraphicsPipelineCreateCallable = std::function<std::shared_ptr<wrapper::pipelines::GraphicsPipeline>(
+        wrapper::pipelines::GraphicsPipelineBuilder &, const VkPipelineLayout)>;
+
+    /// The callables to create the graphics pipelines used in the rendergraph
+    std::vector<GraphicsPipelineCreateCallable> m_on_graphics_pipeline_create_callables;
+
+    std::vector<std::unique_ptr<wrapper::pipelines::PipelineLayout>> m_graphics_pipeline_layouts;
+
+    /// The graphics pipelines used in the rendergraph
+    /// This will be populated using m_on_graphics_pipeline_create_callables
     std::vector<std::shared_ptr<wrapper::pipelines::GraphicsPipeline>> m_graphics_pipelines;
+
     // TODO: Support compute pipelines and compute passes
 
+    // ---------------------------------------------------------------------------------------------------------
+    //  BUFFERS AND TEXTURES
+    // ---------------------------------------------------------------------------------------------------------
     // The buffer resources of the rendergraph (vertex-, index-, and uniform buffers)
     // Note that we must keep the data as std::vector of std::unique_ptr in order to keep entries consistent
-    std::vector<std::shared_ptr<BufferResource>> m_buffer_resources;
+    std::vector<std::shared_ptr<Buffer>> m_buffers;
 
     /// The push constant resources of the rendergraph
     // TODO: Remember we need to squash all VkPushConstantRange of a pass into one std::vector in order to bind it!
+    // TODO: Should push constant ranges be per graphics pipeline?
     std::vector<std::shared_ptr<PushConstantRangeResource>> m_push_constant_ranges;
 
     /// The texture resources of the rendergraph
-    std::vector<std::shared_ptr<TextureResource>> m_texture_resources;
-
-    /// Descriptor management: For performance reasons, it is recommended to group descriptors into descriptor sets by
-    /// update frequency. The descriptor sets below correspond to resource descriptos which do not change to frequently
-    /// changed descriptors
-
-    /// In this descriptor set, we keep resource descriptors which do not change frequently, such as static meshes,
-    /// static textures, and static constant buffers. After an initial update of the descriptor set, it remains
-    /// unchanged for most of the time.
-    VkDescriptorSet m_static_descriptor_set{VK_NULL_HANDLE};
-    /// In this descriptor set we keep resource descriptors which change once per frame.
-    VkDescriptorSet m_per_frame_descriptor_set{VK_NULL_HANDLE};
-    /// In this descriptor set we keep resource descriptors that change on a per-batch basis, meaning there could be a
-    /// group of objects, while the resource descriptors stay constant within one batch. The descriptro set will be
-    /// updated when switching to another batch. This is likely done several times in one frame.
-    VkDescriptorSet m_per_batch_descriptor_set{VK_NULL_HANDLE};
-    /// In this descriptor set we keep resource descriptors that changes multiple times per frame. This could be
-    /// per-object data or per-instance data.
-    VkDescriptorSet m_dynamic_descriptor_set{VK_NULL_HANDLE};
-
-    /// Build the graphics pipeline of a certain render pass
-    void build_graphics_pipeline(/*TODO*/);
+    std::vector<std::shared_ptr<Texture>> m_textures;
 
     /// The rendergraph must not have any cycles in it!
     /// @exception std::logic_error The rendergraph is not acyclic
@@ -100,25 +109,37 @@ private:
     // TODO: better naming? create_descriptors?
     void create_descriptor_sets();
 
+    /// Create the graphics passes
+    /// @note This must happen before the graphics pipeline layouts can be created in
+    /// ``create_graphics_pipeline_layouts()``
+    void create_graphics_passes();
+
+    /// Create the graphics pipeline layouts
+    /// @note This must happen before the graphics pipelines can be created in ``create_graphics_pipeline_layouts()``
+    void create_graphics_pipeline_layouts();
+
     /// Create the graphics pipelines
     void create_graphics_pipelines();
 
     /// Create the textures of every texture resoruce in the rendergraph
     void create_textures();
 
-    /// Determine the order of execution of the graphics passes
+    /// Determine the order of execution of the graphics passes by using depth first search (dfs) algorithm
     void determine_pass_order();
 
     /// Record the command buffer of a pass
-    /// @param graphics_pass The graphics pass to record the command buffer for
     /// @param cmd_buf The command buffer to record the pass into
-    /// @param is_first_pass ``true`` if this is the first pass in the pass stack
-    /// @param is_last_pass ``true`` if this is the last pass in the pass stack
-    void record_command_buffer(std::shared_ptr<GraphicsPass> graphics_pass, const wrapper::CommandBuffer &cmd_buf,
-                               bool is_first_pass, bool is_last_pass);
+    /// @param pass The graphics pass to record the command buffer for
+    /// @param is_first_pass ``true`` if this is the first pass in the graphics pass stack
+    /// @param is_last_pass ``true`` if this is the last pass in the graphics pass stack
+    /// @param img_index The swapchain image index
+    void record_command_buffer_for_pass(const wrapper::CommandBuffer &cmd_buf, const GraphicsPass &pass,
+                                        bool is_first_pass, bool is_last_pass, std::uint32_t img_index);
 
     /// Record all command buffers required for the passes
-    void record_command_buffers();
+    /// @param cmd_buf The command buffer to record all passes with
+    /// @param img_index The swapchain image index
+    void record_command_buffers(const wrapper::CommandBuffer &cmd_buf, std::uint32_t img_index);
 
     /// Update the vertex-, index-, and uniform-buffers
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
@@ -130,10 +151,15 @@ private:
     /// Update the push constant ranges
     void update_push_constant_ranges();
 
+    /// Validate rendergraph
+    /// @note For rendergraph validation, the passes of the rendergraph must already be created
+    void validate_render_graph();
+
 public:
     /// Default constructor
     /// @param device The device wrapper
-    explicit RenderGraph(wrapper::Device &device);
+    /// @param swapchain The swapchain wrapper
+    RenderGraph(wrapper::Device &device, wrapper::Swapchain &swapchain);
 
     RenderGraph(const RenderGraph &) = delete;
     RenderGraph(RenderGraph &&) noexcept;
@@ -142,34 +168,28 @@ public:
     RenderGraph &operator=(const RenderGraph &) = delete;
     RenderGraph &operator=(RenderGraph &&) = delete;
 
-    /// Add a buffer resource to the rendergraph
+    /// Add a buffer (vertex, index, or uniform buffer) resource to the rendergraph
     /// @param name The internal name of the buffer resource (must not be empty)
     /// @param type The internal buffer usage of the buffer
     /// @param category The estimated descriptor set category depending on the update frequency of the buffer
     /// @note The update frequency of a buffer will be respected when grouping uniform buffers into descriptor sets
-    /// @param on_update An optional buffer resource update function (``std::nullopt`` by default)
+    /// @param on_update A buffer resource update function
     /// @exception std::runtime_error Internal debug name is empty
-    /// @return A raw pointer to the buffer resource that was just created
-    [[nodiscard]] std::weak_ptr<BufferResource>
-    add_buffer(std::string name, BufferType type, DescriptorSetUpdateFrequency category,
-               std::optional<std::function<void()>> on_update = std::nullopt);
+    /// @return A weak pointer to the buffer resource that was just created
+    [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type, std::function<void()> on_update);
 
     /// Add a new graphics pass to the rendergraph
-    /// @param name The name of the graphics pass
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
-    /// @return ?
-    void add_graphics_pass(std::string name, std::function<void(GraphicsPassBuilder &)> on_pass_create) {
-        // Some code here
+    void add_graphics_pass(GraphicsPassCreateCallable on_pass_create) {
+        // TODO: Can this be emplace_back?
+        m_on_graphics_pass_create_callables.push_back(std::move(on_pass_create));
     }
 
     /// Add a new graphics pipeline to the rendergraph
-    /// @param name The name of the new graphics pipeline
     /// @param on_pipeline_create A callable to create the graphics pipeline using GraphicsPipelineBuilder
-    /// @return ?
-    void add_graphics_pipeline(
-        std::string name,
-        std::function<void(wrapper::pipelines::GraphicsPipelineBuilder &, const VkPipelineLayout)> on_pipeline_create) {
-        // TODO: What here?
+    void add_graphics_pipeline(GraphicsPipelineCreateCallable on_pipeline_create) {
+        // TODO: Can this be emplace_back?
+        m_on_graphics_pipeline_create_callables.push_back(std::move(on_pipeline_create));
     }
 
     /// Add a push constant range resource to the rendergraph
@@ -193,22 +213,23 @@ public:
     }
 
     /// Add a texture resource to the rendergraph
-    /// @param name The name of the texture
+    /// @param name The name of the texture (must not be empty)
     /// @param uage The texture usage inside of rendergraph
     /// @param format The image format of the texture
-    /// @return A std::wek_ptr to the texture resource that was created
-    [[nodiscard]] std::weak_ptr<TextureResource> add_texture(std::string name, TextureUsage usage, VkFormat format);
+    /// @param on_init The initialization callable of the texture
+    /// @param on_update The update callable of the texture
+    /// @return A weak pointer to the texture resource that was created
+    [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
+                                                     std::optional<std::function<void()>> on_init = std::nullopt,
+                                                     std::optional<std::function<void()>> on_update = std::nullopt);
 
-    /// Compile the entire rendergraph. This is the last step before rendering can begin.
+    /// Compile the entire rendergraph
     void compile();
 
-    /// Render a frame with the rendergraph
-    /// @param swapchain_img_index The index of the current image in the swapchain
-    /// @param img_available A semaphore which signals if the current swapchain image is available
-    void render(std::uint32_t swapchain_img_index, const VkSemaphore *img_available);
+    /// Render a frame
+    void render();
 
-    /// Update the rendering data
-    // TODO: Maybe do not expose this, but call it in render()?
+    /// Update all the rendering data (buffers, textures...)
     void update_data();
 };
 

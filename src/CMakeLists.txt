@@ -12,12 +12,12 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
 
-    vulkan-renderer/render-graph/buffer_resource.cpp
+    vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp
     vulkan-renderer/render-graph/graphics_pass_builder.cpp
     vulkan-renderer/render-graph/push_constant_range_resource.cpp
     vulkan-renderer/render-graph/render_graph.cpp
-    vulkan-renderer/render-graph/texture_resource.cpp
+    vulkan-renderer/render-graph/texture.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/file.cpp
@@ -27,13 +27,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/vk_tools/gpu_info.cpp
     vulkan-renderer/vk_tools/representation.cpp
 
-    vulkan-renderer/wrapper/buffer.cpp
     vulkan-renderer/wrapper/command_buffer.cpp
     vulkan-renderer/wrapper/command_pool.cpp
-    vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/fence.cpp
-    vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
@@ -51,7 +48,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.cpp
 
     vulkan-renderer/wrapper/pipelines/pipeline.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp

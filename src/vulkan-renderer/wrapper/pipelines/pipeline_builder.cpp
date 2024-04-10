@@ -1,11 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
-#include <spdlog/spdlog.h>
-
-#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
@@ -36,32 +32,6 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
     m_vertex_input_binding_descriptions = std::move(other.m_vertex_input_binding_descriptions);
     m_vertex_input_attribute_descriptions = std::move(other.m_vertex_input_attribute_descriptions);
     m_color_blend_attachment_states = std::move(other.m_color_blend_attachment_states);
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const VkPipelineShaderStageCreateInfo &shader_stage) {
-    m_shader_stages.push_back(shader_stage);
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const wrapper::Shader &shader) {
-    return add_shader(make_info<VkPipelineShaderStageCreateInfo>({
-        .stage = shader.type(),
-        .module = shader.module(),
-        .pName = shader.entry_point().c_str(),
-
-    }));
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment) {
-    m_color_blend_attachment_states.push_back(attachment);
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::add_vertex_input_attribute(const VkVertexInputAttributeDescription &description) {
-    m_vertex_input_attribute_descriptions.push_back(description);
-    return *this;
 }
 
 std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
@@ -99,7 +69,7 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
         // The pNext chain ends here!
         .pNext = nullptr,
-        // TODO: Support multiple color attachment formats in the future?
+        // TODO: Implement more than one color attachment in the future if required
         .colorAttachmentCount = 1,
         .pColorAttachmentFormats = &m_swapchain_img_format,
         .depthAttachmentFormat = m_depth_attachment_format,
@@ -132,7 +102,7 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     // Reset the builder's data after creating the graphics pipeline
     reset();
 
-    // TODO: Does this work?
+    // We must std::move the return value because it is a std::unique_ptr
     return std::move(new_graphics_pipeline);
 }
 
@@ -194,149 +164,6 @@ void GraphicsPipelineBuilder::reset() {
     m_dynamic_states_sci = {
         make_info<VkPipelineDynamicStateCreateInfo>(),
     };
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend) {
-    m_color_blend_sci = color_blend;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_color_blend_attachments(
-    const std::vector<VkPipelineColorBlendAttachmentState> &attachments) {
-    m_color_blend_attachment_states = attachments;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_culling_mode(const VkBool32 culling_enabled) {
-    if (culling_enabled == VK_FALSE) {
-        spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
-    }
-    m_rasterization_sci.cullMode = culling_enabled == VK_TRUE ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_depth_stencil(const VkPipelineDepthStencilStateCreateInfo &depth_stencil) {
-    m_depth_stencil_sci = depth_stencil;
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_dynamic_states(const std::vector<VkDynamicState> &dynamic_states) {
-    assert(!dynamic_states.empty());
-    m_dynamic_states = dynamic_states;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_line_width(const float width) {
-    m_rasterization_sci.lineWidth = width;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_multisampling(const VkSampleCountFlagBits sample_count,
-                                                                    const std::optional<float> min_sample_shading) {
-    m_multisample_sci.rasterizationSamples = sample_count;
-
-    if (min_sample_shading) {
-        m_multisample_sci.minSampleShading = min_sample_shading.value();
-    }
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_pipeline_layout(const VkPipelineLayout layout) {
-    assert(layout);
-    m_pipeline_layout = layout;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_primitive_topology(const VkPrimitiveTopology topology) {
-    m_input_assembly_sci.topology = topology;
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization) {
-    m_rasterization_sci = rasterization;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_scissor(const VkRect2D &scissor) {
-    m_scissors = {scissor};
-    m_viewport_sci.scissorCount = 1;
-    m_viewport_sci.pScissors = m_scissors.data();
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_scissor(const VkExtent2D &extent) {
-    return set_scissor({
-        // Convert VkExtent2D to VkRect2D
-        .extent = extent,
-    });
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_scissors(const std::vector<VkRect2D> &scissors) {
-    assert(!scissors.empty());
-    m_scissors = scissors;
-    m_viewport_sci.scissorCount = static_cast<std::uint32_t>(scissors.size());
-    m_viewport_sci.pScissors = scissors.data();
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_shaders(const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages) {
-    assert(!shader_stages.empty());
-    m_shader_stages = shader_stages;
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_tesselation_control_point_count(const std::uint32_t control_point_count) {
-    m_tesselation_sci.patchControlPoints = control_point_count;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_vertex_input_attributes(
-    const std::vector<VkVertexInputAttributeDescription> &descriptions) {
-    assert(!descriptions.empty());
-    m_vertex_input_attribute_descriptions = descriptions;
-    return *this;
-}
-
-GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_vertex_input_bindings(const std::vector<VkVertexInputBindingDescription> &descriptions) {
-    assert(!descriptions.empty());
-    m_vertex_input_binding_descriptions = descriptions;
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_viewport(const VkViewport &viewport) {
-    m_viewports = {viewport};
-    m_viewport_sci.viewportCount = 1;
-    m_viewport_sci.pViewports = m_viewports.data();
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_viewport(const VkExtent2D &extent) {
-    return set_viewport({
-        // Convert VkExtent2D to VkViewport
-        .width = static_cast<float>(extent.width),
-        .height = static_cast<float>(extent.height),
-        .maxDepth = 1.0f,
-    });
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_viewports(const std::vector<VkViewport> &viewports) {
-    assert(!viewports.empty());
-    m_viewports = viewports;
-    m_viewport_sci.viewportCount = static_cast<std::uint32_t>(m_viewports.size());
-    m_viewport_sci.pViewports = m_viewports.data();
-    return *this;
-}
-
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_wireframe(const VkBool32 wireframe) {
-    m_rasterization_sci.polygonMode = (wireframe == VK_TRUE) ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
-    return *this;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

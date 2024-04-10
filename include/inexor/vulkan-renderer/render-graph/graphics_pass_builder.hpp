@@ -1,8 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <functional>
@@ -17,6 +17,7 @@ class CommandBuffer;
 namespace inexor::vulkan_renderer::render_graph {
 
 /// A builder class for graphics stages in the rendergraph
+/// @warning Make sure that the order or add calls for buffers and textures matches the binding order!
 class GraphicsPassBuilder {
 private:
     /// Indicates if the screen is cleared at the beginning of this stage
@@ -29,16 +30,16 @@ private:
     /// The buffers the graphics stage reads from
     /// If the buffer's ``BufferType`` is ``UNIFORM_BUFFER``, a value for the shader stage flag must be specified,
     /// because uniform buffers can be read from vertex or fragment stage bit.
-    std::vector<std::pair<std::weak_ptr<BufferResource>, std::optional<VkShaderStageFlagBits>>> m_buffer_reads;
+    BufferReads m_buffer_reads;
     /// The textures the graphics stage reads from
-    std::vector<std::pair<std::weak_ptr<TextureResource>, std::optional<VkShaderStageFlagBits>>> m_texture_reads;
+    TextureReads m_texture_reads;
     /// The textures the graphics stage writes to
-    std::vector<std::weak_ptr<TextureResource>> m_texture_writes;
+    TextureWrites m_texture_writes;
     /// The push constant ranges of the graphics stage
     std::vector<std::pair<VkPushConstantRange, std::function<void()>>> m_push_constant_ranges;
 
     // TODO: Merge push constant ranges into one block and put it as member here?
-    // TODO: Copy all data into one piece of memory and call vkCmdPushConstants only once! (ChatGPT says yes to this)
+    // TODO: Copy all data into one piece of memory and call vkCmdPushConstants only once?
     void compile_push_constants();
 
     /// Reset all data of the graphics stage builder
@@ -60,16 +61,16 @@ public:
     /// @param offset The offset in the push constant range
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename PushConstantDataType>
-    [[nodiscard]] GraphicsPassBuilder &
-    add_push_constant_range(VkShaderStageFlags shader_stage, const PushConstantDataType &push_constant,
-                            std::function<void()> on_update, std::uint32_t offset = 0) {
-        m_push_constant_ranges.push_back(std::make_pair(
+    [[nodiscard]] auto &add_push_constant_range(VkShaderStageFlags shader_stage,
+                                                const PushConstantDataType &push_constant,
+                                                std::function<void()> on_update, std::uint32_t offset = 0) {
+        m_push_constant_ranges.emplace_back(
             VkPushConstantRange{
                 .stageFlags = shader_stage,
                 .offset = offset,
-                .size = sizeof(PushConstantDataType),
+                .size = sizeof(push_constant),
             },
-            std::move(on_update)));
+            std::move(on_update));
         return *this;
     }
 
@@ -78,39 +79,57 @@ public:
     /// @return The graphics stage which was created
     [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name);
 
-    [[nodiscard]] GraphicsPassBuilder &
-    reads_from_buffer(std::weak_ptr<BufferResource> buffer,
-                      std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
-        m_buffer_reads.push_back(std::make_pair(std::move(buffer), shader_stage));
+    /// Specifies that this pass reads from a buffer
+    /// @param buffer The buffer the pass reads from
+    /// @param shader_stage The shader stage the buffer is read from
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &reads_from_buffer(std::weak_ptr<Buffer> buffer,
+                                          std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
+        m_buffer_reads.emplace_back(std::move(buffer), shader_stage);
         return *this;
     }
 
-    [[nodiscard]] GraphicsPassBuilder &
-    reads_from_texture(std::weak_ptr<TextureResource> texture,
-                       std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
-        m_texture_reads.push_back(std::make_pair(std::move(texture), shader_stage));
+    /// Specifies that this pass reads from a texture
+    /// @param texture The texture the pass reads from
+    /// @param shader_stage The shader stage the texture is read from
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &reads_from_texture(std::weak_ptr<Texture> texture,
+                                           std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
+        m_texture_reads.emplace_back(std::move(texture), shader_stage);
         return *this;
     }
 
-    [[nodiscard]] GraphicsPassBuilder &writes_to_texture(std::weak_ptr<TextureResource> texture) {
-        m_texture_writes.push_back(std::move(texture));
+    /// Specifies that this pass writes to a texture
+    /// @param texture The texture the pass writes to
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &writes_to_texture(std::weak_ptr<Texture> texture) {
+        m_texture_writes.emplace_back(texture);
         return *this;
     }
 
     /// Set the clear status for the stage
     /// @param clear_value The clear value for color and depth
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &set_clear_value(VkClearValue clear_value);
+    [[nodiscard]] auto &set_clear_value(VkClearValue clear_value) {
+        m_clear_value = clear_value;
+        return *this;
+    }
 
     /// Enable or disable depth testing
     /// @param depth_test ``true`` if depth testing is enabled for this stage
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &set_depth_test(bool depth_test);
+    [[nodiscard]] auto &set_depth_test(bool depth_test) {
+        m_depth_test = depth_test;
+        return *this;
+    }
 
     /// Set the function which will be called when the stage's command buffer is being recorded
     /// @param on_record The function which will be called when the stage's command buffer is being recorded
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const wrapper::CommandBuffer &)> on_record);
+    [[nodiscard]] auto &set_on_record(std::function<void(const wrapper::CommandBuffer &)> on_record) {
+        m_on_record = std::move(on_record);
+        return *this;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

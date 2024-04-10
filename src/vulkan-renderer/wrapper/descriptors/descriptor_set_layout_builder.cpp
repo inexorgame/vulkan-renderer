@@ -43,7 +43,7 @@ DescriptorSetLayoutBuilder::add_combined_image_sampler(const VkShaderStageFlags 
     return *this;
 }
 
-VkDescriptorSetLayout DescriptorSetLayoutBuilder::build() {
+VkDescriptorSetLayout DescriptorSetLayoutBuilder::build(std::string name) {
     const auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>({
         .bindingCount = static_cast<std::uint32_t>(m_bindings.size()),
         .pBindings = m_bindings.data(),
@@ -51,7 +51,7 @@ VkDescriptorSetLayout DescriptorSetLayoutBuilder::build() {
 
     // Create the descriptor set layout using the descriptor set layout cache
     const auto descriptor_set_layout =
-        m_descriptor_set_layout_cache.create_descriptor_set_layout(descriptor_set_layout_ci);
+        m_descriptor_set_layout_cache.create_descriptor_set_layout(descriptor_set_layout_ci, std::move(name));
 
     // Clear the builder's data so the builder can be re-used
     m_bindings.clear();

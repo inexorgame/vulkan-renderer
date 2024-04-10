@@ -18,7 +18,6 @@ private:
     std::function<void()> m_on_update{[]() {}};
     const void *m_push_constant_data{nullptr};
 
-public:
     /// Default constructor
     /// @param push_constant The push constant
     /// @param push_constant_data The data of the push constant
@@ -26,6 +25,7 @@ public:
     PushConstantRangeResource(VkPushConstantRange push_constant, const void *push_constant_data,
                               std::function<void()> on_update);
 
+public:
     PushConstantRangeResource(const PushConstantRangeResource &) = delete;
     PushConstantRangeResource(PushConstantRangeResource &&other) noexcept;
     ~PushConstantRangeResource() = default;

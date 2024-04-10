@@ -8,6 +8,11 @@
 #include <span>
 #include <string>
 
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
+class CommandPool;
+} // namespace inexor::vulkan_renderer::wrapper::commands
+
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
@@ -26,7 +31,7 @@ struct DeviceInfo {
 };
 
 /// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
-/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
+/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};

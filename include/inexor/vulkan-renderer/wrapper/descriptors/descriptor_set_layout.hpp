@@ -18,6 +18,7 @@ class DescriptorSetLayoutCache;
 /// For internal use inside of rendergraph only!
 class DescriptorSetLayout {
     friend DescriptorSetLayoutCache;
+    // TODO: Make RenderGraph friend
 
 private:
     const Device &m_device;
@@ -36,14 +37,12 @@ public:
 
     DescriptorSetLayout(const DescriptorSetLayout &) = delete;
     DescriptorSetLayout(DescriptorSetLayout &&) noexcept;
+
+    /// Call vkDestroyDescriptorSetLayout
     ~DescriptorSetLayout();
 
     DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
     DescriptorSetLayout &operator=(DescriptorSetLayout &&) = delete;
-
-    [[nodiscard]] VkDescriptorSetLayout descriptor_set_layout() const noexcept {
-        return m_descriptor_set_layout;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

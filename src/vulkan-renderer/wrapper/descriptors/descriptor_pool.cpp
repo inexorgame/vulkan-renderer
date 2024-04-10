@@ -28,7 +28,9 @@ DescriptorPool::DescriptorPool(const Device &device, std::vector<VkDescriptorPoo
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + m_name + " !", result);
     }
-    // TODO: Assign an internal debug name to this descriptor pool
+    // Assign an internal debug name to this descriptor pool
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_DESCRIPTOR_POOL,
+                                         reinterpret_cast<std::uint64_t>(m_descriptor_pool), m_name);
 }
 
 DescriptorPool::DescriptorPool(DescriptorPool &&other) noexcept : m_device(other.m_device) {

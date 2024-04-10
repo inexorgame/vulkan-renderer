@@ -11,14 +11,14 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
-/// @brief A RAII wrapper for VkFences.
+/// A RAII wrapper for VkFence
 class Fence {
     const Device &m_device;
     std::string m_name;
     VkFence m_fence{VK_NULL_HANDLE};
 
 public:
-    /// @brief Default constructor.
+    /// Default constructor
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the VkFence.
     /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.

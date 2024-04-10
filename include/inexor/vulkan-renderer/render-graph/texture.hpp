@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace inexor::vulkan_renderer::render_graph {
@@ -29,7 +30,7 @@ enum class TextureUsage {
 // TODO: Implement texture updates and use DescriptorSetUpdateFrequencyGroup
 
 /// Wrapper for texture resources in the rendergraph
-class TextureResource {
+class Texture {
     friend RenderGraph;
 
 private:
@@ -44,20 +45,28 @@ private:
     std::uint32_t m_height{0};
     std::uint32_t m_channels{0};
     std::uint32_t m_mip_levels{0};
+    std::optional<std::function<void()>> m_on_update{[]() {}};
 
 public:
     /// Default constructor
+    /// @param name The internal denug name of the texture inside of the rendergraph (must not be empty)
     /// @param usage The internal usage of the texture inside of the rendergraph
     /// @param format The format of the texture
-    /// @param name The internal denug name of the texture inside of the rendergraph (must not be empty)
-    TextureResource(std::string name, TextureUsage usage, VkFormat format);
+    /// @param on_update An optional update function (``std::nullopt`` by default, meaning no updates to this buffer)
+    Texture(std::string name, TextureUsage usage, VkFormat format, std::optional<std::function<void()>> on_update);
 
-    TextureResource(const TextureResource &) = delete;
-    TextureResource(TextureResource &&other) noexcept;
-    ~TextureResource() = default;
+    Texture(const Texture &) = delete;
+    Texture(Texture &&other) noexcept;
+    ~Texture() = default;
 
-    TextureResource &operator=(const TextureResource &) = delete;
-    TextureResource &operator=(TextureResource &&) = delete;
+    Texture &operator=(const Texture &) = delete;
+    Texture &operator=(Texture &&) = delete;
+
+    // TODO: Implement
+    void request_update(const void *texture_src_data, const std::size_t texture_src_data_size) {
+        // TODO: Check if source data is nullptr
+        // TODO: Check if size is 0
+    }
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

@@ -2,6 +2,7 @@
 
 #include <volk.h>
 
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -56,8 +57,9 @@ public:
     DescriptorSetLayoutBuilder &add_uniform_buffer(VkShaderStageFlags shader_stage);
 
     /// Build the descriptor set layout
+    /// @param name The name of the descriptor set layout
     /// @return The descriptor set layout that was created
-    [[nodiscard]] VkDescriptorSetLayout build();
+    [[nodiscard]] VkDescriptorSetLayout build(std::string name);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

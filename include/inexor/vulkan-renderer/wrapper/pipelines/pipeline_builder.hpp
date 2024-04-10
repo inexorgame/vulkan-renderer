@@ -4,7 +4,11 @@
 
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include <cassert>
 #include <memory>
 #include <optional>
 #include <string>
@@ -109,26 +113,25 @@ public:
     GraphicsPipelineBuilder &operator=(GraphicsPipelineBuilder &&) = delete;
 
     /// Add a shader to the graphics pipeline
-    /// @param shader The shader stage to add
-    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &add_shader(const VkPipelineShaderStageCreateInfo &shader);
-
-    /// Add a shader to the graphics pipeline
     /// @param shader The shader
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &add_shader(const wrapper::Shader &shader);
+    [[nodiscard]] auto &add_shader(const wrapper::Shader &shader) {
+        m_shader_stages.push_back(make_info<VkPipelineShaderStageCreateInfo>({
+            .stage = shader.type(),
+            .module = shader.module(),
+            .pName = shader.entry_point().c_str(),
 
-    /// Add a vertex input attribute description
-    /// @param description The vertex input attribute description
-    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    add_vertex_input_attribute(const VkVertexInputAttributeDescription &description);
+        }));
+        return *this;
+    }
 
     /// Add a color blend attachment
     /// @param attachment The color blend attachment
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment);
+    [[nodiscard]] auto &add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment) {
+        m_color_blend_attachment_states.push_back(attachment);
+        return *this;
+    }
 
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
@@ -138,32 +141,50 @@ public:
     /// Set the color blend manually
     /// @param color_blend The color blend
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend);
+    [[nodiscard]] auto &set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend) {
+        m_color_blend_sci = color_blend;
+        return *this;
+    }
 
     /// Set all color blend attachments manually
     /// @note You should prefer to use ``add_color_blend_attachment`` instead
     /// @param attachments The color blend attachments
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    set_color_blend_attachments(const std::vector<VkPipelineColorBlendAttachmentState> &attachments);
+    [[nodiscard]] auto &
+    set_color_blend_attachments(const std::vector<VkPipelineColorBlendAttachmentState> &attachments) {
+        m_color_blend_attachment_states = attachments;
+        return *this;
+    }
 
     /// Enable or disable culling
     /// @warning Disabling culling will have a significant performance impact
     /// @param culling_enabled ``true`` if culling is enabled
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_culling_mode(VkBool32 culling_enabled);
+    [[nodiscard]] auto &set_culling_mode(const VkBool32 culling_enabled) {
+        if (culling_enabled == VK_FALSE) {
+            spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
+        }
+        m_rasterization_sci.cullMode = culling_enabled == VK_TRUE ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
+        return *this;
+    }
 
     /// Set the depth stencil
     /// @warning Disabling culling can have performance impacts!
     /// @param depth_stencil The depth stencil
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    set_depth_stencil(const VkPipelineDepthStencilStateCreateInfo &depth_stencil);
+    [[nodiscard]] auto &set_depth_stencil(const VkPipelineDepthStencilStateCreateInfo &depth_stencil) {
+        m_depth_stencil_sci = depth_stencil;
+        return *this;
+    }
 
     /// Set the dynamic states
     /// @param dynamic_states The dynamic states
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_dynamic_states(const std::vector<VkDynamicState> &dynamic_states);
+    [[nodiscard]] auto &set_dynamic_states(const std::vector<VkDynamicState> &dynamic_states) {
+        assert(!dynamic_states.empty());
+        m_dynamic_states = dynamic_states;
+        return *this;
+    }
 
     /// Set the input assembly state create info
     /// @note If you just want to set the triangle topology, call ``set_triangle_topology`` instead, because this is the
@@ -176,47 +197,82 @@ public:
     /// Set the line width of rasterization
     /// @param line_width The line width used in rasterization
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_line_width(float width);
+    [[nodiscard]] auto &set_line_width(const float width) {
+        m_rasterization_sci.lineWidth = width;
+        return *this;
+    }
 
     /// Set the most important MSAA settings
     /// @param sample_count The number of samples used in rasterization
     /// @param min_sample_shading A minimum fraction of sample shading
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_multisampling(VkSampleCountFlagBits sample_count,
-                                                             std::optional<float> min_sample_shading);
+    [[nodiscard]] auto &set_multisampling(const VkSampleCountFlagBits sample_count,
+                                          const std::optional<float> min_sample_shading) {
+        m_multisample_sci.rasterizationSamples = sample_count;
+
+        if (min_sample_shading) {
+            m_multisample_sci.minSampleShading = min_sample_shading.value();
+        }
+        return *this;
+    }
 
     /// Store the pipeline layout
     /// @param layout The pipeline layout
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_pipeline_layout(VkPipelineLayout layout);
+    [[nodiscard]] auto &set_pipeline_layout(const VkPipelineLayout layout) {
+        assert(layout);
+        m_pipeline_layout = layout;
+        return *this;
+    }
 
     /// Set the triangle topology
     /// @param topology the primitive topology
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_primitive_topology(VkPrimitiveTopology topology);
+    [[nodiscard]] auto &set_primitive_topology(const VkPrimitiveTopology topology) {
+        m_input_assembly_sci.topology = topology;
+        return *this;
+    }
 
     /// Set the rasterization state of the graphics pipeline manually
     /// @param rasterization The rasterization state
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization);
+    [[nodiscard]] auto &set_rasterization(const VkPipelineRasterizationStateCreateInfo &rasterization) {
+        m_rasterization_sci = rasterization;
+        return *this;
+    }
 
     /// Set the scissor data in VkPipelineViewportStateCreateInfo
     /// There is another method called set_scissors in case multiple scissors will be used
     /// @param scissors The scissors in in VkPipelineViewportStateCreateInfo
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_scissor(const VkRect2D &scissor);
+    [[nodiscard]] auto &set_scissor(const VkRect2D &scissor) {
+        m_scissors = {scissor};
+        m_viewport_sci.scissorCount = 1;
+        m_viewport_sci.pScissors = m_scissors.data();
+        return *this;
+    }
 
     /// Set the scissor data in VkPipelineViewportStateCreateInfo (convert VkExtent2D to VkRect2D)
     /// @param extent The extent of the scissor
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_scissor(const VkExtent2D &extent);
+    [[nodiscard]] auto &set_scissor(const VkExtent2D &extent) {
+        return set_scissor({
+            // Convert VkExtent2D to VkRect2D
+            .extent = extent,
+        });
+    }
 
     /// Set the viewport data in VkPipelineViewportStateCreateInfo
     /// There is another method called set_scissors in case multiple scissors will be used
     /// @param scissor The scissor in in VkPipelineViewportStateCreateInfo
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_scissors(const std::vector<VkRect2D> &scissors);
+    [[nodiscard]] auto &set_scissors(const std::vector<VkRect2D> &scissors) {
+        assert(!scissors.empty());
+        m_scissors = scissors;
+        m_viewport_sci.scissorCount = static_cast<std::uint32_t>(scissors.size());
+        m_viewport_sci.pScissors = scissors.data();
+        return *this;
+    }
 
     /// Set the shader stage
     /// @param shader_stages The shader stages
@@ -227,41 +283,71 @@ public:
     /// @note This is not used in the code so far, because we are not using tesselation
     /// @param control_point_count The tesselation control point count
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_tesselation_control_point_count(std::uint32_t control_point_count);
+    [[nodiscard]] auto &set_tesselation_control_point_count(const std::uint32_t control_point_count) {
+        m_tesselation_sci.patchControlPoints = control_point_count;
+        return *this;
+    }
 
     /// Set the vertex input attribute descriptions manually
-    /// You should prefer to use ``add_vertex_input_attribute`` instead
     /// @param descriptions The vertex input attribute descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    set_vertex_input_attributes(const std::vector<VkVertexInputAttributeDescription> &descriptions);
+    [[nodiscard]] auto &
+    set_vertex_input_attributes(const std::vector<VkVertexInputAttributeDescription> &descriptions) {
+        assert(!descriptions.empty());
+        m_vertex_input_attribute_descriptions = descriptions;
+        return *this;
+    }
 
     /// Set the vertex input binding descriptions manually
     /// @param descriptions The vertex input binding descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &
-    set_vertex_input_bindings(const std::vector<VkVertexInputBindingDescription> &descriptions);
+    [[nodiscard]] auto &set_vertex_input_bindings(const std::vector<VkVertexInputBindingDescription> &descriptions) {
+        assert(!descriptions.empty());
+        m_vertex_input_binding_descriptions = descriptions;
+        return *this;
+    }
 
     /// Set the viewport in VkPipelineViewportStateCreateInfo
     /// There is another method called set_viewports in case multiple viewports will be used
     /// @param viewport The viewport in VkPipelineViewportStateCreateInfo
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_viewport(const VkViewport &viewport);
+    [[nodiscard]] auto &set_viewport(const VkViewport &viewport) {
+        m_viewports = {viewport};
+        m_viewport_sci.viewportCount = 1;
+        m_viewport_sci.pViewports = m_viewports.data();
+        return *this;
+    }
 
     /// Set the viewport in VkPipelineViewportStateCreateInfo (convert VkExtent2D to VkViewport)
     /// @param extent The extent of the viewport
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_viewport(const VkExtent2D &extent);
+    [[nodiscard]] auto &set_viewport(const VkExtent2D &extent) {
+        return set_viewport({
+            // Convert VkExtent2D to VkViewport
+            .width = static_cast<float>(extent.width),
+            .height = static_cast<float>(extent.height),
+            .maxDepth = 1.0f,
+        });
+    }
 
     /// Set the viewport in VkPipelineViewportStateCreateInfo
     /// @param viewports The viewports in VkPipelineViewportStateCreateInfo
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_viewports(const std::vector<VkViewport> &viewports);
+    [[nodiscard]] auto &set_viewports(const std::vector<VkViewport> &viewports) {
+        assert(!viewports.empty());
+        m_viewports = viewports;
+        m_viewport_sci.viewportCount = static_cast<std::uint32_t>(m_viewports.size());
+        m_viewport_sci.pViewports = m_viewports.data();
+        return *this;
+    }
 
     /// Set the wireframe mode
     /// @param wireframe ``true`` if wireframe is enabled
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_wireframe(VkBool32 wireframe);
+    [[nodiscard]] auto &set_wireframe(const VkBool32 wireframe) {
+        m_rasterization_sci.polygonMode = (wireframe == VK_TRUE) ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+        return *this;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

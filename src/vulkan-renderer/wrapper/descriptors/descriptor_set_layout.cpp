@@ -20,7 +20,8 @@ DescriptorSetLayout::DescriptorSetLayout(const Device &device,
         throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor set layout " + m_name + " !",
                               result);
     }
-    // TODO: Assign internal debug name to descriptor set layout
+    m_device.set_debug_utils_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                                         reinterpret_cast<std::uint64_t>(m_descriptor_set_layout), m_name);
 }
 
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) noexcept : m_device(other.m_device) {

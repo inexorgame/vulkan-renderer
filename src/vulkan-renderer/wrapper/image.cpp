@@ -146,6 +146,7 @@ Image::Image(Image &&other) noexcept : m_device(other.m_device) {
 }
 
 Image::~Image() {
+    // The image view must be destroyed before the image
     vkDestroyImageView(m_device.device(), m_img_view, nullptr);
     vmaDestroyImage(m_device.allocator(), m_img, m_alloc);
 }

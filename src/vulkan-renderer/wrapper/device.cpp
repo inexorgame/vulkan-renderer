@@ -24,7 +24,7 @@
 
 namespace {
 
-// TODO: Make proper use of queue priorities in the future.
+// TODO: Make proper use of queue priorities in the future
 constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 
 } // namespace
@@ -457,7 +457,7 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 
 void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
-    // TODO: Support other queues (not just graphics)
+    // TODO: Support other queues, not just graphics queue
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
     cmd_lambda(cmd_buf);
     cmd_buf.submit_and_wait();
@@ -465,7 +465,7 @@ void Device::execute(const std::string &name,
 
 std::optional<std::uint32_t> Device::find_queue_family_index_if(
     const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
-    for (std::uint32_t index = 0; const auto queue_family : vk_tools::get_queue_family_properties(m_physical_device)) {
+    for (std::uint32_t index = 0; const auto &queue_family : vk_tools::get_queue_family_properties(m_physical_device)) {
         if (criteria_lambda(index, queue_family)) {
             return index;
         }

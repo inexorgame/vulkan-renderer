@@ -5,21 +5,19 @@
 #include <string>
 #include <vector>
 
-// Forward declaration
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 // Forward declaration
-class DescriptorAllocator;
+class DescriptorPoolAllocator;
 
 /// RAII wrapper for VkDescriptorPool
 /// For internal use inside of rendergraph only!
 class DescriptorPool {
-    friend DescriptorAllocator;
-
 private:
     const Device &m_device;
     std::string m_name;
@@ -27,9 +25,7 @@ private:
     std::vector<VkDescriptorPoolSize> m_pool_sizes;
 
 public:
-    // TODO: Make constructor and descriptor_pool() get method private!
-
-    /// Default constructor
+    /// Default constructor is private so only DescriptorPoolAllocator can access it
     /// @param device The device wrapper
     /// @param pool_sizes The descriptor pool sizes (must not be empty!)
     /// @param max_sets The max descriptor set count
@@ -42,12 +38,14 @@ public:
 
     DescriptorPool(const DescriptorPool &) = delete;
     DescriptorPool(DescriptorPool &&) noexcept;
+
+    /// Call vkDestroyDescriptorPool
     ~DescriptorPool();
 
     DescriptorPool &operator=(const DescriptorPool &) = delete;
     DescriptorPool &operator=(DescriptorPool &&) = delete;
 
-    [[nodiscard]] VkDescriptorPool descriptor_pool() const noexcept {
+    [[nodiscard]] auto descriptor_pool() const noexcept {
         return m_descriptor_pool;
     }
 };

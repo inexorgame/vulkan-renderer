@@ -17,8 +17,8 @@ class Semaphore {
 
 public:
     /// Default constructor
-    /// @param device The const reference to a device RAII wrapper instance.
-    /// @param name The internal debug marker name of the VkSemaphore.
+    /// @param device The const reference to a device RAII wrapper instance
+    /// @param name The internal debug marker name of the VkSemaphore
     Semaphore(const Device &device, const std::string &name);
     Semaphore(const Semaphore &) = delete;
     Semaphore(Semaphore &&) noexcept;
@@ -27,6 +27,8 @@ public:
     Semaphore &operator=(const Semaphore &) = delete;
     Semaphore &operator=(Semaphore &&) = delete;
 
+    // TOOD: Either rename to get() or remove so only friend class can access?
+    // Probably not going to work because semaphores need to be accessed in any part of the program
     [[nodiscard]] const VkSemaphore *semaphore() const {
         return &m_semaphore;
     }

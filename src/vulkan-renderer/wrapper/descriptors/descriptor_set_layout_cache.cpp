@@ -17,7 +17,8 @@ DescriptorSetLayoutCache::DescriptorSetLayoutCache(DescriptorSetLayoutCache &&ot
 }
 
 VkDescriptorSetLayout
-DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci) {
+DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci,
+                                                       std::string name) {
     DescriptorSetLayoutInfo layout_info;
     layout_info.bindings.reserve(descriptor_set_layout_ci.bindingCount);
     bool is_sorted = true;
@@ -46,10 +47,9 @@ DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayo
 
     // Check if this descriptor set layout does already exist in the cache
     if (!m_cache.contains(layout_info)) {
-        // TODO: Take name when creating descriptor set layout and pass it to DescriptorSetLayout wrapper!
-        m_cache.emplace(layout_info, DescriptorSetLayout(m_device, descriptor_set_layout_ci, "descriptor set layout"));
+        m_cache.emplace(layout_info, DescriptorSetLayout(m_device, descriptor_set_layout_ci, std::move(name)));
     }
-    return m_cache.at(layout_info).descriptor_set_layout();
+    return m_cache.at(layout_info).m_descriptor_set_layout;
 }
 
 bool DescriptorSetLayoutInfo::operator==(const DescriptorSetLayoutInfo &other) const {

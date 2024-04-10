@@ -22,6 +22,8 @@ GraphicsPipeline::GraphicsPipeline(const Device &device, const VkGraphicsPipelin
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept : m_device(other.m_device) {
     m_pipeline = std::exchange(other.m_pipeline, nullptr);
     m_name = std::move(other.m_name);
+    m_descriptor_set_layouts = std::move(other.m_descriptor_set_layouts);
+    m_push_constant_ranges = std::move(m_push_constant_ranges);
 }
 
 GraphicsPipeline::~GraphicsPipeline() {

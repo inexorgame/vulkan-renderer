@@ -14,7 +14,7 @@ DescriptorPoolAllocator::DescriptorPoolAllocator(DescriptorPoolAllocator &&other
 
 VkDescriptorPool DescriptorPoolAllocator::request_new_descriptor_pool() {
     // When creating a new descriptor pool we use these pool sizes as default values
-    // TODO: Adapt to other pool types as needed in the future!
+    // Adapt to other pool types as needed in the future
     const std::vector<VkDescriptorPoolSize> DEFAULT_POOL_SIZES{
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -26,11 +26,13 @@ VkDescriptorPool DescriptorPoolAllocator::request_new_descriptor_pool() {
         },
     };
 
+    // TODO: Maybe rendergraph can reason about descriptor pool sizes ahead of descriptor pool allocation?
+
     // When creating a new descriptor pool, we specify a maximum of 1024 descriptor sets to be used
     const std::uint32_t DEFAULT_MAX_DESCRIPTOR_COUNT{1024};
 
-    // Note that this emplace back may fail because there's not enough memory left for creating the new descriptor
-    // pool In that case, DescriptorPool wrapper will throw a VulkanException
+    // This might fail because there's not enough memory left for creating the new descriptor pool
+    // In this case, DescriptorPool wrapper will throw a VulkanException
     m_pools.emplace_back(m_device, DEFAULT_POOL_SIZES, DEFAULT_MAX_DESCRIPTOR_COUNT, "descriptor pool");
 
     // Return the descriptor pool that was just created

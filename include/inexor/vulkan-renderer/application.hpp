@@ -10,7 +10,6 @@
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
-#include "inexor/vulkan-renderer/wrapper/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
@@ -39,19 +38,19 @@ private:
     std::unique_ptr<wrapper::Device> m_device;
     std::unique_ptr<wrapper::WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
-    std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
+    std::unique_ptr<ImGuiOverlay> m_imgui_overlay;
 
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
     std::unique_ptr<render_graph::RenderGraph> m_render_graph;
-    std::weak_ptr<render_graph::TextureResource> m_back_buffer;
-    std::weak_ptr<render_graph::TextureResource> m_depth_buffer;
-    std::weak_ptr<render_graph::TextureResource> m_msaa_depth;
-    std::weak_ptr<render_graph::TextureResource> m_msaa_color;
-    std::weak_ptr<render_graph::BufferResource> m_index_buffer;
-    std::weak_ptr<render_graph::BufferResource> m_vertex_buffer;
-    std::weak_ptr<render_graph::BufferResource> m_uniform_buffer;
+    std::weak_ptr<render_graph::Texture> m_back_buffer;
+    std::weak_ptr<render_graph::Texture> m_depth_buffer;
+    std::weak_ptr<render_graph::Texture> m_msaa_depth;
+    std::weak_ptr<render_graph::Texture> m_msaa_color;
+    std::weak_ptr<render_graph::Buffer> m_index_buffer;
+    std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
+    std::weak_ptr<render_graph::Buffer> m_uniform_buffer;
 
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_octree_pipeline;
     std::shared_ptr<render_graph::GraphicsPass> m_octree_pass;
@@ -109,6 +108,12 @@ public:
     Application &operator=(const Application &) = delete;
     Application &operator=(Application &&) = delete;
 
+    /// @brief Call glfwSetCursorPosCallback.
+    /// @param window The window that received the event.
+    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
+    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
+    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
+
     /// @brief Call glfwSetKeyCallback.
     /// @param window The window that received the event.
     /// @param key The keyboard key that was pressed or released.
@@ -116,12 +121,6 @@ public:
     /// @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
     /// @param mods Bit field describing which modifier keys were held down.
     void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-
-    /// @brief Call glfwSetCursorPosCallback.
-    /// @param window The window that received the event.
-    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
-    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
-    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
 
     /// @brief Call glfwSetMouseButtonCallback.
     /// @param window The window that received the event.

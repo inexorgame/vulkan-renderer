@@ -8,7 +8,6 @@
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
-#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
@@ -21,191 +20,25 @@
 
 namespace inexor::vulkan_renderer {
 
-void Application::key_callback(GLFWwindow * /*window*/, int key, int, int action, int /*mods*/) {
-    if (key < 0 || key > GLFW_KEY_LAST) {
-        return;
-    }
-
-    switch (action) {
-    case GLFW_PRESS:
-        m_input_data->press_key(key);
-        break;
-    case GLFW_RELEASE:
-        m_input_data->release_key(key);
-        break;
-    default:
-        break;
-    }
-}
-
-void Application::cursor_position_callback(GLFWwindow * /*window*/, double x_pos, double y_pos) {
-    m_input_data->set_cursor_pos(x_pos, y_pos);
-}
-
-void Application::mouse_button_callback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
-    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
-        return;
-    }
-
-    switch (action) {
-    case GLFW_PRESS:
-        m_input_data->press_mouse_button(button);
-        break;
-    case GLFW_RELEASE:
-        m_input_data->release_mouse_button(button);
-        break;
-    default:
-        break;
-    }
-}
-
-void Application::mouse_scroll_callback(GLFWwindow * /*window*/, double /*x_offset*/, double y_offset) {
-    m_camera->change_zoom(static_cast<float>(y_offset));
-}
-
-void Application::load_toml_configuration_file(const std::string &file_name) {
-    spdlog::trace("Loading TOML configuration file: {}", file_name);
-
-    std::ifstream toml_file(file_name, std::ios::in);
-    if (!toml_file) {
-        // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
-        throw std::runtime_error("Could not find configuration file: " + file_name +
-                                 "! You must set the working directory properly in your IDE");
-    }
-
-    toml_file.close();
-
-    // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(file_name);
-
-    // Search for the title of the configuration file and print it to debug output.
-    const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
-    spdlog::trace("Title: {}", configuration_title);
-
-    using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
-    const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
-    if (wmodestr == "windowed") {
-        m_window_mode = WindowMode::WINDOWED;
-    } else if (wmodestr == "windowed_fullscreen") {
-        m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
-    } else if (wmodestr == "fullscreen") {
-        m_window_mode = WindowMode::FULLSCREEN;
-    } else {
-        spdlog::warn("Invalid application window mode: {}", wmodestr);
-        m_window_mode = WindowMode::WINDOWED;
-    }
-
-    m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
-    m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
-    m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
-    spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
-
-    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
-
-    spdlog::trace("glTF 2.0 models:");
-
-    for (const auto &gltf_model_file : m_gltf_model_files) {
-        spdlog::trace("   - {}", gltf_model_file);
-    }
-
-    // TODO: Load more info from TOML file.
-}
-
-void Application::load_octree_geometry(bool initialize) {
-    spdlog::trace("Creating octree geometry");
-
-    // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
-    m_worlds.clear();
-    m_worlds.push_back(
-        world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
-    m_worlds.push_back(
-        world::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
-
-    m_octree_vertices.clear();
-    for (const auto &world : m_worlds) {
-        for (const auto &polygons : world->polygons(true)) {
-            for (const auto &triangle : *polygons) {
-                for (const auto &vertex : triangle) {
-                    glm::vec3 color = {
-                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                    };
-                    m_octree_vertices.emplace_back(vertex, color);
-                }
-            }
-        }
-    }
-}
-
-void Application::setup_window_and_input_callbacks() {
-    m_window->set_user_ptr(this);
-
-    spdlog::trace("Setting up window callback:");
-
-    auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        spdlog::trace("Frame buffer resize callback called. window width: {}, height: {}", width, height);
-        app->m_window_resized = true;
-    };
-
-    m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
-
-    spdlog::trace("   - keyboard button callback");
-
-    auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->key_callback(window, key, scancode, action, mods);
-    };
-
-    m_window->set_keyboard_button_callback(lambda_key_callback);
-
-    spdlog::trace("   - cursor position callback");
-
-    auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->cursor_position_callback(window, xpos, ypos);
-    };
-
-    m_window->set_cursor_position_callback(lambda_cursor_position_callback);
-
-    spdlog::trace("   - mouse button callback");
-
-    auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->mouse_button_callback(window, button, action, mods);
-    };
-
-    m_window->set_mouse_button_callback(lambda_mouse_button_callback);
-
-    spdlog::trace("   - mouse wheel scroll callback");
-
-    auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        app->mouse_scroll_callback(window, xoffset, yoffset);
-    };
-
-    m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
-}
-
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                         VkDebugUtilsMessageTypeFlagsEXT type,
                                                         const VkDebugUtilsMessengerCallbackDataEXT *data,
                                                         void *user_data) {
+    // Validation layers have their own logger
+    std::shared_ptr<spdlog::logger> m_validation_log{spdlog::default_logger()->clone("validation-layer")};
+
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-        spdlog::trace("{}", data->pMessage);
+        m_validation_log->trace("{}", data->pMessage);
     }
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-        spdlog::info("{}", data->pMessage);
+        m_validation_log->info("{}", data->pMessage);
     }
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        spdlog::warn("{}", data->pMessage);
+        m_validation_log->warn("{}", data->pMessage);
     }
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-        spdlog::critical("{}", data->pMessage);
+        m_validation_log->critical("{}", data->pMessage);
     }
-
-    // TODO: Print data of VkDebugUtilsMessengerCallbackDataEXT
     return false;
 }
 
@@ -318,6 +151,7 @@ Application::Application(int argc, char **argv) {
         // without this physical device feature being present.
     };
 
+    // TODO: Also implement a callback for required extensions
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME, // VK_KHR_swapchain
@@ -357,6 +191,31 @@ Application::~Application() {
     spdlog::trace("Shutting down vulkan renderer");
 }
 
+void Application::check_octree_collisions() {
+    // Check for collision between camera ray and every octree
+    for (const auto &world : m_worlds) {
+        const auto collision = ray_cube_collision_check(*world, m_camera->position(), m_camera->front());
+
+        if (collision) {
+            const auto intersection = collision.value().intersection();
+            const auto face_normal = collision.value().face();
+            const auto corner = collision.value().corner();
+            const auto edge = collision.value().edge();
+
+            spdlog::trace("pos {} {} {} | face {} {} {} | corner {} {} {} | edge {} {} {}", intersection.x,
+                          intersection.y, intersection.z, face_normal.x, face_normal.y, face_normal.z, corner.x,
+                          corner.y, corner.z, edge.x, edge.y, edge.z);
+
+            // Break after one collision.
+            break;
+        }
+    }
+}
+
+void Application::cursor_position_callback(GLFWwindow * /*window*/, double x_pos, double y_pos) {
+    m_input_data->set_cursor_pos(x_pos, y_pos);
+}
+
 void Application::generate_octree_indices() {
     auto old_vertices = std::move(m_octree_vertices);
     m_octree_indices.clear();
@@ -376,6 +235,132 @@ void Application::generate_octree_indices() {
     spdlog::trace("Total indices {} ", m_octree_indices.size());
 }
 
+void Application::key_callback(GLFWwindow * /*window*/, int key, int, int action, int /*mods*/) {
+    if (key < 0 || key > GLFW_KEY_LAST) {
+        return;
+    }
+
+    switch (action) {
+    case GLFW_PRESS:
+        m_input_data->press_key(key);
+        break;
+    case GLFW_RELEASE:
+        m_input_data->release_key(key);
+        break;
+    default:
+        break;
+    }
+}
+
+void Application::load_toml_configuration_file(const std::string &file_name) {
+    spdlog::trace("Loading TOML configuration file: {}", file_name);
+
+    std::ifstream toml_file(file_name, std::ios::in);
+    if (!toml_file) {
+        // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
+        throw std::runtime_error("Could not find configuration file: " + file_name +
+                                 "! You must set the working directory properly in your IDE");
+    }
+
+    toml_file.close();
+
+    // Load the TOML file using toml11.
+    auto renderer_configuration = toml::parse(file_name);
+
+    // Search for the title of the configuration file and print it to debug output.
+    const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
+    spdlog::trace("Title: {}", configuration_title);
+
+    using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
+    const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
+    if (wmodestr == "windowed") {
+        m_window_mode = WindowMode::WINDOWED;
+    } else if (wmodestr == "windowed_fullscreen") {
+        m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
+    } else if (wmodestr == "fullscreen") {
+        m_window_mode = WindowMode::FULLSCREEN;
+    } else {
+        spdlog::warn("Invalid application window mode: {}", wmodestr);
+        m_window_mode = WindowMode::WINDOWED;
+    }
+
+    m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
+    m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
+    m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
+    spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
+
+    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
+
+    spdlog::trace("glTF 2.0 models:");
+
+    for (const auto &gltf_model_file : m_gltf_model_files) {
+        spdlog::trace("   - {}", gltf_model_file);
+    }
+}
+
+void Application::load_octree_geometry(bool initialize) {
+    spdlog::trace("Creating octree geometry");
+
+    // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
+    m_worlds.clear();
+    m_worlds.push_back(
+        world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
+    m_worlds.push_back(
+        world::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
+
+    m_octree_vertices.clear();
+    for (const auto &world : m_worlds) {
+        for (const auto &polygons : world->polygons(true)) {
+            for (const auto &triangle : *polygons) {
+                for (const auto &vertex : triangle) {
+                    glm::vec3 color = {
+                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                        static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                    };
+                    m_octree_vertices.emplace_back(vertex, color);
+                }
+            }
+        }
+    }
+}
+
+void Application::mouse_button_callback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
+    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
+        return;
+    }
+
+    switch (action) {
+    case GLFW_PRESS:
+        m_input_data->press_mouse_button(button);
+        break;
+    case GLFW_RELEASE:
+        m_input_data->release_mouse_button(button);
+        break;
+    default:
+        break;
+    }
+}
+
+void Application::mouse_scroll_callback(GLFWwindow * /*window*/, double /*x_offset*/, double y_offset) {
+    m_camera->change_zoom(static_cast<float>(y_offset));
+}
+
+void Application::process_keyboard_input() {}
+
+void Application::process_mouse_input() {
+    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
+
+    if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+        m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
+    }
+
+    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
+    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
+    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
+    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
+}
+
 void Application::recreate_swapchain() {
     m_window->wait_for_focus();
     m_device->wait_idle();
@@ -387,21 +372,19 @@ void Application::recreate_swapchain() {
     int window_height = 0;
     glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
 
-    // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
-    m_render_graph.reset();
-    // Recreate the swapchain
     m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
-    m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device);
+
+    m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
+    // TODO: Do we really have to recreate the camera every time we recreate swapchain?
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_render_graph.get(), m_back_buffer, m_msaa_color,
+    m_imgui_overlay = std::make_unique<ImGuiOverlay>(*m_device, *m_render_graph.get(), m_back_buffer, m_msaa_color,
                                                      [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
@@ -414,9 +397,7 @@ void Application::render_frame() {
         return;
     }
 
-    // TODO: m_render_graph->render();
-    m_render_graph->render(m_swapchain->acquire_next_image_index(), m_swapchain->image_available_semaphore());
-    m_swapchain->present();
+    m_render_graph->render();
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
@@ -424,58 +405,74 @@ void Application::render_frame() {
     }
 }
 
+void Application::run() {
+    spdlog::trace("Running Application");
+
+    while (!m_window->should_close()) {
+        m_window->poll();
+        process_keyboard_input();
+        process_mouse_input();
+        m_camera->update(m_time_passed);
+        m_time_passed = m_stopwatch.time_step();
+        check_octree_collisions();
+        render_frame();
+    }
+}
+
 void Application::setup_render_graph() {
-    // TODO: Give swapchain handle to rendergraph
-    // TODO: add_back_buffer, add_depth_buffer
     using render_graph::TextureUsage;
 
-    m_back_buffer = m_render_graph->add_texture("Color", TextureUsage::BACK_BUFFER, m_swapchain->image_format());
+    m_back_buffer = m_render_graph->add_texture("Color",                   //
+                                                TextureUsage::BACK_BUFFER, //
+                                                m_swapchain->image_format());
 
-    m_msaa_color =
-        m_render_graph->add_texture("MSAA color", TextureUsage::MSAA_BACK_BUFFER, m_swapchain->image_format());
+    m_msaa_color = m_render_graph->add_texture("MSAA color",                   //
+                                               TextureUsage::MSAA_BACK_BUFFER, //
+                                               m_swapchain->image_format());
 
-    m_depth_buffer =
-        m_render_graph->add_texture("Depth", TextureUsage::DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    m_depth_buffer = m_render_graph->add_texture("Depth",                            //
+                                                 TextureUsage::DEPTH_STENCIL_BUFFER, //
+                                                 VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_msaa_depth = m_render_graph->add_texture("MSAA depth", TextureUsage::MSAA_DEPTH_STENCIL_BUFFER,
+    m_msaa_depth = m_render_graph->add_texture("MSAA depth",                            //
+                                               TextureUsage::MSAA_DEPTH_STENCIL_BUFFER, //
                                                VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     using render_graph::BufferType;
     using wrapper::descriptors::DescriptorSetUpdateFrequency;
 
-    m_vertex_buffer =
-        m_render_graph->add_buffer("Octree", BufferType::VERTEX_BUFFER, DescriptorSetUpdateFrequency::PER_FRAME, [&]() {
-            // If the key N was pressed once, we generate a new octree
-            if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
-                load_octree_geometry(false);
-                generate_octree_indices();
-                // We update the vertex buffer together with the index buffer
-                // to keep data consistent across frames
-                m_vertex_buffer.lock()->enqueue_update(m_octree_vertices);
-                m_index_buffer.lock()->enqueue_update(m_octree_indices);
-            }
-        });
+    m_vertex_buffer = m_render_graph->add_buffer("Octree", BufferType::VERTEX_BUFFER, [&]() {
+        // If the key N was pressed once, we generate a new octree
+        if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+            load_octree_geometry(false);
+            generate_octree_indices();
+            // We update the vertex buffer together with the index buffer
+            // to keep data consistent across frames
+            m_vertex_buffer.lock()->request_update(m_octree_vertices);
+            m_index_buffer.lock()->request_update(m_octree_indices);
+        }
+    });
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
-    m_index_buffer =
-        m_render_graph->add_buffer("Octree", BufferType::INDEX_BUFFER, DescriptorSetUpdateFrequency::PER_FRAME);
+    // TODO: FIX ME!
+    m_index_buffer = m_render_graph->add_buffer("Octree", BufferType::INDEX_BUFFER, [] {});
 
     // Update the vertex buffer and index buffer at initialization
     // Note that we update the vertex buffer together with the index buffer to keep data consistent
-    m_vertex_buffer.lock()->enqueue_update(m_octree_vertices);
-    m_index_buffer.lock()->enqueue_update(m_octree_indices);
+    m_vertex_buffer.lock()->request_update(m_octree_vertices);
+    m_index_buffer.lock()->request_update(m_octree_indices);
 
-    m_uniform_buffer = m_render_graph->add_buffer("Matrices", BufferType::UNIFORM_BUFFER,
-                                                  DescriptorSetUpdateFrequency::PER_FRAME, [&]() {
-                                                      m_mvp_matrices.view = m_camera->view_matrix();
-                                                      m_mvp_matrices.proj = m_camera->perspective_matrix();
-                                                      m_mvp_matrices.proj[1][1] *= -1;
-                                                      m_uniform_buffer.lock()->enqueue_update(m_mvp_matrices);
-                                                  });
+    m_uniform_buffer = m_render_graph->add_buffer("Matrices", BufferType::UNIFORM_BUFFER, [&]() {
+        // The m_mvp_matrices.model matrix doesn't need to be updated
+        m_mvp_matrices.view = m_camera->view_matrix();
+        m_mvp_matrices.proj = m_camera->perspective_matrix();
+        m_mvp_matrices.proj[1][1] *= -1;
+        m_uniform_buffer.lock()->request_update(m_mvp_matrices);
+    });
 
+    // TODO: How to associate pipeline layouts with pipelines?
     m_render_graph->add_graphics_pipeline(
-        "Octree", [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
-            // TODO: Calling the lambda twice leads to memory leak!
+        [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
                                     .add_color_blend_attachment({
                                         .blendEnable = VK_FALSE,
@@ -509,17 +506,17 @@ void Application::setup_render_graph() {
                                     .add_shader(*m_vertex_shader)
                                     .add_shader(*m_fragment_shader)
                                     .build("Octree");
+            return m_octree_pipeline;
         });
 
-    m_render_graph->add_graphics_pass("Octree", [&](render_graph::GraphicsPassBuilder &builder) {
-        // TODO: Calling the lambda twice leads to memory leak!
+    m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         m_octree_pass = builder
                             .set_clear_value({
                                 .color = {1.0f, 0.0f, 0.0f},
                             })
                             .set_depth_test(true)
                             .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
-                                // Render the octree
+                                // Render octree
                                 cmd_buf.bind_pipeline(*m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)
@@ -531,7 +528,58 @@ void Application::setup_render_graph() {
                             .writes_to_texture(m_back_buffer)
                             .writes_to_texture(m_depth_buffer)
                             .build("Octree");
+        return m_octree_pass;
     });
+}
+
+void Application::setup_window_and_input_callbacks() {
+    m_window->set_user_ptr(this);
+
+    spdlog::trace("Setting up window callback:");
+
+    auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        spdlog::trace("Frame buffer resize callback called. window width: {}, height: {}", width, height);
+        app->m_window_resized = true;
+    };
+
+    m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
+
+    spdlog::trace("   - keyboard button callback");
+
+    auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->key_callback(window, key, scancode, action, mods);
+    };
+
+    m_window->set_keyboard_button_callback(lambda_key_callback);
+
+    spdlog::trace("   - cursor position callback");
+
+    auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->cursor_position_callback(window, xpos, ypos);
+    };
+
+    m_window->set_cursor_position_callback(lambda_cursor_position_callback);
+
+    spdlog::trace("   - mouse button callback");
+
+    auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->mouse_button_callback(window, button, action, mods);
+    };
+
+    m_window->set_mouse_button_callback(lambda_mouse_button_callback);
+
+    spdlog::trace("   - mouse wheel scroll callback");
+
+    auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
+        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        app->mouse_scroll_callback(window, xoffset, yoffset);
+    };
+
+    m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
 void Application::update_imgui_overlay() {
@@ -574,56 +622,6 @@ void Application::update_imgui_overlay() {
     ImGui::End();
     ImGui::PopStyleVar();
     ImGui::Render();
-}
-
-void Application::process_keyboard_input() {}
-
-void Application::process_mouse_input() {
-    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
-
-    if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
-        m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
-    }
-
-    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
-    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
-    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
-    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
-}
-
-void Application::check_octree_collisions() {
-    // Check for collision between camera ray and every octree
-    for (const auto &world : m_worlds) {
-        const auto collision = ray_cube_collision_check(*world, m_camera->position(), m_camera->front());
-
-        if (collision) {
-            const auto intersection = collision.value().intersection();
-            const auto face_normal = collision.value().face();
-            const auto corner = collision.value().corner();
-            const auto edge = collision.value().edge();
-
-            spdlog::trace("pos {} {} {} | face {} {} {} | corner {} {} {} | edge {} {} {}", intersection.x,
-                          intersection.y, intersection.z, face_normal.x, face_normal.y, face_normal.z, corner.x,
-                          corner.y, corner.z, edge.x, edge.y, edge.z);
-
-            // Break after one collision.
-            break;
-        }
-    }
-}
-
-void Application::run() {
-    spdlog::trace("Running Application");
-
-    while (!m_window->should_close()) {
-        m_window->poll();
-        render_frame();
-        process_keyboard_input();
-        process_mouse_input();
-        m_camera->update(m_time_passed);
-        m_time_passed = m_stopwatch.time_step();
-        check_octree_collisions();
-    }
 }
 
 } // namespace inexor::vulkan_renderer

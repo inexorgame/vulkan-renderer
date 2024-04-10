@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
@@ -52,16 +52,11 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, float color[4]) const {
+const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, std::array<float, 4> color) const {
     auto label = make_info<VkDebugUtilsLabelEXT>({
         .pLabelName = name.c_str(),
+        .color = {color[0], color[1], color[2], color[3]},
     });
-    // TODO: Fix me :(
-    label.color[0] = color[0];
-    label.color[1] = color[1];
-    label.color[2] = color[2];
-    label.color[3] = color[3];
-
     vkCmdBeginDebugUtilsLabelEXT(m_cmd_buf, &label);
     return *this;
 }
@@ -92,14 +87,14 @@ const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet de
     return bind_descriptor_sets({&descriptor_set, 1}, layout, bind_point, first_set, dyn_offsets);
 }
 
-const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::BufferResource> buf,
+const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::Buffer> buffer,
                                                       const VkIndexType index_type, const VkDeviceSize offset) const {
-    if (buf.lock()->type() != render_graph::BufferType::INDEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buf.lock()->name() +
+    if (buffer.lock()->m_type != render_graph::BufferType::INDEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
                                     " is not an index buffer!");
     }
     // CommandBuffer is a friend class of BufferResource and is thus allowed to access m_buffer
-    vkCmdBindIndexBuffer(m_cmd_buf, buf.lock()->m_buffer->buffer(), offset, index_type);
+    vkCmdBindIndexBuffer(m_cmd_buf, buffer.lock()->m_buffer, offset, index_type);
     return *this;
 }
 
@@ -110,13 +105,13 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const pipelines::GraphicsPipel
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<render_graph::BufferResource> buffer) const {
-    if (buffer.lock()->type() != render_graph::BufferType::VERTEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->name() +
+const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<render_graph::Buffer> buffer) const {
+    if (buffer.lock()->m_type != render_graph::BufferType::VERTEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
                                     " is not a vertex buffer!");
     }
     // CommandBuffer is a friend class of BufferResource and wrapper::Buffer and is thus allowed to access m_buffer
-    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->m_buffer->m_buffer, 0);
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->m_buffer, 0);
     return *this;
 }
 
