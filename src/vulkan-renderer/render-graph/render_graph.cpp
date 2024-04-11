@@ -263,7 +263,7 @@ void RenderGraph::record_command_buffer_for_pass(const wrapper::CommandBuffer &c
     }
 #endif
 
-    // Call the user defined on_record lambda of the graphics pass
+    // Call the user-defined on_record lambda of the graphics pass
     // This is where the real rendering of the pass is happening
     // Note that it is the responsibility of the programmer to bind the pipeline in the on_record lambda!
     std::invoke(pass.m_on_record, cmd_buf);
@@ -284,16 +284,15 @@ void RenderGraph::record_command_buffer_for_pass(const wrapper::CommandBuffer &c
 }
 
 void RenderGraph::record_command_buffers(const wrapper::CommandBuffer &cmd_buf, const std::uint32_t img_index) {
-    m_log->trace("Recording one command buffer for {} passes", m_graphics_passes.size());
+    // TODO: Support multiple passes per command buffer, not just recording everything into one command buffer
+    // TODO: Record command buffers in parallel
 
     // Loop through all passes and record the command buffer for that pass
-    // TODO: Support multiple passes per command buffer, not just recording everything into one command buffer
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
         // It's important to know if it's the first or last pass because of image layout transition for back buffer
-        record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index],
-                                       (pass_index == 0),                        // Is this the first pass?
-                                       (pass_index == m_graphics_passes.size()), // Is this the last pass?
-                                       img_index);
+        const bool is_first_pass = (pass_index == 0);
+        const bool is_last_pass = (pass_index == m_graphics_passes.size());
+        record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index], is_first_pass, is_last_pass, img_index);
     }
 }
 
