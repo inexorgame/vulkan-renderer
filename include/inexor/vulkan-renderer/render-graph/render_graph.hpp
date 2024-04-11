@@ -31,6 +31,9 @@ namespace inexor::vulkan_renderer::render_graph {
 enum class BufferType;
 class PushConstantRangeResource;
 
+// Namespaces
+using namespace wrapper::pipelines;
+
 /// A rendergraph is a generic solution for rendering architecture
 /// This is based on Yuriy O'Donnell's talk "FrameGraph: Extensible Rendering Architecture in Frostbite" from GDC 2017
 /// Also check out Hans-Kristian Arntzen's blog post "Render graphs and Vulkan - a deep dive" (2017) and
@@ -69,17 +72,17 @@ private:
     wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
 
     /// The callables which create the graphics pipelines used in the rendergraph
-    using GraphicsPipelineCreateCallable = std::function<std::shared_ptr<wrapper::pipelines::GraphicsPipeline>(
+    using GraphicsPipelineCreateCallable = std::function<std::shared_ptr<GraphicsPipeline>(
         wrapper::pipelines::GraphicsPipelineBuilder &, const VkPipelineLayout)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<GraphicsPipelineCreateCallable> m_on_graphics_pipeline_create_callables;
 
-    std::vector<std::unique_ptr<wrapper::pipelines::PipelineLayout>> m_graphics_pipeline_layouts;
+    std::vector<std::unique_ptr<PipelineLayout>> m_graphics_pipeline_layouts;
 
     /// The graphics pipelines used in the rendergraph
     /// This will be populated using m_on_graphics_pipeline_create_callables
-    std::vector<std::shared_ptr<wrapper::pipelines::GraphicsPipeline>> m_graphics_pipelines;
+    std::vector<std::shared_ptr<GraphicsPipeline>> m_graphics_pipelines;
 
     // TODO: Support compute pipelines and compute passes
 
@@ -145,6 +148,9 @@ private:
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
     void update_buffers();
 
+    /// Update dynamic textures
+    void update_textures();
+
     /// Update the descriptor sets
     void update_descriptor_sets();
 
@@ -171,18 +177,17 @@ public:
     /// Add a buffer (vertex, index, or uniform buffer) resource to the rendergraph
     /// @param name The internal name of the buffer resource (must not be empty)
     /// @param type The internal buffer usage of the buffer
-    /// @param category The estimated descriptor set category depending on the update frequency of the buffer
-    /// @note The update frequency of a buffer will be respected when grouping uniform buffers into descriptor sets
-    /// @param on_update A buffer resource update function
+    /// @param on_update An optional buffer resource update function (``std::nullopt`` by default)
+    /// @note Not every buffer must have an update function because index buffers should be updated with vertex buffers
     /// @exception std::runtime_error Internal debug name is empty
     /// @return A weak pointer to the buffer resource that was just created
-    [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type, std::function<void()> on_update);
+    [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type,
+                                                   std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a new graphics pass to the rendergraph
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     void add_graphics_pass(GraphicsPassCreateCallable on_pass_create) {
-        // TODO: Can this be emplace_back?
-        m_on_graphics_pass_create_callables.push_back(std::move(on_pass_create));
+        m_on_graphics_pass_create_callables.emplace_back(std::move(on_pass_create));
     }
 
     /// Add a new graphics pipeline to the rendergraph

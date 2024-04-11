@@ -454,8 +454,7 @@ void Application::setup_render_graph() {
     });
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
-    // TODO: FIX ME!
-    m_index_buffer = m_render_graph->add_buffer("Octree", BufferType::INDEX_BUFFER, [] {});
+    m_index_buffer = m_render_graph->add_buffer("Octree", BufferType::INDEX_BUFFER);
 
     // Update the vertex buffer and index buffer at initialization
     // Note that we update the vertex buffer together with the index buffer to keep data consistent
@@ -463,7 +462,7 @@ void Application::setup_render_graph() {
     m_index_buffer.lock()->request_update(m_octree_indices);
 
     m_uniform_buffer = m_render_graph->add_buffer("Matrices", BufferType::UNIFORM_BUFFER, [&]() {
-        // The m_mvp_matrices.model matrix doesn't need to be updated
+        // The model matrix is constant and doesn't need to be updated
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
@@ -516,7 +515,6 @@ void Application::setup_render_graph() {
                             })
                             .set_depth_test(true)
                             .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
-                                // Render octree
                                 cmd_buf.bind_pipeline(*m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)
@@ -533,6 +531,18 @@ void Application::setup_render_graph() {
 }
 
 void Application::setup_window_and_input_callbacks() {
+    // The following code requires some explanation
+    // Because glfw is a C-style API, we can't use a pointer to non-static class methods as window or input callbacks.
+    // For example, we can't use Application::key_callback in glfwSetKeyCallback as key callback directly.
+    // A good explanation can be found on Stack Overflow:
+    // https://stackoverflow.com/questions/7676971/pointing-to-a-function-that-is-a-class-member-glfw-setkeycallback
+    // In order to fix this, we can pass a lambda to glfwSetKeyCallback, which calls Application::key_callback
+    // internally. But there is another problem: Inside of the template, we need to call Application::Key_callback. In
+    // order to do so, we need to have access to the this-pointer. Unfortunately, the this-pointer can't be captured
+    // in the lambda capture like [this](){}, because the glfw would not accept the lambda then. To work around this
+    // problem, we store the this pointer using glfwSetWindowUserPointer. Inside of these lambdas, we then cast the
+    // pointer to Application* again, allowing us to finally use the callbacks.
+
     m_window->set_user_ptr(this);
 
     spdlog::trace("Setting up window callback:");

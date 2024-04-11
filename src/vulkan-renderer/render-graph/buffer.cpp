@@ -8,7 +8,8 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Buffer::Buffer(const wrapper::Device &device, std::string name, const BufferType type, std::function<void()> on_update)
+Buffer::Buffer(const wrapper::Device &device, std::string name, const BufferType type,
+               std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_type(type), m_on_update(std::move(on_update)) {
     // Uniform buffer can be updated by std::memcpy, other types of memory require staging buffer updates
     m_requires_staging_buffer_update = (type != BufferType::UNIFORM_BUFFER);
@@ -47,13 +48,14 @@ void Buffer::create_buffer(const VkDeviceSize buffer_size, const VkBufferUsageFl
         throw VulkanException("Error: vmaCreateBuffer failed for buffer " + m_name + " !", result);
     }
 
+    // We are basically storing things duplicately here, but whatever
     m_buf_usage = buffer_usage;
     m_mem_usage = memory_usage;
 
     // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
 
-    // Set the buffer's internal denug name through Vulkan debug utils
+    // Set the buffer's internal debug name through Vulkan debug utils
     m_device.set_debug_name(m_buffer, m_name);
 }
 
@@ -66,6 +68,7 @@ void Buffer::destroy_buffer() {
 
 void Buffer::recreate_buffer(const VkDeviceSize new_buffer_size) {
     destroy_buffer();
+    // We are basically storing things duplicately here, but whatever
     create_buffer(new_buffer_size, m_buf_usage, m_mem_usage);
 }
 

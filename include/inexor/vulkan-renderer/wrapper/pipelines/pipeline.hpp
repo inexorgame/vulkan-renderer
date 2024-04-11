@@ -11,6 +11,11 @@ class CommandBuffer;
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class RenderGraph;
+} // namespace inexor::vulkan_renderer::render_graph
+
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 /// RAII wrapper for VkPipeline
@@ -18,6 +23,7 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 class GraphicsPipeline {
     // The CommandBuffer wrapper needs to access m_pipeline
     friend CommandBuffer;
+    friend render_graph::RenderGraph;
 
 private:
     const Device &m_device;

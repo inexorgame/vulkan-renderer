@@ -12,12 +12,6 @@ std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name) {
                                           std::move(m_clear_value));
 }
 
-/*
-    GraphicsPass(std::string name, BufferReads buffer_reads, TextureReads texture_reads, TextureWrites texture_writes,
-                 std::function<void(const wrapper::CommandBuffer &)> on_record,
-                 std::optional<VkClearValue> clear_values);
-*/
-
 void GraphicsPassBuilder::reset() {
     m_clear_value = std::nullopt;
     m_on_record = [](auto &) {};

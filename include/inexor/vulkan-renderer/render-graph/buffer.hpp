@@ -30,8 +30,6 @@ enum class BufferType {
 class Buffer {
 private:
     friend class RenderGraph;
-    friend class GraphicsPass;
-    friend class wrapper::CommandBuffer;
 
     /// The device wrapper
     const wrapper::Device &m_device;
@@ -40,7 +38,7 @@ private:
     /// The buffer type
     BufferType m_type;
     /// An optional update function to update the data of the buffer resource
-    std::function<void()> m_on_update{[]() {}};
+    std::optional<std::function<void()>> m_on_update{std::nullopt};
     /// If this is true, an update can only be carried out with the use of staging buffers
     bool m_requires_staging_buffer_update{false};
 
@@ -63,15 +61,15 @@ private:
     /// @param new_buffer_size The new size of the buffer
     void recreate_buffer(VkDeviceSize new_buffer_size);
 
+public:
     /// Default constructor
     /// @param device The device wrapper
     /// @param name The internal debug name of the buffer (must not be empty)
     /// @param usage The internal usage of the buffer in the rendergraph
     /// @note The update frequency of a buffer will only be respected when grouping uniform buffers into descriptor sets
     /// @param on_update An optional update function (``std::nullopt`` by default, meaning no updates to this buffer)
-    Buffer(const wrapper::Device &device, std::string name, BufferType type, std::function<void()> on_update);
-
-public:
+    Buffer(const wrapper::Device &device, std::string name, BufferType type,
+           std::optional<std::function<void()>> on_update);
     Buffer(const Buffer &) = delete;
     Buffer(Buffer &&other) noexcept;
     ~Buffer();
@@ -116,6 +114,18 @@ public:
     template <typename BufferDataType>
     void request_update(std::vector<BufferDataType> &data) {
         return request_update(data.data(), sizeof(data) * data.size());
+    }
+
+    [[nodiscard]] auto &buffer() const {
+        return m_buffer;
+    }
+
+    [[nodiscard]] auto &name() const {
+        return m_name;
+    }
+
+    [[nodiscard]] auto type() const {
+        return m_type;
     }
 };
 

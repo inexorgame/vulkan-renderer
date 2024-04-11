@@ -341,7 +341,7 @@ public:
     /// Call vkCmdInsertDebugUtilsLabelEXT
     /// @param name The name of the debug label to insert
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &insert_debug_label(std::string name, float color[4]) const;
+    const CommandBuffer &insert_debug_label(std::string name, std::array<float, 4> color) const;
 
     /// Call vkCmdPushConstants
     /// @param layout The pipeline layout

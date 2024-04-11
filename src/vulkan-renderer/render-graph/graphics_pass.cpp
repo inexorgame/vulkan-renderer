@@ -15,7 +15,7 @@ GraphicsPass::GraphicsPass(std::string name, BufferReads buffer_reads, TextureRe
     bool index_buffer_present = false;
     for (const auto buffer : m_buffer_reads) {
         // Is this buffer resource an index buffer?
-        if (buffer.first.lock()->m_type == BufferType::INDEX_BUFFER) {
+        if (buffer.first.lock()->type() == BufferType::INDEX_BUFFER) {
             // Is an index buffer already specified?
             if (index_buffer_present) {
                 throw std::runtime_error("Error: More than one index buffer in graphics pass " + m_name + "!");

@@ -16,13 +16,14 @@ RenderGraph::RenderGraph(wrapper::Device &device, wrapper::Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device) {}
 
 std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type,
-                                              std::function<void()> on_update) {
+                                              std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
         throw std::invalid_argument("Error: Buffer name must not be empty!");
     }
-    // Add the buffer resource to the rendergraph
-    // m_buffers.emplace_back(std::make_unique<Buffer>(m_device, std::move(name), type, std::move(on_update)));
-    // Return a weak pointer to the buffer resource that was just created
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device,        //
+                                                    std::move(name), //
+                                                    type,            //
+                                                    std::move(on_update)));
     return m_buffers.back();
 }
 
@@ -32,14 +33,16 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureU
     if (name.empty()) {
         throw std::invalid_argument("Error: Texture name must not be empty!");
     }
-    // Add the texture resource to the rendergraph
-    m_textures.emplace_back(std::make_shared<Texture>(std::move(name), usage, format, std::move(on_update)));
-    // Return a weak pointer to the texture resource that was just created
+    m_textures.emplace_back(std::make_shared<Texture>(std::move(name),    //
+                                                      usage,              //
+                                                      format,             //
+                                                      std::move(on_init), //
+                                                      std::move(on_update)));
     return m_textures.back();
 }
 
 void RenderGraph::check_for_cycles() {
-    abort();
+    m_log->warn("Implement RenderGraph::check_for_cycles()!");
 }
 
 void RenderGraph::compile() {
@@ -56,14 +59,17 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_buffers() {
-    for (const auto &pass : m_graphics_passes) {
+    // Do not call the buffers via passes, but through rendergraph directly?
+
+    for (const auto &graphics_pass : m_graphics_passes) {
         // Create the vertex buffers of the pass
         // Note that each pass must have at least one vertex buffer
-        for (auto &vertex_buffer : pass->m_vertex_buffers) {
+        for (const auto &vertex_buffer : graphics_pass->m_vertex_buffers) {
             //
         }
 
-        // TODO: Create index buffer if required
+        // TODO: Create index buffers
+        // TOOD: Create uniform buffers
     }
 
 #if 0
@@ -106,7 +112,6 @@ void RenderGraph::create_buffers() {
 
 void RenderGraph::create_descriptor_sets() {
     m_log->trace("Creating descriptor sets");
-    spdlog::warn("And to this day, Hanni was too lazy too implement create_descriptor_sets()");
 }
 
 void RenderGraph::create_graphics_passes() {
@@ -135,12 +140,13 @@ void RenderGraph::create_graphics_pipeline_layouts() {
     m_graphics_pipeline_layouts.reserve(m_graphics_pipelines.size());
 
     for (const auto &pipeline : m_graphics_pipelines) {
-        // TODO: How to associate pipelines with passes?
-        /* m_graphics_pipeline_layouts.emplace_back(m_device,                           //
-                                                 pipeline->descriptor_set_layouts(), //
-                                                 pipeline->push_constant_ranges(),   //
-                                                 pipeline->name());
-        */
+// TODO: How to associate pipelines with passes?
+#if 0
+        m_graphics_pipeline_layouts.emplace_back(std::make_unique<PipelineLayout>(m_device,                           //
+                                                                                  pipeline->descriptor_set_layouts(), //
+                                                                                  pipeline->push_constant_ranges(),   //
+                                                                                  pipeline->name()));
+#endif
     }
 }
 
@@ -164,10 +170,10 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    spdlog::warn("And to this day, Hanni was too lazy too implement create_textures()");
-    // Loop through all texture resources and create them
-    for (auto &texture : m_textures) {
-        // TODO: Update texture here?
+    m_log->trace("Creating {} textures", m_textures.size());
+    for (const auto &texture : m_textures) {
+        // Call the optional init lambda of the texture
+        std::invoke(texture->m_on_init.value());
     }
 }
 
@@ -179,8 +185,8 @@ void RenderGraph::record_command_buffer_for_pass(const wrapper::CommandBuffer &c
                                                  const bool is_first_pass, const bool is_last_pass,
                                                  const std::uint32_t img_index) {
     // Start a new debug label for this graphics pass
-    // This is for debugging in RenderDoc only
-    // TODO: make constexpr std::array<> for color codes!
+    // These debug labels are visible in RenderDoc
+    // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
 
     // If this is the first graphics pass, we need to transform the swapchain image, which comes back in undefined
@@ -265,14 +271,15 @@ void RenderGraph::record_command_buffer_for_pass(const wrapper::CommandBuffer &c
     // End dynamic rendering
     cmd_buf.end_rendering();
 
-    // If this is the last pass, transform the back buffer for presenting
+    // If this is the last pass, transition the image layout the back buffer for presenting
     if (is_last_pass) {
-        // cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        //                              VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        cmd_buf.change_image_layout(m_swapchain.image(img_index),             //
+                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, //
+                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
-    // End the debug label for the graphics pass
-    // This is for debugging in RenderDoc only
+    // End the debug label for this graphics pass
+    // These debug labels are visible in RenderDoc
     cmd_buf.end_debug_label_region();
 }
 
@@ -307,8 +314,20 @@ void RenderGraph::render() {
 
 void RenderGraph::update_buffers() {
     for (const auto &buffer : m_buffers) {
-        // Call the update lambda of the buffer
-        std::invoke(buffer->m_on_update);
+        // Call the update lambda of the buffer, if specified
+        if (buffer->m_on_update) {
+            std::invoke(buffer->m_on_update.value());
+        }
+    }
+    // TODO: Batch barriers for updates which require staging buffer
+}
+
+void RenderGraph::update_textures() {
+    for (const auto &texture : m_textures) {
+        if (texture->m_on_update) {
+            // Call the update lambda of the texture
+            std::invoke(texture->m_on_update.value());
+        }
     }
     // TODO: Batch barriers for updates which require staging buffer
 }
@@ -324,7 +343,7 @@ void RenderGraph::update_descriptor_sets() {
 void RenderGraph::update_push_constant_ranges() {
     for (const auto &push_constant : m_push_constant_ranges) {
         // Call the update lambda of the push constant range
-        push_constant->m_on_update();
+        std::invoke(push_constant->m_on_update);
     }
 }
 

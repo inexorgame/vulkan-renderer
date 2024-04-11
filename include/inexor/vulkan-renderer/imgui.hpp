@@ -9,11 +9,16 @@
 #include <memory>
 #include <vector>
 
-// Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declarations
 class Device;
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class RenderGraph;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer {
 
