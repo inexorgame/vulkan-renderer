@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -20,7 +19,7 @@ namespace inexor::vulkan_renderer::wrapper {
 Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
-    m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
+    m_img_available = std::make_unique<synchronization::Semaphore>(m_device, "Swapchain image available");
     setup_swapchain(width, height, vsync_enabled);
 }
 

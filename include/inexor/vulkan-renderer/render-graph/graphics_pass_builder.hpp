@@ -9,10 +9,10 @@
 #include <memory>
 #include <utility>
 
+namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
-namespace inexor::vulkan_renderer::wrapper {
 class CommandBuffer;
-}
+} // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -23,7 +23,7 @@ private:
     /// Indicates if the screen is cleared at the beginning of this stage
     std::optional<VkClearValue> m_clear_value;
     /// Add members which describe data related to graphics stages here
-    std::function<void(const wrapper::CommandBuffer &)> m_on_record;
+    std::function<void(const wrapper::commands::CommandBuffer &)> m_on_record;
     /// Depth testing
     bool m_depth_test;
 
@@ -126,7 +126,7 @@ public:
     /// Set the function which will be called when the stage's command buffer is being recorded
     /// @param on_record The function which will be called when the stage's command buffer is being recorded
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &set_on_record(std::function<void(const wrapper::CommandBuffer &)> on_record) {
+    [[nodiscard]] auto &set_on_record(std::function<void(const wrapper::commands::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
         return *this;
     }

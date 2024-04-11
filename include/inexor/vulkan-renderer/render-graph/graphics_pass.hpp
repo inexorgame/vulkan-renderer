@@ -12,7 +12,7 @@
 #include <string>
 
 // Forward declaration
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 }
 
@@ -38,7 +38,7 @@ private:
     /// An optional clear value
     std::optional<VkClearValue> m_clear_values{std::nullopt};
     /// Add members which describe data related to graphics passes here
-    std::function<void(const wrapper::CommandBuffer &)> m_on_record{[](auto &) {}};
+    std::function<void(const wrapper::commands::CommandBuffer &)> m_on_record{[](auto &) {}};
 
     /// The buffers the graphics passes reads from
     /// If the buffer's ``BufferType`` is ``UNIFORM_BUFFER``, a value for the shader stage flag must be specified,
@@ -76,7 +76,7 @@ public:
     /// which case ``VK_ATTACHMENT_LOAD_OP_LOAD`` is used)
     /// @exception std::runtime_error More than one index buffer is specified
     GraphicsPass(std::string name, BufferReads buffer_reads, TextureReads texture_reads, TextureWrites texture_writes,
-                 std::function<void(const wrapper::CommandBuffer &)> on_record,
+                 std::function<void(const wrapper::commands::CommandBuffer &)> on_record,
                  std::optional<VkClearValue> clear_values);
 
     GraphicsPass(const GraphicsPass &) = delete;

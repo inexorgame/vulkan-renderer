@@ -7,9 +7,13 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declarations
-class CommandBuffer;
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declarations
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
@@ -22,7 +26,7 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 // TODO: Compute pipelines
 class GraphicsPipeline {
     // The CommandBuffer wrapper needs to access m_pipeline
-    friend CommandBuffer;
+    friend commands::CommandBuffer;
     friend render_graph::RenderGraph;
 
 private:

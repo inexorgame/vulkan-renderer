@@ -139,7 +139,7 @@ ImGuiOverlay::ImGuiOverlay(const wrapper::Device &device, render_graph::RenderGr
                                                         m_push_const_block.scale =
                                                             glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
                                                     })
-                           .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
+                           .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                                cmd_buf.bind_pipeline(*m_imgui_pipeline);
                                ImDrawData *draw_data = ImGui::GetDrawData();
                                if (draw_data == nullptr) {

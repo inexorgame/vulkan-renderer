@@ -181,9 +181,9 @@ void RenderGraph::determine_pass_order() {
     // TODO: Implement dfs
 }
 
-void RenderGraph::record_command_buffer_for_pass(const wrapper::CommandBuffer &cmd_buf, const GraphicsPass &pass,
-                                                 const bool is_first_pass, const bool is_last_pass,
-                                                 const std::uint32_t img_index) {
+void RenderGraph::record_command_buffer_for_pass(const wrapper::commands::CommandBuffer &cmd_buf,
+                                                 const GraphicsPass &pass, const bool is_first_pass,
+                                                 const bool is_last_pass, const std::uint32_t img_index) {
     // Start a new debug label for this graphics pass
     // These debug labels are visible in RenderDoc
     // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
@@ -283,7 +283,8 @@ void RenderGraph::record_command_buffer_for_pass(const wrapper::CommandBuffer &c
     cmd_buf.end_debug_label_region();
 }
 
-void RenderGraph::record_command_buffers(const wrapper::CommandBuffer &cmd_buf, const std::uint32_t img_index) {
+void RenderGraph::record_command_buffers(const wrapper::commands::CommandBuffer &cmd_buf,
+                                         const std::uint32_t img_index) {
     // TODO: Support multiple passes per command buffer, not just recording everything into one command buffer
     // TODO: Record command buffers in parallel
 

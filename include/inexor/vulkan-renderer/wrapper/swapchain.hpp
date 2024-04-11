@@ -8,11 +8,15 @@
 #include <optional>
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper::synchronization {
+// Forward declaration
+class Semaphore;
+} // namespace inexor::vulkan_renderer::wrapper::synchronization
+
 namespace inexor::vulkan_renderer::wrapper {
 
-// Forward declarations
+// Forward declaration
 class Device;
-class Semaphore;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
@@ -24,7 +28,7 @@ private:
     std::vector<VkImage> m_imgs;
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_extent{};
-    std::unique_ptr<Semaphore> m_img_available;
+    std::unique_ptr<synchronization::Semaphore> m_img_available;
     bool m_vsync_enabled{false};
     std::uint32_t m_img_index;
 

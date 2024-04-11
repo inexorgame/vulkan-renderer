@@ -10,9 +10,9 @@
 #include <memory>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::commands {
 
-CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, std::string name)
+CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool cmd_pool, std::string name)
     : m_device(device), m_name(std::move(name)) {
     const auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>({
         .commandPool = cmd_pool,
@@ -29,7 +29,7 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
 
     m_device.set_debug_name(m_cmd_buf, m_name);
 
-    m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
+    m_wait_fence = std::make_unique<synchronization::Fence>(m_device, m_name, false);
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
@@ -362,4 +362,4 @@ const CommandBuffer &CommandBuffer::submit_and_wait() const {
     }));
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

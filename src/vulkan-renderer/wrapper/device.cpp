@@ -455,7 +455,7 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 }
 
 void Device::execute(const std::string &name,
-                     const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
+                     const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_lambda) const {
     // TODO: Support other queues, not just graphics queue
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
     cmd_lambda(cmd_buf);
@@ -473,18 +473,18 @@ std::optional<std::uint32_t> Device::find_queue_family_index_if(
     return std::nullopt;
 }
 
-CommandPool &Device::thread_graphics_pool() const {
+commands::CommandPool &Device::thread_graphics_pool() const {
     // Note that thread_graphics_pool is implicitely static!
-    thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
+    thread_local commands::CommandPool *thread_graphics_pool = nullptr; // NOLINT
     if (thread_graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, "Graphics Pool");
+        auto cmd_pool = std::make_unique<commands::CommandPool>(*this, "Graphics Pool");
         std::scoped_lock locker(m_mutex);
         thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }
     return *thread_graphics_pool;
 }
 
-const CommandBuffer &Device::request_command_buffer(const std::string &name) {
+const commands::CommandBuffer &Device::request_command_buffer(const std::string &name) {
     return thread_graphics_pool().request_command_buffer(name);
 }
 

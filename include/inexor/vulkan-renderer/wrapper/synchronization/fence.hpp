@@ -7,9 +7,11 @@
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::synchronization {
 
 /// A RAII wrapper for VkFence
 class Fence {
@@ -23,7 +25,7 @@ public:
     /// @param name The internal debug marker name of the VkFence.
     /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
     /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
-    Fence(const Device &device, const std::string &name, bool in_signaled_state);
+    Fence(const wrapper::Device &device, const std::string &name, bool in_signaled_state);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
@@ -49,4 +51,4 @@ public:
     [[nodiscard]] VkResult status() const;
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::synchronization

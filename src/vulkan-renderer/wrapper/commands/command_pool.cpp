@@ -8,9 +8,9 @@
 
 #include <thread>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::commands {
 
-CommandPool::CommandPool(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
+CommandPool::CommandPool(const wrapper::Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
     const auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>({
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
         .queueFamilyIndex = device.graphics_queue_family_index(),
@@ -37,7 +37,7 @@ CommandPool::~CommandPool() {
     vkDestroyCommandPool(m_device.device(), m_cmd_pool, nullptr);
 }
 
-const CommandBuffer &CommandPool::request_command_buffer(const std::string &name) {
+const commands::CommandBuffer &CommandPool::request_command_buffer(const std::string &name) {
     // Try to find a command buffer which is currently not used
     for (const auto &cmd_buf : m_cmd_bufs) {
         if (cmd_buf->fence_status() == VK_SUCCESS) {
@@ -51,7 +51,7 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
 
     // We need to create a new command buffer because no free one was found
     // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
-    m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, "command buffer"));
+    m_cmd_bufs.emplace_back(std::make_unique<commands::CommandBuffer>(m_device, m_cmd_pool, "command buffer"));
 
     spdlog::trace("Creating new command buffer #{}", m_cmd_bufs.size());
 
@@ -59,4 +59,4 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
     return *m_cmd_bufs.back();
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

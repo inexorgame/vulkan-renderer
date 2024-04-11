@@ -136,13 +136,13 @@ private:
     /// @param is_first_pass ``true`` if this is the first pass in the graphics pass stack
     /// @param is_last_pass ``true`` if this is the last pass in the graphics pass stack
     /// @param img_index The swapchain image index
-    void record_command_buffer_for_pass(const wrapper::CommandBuffer &cmd_buf, const GraphicsPass &pass,
+    void record_command_buffer_for_pass(const wrapper::commands::CommandBuffer &cmd_buf, const GraphicsPass &pass,
                                         bool is_first_pass, bool is_last_pass, std::uint32_t img_index);
 
     /// Record all command buffers required for the passes
     /// @param cmd_buf The command buffer to record all passes with
     /// @param img_index The swapchain image index
-    void record_command_buffers(const wrapper::CommandBuffer &cmd_buf, std::uint32_t img_index);
+    void record_command_buffers(const wrapper::commands::CommandBuffer &cmd_buf, std::uint32_t img_index);
 
     /// Update the vertex-, index-, and uniform-buffers
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed

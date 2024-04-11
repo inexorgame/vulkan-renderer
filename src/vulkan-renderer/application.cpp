@@ -514,7 +514,7 @@ void Application::setup_render_graph() {
                                 .color = {1.0f, 0.0f, 0.0f},
                             })
                             .set_depth_test(true)
-                            .set_on_record([&](const wrapper::CommandBuffer &cmd_buf) {
+                            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                                 cmd_buf.bind_pipeline(*m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)

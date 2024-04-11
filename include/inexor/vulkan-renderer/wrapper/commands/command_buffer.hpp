@@ -9,6 +9,11 @@
 #include <span>
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
+class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 // Forward declaration
 class GraphicsPipeline;
@@ -19,10 +24,7 @@ namespace inexor::vulkan_renderer::render_graph {
 class Buffer;
 } // namespace inexor::vulkan_renderer::render_graph
 
-namespace inexor::vulkan_renderer::wrapper {
-
-// Forward declaration
-class Device;
+namespace inexor::vulkan_renderer::wrapper::commands {
 
 /// RAII wrapper class for VkCommandBuffer
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
@@ -30,7 +32,7 @@ class CommandBuffer {
     VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
     const Device &m_device;
     std::string m_name;
-    std::unique_ptr<Fence> m_wait_fence;
+    std::unique_ptr<synchronization::Fence> m_wait_fence;
 
     // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
     friend class Device;
@@ -89,7 +91,7 @@ public:
     /// @param device A const reference to the device wrapper class
     /// @param cmd_pool The command pool from which the command buffer will be allocated
     /// @param name The internal debug marker name of the command buffer (must not be empty)
-    CommandBuffer(const Device &device, VkCommandPool cmd_pool, std::string name);
+    CommandBuffer(const wrapper::Device &device, VkCommandPool cmd_pool, std::string name);
 
     CommandBuffer(const CommandBuffer &) = delete;
     CommandBuffer(CommandBuffer &&) noexcept;
@@ -373,7 +375,7 @@ public:
         return m_cmd_buf;
     }
 
-    [[nodiscard]] const Fence &get_wait_fence() const {
+    [[nodiscard]] const synchronization::Fence &get_wait_fence() const {
         return *m_wait_fence;
     }
 
@@ -407,4 +409,4 @@ public:
     const CommandBuffer &submit_and_wait() const; // NOLINT
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

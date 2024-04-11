@@ -52,7 +52,7 @@ class Device {
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
-    mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
+    mutable std::vector<std::unique_ptr<commands::CommandPool>> m_cmd_pools;
     mutable std::mutex m_mutex;
 
     /// Set the debug name of a Vulkan object using debug utils extension (VK_EXT_debug_utils)
@@ -66,7 +66,7 @@ class Device {
 
     /// Get the thread_local command pool
     /// @note This method will create a command pool for the thread if it doesn't already exist
-    CommandPool &thread_graphics_pool() const;
+    commands::CommandPool &thread_graphics_pool() const;
 
 public:
     /// Pick the best physical device automatically
@@ -144,7 +144,8 @@ public:
     /// submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
     /// @param cmd_lambda The command lambda to execute
-    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
+    void execute(const std::string &name,
+                 const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_lambda) const;
 
     /// Find a queue family index that suits a specific criteria
     /// @param criteria_lambda The lambda to sort out unsuitable queue families
@@ -203,7 +204,7 @@ public:
     /// Request a command buffer from the thread_local command pool
     /// @param name The name which will be assigned to the command buffer
     /// @return A command buffer from the thread_local command pool
-    [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
+    [[nodiscard]] const commands::CommandBuffer &request_command_buffer(const std::string &name);
 
     template <typename VulkanObjectType>
     void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
