@@ -439,7 +439,6 @@ void Application::setup_render_graph() {
                                                VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     using render_graph::BufferType;
-    using wrapper::descriptors::DescriptorSetUpdateFrequency;
 
     m_vertex_buffer = m_render_graph->add_buffer("Octree", BufferType::VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, we generate a new octree

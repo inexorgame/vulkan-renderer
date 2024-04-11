@@ -12,7 +12,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-RenderGraph::RenderGraph(wrapper::Device &device, wrapper::Swapchain &swapchain)
+RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device) {}
 
 std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type,
@@ -157,9 +157,9 @@ void RenderGraph::determine_pass_order() {
     // TODO: Implement dfs
 }
 
-void RenderGraph::record_command_buffer_for_pass(const wrapper::commands::CommandBuffer &cmd_buf,
-                                                 const GraphicsPass &pass, const bool is_first_pass,
-                                                 const bool is_last_pass, const std::uint32_t img_index) {
+void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass,
+                                                 const bool is_first_pass, const bool is_last_pass,
+                                                 const std::uint32_t img_index) {
     // Start a new debug label for this graphics pass
     // These debug labels are visible in RenderDoc
     // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
@@ -259,8 +259,7 @@ void RenderGraph::record_command_buffer_for_pass(const wrapper::commands::Comman
     cmd_buf.end_debug_label_region();
 }
 
-void RenderGraph::record_command_buffers(const wrapper::commands::CommandBuffer &cmd_buf,
-                                         const std::uint32_t img_index) {
+void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std::uint32_t img_index) {
     // TODO: Support multiple passes per command buffer, not just recording everything into one command buffer
     // TODO: Record command buffers in parallel
 

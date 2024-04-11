@@ -32,7 +32,12 @@ enum class BufferType;
 class PushConstantRangeResource;
 
 // Namespaces
-using namespace wrapper::pipelines;
+using CommandBuffer = wrapper::commands::CommandBuffer;
+using Device = wrapper::Device;
+using GraphicsPipeline = wrapper::pipelines::GraphicsPipeline;
+using GraphicsPipelineBuilder = wrapper::pipelines::GraphicsPipelineBuilder;
+using PipelineLayout = wrapper::pipelines::PipelineLayout;
+using Swapchain = wrapper::Swapchain;
 
 /// A rendergraph is a generic solution for rendering architecture
 /// This is based on Yuriy O'Donnell's talk "FrameGraph: Extensible Rendering Architecture in Frostbite" from GDC 2017
@@ -41,9 +46,9 @@ using namespace wrapper::pipelines;
 class RenderGraph {
 private:
     /// The device wrapper
-    wrapper::Device &m_device;
+    Device &m_device;
     /// The swapchain wrapper
-    wrapper::Swapchain &m_swapchain;
+    Swapchain &m_swapchain;
 
     // The rendergraph has its own logger
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
@@ -55,8 +60,7 @@ private:
     GraphicsPassBuilder m_graphics_pass_builder{};
 
     /// The callables which create the graphics passes used in the rendergraph
-    using GraphicsPassCreateCallable =
-        std::function<std::shared_ptr<render_graph::GraphicsPass>(render_graph::GraphicsPassBuilder &)>;
+    using GraphicsPassCreateCallable = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
 
     /// The callables to create the graphics passes used in the rendergraph
     std::vector<GraphicsPassCreateCallable> m_on_graphics_pass_create_callables;
@@ -69,11 +73,11 @@ private:
     //  GRAPHICS PIPELINES
     // ---------------------------------------------------------------------------------------------------------
     /// The graphics pipeline builder of the rendergraph
-    wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
+    GraphicsPipelineBuilder m_graphics_pipeline_builder;
 
     /// The callables which create the graphics pipelines used in the rendergraph
-    using GraphicsPipelineCreateCallable = std::function<std::shared_ptr<GraphicsPipeline>(
-        wrapper::pipelines::GraphicsPipelineBuilder &, const VkPipelineLayout)>;
+    using GraphicsPipelineCreateCallable =
+        std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, const VkPipelineLayout)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<GraphicsPipelineCreateCallable> m_on_graphics_pipeline_create_callables;
@@ -133,13 +137,13 @@ private:
     /// @param is_first_pass ``true`` if this is the first pass in the graphics pass stack
     /// @param is_last_pass ``true`` if this is the last pass in the graphics pass stack
     /// @param img_index The swapchain image index
-    void record_command_buffer_for_pass(const wrapper::commands::CommandBuffer &cmd_buf, const GraphicsPass &pass,
-                                        bool is_first_pass, bool is_last_pass, std::uint32_t img_index);
+    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass, bool is_first_pass,
+                                        bool is_last_pass, std::uint32_t img_index);
 
     /// Record all command buffers required for the passes
     /// @param cmd_buf The command buffer to record all passes with
     /// @param img_index The swapchain image index
-    void record_command_buffers(const wrapper::commands::CommandBuffer &cmd_buf, std::uint32_t img_index);
+    void record_command_buffers(const CommandBuffer &cmd_buf, std::uint32_t img_index);
 
     /// Update the vertex-, index-, and uniform-buffers
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
@@ -162,7 +166,7 @@ public:
     /// Default constructor
     /// @param device The device wrapper
     /// @param swapchain The swapchain wrapper
-    RenderGraph(wrapper::Device &device, wrapper::Swapchain &swapchain);
+    RenderGraph(Device &device, Swapchain &swapchain);
 
     RenderGraph(const RenderGraph &) = delete;
     RenderGraph(RenderGraph &&) noexcept;
