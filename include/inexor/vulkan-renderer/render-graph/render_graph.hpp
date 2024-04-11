@@ -124,9 +124,6 @@ private:
     /// Create the graphics pipelines
     void create_graphics_pipelines();
 
-    /// Create the textures of every texture resoruce in the rendergraph
-    void create_textures();
-
     /// Determine the order of execution of the graphics passes by using depth first search (dfs) algorithm
     void determine_pass_order();
 
@@ -221,11 +218,9 @@ public:
     /// @param name The name of the texture (must not be empty)
     /// @param uage The texture usage inside of rendergraph
     /// @param format The image format of the texture
-    /// @param on_init The initialization callable of the texture
     /// @param on_update The update callable of the texture
     /// @return A weak pointer to the texture resource that was created
     [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
-                                                     std::optional<std::function<void()>> on_init = std::nullopt,
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the entire rendergraph

@@ -17,27 +17,13 @@ RenderGraph::RenderGraph(wrapper::Device &device, wrapper::Swapchain &swapchain)
 
 std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type,
                                               std::optional<std::function<void()>> on_update) {
-    if (name.empty()) {
-        throw std::invalid_argument("Error: Buffer name must not be empty!");
-    }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device,        //
-                                                    std::move(name), //
-                                                    type,            //
-                                                    std::move(on_update)));
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), type, std::move(on_update)));
     return m_buffers.back();
 }
 
 std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
-                                                std::optional<std::function<void()>> on_init,
                                                 std::optional<std::function<void()>> on_update) {
-    if (name.empty()) {
-        throw std::invalid_argument("Error: Texture name must not be empty!");
-    }
-    m_textures.emplace_back(std::make_shared<Texture>(std::move(name),    //
-                                                      usage,              //
-                                                      format,             //
-                                                      std::move(on_init), //
-                                                      std::move(on_update)));
+    m_textures.emplace_back(std::make_shared<Texture>(std::move(name), usage, format, std::move(on_update)));
     return m_textures.back();
 }
 
@@ -47,11 +33,9 @@ void RenderGraph::check_for_cycles() {
 
 void RenderGraph::compile() {
     m_log->trace("Compiling rendergraph");
-
     determine_pass_order();
     create_graphics_passes();
     create_buffers();
-    create_textures();
     create_descriptor_sets();
     create_graphics_pipeline_layouts();
     create_graphics_pipelines();
@@ -166,14 +150,6 @@ void RenderGraph::create_graphics_pipelines() {
             std::move(std::invoke(m_on_graphics_pipeline_create_callables.at(pipeline_index), //
                                   m_graphics_pipeline_builder,                                //
                                   m_graphics_pipeline_layouts.at(pipeline_index)->pipeline_layout())));
-    }
-}
-
-void RenderGraph::create_textures() {
-    m_log->trace("Creating {} textures", m_textures.size());
-    for (const auto &texture : m_textures) {
-        // Call the optional init lambda of the texture
-        std::invoke(texture->m_on_init.value());
     }
 }
 

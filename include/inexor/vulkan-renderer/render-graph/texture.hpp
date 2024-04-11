@@ -43,7 +43,6 @@ private:
     std::uint32_t m_channels{0};
     std::uint32_t m_mip_levels{0};
 
-    std::optional<std::function<void()>> m_on_init{std::nullopt};
     std::optional<std::function<void()>> m_on_update{std::nullopt};
 
 public:
@@ -51,10 +50,8 @@ public:
     /// @param name The internal denug name of the texture inside of the rendergraph (must not be empty)
     /// @param usage The internal usage of the texture inside of the rendergraph
     /// @param format The format of the texture
-    /// @param on_init The init function of the texture
     /// @param on_update An optional update function (``std::nullopt`` by default, meaning no updates to this buffer)
-    Texture(std::string name, TextureUsage usage, VkFormat format, std::optional<std::function<void()>> on_init,
-            std::optional<std::function<void()>> on_update);
+    Texture(std::string name, TextureUsage usage, VkFormat format, std::optional<std::function<void()>> on_update);
 
     Texture(const Texture &) = delete;
     Texture(Texture &&other) noexcept;
