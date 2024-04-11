@@ -1,7 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
-#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
 #include <array>
 #include <functional>

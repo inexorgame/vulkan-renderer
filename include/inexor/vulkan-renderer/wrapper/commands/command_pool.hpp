@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <volk.h>
 
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
 #include <cassert>
 
