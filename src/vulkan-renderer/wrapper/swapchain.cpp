@@ -5,7 +5,7 @@
 #include "inexor/vulkan-renderer/vk_tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 

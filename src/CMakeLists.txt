@@ -28,12 +28,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/vk_tools/representation.cpp
 
     vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/sampler.cpp
-    vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/window.cpp
@@ -54,6 +52,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
+    vulkan-renderer/wrapper/synchronization/fence.cpp
+    vulkan-renderer/wrapper/synchronization/semaphore.cpp
 
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp

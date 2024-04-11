@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <cstdint>
 #include <limits>

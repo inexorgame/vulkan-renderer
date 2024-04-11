@@ -1,7 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/fence.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include <array>
 #include <cassert>
