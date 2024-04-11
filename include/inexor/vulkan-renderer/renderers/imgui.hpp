@@ -20,10 +20,10 @@ namespace inexor::vulkan_renderer::render_graph {
 class RenderGraph;
 } // namespace inexor::vulkan_renderer::render_graph
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::renderers {
 
 /// A wrapper for an ImGui implementation
-class ImGuiOverlay {
+class ImGuiRenderer {
     const wrapper::Device &m_device;
     std::weak_ptr<render_graph::Buffer> m_index_buffer;
     std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
@@ -65,16 +65,16 @@ public:
     /// @param back_buffer The back buffer texture resource
     /// @param depth_buffer The depth buffer texture resource
     /// @param on_update_user_data The function in which the user's ImGui data is updated
-    ImGuiOverlay(const wrapper::Device &device, render_graph::RenderGraph &render_graph,
-                 std::weak_ptr<render_graph::Texture> back_buffer, std::weak_ptr<render_graph::Texture> depth_buffer,
-                 std::function<void()> on_update_user_data);
+    ImGuiRenderer(const wrapper::Device &device, render_graph::RenderGraph &render_graph,
+                  std::weak_ptr<render_graph::Texture> back_buffer, std::weak_ptr<render_graph::Texture> depth_buffer,
+                  std::function<void()> on_update_user_data);
 
-    ImGuiOverlay(const ImGuiOverlay &) = delete;
-    ImGuiOverlay(ImGuiOverlay &&) = delete;
-    ~ImGuiOverlay();
+    ImGuiRenderer(const ImGuiRenderer &) = delete;
+    ImGuiRenderer(ImGuiRenderer &&) = delete;
+    ~ImGuiRenderer();
 
-    ImGuiOverlay &operator=(const ImGuiOverlay &) = delete;
-    ImGuiOverlay &operator=(ImGuiOverlay &&) = delete;
+    ImGuiRenderer &operator=(const ImGuiRenderer &) = delete;
+    ImGuiRenderer &operator=(ImGuiRenderer &&) = delete;
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::renderers

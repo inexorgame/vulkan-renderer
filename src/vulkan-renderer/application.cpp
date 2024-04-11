@@ -384,8 +384,8 @@ void Application::recreate_swapchain() {
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_imgui_overlay = std::make_unique<ImGuiOverlay>(*m_device, *m_render_graph.get(), m_back_buffer, m_msaa_color,
-                                                     [&]() { update_imgui_overlay(); });
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_render_graph.get(), m_back_buffer,
+                                                                 m_msaa_color, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }
@@ -468,9 +468,11 @@ void Application::setup_render_graph() {
         m_uniform_buffer.lock()->request_update(m_mvp_matrices);
     });
 
+    using wrapper::pipelines::GraphicsPipelineBuilder;
+
     // TODO: How to associate pipeline layouts with pipelines?
     m_render_graph->add_graphics_pipeline(
-        [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
+        [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
                                     .add_color_blend_attachment({
                                         .blendEnable = VK_FALSE,
@@ -507,13 +509,16 @@ void Application::setup_render_graph() {
             return m_octree_pipeline;
         });
 
-    m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
+    using render_graph::GraphicsPassBuilder;
+    using wrapper::commands::CommandBuffer;
+
+    m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
         m_octree_pass = builder
                             .set_clear_value({
                                 .color = {1.0f, 0.0f, 0.0f},
                             })
                             .set_depth_test(true)
-                            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                            .set_on_record([&](const CommandBuffer &cmd_buf) {
                                 cmd_buf.bind_pipeline(*m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)

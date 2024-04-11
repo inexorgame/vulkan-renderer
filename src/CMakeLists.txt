@@ -4,13 +4,14 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/camera.cpp
     vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
-    vulkan-renderer/imgui.cpp
     vulkan-renderer/time_step.cpp
 
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
+
+    vulkan-renderer/renderers/imgui.cpp
 
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp

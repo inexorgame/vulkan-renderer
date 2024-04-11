@@ -2,10 +2,10 @@
 
 #include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
-#include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/renderers/imgui.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
@@ -38,7 +38,7 @@ private:
     std::unique_ptr<wrapper::Device> m_device;
     std::unique_ptr<wrapper::WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
-    std::unique_ptr<ImGuiOverlay> m_imgui_overlay;
+    std::unique_ptr<renderers::ImGuiRenderer> m_imgui_overlay;
 
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;

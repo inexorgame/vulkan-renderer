@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/imgui.hpp"
+#include "inexor/vulkan-renderer/renderers/imgui.hpp"
 
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/pipeline_builder.hpp"
@@ -10,12 +10,12 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::renderers {
 
-ImGuiOverlay::ImGuiOverlay(const wrapper::Device &device, render_graph::RenderGraph &render_graph,
-                           const std::weak_ptr<render_graph::Texture> back_buffer,
-                           const std::weak_ptr<render_graph::Texture> depth_buffer,
-                           std::function<void()> on_update_user_data)
+ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::RenderGraph &render_graph,
+                             const std::weak_ptr<render_graph::Texture> back_buffer,
+                             const std::weak_ptr<render_graph::Texture> depth_buffer,
+                             std::function<void()> on_update_user_data)
     : m_device(device), m_vertex_shader(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGui", "shaders/ui.vert.spv"),
       m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGui", "shaders/ui.frag.spv"),
       m_on_update_user_data(std::move(on_update_user_data)) {
@@ -162,11 +162,11 @@ ImGuiOverlay::ImGuiOverlay(const wrapper::Device &device, render_graph::RenderGr
     });
 }
 
-ImGuiOverlay::~ImGuiOverlay() {
+ImGuiRenderer::~ImGuiRenderer() {
     ImGui::DestroyContext();
 }
 
-void ImGuiOverlay::load_font_data_from_file() {
+void ImGuiRenderer::load_font_data_from_file() {
     ImGuiIO &io = ImGui::GetIO();
     io.FontGlobalScale = 1.0f;
 
@@ -182,7 +182,7 @@ void ImGuiOverlay::load_font_data_from_file() {
     m_font_texture_data_size = m_font_texture_width * m_font_texture_height * FONT_TEXTURE_CHANNELS;
 }
 
-void ImGuiOverlay::set_imgui_style() {
+void ImGuiRenderer::set_imgui_style() {
     ImGuiStyle &style = ImGui::GetStyle();
     style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -202,4 +202,4 @@ void ImGuiOverlay::set_imgui_style() {
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::renderers
