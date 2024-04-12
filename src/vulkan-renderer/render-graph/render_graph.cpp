@@ -27,71 +27,38 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureU
     return m_textures.back();
 }
 
+void RenderGraph::add_graphics_pass(GraphicsPassCreateCallable on_pass_create) {
+    m_on_graphics_pass_create_callables.emplace_back(std::move(on_pass_create));
+}
+
+void RenderGraph::add_graphics_pipeline(GraphicsPipelineCreateCallable on_pipeline_create) {
+    m_on_graphics_pipeline_create_callables.emplace_back(std::move(on_pipeline_create));
+}
+
 void RenderGraph::check_for_cycles() {
     m_log->warn("Implement RenderGraph::check_for_cycles()!");
 }
 
 void RenderGraph::compile() {
     m_log->trace("Compiling rendergraph");
+    validate_render_graph();
     determine_pass_order();
     create_graphics_passes();
     create_buffers();
     create_descriptor_sets();
     create_graphics_pipeline_layouts();
     create_graphics_pipelines();
-    validate_render_graph();
+    // TODO: What to add more here?
 }
 
 void RenderGraph::create_buffers() {
-    // Do not call the buffers via passes, but through rendergraph directly?
-
-    for (const auto &graphics_pass : m_graphics_passes) {
-        // Create the vertex buffers of the pass
-        // Note that each pass must have at least one vertex buffer
-        for (const auto &vertex_buffer : graphics_pass->m_vertex_buffers) {
-            //
-        }
-
-        // TODO: Create index buffers
-        // TOOD: Create uniform buffers
+    for (const auto &buffer : m_buffers) {
+        // Call the update lambda of the buffer
+        std::invoke(buffer->m_on_update.value());
+        // Create the buffer
+        buffer->create_buffer();
     }
-
-#if 0
-    // Loop through all buffer resources and create them
-    for (auto &buffer : m_buffer_resources) {
-        // We call the update method of each buffer before we create it because we need to know the initial size
-        // Only call update callback if it exists
-        if (buffer->m_on_update) {
-            std::invoke(buffer->m_on_update.value());
-        }
-
-        // TODO: Move this not to representation, but to buffer wrapper!
-
-        // This maps from buffer usage to Vulkan buffer usage flags
-        const std::unordered_map<BufferType, VkBufferUsageFlags> buffer_usage_flags{
-            {BufferType::VERTEX_BUFFER, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT},
-            {BufferType::INDEX_BUFFER, VK_BUFFER_USAGE_INDEX_BUFFER_BIT},
-            {BufferType::UNIFORM_BUFFER, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT},
-        };
-
-        // This maps from buffer usage to VMA memory usage flags
-        const std::unordered_map<BufferType, VmaMemoryUsage> memory_usage_flags{
-            // TODO: Change to VMA_MEMORY_USAGE_GPU and support staging buffers correctly!
-            {BufferType::VERTEX_BUFFER, VMA_MEMORY_USAGE_CPU_TO_GPU},
-            // TODO: Change to VMA_MEMORY_USAGE_GPU and support staging buffers correctly!
-            {BufferType::INDEX_BUFFER, VMA_MEMORY_USAGE_CPU_TO_GPU},
-            {BufferType::UNIFORM_BUFFER, VMA_MEMORY_USAGE_CPU_TO_GPU},
-        };
-
-        // TODO: Remove buffer wrapper indirection
-
-        // Create the physical buffer inside of the buffer resource wrapper
-        // Keep in mind that this physical buffer can only be accessed from inside of the rendergraph
-        buffer->m_buffer = std::make_unique<wrapper::Buffer>(m_device, buffer->m_data_size, // We must know the size
-                                                             buffer_usage_flags.at(buffer->m_type),
-                                                             memory_usage_flags.at(buffer->m_type), buffer->m_name);
-    }
-#endif
+    // TODO: Batch all updates which require staging buffer into one pipeline barrier call
 }
 
 void RenderGraph::create_descriptor_sets() {

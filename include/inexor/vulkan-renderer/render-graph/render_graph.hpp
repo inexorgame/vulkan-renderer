@@ -187,16 +187,11 @@ public:
 
     /// Add a new graphics pass to the rendergraph
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
-    void add_graphics_pass(GraphicsPassCreateCallable on_pass_create) {
-        m_on_graphics_pass_create_callables.emplace_back(std::move(on_pass_create));
-    }
+    void add_graphics_pass(GraphicsPassCreateCallable on_pass_create);
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A callable to create the graphics pipeline using GraphicsPipelineBuilder
-    void add_graphics_pipeline(GraphicsPipelineCreateCallable on_pipeline_create) {
-        // TODO: Can this be emplace_back?
-        m_on_graphics_pipeline_create_callables.push_back(std::move(on_pipeline_create));
-    }
+    void add_graphics_pipeline(GraphicsPipelineCreateCallable on_pipeline_create);
 
     /// Add a push constant range resource to the rendergraph
     /// @tparam T The data type of the push constant range

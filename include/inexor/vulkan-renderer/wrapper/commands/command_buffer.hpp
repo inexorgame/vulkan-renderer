@@ -58,28 +58,9 @@ class CommandBuffer {
     /// @return A VkBuffer which contains the staging buffer data
     [[nodiscard]] VkBuffer create_staging_buffer(const void *data, const VkDeviceSize data_size,
                                                  const std::string &name) const {
-        assert(data);
-        assert(data_size > 0);
-        assert(!name.empty());
-
-        // TODO: Implement staging buffers!
-        abort();
-        return VK_NULL_HANDLE;
-#if 0
         // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
-        m_staging_bufs.emplace_back(m_device, name, render_graph::BufferType::STAGING_BUFFER, data, data_size);
-        return m_staging_bufs.back().m_buffer;
-#endif
-    }
-
-    /// Create a new staging buffer which will be stored internally for a copy operation
-    /// @tparam The data type of the staging buffer
-    /// @param data A std::span of the source data
-    /// @param name The internal name of the staging buffer (must not be empty)
-    /// @return The staging buffer's VkBuffer
-    template <typename DataType>
-    [[nodiscard]] VkBuffer create_staging_buffer(const std::span<const DataType> data, const std::string &name) const {
-        return create_staging_buffer(data.data(), static_cast<VkDeviceSize>(sizeof(data) * data.size()), name);
+        m_staging_bufs.emplace_back(m_device, name, render_graph::BufferType::STAGING_BUFFER);
+        return m_staging_bufs.back().buffer();
     }
 
     /// Call vkEndCommandBuffer

@@ -61,9 +61,9 @@ public:
     /// @param offset The offset in the push constant range
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename PushConstantDataType>
-    [[nodiscard]] auto &add_push_constant_range(VkShaderStageFlags shader_stage,
+    [[nodiscard]] auto &add_push_constant_range(const VkShaderStageFlags shader_stage,
                                                 const PushConstantDataType &push_constant,
-                                                std::function<void()> on_update, std::uint32_t offset = 0) {
+                                                std::function<void()> on_update, const std::uint32_t offset = 0) {
         m_push_constant_ranges.emplace_back(
             VkPushConstantRange{
                 .stageFlags = shader_stage,
@@ -78,6 +78,8 @@ public:
     /// @param name The name of the graphics stage
     /// @return The graphics stage which was created
     [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name);
+
+    // TODO: We must specify buffer reads for vertex and index buffers, but bind manually... is that good?
 
     /// Specifies that this pass reads from a buffer
     /// @param buffer The buffer the pass reads from

@@ -520,7 +520,8 @@ void Application::setup_render_graph() {
                             })
                             .set_depth_test(true)
                             .set_on_record([&](const CommandBuffer &cmd_buf) {
-                                cmd_buf.bind_pipeline(*m_octree_pipeline)
+                                cmd_buf
+                                    .bind_pipeline(*m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)
                                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
