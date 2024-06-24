@@ -20,12 +20,12 @@
 
 namespace inexor::vulkan_renderer {
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-                                                        VkDebugUtilsMessageTypeFlagsEXT type,
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+                                                        const VkDebugUtilsMessageTypeFlagsEXT type,
                                                         const VkDebugUtilsMessengerCallbackDataEXT *data,
                                                         void *user_data) {
-    // Validation layers have their own logger
-    std::shared_ptr<spdlog::logger> m_validation_log{spdlog::default_logger()->clone("validation-layer")};
+    // Validation layers get their own logger
+    std::shared_ptr<spdlog::logger> m_validation_log{spdlog::default_logger()->clone("validation")};
 
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
         m_validation_log->trace("{}", data->pMessage);
@@ -70,8 +70,6 @@ Application::Application(int argc, char **argv) {
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers,
         debug_messenger_callback);
 
-    vk_tools::print_driver_vulkan_version();
-
     m_input_data = std::make_unique<input::KeyboardMouseInputData>();
 
     m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
@@ -113,10 +111,6 @@ Application::Application(int argc, char **argv) {
     } else {
         spdlog::trace("V-sync disabled!");
         m_vsync_enabled = false;
-    }
-
-    if (display_graphics_card_info) {
-        vk_tools::print_all_physical_devices(m_instance->instance(), m_surface->get());
     }
 
     bool use_distinct_data_transfer_queue = true;

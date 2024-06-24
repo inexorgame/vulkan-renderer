@@ -7,7 +7,6 @@
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/renderers/imgui.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
-#include "inexor/vulkan-renderer/vk_tools/gpu_info.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
