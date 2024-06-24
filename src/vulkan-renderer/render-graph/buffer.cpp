@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Buffer::Buffer(const wrapper::Device &device, std::string name, const BufferType type,
+Buffer::Buffer(const Device &device, std::string name, const BufferType type,
                std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_buffer_type(type), m_on_update(std::move(on_update)) {
     // TODO: Set VMA memory usage and Vulkan buffer usage flags
@@ -67,13 +67,17 @@ void Buffer::update_buffer() {
     }
     case BufferType::VERTEX_BUFFER:
     case BufferType::INDEX_BUFFER: {
-        // Vertex and index buffers are updated through a staging buffer
+        // Vertex and index buffers are updated through a buffer copy command using a staging buffer
+        // This itself requires another instance of the Buffer wrapper class
+        // Note that staging buffers are managed inside of device wrapper, not rendergraph
+
         // TODO: Batching of pipeline memory barriers for staging buffer through rendergraph?
         break;
     }
     case BufferType::STAGING_BUFFER: {
         // A staging buffer does not require updates, as it itself is used to update other buffers
-        // Note that we currently do not re-use staging buffers
+        // Note that staging buffers are managed inside of device wrapper, not rendergraph, and we currently do not
+        // re-use staging buffers
         break;
     }
     }

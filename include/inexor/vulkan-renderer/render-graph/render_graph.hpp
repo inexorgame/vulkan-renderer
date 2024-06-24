@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/push_constant_range_resource.hpp"
+#include "inexor/vulkan-renderer/render-graph/push_constant_range.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
@@ -100,7 +100,7 @@ private:
     /// The push constant resources of the rendergraph
     // TODO: Remember we need to squash all VkPushConstantRange of a pass into one std::vector in order to bind it!
     // TODO: Should push constant ranges be per graphics pipeline?
-    std::vector<std::shared_ptr<PushConstantRangeResource>> m_push_constant_ranges;
+    std::vector<std::shared_ptr<PushConstantRange>> m_push_constant_ranges;
 
     /// The texture resources of the rendergraph
     std::vector<std::shared_ptr<Texture>> m_textures;
@@ -187,10 +187,12 @@ public:
 
     /// Add a new graphics pass to the rendergraph
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
+    /// @note Move semantics is used to std::move on_pass_create
     void add_graphics_pass(GraphicsPassCreateCallable on_pass_create);
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A callable to create the graphics pipeline using GraphicsPipelineBuilder
+    /// @note Move semantics is used to std::move on_pipeline_create
     void add_graphics_pipeline(GraphicsPipelineCreateCallable on_pipeline_create);
 
     /// Add a push constant range resource to the rendergraph

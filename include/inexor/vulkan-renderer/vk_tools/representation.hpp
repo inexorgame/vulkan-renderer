@@ -20,7 +20,7 @@ template <typename VulkanObjectType>
 /// @note We have to specify a specialization for every Vulkan object type!
 /// As far as we know, there is no other easy way to do this in C++.
 /// @tparam VulkanObjectType The Vulkan object type as template parameter, for examplke VkFence
-/// @return The VkObjectType of the template parameter, in our example ``VK_OBJECT_TYPE_FENCE``
+/// @return The VkObjectType of the template parameter, for the above mentioned example ``VK_OBJECT_TYPE_FENCE``
 template <typename VulkanObjectType>
 [[nodiscard]] constexpr VkObjectType get_vulkan_object_type(VulkanObjectType);
 

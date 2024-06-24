@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/push_constant_range_resource.hpp"
+#include "inexor/vulkan-renderer/render-graph/push_constant_range.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"

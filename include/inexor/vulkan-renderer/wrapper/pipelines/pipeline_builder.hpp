@@ -289,6 +289,8 @@ public:
     }
 
     /// Set the vertex input attribute descriptions manually
+    /// @note As of C++23, there is no mechanism to do so called reflection in C++, meaning we can't get any information
+    /// about the members of a struct, which would allow us to determine vertex input attributes automatically
     /// @param descriptions The vertex input attribute descriptions
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] auto &

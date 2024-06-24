@@ -134,7 +134,6 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
                            .writes_to_texture(depth_buffer)
                            .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, &m_push_const_block,
                                                     [&]() {
-                                                        // Update lambda for ImGui push constant range
                                                         const ImGuiIO &io = ImGui::GetIO();
                                                         m_push_const_block.scale =
                                                             glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);

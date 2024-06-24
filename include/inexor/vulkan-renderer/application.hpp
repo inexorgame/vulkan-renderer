@@ -71,11 +71,11 @@ private:
 
     float m_time_passed{0.0f};
 
-    std::uint32_t m_window_width{0};
-    std::uint32_t m_window_height{0};
-    std::string m_window_title;
-    wrapper::Window::Mode m_window_mode{wrapper::Window::Mode::WINDOWED};
-    bool m_window_resized{false};
+    std::uint32_t m_wnd_width{0};
+    std::uint32_t m_wnd_height{0};
+    std::string m_wnd_title;
+    bool m_wnd_resized{false};
+    wrapper::Window::Mode m_wnd_mode{wrapper::Window::Mode::WINDOWED};
 
     std::vector<std::string> m_gltf_model_files;
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;

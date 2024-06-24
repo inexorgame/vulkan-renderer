@@ -25,6 +25,8 @@ enum class BufferType {
     // TODO: Add more buffer types here and implement support for them
 };
 
+using wrapper::Device;
+
 // TODO: Store const reference to rendergraph and retrieve the swapchain image index for automatic buffer tripling
 
 /// RAII wrapper for buffer resources inside of the rendergraph
@@ -34,7 +36,7 @@ private:
     friend class RenderGraph;
 
     /// The device wrapper
-    const wrapper::Device &m_device;
+    const Device &m_device;
     /// The internal name of this buffer resource inside of the rendergraph
     std::string m_name;
     /// The buffer type
@@ -47,6 +49,8 @@ private:
     VmaAllocationInfo m_alloc_info;
     VkBufferUsageFlags m_buffer_usage;
     VmaMemoryUsage m_mem_usage;
+
+    // TODO: Maybe buffer updates should be done immediately, and no m_src_data should be stored!
 
     /// It's the responsibility of the programmer to make sure the data m_src_data points to is still valid when
     /// update_buffer() is called!
@@ -66,7 +70,7 @@ public:
     /// @param usage The internal usage of the buffer in the rendergraph
     /// @note The update frequency of a buffer will only be respected when grouping uniform buffers into descriptor sets
     /// @param on_update An optional update function (``std::nullopt`` by default, meaning no updates to this buffer)
-    Buffer(const wrapper::Device &device, std::string name, BufferType type,
+    Buffer(const Device &device, std::string name, BufferType type,
            std::optional<std::function<void()>> on_update = std::nullopt);
 
     Buffer(const Buffer &) = delete;

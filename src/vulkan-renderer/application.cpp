@@ -51,7 +51,6 @@ Application::Application(int argc, char **argv) {
     spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
     spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
 
-    // Load the configuration from the TOML file.
     load_toml_configuration_file("configuration/renderer.toml");
 
     // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
@@ -62,8 +61,7 @@ Application::Application(int argc, char **argv) {
         m_enable_validation_layers = false;
     }
 
-    m_window =
-        std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
+    m_window = std::make_unique<wrapper::Window>(m_wnd_title, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
 
     spdlog::trace("Creating Vulkan instance");
 
@@ -172,16 +170,23 @@ Application::Application(int argc, char **argv) {
         std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
                                           physical_device, required_extensions, required_features, optional_features);
 
+    // TODO: Replace ->get() methods with private fields and friend class declaration!
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
     load_octree_geometry(true);
     generate_octree_indices();
 
-    m_vertex_shader = std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Shader Octree",
-                                                        "shaders/main.vert.spv");
-    m_fragment_shader = std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Shader Octree",
-                                                          "shaders/main.frag.spv");
+    m_vertex_shader =
+        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
+    m_fragment_shader =
+        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Octree", "shaders/main.frag.spv");
+
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+
+    m_camera->set_movement_speed(5.0f);
+    m_camera->set_rotation_speed(0.5f);
 
     m_window->show();
     recreate_swapchain();
@@ -274,20 +279,20 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
     const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
     if (wmodestr == "windowed") {
-        m_window_mode = WindowMode::WINDOWED;
+        m_wnd_mode = WindowMode::WINDOWED;
     } else if (wmodestr == "windowed_fullscreen") {
-        m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
+        m_wnd_mode = WindowMode::WINDOWED_FULLSCREEN;
     } else if (wmodestr == "fullscreen") {
-        m_window_mode = WindowMode::FULLSCREEN;
+        m_wnd_mode = WindowMode::FULLSCREEN;
     } else {
         spdlog::warn("Invalid application window mode: {}", wmodestr);
-        m_window_mode = WindowMode::WINDOWED;
+        m_wnd_mode = WindowMode::WINDOWED;
     }
 
-    m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
-    m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
-    m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
-    spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
+    m_wnd_width = toml::find<int>(renderer_configuration, "application", "window", "width");
+    m_wnd_height = toml::find<int>(renderer_configuration, "application", "window", "height");
+    m_wnd_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
+    spdlog::trace("Window: {}, {} x {}", m_wnd_title, m_wnd_width, m_wnd_height);
 
     m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
 
@@ -377,13 +382,6 @@ void Application::recreate_swapchain() {
     m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 
-    // TODO: Do we really have to recreate the camera every time we recreate swapchain?
-    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
-                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
-
-    m_camera->set_movement_speed(5.0f);
-    m_camera->set_rotation_speed(0.5f);
-
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_render_graph.get(), m_back_buffer,
                                                                  m_msaa_color, [&]() { update_imgui_overlay(); });
@@ -392,8 +390,8 @@ void Application::recreate_swapchain() {
 }
 
 void Application::render_frame() {
-    if (m_window_resized) {
-        m_window_resized = false;
+    if (m_wnd_resized) {
+        m_wnd_resized = false;
         recreate_swapchain();
         return;
     }
@@ -446,8 +444,7 @@ void Application::setup_render_graph() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
-            // We update the vertex buffer together with the index buffer
-            // to keep data consistent across frames
+            // Update the vertex buffer together with the index buffer to keep data consistent across frames
             m_vertex_buffer.lock()->request_update(m_octree_vertices);
             m_index_buffer.lock()->request_update(m_octree_indices);
         }
@@ -520,8 +517,7 @@ void Application::setup_render_graph() {
                             })
                             .set_depth_test(true)
                             .set_on_record([&](const CommandBuffer &cmd_buf) {
-                                cmd_buf
-                                    .bind_pipeline(*m_octree_pipeline)
+                                cmd_buf.bind_pipeline(*m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)
                                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
@@ -556,7 +552,7 @@ void Application::setup_window_and_input_callbacks() {
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
         spdlog::trace("Frame buffer resize callback called. window width: {}, height: {}", width, height);
-        app->m_window_resized = true;
+        app->m_wnd_resized = true;
     };
 
     m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
