@@ -97,6 +97,7 @@ private:
     void check_octree_collisions();
     void process_mouse_input();
     void process_keyboard_input();
+    void initialize_spdlog();
 
 public:
     Application(int argc, char **argv);

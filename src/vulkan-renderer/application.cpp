@@ -13,6 +13,10 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 #include <random>
@@ -43,6 +47,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(const VkDebugUtilsMessag
 }
 
 Application::Application(int argc, char **argv) {
+    initialize_spdlog();
+
     spdlog::trace("Initialising vulkan-renderer");
 
     tools::CommandLineArgumentParser cla_parser;
@@ -65,6 +71,7 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating Vulkan instance");
 
+    // Management of VkDebugUtilsMessengerCallbackDataEXT is part of the instance wrapper class
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers,
@@ -86,20 +93,12 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating window surface");
 
-    // The user can specify with "--gpu <number>" which graphics card to prefer.
+    // The user can specify with "--gpu <index>" which graphics card to prefer (index starts from 0)
     auto preferred_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
     if (preferred_graphics_card) {
-        spdlog::trace("Preferential graphics card index {} specified", *preferred_graphics_card);
-    }
-
-    bool display_graphics_card_info = true;
-
-    // If the user specified command line argument "--nostats", no information will be
-    // displayed about all the graphics cards which are available on the system.
-    const auto hide_gpu_stats = cla_parser.arg<bool>("--no-stats");
-    if (hide_gpu_stats.value_or(false)) {
-        spdlog::trace("--no-stats specified, no extended information about graphics cards will be shown");
-        display_graphics_card_info = false;
+        spdlog::trace("Preferential gpu index {} specified", *preferred_graphics_card);
+    } else {
+        spdlog::trace("No user preferred gpu index specified");
     }
 
     // If the user specified command line argument "--vsync", the presentation engine waits
@@ -160,17 +159,22 @@ Application::Application(int argc, char **argv) {
                                 : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->get(),
                                                                              required_features, required_extensions);
 
+    // TODO: Implement on_extension_unavailable and on_feature_unavailable callback
     m_device =
         std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
                                           physical_device, required_extensions, required_features, optional_features);
 
     // TODO: Replace ->get() methods with private fields and friend class declaration!
+    // TODO: API style like this: m_swapchain = m_device->create_swapchain(m_surface, m_window, m_vsync_enabled);
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
     load_octree_geometry(true);
     generate_octree_indices();
 
+    // TODO: Consistent design: object name must not be empty!
+    // TODO: Uniform API style like this: m_vertex_shader = m_device->create_vertex(?)_shader("Octree",
+    // "shaders/main.vert.spv");
     m_vertex_shader =
         std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
     m_fragment_shader =
@@ -232,6 +236,23 @@ void Application::generate_octree_indices() {
     spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
                   old_vertices.size(), m_octree_vertices.size());
     spdlog::trace("Total indices {} ", m_octree_indices.size());
+}
+
+void Application::initialize_spdlog() {
+    spdlog::init_thread_pool(8192, 2);
+
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("vulkan-renderer.log", true);
+    auto vulkan_renderer_log =
+        std::make_shared<spdlog::async_logger>("vulkan-renderer", spdlog::sinks_init_list{console_sink, file_sink},
+                                               spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    vulkan_renderer_log->set_level(spdlog::level::trace);
+    vulkan_renderer_log->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%-10n] %v");
+    vulkan_renderer_log->flush_on(spdlog::level::trace);
+
+    spdlog::set_default_logger(vulkan_renderer_log);
+
+    spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 }
 
 void Application::key_callback(GLFWwindow * /*window*/, int key, int, int action, int /*mods*/) {
@@ -375,11 +396,6 @@ void Application::recreate_swapchain() {
 
     m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
-
-    // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_render_graph.get(), m_back_buffer,
-                                                                 m_msaa_color, [&]() { update_imgui_overlay(); });
-
     m_render_graph->compile();
 }
 
@@ -403,6 +419,7 @@ void Application::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
+        // TODO: Incorporate this also into rendergraph? Might be a little too much though
         process_keyboard_input();
         process_mouse_input();
         m_camera->update(m_time_passed);
@@ -415,20 +432,15 @@ void Application::run() {
 void Application::setup_render_graph() {
     using render_graph::TextureUsage;
 
-    m_back_buffer = m_render_graph->add_texture("Color",                   //
-                                                TextureUsage::BACK_BUFFER, //
-                                                m_swapchain->image_format());
+    m_back_buffer = m_render_graph->add_texture("Color", TextureUsage::BACK_BUFFER, m_swapchain->image_format());
 
-    m_msaa_color = m_render_graph->add_texture("MSAA color",                   //
-                                               TextureUsage::MSAA_BACK_BUFFER, //
-                                               m_swapchain->image_format());
+    m_msaa_color =
+        m_render_graph->add_texture("MSAA-Color", TextureUsage::MSAA_BACK_BUFFER, m_swapchain->image_format());
 
-    m_depth_buffer = m_render_graph->add_texture("Depth",                            //
-                                                 TextureUsage::DEPTH_STENCIL_BUFFER, //
-                                                 VK_FORMAT_D32_SFLOAT_S8_UINT);
+    m_depth_buffer =
+        m_render_graph->add_texture("Depth", TextureUsage::DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    m_msaa_depth = m_render_graph->add_texture("MSAA depth",                            //
-                                               TextureUsage::MSAA_DEPTH_STENCIL_BUFFER, //
+    m_msaa_depth = m_render_graph->add_texture("MSAA-Depth", TextureUsage::MSAA_DEPTH_STENCIL_BUFFER,
                                                VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     using render_graph::BufferType;
@@ -438,6 +450,7 @@ void Application::setup_render_graph() {
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
+
             // Update the vertex buffer together with the index buffer to keep data consistent across frames
             m_vertex_buffer.lock()->request_update(m_octree_vertices);
             m_index_buffer.lock()->request_update(m_octree_indices);
@@ -524,6 +537,10 @@ void Application::setup_render_graph() {
                             .build("Octree");
         return m_octree_pass;
     });
+
+    // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_render_graph.get(), m_back_buffer,
+                                                                 m_msaa_color, [&]() { update_imgui_overlay(); });
 }
 
 void Application::setup_window_and_input_callbacks() {
@@ -610,15 +627,15 @@ void Application::update_imgui_overlay() {
     ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(wrapper::Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(wrapper::Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_PATCH(wrapper::Instance::REQUIRED_VK_API_VERSION));
-    const auto cam_pos = m_camera->position();
+    const auto &cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
-    const auto cam_rot = m_camera->rotation();
+    const auto &cam_rot = m_camera->rotation();
     ImGui::Text("Camera rotation: (%.2f, %.2f, %.2f)", cam_rot.x, cam_rot.y, cam_rot.z);
-    const auto cam_front = m_camera->front();
+    const auto &cam_front = m_camera->front();
     ImGui::Text("Camera vector front: (%.2f, %.2f, %.2f)", cam_front.x, cam_front.y, cam_front.z);
-    const auto cam_right = m_camera->right();
+    const auto &cam_right = m_camera->right();
     ImGui::Text("Camera vector right: (%.2f, %.2f, %.2f)", cam_right.x, cam_right.y, cam_right.z);
-    const auto cam_up = m_camera->up();
+    const auto &cam_up = m_camera->up();
     ImGui::Text("Camera vector up (%.2f, %.2f, %.2f)", cam_up.x, cam_up.y, cam_up.z);
     ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
     const auto cam_fov = m_camera->fov();

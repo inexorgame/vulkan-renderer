@@ -8,10 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// RAII wrapper class for VkInstance
+/// RAII wrapper class for VkInstance and VkDebugUtilsMessengerEXT
 class Instance {
 private:
-    VkInstance m_instance{VK_NULL_HANDLE};
+    VkInstance m_inst{VK_NULL_HANDLE};
     VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
 
 public:
@@ -45,13 +45,15 @@ public:
     Instance(const Instance &) = delete;
     Instance(Instance &&) noexcept;
 
+    /// Call vkDestroyDebugUtilsMessengerEXT and vkDestroyInstance
     ~Instance();
 
     Instance &operator=(const Instance &) = delete;
     Instance &operator=(Instance &&) = default;
 
+    // TODO: Remove get methods and use access to private members via friend declarations!
     [[nodiscard]] VkInstance instance() const {
-        return m_instance;
+        return m_inst;
     }
 };
 

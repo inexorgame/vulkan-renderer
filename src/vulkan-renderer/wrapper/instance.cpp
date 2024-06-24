@@ -219,16 +219,16 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     });
 
     // Note that an internal debug name will be assigned to the instance inside of the device wrapper
-    if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
+    if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_inst); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);
     }
 
-    volkLoadInstanceOnly(m_instance);
+    volkLoadInstanceOnly(m_inst);
 
     // Note that we can only call is_extension_supported afer volkLoadInstanceOnly!
     if (!is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
         // Don't forget to destroy the instance before throwing the exception!
-        vkDestroyInstance(m_instance, nullptr);
+        vkDestroyInstance(m_inst, nullptr);
         throw std::runtime_error("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
     }
 
@@ -242,10 +242,10 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         .pUserData = nullptr,
     });
 
-    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_debug_callback);
+    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_inst, &dbg_messenger_ci, nullptr, &m_debug_callback);
         result != VK_SUCCESS) {
         // Don't forget to destroy the instance before throwing the exception!
-        vkDestroyInstance(m_instance, nullptr);
+        vkDestroyInstance(m_inst, nullptr);
         throw VulkanException(
             "Error: Could not create Vulkan validation layer debug callback! (vkCreateDebugUtilsMessengerEXT failed!)",
             result);
@@ -253,13 +253,13 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 }
 
 Instance::Instance(Instance &&other) noexcept {
-    m_instance = std::exchange(other.m_instance, nullptr);
+    m_inst = std::exchange(other.m_inst, nullptr);
     m_debug_callback = std::exchange(other.m_debug_callback, nullptr);
 }
 
 Instance::~Instance() {
-    vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_callback, nullptr);
-    vkDestroyInstance(m_instance, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(m_inst, m_debug_callback, nullptr);
+    vkDestroyInstance(m_inst, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
