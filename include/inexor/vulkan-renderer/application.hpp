@@ -90,14 +90,17 @@ private:
     /// @brief file_name The TOML configuration file.
     /// @note It was collectively decided not to use JSON for configuration files.
     void load_toml_configuration_file(const std::string &file_name);
+
+    void check_octree_collisions();
+    void initialize_spdlog();
+
     /// @param initialize Initialize worlds with a fixed seed, which is useful for benchmarking and testing
     void load_octree_geometry(bool initialize);
+
+    void process_keyboard_input();
+    void process_mouse_input();
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
-    void check_octree_collisions();
-    void process_mouse_input();
-    void process_keyboard_input();
-    void initialize_spdlog();
 
 public:
     Application(int argc, char **argv);

@@ -392,11 +392,13 @@ void Application::recreate_swapchain() {
     int window_height = 0;
     glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
 
-    m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
+    m_swapchain->setup(window_width, window_height, m_vsync_enabled);
 
+    // TODO: Unified API style like this: m_device->create_rendergraph(m_swapchain);
+    // TODO: Maybe make RenderGraph constructor (and others) private and only allow device wrapper to call it?
     m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device, *m_swapchain);
+
     setup_render_graph();
-    m_render_graph->compile();
 }
 
 void Application::render_frame() {
@@ -541,6 +543,8 @@ void Application::setup_render_graph() {
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_render_graph.get(), m_back_buffer,
                                                                  m_msaa_color, [&]() { update_imgui_overlay(); });
+
+    m_render_graph->compile();
 }
 
 void Application::setup_window_and_input_callbacks() {

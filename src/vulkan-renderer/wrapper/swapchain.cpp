@@ -20,7 +20,7 @@ Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     m_img_available = std::make_unique<synchronization::Semaphore>(m_device, "Swapchain image available");
-    setup_swapchain(width, height, vsync_enabled);
+    setup(width, height, vsync_enabled);
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
@@ -41,7 +41,7 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain
-            setup_swapchain(m_extent.width, m_extent.height, m_vsync_enabled);
+            setup(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
             throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
         }
@@ -171,7 +171,7 @@ void Swapchain::present() {
     if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
-            setup_swapchain(m_extent.width, m_extent.height, m_vsync_enabled);
+            setup(m_extent.width, m_extent.height, m_vsync_enabled);
         } else {
             // Exception is thrown if result is not VK_SUCCESS but also not VK_SUBOPTIMAL_KHR
             throw VulkanException("Error: vkQueuePresentKHR failed!", result);
@@ -179,7 +179,7 @@ void Swapchain::present() {
     }
 }
 
-void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
+void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
     const auto caps = m_device.get_surface_capabilities(m_surface);
     m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.physical_device(), m_surface));
     const VkExtent2D requested_extent{.width = width, .height = height};
