@@ -43,15 +43,22 @@ private:
     std::uint32_t m_channels{0};
     std::uint32_t m_mip_levels{0};
 
-    std::optional<std::function<void()>> m_on_update{std::nullopt};
+    std::optional<std::function<void()>> m_on_init;
+    std::optional<std::function<void()>> m_on_update;
 
 public:
     /// Default constructor
     /// @param name The internal denug name of the texture inside of the rendergraph (must not be empty)
     /// @param usage The internal usage of the texture inside of the rendergraph
     /// @param format The format of the texture
-    /// @param on_update An optional update function (``std::nullopt`` by default, meaning no updates to this buffer)
-    Texture(std::string name, TextureUsage usage, VkFormat format, std::optional<std::function<void()>> on_update);
+    /// @param on_init The init function of the texture (``std::nullopt`` by default)
+    /// @note There are several ways a texture can be initialized inside of rendergraph. A depth buffer for example does
+    /// not require an on_init function, as rendergraph creates it internally. A static textures requires an on_init
+    /// function, but no on_update function. A dynamic texture requires on_init and on_update.
+    /// @param on_update An optional update function of the texture (``std::nullopt`` by default)
+    Texture(std::string name, TextureUsage usage, VkFormat format,
+            std::optional<std::function<void()>> on_init = std::nullopt,
+            std::optional<std::function<void()>> on_update = std::nullopt);
 
     Texture(const Texture &) = delete;
     Texture(Texture &&other) noexcept;
@@ -60,8 +67,8 @@ public:
     Texture &operator=(const Texture &) = delete;
     Texture &operator=(Texture &&) = delete;
 
-    // TODO: Implement
-    void request_update(const void *texture_src_data, const std::size_t texture_src_data_size) {
+    // TODO: Implement (In what API style though?)
+    void request_update(const void *src_data, const std::size_t src_data_size) {
         // TODO: Check if source data is nullptr
         // TODO: Check if size is 0
     }

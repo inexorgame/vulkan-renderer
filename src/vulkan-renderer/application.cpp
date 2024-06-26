@@ -172,9 +172,9 @@ Application::Application(int argc, char **argv) {
     load_octree_geometry(true);
     generate_octree_indices();
 
-    // TODO: Consistent design: object name must not be empty!
     // TODO: Uniform API style like this: m_vertex_shader = m_device->create_vertex(?)_shader("Octree",
-    // "shaders/main.vert.spv");
+    // "shaders/main.vert.spv"); (This would also mean we have a std::weak_ptr, and the shared_ptr lives in Device
+    // wrapper only!
     // TODO: Same idea here: make constructor of Shader private and allow friend class Rendergraph only?
     m_vertex_shader =
         std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
@@ -388,11 +388,11 @@ void Application::recreate_swapchain() {
     // Query the framebuffer size here again although the window width is set during framebuffer resize callback
     // The reason for this is that the framebuffer size could already be different again because we missed a poll
     // This seems to be an issue on Linux only though
-    int window_width = 0;
-    int window_height = 0;
-    glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
+    int wnd_width = 0;
+    int wnd_height = 0;
+    glfwGetFramebufferSize(m_window->get(), &wnd_width, &wnd_height);
 
-    m_swapchain->setup(window_width, window_height, m_vsync_enabled);
+    m_swapchain->setup(wnd_width, wnd_height, m_vsync_enabled);
 
     // TODO: Unified API style like this: m_device->create_rendergraph(m_swapchain);
     // TODO: Maybe make RenderGraph constructor (and others) private and only allow device wrapper to call it?
@@ -407,7 +407,6 @@ void Application::render_frame() {
         recreate_swapchain();
         return;
     }
-
     m_render_graph->render();
 
     if (auto fps_value = m_fps_counter.update()) {
@@ -431,20 +430,15 @@ void Application::run() {
 }
 
 void Application::setup_render_graph() {
-    using render_graph::TextureUsage;
+    using render_graph::TextureUsage::BACK_BUFFER;
+    using render_graph::TextureUsage::DEPTH_STENCIL_BUFFER;
+    using render_graph::TextureUsage::MSAA_BACK_BUFFER;
+    using render_graph::TextureUsage::MSAA_DEPTH_STENCIL_BUFFER;
 
-    m_back_buffer = m_render_graph->add_texture("Color", TextureUsage::BACK_BUFFER, m_swapchain->image_format());
-
-    m_msaa_color =
-        m_render_graph->add_texture("MSAA-Color", TextureUsage::MSAA_BACK_BUFFER, m_swapchain->image_format());
-
-    m_depth_buffer =
-        m_render_graph->add_texture("Depth", TextureUsage::DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
-
-    m_msaa_depth = m_render_graph->add_texture("MSAA-Depth", TextureUsage::MSAA_DEPTH_STENCIL_BUFFER,
-                                               VK_FORMAT_D32_SFLOAT_S8_UINT);
-
-    using render_graph::BufferType;
+    m_back_buffer = m_render_graph->add_texture("Color", BACK_BUFFER, m_swapchain->image_format());
+    m_msaa_color = m_render_graph->add_texture("MSAA-Color", MSAA_BACK_BUFFER, m_swapchain->image_format());
+    m_depth_buffer = m_render_graph->add_texture("Depth", DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    m_msaa_depth = m_render_graph->add_texture("MSAA-Depth", MSAA_DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     const std::vector<VkVertexInputAttributeDescription> vert_input_attr_desc{{
         {
@@ -476,16 +470,8 @@ void Application::setup_render_graph() {
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     m_index_buffer = m_render_graph->add_index_buffer("Octree");
 
-    // -------------------------------------------------------------------------------------------------
-    // TODO: Delete this if not required (improves simplicity)
-    // Update the vertex buffer and index buffer at initialization
-    // NOTE: We must update the vertex buffer together with the index buffer to keep data consistent
-    m_vertex_buffer.lock()->request_update(m_octree_vertices);
-    m_index_buffer.lock()->request_update(m_octree_indices);
-    // -------------------------------------------------------------------------------------------------
-
     m_uniform_buffer = m_render_graph->add_uniform_buffer("Matrices", [&]() {
-        // TODO: Update model matrix
+        // TODO: Update model matrix if required
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
@@ -497,6 +483,7 @@ void Application::setup_render_graph() {
     m_render_graph->add_graphics_pipeline(
         [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
+                                    // TODO: Default this?
                                     .add_color_blend_attachment({
                                         .blendEnable = VK_FALSE,
                                         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
@@ -523,7 +510,6 @@ void Application::setup_render_graph() {
     using wrapper::commands::CommandBuffer;
 
     m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        // TODO: Should graphics pass be owned by rendergraph or other code place? (shared_ptr or weak_ptr?)
         m_octree_pass = builder
                             .set_clear_value({
                                 .color = {1.0f, 0.0f, 0.0f},

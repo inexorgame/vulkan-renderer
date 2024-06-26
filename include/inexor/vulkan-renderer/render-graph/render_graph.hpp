@@ -237,15 +237,15 @@ public:
             data, std::move(on_update));
     }
 
-    // TODO: Implement dynamic textures!
-
-    /// Add a texture resource to the rendergraph
+    /// Add a texture to the rendergraph
     /// @param name The name of the texture (must not be empty)
     /// @param uage The texture usage inside of rendergraph
     /// @param format The image format of the texture
-    /// @param on_update The update callable of the texture
-    /// @return A weak pointer to the texture resource that was created
+    /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
+    /// @param on_update The update function of the texture (``std::nullopt`` by default)
+    /// @return A weak pointer to the texture that was created
     [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
+                                                     std::optional<std::function<void()>> on_init = std::nullopt,
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the rendergraph

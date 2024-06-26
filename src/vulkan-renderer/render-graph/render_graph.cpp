@@ -35,8 +35,13 @@ RenderGraph::add_vertex_buffer(std::string name, std::vector<VkVertexInputAttrib
 }
 
 std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
+                                                std::optional<std::function<void()>> on_init,
                                                 std::optional<std::function<void()>> on_update) {
-    m_textures.emplace_back(std::make_shared<Texture>(std::move(name), usage, format, std::move(on_update)));
+    if (name.empty()) {
+        throw std::invalid_argument("Error: Texture name must not be empty!");
+    }
+    m_textures.emplace_back(
+        std::make_shared<Texture>(std::move(name), usage, format, std::move(on_init), std::move(on_update)));
     return m_textures.back();
 }
 
