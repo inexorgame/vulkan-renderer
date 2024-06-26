@@ -164,6 +164,7 @@ private:
 
 public:
     /// Default constructor
+    /// @note device and swapchain are not a const reference because rendergraph needs to modify both
     /// @param device The device wrapper
     /// @param swapchain The swapchain wrapper
     RenderGraph(Device &device, Swapchain &swapchain);
@@ -175,15 +176,36 @@ public:
     RenderGraph &operator=(const RenderGraph &) = delete;
     RenderGraph &operator=(RenderGraph &&) = delete;
 
-    /// Add a buffer (vertex, index, or uniform buffer) resource to the rendergraph
-    /// @param name The internal name of the buffer resource (must not be empty)
-    /// @param type The internal buffer usage of the buffer
-    /// @param on_update An optional buffer resource update function (``std::nullopt`` by default)
-    /// @note Not every buffer must have an update function because index buffers should be updated with vertex buffers
-    /// @exception std::runtime_error Internal debug name is empty
-    /// @return A weak pointer to the buffer resource that was just created
-    [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type,
-                                                   std::optional<std::function<void()>> on_update = std::nullopt);
+    /// Add an index buffer to rendergraph
+    /// @note The Vulkan index type is set to ``VK_INDEX_TYPE_UINT32`` by default and it not exposed as parameter
+    /// @param name The name of the index buffer
+    /// @param on_update The update function of the index buffer
+    /// @return A weak pointer to the buffer resource that was created
+    /// @note The rendergraph owns the memory of the buffer resource, hence we return a weak pointer
+    [[nodiscard]] std::weak_ptr<Buffer> add_index_buffer(std::string name,
+                                                         std::optional<std::function<void()>> on_update = std::nullopt);
+
+    /// Add a uniform buffer to rendergraph
+    /// @param name The name of the uniform buffer
+    /// @param on_update The update function of the uniform buffer
+    /// @return A weak pointer to the buffer resource that was created
+    /// @note The rendergraph owns the memory of the buffer resource, hence we return a weak pointer
+    [[nodiscard]] std::weak_ptr<Buffer>
+    add_uniform_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
+
+    /// Add a vertex buffer to rendergraph
+    /// @param name The name of the vertex buffer
+    /// @param vert_input_attr_descs The vertex input attribute descriptions
+    /// @note You might cleverly noticed that ``VkVertexInputAttributeDescription`` is not required to create a buffer.
+    /// Why then is it a parameter here? The vertex input attribute description is stored in the buffer so that when
+    /// rendergraph gets compiled and builds the graphics pipelines, it can read ``VkVertexInputAttributeDescription``
+    /// from the buffers to create the graphics pipelines.
+    /// @param on_update The update function of the vertex buffer
+    /// @return A weak pointer to the buffer resource that was created
+    /// @note The rendergraph owns the memory of the buffer resource, hence we return a weak pointer
+    [[nodiscard]] std::weak_ptr<Buffer>
+    add_vertex_buffer(std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
+                      std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a new graphics pass to the rendergraph
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
@@ -199,7 +221,7 @@ public:
     /// @tparam T The data type of the push constant range
     /// @param data A pointer to the data of the push constant range
     /// @param on_update The update function of the push constant range
-    /// @param stage_flags The shader stage flags
+    /// @param stage_flags The shader stage flags (``VK_SHADER_STAGE_VERTEX_BIT`` by default)
     /// @param offset The offset in bytes (``0`` by default)
     /// @return The this pointer, allowing for methods to be chained as a builder pattern
     template <typename PushConstantDataType>
@@ -215,6 +237,8 @@ public:
             data, std::move(on_update));
     }
 
+    // TODO: Implement dynamic textures!
+
     /// Add a texture resource to the rendergraph
     /// @param name The name of the texture (must not be empty)
     /// @param uage The texture usage inside of rendergraph
@@ -224,13 +248,13 @@ public:
     [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
-    /// Compile the entire rendergraph
+    /// Compile the rendergraph
     void compile();
 
     /// Render a frame
     void render();
 
-    /// Update all the rendering data (buffers, textures...)
+    /// Update rendering data like buffers or textures
     void update_data();
 };
 

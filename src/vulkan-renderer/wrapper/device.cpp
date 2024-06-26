@@ -477,7 +477,7 @@ commands::CommandPool &Device::thread_graphics_pool() const {
     // Note that thread_graphics_pool is implicitely static!
     thread_local commands::CommandPool *thread_graphics_pool = nullptr; // NOLINT
     if (thread_graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<commands::CommandPool>(*this, "Graphics Pool");
+        auto cmd_pool = std::make_unique<commands::CommandPool>(*this, "Graphics");
         std::scoped_lock locker(m_mutex);
         thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }

@@ -8,14 +8,30 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Buffer::Buffer(const Device &device, std::string name, const BufferType type,
+Buffer::Buffer(const Device &device, std::string name, std::optional<std::function<void()>> on_update)
+    : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)),
+      m_buffer_type(BufferType::UNIFORM_BUFFER) {
+    // TODO: Set buffer usage flags!
+}
+
+Buffer::Buffer(const Device &device, std::string name,
+               std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
                std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(name)), m_buffer_type(type), m_on_update(std::move(on_update)) {
-    // TODO: Set VMA memory usage and Vulkan buffer usage flags
+    : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)),
+      m_buffer_type(BufferType::VERTEX_BUFFER) {
+    // TODO: Set buffer usage flags!
+}
+
+Buffer::Buffer(const Device &device, std::string name, VkIndexType index_type,
+               std::optional<std::function<void()>> on_update)
+    : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)), m_index_type(index_type),
+      m_buffer_type(BufferType::INDEX_BUFFER) {
+    // TODO: Set buffer usage flags!
 }
 
 Buffer::Buffer(Buffer &&other) noexcept
     : m_device(other.m_device), m_buffer_usage(other.m_buffer_usage), m_mem_usage(other.m_mem_usage) {
+    // TODO: Fix me!
     m_name = std::move(other.m_name);
     m_buffer_type = other.m_buffer_type;
     m_on_update = std::move(other.m_on_update);
@@ -74,12 +90,14 @@ void Buffer::update_buffer() {
         // TODO: Batching of pipeline memory barriers for staging buffer through rendergraph?
         break;
     }
-    case BufferType::STAGING_BUFFER: {
-        // A staging buffer does not require updates, as it itself is used to update other buffers
-        // Note that staging buffers are managed inside of device wrapper, not rendergraph, and we currently do not
-        // re-use staging buffers
-        break;
-    }
+        /*
+        case BufferType::STAGING_BUFFER: {
+            // A staging buffer does not require updates, as it itself is used to update other buffers
+            // Note that staging buffers are managed inside of device wrapper, not rendergraph, and we currently do not
+            // re-use staging buffers
+            break;
+        }
+        */
     }
 }
 

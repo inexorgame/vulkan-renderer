@@ -175,6 +175,7 @@ Application::Application(int argc, char **argv) {
     // TODO: Consistent design: object name must not be empty!
     // TODO: Uniform API style like this: m_vertex_shader = m_device->create_vertex(?)_shader("Octree",
     // "shaders/main.vert.spv");
+    // TODO: Same idea here: make constructor of Shader private and allow friend class Rendergraph only?
     m_vertex_shader =
         std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
     m_fragment_shader =
@@ -185,7 +186,6 @@ Application::Application(int argc, char **argv) {
 
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
-
     m_window->show();
     recreate_swapchain();
 }
@@ -421,7 +421,6 @@ void Application::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
-        // TODO: Incorporate this also into rendergraph? Might be a little too much though
         process_keyboard_input();
         process_mouse_input();
         m_camera->update(m_time_passed);
@@ -447,7 +446,22 @@ void Application::setup_render_graph() {
 
     using render_graph::BufferType;
 
-    m_vertex_buffer = m_render_graph->add_buffer("Octree", BufferType::VERTEX_BUFFER, [&]() {
+    const std::vector<VkVertexInputAttributeDescription> vert_input_attr_desc{{
+        {
+            .location = 0,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(OctreeGpuVertex, position),
+        },
+        {
+            .location = 1,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(OctreeGpuVertex, color),
+        },
+    }};
+
+    m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
         // If the key N was pressed once, we generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
@@ -460,15 +474,18 @@ void Application::setup_render_graph() {
     });
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
-    m_index_buffer = m_render_graph->add_buffer("Octree", BufferType::INDEX_BUFFER);
+    m_index_buffer = m_render_graph->add_index_buffer("Octree");
 
+    // -------------------------------------------------------------------------------------------------
+    // TODO: Delete this if not required (improves simplicity)
     // Update the vertex buffer and index buffer at initialization
-    // Note that we update the vertex buffer together with the index buffer to keep data consistent
+    // NOTE: We must update the vertex buffer together with the index buffer to keep data consistent
     m_vertex_buffer.lock()->request_update(m_octree_vertices);
     m_index_buffer.lock()->request_update(m_octree_indices);
+    // -------------------------------------------------------------------------------------------------
 
-    m_uniform_buffer = m_render_graph->add_buffer("Matrices", BufferType::UNIFORM_BUFFER, [&]() {
-        // The model matrix is constant and doesn't need to be updated
+    m_uniform_buffer = m_render_graph->add_uniform_buffer("Matrices", [&]() {
+        // TODO: Update model matrix
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
@@ -477,7 +494,6 @@ void Application::setup_render_graph() {
 
     using wrapper::pipelines::GraphicsPipelineBuilder;
 
-    // TODO: How to associate pipeline layouts with pipelines?
     m_render_graph->add_graphics_pipeline(
         [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
@@ -493,20 +509,7 @@ void Application::setup_render_graph() {
                                             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                         },
                                     })
-                                    .set_vertex_input_attributes({
-                                        {
-                                            .location = 0,
-                                            .binding = 0,
-                                            .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                            .offset = offsetof(OctreeGpuVertex, position),
-                                        },
-                                        {
-                                            .location = 1,
-                                            .binding = 0,
-                                            .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                            .offset = offsetof(OctreeGpuVertex, color),
-                                        },
-                                    })
+                                    .set_vertex_input_attributes(vert_input_attr_desc)
                                     .set_viewport(m_swapchain->extent())
                                     .set_scissor(m_swapchain->extent())
                                     .set_pipeline_layout(pipeline_layout)
@@ -520,6 +523,7 @@ void Application::setup_render_graph() {
     using wrapper::commands::CommandBuffer;
 
     m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
+        // TODO: Should graphics pass be owned by rendergraph or other code place? (shared_ptr or weak_ptr?)
         m_octree_pass = builder
                             .set_clear_value({
                                 .color = {1.0f, 0.0f, 0.0f},

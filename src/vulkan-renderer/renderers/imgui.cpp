@@ -32,7 +32,26 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
     // TODO: Do we need this here?
     using render_graph::BufferType;
 
-    m_vertex_buffer = render_graph.add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
+    // This is required for both vertex buffer and the graphics pipeline
+    const std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs{{
+        {
+            .location = 0,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(ImDrawVert, pos),
+        },
+        {
+            .location = 1,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(ImDrawVert, uv),
+        },
+        {
+            .location = 2,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .offset = offsetof(ImDrawVert, col),
+        },
+    }};
+
+    m_vertex_buffer = render_graph.add_vertex_buffer("ImGui", vert_input_attr_descs, [&]() {
         // Update the user ImGui data
         m_on_update_user_data();
 
@@ -63,11 +82,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
         m_index_buffer.lock()->request_update(&m_index_data, sizeof(m_index_data));
     });
 
-    // Note that the index buffer is updated together with the vertex buffer to keep data consistent
-    // This means there is no update lambda here
-
-    // TODO: FIX ME!
-    m_index_buffer = render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, [] {});
+    m_index_buffer = render_graph.add_index_buffer("ImGui");
 
     render_graph.add_graphics_pipeline(
         [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
@@ -91,23 +106,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
                                            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                        },
                                    })
-                                   .set_vertex_input_attributes({
-                                       {
-                                           .location = 0,
-                                           .format = VK_FORMAT_R32G32_SFLOAT,
-                                           .offset = offsetof(ImDrawVert, pos),
-                                       },
-                                       {
-                                           .location = 1,
-                                           .format = VK_FORMAT_R32G32_SFLOAT,
-                                           .offset = offsetof(ImDrawVert, uv),
-                                       },
-                                       {
-                                           .location = 2,
-                                           .format = VK_FORMAT_R8G8B8A8_UNORM,
-                                           .offset = offsetof(ImDrawVert, col),
-                                       },
-                                   })
+                                   .set_vertex_input_attributes(vert_input_attr_descs)
                                    .add_shader(m_vertex_shader)
                                    .add_shader(m_fragment_shader)
                                    .set_pipeline_layout(pipeline_layout)
@@ -115,14 +114,11 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
             return m_imgui_pipeline;
         });
 
-    m_imgui_texture = render_graph.add_texture("ImGui font",                       //
-                                               render_graph::TextureUsage::NORMAL, //
-                                               VK_FORMAT_R8G8B8A8_UNORM,           //
-                                               [&]() {
-                                                   // Initialize the font texture
-                                                   m_imgui_texture.lock()->request_update(m_font_texture_data,
-                                                                                          m_font_texture_data_size);
-                                               });
+    m_imgui_texture =
+        render_graph.add_texture("ImGui-font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, [&]() {
+            // Initialize the font texture
+            m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
+        });
 
     render_graph.add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         m_imgui_pass = builder.reads_from_buffer(m_index_buffer)

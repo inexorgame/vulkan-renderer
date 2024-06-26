@@ -68,6 +68,8 @@ class Device {
     /// @note This method will create a command pool for the thread if it doesn't already exist
     commands::CommandPool &thread_graphics_pool() const;
 
+    /// TODO: Implement thread_local command pools for other queue types (transfer, compute, sparse binding..?)
+
 public:
     /// Pick the best physical device automatically
     /// @param physical_device_infos The data of the physical devices

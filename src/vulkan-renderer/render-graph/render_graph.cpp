@@ -15,9 +15,22 @@ namespace inexor::vulkan_renderer::render_graph {
 RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device) {}
 
-std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type,
-                                              std::optional<std::function<void()>> on_update) {
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), type, std::move(on_update)));
+std::weak_ptr<Buffer> RenderGraph::add_index_buffer(std::string name, std::optional<std::function<void()>> on_update) {
+    m_buffers.emplace_back(
+        std::make_shared<Buffer>(m_device, std::move(name), VK_INDEX_TYPE_UINT32, std::move(on_update)));
+    return m_buffers.back();
+}
+
+std::weak_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
+                                                      std::optional<std::function<void()>> on_update) {
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), std::move(on_update)));
+    return m_buffers.back();
+}
+
+std::weak_ptr<Buffer>
+RenderGraph::add_vertex_buffer(std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
+                               std::optional<std::function<void()>> on_update) {
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), std::move(vert_input_attr_descs)));
     return m_buffers.back();
 }
 
@@ -54,7 +67,9 @@ void RenderGraph::compile() {
 void RenderGraph::create_buffers() {
     for (const auto &buffer : m_buffers) {
         // Call the update lambda of the buffer
-        std::invoke(buffer->m_on_update.value());
+        if (buffer->m_on_update) {
+            std::invoke(buffer->m_on_update.value());
+        }
         // Create the buffer
         buffer->create_buffer();
     }
@@ -127,8 +142,7 @@ void RenderGraph::determine_pass_order() {
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass,
                                                  const bool is_first_pass, const bool is_last_pass,
                                                  const std::uint32_t img_index) {
-    // Start a new debug label for this graphics pass
-    // These debug labels are visible in RenderDoc
+    // Start a new debug label for this graphics pass (debug labels are visible in graphics debuggers like RenderDoc)
     // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
 
@@ -206,23 +220,25 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     }
 #endif
 
-    // Call the user-defined on_record lambda of the graphics pass
+    // Call the user-defined on_record function of the graphics pass
     // This is where the real rendering of the pass is happening
-    // Note that it is the responsibility of the programmer to bind the pipeline in the on_record lambda!
+    // NOTE: It is the responsibility of the programmer to bind the correct pipeline in the on_record lambda! This is
+    // not part of the rendergraph abstraction because during rendering binding pipelines can be arbitrarily complex.
+    // TODO: Implement binding only one (or several) pipelines at beginning of rendering, so there is partial
+    // abstraction
     std::invoke(pass.m_on_record, cmd_buf);
 
     // End dynamic rendering
     cmd_buf.end_rendering();
 
-    // If this is the last pass, transition the image layout the back buffer for presenting
+    // If this is the last graphics pass, transition the image layout of the back buffer for presenting
     if (is_last_pass) {
         cmd_buf.change_image_layout(m_swapchain.image(img_index),             //
                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, //
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
-    // End the debug label for this graphics pass
-    // These debug labels are visible in RenderDoc
+    // End the debug label for this graphics pass (debug labels are visible in graphics debuggers like RenderDoc)
     cmd_buf.end_debug_label_region();
 }
 
@@ -230,9 +246,9 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
     // TODO: Support multiple passes per command buffer, not just recording everything into one command buffer
     // TODO: Record command buffers in parallel
 
-    // Loop through all passes and record the command buffer for that pass
+    // Loop through all graphics passes and record their command buffer
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
-        // It's important to know if it's the first or last pass because of image layout transition for back buffer
+        // This is important to know because of image layout transitions for back buffer for example
         const bool is_first_pass = (pass_index == 0);
         const bool is_last_pass = (pass_index == m_graphics_passes.size());
         record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index], is_first_pass, is_last_pass, img_index);
@@ -240,7 +256,6 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
 }
 
 void RenderGraph::render() {
-    // TODO: Can't we turn this into an m_device.execute(); ?
     const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render");
     record_command_buffers(cmd_buf, m_swapchain.acquire_next_image_index());
     const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -256,7 +271,7 @@ void RenderGraph::render() {
 
 void RenderGraph::update_buffers() {
     for (const auto &buffer : m_buffers) {
-        // Call the update lambda of the buffer, if specified
+        // Call the update lambda of the buffer (if specified)
         if (buffer->m_on_update) {
             std::invoke(buffer->m_on_update.value());
         }
@@ -266,8 +281,8 @@ void RenderGraph::update_buffers() {
 
 void RenderGraph::update_textures() {
     for (const auto &texture : m_textures) {
+        // Call the update lambda of the texture (if specified)
         if (texture->m_on_update) {
-            // Call the update lambda of the texture
             std::invoke(texture->m_on_update.value());
         }
     }
@@ -283,8 +298,9 @@ void RenderGraph::update_descriptor_sets() {
 }
 
 void RenderGraph::update_push_constant_ranges() {
+    // TODO: Update push constant ranges in parallel
+    // Loop through all push constant ranges and call their update function
     for (const auto &push_constant : m_push_constant_ranges) {
-        // Call the update lambda of the push constant range
         std::invoke(push_constant->m_on_update);
     }
 }

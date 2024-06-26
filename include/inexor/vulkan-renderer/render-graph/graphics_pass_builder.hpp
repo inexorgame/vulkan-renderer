@@ -16,33 +16,33 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::render_graph {
 
-/// A builder class for graphics stages in the rendergraph
+/// A builder class for graphics passes in the rendergraph
 /// @warning Make sure that the order or add calls for buffers and textures matches the binding order!
 class GraphicsPassBuilder {
 private:
-    /// Indicates if the screen is cleared at the beginning of this stage
+    /// Indicates if the screen is cleared at the beginning of this pass
     std::optional<VkClearValue> m_clear_value;
-    /// Add members which describe data related to graphics stages here
+    /// Add members which describe data related to graphics passes here
     std::function<void(const wrapper::commands::CommandBuffer &)> m_on_record;
     /// Depth testing
     bool m_depth_test;
 
-    /// The buffers the graphics stage reads from
+    /// The buffers which are read by the graphics pass
     /// If the buffer's ``BufferType`` is ``UNIFORM_BUFFER``, a value for the shader stage flag must be specified,
     /// because uniform buffers can be read from vertex or fragment stage bit.
     BufferReads m_buffer_reads;
-    /// The textures the graphics stage reads from
+    /// The textures the graphics pass reads from
     TextureReads m_texture_reads;
-    /// The textures the graphics stage writes to
+    /// The textures the graphics pass writes to
     TextureWrites m_texture_writes;
-    /// The push constant ranges of the graphics stage
+    /// The push constant ranges of the graphics pass
     std::vector<std::pair<VkPushConstantRange, std::function<void()>>> m_push_constant_ranges;
 
     // TODO: Merge push constant ranges into one block and put it as member here?
     // TODO: Copy all data into one piece of memory and call vkCmdPushConstants only once?
     void compile_push_constants();
 
-    /// Reset all data of the graphics stage builder
+    /// Reset all data of the graphics pass builder
     void reset();
 
 public:
@@ -54,7 +54,7 @@ public:
     GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
     GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) noexcept;
 
-    /// Add a push constant range to the graphics stage
+    /// Add a push constant range to the graphics pass
     /// @param shader_stage The shader stage for the push constant range
     /// @param push_constant The push constant data
     /// @param on_update The update callable
@@ -74,14 +74,23 @@ public:
         return *this;
     }
 
-    /// Build the graphics stage and reset the builder's data
-    /// @param name The name of the graphics stage
-    /// @return The graphics stage which was created
-    [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name);
+    /// Build the graphics pass
+    /// @param name The name of the graphics pass
+    /// @return The graphics pass that was just created
+    [[nodiscard]] auto build(std::string name) {
+        auto graphics_pass = std::make_shared<GraphicsPass>(std::move(name), std::move(m_buffer_reads),
+                                                            std::move(m_texture_reads), std::move(m_texture_writes),
+                                                            std::move(m_on_record), std::move(m_clear_value));
+        // Don't forget to reset the builder automatically before returning the graphics pass that was just created
+        reset();
+        // Return the graphics pass that was created
+        return graphics_pass;
+    }
 
     // TODO: We must specify buffer reads for vertex and index buffers, but bind manually... is that good?
+    // TODO: std::optional<VkShaderStageFlagBits> or better default VkShaderStageFlagBits to VK_SHADER_STAGE_VERTEX_BIT?
 
-    /// Specifies that this pass reads from a buffer
+    /// Specify that the pass reads from a buffer
     /// @param buffer The buffer the pass reads from
     /// @param shader_stage The shader stage the buffer is read from
     /// @return A const reference to the this pointer (allowing method calls to be chained)
@@ -91,7 +100,7 @@ public:
         return *this;
     }
 
-    /// Specifies that this pass reads from a texture
+    /// Specify that the pass reads from a texture
     /// @param texture The texture the pass reads from
     /// @param shader_stage The shader stage the texture is read from
     /// @return A const reference to the this pointer (allowing method calls to be chained)
@@ -101,7 +110,7 @@ public:
         return *this;
     }
 
-    /// Specifies that this pass writes to a texture
+    /// Specify that the pass writes to a texture
     /// @param texture The texture the pass writes to
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &writes_to_texture(std::weak_ptr<Texture> texture) {
@@ -109,7 +118,7 @@ public:
         return *this;
     }
 
-    /// Set the clear status for the stage
+    /// Set the clear status for the pass
     /// @param clear_value The clear value for color and depth
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &set_clear_value(VkClearValue clear_value) {
@@ -118,15 +127,15 @@ public:
     }
 
     /// Enable or disable depth testing
-    /// @param depth_test ``true`` if depth testing is enabled for this stage
+    /// @param depth_test ``true`` if depth testing is enabled for this pass
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &set_depth_test(bool depth_test) {
         m_depth_test = depth_test;
         return *this;
     }
 
-    /// Set the function which will be called when the stage's command buffer is being recorded
-    /// @param on_record The function which will be called when the stage's command buffer is being recorded
+    /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
+    /// @param on_record The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &set_on_record(std::function<void(const wrapper::commands::CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);

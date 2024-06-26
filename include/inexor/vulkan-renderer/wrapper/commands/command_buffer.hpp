@@ -59,7 +59,10 @@ class CommandBuffer {
     [[nodiscard]] VkBuffer create_staging_buffer(const void *data, const VkDeviceSize data_size,
                                                  const std::string &name) const {
         // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
-        m_staging_bufs.emplace_back(m_device, name, render_graph::BufferType::STAGING_BUFFER);
+
+        // TODO: Create/Implement staging buffers!
+
+        // m_staging_bufs.emplace_back(m_device, name, render_graph::BufferType::STAGING_BUFFER);
         return m_staging_bufs.back().buffer();
     }
 
