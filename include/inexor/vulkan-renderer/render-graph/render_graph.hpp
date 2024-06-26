@@ -59,11 +59,9 @@ private:
     /// The graphics pass builder of the rendergraph
     GraphicsPassBuilder m_graphics_pass_builder{};
 
-    /// The callables which create the graphics passes used in the rendergraph
-    using GraphicsPassCreateCallable = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
-
-    /// The callables to create the graphics passes used in the rendergraph
-    std::vector<GraphicsPassCreateCallable> m_on_graphics_pass_create_callables;
+    /// The function used by the rendergraph to to create the graphics passes
+    using GraphicsPassCreateFunction = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
+    std::vector<GraphicsPassCreateFunction> m_on_graphics_pass_create_functions;
 
     /// The graphics passes used in the rendergraph
     /// This will be populated using m_on_graphics_pass_create_callables
@@ -76,11 +74,11 @@ private:
     GraphicsPipelineBuilder m_graphics_pipeline_builder;
 
     /// The callables which create the graphics pipelines used in the rendergraph
-    using GraphicsPipelineCreateCallable =
+    using GraphicsPipelineCreateFunction =
         std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, const VkPipelineLayout)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
-    std::vector<GraphicsPipelineCreateCallable> m_on_graphics_pipeline_create_callables;
+    std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;
 
     std::vector<std::unique_ptr<PipelineLayout>> m_graphics_pipeline_layouts;
 
@@ -210,12 +208,12 @@ public:
     /// Add a new graphics pass to the rendergraph
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     /// @note Move semantics is used to std::move on_pass_create
-    void add_graphics_pass(GraphicsPassCreateCallable on_pass_create);
+    void add_graphics_pass(GraphicsPassCreateFunction on_pass_create);
 
     /// Add a new graphics pipeline to the rendergraph
-    /// @param on_pipeline_create A callable to create the graphics pipeline using GraphicsPipelineBuilder
+    /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
     /// @note Move semantics is used to std::move on_pipeline_create
-    void add_graphics_pipeline(GraphicsPipelineCreateCallable on_pipeline_create);
+    void add_graphics_pipeline(GraphicsPipelineCreateFunction on_pipeline_create);
 
     /// Add a push constant range resource to the rendergraph
     /// @tparam T The data type of the push constant range

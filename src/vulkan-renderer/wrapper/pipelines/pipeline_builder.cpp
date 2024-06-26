@@ -78,7 +78,7 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
 
     assert(m_pipeline_layout);
 
-    auto new_graphics_pipeline =
+    auto graphics_pipeline =
         std::make_unique<GraphicsPipeline>(m_device,
                                            make_info<VkGraphicsPipelineCreateInfo>({
                                                // This is one of those rare cases where pNext is actually not nullptr!
@@ -101,9 +101,8 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
 
     // Reset the builder's data after creating the graphics pipeline
     reset();
-
-    // We must std::move the return value because it is a std::unique_ptr
-    return std::move(new_graphics_pipeline);
+    // Return the graphics pipeline we created
+    return graphics_pipeline;
 }
 
 void GraphicsPipelineBuilder::reset() {

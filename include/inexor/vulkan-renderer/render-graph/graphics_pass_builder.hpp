@@ -58,7 +58,7 @@ public:
     /// Add a push constant range to the graphics pass
     /// @param shader_stage The shader stage for the push constant range
     /// @param push_constant The push constant data
-    /// @param on_update The update callable
+    /// @param on_update The update function
     /// @param offset The offset in the push constant range
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename PushConstantDataType>

@@ -44,10 +44,10 @@ private:
     /// buffers, and uniform buffers. The instances of the Buffer wrapper class are managed by rendergraph only. One
     /// solution to deal with the different buffer types would be to use a BufferBase class and to make three distinct
     /// classes VertexBuffer, IndexBuffer, and UniformBuffer. However, we aimed for simplicity and wanted to avoid
-    /// polymorphism in the rendergraph for performance reasons. Therefore, we have chosen to use only one Buffer
-    /// wrapper class which contains members for all three different buffer types. The type of the buffer will be set
-    /// depending on which Buffer constructor is called by rendergraph. The actual memory management for the buffers is
-    /// done by Vulkan Memory Allocator (VMA) internally.
+    /// polymorphism in the rendergraph for performance reasons. We also refrained from using templates for this use
+    /// case. Therefore, we have chosen to use only one Buffer wrapper class which contains members for all three
+    /// different buffer types. The type of the buffer will be set depending on which Buffer constructor is called by
+    /// rendergraph. The actual memory management for the buffers is done by Vulkan Memory Allocator (VMA) internally.
     BufferType m_buffer_type;
 
     /// The buffer update function which is called by rendergraph to update the buffer's data. This update function is
