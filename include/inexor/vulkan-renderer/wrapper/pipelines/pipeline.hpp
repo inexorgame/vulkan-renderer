@@ -25,11 +25,10 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 /// RAII wrapper for VkPipeline
 // TODO: Compute pipelines
 class GraphicsPipeline {
-    // The CommandBuffer wrapper needs to access m_pipeline
-    friend commands::CommandBuffer;
-    friend render_graph::RenderGraph;
-
 private:
+    friend class commands::CommandBuffer;
+    friend class render_graph::RenderGraph;
+
     const Device &m_device;
     std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
     std::vector<VkPushConstantRange> m_push_constant_ranges;

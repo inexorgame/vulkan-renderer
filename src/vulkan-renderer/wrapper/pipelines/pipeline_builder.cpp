@@ -34,8 +34,11 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
     m_color_blend_attachment_states = std::move(other.m_color_blend_attachment_states);
 }
 
-std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
-    assert(!name.empty());
+std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
+    if (name.empty()) {
+        throw std::invalid_argument("Error: No name specified for graphics pipeline in GraphicsPipelineBuilder!");
+    }
+
     assert(!m_vertex_input_binding_descriptions.empty());
     assert(!m_vertex_input_attribute_descriptions.empty());
 
@@ -79,7 +82,7 @@ std::unique_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     assert(m_pipeline_layout);
 
     auto graphics_pipeline =
-        std::make_unique<GraphicsPipeline>(m_device,
+        std::make_shared<GraphicsPipeline>(m_device,
                                            make_info<VkGraphicsPipelineCreateInfo>({
                                                // This is one of those rare cases where pNext is actually not nullptr!
                                                .pNext = &m_pipeline_rendering_ci, // We use dynamic rendering

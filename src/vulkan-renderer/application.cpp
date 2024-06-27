@@ -172,15 +172,6 @@ Application::Application(int argc, char **argv) {
     load_octree_geometry(true);
     generate_octree_indices();
 
-    // TODO: Uniform API style like this: m_vertex_shader = m_device->create_vertex(?)_shader("Octree",
-    // "shaders/main.vert.spv"); (This would also mean we have a std::weak_ptr, and the shared_ptr lives in Device
-    // wrapper only!
-    // TODO: Same idea here: make constructor of Shader private and allow friend class Rendergraph only?
-    m_vertex_shader =
-        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
-    m_fragment_shader =
-        std::make_unique<wrapper::Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Octree", "shaders/main.frag.spv");
-
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
 
@@ -430,6 +421,8 @@ void Application::run() {
 }
 
 void Application::setup_render_graph() {
+    // TODO: Move to OctreeRenderer and ImGuiRenderer!
+
     using render_graph::TextureUsage::BACK_BUFFER;
     using render_graph::TextureUsage::DEPTH_STENCIL_BUFFER;
     using render_graph::TextureUsage::MSAA_BACK_BUFFER;
@@ -456,16 +449,21 @@ void Application::setup_render_graph() {
     }};
 
     m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
-        // If the key N was pressed once, we generate a new octree
+        // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
             generate_octree_indices();
 
             // Update the vertex buffer together with the index buffer to keep data consistent across frames
-            m_vertex_buffer.lock()->request_update(m_octree_vertices);
-            m_index_buffer.lock()->request_update(m_octree_indices);
+            m_vertex_buffer->request_update(m_octree_vertices);
+            m_index_buffer->request_update(m_octree_indices);
         }
     });
+
+    // TODO: How to prevent duplicate loading of shaders or how to deal with object lifetime?
+    // (std::unordered_map<std::string, std::shared_ptr<Shader>>)
+    m_octree_vert = m_render_graph->add_shader("Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
+    m_octree_frag = m_render_graph->add_shader("Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     m_index_buffer = m_render_graph->add_index_buffer("Octree");
@@ -475,15 +473,18 @@ void Application::setup_render_graph() {
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
-        m_uniform_buffer.lock()->request_update(m_mvp_matrices);
+        m_uniform_buffer->request_update(m_mvp_matrices);
     });
 
     using wrapper::pipelines::GraphicsPipelineBuilder;
 
+    // TODO: Move octree renderer out of here
+    // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
+    // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
     m_render_graph->add_graphics_pipeline(
         [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
-                                    // TODO: Default this?
+                                    // TODO: Default parameter values for this?
                                     .add_color_blend_attachment({
                                         .blendEnable = VK_FALSE,
                                         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
@@ -500,8 +501,8 @@ void Application::setup_render_graph() {
                                     .set_viewport(m_swapchain->extent())
                                     .set_scissor(m_swapchain->extent())
                                     .set_pipeline_layout(pipeline_layout)
-                                    .add_shader(*m_vertex_shader)
-                                    .add_shader(*m_fragment_shader)
+                                    .uses_shader(m_octree_vert)
+                                    .uses_shader(m_octree_frag)
                                     .build("Octree");
             return m_octree_pipeline;
         });
@@ -512,13 +513,15 @@ void Application::setup_render_graph() {
     m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
         m_octree_pass = builder
                             .set_clear_value({
+                                // TODO: Define default color values for the engine
                                 .color = {1.0f, 0.0f, 0.0f},
                             })
                             .set_depth_test(true)
                             .set_on_record([&](const CommandBuffer &cmd_buf) {
-                                cmd_buf.bind_pipeline(*m_octree_pipeline)
+                                cmd_buf.bind_pipeline(m_octree_pipeline)
                                     .bind_vertex_buffer(m_vertex_buffer)
                                     .bind_index_buffer(m_index_buffer)
+                                    // TODO: Offer overload which converts std::size_t to std::uint32_t
                                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
                             })
                             .reads_from_buffer(m_index_buffer)

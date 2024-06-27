@@ -48,7 +48,7 @@ private:
 
 public:
     /// Default constructor
-    /// @param name The internal denug name of the texture inside of the rendergraph (must not be empty)
+    /// @param name The internal debug name of the texture inside of the rendergraph (must not be empty)
     /// @param usage The internal usage of the texture inside of the rendergraph
     /// @param format The format of the texture
     /// @param on_init The init function of the texture (``std::nullopt`` by default)

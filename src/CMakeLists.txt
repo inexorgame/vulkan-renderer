@@ -18,10 +18,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/render-graph/graphics_pass_builder.cpp
     vulkan-renderer/render-graph/push_constant_range.cpp
     vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/shader.cpp
     vulkan-renderer/render-graph/texture.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
-    vulkan-renderer/tools/file.cpp
 
     vulkan-renderer/vk_tools/device_info.cpp
     vulkan-renderer/vk_tools/enumerate.cpp
@@ -32,7 +32,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/sampler.cpp
-    vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/window.cpp
     vulkan-renderer/wrapper/window_surface.cpp

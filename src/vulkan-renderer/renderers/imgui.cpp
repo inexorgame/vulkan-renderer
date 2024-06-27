@@ -3,8 +3,8 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -16,9 +16,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
                              const std::weak_ptr<render_graph::Texture> back_buffer,
                              const std::weak_ptr<render_graph::Texture> depth_buffer,
                              std::function<void()> on_update_user_data)
-    : m_device(device), m_vertex_shader(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGui", "shaders/ui.vert.spv"),
-      m_fragment_shader(m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "ImGui", "shaders/ui.frag.spv"),
-      m_on_update_user_data(std::move(on_update_user_data)) {
+    : m_device(device), m_on_update_user_data(std::move(on_update_user_data)) {
 
     spdlog::trace("Creating ImGui context");
     ImGui::CreateContext();
@@ -78,11 +76,13 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
         }
         // Update ImGui vertices and indices
         // Note that the index buffer does not have a separate update code, as it is updated here with vertices
-        m_vertex_buffer.lock()->request_update(&m_vertex_data, sizeof(m_vertex_data));
-        m_index_buffer.lock()->request_update(&m_index_data, sizeof(m_index_data));
+        m_vertex_buffer->request_update(&m_vertex_data, sizeof(m_vertex_data));
+        m_index_buffer->request_update(&m_index_data, sizeof(m_index_data));
     });
 
     m_index_buffer = render_graph.add_index_buffer("ImGui");
+    m_vertex_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
+    m_fragment_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
     render_graph.add_graphics_pipeline(
         [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
@@ -107,8 +107,8 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
                                        },
                                    })
                                    .set_vertex_input_attributes(vert_input_attr_descs)
-                                   .add_shader(m_vertex_shader)
-                                   .add_shader(m_fragment_shader)
+                                   .uses_shader(m_vertex_shader)
+                                   .uses_shader(m_fragment_shader)
                                    .set_pipeline_layout(pipeline_layout)
                                    .build("ImGui");
             return m_imgui_pipeline;
@@ -116,8 +116,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
 
     m_imgui_texture =
         render_graph.add_texture("ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, [&]() {
-            // Initialize the font texture
-            m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
+            m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size);
         });
 
     render_graph.add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
@@ -135,7 +134,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device, render_graph::Render
                                                             glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
                                                     })
                            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
-                               cmd_buf.bind_pipeline(*m_imgui_pipeline);
+                               cmd_buf.bind_pipeline(m_imgui_pipeline);
                                ImDrawData *draw_data = ImGui::GetDrawData();
                                if (draw_data == nullptr) {
                                    return;

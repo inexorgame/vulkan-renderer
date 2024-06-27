@@ -82,7 +82,6 @@ private:
     /// Create the buffer using Vulkan Memory Allocator (VMA) library
     void create_buffer();
 
-    // TODO: Only necessary for uniform buffers(?)
     void update_buffer();
 
     /// Call vmaDestroyBuffer

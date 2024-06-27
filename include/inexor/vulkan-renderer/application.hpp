@@ -43,13 +43,15 @@ private:
     std::vector<std::uint32_t> m_octree_indices;
 
     std::unique_ptr<render_graph::RenderGraph> m_render_graph;
-    std::weak_ptr<render_graph::Texture> m_back_buffer;
-    std::weak_ptr<render_graph::Texture> m_depth_buffer;
-    std::weak_ptr<render_graph::Texture> m_msaa_depth;
-    std::weak_ptr<render_graph::Texture> m_msaa_color;
-    std::weak_ptr<render_graph::Buffer> m_index_buffer;
-    std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
-    std::weak_ptr<render_graph::Buffer> m_uniform_buffer;
+    std::shared_ptr<render_graph::Texture> m_back_buffer;
+    std::shared_ptr<render_graph::Texture> m_depth_buffer;
+    std::shared_ptr<render_graph::Texture> m_msaa_depth;
+    std::shared_ptr<render_graph::Texture> m_msaa_color;
+    std::shared_ptr<render_graph::Buffer> m_index_buffer;
+    std::shared_ptr<render_graph::Buffer> m_vertex_buffer;
+    std::shared_ptr<render_graph::Buffer> m_uniform_buffer;
+    std::shared_ptr<render_graph::Shader> m_octree_vert;
+    std::shared_ptr<render_graph::Shader> m_octree_frag;
 
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_octree_pipeline;
     std::shared_ptr<render_graph::GraphicsPass> m_octree_pass;
@@ -59,9 +61,6 @@ private:
         glm::mat4 view{1.0f};
         glm::mat4 proj{1.0f};
     } m_mvp_matrices;
-
-    std::unique_ptr<wrapper::Shader> m_vertex_shader;
-    std::unique_ptr<wrapper::Shader> m_fragment_shader;
 
     void setup_render_graph();
     void generate_octree_indices();

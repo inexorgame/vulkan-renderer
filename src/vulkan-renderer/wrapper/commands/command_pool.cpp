@@ -43,20 +43,22 @@ const commands::CommandBuffer &CommandPool::request_command_buffer(const std::st
         if (cmd_buf->fence_status() == VK_SUCCESS) {
             // Reset the command buffer's fence to make it usable again
             cmd_buf->reset_fence();
-            // TODO: Set command buffer name with VK_EXT_debug_utils!
             cmd_buf->begin_command_buffer();
+            m_device.set_debug_name(cmd_buf->get(), name);
             return *cmd_buf;
         }
     }
 
-    // We need to create a new command buffer because no free one was found
+    spdlog::trace("Creating new command buffer #{}", 1 + m_cmd_bufs.size());
+
+    // No free command buffer was found so we need to create a new one
     // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
     m_cmd_bufs.emplace_back(std::make_unique<commands::CommandBuffer>(m_device, m_cmd_pool, "command buffer"));
 
-    spdlog::trace("Creating new command buffer #{}", m_cmd_bufs.size());
-
-    m_cmd_bufs.back()->begin_command_buffer();
-    return *m_cmd_bufs.back();
+    auto &new_cmd_buf = *m_cmd_bufs.back();
+    new_cmd_buf.begin_command_buffer();
+    m_device.set_debug_name(new_cmd_buf.get(), name);
+    return new_cmd_buf;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

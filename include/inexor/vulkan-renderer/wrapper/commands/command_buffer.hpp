@@ -138,7 +138,7 @@ public:
     /// @param pipeline The graphics pipeline to bind
     /// @param bind_point The pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_pipeline(const pipelines::GraphicsPipeline &pipeline, // NOLINT
+    const CommandBuffer &bind_pipeline(std::weak_ptr<pipelines::GraphicsPipeline> pipeline, // NOLINT
                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// Call vkCmdBindVertexBuffers

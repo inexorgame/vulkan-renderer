@@ -14,18 +14,22 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 /// RAII wrapper class for VkPipelineLayout
 class PipelineLayout {
 private:
+    // Rendergraph needs to read from m_pipeline_layout
     friend render_graph::RenderGraph;
 
     const Device &m_device;
     std::string m_name;
+
+    // There is no get method for this because only rendergraph needs to access it through friend class
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
-    /// Default constructor is private so that only RenderGraph can access it
+    /// Call vkCreatePipelineLayout
+    /// @note The constructor is private because only friend class RenderGraph needs access to it
     /// @param device The device wrapper
-    /// @param descriptor_set_layouts The descriptor set layouts of the pipeline layout
+    /// @param desc_set_layouts The descriptor set layouts of the pipeline layout
     /// @param push_constant_ranges The push constant ranges of the pipeline layout
     /// @param name The name of the pipeline layout
-    PipelineLayout(const Device &device, std::span<const VkDescriptorSetLayout> descriptor_set_layouts,
+    PipelineLayout(const Device &device, std::span<const VkDescriptorSetLayout> desc_set_layouts,
                    std::span<const VkPushConstantRange> push_constant_ranges, std::string name);
 
 public:
@@ -37,11 +41,6 @@ public:
 
     PipelineLayout &operator=(const PipelineLayout &) = delete;
     PipelineLayout &operator=(PipelineLayout &&other) noexcept = delete;
-
-    // TODO: Switch from get method to friend class
-    [[nodiscard]] VkPipelineLayout pipeline_layout() const noexcept {
-        return m_pipeline_layout;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

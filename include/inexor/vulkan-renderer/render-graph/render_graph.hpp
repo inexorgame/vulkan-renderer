@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/push_constant_range.hpp"
+#include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
@@ -32,12 +33,12 @@ enum class BufferType;
 class PushConstantRangeResource;
 
 // Namespaces
-using CommandBuffer = wrapper::commands::CommandBuffer;
 using Device = wrapper::Device;
+using Swapchain = wrapper::Swapchain;
+using CommandBuffer = wrapper::commands::CommandBuffer;
 using GraphicsPipeline = wrapper::pipelines::GraphicsPipeline;
 using GraphicsPipelineBuilder = wrapper::pipelines::GraphicsPipelineBuilder;
 using PipelineLayout = wrapper::pipelines::PipelineLayout;
-using Swapchain = wrapper::Swapchain;
 
 /// A rendergraph is a generic solution for rendering architecture
 /// This is based on Yuriy O'Donnell's talk "FrameGraph: Extensible Rendering Architecture in Frostbite" from GDC 2017
@@ -61,6 +62,7 @@ private:
 
     /// The function used by the rendergraph to to create the graphics passes
     using GraphicsPassCreateFunction = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
+
     std::vector<GraphicsPassCreateFunction> m_on_graphics_pass_create_functions;
 
     /// The graphics passes used in the rendergraph
@@ -80,7 +82,8 @@ private:
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;
 
-    std::vector<std::unique_ptr<PipelineLayout>> m_graphics_pipeline_layouts;
+    // TODO: Graphics pipeline layout create functions..?
+    std::vector<std::shared_ptr<PipelineLayout>> m_graphics_pipeline_layouts;
 
     /// The graphics pipelines used in the rendergraph
     /// This will be populated using m_on_graphics_pipeline_create_callables
@@ -95,16 +98,23 @@ private:
     // Note that we must keep the data as std::vector of std::unique_ptr in order to keep entries consistent
     std::vector<std::shared_ptr<Buffer>> m_buffers;
 
+    // ---------------------------------------------------------------------------------------------------------
+    //  SHADERS
+    // ---------------------------------------------------------------------------------------------------------
+    std::vector<std::shared_ptr<Shader>> m_shaders;
+
     /// The push constant resources of the rendergraph
     // TODO: Remember we need to squash all VkPushConstantRange of a pass into one std::vector in order to bind it!
     // TODO: Should push constant ranges be per graphics pipeline?
     std::vector<std::shared_ptr<PushConstantRange>> m_push_constant_ranges;
 
-    /// The texture resources of the rendergraph
+    /// TODO: Explain how textures are treated equally here
     std::vector<std::shared_ptr<Texture>> m_textures;
 
+    // TODO: Add @exception to documentation of other methods/code parts!
+
     /// The rendergraph must not have any cycles in it!
-    /// @exception std::logic_error The rendergraph is not acyclic
+    /// @exception std::logic_error The rendergraph is not acyclic!
     void check_for_cycles();
 
     /// Create the buffers of every buffer resource in the rendergraph
@@ -178,17 +188,15 @@ public:
     /// @note The Vulkan index type is set to ``VK_INDEX_TYPE_UINT32`` by default and it not exposed as parameter
     /// @param name The name of the index buffer
     /// @param on_update The update function of the index buffer
-    /// @return A weak pointer to the buffer resource that was created
-    /// @note The rendergraph owns the memory of the buffer resource, hence we return a weak pointer
-    [[nodiscard]] std::weak_ptr<Buffer> add_index_buffer(std::string name,
-                                                         std::optional<std::function<void()>> on_update = std::nullopt);
+    /// @return A shared pointer to the buffer resource that was created
+    [[nodiscard]] std::shared_ptr<Buffer>
+    add_index_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a uniform buffer to rendergraph
     /// @param name The name of the uniform buffer
     /// @param on_update The update function of the uniform buffer
-    /// @return A weak pointer to the buffer resource that was created
-    /// @note The rendergraph owns the memory of the buffer resource, hence we return a weak pointer
-    [[nodiscard]] std::weak_ptr<Buffer>
+    /// @return A shared pointer to the buffer resource that was created
+    [[nodiscard]] std::shared_ptr<Buffer>
     add_uniform_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a vertex buffer to rendergraph
@@ -199,9 +207,8 @@ public:
     /// rendergraph gets compiled and builds the graphics pipelines, it can read ``VkVertexInputAttributeDescription``
     /// from the buffers to create the graphics pipelines.
     /// @param on_update The update function of the vertex buffer
-    /// @return A weak pointer to the buffer resource that was created
-    /// @note The rendergraph owns the memory of the buffer resource, hence we return a weak pointer
-    [[nodiscard]] std::weak_ptr<Buffer>
+    /// @return A shared pointer to the buffer resource that was created
+    [[nodiscard]] std::shared_ptr<Buffer>
     add_vertex_buffer(std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
                       std::optional<std::function<void()>> on_update = std::nullopt);
 
@@ -235,16 +242,26 @@ public:
             data, std::move(on_update));
     }
 
+    // TODO: Use a SPIR-V library like spirv-cross to deduce shader type from the SPIR-V file automatically!
+
+    /// Load a SPIR-V shader from a file
+    /// @param name The internal debug name of the shader (not the file name)
+    /// @param shader_stage The shader stage
+    /// @param file_name The shader file name
+    /// @return A shared pointer to the shader that was loaded from the SPIR-V file
+    [[nodiscard]] std::shared_ptr<Shader> add_shader(std::string name, VkShaderStageFlagBits shader_stage,
+                                                     std::string file_name);
+
     /// Add a texture to the rendergraph
     /// @param name The name of the texture (must not be empty)
     /// @param uage The texture usage inside of rendergraph
     /// @param format The image format of the texture
     /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
     /// @param on_update The update function of the texture (``std::nullopt`` by default)
-    /// @return A weak pointer to the texture that was created
-    [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
-                                                     std::optional<std::function<void()>> on_init = std::nullopt,
-                                                     std::optional<std::function<void()>> on_update = std::nullopt);
+    /// @return A shared pointer to the texture that was created
+    [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
+                                                       std::optional<std::function<void()>> on_init = std::nullopt,
+                                                       std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the rendergraph
     void compile();

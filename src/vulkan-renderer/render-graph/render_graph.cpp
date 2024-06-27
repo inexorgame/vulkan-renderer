@@ -16,7 +16,8 @@ RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
     // TODO: Fix me!
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device) {}
 
-std::weak_ptr<Buffer> RenderGraph::add_index_buffer(std::string name, std::optional<std::function<void()>> on_update) {
+std::shared_ptr<Buffer> RenderGraph::add_index_buffer(std::string name,
+                                                      std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
         throw std::invalid_argument("Error: Index buffer name is empty!");
     }
@@ -25,8 +26,8 @@ std::weak_ptr<Buffer> RenderGraph::add_index_buffer(std::string name, std::optio
     return m_buffers.back();
 }
 
-std::weak_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
-                                                      std::optional<std::function<void()>> on_update) {
+std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
+                                                        std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
         throw std::runtime_error("Error: Uniform buffer name is empty!");
     }
@@ -34,7 +35,7 @@ std::weak_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
     return m_buffers.back();
 }
 
-std::weak_ptr<Buffer>
+std::shared_ptr<Buffer>
 RenderGraph::add_vertex_buffer(std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
                                std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
@@ -44,9 +45,15 @@ RenderGraph::add_vertex_buffer(std::string name, std::vector<VkVertexInputAttrib
     return m_buffers.back();
 }
 
-std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
-                                                std::optional<std::function<void()>> on_init,
-                                                std::optional<std::function<void()>> on_update) {
+std::shared_ptr<Shader> RenderGraph::add_shader(std::string name, const VkShaderStageFlagBits shader_stage,
+                                                std::string file_name) {
+    m_shaders.emplace_back(std::make_shared<Shader>(m_device, std::move(name), shader_stage, std::move(file_name)));
+    return m_shaders.back();
+}
+
+std::shared_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
+                                                  std::optional<std::function<void()>> on_init,
+                                                  std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
         throw std::invalid_argument("Error: Texture name ist empty!");
     }
@@ -144,7 +151,7 @@ void RenderGraph::create_graphics_pipelines() {
     for (std::size_t pipeline_index = 0; pipeline_index < pipeline_count; pipeline_index++) {
         m_graphics_pipelines.push_back(
             std::move(std::invoke(m_pipeline_create_functions[pipeline_index], m_graphics_pipeline_builder,
-                                  m_graphics_pipeline_layouts[pipeline_index]->pipeline_layout())));
+                                  m_graphics_pipeline_layouts[pipeline_index]->m_pipeline_layout)));
     }
 }
 
@@ -240,7 +247,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     }
 #endif
 
-    // Call the user-defined recording function of the command buffer of the graphics pass
+    // Call the user-defined command buffer recording function of the graphics pass
     std::invoke(pass.m_on_record, cmd_buf);
 
     // End dynamic rendering
@@ -326,18 +333,18 @@ void RenderGraph::update_push_constant_ranges() {
     // TODO: Update push constant ranges in parallel using taskflow!
     // Loop through all push constant ranges and call their update function
     for (const auto &push_constant : m_push_constant_ranges) {
-        // NOTE: Unlike textures or buffers, update functions for push constant ranges are not optional!
         std::invoke(push_constant->m_on_update);
     }
 }
 
 void RenderGraph::validate_render_graph() {
     if (m_graphics_passes.empty()) {
-        throw std::runtime_error("Error: No graphics passes specified in rendergraph!");
+        throw std::runtime_error("Error: No graphics passes in rendergraph!");
     }
     if (m_pipeline_create_functions.empty()) {
-        throw std::runtime_error("Error: No graphics pipelines specified in rendergraph!");
+        throw std::runtime_error("Error: No graphics pipelines in rendergraph!");
     }
+    // TODO: Add more validation here...
     check_for_cycles();
 }
 

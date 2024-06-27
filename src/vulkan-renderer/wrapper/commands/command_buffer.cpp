@@ -95,9 +95,9 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_pipeline(const pipelines::GraphicsPipeline &pipeline,
+const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<pipelines::GraphicsPipeline> pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
-    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.m_pipeline);
+    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.lock()->m_pipeline);
     return *this;
 }
 

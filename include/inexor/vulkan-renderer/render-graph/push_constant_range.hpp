@@ -15,7 +15,11 @@ class PushConstantRange {
 
 private:
     VkPushConstantRange m_push_constant;
+
+    /// Unlike textures or buffers, update functions for push constant ranges are not optional!
     std::function<void()> m_on_update{[]() {}};
+
+    // TODO: Delete this?
     const void *m_push_constant_data{nullptr};
 
     /// Default constructor

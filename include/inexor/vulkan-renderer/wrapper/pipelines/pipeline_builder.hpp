@@ -2,9 +2,9 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -115,11 +115,11 @@ public:
     /// Add a shader to the graphics pipeline
     /// @param shader The shader
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] auto &add_shader(const wrapper::Shader &shader) {
+    [[nodiscard]] auto &uses_shader(std::shared_ptr<render_graph::Shader> shader) {
         m_shader_stages.push_back(make_info<VkPipelineShaderStageCreateInfo>({
-            .stage = shader.type(),
-            .module = shader.module(),
-            .pName = shader.entry_point().c_str(),
+            .stage = shader->m_shader_stage,
+            .module = shader->m_shader_module,
+            .pName = "main",
 
         }));
         return *this;
@@ -136,7 +136,7 @@ public:
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
-    [[nodiscard]] std::unique_ptr<GraphicsPipeline> build(std::string name);
+    [[nodiscard]] std::shared_ptr<GraphicsPipeline> build(std::string name);
 
     /// Set the color blend manually
     /// @param color_blend The color blend
