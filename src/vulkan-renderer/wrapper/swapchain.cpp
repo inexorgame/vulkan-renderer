@@ -16,7 +16,10 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
+Swapchain::Swapchain(Device &device,
+                     const VkSurfaceKHR surface,
+                     const std::uint32_t width,
+                     const std::uint32_t height,
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     m_img_available = std::make_unique<synchronization::Semaphore>(m_device, "m_img_available");
@@ -70,8 +73,10 @@ Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_comp
     return std::nullopt;
 }
 
-VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, const VkExtent2D &min_extent,
-                                          const VkExtent2D &max_extent, const VkExtent2D &current_extent) {
+VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent,
+                                          const VkExtent2D &min_extent,
+                                          const VkExtent2D &max_extent,
+                                          const VkExtent2D &current_extent) {
     if (current_extent.width == std::numeric_limits<std::uint32_t>::max()) {
         return requested_extent;
     }

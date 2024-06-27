@@ -5,7 +5,9 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-GraphicsPass::GraphicsPass(std::string name, BufferReads buffer_reads, TextureReads texture_reads,
+GraphicsPass::GraphicsPass(std::string name,
+                           BufferReads buffer_reads,
+                           TextureReads texture_reads,
                            TextureWrites texture_writes,
                            std::function<void(const wrapper::commands::CommandBuffer &)> on_record,
                            std::optional<VkClearValue> clear_values)

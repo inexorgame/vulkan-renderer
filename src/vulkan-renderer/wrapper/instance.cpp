@@ -69,9 +69,12 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
                         }) != instance_extensions.end();
 }
 
-Instance::Instance(const std::string &application_name, const std::string &engine_name,
-                   const std::uint32_t application_version, const std::uint32_t engine_version,
-                   bool enable_validation_layers, const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
+Instance::Instance(const std::string &application_name,
+                   const std::string &engine_name,
+                   const std::uint32_t application_version,
+                   const std::uint32_t engine_version,
+                   bool enable_validation_layers,
+                   const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
                    const std::vector<std::string> &requested_instance_extensions,
                    const std::vector<std::string> &requested_instance_layers) {
     if (application_name.empty()) {

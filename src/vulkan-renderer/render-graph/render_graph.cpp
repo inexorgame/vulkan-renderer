@@ -36,7 +36,8 @@ std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
 }
 
 std::shared_ptr<Buffer>
-RenderGraph::add_vertex_buffer(std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
+RenderGraph::add_vertex_buffer(std::string name,
+                               std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
                                std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
         throw std::invalid_argument("Error: Vertex buffer name is empty!");
@@ -45,13 +46,18 @@ RenderGraph::add_vertex_buffer(std::string name, std::vector<VkVertexInputAttrib
     return m_buffers.back();
 }
 
-std::shared_ptr<Shader> RenderGraph::add_shader(std::string name, const VkShaderStageFlagBits shader_stage,
-                                                std::string file_name) {
+std::shared_ptr<Shader>
+RenderGraph::add_shader(std::string name, const VkShaderStageFlagBits shader_stage, std::string file_name) {
+    if (name.empty()) {
+        throw std::invalid_argument("Error: Shader name is empty!");
+    }
     m_shaders.emplace_back(std::make_shared<Shader>(m_device, std::move(name), shader_stage, std::move(file_name)));
     return m_shaders.back();
 }
 
-std::shared_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
+std::shared_ptr<Texture> RenderGraph::add_texture(std::string name,
+                                                  const TextureUsage usage,
+                                                  const VkFormat format,
                                                   std::optional<std::function<void()>> on_init,
                                                   std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
@@ -160,8 +166,10 @@ void RenderGraph::determine_pass_order() {
     // TODO: The data structure to determine pass order should be created before rendergraph compilation!
 }
 
-void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass,
-                                                 const bool is_first_pass, const bool is_last_pass,
+void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
+                                                 const GraphicsPass &pass,
+                                                 const bool is_first_pass,
+                                                 const bool is_last_pass,
                                                  const std::uint32_t img_index) {
 
     // TODO: Remove img_index and implement swapchain.get_current_image()

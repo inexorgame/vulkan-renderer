@@ -64,8 +64,10 @@ bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions
 /// @param print_message If ``true``, an info message will be printed to the console if a device feature or device
 /// extension is not supported (``true`` by default)
 /// @return ``true`` if the physical device supports all device features and device extensions
-bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                        const std::span<const char *> required_extensions, const bool print_info = false) {
+bool is_device_suitable(const DeviceInfo &info,
+                        const VkPhysicalDeviceFeatures &required_features,
+                        const std::span<const char *> required_extensions,
+                        const bool print_info = false) {
     const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
     const auto comparable_available_features = vk_tools::get_device_features_as_vector(info.features);
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
@@ -100,7 +102,8 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
 /// @param rhs The other physical device
 /// @return ``true`` if `lhs` is more preferable over `rhs`
 bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
-                              const std::span<const char *> required_extensions, const DeviceInfo &lhs,
+                              const std::span<const char *> required_extensions,
+                              const DeviceInfo &lhs,
                               const DeviceInfo &rhs) {
     if (!is_device_suitable(rhs, required_features, required_extensions)) {
         return true;
@@ -184,7 +187,8 @@ VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&phy
     return physical_device_infos.front().physical_device;
 }
 
-VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const VkSurfaceKHR surface,
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst,
+                                                   const VkSurfaceKHR surface,
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
@@ -195,9 +199,13 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const V
     return pick_best_physical_device(std::move(infos), required_features, required_extensions);
 }
 
-Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool prefer_distinct_transfer_queue,
-               const VkPhysicalDevice physical_device, const std::span<const char *> required_extensions,
-               const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features)
+Device::Device(const Instance &inst,
+               const VkSurfaceKHR surface,
+               const bool prefer_distinct_transfer_queue,
+               const VkPhysicalDevice physical_device,
+               const std::span<const char *> required_extensions,
+               const VkPhysicalDeviceFeatures &required_features,
+               const VkPhysicalDeviceFeatures &optional_features)
     : m_physical_device(physical_device) {
 
     if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions,
@@ -488,7 +496,8 @@ const commands::CommandBuffer &Device::request_command_buffer(const std::string 
     return thread_graphics_pool().request_command_buffer(name);
 }
 
-void Device::set_debug_utils_object_name(const VkObjectType obj_type, const std::uint64_t obj_handle,
+void Device::set_debug_utils_object_name(const VkObjectType obj_type,
+                                         const std::uint64_t obj_handle,
                                          const std::string &name) const {
     assert(obj_handle);
 

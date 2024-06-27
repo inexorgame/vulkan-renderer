@@ -14,7 +14,8 @@ Buffer::Buffer(const Device &device, std::string name, std::optional<std::functi
     // TODO: Set buffer usage flags!
 }
 
-Buffer::Buffer(const Device &device, std::string name,
+Buffer::Buffer(const Device &device,
+               std::string name,
                std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
                std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)),
@@ -22,7 +23,9 @@ Buffer::Buffer(const Device &device, std::string name,
     // TODO: Set buffer usage flags!
 }
 
-Buffer::Buffer(const Device &device, std::string name, VkIndexType index_type,
+Buffer::Buffer(const Device &device,
+               std::string name,
+               VkIndexType index_type,
                std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)), m_index_type(index_type),
       m_buffer_type(BufferType::INDEX_BUFFER) {

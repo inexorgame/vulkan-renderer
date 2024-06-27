@@ -8,8 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-PipelineLayout::PipelineLayout(const Device &device, const std::span<const VkDescriptorSetLayout> desc_set_layouts,
-                               const std::span<const VkPushConstantRange> push_constant_ranges, std::string name)
+PipelineLayout::PipelineLayout(const Device &device,
+                               const std::span<const VkDescriptorSetLayout> desc_set_layouts,
+                               const std::span<const VkPushConstantRange> push_constant_ranges,
+                               std::string name)
     : m_device(device), m_name(std::move(name)) {
 
     const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({

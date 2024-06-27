@@ -8,8 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorPool::DescriptorPool(const Device &device, std::vector<VkDescriptorPoolSize> pool_sizes,
-                               const std::uint32_t max_sets, std::string name)
+DescriptorPool::DescriptorPool(const Device &device,
+                               std::vector<VkDescriptorPoolSize> pool_sizes,
+                               const std::uint32_t max_sets,
+                               std::string name)
     : m_device(device), m_pool_sizes(pool_sizes), m_name(std::move(name)) {
     if (m_name.empty()) {
         throw std::invalid_argument("Error: Internal debug name for descriptor pool must not be empty!");

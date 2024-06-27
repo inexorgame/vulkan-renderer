@@ -2,7 +2,8 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-PushConstantRange::PushConstantRange(const VkPushConstantRange push_constant, const void *push_constant_data,
+PushConstantRange::PushConstantRange(const VkPushConstantRange push_constant,
+                                     const void *push_constant_data,
                                      std::function<void()> on_update)
     : m_push_constant(push_constant), m_push_constant_data(push_constant_data), m_on_update(std::move(on_update)) {}
 

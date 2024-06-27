@@ -86,7 +86,8 @@ const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet de
 }
 
 const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::Buffer> buffer,
-                                                      const VkIndexType index_type, const VkDeviceSize offset) const {
+                                                      const VkIndexType index_type,
+                                                      const VkDeviceSize offset) const {
     if (buffer.lock()->type() != render_graph::BufferType::INDEX_BUFFER) {
         throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->name() +
                                     " is not an index buffer!");
@@ -110,7 +111,8 @@ const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<rende
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_layout,
+const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
+                                                        const VkImageLayout old_layout,
                                                         const VkImageLayout new_layout,
                                                         const VkImageSubresourceRange subres_range,
                                                         const VkPipelineStageFlags src_mask,
@@ -178,11 +180,15 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, con
     return pipeline_image_memory_barrier(src_mask, dst_mask, barrier);
 }
 
-const CommandBuffer &
-CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_layout, const VkImageLayout new_layout,
-                                   const std::uint32_t mip_level_count, const std::uint32_t array_layer_count,
-                                   const std::uint32_t base_mip_level, const std::uint32_t base_array_layer,
-                                   const VkPipelineStageFlags src_mask, const VkPipelineStageFlags dst_mask) const {
+const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
+                                                        const VkImageLayout old_layout,
+                                                        const VkImageLayout new_layout,
+                                                        const std::uint32_t mip_level_count,
+                                                        const std::uint32_t array_layer_count,
+                                                        const std::uint32_t base_mip_level,
+                                                        const std::uint32_t base_array_layer,
+                                                        const VkPipelineStageFlags src_mask,
+                                                        const VkPipelineStageFlags dst_mask) const {
     return change_image_layout(image, old_layout, new_layout,
                                {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                                 .baseMipLevel = base_mip_level,
@@ -192,7 +198,8 @@ CommandBuffer::change_image_layout(const VkImage image, const VkImageLayout old_
                                src_mask, dst_mask);
 }
 
-const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
+const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf,
+                                                const VkBuffer dst_buf,
                                                 const std::span<const VkBufferCopy> copy_regions) const {
     assert(src_buf);
     assert(dst_buf);
@@ -201,17 +208,18 @@ const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const Vk
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
-                                                const VkBufferCopy &copy_region) const {
+const CommandBuffer &
+CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf, const VkBufferCopy &copy_region) const {
     return copy_buffer(src_buf, dst_buf, {&copy_region, 1});
 }
 
-const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
-                                                const VkDeviceSize src_buf_size) const {
+const CommandBuffer &
+CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf, const VkDeviceSize src_buf_size) const {
     return copy_buffer(src_buf, dst_buf, {.size = src_buf_size});
 }
 
-const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
+                                                         const VkImage dst_img,
                                                          const std::span<const VkBufferImageCopy> copy_regions) const {
     assert(src_buf);
     assert(dst_img);
@@ -220,7 +228,8 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
+                                                         const VkImage dst_img,
                                                          const VkBufferImageCopy &copy_region) const {
     assert(src_buf);
     assert(dst_img);
@@ -230,19 +239,24 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
                                                          const VkDeviceSize data_size, // NOLINT
-                                                         const VkImage dst_img, const VkBufferImageCopy &copy_region,
+                                                         const VkImage dst_img,
+                                                         const VkBufferImageCopy &copy_region,
                                                          const std::string &name) const {
     return copy_buffer_to_image(create_staging_buffer(data, data_size, name), dst_img, copy_region);
 }
 
-const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count, const std::uint32_t inst_count,
-                                         const std::uint32_t first_vert, const std::uint32_t first_inst) const {
+const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count,
+                                         const std::uint32_t inst_count,
+                                         const std::uint32_t first_vert,
+                                         const std::uint32_t first_inst) const {
     vkCmdDraw(m_cmd_buf, vert_count, inst_count, first_vert, first_inst);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::draw_indexed(const std::uint32_t index_count, const std::uint32_t inst_count,
-                                                 const std::uint32_t first_index, const std::int32_t vert_offset,
+const CommandBuffer &CommandBuffer::draw_indexed(const std::uint32_t index_count,
+                                                 const std::uint32_t inst_count,
+                                                 const std::uint32_t first_index,
+                                                 const std::int32_t vert_offset,
                                                  const std::uint32_t first_inst) const {
     vkCmdDrawIndexed(m_cmd_buf, index_count, inst_count, first_index, vert_offset, first_inst);
     return *this;
@@ -308,8 +322,10 @@ const CommandBuffer &CommandBuffer::insert_debug_label(std::string name, std::ar
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout, const VkShaderStageFlags stage,
-                                                   const std::uint32_t size, const void *data,
+const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout,
+                                                   const VkShaderStageFlags stage,
+                                                   const std::uint32_t size,
+                                                   const void *data,
                                                    const VkDeviceSize offset) const {
     assert(layout);
     assert(size > 0);

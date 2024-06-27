@@ -7,7 +7,8 @@
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-GraphicsPipeline::GraphicsPipeline(const Device &device, const VkGraphicsPipelineCreateInfo &pipeline_ci,
+GraphicsPipeline::GraphicsPipeline(const Device &device,
+                                   const VkGraphicsPipelineCreateInfo &pipeline_ci,
                                    std::string name)
     : m_device(device), m_name(std::move(name)) {
     if (const auto result =

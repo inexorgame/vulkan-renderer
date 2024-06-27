@@ -6,8 +6,11 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Texture::Texture(std::string name, const TextureUsage usage, const VkFormat format,
-                 std::optional<std::function<void()>> on_init, std::optional<std::function<void()>> on_update)
+Texture::Texture(std::string name,
+                 const TextureUsage usage,
+                 const VkFormat format,
+                 std::optional<std::function<void()>> on_init,
+                 std::optional<std::function<void()>> on_update)
     : m_name(std::move(name)), m_usage(usage), m_format(format), m_on_init(std::move(on_init)),
       m_on_update(std::move(on_update)) {}
 

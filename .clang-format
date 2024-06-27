@@ -3,8 +3,10 @@ BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
+BinPackParameters: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakTemplateDeclarations: Yes
 ColumnLimit: 120
