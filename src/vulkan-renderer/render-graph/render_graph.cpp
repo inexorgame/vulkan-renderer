@@ -305,7 +305,7 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
         // This is important to know because of image layout transitions for back buffer for example
         const bool is_first_pass = (pass_index == 0);
-        const bool is_last_pass = (pass_index == m_graphics_passes.size());
+        const bool is_last_pass = (pass_index == m_graphics_passes.size() - 1);
         record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index], is_first_pass, is_last_pass, img_index);
     }
 }
