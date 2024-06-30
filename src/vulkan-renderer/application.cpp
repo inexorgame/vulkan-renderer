@@ -484,15 +484,10 @@ void Application::setup_render_graph() {
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
     m_render_graph->add_graphics_pipeline(
-        // This lambda will be called by rendergraph during rendergraph compilation
-        [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
+        "Octree", [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
-                                    // TODO: Default parameter values for this?
-                                    .add_color_blend_attachment({
-                                        .blendEnable = VK_FALSE,
-                                        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                                          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-                                    })
+                                    .add_default_color_blend_attachment()
+                                    // TODO: This could be turned into a variadic template...
                                     .set_vertex_input_bindings({
                                         {
                                             .binding = 0,

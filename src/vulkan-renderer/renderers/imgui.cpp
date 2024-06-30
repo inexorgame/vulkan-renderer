@@ -88,20 +88,8 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
     // TODO: using <namespace> to make code shorter...
 
     render_graph.add_graphics_pipeline(
-        [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
-            m_imgui_pipeline = builder
-                                   .add_color_blend_attachment({
-                                       // TODO: Which values here are by default? (compare with application.cpp)
-                                       .blendEnable = VK_TRUE,
-                                       .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-                                       .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                                       .colorBlendOp = VK_BLEND_OP_ADD,
-                                       .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-                                       .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-                                       .alphaBlendOp = VK_BLEND_OP_ADD,
-                                       .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                                         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-                                   })
+        "ImGui", [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
+            m_imgui_pipeline = builder.add_default_color_blend_attachment()
                                    .set_vertex_input_bindings({
                                        {
                                            .binding = 0,
@@ -122,6 +110,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
             m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size);
         });
 
+    // TODO: Descriptor management, pipeline management, and graphics passes are deeply related! Solution=?
     render_graph.add_graphics_pass("ImGui", [&](render_graph::GraphicsPassBuilder &builder) {
         m_imgui_pass = builder.reads_from_buffer(m_index_buffer)
                            .reads_from_buffer(m_vertex_buffer)

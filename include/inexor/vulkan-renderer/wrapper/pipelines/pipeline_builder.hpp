@@ -14,15 +14,16 @@
 #include <string>
 #include <vector>
 
-// Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declarations
 class Device;
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
 class RenderGraph;
-}
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
@@ -131,6 +132,22 @@ public:
     [[nodiscard]] auto &add_color_blend_attachment(const VkPipelineColorBlendAttachmentState &attachment) {
         m_color_blend_attachment_states.push_back(attachment);
         return *this;
+    }
+
+    /// Add the default color blend attachment
+    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
+    [[nodiscard]] auto &add_default_color_blend_attachment() {
+        return add_color_blend_attachment({
+            .blendEnable = VK_TRUE,
+            .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+            .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+            .colorBlendOp = VK_BLEND_OP_ADD,
+            .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+            .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .alphaBlendOp = VK_BLEND_OP_ADD,
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+                              VK_COLOR_COMPONENT_A_BIT,
+        });
     }
 
     /// Build the graphics pipeline with specified pipeline create flags

@@ -64,10 +64,9 @@ private:
     using GraphicsPassCreateFunction = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
 
     /// The name of the graphics pass create function is associated by using a std::pair
-    std::vector<std::pair<std::string, GraphicsPassCreateFunction>> m_on_graphics_pass_create_functions;
+    std::vector<std::pair<std::string, GraphicsPassCreateFunction>> m_graphics_pass_create_functions;
 
     /// The graphics passes used in the rendergraph
-    /// This will be populated using m_on_graphics_pass_create_callables
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
     // ---------------------------------------------------------------------------------------------------------
@@ -81,7 +80,7 @@ private:
         std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, const VkPipelineLayout)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
-    std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;
+    std::vector<std::pair<std::string, GraphicsPipelineCreateFunction>> m_pipeline_create_functions;
 
     // TODO: Graphics pipeline layout create functions..?
     std::vector<std::shared_ptr<PipelineLayout>> m_graphics_pipeline_layouts;
@@ -224,9 +223,10 @@ public:
     void add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create);
 
     /// Add a new graphics pipeline to the rendergraph
+    /// @param pipeline_name The graphics pipeline name
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
     /// @note Move semantics is used to std::move on_pipeline_create
-    void add_graphics_pipeline(GraphicsPipelineCreateFunction on_pipeline_create);
+    void add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create);
 
     /// Add a push constant range resource to the rendergraph
     /// @tparam T The data type of the push constant range
