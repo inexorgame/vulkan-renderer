@@ -98,7 +98,9 @@ public:
     /// @param device The device wrapper
     /// @param vert_input_attr_descs A vertex of vertex input attribute descriptions
     /// @param on_update The buffer update function (``std::nullopt`` by default)
-    Buffer(const Device &device, std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
+    Buffer(const Device &device,
+           std::string name,
+           std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
            std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Constructor for index buffers
@@ -106,7 +108,9 @@ public:
     /// @param name The name of the buffer
     /// @param index_type The Vulkan index type
     /// @param on_update The buffer update function (``std::nullopt`` by default)
-    Buffer(const Device &device, std::string name, VkIndexType index_type,
+    Buffer(const Device &device,
+           std::string name,
+           VkIndexType index_type,
            std::optional<std::function<void()>> on_update = std::nullopt);
 
     Buffer(const Buffer &) = delete;

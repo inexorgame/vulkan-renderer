@@ -422,7 +422,9 @@ void Application::run() {
 
 void Application::setup_render_graph() {
     // TODO: Move to OctreeRenderer and ImGuiRenderer!
+    // TODO: Lambda style > polymorphism!
 
+    // TODO: Move this to rendergraph header file? (Can we then use it here?)
     using render_graph::TextureUsage::BACK_BUFFER;
     using render_graph::TextureUsage::DEPTH_STENCIL_BUFFER;
     using render_graph::TextureUsage::MSAA_BACK_BUFFER;
@@ -482,6 +484,7 @@ void Application::setup_render_graph() {
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
     m_render_graph->add_graphics_pipeline(
+        // This lambda will be called by rendergraph during rendergraph compilation
         [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
             m_octree_pipeline = builder
                                     // TODO: Default parameter values for this?
@@ -510,7 +513,7 @@ void Application::setup_render_graph() {
     using render_graph::GraphicsPassBuilder;
     using wrapper::commands::CommandBuffer;
 
-    m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
+    m_render_graph->add_graphics_pass("Octree", [&](GraphicsPassBuilder &builder) {
         m_octree_pass = builder
                             .set_clear_value({
                                 // TODO: Define default color values for the engine

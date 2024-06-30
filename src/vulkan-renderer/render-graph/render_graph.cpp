@@ -68,8 +68,11 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string name,
     return m_textures.back();
 }
 
-void RenderGraph::add_graphics_pass(GraphicsPassCreateFunction on_pass_create) {
-    m_on_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
+void RenderGraph::add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create) {
+    if (pass_name.empty()) {
+        throw std::invalid_argument("Error: GraphicsPassCreateFunction name is empty!");
+    }
+    m_on_graphics_pass_create_functions.emplace_back(std::make_pair(std::move(pass_name), std::move(on_pass_create)));
 }
 
 void RenderGraph::add_graphics_pipeline(GraphicsPipelineCreateFunction on_pipeline_create) {
@@ -90,7 +93,6 @@ void RenderGraph::compile() {
     create_descriptor_sets();
     create_graphics_pipeline_layouts();
     create_graphics_pipelines();
-    // TODO: What to add more here?
 }
 
 void RenderGraph::create_buffers() {
@@ -120,9 +122,17 @@ void RenderGraph::create_graphics_passes() {
     m_graphics_passes.reserve(m_on_graphics_pass_create_functions.size());
 
     // Fill the vector of graphics passes by calling the corresponding callables (lambdas)
-    for (const auto &on_pass_create_callable : m_on_graphics_pass_create_functions) {
-        // Store the result of the graphics pass create function
-        m_graphics_passes.push_back(std::move(std::invoke(on_pass_create_callable, m_graphics_pass_builder)));
+    for (const auto &pass_create_function : m_on_graphics_pass_create_functions) {
+        // Let's call the graphics pass create function
+        auto new_graphics_pass = std::invoke(pass_create_function.second, m_graphics_pass_builder);
+        // We must check if the graphics pass that was created is valid!
+        if (!new_graphics_pass) {
+            throw std::runtime_error("Error: Failed to create graphics pass " + pass_create_function.first + " !");
+        }
+        // Store the name of the graphics pass
+        new_graphics_pass->m_name = pass_create_function.first;
+        // Store the graphics pass that was created
+        m_graphics_passes.push_back(std::move(new_graphics_pass));
     }
 }
 
@@ -352,7 +362,6 @@ void RenderGraph::validate_render_graph() {
     if (m_pipeline_create_functions.empty()) {
         throw std::runtime_error("Error: No graphics pipelines in rendergraph!");
     }
-    // TODO: Add more validation here...
     check_for_cycles();
 }
 

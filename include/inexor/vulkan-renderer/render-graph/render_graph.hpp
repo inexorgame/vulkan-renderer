@@ -63,7 +63,8 @@ private:
     /// The function used by the rendergraph to to create the graphics passes
     using GraphicsPassCreateFunction = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
 
-    std::vector<GraphicsPassCreateFunction> m_on_graphics_pass_create_functions;
+    /// The name of the graphics pass create function is associated by using a std::pair
+    std::vector<std::pair<std::string, GraphicsPassCreateFunction>> m_on_graphics_pass_create_functions;
 
     /// The graphics passes used in the rendergraph
     /// This will be populated using m_on_graphics_pass_create_callables
@@ -145,8 +146,11 @@ private:
     /// @param is_first_pass ``true`` if this is the first pass in the graphics pass stack
     /// @param is_last_pass ``true`` if this is the last pass in the graphics pass stack
     /// @param img_index The swapchain image index
-    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass, bool is_first_pass,
-                                        bool is_last_pass, std::uint32_t img_index);
+    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
+                                        const GraphicsPass &pass,
+                                        bool is_first_pass,
+                                        bool is_last_pass,
+                                        std::uint32_t img_index);
 
     /// Record all command buffers required for the passes
     /// @param cmd_buf The command buffer to record all passes with
@@ -209,13 +213,15 @@ public:
     /// @param on_update The update function of the vertex buffer
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
-    add_vertex_buffer(std::string name, std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
+    add_vertex_buffer(std::string name,
+                      std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
                       std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a new graphics pass to the rendergraph
+    /// @param pass_name The name of the graphics pass
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     /// @note Move semantics is used to std::move on_pass_create
-    void add_graphics_pass(GraphicsPassCreateFunction on_pass_create);
+    void add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create);
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
@@ -231,8 +237,10 @@ public:
     /// @return The this pointer, allowing for methods to be chained as a builder pattern
     template <typename PushConstantDataType>
     void add_push_constant_range(
-        const PushConstantDataType *data, std::function<void()> on_update = []() {},
-        const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT, const std::uint32_t offset = 0) {
+        const PushConstantDataType *data,
+        std::function<void()> on_update = []() {},
+        const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
+        const std::uint32_t offset = 0) {
         m_push_constant_ranges.emplace_back(
             VkPushConstantRange{
                 .stageFlags = stage_flags,
@@ -249,8 +257,8 @@ public:
     /// @param shader_stage The shader stage
     /// @param file_name The shader file name
     /// @return A shared pointer to the shader that was loaded from the SPIR-V file
-    [[nodiscard]] std::shared_ptr<Shader> add_shader(std::string name, VkShaderStageFlagBits shader_stage,
-                                                     std::string file_name);
+    [[nodiscard]] std::shared_ptr<Shader>
+    add_shader(std::string name, VkShaderStageFlagBits shader_stage, std::string file_name);
 
     /// Add a texture to the rendergraph
     /// @param name The name of the texture (must not be empty)
@@ -259,7 +267,9 @@ public:
     /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
     /// @param on_update The update function of the texture (``std::nullopt`` by default)
     /// @return A shared pointer to the texture that was created
-    [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
+    [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string name,
+                                                       TextureUsage usage,
+                                                       VkFormat format,
                                                        std::optional<std::function<void()>> on_init = std::nullopt,
                                                        std::optional<std::function<void()>> on_update = std::nullopt);
 

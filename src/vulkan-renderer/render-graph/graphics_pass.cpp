@@ -9,7 +9,7 @@ GraphicsPass::GraphicsPass(std::string name,
                            BufferReads buffer_reads,
                            TextureReads texture_reads,
                            TextureWrites texture_writes,
-                           std::function<void(const wrapper::commands::CommandBuffer &)> on_record,
+                           std::function<void(const CommandBuffer &)> on_record,
                            std::optional<VkClearValue> clear_values)
     : m_name(std::move(name)), m_buffer_reads(std::move(buffer_reads)), m_texture_reads(std::move(texture_reads)),
       m_texture_writes(std::move(texture_writes)), m_on_record(std::move(on_record)),

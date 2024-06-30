@@ -11,10 +11,10 @@
 #include <optional>
 #include <string>
 
-// Forward declaration
 namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
 class CommandBuffer;
-}
+} // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -29,16 +29,20 @@ using TextureRead = std::pair<std::weak_ptr<Texture>, std::optional<VkShaderStag
 using TextureReads = std::vector<TextureRead>;
 using TextureWrites = std::vector<std::weak_ptr<Texture>>;
 
+using wrapper::commands::CommandBuffer;
+using wrapper::descriptors::DescriptorSetLayout;
+
 /// A wrapper for graphics passes inside of rendergraph
 class GraphicsPass {
     friend RenderGraph;
 
 private:
+    /// The name of the graphics pass
     std::string m_name;
     /// An optional clear value
     std::optional<VkClearValue> m_clear_values{std::nullopt};
     /// Add members which describe data related to graphics passes here
-    std::function<void(const wrapper::commands::CommandBuffer &)> m_on_record{[](auto &) {}};
+    std::function<void(const CommandBuffer &)> m_on_record{[](auto &) {}};
 
     /// The buffers the graphics passes reads from
     /// If the buffer's ``BufferType`` is ``UNIFORM_BUFFER``, a value for the shader stage flag must be specified,
@@ -55,7 +59,7 @@ private:
     VkBuffer m_index_buffer{VK_NULL_HANDLE};
 
     /// The descriptor set layout of the pass (will be created by rendergraph)
-    std::unique_ptr<wrapper::descriptors::DescriptorSetLayout> m_descriptor_set_layout;
+    std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
 
     /// The descriptor set of the pass (will be created by rendergraph)
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
@@ -75,8 +79,11 @@ public:
     /// ``VK_ATTACHMENT_LOAD_OP_CLEAR``, and the clear values specified here are used (``std::nullopt`` by default, in
     /// which case ``VK_ATTACHMENT_LOAD_OP_LOAD`` is used)
     /// @exception std::runtime_error More than one index buffer is specified
-    GraphicsPass(std::string name, BufferReads buffer_reads, TextureReads texture_reads, TextureWrites texture_writes,
-                 std::function<void(const wrapper::commands::CommandBuffer &)> on_record,
+    GraphicsPass(std::string name,
+                 BufferReads buffer_reads,
+                 TextureReads texture_reads,
+                 TextureWrites texture_writes,
+                 std::function<void(const CommandBuffer &)> on_record,
                  std::optional<VkClearValue> clear_values);
 
     GraphicsPass(const GraphicsPass &) = delete;
