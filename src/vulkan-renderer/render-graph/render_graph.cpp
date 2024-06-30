@@ -364,11 +364,11 @@ void RenderGraph::update_push_constant_ranges() {
 }
 
 void RenderGraph::validate_render_graph() {
-    if (m_graphics_passes.empty()) {
-        throw std::runtime_error("Error: No graphics passes in rendergraph!");
+    if (m_graphics_pass_create_functions.empty()) {
+        throw std::runtime_error("Error: No graphics passes in rendergraph! Use add_graphics_pass!");
     }
     if (m_pipeline_create_functions.empty()) {
-        throw std::runtime_error("Error: No graphics pipelines in rendergraph!");
+        throw std::runtime_error("Error: No graphics pipelines in rendergraph! Use add_graphics_pipeline!");
     }
     check_for_cycles();
 }
