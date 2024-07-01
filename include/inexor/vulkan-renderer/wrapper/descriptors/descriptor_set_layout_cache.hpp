@@ -9,10 +9,15 @@
 #include <unordered_map>
 #include <vector>
 
-// Forward declaration
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
 class Device;
-}
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class RenderGraph;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
@@ -37,6 +42,7 @@ struct DescriptorSetLayoutHash {
 /// For internal use inside of rendergraph only!
 class DescriptorSetLayoutCache {
     friend DescriptorBuilder;
+    friend render_graph::RenderGraph;
 
 private:
     /// The device wrapper
@@ -49,11 +55,10 @@ private:
     /// destructor is called
     std::unordered_map<DescriptorSetLayoutInfo, DescriptorSetLayout, DescriptorSetLayoutHash> m_cache;
 
+public:
     /// Default constructor
     /// @param device The device wrapper
     explicit DescriptorSetLayoutCache(const Device &device);
-
-public:
     DescriptorSetLayoutCache(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache(DescriptorSetLayoutCache &&) noexcept;
     ~DescriptorSetLayoutCache() = default;

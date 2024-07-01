@@ -97,6 +97,9 @@ private:
     // With the builder we can either call add_color_blend_attachment or set_color_blend_attachments
     std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
 
+    /// The push constant ranges of the graphics pass
+    std::vector<std::pair<VkPushConstantRange, std::function<void()>>> m_push_constant_ranges;
+
     /// Reset all data in this class so the builder can be re-used
     /// @note This is called by the constructor
     void reset();
@@ -150,6 +153,27 @@ public:
         });
     }
 
+    /// Add a push constant range to the graphics pass
+    /// @param shader_stage The shader stage for the push constant range
+    /// @param push_constant The push constant data
+    /// @param on_update The update function
+    /// @param offset The offset in the push constant range
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    template <typename PushConstantDataType>
+    [[nodiscard]] auto &add_push_constant_range(const VkShaderStageFlags shader_stage,
+                                                const PushConstantDataType &push_constant,
+                                                std::function<void()> on_update,
+                                                const std::uint32_t offset = 0) {
+        m_push_constant_ranges.emplace_back(
+            VkPushConstantRange{
+                .stageFlags = shader_stage,
+                .offset = offset,
+                .size = sizeof(push_constant),
+            },
+            std::move(on_update));
+        return *this;
+    }
+
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
@@ -191,6 +215,15 @@ public:
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] auto &set_depth_stencil(const VkPipelineDepthStencilStateCreateInfo &depth_stencil) {
         m_depth_stencil_sci = depth_stencil;
+        return *this;
+    }
+
+    // TODO: std::unordered_map<std::string, VkDescriptorSetLayout>?
+
+    /// Set the descriptor set layout
+    /// @param descriptor_set_layout The descriptor set layout
+    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
+    [[nodiscard]] auto &set_descriptor_set_layout(const VkDescriptorSetLayout descriptor_set_layout) {
         return *this;
     }
 
@@ -247,6 +280,12 @@ public:
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] auto &set_primitive_topology(const VkPrimitiveTopology topology) {
         m_input_assembly_sci.topology = topology;
+        return *this;
+    }
+
+    ///
+    /// @return
+    [[nodiscard]] auto &set_push_constant_ranges() {
         return *this;
     }
 

@@ -35,8 +35,6 @@ private:
     TextureReads m_texture_reads;
     /// The textures the graphics pass writes to
     TextureWrites m_texture_writes;
-    /// The push constant ranges of the graphics pass
-    std::vector<std::pair<VkPushConstantRange, std::function<void()>>> m_push_constant_ranges;
 
     // TODO: Merge push constant ranges into one block and put it as member here?
     // TODO: Copy all data into one piece of memory and call vkCmdPushConstants only once?
@@ -54,26 +52,6 @@ public:
 
     GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
     GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) noexcept;
-
-    /// Add a push constant range to the graphics pass
-    /// @param shader_stage The shader stage for the push constant range
-    /// @param push_constant The push constant data
-    /// @param on_update The update function
-    /// @param offset The offset in the push constant range
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    template <typename PushConstantDataType>
-    [[nodiscard]] auto &add_push_constant_range(const VkShaderStageFlags shader_stage,
-                                                const PushConstantDataType &push_constant,
-                                                std::function<void()> on_update, const std::uint32_t offset = 0) {
-        m_push_constant_ranges.emplace_back(
-            VkPushConstantRange{
-                .stageFlags = shader_stage,
-                .offset = offset,
-                .size = sizeof(push_constant),
-            },
-            std::move(on_update));
-        return *this;
-    }
 
     /// Build the graphics pass
     /// @param name The name of the graphics pass

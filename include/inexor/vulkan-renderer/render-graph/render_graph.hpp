@@ -6,6 +6,8 @@
 #include "inexor/vulkan-renderer/render-graph/push_constant_range.hpp"
 #include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
@@ -33,12 +35,14 @@ enum class BufferType;
 class PushConstantRangeResource;
 
 // Namespaces
-using Device = wrapper::Device;
-using Swapchain = wrapper::Swapchain;
-using CommandBuffer = wrapper::commands::CommandBuffer;
-using GraphicsPipeline = wrapper::pipelines::GraphicsPipeline;
-using GraphicsPipelineBuilder = wrapper::pipelines::GraphicsPipelineBuilder;
-using PipelineLayout = wrapper::pipelines::PipelineLayout;
+using wrapper::Device;
+using wrapper::Swapchain;
+using wrapper::commands::CommandBuffer;
+using wrapper::descriptors::DescriptorSetLayoutBuilder;
+using wrapper::descriptors::DescriptorSetLayoutCache;
+using wrapper::pipelines::GraphicsPipeline;
+using wrapper::pipelines::GraphicsPipelineBuilder;
+using wrapper::pipelines::PipelineLayout;
 
 /// A rendergraph is a generic solution for rendering architecture
 /// This is based on Yuriy O'Donnell's talk "FrameGraph: Extensible Rendering Architecture in Frostbite" from GDC 2017
@@ -75,24 +79,32 @@ private:
     /// The graphics pipeline builder of the rendergraph
     GraphicsPipelineBuilder m_graphics_pipeline_builder;
 
+    // ---------------------------------------------------------------------------------------------------------
+    //  DESCRIPTORS
+    // ---------------------------------------------------------------------------------------------------------
+    /// NOTE: In C++, the order of initialization of member variables in a class constructor is determined by the order
+    /// of declaration in the class, not by the order of arguments in the constructor's initializer list! Also, do not
+    /// reset descriptor set layout cache when calling reset method of the rendergraph!
+    DescriptorSetLayoutCache m_descriptor_set_layout_cache;
+    DescriptorSetLayoutBuilder m_descriptor_set_layout_builder;
+
+    // ---------------------------------------------------------------------------------------------------------
+    //  PIPELINES
+    // ---------------------------------------------------------------------------------------------------------
     /// The callables which create the graphics pipelines used in the rendergraph
     using GraphicsPipelineCreateFunction =
-        std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, const VkPipelineLayout)>;
+        std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, DescriptorSetLayoutBuilder &)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<std::pair<std::string, GraphicsPipelineCreateFunction>> m_pipeline_create_functions;
 
-    // TODO: Graphics pipeline layout create functions..?
-    std::vector<std::shared_ptr<PipelineLayout>> m_graphics_pipeline_layouts;
-
+    // TODO: Support compute pipelines and compute passes
     /// The graphics pipelines used in the rendergraph
     /// This will be populated using m_on_graphics_pipeline_create_callables
     std::vector<std::shared_ptr<GraphicsPipeline>> m_graphics_pipelines;
 
-    // TODO: Support compute pipelines and compute passes
-
     // ---------------------------------------------------------------------------------------------------------
-    //  BUFFERS AND TEXTURES
+    //  BUFFERS
     // ---------------------------------------------------------------------------------------------------------
     // The buffer resources of the rendergraph (vertex-, index-, and uniform buffers)
     // Note that we must keep the data as std::vector of std::unique_ptr in order to keep entries consistent
@@ -103,11 +115,17 @@ private:
     // ---------------------------------------------------------------------------------------------------------
     std::vector<std::shared_ptr<Shader>> m_shaders;
 
+    // ---------------------------------------------------------------------------------------------------------
+    //  PUSH CONSTANT RANGES?
+    // ---------------------------------------------------------------------------------------------------------
     /// The push constant resources of the rendergraph
     // TODO: Remember we need to squash all VkPushConstantRange of a pass into one std::vector in order to bind it!
     // TODO: Should push constant ranges be per graphics pipeline?
     std::vector<std::shared_ptr<PushConstantRange>> m_push_constant_ranges;
 
+    // ---------------------------------------------------------------------------------------------------------
+    //  TEXTURES
+    // ---------------------------------------------------------------------------------------------------------
     /// TODO: Explain how textures are treated equally here
     std::vector<std::shared_ptr<Texture>> m_textures;
 
@@ -125,13 +143,7 @@ private:
     void create_descriptor_sets();
 
     /// Create the graphics passes
-    /// @note This must happen before the graphics pipeline layouts can be created in
-    /// ``create_graphics_pipeline_layouts()``
     void create_graphics_passes();
-
-    /// Create the graphics pipeline layouts
-    /// @note This must happen before the graphics pipelines can be created in ``create_graphics_pipeline_layouts()``
-    void create_graphics_pipeline_layouts();
 
     /// Create the graphics pipelines
     void create_graphics_pipelines();
@@ -187,6 +199,18 @@ public:
     RenderGraph &operator=(const RenderGraph &) = delete;
     RenderGraph &operator=(RenderGraph &&) = delete;
 
+    /// Add a new graphics pass to the rendergraph
+    /// @param name The name of the graphics pass
+    /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
+    /// @note Move semantics is used to std::move on_pass_create
+    void add_graphics_pass(std::string name, GraphicsPassCreateFunction on_pass_create);
+
+    /// Add a new graphics pipeline to the rendergraph
+    /// @param name The graphics pipeline name
+    /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
+    /// @note Move semantics is used to std::move on_pipeline_create
+    void add_graphics_pipeline(std::string name, GraphicsPipelineCreateFunction on_pipeline_create);
+
     /// Add an index buffer to rendergraph
     /// @note The Vulkan index type is set to ``VK_INDEX_TYPE_UINT32`` by default and it not exposed as parameter
     /// @param name The name of the index buffer
@@ -194,39 +218,6 @@ public:
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_index_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
-
-    /// Add a uniform buffer to rendergraph
-    /// @param name The name of the uniform buffer
-    /// @param on_update The update function of the uniform buffer
-    /// @return A shared pointer to the buffer resource that was created
-    [[nodiscard]] std::shared_ptr<Buffer>
-    add_uniform_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
-
-    /// Add a vertex buffer to rendergraph
-    /// @param name The name of the vertex buffer
-    /// @param vert_input_attr_descs The vertex input attribute descriptions
-    /// @note You might cleverly noticed that ``VkVertexInputAttributeDescription`` is not required to create a buffer.
-    /// Why then is it a parameter here? The vertex input attribute description is stored in the buffer so that when
-    /// rendergraph gets compiled and builds the graphics pipelines, it can read ``VkVertexInputAttributeDescription``
-    /// from the buffers to create the graphics pipelines.
-    /// @param on_update The update function of the vertex buffer
-    /// @return A shared pointer to the buffer resource that was created
-    [[nodiscard]] std::shared_ptr<Buffer>
-    add_vertex_buffer(std::string name,
-                      std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
-                      std::optional<std::function<void()>> on_update = std::nullopt);
-
-    /// Add a new graphics pass to the rendergraph
-    /// @param pass_name The name of the graphics pass
-    /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
-    /// @note Move semantics is used to std::move on_pass_create
-    void add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create);
-
-    /// Add a new graphics pipeline to the rendergraph
-    /// @param pipeline_name The graphics pipeline name
-    /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
-    /// @note Move semantics is used to std::move on_pipeline_create
-    void add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create);
 
     /// Add a push constant range resource to the rendergraph
     /// @tparam T The data type of the push constant range
@@ -273,11 +264,35 @@ public:
                                                        std::optional<std::function<void()>> on_init = std::nullopt,
                                                        std::optional<std::function<void()>> on_update = std::nullopt);
 
+    /// Add a uniform buffer to rendergraph
+    /// @param name The name of the uniform buffer
+    /// @param on_update The update function of the uniform buffer
+    /// @return A shared pointer to the buffer resource that was created
+    [[nodiscard]] std::shared_ptr<Buffer>
+    add_uniform_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
+
+    /// Add a vertex buffer to rendergraph
+    /// @param name The name of the vertex buffer
+    /// @param vertex_attributes The vertex input attribute descriptions
+    /// @note You might cleverly noticed that ``VkVertexInputAttributeDescription`` is not required to create a buffer.
+    /// Why then is it a parameter here? The vertex input attribute description is stored in the buffer so that when
+    /// rendergraph gets compiled and builds the graphics pipelines, it can read ``VkVertexInputAttributeDescription``
+    /// from the buffers to create the graphics pipelines.
+    /// @param on_update The update function of the vertex buffer
+    /// @return A shared pointer to the buffer resource that was created
+    [[nodiscard]] std::shared_ptr<Buffer>
+    add_vertex_buffer(std::string name,
+                      std::vector<VkVertexInputAttributeDescription> vertex_attributes,
+                      std::optional<std::function<void()>> on_update = std::nullopt);
+
     /// Compile the rendergraph
     void compile();
 
     /// Render a frame
     void render();
+
+    /// Reset the entire RenderGraph
+    void reset();
 
     /// Update rendering data like buffers or textures
     void update_data();

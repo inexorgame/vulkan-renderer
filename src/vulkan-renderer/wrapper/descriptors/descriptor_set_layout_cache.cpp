@@ -49,6 +49,7 @@ DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayo
     if (!m_cache.contains(layout_info)) {
         m_cache.emplace(layout_info, DescriptorSetLayout(m_device, descriptor_set_layout_ci, std::move(name)));
     }
+    // TODO: Name descriptor set layout internally!
     return m_cache.at(layout_info).m_descriptor_set_layout;
 }
 

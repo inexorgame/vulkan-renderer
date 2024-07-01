@@ -6,15 +6,15 @@
 #include <utility>
 #include <vector>
 
-// Forward declaration
 namespace inexor::vulkan_renderer {
-class RenderGraph;
-}
-
 // Forward declaration
+class RenderGraph;
+} // namespace inexor::vulkan_renderer
+
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
 class Device;
-}
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
@@ -47,14 +47,17 @@ public:
     // TODO: Support other descriptor types besides uniform buffers and combined image samplers!
 
     /// Add a combined image sampler to the descriptor set
-    /// @param shader_stage The shader stage
+    /// @param shader_stage The shader stage (``VK_SHADER_STAGE_FRAGMENT_BIT`` by default)
+    /// @param count The number of combined image samplers
     /// @return The dereferenced this pointer
-    DescriptorSetLayoutBuilder &add_combined_image_sampler(VkShaderStageFlags shader_stage);
+    DescriptorSetLayoutBuilder &
+    add_combined_image_sampler(VkShaderStageFlags shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT, std::uint32_t count = 1);
 
     /// Add a uniform buffer to the descriptor set
     /// @param shader_stage The shader stage
+    /// @param count The number of uniform buffers
     /// @return The dereferenced this pointer
-    DescriptorSetLayoutBuilder &add_uniform_buffer(VkShaderStageFlags shader_stage);
+    DescriptorSetLayoutBuilder &add_uniform_buffer(VkShaderStageFlags shader_stage, std::uint32_t count = 1);
 
     /// Build the descriptor set layout
     /// @param name The name of the descriptor set layout

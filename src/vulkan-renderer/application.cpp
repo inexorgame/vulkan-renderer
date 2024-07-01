@@ -8,6 +8,7 @@
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
@@ -423,7 +424,6 @@ void Application::run() {
 void Application::setup_render_graph() {
     // TODO: Move to OctreeRenderer and ImGuiRenderer!
     // TODO: Lambda style > polymorphism!
-
     // TODO: Move this to rendergraph header file? (Can we then use it here?)
     using render_graph::TextureUsage::BACK_BUFFER;
     using render_graph::TextureUsage::DEPTH_STENCIL_BUFFER;
@@ -435,7 +435,7 @@ void Application::setup_render_graph() {
     m_depth_buffer = m_render_graph->add_texture("Depth", DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
     m_msaa_depth = m_render_graph->add_texture("MSAA-Depth", MSAA_DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    const std::vector<VkVertexInputAttributeDescription> vert_input_attr_desc{{
+    const std::vector<VkVertexInputAttributeDescription> vert_input_attr_desc{
         {
             .location = 0,
             .binding = 0,
@@ -448,7 +448,7 @@ void Application::setup_render_graph() {
             .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = offsetof(OctreeGpuVertex, color),
         },
-    }};
+    };
 
     m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
         // If the key N was pressed once, generate a new octree
@@ -469,7 +469,6 @@ void Application::setup_render_graph() {
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     m_index_buffer = m_render_graph->add_index_buffer("Octree");
-
     m_uniform_buffer = m_render_graph->add_uniform_buffer("Matrices", [&]() {
         // TODO: Update model matrix if required
         m_mvp_matrices.view = m_camera->view_matrix();
@@ -478,56 +477,61 @@ void Application::setup_render_graph() {
         m_uniform_buffer->request_update(m_mvp_matrices);
     });
 
+    using wrapper::descriptors::DescriptorSetLayoutBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
-
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
-    m_render_graph->add_graphics_pipeline(
-        "Octree", [&](GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
-            m_octree_pipeline = builder
-                                    .add_default_color_blend_attachment()
-                                    // TODO: This could be turned into a variadic template...
-                                    .set_vertex_input_bindings({
-                                        {
-                                            .binding = 0,
-                                            .stride = sizeof(OctreeGpuVertex),
-                                            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                        },
-                                    })
-                                    .set_vertex_input_attributes(vert_input_attr_desc)
-                                    .set_viewport(m_swapchain->extent())
-                                    .set_scissor(m_swapchain->extent())
-                                    .set_pipeline_layout(pipeline_layout)
-                                    .uses_shader(m_octree_vert)
-                                    .uses_shader(m_octree_frag)
-                                    .build("Octree");
-            return m_octree_pipeline;
-        });
+    // TODO: Should this return a handle?
+    // TODO: Pass on push constant ranges and descriptor set layouts here already?
+    m_render_graph->add_graphics_pipeline("Octree", [&](GraphicsPipelineBuilder &graphics_pipeline_builder,
+                                                        DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
+        m_octree_pipeline =
+            graphics_pipeline_builder.add_default_color_blend_attachment()
+                .set_vertex_input_bindings({
+                    {
+                        .binding = 0,
+                        .stride = sizeof(OctreeGpuVertex),
+                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                    },
+                })
+                .set_vertex_input_attributes(vert_input_attr_desc)
+                .set_viewport(m_swapchain->extent())
+                .set_scissor(m_swapchain->extent())
+                .set_descriptor_set_layout(
+                    descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree"))
+                .uses_shader(m_octree_vert)
+                .uses_shader(m_octree_frag)
+                .build("Octree");
+        return m_octree_pipeline;
+    });
 
     using render_graph::GraphicsPassBuilder;
     using wrapper::commands::CommandBuffer;
-
-    m_render_graph->add_graphics_pass("Octree", [&](GraphicsPassBuilder &builder) {
-        m_octree_pass = builder
-                            .set_clear_value({
-                                // TODO: Define default color values for the engine
-                                .color = {1.0f, 0.0f, 0.0f},
-                            })
-                            .set_depth_test(true)
-                            .set_on_record([&](const CommandBuffer &cmd_buf) {
-                                cmd_buf.bind_pipeline(m_octree_pipeline)
-                                    .bind_vertex_buffer(m_vertex_buffer)
-                                    .bind_index_buffer(m_index_buffer)
-                                    // TODO: Offer overload which converts std::size_t to std::uint32_t
-                                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-                            })
-                            .reads_from_buffer(m_index_buffer)
-                            .reads_from_buffer(m_vertex_buffer)
-                            .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
-                            .writes_to_texture(m_back_buffer)
-                            .writes_to_texture(m_depth_buffer)
-                            .build("Octree");
+    m_render_graph->add_graphics_pass("Octree", [&](GraphicsPassBuilder &graphics_pass_builder) {
+        m_octree_pass =
+            graphics_pass_builder
+                .set_clear_value({
+                    // TODO: Define default color values for the engine
+                    .color = {1.0f, 0.0f, 0.0f},
+                })
+                .set_depth_test(true)
+                .set_on_record([&](const CommandBuffer &cmd_buf) {
+                    // TODO: Even simpler API like .bind() without templates (just overloading)?
+                    cmd_buf.bind_pipeline(m_octree_pipeline)
+                        .bind_vertex_buffer(m_vertex_buffer)
+                        .bind_index_buffer(m_index_buffer)
+                        .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+                })
+                // TOOD: Even simpler API like .reads_from() and .writes_to() without templates (just overloading)?
+                // TODO: Since we don't bind vertex or index buffers, do we even need these calls to reads_from_buffer?
+                .reads_from_buffer(m_index_buffer)
+                .reads_from_buffer(m_vertex_buffer)
+                // This is essential to know for descriptor setup in rendergraph
+                .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
+                .writes_to_texture(m_back_buffer)
+                .writes_to_texture(m_depth_buffer)
+                .build("Octree");
         return m_octree_pass;
     });
 

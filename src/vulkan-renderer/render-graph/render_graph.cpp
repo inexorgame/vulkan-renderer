@@ -13,43 +13,50 @@
 namespace inexor::vulkan_renderer::render_graph {
 
 RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
-    // TODO: Fix me!
-    : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device) {}
+    : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device),
+      m_descriptor_set_layout_cache(device), m_descriptor_set_layout_builder(device, m_descriptor_set_layout_cache) {}
+
+void RenderGraph::add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create) {
+    if (pass_name.empty()) {
+        throw std::invalid_argument(
+            "[RenderGraph::add_graphics_pass] Error: GraphicsPassCreateFunction name is empty!");
+    }
+    // We associate the name of the graphics pass with the GraphicsPassCreateFunction by using a std::pair
+    m_graphics_pass_create_functions.emplace_back(std::make_pair(std::move(pass_name), std::move(on_pass_create)));
+}
+
+void RenderGraph::add_graphics_pipeline(std::string name, GraphicsPipelineCreateFunction on_pipeline_create) {
+    if (name.empty()) {
+        throw std::invalid_argument(
+            "[RenderGraph::add_graphics_pipeline] Error: GraphicsPipelineCreateFunction name is empty!");
+    }
+    // We associate the name of the graphics pass with the GraphicsPipelineCreateFunction by using a std::pair
+    m_pipeline_create_functions.emplace_back(std::make_pair(std::move(name), std::move(on_pipeline_create)));
+}
+
+std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
+                                                        std::optional<std::function<void()>> on_update) {
+    if (name.empty()) {
+        throw std::runtime_error("[RenderGraph::add_uniform_buffer] Error: Uniform buffer name is empty!");
+    }
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), std::move(on_update)));
+    return m_buffers.back();
+}
 
 std::shared_ptr<Buffer> RenderGraph::add_index_buffer(std::string name,
                                                       std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
-        throw std::invalid_argument("Error: Index buffer name is empty!");
+        throw std::invalid_argument("[RenderGraph::add_index_buffer] Error: Index buffer name is empty!");
     }
     m_buffers.emplace_back(
         std::make_shared<Buffer>(m_device, std::move(name), VK_INDEX_TYPE_UINT32, std::move(on_update)));
     return m_buffers.back();
 }
 
-std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string name,
-                                                        std::optional<std::function<void()>> on_update) {
-    if (name.empty()) {
-        throw std::runtime_error("Error: Uniform buffer name is empty!");
-    }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), std::move(on_update)));
-    return m_buffers.back();
-}
-
-std::shared_ptr<Buffer>
-RenderGraph::add_vertex_buffer(std::string name,
-                               std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
-                               std::optional<std::function<void()>> on_update) {
-    if (name.empty()) {
-        throw std::invalid_argument("Error: Vertex buffer name is empty!");
-    }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), std::move(vert_input_attr_descs)));
-    return m_buffers.back();
-}
-
 std::shared_ptr<Shader>
 RenderGraph::add_shader(std::string name, const VkShaderStageFlagBits shader_stage, std::string file_name) {
     if (name.empty()) {
-        throw std::invalid_argument("Error: Shader name is empty!");
+        throw std::invalid_argument("[RenderGraph::add_shader] Error: Shader name is empty!");
     }
     m_shaders.emplace_back(std::make_shared<Shader>(m_device, std::move(name), shader_stage, std::move(file_name)));
     return m_shaders.back();
@@ -61,27 +68,24 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string name,
                                                   std::optional<std::function<void()>> on_init,
                                                   std::optional<std::function<void()>> on_update) {
     if (name.empty()) {
-        throw std::invalid_argument("Error: Texture name ist empty!");
+        throw std::invalid_argument("[RenderGraph::add_texture] Error: Texture name ist empty!");
     }
     m_textures.emplace_back(
         std::make_shared<Texture>(std::move(name), usage, format, std::move(on_init), std::move(on_update)));
     return m_textures.back();
 }
 
-void RenderGraph::add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create) {
-    if (pass_name.empty()) {
-        throw std::invalid_argument("Error: GraphicsPassCreateFunction name is empty!");
+std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string name,
+                                                       std::vector<VkVertexInputAttributeDescription> vertex_attributes,
+                                                       std::optional<std::function<void()>> on_update) {
+    if (name.empty()) {
+        throw std::invalid_argument("[RenderGraph::add_vertex_buffer] Error: Vertex buffer name is empty!");
     }
-    // We associate the name of the graphics pass with the GraphicsPassCreateFunction by using a std::pair
-    m_graphics_pass_create_functions.emplace_back(std::make_pair(std::move(pass_name), std::move(on_pass_create)));
-}
-
-void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create) {
-    if (pipeline_name.empty()) {
-        throw std::invalid_argument("Error: GraphicsPipelineCreateFunction name is empty!");
+    if (vertex_attributes.empty()) {
+        throw std::invalid_argument("[RenderGraph::add_vertex_buffer] Error: Vertex input attributes are empty!");
     }
-    // We associate the name of the graphics pass with the GraphicsPipelineCreateFunction by using a std::pair
-    m_pipeline_create_functions.emplace_back(std::make_pair(std::move(pipeline_name), std::move(on_pipeline_create)));
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), std::move(vertex_attributes)));
+    return m_buffers.back();
 }
 
 void RenderGraph::check_for_cycles() {
@@ -96,7 +100,6 @@ void RenderGraph::compile() {
     create_graphics_passes();
     create_buffers();
     create_descriptor_sets();
-    create_graphics_pipeline_layouts();
     create_graphics_pipelines();
 }
 
@@ -141,26 +144,6 @@ void RenderGraph::create_graphics_passes() {
     }
 }
 
-void RenderGraph::create_graphics_pipeline_layouts() {
-    m_log->trace("Creating graphics pipeline layouts");
-
-    // TODO: This is wrong! First pipeline layout, then pipeline, right?
-    // TODO: We can't iterate through m_graphics_pipelines if we haven't created them yet!
-
-    m_graphics_pipeline_layouts.clear();
-    m_graphics_pipeline_layouts.reserve(m_graphics_pipelines.size());
-
-    for (const auto &pipeline : m_graphics_pipelines) {
-// TODO: How to associate pipelines with passes?
-#if 0
-        m_graphics_pipeline_layouts.emplace_back(std::make_unique<PipelineLayout>(m_device,                           //
-                                                                                  pipeline->descriptor_set_layouts(), //
-                                                                                  pipeline->push_constant_ranges(),   //
-                                                                                  pipeline->name()));
-#endif
-    }
-}
-
 void RenderGraph::create_graphics_pipelines() {
     m_log->trace("Creating graphics pipelines");
 
@@ -171,16 +154,15 @@ void RenderGraph::create_graphics_pipelines() {
     // Call all graphics pipeline create functions
     for (std::size_t pipeline_index = 0; pipeline_index < pipeline_count; pipeline_index++) {
         // Call the graphics pipeline create function
-        auto new_graphics_pipeline = std::invoke(m_pipeline_create_functions[pipeline_index].second, //
-                                                 m_graphics_pipeline_builder,                        //
-                                                 m_graphics_pipeline_layouts[pipeline_index]->m_pipeline_layout);
+        auto new_graphics_pipeline = std::invoke(m_pipeline_create_functions[pipeline_index].second,
+                                                 m_graphics_pipeline_builder, m_descriptor_set_layout_builder);
         // Store the graphics pipeline that was created
         m_graphics_pipelines.push_back(std::move(new_graphics_pipeline));
     }
 }
 
 void RenderGraph::determine_pass_order() {
-    spdlog::trace("Determing pass order using depth first search (dfs)");
+    m_log->trace("Determing pass order using depth first search (dfs)");
     // TODO: The data structure to determine pass order should be created before rendergraph compilation!
 }
 
@@ -199,10 +181,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
     // If this is the first graphics pass, we need to transform the swapchain image, which comes back in undefined
     // layout after presenting
     if (is_first_pass) {
-        // TODO: Can't it keep track of the current image layout itself? Why do we need to specify it again
-        // TODO: Remove img_index and implement swapchain.get_current_image()
-        cmd_buf.change_image_layout(m_swapchain.image(img_index), //
-                                    VK_IMAGE_LAYOUT_UNDEFINED,    //
+        cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_UNDEFINED,
                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     }
 
@@ -281,10 +260,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
 
     // If this is the last graphics pass, change the image layout of the back buffer for presenting
     if (is_last_pass) {
-        // TODO: Can't it keep track of the current image layout itself? Why do we need to specify it again
-        // TODO: Remove img_index and implement swapchain.get_current_image()
-        cmd_buf.change_image_layout(m_swapchain.image(img_index),             //
-                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, //
+        cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
@@ -327,6 +303,10 @@ void RenderGraph::render() {
     m_swapchain.present();
 }
 
+void RenderGraph::reset() {
+    // TODO: Implement me!
+}
+
 void RenderGraph::update_buffers() {
     for (const auto &buffer : m_buffers) {
         // If m_on_update is not std::nullopt, call the update function of the buffer
@@ -353,6 +333,8 @@ void RenderGraph::update_descriptor_sets() {
     // would either have to be in one struct or some other ordering must take place!!! If not, this will cause trouble
     // if a pass reads from both let's say a uniform buffer and a texture, but the order specified in descriptor set
     // layout builder results in a binding order that is incorrect!
+
+    // TODO: Builder pattern for descriptor writes?
 }
 
 void RenderGraph::update_push_constant_ranges() {

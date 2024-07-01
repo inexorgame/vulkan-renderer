@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/render-graph/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/render-graph/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
@@ -76,7 +77,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
             }
         }
         // Update ImGui vertices and indices
-        // Note that the index buffer does not have a separate update code, as it is updated here with vertices
+        // Note that the index buffer does not have a separate update code because it is updated here with vertices
         m_vertex_buffer->request_update(&m_vertex_data, sizeof(m_vertex_data));
         m_index_buffer->request_update(&m_index_data, sizeof(m_index_data));
     });
@@ -85,69 +86,67 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
     m_vertex_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
     m_fragment_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
-    // TODO: using <namespace> to make code shorter...
+    using wrapper::descriptors::DescriptorSetLayoutBuilder;
+    using wrapper::pipelines::GraphicsPipelineBuilder;
+    render_graph.add_graphics_pipeline("ImGui", [&](GraphicsPipelineBuilder &graphics_pipeline_builder,
+                                                    DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
+        m_imgui_pipeline =
+            graphics_pipeline_builder.add_default_color_blend_attachment()
+                .set_vertex_input_bindings({
+                    {
+                        .binding = 0,
+                        .stride = sizeof(ImDrawVert),
+                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                    },
+                })
+                .set_vertex_input_attributes(vert_input_attr_descs)
+                .uses_shader(m_vertex_shader)
+                .uses_shader(m_fragment_shader)
+                .set_descriptor_set_layout(descriptor_set_layout_builder.add_combined_image_sampler().build("ImGui"))
+                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, &m_push_const_block,
+                                         [&]() {
+                                             const ImGuiIO &io = ImGui::GetIO();
+                                             m_push_const_block.scale =
+                                                 glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+                                         })
+                .build("ImGui");
+        return m_imgui_pipeline;
+    });
 
-    render_graph.add_graphics_pipeline(
-        "ImGui", [&](wrapper::pipelines::GraphicsPipelineBuilder &builder, const VkPipelineLayout pipeline_layout) {
-            m_imgui_pipeline = builder.add_default_color_blend_attachment()
-                                   .set_vertex_input_bindings({
-                                       {
-                                           .binding = 0,
-                                           .stride = sizeof(ImDrawVert),
-                                           .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                       },
-                                   })
-                                   .set_vertex_input_attributes(vert_input_attr_descs)
-                                   .uses_shader(m_vertex_shader)
-                                   .uses_shader(m_fragment_shader)
-                                   .set_pipeline_layout(pipeline_layout)
-                                   .build("ImGui");
-            return m_imgui_pipeline;
-        });
+    using render_graph::TextureUsage;
+    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, [&]() {
+        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size);
+    });
 
-    m_imgui_texture =
-        render_graph.add_texture("ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, [&]() {
-            m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size);
-        });
-
-    // TODO: Descriptor management, pipeline management, and graphics passes are deeply related! Solution=?
-    render_graph.add_graphics_pass("ImGui", [&](render_graph::GraphicsPassBuilder &builder) {
-        m_imgui_pass = builder.reads_from_buffer(m_index_buffer)
+    using render_graph::GraphicsPassBuilder;
+    using wrapper::commands::CommandBuffer;
+    render_graph.add_graphics_pass("ImGui", [&](GraphicsPassBuilder &graphics_pass_builder) {
+        m_imgui_pass = graphics_pass_builder.reads_from_buffer(m_index_buffer)
                            .reads_from_buffer(m_vertex_buffer)
                            .reads_from_texture(m_imgui_texture, VK_SHADER_STAGE_FRAGMENT_BIT)
                            .writes_to_texture(back_buffer)
                            .writes_to_texture(depth_buffer)
                            .writes_to_texture(back_buffer)
                            .writes_to_texture(depth_buffer)
-                           .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, &m_push_const_block,
-                                                    // Push constant range update lambda
-                                                    [&]() {
-                                                        const ImGuiIO &io = ImGui::GetIO();
-                                                        m_push_const_block.scale =
-                                                            glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-                                                    })
-                           .set_on_record(
-                               // Graphics pass command buffer recording lambda
-                               [&](const wrapper::commands::CommandBuffer &cmd_buf) {
-                                   // TODO: Bind pipelines through rendergraph automatically or not?
-                                   cmd_buf.bind_pipeline(m_imgui_pipeline);
-                                   ImDrawData *draw_data = ImGui::GetDrawData();
-                                   if (draw_data == nullptr) {
-                                       // There is no ImGui data to render
-                                       return;
+                           .set_on_record([&](const CommandBuffer &cmd_buf) {
+                               // TODO: Bind pipelines through rendergraph automatically or not?
+                               cmd_buf.bind_pipeline(m_imgui_pipeline);
+                               ImDrawData *draw_data = ImGui::GetDrawData();
+                               if (draw_data == nullptr) {
+                                   return;
+                               }
+                               std::uint32_t index_offset = 0;
+                               std::int32_t vertex_offset = 0;
+                               for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                                   const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
+                                   for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                                       const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                                       cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                                       index_offset += draw_cmd.ElemCount;
                                    }
-                                   std::uint32_t index_offset = 0;
-                                   std::int32_t vertex_offset = 0;
-                                   for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                                       const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
-                                       for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-                                           const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                                           cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
-                                           index_offset += draw_cmd.ElemCount;
-                                       }
-                                       vertex_offset += cmd_list->VtxBuffer.Size;
-                                   }
-                               })
+                                   vertex_offset += cmd_list->VtxBuffer.Size;
+                               }
+                           })
                            .build("ImGui");
         return m_imgui_pass;
     });
