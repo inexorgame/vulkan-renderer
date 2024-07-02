@@ -3,7 +3,6 @@
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/push_constant_range.hpp"
 #include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
@@ -32,7 +31,6 @@ namespace inexor::vulkan_renderer::render_graph {
 
 // Forward declarations
 enum class BufferType;
-class PushConstantRangeResource;
 
 // Namespaces
 using wrapper::Device;
@@ -116,14 +114,6 @@ private:
     std::vector<std::shared_ptr<Shader>> m_shaders;
 
     // ---------------------------------------------------------------------------------------------------------
-    //  PUSH CONSTANT RANGES?
-    // ---------------------------------------------------------------------------------------------------------
-    /// The push constant resources of the rendergraph
-    // TODO: Remember we need to squash all VkPushConstantRange of a pass into one std::vector in order to bind it!
-    // TODO: Should push constant ranges be per graphics pipeline?
-    std::vector<std::shared_ptr<PushConstantRange>> m_push_constant_ranges;
-
-    // ---------------------------------------------------------------------------------------------------------
     //  TEXTURES
     // ---------------------------------------------------------------------------------------------------------
     /// TODO: Explain how textures are treated equally here
@@ -178,9 +168,6 @@ private:
     /// Update the descriptor sets
     void update_descriptor_sets();
 
-    /// Update the push constant ranges
-    void update_push_constant_ranges();
-
     /// Validate rendergraph
     /// @note For rendergraph validation, the passes of the rendergraph must already be created
     void validate_render_graph();
@@ -218,28 +205,6 @@ public:
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_index_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
-
-    /// Add a push constant range resource to the rendergraph
-    /// @tparam T The data type of the push constant range
-    /// @param data A pointer to the data of the push constant range
-    /// @param on_update The update function of the push constant range
-    /// @param stage_flags The shader stage flags (``VK_SHADER_STAGE_VERTEX_BIT`` by default)
-    /// @param offset The offset in bytes (``0`` by default)
-    /// @return The this pointer, allowing for methods to be chained as a builder pattern
-    template <typename PushConstantDataType>
-    void add_push_constant_range(
-        const PushConstantDataType *data,
-        std::function<void()> on_update = []() {},
-        const VkShaderStageFlags stage_flags = VK_SHADER_STAGE_VERTEX_BIT,
-        const std::uint32_t offset = 0) {
-        m_push_constant_ranges.emplace_back(
-            VkPushConstantRange{
-                .stageFlags = stage_flags,
-                .offset = offset,
-                .size = sizeof(PushConstantDataType),
-            },
-            data, std::move(on_update));
-    }
 
     // TODO: Use a SPIR-V library like spirv-cross to deduce shader type from the SPIR-V file automatically!
 

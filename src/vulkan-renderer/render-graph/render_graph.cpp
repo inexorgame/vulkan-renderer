@@ -3,7 +3,6 @@
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/push_constant_range.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -329,14 +328,6 @@ void RenderGraph::update_descriptor_sets() {
     // layout builder results in a binding order that is incorrect!
 
     // TODO: Builder pattern for descriptor writes?
-}
-
-void RenderGraph::update_push_constant_ranges() {
-    // TODO: Update push constant ranges in parallel using taskflow!
-    // Loop through all push constant ranges and call their update function
-    for (const auto &push_constant : m_push_constant_ranges) {
-        std::invoke(push_constant->m_on_update);
-    }
 }
 
 void RenderGraph::validate_render_graph() {
