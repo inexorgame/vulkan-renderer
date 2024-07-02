@@ -140,33 +140,29 @@ void RenderGraph::create_graphics_passes() {
     m_graphics_passes.clear();
     m_graphics_passes.reserve(m_graphics_pass_create_functions.size());
 
-    // Fill the vector of graphics passes by calling the corresponding callables (lambdas)
     for (const auto &pass_create_function : m_graphics_pass_create_functions) {
-        // Call the graphics pass create function
-        auto new_graphics_pass = std::invoke(pass_create_function, m_graphics_pass_builder);
-        // We must check if the graphics pass that was created is valid!
-        if (!new_graphics_pass) {
-            throw std::runtime_error("Error: Failed to create graphics pass!");
-        }
-        // Store the graphics pass that was created
-        m_graphics_passes.push_back(std::move(new_graphics_pass));
+        // NOTE: We don't have to check if the std::shared_ptr<GraphicsPass> that was created is valid because
+        // an exception would have been thrown in case an error occured during creation of it
+        m_graphics_passes.emplace_back(std::invoke(pass_create_function, m_graphics_pass_builder));
     }
 }
 
 void RenderGraph::create_graphics_pipelines() {
     m_log->trace("Creating graphics pipelines");
 
+    if (m_graphics_pass_create_functions.empty()) {
+        throw std::runtime_error("Error: No graphics pipelines specified in rendergraph!");
+    }
     m_graphics_pipelines.clear();
     const auto pipeline_count = m_pipeline_create_functions.size();
     m_graphics_pipelines.reserve(pipeline_count);
 
     // Call all graphics pipeline create functions
     for (std::size_t pipeline_index = 0; pipeline_index < pipeline_count; pipeline_index++) {
-        // Call the graphics pipeline create function
-        auto new_graphics_pipeline = std::invoke(m_pipeline_create_functions[pipeline_index],
-                                                 m_graphics_pipeline_builder, m_descriptor_set_layout_builder);
         // Store the graphics pipeline that was created
-        m_graphics_pipelines.push_back(std::move(new_graphics_pipeline));
+        m_graphics_pipelines.emplace_back(
+            std::move(std::invoke(m_pipeline_create_functions[pipeline_index], m_graphics_pipeline_builder,
+                                  m_descriptor_set_layout_builder)));
     }
 }
 
