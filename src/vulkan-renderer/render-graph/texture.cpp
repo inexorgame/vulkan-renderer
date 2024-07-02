@@ -15,6 +15,7 @@ Texture::Texture(std::string name,
       m_on_update(std::move(on_update)) {}
 
 Texture::Texture(Texture &&other) noexcept {
+    // TODO: Check me!
     m_name = std::move(other.m_name);
     m_usage = other.m_usage;
     m_format = other.m_format;
@@ -25,6 +26,7 @@ Texture::Texture(Texture &&other) noexcept {
     m_height = other.m_height;
     m_channels = other.m_channels;
     m_mip_levels = other.m_mip_levels;
+    m_on_init = std::move(other.m_on_init);
     m_on_update = std::move(other.m_on_update);
 }
 

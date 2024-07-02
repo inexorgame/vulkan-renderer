@@ -8,39 +8,49 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Buffer::Buffer(const Device &device, std::string name, std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)),
-      m_buffer_type(BufferType::UNIFORM_BUFFER) {
-    // TODO: Set buffer usage flags!
-}
+Buffer::Buffer(const Device &device,
+               std::string buffer_name,
+               std::optional<std::function<void()>> on_init,
+               std::optional<std::function<void()>> on_update)
+    : m_device(device), m_name(std::move(buffer_name)), m_on_init(std::move(on_init)),
+      m_on_update(std::move(on_update)), m_buffer_type(BufferType::UNIFORM_BUFFER),
+      m_buffer_usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
+      // TODO: Is this really the best memory usage flag for a uniform buffer?
+      m_mem_usage(VMA_MEMORY_USAGE_AUTO_PREFER_HOST) {}
 
 Buffer::Buffer(const Device &device,
-               std::string name,
+               std::string buffer_name,
                std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
+               std::optional<std::function<void()>> on_init,
                std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)),
-      m_buffer_type(BufferType::VERTEX_BUFFER) {
-    // TODO: Set buffer usage flags!
-}
+    : m_device(device), m_name(std::move(buffer_name)), m_on_init(std::move(on_init)),
+      m_on_update(std::move(on_update)), m_buffer_type(BufferType::VERTEX_BUFFER),
+      m_buffer_usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+      // TODO: Is this really the best memory usage flag for a vertex buffer?
+      m_mem_usage(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE) {}
 
 Buffer::Buffer(const Device &device,
-               std::string name,
+               std::string buffer_name,
                VkIndexType index_type,
+               std::optional<std::function<void()>> on_init,
                std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(name)), m_on_update(std::move(on_update)), m_index_type(index_type),
-      m_buffer_type(BufferType::INDEX_BUFFER) {
-    // TODO: Set buffer usage flags!
-}
+    : m_device(device), m_name(std::move(buffer_name)), m_on_init(std::move(on_init)),
+      m_on_update(std::move(on_update)), m_index_type(index_type), m_buffer_type(BufferType::INDEX_BUFFER),
+      m_buffer_usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
+      // TODO: Is this really the best memory usage flag for an index buffer?
+      m_mem_usage(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE) {}
 
 Buffer::Buffer(Buffer &&other) noexcept
     : m_device(other.m_device), m_buffer_usage(other.m_buffer_usage), m_mem_usage(other.m_mem_usage) {
     // TODO: Fix me!
     m_name = std::move(other.m_name);
     m_buffer_type = other.m_buffer_type;
+    m_on_init = std::move(other.m_on_init);
     m_on_update = std::move(other.m_on_update);
     m_buffer = std::exchange(other.m_buffer, VK_NULL_HANDLE);
     m_alloc = std::exchange(other.m_alloc, VK_NULL_HANDLE);
     m_alloc_info = other.m_alloc_info;
+    m_mem_usage = other.m_mem_usage;
 }
 
 Buffer::~Buffer() {
@@ -48,6 +58,9 @@ Buffer::~Buffer() {
 }
 
 void Buffer::create_buffer() {
+    if (m_src_data_size == 0) {
+        return;
+    }
     const auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
         .size = m_src_data_size,
         .usage = m_buffer_usage,
@@ -55,8 +68,9 @@ void Buffer::create_buffer() {
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
     const VmaAllocationCreateInfo alloc_ci{
+        // TODO: Check if VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT is more appropriate?
         // It is recommended to create the buffer as mapped and to keep it persistently mapped
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
         .usage = m_mem_usage,
     };
     if (const auto result =
@@ -80,7 +94,7 @@ void Buffer::update_buffer() {
     // Depending on the buffer type, different update mechanisms must be applied
     switch (m_buffer_type) {
     case BufferType::UNIFORM_BUFFER: {
-        // Uniform buffers can be updated simply by using memcpy
+        // Uniform buffers can be updated simply by using std::memcpy
         std::memcpy(m_alloc_info.pMappedData, m_src_data, m_src_data_size);
         break;
     }

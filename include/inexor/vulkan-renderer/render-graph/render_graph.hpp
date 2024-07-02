@@ -108,6 +108,7 @@ private:
     // Note that we must keep the data as std::vector of std::unique_ptr in order to keep entries consistent
     std::vector<std::shared_ptr<Buffer>> m_buffers;
 
+    // TODO: Shaders should not be in rendergraph! They should be part of the renderer which uses them!
     // ---------------------------------------------------------------------------------------------------------
     //  SHADERS
     // ---------------------------------------------------------------------------------------------------------
@@ -116,6 +117,7 @@ private:
     // ---------------------------------------------------------------------------------------------------------
     //  TEXTURES
     // ---------------------------------------------------------------------------------------------------------
+    // TODO: We could split it into internal and external textures actually...
     /// TODO: Explain how textures are treated equally here
     std::vector<std::shared_ptr<Texture>> m_textures;
 
@@ -172,12 +174,11 @@ private:
     void update_descriptor_sets();
 
     /// Validate rendergraph
-    /// @note For rendergraph validation, the passes of the rendergraph must already be created
     void validate_render_graph();
 
 public:
     /// Default constructor
-    /// @note device and swapchain are not a const reference because rendergraph needs to modify both
+    /// @note device and swapchain are not taken as a const reference because rendergraph needs to modify both
     /// @param device The device wrapper
     /// @param swapchain The swapchain wrapper
     RenderGraph(Device &device, Swapchain &swapchain);
@@ -193,21 +194,24 @@ public:
     /// @param name The name of the graphics pass
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     /// @note Move semantics is used to std::move on_pass_create
-    void add_graphics_pass(std::string name, GraphicsPassCreateFunction on_pass_create);
+    void add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create);
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param name The graphics pipeline name
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
     /// @note Move semantics is used to std::move on_pipeline_create
-    void add_graphics_pipeline(std::string name, GraphicsPipelineCreateFunction on_pipeline_create);
+    void add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create);
 
     /// Add an index buffer to rendergraph
     /// @note The Vulkan index type is set to ``VK_INDEX_TYPE_UINT32`` by default and it not exposed as parameter
     /// @param name The name of the index buffer
-    /// @param on_update The update function of the index buffer
+    /// @param on_update The initialization function of the index buffer (``std::nullopt`` by default)
+    /// @param on_update The update function of the index buffer (``std::nullopt`` by default)
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
-    add_index_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
+    add_index_buffer(std::string index_buffer_name,
+                     std::optional<std::function<void()>> on_init = std::nullopt,
+                     std::optional<std::function<void()>> on_update = std::nullopt);
 
     // TODO: Use a SPIR-V library like spirv-cross to deduce shader type from the SPIR-V file automatically!
 
@@ -234,10 +238,13 @@ public:
 
     /// Add a uniform buffer to rendergraph
     /// @param name The name of the uniform buffer
-    /// @param on_update The update function of the uniform buffer
+    /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
+    /// @param on_update The update function of the uniform buffer (``std::nullopt`` by default)
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
-    add_uniform_buffer(std::string buffer_name, std::optional<std::function<void()>> on_update = std::nullopt);
+    add_uniform_buffer(std::string buffer_name,
+                       std::optional<std::function<void()>> on_init = std::nullopt,
+                       std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a vertex buffer to rendergraph
     /// @param name The name of the vertex buffer
@@ -246,11 +253,13 @@ public:
     /// Why then is it a parameter here? The vertex input attribute description is stored in the buffer so that when
     /// rendergraph gets compiled and builds the graphics pipelines, it can read ``VkVertexInputAttributeDescription``
     /// from the buffers to create the graphics pipelines.
-    /// @param on_update The update function of the vertex buffer
+    /// @param on_update The initialization function of the vertex buffer (``std::nullopt`` by default)
+    /// @param on_update The update function of the vertex buffer (``std::nullopt`` by default)
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_vertex_buffer(std::string name,
                       std::vector<VkVertexInputAttributeDescription> vertex_attributes,
+                      std::optional<std::function<void()>> on_init = std::nullopt,
                       std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the rendergraph

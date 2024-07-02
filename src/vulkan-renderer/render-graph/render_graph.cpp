@@ -23,8 +23,8 @@ void RenderGraph::add_graphics_pass(std::string pass_name, GraphicsPassCreateFun
     m_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
 }
 
-void RenderGraph::add_graphics_pipeline(std::string name, GraphicsPipelineCreateFunction on_pipeline_create) {
-    if (name.empty()) {
+void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create) {
+    if (pipeline_name.empty()) {
         throw std::invalid_argument("[RenderGraph::add_graphics_pipeline] Error: Parameter 'on_pipeline_create' is an "
                                     "empty std::string! You must give a name to every rendergraph resource!");
     }
@@ -32,33 +32,36 @@ void RenderGraph::add_graphics_pipeline(std::string name, GraphicsPipelineCreate
 }
 
 std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string uniform_buffer_name,
+                                                        std::optional<std::function<void()>> on_init,
                                                         std::optional<std::function<void()>> on_update) {
     if (uniform_buffer_name.empty()) {
         throw std::runtime_error("[RenderGraph::add_uniform_buffer] Error: Parameter 'uniform_buffer_name' is an empty "
                                  "std::string! You must give a name to every rendergraph resource!");
     }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(uniform_buffer_name), std::move(on_update)));
+    m_buffers.emplace_back(
+        std::make_shared<Buffer>(m_device, std::move(uniform_buffer_name), std::move(on_init), std::move(on_update)));
     return m_buffers.back();
 }
 
 std::shared_ptr<Buffer> RenderGraph::add_index_buffer(std::string index_buffer_name,
+                                                      std::optional<std::function<void()>> on_init,
                                                       std::optional<std::function<void()>> on_update) {
     if (index_buffer_name.empty()) {
         throw std::invalid_argument("[RenderGraph::add_index_buffer] Error: Parameter 'index_buffer_name' is an empty "
                                     "std::string! You must give a name to every rendergraph resource!");
     }
-    m_buffers.emplace_back(
-        std::make_shared<Buffer>(m_device, std::move(index_buffer_name), VK_INDEX_TYPE_UINT32, std::move(on_update)));
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(index_buffer_name), VK_INDEX_TYPE_UINT32,
+                                                    std::move(on_init), std::move(on_update)));
     return m_buffers.back();
 }
 
 std::shared_ptr<Shader>
 RenderGraph::add_shader(std::string shader_name, const VkShaderStageFlagBits shader_stage, std::string file_name) {
-    // TODO: Check if shader names are unique or not?
     if (shader_name.empty()) {
         throw std::invalid_argument("[RenderGraph::add_shader] Error: Parameter 'shader_name' is an empty std::string! "
                                     "You must give a name to every rendergraph resource!");
     }
+    // We do not check if 'file_name' is empty because this is done in Shader wrapper
     m_shaders.emplace_back(
         std::make_shared<Shader>(m_device, std::move(shader_name), shader_stage, std::move(file_name)));
     return m_shaders.back();
@@ -81,6 +84,7 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
 
 std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string vertex_buffer_name,
                                                        std::vector<VkVertexInputAttributeDescription> vertex_attributes,
+                                                       std::optional<std::function<void()>> on_init,
                                                        std::optional<std::function<void()>> on_update) {
     if (vertex_buffer_name.empty()) {
         throw std::invalid_argument(
@@ -91,8 +95,9 @@ std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string vertex_buffer
         throw std::invalid_argument(
             "[RenderGraph::add_vertex_buffer] Error: Parameter 'vertex_attributes' is an empty std::vector!");
     }
-    m_buffers.emplace_back(
-        std::make_shared<Buffer>(m_device, std::move(vertex_buffer_name), std::move(vertex_attributes)));
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(vertex_buffer_name),
+                                                    std::move(vertex_attributes), std::move(on_init),
+                                                    std::move(on_update)));
     return m_buffers.back();
 }
 
@@ -107,20 +112,17 @@ void RenderGraph::compile() {
     determine_pass_order();
     create_buffers();
     create_textures();
-    // Buffers and textures must be created before graphics passes are created!
     create_graphics_passes();
     create_descriptor_sets();
-    // Graphics pipelines must be created before calling set_on_record
     create_graphics_pipelines();
 }
 
 void RenderGraph::create_buffers() {
     for (const auto &buffer : m_buffers) {
         // Call the update lambda of the buffer (if specified)
-        if (buffer->m_on_update) {
-            std::invoke(buffer->m_on_update.value());
+        if (buffer->m_on_init) {
+            std::invoke(buffer->m_on_init.value());
         }
-        // TODO: Do we need an on_init here?
         buffer->create_buffer();
     }
     // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
@@ -132,37 +134,18 @@ void RenderGraph::create_descriptor_sets() {
 }
 
 void RenderGraph::create_graphics_passes() {
-    m_log->trace("Creating graphics passes");
-
-    if (m_graphics_pass_create_functions.empty()) {
-        throw std::runtime_error("Error: No graphics passes specified in rendergraph!");
-    }
     m_graphics_passes.clear();
     m_graphics_passes.reserve(m_graphics_pass_create_functions.size());
-
-    for (const auto &pass_create_function : m_graphics_pass_create_functions) {
-        // NOTE: We don't have to check if the std::shared_ptr<GraphicsPass> that was created is valid because
-        // an exception would have been thrown in case an error occured during creation of it
-        m_graphics_passes.emplace_back(std::invoke(pass_create_function, m_graphics_pass_builder));
+    for (const auto &create_func : m_graphics_pass_create_functions) {
+        m_graphics_passes.emplace_back(create_func(m_graphics_pass_builder));
     }
 }
 
 void RenderGraph::create_graphics_pipelines() {
-    m_log->trace("Creating graphics pipelines");
-
-    if (m_graphics_pass_create_functions.empty()) {
-        throw std::runtime_error("Error: No graphics pipelines specified in rendergraph!");
-    }
     m_graphics_pipelines.clear();
-    const auto pipeline_count = m_pipeline_create_functions.size();
-    m_graphics_pipelines.reserve(pipeline_count);
-
-    // Call all graphics pipeline create functions
-    for (std::size_t pipeline_index = 0; pipeline_index < pipeline_count; pipeline_index++) {
-        // Store the graphics pipeline that was created
-        m_graphics_pipelines.emplace_back(
-            std::move(std::invoke(m_pipeline_create_functions[pipeline_index], m_graphics_pipeline_builder,
-                                  m_descriptor_set_layout_builder)));
+    m_graphics_pipelines.reserve(m_pipeline_create_functions.size());
+    for (const auto &create_func : m_pipeline_create_functions) {
+        m_graphics_pipelines.emplace_back(create_func(m_graphics_pipeline_builder, m_descriptor_set_layout_builder));
     }
 }
 

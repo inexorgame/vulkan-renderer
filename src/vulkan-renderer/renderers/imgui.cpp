@@ -51,14 +51,11 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
         },
     }};
 
-    m_vertex_buffer = render_graph.add_vertex_buffer("ImGui", vert_input_attr_descs, [&]() {
-        // Update the user ImGui data
+    auto imgui_init = [&]() {
         m_on_update_user_data();
 
         const ImDrawData *draw_data = ImGui::GetDrawData();
         if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
-            // Prevent reading from nullpointer and creating buffers of size 0, because both would throw an
-            // exception
             return;
         }
 
@@ -80,7 +77,10 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
         // Note that the index buffer does not have a separate update code because it is updated here with vertices
         m_vertex_buffer->request_update(&m_vertex_data, sizeof(m_vertex_data));
         m_index_buffer->request_update(&m_index_data, sizeof(m_index_data));
-    });
+    };
+
+    // TODO: Is it a problem that we std::move the lambda for on_init?
+    m_vertex_buffer = render_graph.add_vertex_buffer("ImGui", vert_input_attr_descs, imgui_init, imgui_init);
 
     m_index_buffer = render_graph.add_index_buffer("ImGui");
     m_vertex_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
