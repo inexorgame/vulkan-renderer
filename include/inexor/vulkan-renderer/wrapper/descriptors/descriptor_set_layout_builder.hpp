@@ -47,11 +47,10 @@ public:
     // TODO: Support other descriptor types besides uniform buffers and combined image samplers!
 
     /// Add a combined image sampler to the descriptor set
-    /// @param shader_stage The shader stage (``VK_SHADER_STAGE_FRAGMENT_BIT`` by default)
+    /// @param shader_stage The shader stage
     /// @param count The number of combined image samplers
     /// @return The dereferenced this pointer
-    DescriptorSetLayoutBuilder &
-    add_combined_image_sampler(VkShaderStageFlags shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT, std::uint32_t count = 1);
+    DescriptorSetLayoutBuilder &add_combined_image_sampler(VkShaderStageFlags shader_stage, std::uint32_t count = 1);
 
     /// Add a uniform buffer to the descriptor set
     /// @param shader_stage The shader stage

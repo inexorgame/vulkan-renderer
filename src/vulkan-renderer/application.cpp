@@ -517,7 +517,6 @@ void Application::setup_render_graph() {
                 })
                 .set_depth_test(true)
                 .set_on_record([&](const CommandBuffer &cmd_buf) {
-                    // TODO: Even simpler API like .bind() without templates (just overloading)?
                     cmd_buf.bind_pipeline(m_octree_pipeline)
                         .bind_vertex_buffer(m_vertex_buffer)
                         .bind_index_buffer(m_index_buffer)
@@ -529,7 +528,6 @@ void Application::setup_render_graph() {
                 // which ones were not bound
                 .reads_from_buffer(m_index_buffer)
                 .reads_from_buffer(m_vertex_buffer)
-                // This is essential to know for descriptor setup in rendergraph
                 .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
                 .writes_to_texture(m_back_buffer)
                 .writes_to_texture(m_depth_buffer)

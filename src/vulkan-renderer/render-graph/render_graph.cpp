@@ -96,9 +96,12 @@ void RenderGraph::compile() {
     m_log->trace("Compiling rendergraph");
     validate_render_graph();
     determine_pass_order();
-    create_graphics_passes();
     create_buffers();
+    create_textures();
+    // Buffers and textures must be created before graphics passes are created!
+    create_graphics_passes();
     create_descriptor_sets();
+    // Graphics pipelines must be created before calling set_on_record
     create_graphics_pipelines();
 }
 
@@ -108,6 +111,7 @@ void RenderGraph::create_buffers() {
         if (buffer->m_on_update) {
             std::invoke(buffer->m_on_update.value());
         }
+        // TODO: Do we need an on_init here?
         buffer->create_buffer();
     }
     // TODO: Batch all updates which require staging buffer into one pipeline barrier call
@@ -135,8 +139,6 @@ void RenderGraph::create_graphics_passes() {
         if (!new_graphics_pass) {
             throw std::runtime_error("Error: Failed to create graphics pass " + pass_create_function.first + " !");
         }
-        // Store the name of the graphics pass
-        new_graphics_pass->m_name = pass_create_function.first;
         // Store the graphics pass that was created
         m_graphics_passes.push_back(std::move(new_graphics_pass));
     }
@@ -157,6 +159,11 @@ void RenderGraph::create_graphics_pipelines() {
         // Store the graphics pipeline that was created
         m_graphics_pipelines.push_back(std::move(new_graphics_pipeline));
     }
+}
+
+void RenderGraph::create_textures() {
+    m_log->trace("Creating textures");
+    // TODO: Implement!
 }
 
 void RenderGraph::determine_pass_order() {

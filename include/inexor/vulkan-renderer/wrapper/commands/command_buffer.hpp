@@ -56,8 +56,8 @@ class CommandBuffer {
     /// @param data_size The size of the data to copy (must be greater than ``0``)
     /// @param name The internal name of the staging buffer (must not be empty)
     /// @return A VkBuffer which contains the staging buffer data
-    [[nodiscard]] VkBuffer create_staging_buffer(const void *data, const VkDeviceSize data_size,
-                                                 const std::string &name) const {
+    [[nodiscard]] VkBuffer
+    create_staging_buffer(const void *data, const VkDeviceSize data_size, const std::string &name) const {
         // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
 
         // TODO: Create/Implement staging buffers!
@@ -107,7 +107,8 @@ public:
     /// @param first_set The first descriptor set (``0`` by default)
     /// @param dyn_offsets The dynamic offset values (empty by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set, VkPipelineLayout layout,
+    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set,
+                                             VkPipelineLayout layout,
                                              VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
                                              std::uint32_t first_set = 0,
                                              std::span<const std::uint32_t> dyn_offsets = {}) const;
@@ -130,7 +131,7 @@ public:
     /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
     /// @param offset The offset (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_index_buffer(std::weak_ptr<render_graph::Buffer> buf,
+    const CommandBuffer &bind_index_buffer(std::shared_ptr<render_graph::Buffer> buf,
                                            VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
                                            VkDeviceSize offset = 0) const;
 
@@ -146,7 +147,7 @@ public:
     /// ``pOffsets`` in ``vkCmdBindVertexBuffers`` do not need to be exposed.
     /// @param buf The vertex buffer to bind
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_vertex_buffer(std::weak_ptr<render_graph::Buffer> buf) const;
+    const CommandBuffer &bind_vertex_buffer(std::shared_ptr<render_graph::Buffer> buf) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param image The image
@@ -158,7 +159,9 @@ public:
     /// @param dst_mask The destination pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer & // NOLINT
-    change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
+    change_image_layout(VkImage image,
+                        VkImageLayout old_layout,
+                        VkImageLayout new_layout,
                         VkImageSubresourceRange subres_range,
                         VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                         VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
@@ -175,9 +178,13 @@ public:
     /// @param dst_mask The destination pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer & // NOLINT
-    change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
-                        std::uint32_t mip_level_count = 1, std::uint32_t array_layer_count = 1,
-                        std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0,
+    change_image_layout(VkImage image,
+                        VkImageLayout old_layout,
+                        VkImageLayout new_layout,
+                        std::uint32_t mip_level_count = 1,
+                        std::uint32_t array_layer_count = 1,
+                        std::uint32_t base_mip_level = 0,
+                        std::uint32_t base_array_layer = 0,
                         VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                         VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
 
@@ -186,7 +193,8 @@ public:
     /// @param dst_buf The destination buffer
     /// @param copy_region A single buffer copy region
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, // NOLINT
+    const CommandBuffer &copy_buffer(VkBuffer src_buf,
+                                     VkBuffer dst_buf, // NOLINT
                                      const VkBufferCopy &copy_region) const;
 
     /// Call vkCmdCopyBuffer
@@ -194,7 +202,8 @@ public:
     /// @param dst_buf The destination buffer
     /// @param copy_regions A std::span of buffer copy regions
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, // NOLINT
+    const CommandBuffer &copy_buffer(VkBuffer src_buf,
+                                     VkBuffer dst_buf, // NOLINT
                                      std::span<const VkBufferCopy> copy_regions) const;
 
     /// Call vkCmdCopyBuffer
@@ -202,7 +211,8 @@ public:
     /// @param dst_buf The destination buffer
     /// @param src_buf_size The size of the source buffer
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, // NOLINT
+    const CommandBuffer &copy_buffer(VkBuffer src_buf,
+                                     VkBuffer dst_buf, // NOLINT
                                      VkDeviceSize src_buf_size) const;
 
     /// Call vkCmdCopyBufferToImage
@@ -211,7 +221,8 @@ public:
     /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL``
     /// @param copy_regions A std::span of buffer image copy regions
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img, // NOLINT
+    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf,
+                                              VkImage dst_img, // NOLINT
                                               std::span<const VkBufferImageCopy> copy_regions) const;
 
     /// Call vkCmdCopyBufferToImage
@@ -220,7 +231,8 @@ public:
     /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL``
     /// @param copy_region The buffer image copy region
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img, // NOLINT
+    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf,
+                                              VkImage dst_img, // NOLINT
                                               const VkBufferImageCopy &copy_region) const;
 
     /// Call vkCmdCopyBufferToImage
@@ -231,8 +243,10 @@ public:
     /// copy operation
     /// @param name The internal name of the staging buffer (must not be empty)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer_to_image(const void *data, const VkDeviceSize data_size, // NOLINT
-                                              VkImage dst_img, const VkBufferImageCopy &copy_region,
+    const CommandBuffer &copy_buffer_to_image(const void *data,
+                                              const VkDeviceSize data_size, // NOLINT
+                                              VkImage dst_img,
+                                              const VkBufferImageCopy &copy_region,
                                               const std::string &name) const;
 
     /// Call vkCmdCopyBufferToImage
@@ -245,7 +259,8 @@ public:
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     template <typename DataType>
     const CommandBuffer &copy_buffer_to_image(const std::span<const DataType> data, // NOLINT
-                                              VkImage dst_img, const VkBufferImageCopy &copy_region,
+                                              VkImage dst_img,
+                                              const VkBufferImageCopy &copy_region,
                                               const std::string &name) const {
         return copy_buffer_to_image(create_staging_buffer<DataType>(data, name), dst_img,
                                     static_cast<VkDeviceSize>(sizeof(data) * data.size()), copy_region, name);
@@ -257,8 +272,10 @@ public:
     /// @param first_vert The index of the first vertex (``0`` by default)
     /// @param first_inst The instance ID of the first instance to draw (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &draw(std::uint32_t vert_count, std::uint32_t inst_count = 1, // NOLINT
-                              std::uint32_t first_vert = 0, std::uint32_t first_inst = 0) const;
+    const CommandBuffer &draw(std::uint32_t vert_count,
+                              std::uint32_t inst_count = 1, // NOLINT
+                              std::uint32_t first_vert = 0,
+                              std::uint32_t first_inst = 0) const;
 
     /// Call vkCmdDrawIndexed
     /// @param index_count The number of vertices to draw
@@ -268,8 +285,10 @@ public:
     /// @param first_inst The instance ID of the first instance to draw (``0`` by default)
     /// @param index_count The number of indices to draw
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &draw_indexed(std::uint32_t index_count, std::uint32_t inst_count = 1, // NOLINT
-                                      std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
+    const CommandBuffer &draw_indexed(std::uint32_t index_count,
+                                      std::uint32_t inst_count = 1, // NOLINT
+                                      std::uint32_t first_index = 0,
+                                      std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
 
     /// Call vkCmdEndDebugUtilsLabelEXT
@@ -336,8 +355,11 @@ public:
     /// @param data A pointer to the push constant data
     /// @param offset The offset value (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, // NOLINT
-                                        std::uint32_t size, const void *data, VkDeviceSize offset = 0) const;
+    const CommandBuffer &push_constants(VkPipelineLayout layout,
+                                        VkShaderStageFlags stage, // NOLINT
+                                        std::uint32_t size,
+                                        const void *data,
+                                        VkDeviceSize offset = 0) const;
 
     /// Call vkCmdPushConstants
     /// @tparam T the data type of the push constant
@@ -347,8 +369,10 @@ public:
     /// @param offset The offset value (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename T>
-    const CommandBuffer &push_constant(const VkPipelineLayout layout, const T &data, // NOLINT
-                                       const VkShaderStageFlags stage, const VkDeviceSize offset = 0) const {
+    const CommandBuffer &push_constant(const VkPipelineLayout layout,
+                                       const T &data, // NOLINT
+                                       const VkShaderStageFlags stage,
+                                       const VkDeviceSize offset = 0) const {
         return push_constants(layout, stage, sizeof(data), &data, offset);
     }
 

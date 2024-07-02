@@ -85,14 +85,14 @@ const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet de
     return bind_descriptor_sets({&descriptor_set, 1}, layout, bind_point, first_set, dyn_offsets);
 }
 
-const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::Buffer> buffer,
+const CommandBuffer &CommandBuffer::bind_index_buffer(const std::shared_ptr<render_graph::Buffer> buffer,
                                                       const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
-    if (buffer.lock()->type() != render_graph::BufferType::INDEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->name() +
+    if (buffer->type() != render_graph::BufferType::INDEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->name() +
                                     " is not an index buffer!");
     }
-    vkCmdBindIndexBuffer(m_cmd_buf, buffer.lock()->buffer(), offset, index_type);
+    vkCmdBindIndexBuffer(m_cmd_buf, buffer->buffer(), offset, index_type);
     return *this;
 }
 
@@ -102,12 +102,12 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<pipelines:
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<render_graph::Buffer> buffer) const {
-    if (buffer.lock()->type() != render_graph::BufferType::VERTEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->name() +
+const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::shared_ptr<render_graph::Buffer> buffer) const {
+    if (buffer->type() != render_graph::BufferType::VERTEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->name() +
                                     " is not a vertex buffer!");
     }
-    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->buffer(), 0);
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer->buffer(), 0);
     return *this;
 }
 

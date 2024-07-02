@@ -138,6 +138,9 @@ private:
     /// Create the graphics pipelines
     void create_graphics_pipelines();
 
+    /// Create the textures
+    void create_textures();
+
     /// Determine the order of execution of the graphics passes by using depth first search (dfs) algorithm
     void determine_pass_order();
 

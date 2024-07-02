@@ -90,21 +90,22 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
     using wrapper::pipelines::GraphicsPipelineBuilder;
     render_graph.add_graphics_pipeline("ImGui", [&](GraphicsPipelineBuilder &graphics_pipeline_builder,
                                                     DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
-        m_imgui_pipeline =
-            graphics_pipeline_builder.add_default_color_blend_attachment()
-                .set_vertex_input_bindings({
-                    {
-                        .binding = 0,
-                        .stride = sizeof(ImDrawVert),
-                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                    },
-                })
-                .set_vertex_input_attributes(vert_input_attr_descs)
-                .uses_shader(m_vertex_shader)
-                .uses_shader(m_fragment_shader)
-                .set_descriptor_set_layout(descriptor_set_layout_builder.add_combined_image_sampler().build("ImGui"))
-                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                .build("ImGui");
+        m_imgui_pipeline = graphics_pipeline_builder.add_default_color_blend_attachment()
+                               .set_vertex_input_bindings({
+                                   {
+                                       .binding = 0,
+                                       .stride = sizeof(ImDrawVert),
+                                       .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                   },
+                               })
+                               .set_vertex_input_attributes(vert_input_attr_descs)
+                               .uses_shader(m_vertex_shader)
+                               .uses_shader(m_fragment_shader)
+                               .set_descriptor_set_layout(descriptor_set_layout_builder
+                                                              .add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT)
+                                                              .build("ImGui"))
+                               .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                               .build("ImGui");
         return m_imgui_pipeline;
     });
 

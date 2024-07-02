@@ -75,6 +75,9 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &reads_from_buffer(std::weak_ptr<Buffer> buffer,
                                           std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
+        if (buffer.expired()) {
+            throw std::invalid_argument("[GraphicsPassBuilder::reads_from_buffer] Error: buffer is nullptr!");
+        }
         m_buffer_reads.emplace_back(std::move(buffer), shader_stage);
         return *this;
     }
@@ -85,6 +88,9 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &reads_from_texture(std::weak_ptr<Texture> texture,
                                            std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
+        if (texture.expired()) {
+            throw std::invalid_argument("[GraphicsPassBuilder::reads_from_texture] Error: texture is nullptr!");
+        }
         m_texture_reads.emplace_back(std::move(texture), shader_stage);
         return *this;
     }
