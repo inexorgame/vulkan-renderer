@@ -450,24 +450,20 @@ void Application::setup_render_graph() {
         },
     };
 
-    auto init_vertex_and_index_buffer = [&]() {
-        // Update the vertex buffer together with the index buffer to keep data consistent across frames
-        load_octree_geometry(false);
-        generate_octree_indices();
-        m_vertex_buffer->request_update(m_octree_vertices);
-        m_index_buffer->request_update(m_octree_indices);
-    };
+    load_octree_geometry(false);
+    generate_octree_indices();
 
-    auto update_vertex_and_index_buffer = [&]() {
+    /*
         // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
-            init_vertex_and_index_buffer();
         }
-    };
+    */
 
     // Use the same lambda for initialization and update of the buffer
-    m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, init_vertex_and_index_buffer,
-                                                        update_vertex_and_index_buffer);
+    m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
+        // Update octree vertex buffer
+        m_vertex_buffer->request_update(m_octree_vertices);
+    });
 
     // TODO: How to prevent duplicate loading of shaders or how to deal with object lifetime?
     // (std::unordered_map<std::string, std::shared_ptr<Shader>>)
@@ -476,7 +472,10 @@ void Application::setup_render_graph() {
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
-    m_index_buffer = m_render_graph->add_index_buffer("Octree");
+    m_index_buffer = m_render_graph->add_index_buffer("Octree", [&]() {
+        // Update octree index buffer
+        m_index_buffer->request_update(m_octree_indices);
+    });
 
     m_uniform_buffer = m_render_graph->add_uniform_buffer("Matrices", [&]() {
         // TODO: Update model matrix if required

@@ -32,26 +32,22 @@ void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipel
 }
 
 std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string uniform_buffer_name,
-                                                        std::optional<std::function<void()>> on_init,
-                                                        std::optional<std::function<void()>> on_update) {
+                                                        std::function<void()> on_update) {
     if (uniform_buffer_name.empty()) {
         throw std::runtime_error("[RenderGraph::add_uniform_buffer] Error: Parameter 'uniform_buffer_name' is an empty "
                                  "std::string! You must give a name to every rendergraph resource!");
     }
-    m_buffers.emplace_back(
-        std::make_shared<Buffer>(m_device, std::move(uniform_buffer_name), std::move(on_init), std::move(on_update)));
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(uniform_buffer_name), std::move(on_update)));
     return m_buffers.back();
 }
 
-std::shared_ptr<Buffer> RenderGraph::add_index_buffer(std::string index_buffer_name,
-                                                      std::optional<std::function<void()>> on_init,
-                                                      std::optional<std::function<void()>> on_update) {
+std::shared_ptr<Buffer> RenderGraph::add_index_buffer(std::string index_buffer_name, std::function<void()> on_update) {
     if (index_buffer_name.empty()) {
         throw std::invalid_argument("[RenderGraph::add_index_buffer] Error: Parameter 'index_buffer_name' is an empty "
                                     "std::string! You must give a name to every rendergraph resource!");
     }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(index_buffer_name), VK_INDEX_TYPE_UINT32,
-                                                    std::move(on_init), std::move(on_update)));
+    m_buffers.emplace_back(
+        std::make_shared<Buffer>(m_device, std::move(index_buffer_name), VK_INDEX_TYPE_UINT32, std::move(on_update)));
     return m_buffers.back();
 }
 
@@ -84,8 +80,7 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
 
 std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string vertex_buffer_name,
                                                        std::vector<VkVertexInputAttributeDescription> vertex_attributes,
-                                                       std::optional<std::function<void()>> on_init,
-                                                       std::optional<std::function<void()>> on_update) {
+                                                       std::function<void()> on_update) {
     if (vertex_buffer_name.empty()) {
         throw std::invalid_argument(
             "[RenderGraph::add_vertex_buffer] Error: Parameter 'vertex_buffer_name' is an empty std::string! "
@@ -96,8 +91,7 @@ std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string vertex_buffer
             "[RenderGraph::add_vertex_buffer] Error: Parameter 'vertex_attributes' is an empty std::vector!");
     }
     m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(vertex_buffer_name),
-                                                    std::move(vertex_attributes), std::move(on_init),
-                                                    std::move(on_update)));
+                                                    std::move(vertex_attributes), std::move(on_update)));
     return m_buffers.back();
 }
 
@@ -119,10 +113,7 @@ void RenderGraph::compile() {
 
 void RenderGraph::create_buffers() {
     for (const auto &buffer : m_buffers) {
-        // Call the update lambda of the buffer (if specified)
-        if (buffer->m_on_init) {
-            std::invoke(buffer->m_on_init.value());
-        }
+        buffer->m_on_update();
         buffer->create_buffer();
     }
     // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
@@ -301,10 +292,7 @@ void RenderGraph::reset() {
 
 void RenderGraph::update_buffers() {
     for (const auto &buffer : m_buffers) {
-        // If m_on_update is not std::nullopt, call the update function of the buffer
-        if (buffer->m_on_update) {
-            std::invoke(buffer->m_on_update.value());
-        }
+        buffer->m_on_update();
     }
     // TODO: Batch barriers for updates which require staging buffer
 }

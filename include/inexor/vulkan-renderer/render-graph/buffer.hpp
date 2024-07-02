@@ -50,8 +50,6 @@ private:
     /// rendergraph. The actual memory management for the buffers is done by Vulkan Memory Allocator (VMA) internally.
     BufferType m_buffer_type;
 
-    std::optional<std::function<void()>> m_on_init;
-
     /// The buffer update function which is called by rendergraph to update the buffer's data. This update function is
     /// called, no matter what the type of the buffer is. With the currently supported buffer types (vertex-, index-,
     /// and uniform buffers) there is always a discussion about whether some update lambdas can be made std::optional.
@@ -61,7 +59,9 @@ private:
     /// created in rendergraph. In our example, the update function of the index buffer could be std::nullopt. In this
     /// case, rendergraph could separate all buffers into those which require an update and those who do not. For
     /// simplicity however, we made the update function not std::optional.
-    std::optional<std::function<void()>> m_on_update;
+
+    // TODO: Rewrite description
+    std::function<void()> m_on_update;
 
     /// This is relevant for index buffers only
     VkIndexType m_index_type;
@@ -93,36 +93,25 @@ public:
     /// Constructor for uniform buffers
     /// @param device The device wrapper
     /// @param buffer_name The name of the buffer
-    /// @param on_init The buffer initialization function
     /// @param on_update The buffer update function
-    Buffer(const Device &device,
-           std::string buffer_name,
-           std::optional<std::function<void()>> on_init,
-           std::optional<std::function<void()>> on_update);
+    Buffer(const Device &device, std::string buffer_name, std::function<void()> on_update);
 
     /// Constructor for vertex buffers
     /// @param device The device wrapper
     /// @param buffer_name The name of the buffer
     /// @param vert_input_attr_descs A vertex of vertex input attribute descriptions
-    /// @param on_init The buffer initialization function
     /// @param on_update The buffer update function
     Buffer(const Device &device,
            std::string buffer_name,
            std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
-           std::optional<std::function<void()>> on_init,
-           std::optional<std::function<void()>> on_update);
+           std::function<void()> on_update);
 
     /// Constructor for index buffers
     /// @param device The device wrapper
     /// @param name The name of the buffer
     /// @param index_type The Vulkan index type
-    /// @param on_init The buffer initialization function
     /// @param on_update The buffer update function
-    Buffer(const Device &device,
-           std::string name,
-           VkIndexType index_type,
-           std::optional<std::function<void()>> on_init,
-           std::optional<std::function<void()>> on_update);
+    Buffer(const Device &device, std::string name, VkIndexType index_type, std::function<void()> on_update);
 
     Buffer(const Buffer &) = delete;
     Buffer(Buffer &&other) noexcept;

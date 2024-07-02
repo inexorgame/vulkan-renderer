@@ -8,35 +8,24 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Buffer::Buffer(const Device &device,
-               std::string buffer_name,
-               std::optional<std::function<void()>> on_init,
-               std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(buffer_name)), m_on_init(std::move(on_init)),
-      m_on_update(std::move(on_update)), m_buffer_type(BufferType::UNIFORM_BUFFER),
-      m_buffer_usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
+Buffer::Buffer(const Device &device, std::string buffer_name, std::function<void()> on_update)
+    : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)),
+      m_buffer_type(BufferType::UNIFORM_BUFFER), m_buffer_usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
       // TODO: Is this really the best memory usage flag for a uniform buffer?
       m_mem_usage(VMA_MEMORY_USAGE_AUTO_PREFER_HOST) {}
 
 Buffer::Buffer(const Device &device,
                std::string buffer_name,
                std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
-               std::optional<std::function<void()>> on_init,
-               std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(buffer_name)), m_on_init(std::move(on_init)),
-      m_on_update(std::move(on_update)), m_buffer_type(BufferType::VERTEX_BUFFER),
-      m_buffer_usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+               std::function<void()> on_update)
+    : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)),
+      m_buffer_type(BufferType::VERTEX_BUFFER), m_buffer_usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
       // TODO: Is this really the best memory usage flag for a vertex buffer?
       m_mem_usage(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE) {}
 
-Buffer::Buffer(const Device &device,
-               std::string buffer_name,
-               VkIndexType index_type,
-               std::optional<std::function<void()>> on_init,
-               std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(buffer_name)), m_on_init(std::move(on_init)),
-      m_on_update(std::move(on_update)), m_index_type(index_type), m_buffer_type(BufferType::INDEX_BUFFER),
-      m_buffer_usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
+Buffer::Buffer(const Device &device, std::string buffer_name, VkIndexType index_type, std::function<void()> on_update)
+    : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)), m_index_type(index_type),
+      m_buffer_type(BufferType::INDEX_BUFFER), m_buffer_usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
       // TODO: Is this really the best memory usage flag for an index buffer?
       m_mem_usage(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE) {}
 
@@ -45,7 +34,6 @@ Buffer::Buffer(Buffer &&other) noexcept
     // TODO: Fix me!
     m_name = std::move(other.m_name);
     m_buffer_type = other.m_buffer_type;
-    m_on_init = std::move(other.m_on_init);
     m_on_update = std::move(other.m_on_update);
     m_buffer = std::exchange(other.m_buffer, VK_NULL_HANDLE);
     m_alloc = std::exchange(other.m_alloc, VK_NULL_HANDLE);

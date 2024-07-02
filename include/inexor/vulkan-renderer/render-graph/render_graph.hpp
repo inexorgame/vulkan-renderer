@@ -205,13 +205,10 @@ public:
     /// Add an index buffer to rendergraph
     /// @note The Vulkan index type is set to ``VK_INDEX_TYPE_UINT32`` by default and it not exposed as parameter
     /// @param name The name of the index buffer
-    /// @param on_update The initialization function of the index buffer (``std::nullopt`` by default)
-    /// @param on_update The update function of the index buffer (``std::nullopt`` by default)
+    /// @param on_update The update function of the index buffer
     /// @return A shared pointer to the buffer resource that was created
-    [[nodiscard]] std::shared_ptr<Buffer>
-    add_index_buffer(std::string index_buffer_name,
-                     std::optional<std::function<void()>> on_init = std::nullopt,
-                     std::optional<std::function<void()>> on_update = std::nullopt);
+    [[nodiscard]] std::shared_ptr<Buffer> add_index_buffer(std::string index_buffer_name,
+                                                           std::function<void()> on_update);
 
     // TODO: Use a SPIR-V library like spirv-cross to deduce shader type from the SPIR-V file automatically!
 
@@ -238,13 +235,10 @@ public:
 
     /// Add a uniform buffer to rendergraph
     /// @param name The name of the uniform buffer
-    /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
-    /// @param on_update The update function of the uniform buffer (``std::nullopt`` by default)
+    /// @param on_update The update function of the uniform buffer
     /// @return A shared pointer to the buffer resource that was created
-    [[nodiscard]] std::shared_ptr<Buffer>
-    add_uniform_buffer(std::string buffer_name,
-                       std::optional<std::function<void()>> on_init = std::nullopt,
-                       std::optional<std::function<void()>> on_update = std::nullopt);
+    [[nodiscard]] std::shared_ptr<Buffer> add_uniform_buffer(std::string uniform_buffer_name,
+                                                             std::function<void()> on_update);
 
     /// Add a vertex buffer to rendergraph
     /// @param name The name of the vertex buffer
@@ -253,14 +247,12 @@ public:
     /// Why then is it a parameter here? The vertex input attribute description is stored in the buffer so that when
     /// rendergraph gets compiled and builds the graphics pipelines, it can read ``VkVertexInputAttributeDescription``
     /// from the buffers to create the graphics pipelines.
-    /// @param on_update The initialization function of the vertex buffer (``std::nullopt`` by default)
-    /// @param on_update The update function of the vertex buffer (``std::nullopt`` by default)
+    /// @param on_update The update function of the vertex buffer
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_vertex_buffer(std::string name,
                       std::vector<VkVertexInputAttributeDescription> vertex_attributes,
-                      std::optional<std::function<void()>> on_init = std::nullopt,
-                      std::optional<std::function<void()>> on_update = std::nullopt);
+                      std::function<void()> on_update);
 
     /// Compile the rendergraph
     void compile();
