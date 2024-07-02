@@ -28,4 +28,8 @@ Texture::Texture(Texture &&other) noexcept {
     m_on_update = std::move(other.m_on_update);
 }
 
+void Texture::create_texture() {
+    // TODO: Implement me!
+}
+
 } // namespace inexor::vulkan_renderer::render_graph

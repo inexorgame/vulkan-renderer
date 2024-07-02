@@ -66,7 +66,7 @@ private:
     using GraphicsPassCreateFunction = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
 
     /// The name of the graphics pass create function is associated by using a std::pair
-    std::vector<std::pair<std::string, GraphicsPassCreateFunction>> m_graphics_pass_create_functions;
+    std::vector<GraphicsPassCreateFunction> m_graphics_pass_create_functions;
 
     /// The graphics passes used in the rendergraph
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
@@ -94,7 +94,7 @@ private:
         std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, DescriptorSetLayoutBuilder &)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
-    std::vector<std::pair<std::string, GraphicsPipelineCreateFunction>> m_pipeline_create_functions;
+    std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;
 
     // TODO: Support compute pipelines and compute passes
     /// The graphics pipelines used in the rendergraph
@@ -217,7 +217,7 @@ public:
     /// @param file_name The shader file name
     /// @return A shared pointer to the shader that was loaded from the SPIR-V file
     [[nodiscard]] std::shared_ptr<Shader>
-    add_shader(std::string name, VkShaderStageFlagBits shader_stage, std::string file_name);
+    add_shader(std::string shader_name, VkShaderStageFlagBits shader_stage, std::string file_name);
 
     /// Add a texture to the rendergraph
     /// @param name The name of the texture (must not be empty)
@@ -226,7 +226,7 @@ public:
     /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
     /// @param on_update The update function of the texture (``std::nullopt`` by default)
     /// @return A shared pointer to the texture that was created
-    [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string name,
+    [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string texture_name,
                                                        TextureUsage usage,
                                                        VkFormat format,
                                                        std::optional<std::function<void()>> on_init = std::nullopt,
@@ -237,7 +237,7 @@ public:
     /// @param on_update The update function of the uniform buffer
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
-    add_uniform_buffer(std::string name, std::optional<std::function<void()>> on_update = std::nullopt);
+    add_uniform_buffer(std::string buffer_name, std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Add a vertex buffer to rendergraph
     /// @param name The name of the vertex buffer

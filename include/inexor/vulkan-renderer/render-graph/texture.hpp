@@ -46,6 +46,9 @@ private:
     std::optional<std::function<void()>> m_on_init;
     std::optional<std::function<void()>> m_on_update;
 
+    // TODO: Implement!
+    void create_texture();
+
 public:
     /// Default constructor
     /// @param name The internal debug name of the texture inside of the rendergraph (must not be empty)
@@ -56,7 +59,9 @@ public:
     /// not require an on_init function, as rendergraph creates it internally. A static textures requires an on_init
     /// function, but no on_update function. A dynamic texture requires on_init and on_update.
     /// @param on_update An optional update function of the texture (``std::nullopt`` by default)
-    Texture(std::string name, TextureUsage usage, VkFormat format,
+    Texture(std::string name,
+            TextureUsage usage,
+            VkFormat format,
             std::optional<std::function<void()>> on_init = std::nullopt,
             std::optional<std::function<void()>> on_update = std::nullopt);
 
