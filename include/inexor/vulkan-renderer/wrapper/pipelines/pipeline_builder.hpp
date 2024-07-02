@@ -98,7 +98,7 @@ private:
     std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
 
     /// The push constant ranges of the graphics pass
-    std::vector<std::pair<VkPushConstantRange, std::function<void()>>> m_push_constant_ranges;
+    std::vector<VkPushConstantRange> m_push_constant_ranges;
 
     /// Reset all data in this class so the builder can be re-used
     /// @note This is called by the constructor
@@ -155,22 +155,17 @@ public:
 
     /// Add a push constant range to the graphics pass
     /// @param shader_stage The shader stage for the push constant range
-    /// @param push_constant The push constant data
-    /// @param on_update The update function
+    /// @param size The size of the push constant
     /// @param offset The offset in the push constant range
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    template <typename PushConstantDataType>
     [[nodiscard]] auto &add_push_constant_range(const VkShaderStageFlags shader_stage,
-                                                const PushConstantDataType &push_constant,
-                                                std::function<void()> on_update,
+                                                const std::uint32_t size,
                                                 const std::uint32_t offset = 0) {
-        m_push_constant_ranges.emplace_back(
-            VkPushConstantRange{
-                .stageFlags = shader_stage,
-                .offset = offset,
-                .size = sizeof(push_constant),
-            },
-            std::move(on_update));
+        m_push_constant_ranges.emplace_back(VkPushConstantRange{
+            .stageFlags = shader_stage,
+            .offset = offset,
+            .size = size,
+        });
         return *this;
     }
 

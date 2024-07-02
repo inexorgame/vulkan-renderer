@@ -525,6 +525,8 @@ void Application::setup_render_graph() {
                 })
                 // TOOD: Even simpler API like .reads_from() and .writes_to() without templates (just overloading)?
                 // TODO: Since we don't bind vertex or index buffers, do we even need these calls to reads_from_buffer?
+                // TODO: We could imagine some API where we have vertex_buffer.bind_me() in on_record and then check
+                // which ones were not bound
                 .reads_from_buffer(m_index_buffer)
                 .reads_from_buffer(m_vertex_buffer)
                 // This is essential to know for descriptor setup in rendergraph

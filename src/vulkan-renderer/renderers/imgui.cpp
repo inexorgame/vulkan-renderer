@@ -103,12 +103,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
                 .uses_shader(m_vertex_shader)
                 .uses_shader(m_fragment_shader)
                 .set_descriptor_set_layout(descriptor_set_layout_builder.add_combined_image_sampler().build("ImGui"))
-                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, &m_push_const_block,
-                                         [&]() {
-                                             const ImGuiIO &io = ImGui::GetIO();
-                                             m_push_const_block.scale =
-                                                 glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-                                         })
+                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                 .build("ImGui");
         return m_imgui_pipeline;
     });
@@ -129,8 +124,13 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
                            .writes_to_texture(back_buffer)
                            .writes_to_texture(depth_buffer)
                            .set_on_record([&](const CommandBuffer &cmd_buf) {
-                               // TODO: Bind pipelines through rendergraph automatically or not?
+                               const ImGuiIO &io = ImGui::GetIO();
+                               m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+
                                cmd_buf.bind_pipeline(m_imgui_pipeline);
+                               // TODO: Bind descriptor set!
+                               // TODO: Bind push constant!
+
                                ImDrawData *draw_data = ImGui::GetDrawData();
                                if (draw_data == nullptr) {
                                    return;
@@ -138,7 +138,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
                                std::uint32_t index_offset = 0;
                                std::int32_t vertex_offset = 0;
                                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                                   const ImDrawList *cmd_list = draw_data->CmdLists[i]; // NOLINT
+                                   const ImDrawList *cmd_list = draw_data->CmdLists[i];
                                    for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                                        const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
                                        cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);

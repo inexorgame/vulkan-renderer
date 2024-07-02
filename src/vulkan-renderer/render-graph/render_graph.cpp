@@ -105,11 +105,10 @@ void RenderGraph::compile() {
 
 void RenderGraph::create_buffers() {
     for (const auto &buffer : m_buffers) {
-        // Call the update lambda of the buffer
+        // Call the update lambda of the buffer (if specified)
         if (buffer->m_on_update) {
             std::invoke(buffer->m_on_update.value());
         }
-        // Create the buffer
         buffer->create_buffer();
     }
     // TODO: Batch all updates which require staging buffer into one pipeline barrier call
@@ -173,6 +172,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
                                                  const std::uint32_t img_index) {
 
     // TODO: Remove img_index and implement swapchain.get_current_image()
+    // TODO: Or do we need the image index for buffers? (We want to automatically double or triple buffer them)
 
     // Start a new debug label for this graphics pass (debug labels are visible in graphics debuggers like RenderDoc)
     // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
@@ -244,15 +244,9 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
         cmd_buf.bind_index_buffer(pass.m_index_buffer);
     }
 
-    // TODO: bind descriptor set(s)
-
-    // TODO: push constants
-    if (!pass.m_push_constant_ranges.empty()) {
-        cmd_buf.push_constants();
-    }
 #endif
 
-    // Call the user-defined command buffer recording function of the graphics pass
+    // Call the custom command buffer recording function of the graphics pass
     std::invoke(pass.m_on_record, cmd_buf);
 
     // End dynamic rendering
