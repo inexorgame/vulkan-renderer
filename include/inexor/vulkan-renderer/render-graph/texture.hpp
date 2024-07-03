@@ -1,13 +1,16 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/image.hpp"
-
-#include <volk.h>
+#include <vk_mem_alloc.h>
 
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+
+namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
+class Device;
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -26,15 +29,17 @@ enum class TextureUsage {
 // Forward declaration
 class RenderGraph;
 
+using wrapper::Device;
+
 /// RAII wrapper for texture resources in the rendergraph
 class Texture {
 private:
     friend RenderGraph;
 
+    const Device &m_device;
     std::string m_name;
     TextureUsage m_usage;
     VkFormat m_format{VK_FORMAT_UNDEFINED};
-    std::unique_ptr<wrapper::Image> m_texture;
 
     void *m_texture_data{nullptr};
     std::size_t m_texture_data_size{0};
@@ -46,13 +51,21 @@ private:
     std::optional<std::function<void()>> m_on_init;
     std::optional<std::function<void()>> m_on_update;
 
+    VmaAllocation m_alloc{VK_NULL_HANDLE};
+    VmaAllocationInfo m_alloc_info{};
+    VkImage m_img{VK_NULL_HANDLE};
+    VkImageView m_img_view{VK_NULL_HANDLE};
+    // TODO: Sampler here as well?
+
     /// Only RenderGraph is allowed to create the texture
-    // TODO: Implement!
-    void create_texture();
+    void create_texture(const VkImageCreateInfo &img_ci,
+                        const VkImageViewCreateInfo &img_view_ci,
+                        const VmaAllocationCreateInfo &alloc_ci);
 
 public:
     /// Default constructor
-    /// @param name The internal debug name of the texture inside of the rendergraph (must not be empty)
+    /// @param device The device wrapper
+    /// @param name The internal debug name of the texture inside of the rendergraph (must not be empty!)
     /// @param usage The internal usage of the texture inside of the rendergraph
     /// @param format The format of the texture
     /// @param on_init The init function of the texture (``std::nullopt`` by default)
@@ -60,7 +73,8 @@ public:
     /// not require an on_init function, as rendergraph creates it internally. A static textures requires an on_init
     /// function, but no on_update function. A dynamic texture requires on_init and on_update.
     /// @param on_update An optional update function of the texture (``std::nullopt`` by default)
-    Texture(std::string name,
+    Texture(const Device &device,
+            std::string name,
             TextureUsage usage,
             VkFormat format,
             std::optional<std::function<void()>> on_init = std::nullopt,

@@ -25,7 +25,11 @@ public:
     /// @param height The height of the window.
     /// @param visible True if the window is visible after creation, false otherwise.
     /// @param resizable True if the window should be resizable, false otherwise.
-    Window(const std::string &title, std::uint32_t width, std::uint32_t height, bool visible, bool resizable,
+    Window(const std::string &title,
+           std::uint32_t width,
+           std::uint32_t height,
+           bool visible,
+           bool resizable,
            Mode mode);
     Window(const Window &) = delete;
     Window(Window &&) = delete;
@@ -76,6 +80,7 @@ public:
     /// @return ``true`` if the window will be closed.
     bool should_close();
 
+    // TODO: make m_window public and remove most of those methods!
     [[nodiscard]] GLFWwindow *get() const {
         return m_window;
     }

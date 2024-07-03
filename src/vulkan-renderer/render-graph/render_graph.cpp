@@ -32,23 +32,14 @@ void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipel
     m_pipeline_create_functions.emplace_back(std::move(on_pipeline_create));
 }
 
-std::shared_ptr<Buffer> RenderGraph::add_uniform_buffer(std::string uniform_buffer_name,
-                                                        std::function<void()> on_update) {
-    if (uniform_buffer_name.empty()) {
-        throw std::runtime_error("[RenderGraph::add_uniform_buffer] Error: Parameter 'uniform_buffer_name' is an empty "
-                                 "std::string! You must give a name to every rendergraph resource!");
-    }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(uniform_buffer_name), std::move(on_update)));
-    return m_buffers.back();
-}
-
-std::shared_ptr<Buffer> RenderGraph::add_index_buffer(std::string index_buffer_name, std::function<void()> on_update) {
-    if (index_buffer_name.empty()) {
-        throw std::invalid_argument("[RenderGraph::add_index_buffer] Error: Parameter 'index_buffer_name' is an empty "
+std::shared_ptr<Buffer>
+RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, std::function<void()> on_update) {
+    if (buffer_name.empty()) {
+        throw std::invalid_argument("[RenderGraph::add_buffer] Error: Parameter 'buffer_name' is an empty "
                                     "std::string! You must give a name to every rendergraph resource!");
     }
     m_buffers.emplace_back(
-        std::make_shared<Buffer>(m_device, std::move(index_buffer_name), VK_INDEX_TYPE_UINT32, std::move(on_update)));
+        std::make_shared<Buffer>(m_device, std::move(buffer_name), buffer_type, std::move(on_update)));
     return m_buffers.back();
 }
 
@@ -73,26 +64,9 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
             "[RenderGraph::add_texture] Error: Parameter 'texture_name' ist an empty std::string! "
             "You must give a name to every rendergraph resource!");
     }
-    m_textures.emplace_back(
-        std::make_shared<Texture>(std::move(texture_name), usage, format, std::move(on_init), std::move(on_update)));
+    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format,
+                                                      std::move(on_init), std::move(on_update)));
     return m_textures.back();
-}
-
-std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string vertex_buffer_name,
-                                                       std::vector<VkVertexInputAttributeDescription> vertex_attributes,
-                                                       std::function<void()> on_update) {
-    if (vertex_buffer_name.empty()) {
-        throw std::invalid_argument(
-            "[RenderGraph::add_vertex_buffer] Error: Parameter 'vertex_buffer_name' is an empty std::string! "
-            "You must give a name to every rendergraph resource!");
-    }
-    if (vertex_attributes.empty()) {
-        throw std::invalid_argument(
-            "[RenderGraph::add_vertex_buffer] Error: Parameter 'vertex_attributes' is an empty std::vector!");
-    }
-    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(vertex_buffer_name),
-                                                    std::move(vertex_attributes), std::move(on_update)));
-    return m_buffers.back();
 }
 
 void RenderGraph::check_for_cycles() {
@@ -110,10 +84,12 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_buffers() {
-    for (const auto &buffer : m_buffers) {
-        buffer->m_on_update();
-        buffer->create_buffer();
-    }
+    m_device.execute("RenderGraph::create_buffers", [&](const CommandBuffer &cmd_buf) {
+        for (const auto &buffer : m_buffers) {
+            buffer->m_on_update();
+            buffer->create_buffer(cmd_buf);
+        }
+    });
     // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
 }
 
@@ -143,7 +119,8 @@ void RenderGraph::create_textures() {
             // Call the initialization function of the texture (if specified)
             std::invoke(texture->m_on_init.value());
         }
-        texture->create_texture();
+        // TODO: Implement me!
+        // texture->create_texture();
     }
     // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
 }
@@ -290,10 +267,16 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    for (const auto &buffer : m_buffers) {
-        buffer->m_on_update();
-    }
-    // TODO: Implement me!
+    // Simply destroy all buffers and recreate them directly in VMA
+    // TODO: This might not be the most optimal solution because it leads to memory fragmentation?
+    // TODO: Even worse, the performance of this will gretly depend on the gpu which is used!
+    m_device.execute("RenderGraph::update_buffers", [&](const CommandBuffer &cmd_buf) {
+        for (const auto &buffer : m_buffers) {
+            buffer->destroy_buffer();
+            buffer->m_on_update();
+            buffer->create_buffer(cmd_buf);
+        }
+    });
     // TODO: Batch barriers for updates which require staging buffer
 }
 
@@ -321,10 +304,12 @@ void RenderGraph::update_descriptor_sets() {
 
 void RenderGraph::validate_render_graph() {
     if (m_graphics_pass_create_functions.empty()) {
-        throw std::runtime_error("Error: No graphics passes in rendergraph! Use add_graphics_pass!");
+        throw std::runtime_error(
+            "[RenderGraph::validate_render_graph] Error: No graphics passes in rendergraph! Use add_graphics_pass!");
     }
     if (m_pipeline_create_functions.empty()) {
-        throw std::runtime_error("Error: No graphics pipelines in rendergraph! Use add_graphics_pipeline!");
+        throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics pipelines in rendergraph! "
+                                 "Use add_graphics_pipeline!");
     }
     check_for_cycles();
 }

@@ -423,8 +423,11 @@ void Application::run() {
 
 void Application::setup_render_graph() {
     // TODO: Move to OctreeRenderer and ImGuiRenderer!
-    // TODO: Lambda style > polymorphism!
     // TODO: Move this to rendergraph header file? (Can we then use it here?)
+    using render_graph::BufferType;
+    using render_graph::BufferType::INDEX_BUFFER;
+    using render_graph::BufferType::UNIFORM_BUFFER;
+    using render_graph::BufferType::VERTEX_BUFFER;
     using render_graph::TextureUsage::BACK_BUFFER;
     using render_graph::TextureUsage::DEPTH_STENCIL_BUFFER;
     using render_graph::TextureUsage::MSAA_BACK_BUFFER;
@@ -450,7 +453,7 @@ void Application::setup_render_graph() {
         },
     };
 
-    m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
+    m_vertex_buffer = m_render_graph->add_buffer("Octree", VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
@@ -467,7 +470,7 @@ void Application::setup_render_graph() {
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
-    m_index_buffer = m_render_graph->add_index_buffer("Octree", [&]() {
+    m_index_buffer = m_render_graph->add_buffer("Octree", INDEX_BUFFER, [&]() {
         // Request update of the octree index buffer
         m_index_buffer->request_update(m_octree_indices);
     });
@@ -479,7 +482,7 @@ void Application::setup_render_graph() {
     m_vertex_buffer->request_update(m_octree_vertices);
     m_index_buffer->request_update(m_octree_indices);
 
-    m_uniform_buffer = m_render_graph->add_uniform_buffer("Matrices", [&]() {
+    m_uniform_buffer = m_render_graph->add_buffer("Matrices", UNIFORM_BUFFER, [&]() {
         // TODO: Update model matrix if required
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();

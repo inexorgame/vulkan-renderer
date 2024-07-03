@@ -1,38 +1,48 @@
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
+#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Texture::Texture(std::string name,
+Texture::Texture(const Device &device,
+                 std::string name,
                  const TextureUsage usage,
                  const VkFormat format,
                  std::optional<std::function<void()>> on_init,
                  std::optional<std::function<void()>> on_update)
-    : m_name(std::move(name)), m_usage(usage), m_format(format), m_on_init(std::move(on_init)),
+    : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_on_init(std::move(on_init)),
       m_on_update(std::move(on_update)) {}
 
-Texture::Texture(Texture &&other) noexcept {
-    // TODO: Check me!
-    m_name = std::move(other.m_name);
-    m_usage = other.m_usage;
-    m_format = other.m_format;
-    m_texture = std::exchange(other.m_texture, nullptr);
-    m_texture_data = std::exchange(other.m_texture_data, nullptr);
-    m_texture_data_size = other.m_texture_data_size;
-    m_width = other.m_width;
-    m_height = other.m_height;
-    m_channels = other.m_channels;
-    m_mip_levels = other.m_mip_levels;
-    m_on_init = std::move(other.m_on_init);
-    m_on_update = std::move(other.m_on_update);
+Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
+    // TODO: FIX me!
 }
 
-void Texture::create_texture() {
-    // TODO: Implement me!
+void Texture::create_texture(const VkImageCreateInfo &img_ci,
+                             const VkImageViewCreateInfo &img_view_ci,
+                             const VmaAllocationCreateInfo &alloc_ci) {
+    if (const auto result = vmaCreateImage(m_device.allocator(), &img_ci, &alloc_ci, &m_img, &m_alloc, &m_alloc_info);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
+    }
+    // Assign an internal debug name to this image in Vulkan Memory Allocator (VMA)
+    vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
+    // Set the textures's internal debug name through Vulkan debug utils
+    m_device.set_debug_name(m_img, m_name);
+
+    // Fill in the image that was created and the format of the image
+    auto filled_img_view_ci = img_view_ci;
+    filled_img_view_ci.image = m_img;
+    filled_img_view_ci.format = img_ci.format;
+
+    if (const auto result = vkCreateImageView(m_device.device(), &filled_img_view_ci, nullptr, &m_img_view);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
+    }
+    m_device.set_debug_name(m_img_view, m_name);
 }
 
 void Texture::request_update(void *texture_src_data, const std::size_t src_texture_data_size) {

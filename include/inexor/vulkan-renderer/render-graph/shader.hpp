@@ -26,6 +26,8 @@ class RenderGraph;
 using inexor::vulkan_renderer::wrapper::Device;
 using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
 
+// TODO: This should not be in rendergraph!
+
 /// RAII wrapper class for VkShaderModule
 class Shader {
 private:

@@ -285,14 +285,25 @@ const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags 
                                                      const std::span<const VkMemoryBarrier> mem_barriers,
                                                      const std::span<const VkBufferMemoryBarrier> buf_mem_barriers,
                                                      const VkDependencyFlags dep_flags) const {
-    // One barrier must be set at least
-    assert(!(img_mem_barriers.empty() && mem_barriers.empty()) && buf_mem_barriers.empty());
-
     vkCmdPipelineBarrier(m_cmd_buf, src_stage_flags, dst_stage_flags, dep_flags,
                          static_cast<std::uint32_t>(mem_barriers.size()), mem_barriers.data(),
                          static_cast<std::uint32_t>(buf_mem_barriers.size()), buf_mem_barriers.data(),
                          static_cast<std::uint32_t>(img_mem_barriers.size()), img_mem_barriers.data());
     return *this;
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_buffer_memory_barrier(const VkPipelineStageFlags src_stage_flags,
+                                              const VkPipelineStageFlags dst_stage_flags,
+                                              const VkBufferMemoryBarrier &buffer_mem_barrier) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, {&buffer_mem_barrier, 1});
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_buffer_memory_barriers(const VkPipelineStageFlags src_stage_flags,
+                                               const VkPipelineStageFlags dst_stage_flags,
+                                               const std::span<const VkBufferMemoryBarrier> buffer_mem_barriers) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, buffer_mem_barriers);
 }
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipelineStageFlags src_stage_flags,
@@ -301,10 +312,24 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {&img_barrier, 1});
 }
 
-const CommandBuffer &CommandBuffer::pipeline_memory_barrier(VkPipelineStageFlags src_stage_flags,
-                                                            VkPipelineStageFlags dst_stage_flags,
+const CommandBuffer &
+CommandBuffer::pipeline_image_memory_barriers(const VkPipelineStageFlags src_stage_flags,
+                                              const VkPipelineStageFlags dst_stage_flags,
+                                              const std::span<const VkImageMemoryBarrier> img_barrier) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, img_barrier);
+}
+
+const CommandBuffer &CommandBuffer::pipeline_memory_barrier(const VkPipelineStageFlags src_stage_flags,
+                                                            const VkPipelineStageFlags dst_stage_flags,
                                                             const VkMemoryBarrier &mem_barrier) const {
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {&mem_barrier, 1});
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_memory_barriers(const VkPipelineStageFlags src_stage_flags,
+                                        const VkPipelineStageFlags dst_stage_flags,
+                                        const std::span<const VkMemoryBarrier> mem_barriers) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, mem_barriers);
 }
 
 const CommandBuffer &CommandBuffer::full_barrier() const {

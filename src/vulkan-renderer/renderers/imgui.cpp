@@ -52,7 +52,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
     }};
 
     // TODO: Do we really need vert_input_attr_descs here?
-    m_vertex_buffer = render_graph.add_vertex_buffer("ImGui", vert_input_attr_descs, [&]() {
+    m_vertex_buffer = render_graph.add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
         m_on_update_user_data();
         const ImDrawData *draw_data = ImGui::GetDrawData();
         if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
@@ -76,7 +76,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
         m_index_buffer->request_update(m_index_data);
     });
 
-    m_index_buffer = render_graph.add_index_buffer("ImGui", [&]() {
+    m_index_buffer = render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {
         // Index buffer is already being updated in vertex buffer update lambda...
     });
 

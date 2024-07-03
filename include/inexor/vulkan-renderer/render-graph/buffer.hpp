@@ -73,10 +73,6 @@ private:
     // TODO: Rewrite description
     std::function<void()> m_on_update;
 
-    /// This is relevant for index buffers only
-    VkIndexType m_index_type;
-    /// This is relevant for vertex buffers only
-    std::vector<VkVertexInputAttributeDescription> m_vert_input_attr_descs;
     /// TODO: Is this is relevant for uniform buffers only?
     /// TODO: Maybe buffer updates should be done immediately, and no m_src_data should be stored!
     /// It's the responsibility of the programmer to make sure the data m_src_data points to is still valid when
@@ -88,13 +84,15 @@ private:
     VkBuffer m_buffer{VK_NULL_HANDLE};
     VmaAllocation m_alloc{VK_NULL_HANDLE};
     VmaAllocationInfo m_alloc_info{};
-    VkBufferUsageFlags m_buffer_usage{};
-    VmaMemoryUsage m_mem_usage{};
+
+    /// The staging buffer (if required)
+    VkBuffer m_staging_buffer{VK_NULL_HANDLE};
+    VmaAllocation m_staging_alloc{VK_NULL_HANDLE};
+    VmaAllocationInfo m_staging_alloc_info{};
 
     /// Create the buffer using Vulkan Memory Allocator (VMA) library
-    void create_buffer();
-
-    void update_buffer();
+    /// @param cmd_buf The command buffer
+    void create_buffer(const CommandBuffer &cmd_buf);
 
     /// Call vmaDestroyBuffer
     void destroy_buffer();
@@ -103,25 +101,9 @@ public:
     /// Constructor for uniform buffers
     /// @param device The device wrapper
     /// @param buffer_name The name of the buffer
+    /// @param buffer_type The type of the buffer
     /// @param on_update The buffer update function
-    Buffer(const Device &device, std::string buffer_name, std::function<void()> on_update);
-
-    /// Constructor for vertex buffers
-    /// @param device The device wrapper
-    /// @param buffer_name The name of the buffer
-    /// @param vert_input_attr_descs A vertex of vertex input attribute descriptions
-    /// @param on_update The buffer update function
-    Buffer(const Device &device,
-           std::string buffer_name,
-           std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs,
-           std::function<void()> on_update);
-
-    /// Constructor for index buffers
-    /// @param device The device wrapper
-    /// @param name The name of the buffer
-    /// @param index_type The Vulkan index type
-    /// @param on_update The buffer update function
-    Buffer(const Device &device, std::string name, VkIndexType index_type, std::function<void()> on_update);
+    Buffer(const Device &device, std::string buffer_name, BufferType buffer_type, std::function<void()> on_update);
 
     Buffer(const Buffer &) = delete;
     Buffer(Buffer &&other) noexcept;

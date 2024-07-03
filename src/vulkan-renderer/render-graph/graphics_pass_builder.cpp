@@ -15,4 +15,6 @@ void GraphicsPassBuilder::reset() {
     m_texture_writes.clear();
 }
 
+// TODO: Move stuff to .cpp file again. Header files should contain declarations, cpp files should contain definitions!
+
 } // namespace inexor::vulkan_renderer::render_graph
