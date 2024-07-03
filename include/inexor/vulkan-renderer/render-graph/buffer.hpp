@@ -9,10 +9,14 @@
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
-/// Forward declarations
+/// Forward declaration
 class Device;
-class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::commands {
+/// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -24,7 +28,11 @@ enum class BufferType {
     // TODO: Add more buffer types here and implement support for them
 };
 
+// Forward declaration
+class GraphicsPass;
+
 using wrapper::Device;
+using wrapper::commands::CommandBuffer;
 
 // TODO: Store const reference to rendergraph and retrieve the swapchain image index for automatic buffer tripling
 
@@ -33,6 +41,8 @@ using wrapper::Device;
 class Buffer {
 private:
     friend class RenderGraph;
+    friend class GraphicsPass;
+    friend class CommandBuffer;
 
     /// The device wrapper
     const Device &m_device;
@@ -122,16 +132,6 @@ public:
     Buffer &operator=(const Buffer &) = delete;
     Buffer &operator=(Buffer &&) = delete;
 
-    // TODO: Remove get methods and allow access to private fields through friend class declaration only?
-    [[nodiscard]] auto &buffer() const {
-        return m_buffer;
-    }
-
-    // TODO: Remove get methods and allow access to private fields through friend class declaration only?
-    [[nodiscard]] auto &name() const {
-        return m_name;
-    }
-
     /// Update the buffer
     /// @param src_data A pointer to the data to copy the updated data from
     /// @warning It is the responsibility of the programmer to make sure src_data still points to valid memory when
@@ -156,10 +156,6 @@ public:
     template <typename BufferDataType>
     void request_update(std::vector<BufferDataType> &data) {
         return request_update(data.data(), sizeof(data) * data.size());
-    }
-
-    [[nodiscard]] auto type() const {
-        return m_buffer_type;
     }
 };
 

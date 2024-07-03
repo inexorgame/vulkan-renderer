@@ -51,20 +51,7 @@ class CommandBuffer {
     const CommandBuffer & // NOLINT
     begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 
-    /// Create a new staging buffer which will be stored internally for a copy operation
-    /// @param data A raw pointer to the data to copy (must not be ``nullptr``)
-    /// @param data_size The size of the data to copy (must be greater than ``0``)
-    /// @param name The internal name of the staging buffer (must not be empty)
-    /// @return A VkBuffer which contains the staging buffer data
-    [[nodiscard]] VkBuffer
-    create_staging_buffer(const void *data, const VkDeviceSize data_size, const std::string &name) const {
-        // Create a staging buffer for the copy operation and keep it until the CommandBuffer exceeds its lifetime
-
-        // TODO: Create/Implement staging buffers!
-
-        // m_staging_bufs.emplace_back(m_device, name, render_graph::BufferType::STAGING_BUFFER);
-        return m_staging_bufs.back().buffer();
-    }
+    // TODO: Implement create_staging_buffer()!
 
     /// Call vkEndCommandBuffer
     /// @return A const reference to the this pointer (allowing method calls to be chained)

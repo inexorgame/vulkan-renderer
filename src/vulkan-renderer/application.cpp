@@ -450,18 +450,13 @@ void Application::setup_render_graph() {
         },
     };
 
-    load_octree_geometry(false);
-    generate_octree_indices();
-
-    /*
+    m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
         // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
+            load_octree_geometry(false);
+            generate_octree_indices();
         }
-    */
-
-    // Use the same lambda for initialization and update of the buffer
-    m_vertex_buffer = m_render_graph->add_vertex_buffer("Octree", vert_input_attr_desc, [&]() {
-        // Update octree vertex buffer
+        // Request update of the octree vertex buffer
         m_vertex_buffer->request_update(m_octree_vertices);
     });
 
@@ -473,9 +468,15 @@ void Application::setup_render_graph() {
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
     m_index_buffer = m_render_graph->add_index_buffer("Octree", [&]() {
-        // Update octree index buffer
+        // Request update of the octree index buffer
         m_index_buffer->request_update(m_octree_indices);
     });
+
+    /// Initialize octree vertices and indices here
+    load_octree_geometry(false);
+    generate_octree_indices();
+    m_vertex_buffer->request_update(m_octree_vertices);
+    m_index_buffer->request_update(m_octree_indices);
 
     m_uniform_buffer = m_render_graph->add_uniform_buffer("Matrices", [&]() {
         // TODO: Update model matrix if required
@@ -490,8 +491,6 @@ void Application::setup_render_graph() {
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
-    // TODO: Should this return a handle?
-    // TODO: Pass on push constant ranges and descriptor set layouts here already?
     m_render_graph->add_graphics_pipeline("Octree", [&](GraphicsPipelineBuilder &graphics_pipeline_builder,
                                                         DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
         m_octree_pipeline =
@@ -507,6 +506,7 @@ void Application::setup_render_graph() {
                 .set_viewport(m_swapchain->extent())
                 .set_scissor(m_swapchain->extent())
                 .set_descriptor_set_layout(
+                    // Use rendergraph's descriptor set layout builder
                     descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree"))
                 .uses_shader(m_octree_vert)
                 .uses_shader(m_octree_frag)
@@ -525,6 +525,7 @@ void Application::setup_render_graph() {
                 })
                 .set_depth_test(true)
                 .set_on_record([&](const CommandBuffer &cmd_buf) {
+                    // Record the command buffer for rendering the octree
                     cmd_buf.bind_pipeline(m_octree_pipeline)
                         .bind_vertex_buffer(m_vertex_buffer)
                         .bind_index_buffer(m_index_buffer)

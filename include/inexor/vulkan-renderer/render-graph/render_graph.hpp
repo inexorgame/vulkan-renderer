@@ -173,7 +173,7 @@ private:
     /// Update the descriptor sets
     void update_descriptor_sets();
 
-    /// Validate rendergraph
+    /// Make sure all required resources are specified so rendergraph is ready to be compiled
     void validate_render_graph();
 
 public:
@@ -195,6 +195,8 @@ public:
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     /// @note Move semantics is used to std::move on_pass_create
     void add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create);
+
+    // TODO: One thread_local GraphicsPipelineBuilder? Once graphics pipelines will be created in parallel!
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param name The graphics pipeline name
@@ -254,6 +256,7 @@ public:
                       std::vector<VkVertexInputAttributeDescription> vertex_attributes,
                       std::function<void()> on_update);
 
+    // TODO: Keep track of internal state? What happens when calling render() before compiler()?
     /// Compile the rendergraph
     void compile();
 

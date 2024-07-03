@@ -8,6 +8,8 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
+// TODO: Only one constructor and simplify API?
+
 Buffer::Buffer(const Device &device, std::string buffer_name, std::function<void()> on_update)
     : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)),
       m_buffer_type(BufferType::UNIFORM_BUFFER), m_buffer_usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
@@ -45,6 +47,9 @@ Buffer::~Buffer() {
     destroy_buffer();
 }
 
+// TODO: create = update? (simplify API, double- or triple-buffer everything in rendergraph)
+// TODO: For automatic triple-buffering, use 3 custom VMA memory pools?
+
 void Buffer::create_buffer() {
     if (m_src_data_size == 0) {
         return;
@@ -65,12 +70,14 @@ void Buffer::create_buffer() {
             vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &m_buffer, &m_alloc, &m_alloc_info)) {
         throw VulkanException("Error: vmaCreateBuffer failed for buffer " + m_name + " !", result);
     }
+    // TODO: Wrap naming objects in DEBUG only?
     // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
     // Set the buffer's internal debug name through Vulkan debug utils
     m_device.set_debug_name(m_buffer, m_name);
 }
 
+// TODO: Should we do it like this or just allocate every frame anyways?
 void Buffer::update_buffer() {
     // Before updating the buffer, we must check if the required new size is bigger than the existing buffer
     if (m_src_data_size > m_alloc_info.size) {

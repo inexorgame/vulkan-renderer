@@ -29,7 +29,6 @@ using TextureRead = std::pair<std::weak_ptr<Texture>, std::optional<VkShaderStag
 using TextureReads = std::vector<TextureRead>;
 using TextureWrites = std::vector<std::weak_ptr<Texture>>;
 
-using wrapper::commands::CommandBuffer;
 using wrapper::descriptors::DescriptorSetLayout;
 
 /// A wrapper for graphics passes inside of rendergraph

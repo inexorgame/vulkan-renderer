@@ -26,7 +26,7 @@ enum class TextureUsage {
 // Forward declaration
 class RenderGraph;
 
-/// Wrapper for texture resources in the rendergraph
+/// RAII wrapper for texture resources in the rendergraph
 class Texture {
 private:
     friend RenderGraph;
@@ -36,8 +36,8 @@ private:
     VkFormat m_format{VK_FORMAT_UNDEFINED};
     std::unique_ptr<wrapper::Image> m_texture;
 
-    void *m_data{nullptr};
-    std::size_t m_data_size{0};
+    void *m_texture_data{nullptr};
+    std::size_t m_texture_data_size{0};
     std::uint32_t m_width{0};
     std::uint32_t m_height{0};
     std::uint32_t m_channels{0};
@@ -46,6 +46,7 @@ private:
     std::optional<std::function<void()>> m_on_init;
     std::optional<std::function<void()>> m_on_update;
 
+    /// Only RenderGraph is allowed to create the texture
     // TODO: Implement!
     void create_texture();
 
@@ -72,11 +73,10 @@ public:
     Texture &operator=(const Texture &) = delete;
     Texture &operator=(Texture &&) = delete;
 
-    // TODO: Implement (In what API style though?)
-    void request_update(const void *src_data, const std::size_t src_data_size) {
-        // TODO: Check if source data is nullptr
-        // TODO: Check if size is 0
-    }
+    /// Request rendergraph to update the texture
+    /// @param texture_src_data A pointer to the texture data
+    /// @param src_texture_data_size The size of the texture data to which ``texture_src_data`` points to
+    void request_update(void *texture_src_data, const std::size_t src_texture_data_size);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

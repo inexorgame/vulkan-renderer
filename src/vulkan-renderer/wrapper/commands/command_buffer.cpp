@@ -88,11 +88,11 @@ const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet de
 const CommandBuffer &CommandBuffer::bind_index_buffer(const std::shared_ptr<render_graph::Buffer> buffer,
                                                       const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
-    if (buffer->type() != render_graph::BufferType::INDEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->name() +
+    if (buffer->m_buffer_type != render_graph::BufferType::INDEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->m_name +
                                     " is not an index buffer!");
     }
-    vkCmdBindIndexBuffer(m_cmd_buf, buffer->buffer(), offset, index_type);
+    vkCmdBindIndexBuffer(m_cmd_buf, buffer->m_buffer, offset, index_type);
     return *this;
 }
 
@@ -103,11 +103,11 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<pipelines:
 }
 
 const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::shared_ptr<render_graph::Buffer> buffer) const {
-    if (buffer->type() != render_graph::BufferType::VERTEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->name() +
+    if (buffer->m_buffer_type != render_graph::BufferType::VERTEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->m_name +
                                     " is not a vertex buffer!");
     }
-    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer->buffer(), 0);
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer->m_buffer, 0);
     return *this;
 }
 
@@ -237,6 +237,7 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
     return *this;
 }
 
+/*
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
                                                          const VkDeviceSize data_size, // NOLINT
                                                          const VkImage dst_img,
@@ -244,6 +245,7 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
                                                          const std::string &name) const {
     return copy_buffer_to_image(create_staging_buffer(data, data_size, name), dst_img, copy_region);
 }
+*/
 
 const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count,
                                          const std::uint32_t inst_count,
