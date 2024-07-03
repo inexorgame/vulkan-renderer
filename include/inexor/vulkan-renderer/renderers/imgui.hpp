@@ -65,8 +65,10 @@ public:
     /// @param back_buffer The back buffer texture resource
     /// @param depth_buffer The depth buffer texture resource
     /// @param on_update_user_data The function in which the user's ImGui data is updated
-    ImGuiRenderer(const wrapper::Device &device, render_graph::RenderGraph &render_graph,
-                  std::weak_ptr<render_graph::Texture> back_buffer, std::weak_ptr<render_graph::Texture> depth_buffer,
+    ImGuiRenderer(const wrapper::Device &device,
+                  render_graph::RenderGraph &render_graph,
+                  std::weak_ptr<render_graph::Texture> back_buffer,
+                  std::weak_ptr<render_graph::Texture> depth_buffer,
                   std::function<void()> on_update_user_data);
 
     ImGuiRenderer(const ImGuiRenderer &) = delete;

@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-// TODO: Only one constructor and simplify API?
+// TODO: Only one constructor and simplify API? Actually remove most of the parameters...
 
 Buffer::Buffer(const Device &device, std::string buffer_name, std::function<void()> on_update)
     : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)),

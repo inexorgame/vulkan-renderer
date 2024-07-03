@@ -472,6 +472,7 @@ void Application::setup_render_graph() {
         m_index_buffer->request_update(m_octree_indices);
     });
 
+    // TODO: This must be in the init() method of some OctreeRenderer class in the future!
     /// Initialize octree vertices and indices here
     load_octree_geometry(false);
     generate_octree_indices();
@@ -526,9 +527,13 @@ void Application::setup_render_graph() {
                 .set_depth_test(true)
                 .set_on_record([&](const CommandBuffer &cmd_buf) {
                     // Record the command buffer for rendering the octree
-                    cmd_buf.bind_pipeline(m_octree_pipeline)
+                    cmd_buf
+                        .bind_pipeline(m_octree_pipeline)
+                        // TODO: Binding vertex buffer must automatically respect current swapchain img index!
                         .bind_vertex_buffer(m_vertex_buffer)
+                        // TODO: Binding index buffer must automatically respect current swapchain img index!
                         .bind_index_buffer(m_index_buffer)
+                        // TODO: Automatically respect current swapchain img index!
                         .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
                 })
                 // TOOD: Even simpler API like .reads_from() and .writes_to() without templates (just overloading)?

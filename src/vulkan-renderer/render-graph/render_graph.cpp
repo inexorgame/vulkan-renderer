@@ -26,7 +26,7 @@ void RenderGraph::add_graphics_pass(std::string pass_name, GraphicsPassCreateFun
 
 void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create) {
     if (pipeline_name.empty()) {
-        throw std::invalid_argument("[RenderGraph::add_graphics_pipeline] Error: Parameter 'on_pipeline_create' is an "
+        throw std::invalid_argument("[RenderGraph::add_graphics_pipeline] Error: Parameter 'pipeline_name' is an "
                                     "empty std::string! You must give a name to every rendergraph resource!");
     }
     m_pipeline_create_functions.emplace_back(std::move(on_pipeline_create));
@@ -58,7 +58,6 @@ RenderGraph::add_shader(std::string shader_name, const VkShaderStageFlagBits sha
         throw std::invalid_argument("[RenderGraph::add_shader] Error: Parameter 'shader_name' is an empty std::string! "
                                     "You must give a name to every rendergraph resource!");
     }
-    // We do not check if 'file_name' is empty because this is done in Shader wrapper
     m_shaders.emplace_back(
         std::make_shared<Shader>(m_device, std::move(shader_name), shader_stage, std::move(file_name)));
     return m_shaders.back();
@@ -97,12 +96,10 @@ std::shared_ptr<Buffer> RenderGraph::add_vertex_buffer(std::string vertex_buffer
 }
 
 void RenderGraph::check_for_cycles() {
-    m_log->warn("Implement RenderGraph::check_for_cycles()!");
-    // TODO: Implement!
+    // TODO: Implement me!
 }
 
 void RenderGraph::compile() {
-    m_log->trace("Compiling rendergraph");
     validate_render_graph();
     determine_pass_order();
     create_buffers();
@@ -121,8 +118,7 @@ void RenderGraph::create_buffers() {
 }
 
 void RenderGraph::create_descriptor_sets() {
-    m_log->trace("Creating descriptor sets");
-    // TODO: Implement!
+    // TODO: Implement me!
 }
 
 void RenderGraph::create_graphics_passes() {
@@ -142,16 +138,18 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    m_log->trace("Creating textures");
-
     for (const auto &texture : m_textures) {
+        if (texture->m_on_init) {
+            // Call the initialization function of the texture (if specified)
+            std::invoke(texture->m_on_init.value());
+        }
         texture->create_texture();
     }
     // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
 }
 
 void RenderGraph::determine_pass_order() {
-    m_log->trace("Determing pass order using depth first search (DFS)");
+    // TODO: Implement me!
     // TODO: The data structure to determine pass order should be created before rendergraph compilation!
 }
 
@@ -265,7 +263,7 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
         // This is important to know because of image layout transitions for back buffer for example
         const bool is_first_pass = (pass_index == 0);
-        const bool is_last_pass = (pass_index == m_graphics_passes.size() - 1);
+        const bool is_last_pass = (pass_index == (m_graphics_passes.size() - 1));
         record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index], is_first_pass, is_last_pass, img_index);
     }
 }
@@ -295,6 +293,7 @@ void RenderGraph::update_buffers() {
     for (const auto &buffer : m_buffers) {
         buffer->m_on_update();
     }
+    // TODO: Implement me!
     // TODO: Batch barriers for updates which require staging buffer
 }
 
@@ -304,6 +303,7 @@ void RenderGraph::update_textures() {
         if (texture->m_on_update) {
             std::invoke(texture->m_on_update.value());
         }
+        // TODO: Update texture (Implement me!)
     }
     // TODO: Batch barriers for updates which require staging buffer
 }
@@ -315,6 +315,7 @@ void RenderGraph::update_descriptor_sets() {
     // if a pass reads from both let's say a uniform buffer and a texture, but the order specified in descriptor set
     // layout builder results in a binding order that is incorrect!
 
+    // TODO: Implement me!
     // TODO: Builder pattern for descriptor writes?
 }
 

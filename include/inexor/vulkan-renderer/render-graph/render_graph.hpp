@@ -204,6 +204,8 @@ public:
     /// @note Move semantics is used to std::move on_pipeline_create
     void add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create);
 
+    // TODO: Should those return a std::shared_ptr or a std::weak_ptr now? (Which memory ownership model?)
+
     /// Add an index buffer to rendergraph
     /// @note The Vulkan index type is set to ``VK_INDEX_TYPE_UINT32`` by default and it not exposed as parameter
     /// @param name The name of the index buffer
@@ -218,6 +220,7 @@ public:
     /// @param name The internal debug name of the shader (not the file name)
     /// @param shader_stage The shader stage
     /// @param file_name The shader file name
+    /// @note We do not check if ``file_name`` is empty because this is done in the Shader wrapper
     /// @return A shared pointer to the shader that was loaded from the SPIR-V file
     [[nodiscard]] std::shared_ptr<Shader>
     add_shader(std::string shader_name, VkShaderStageFlagBits shader_stage, std::string file_name);
