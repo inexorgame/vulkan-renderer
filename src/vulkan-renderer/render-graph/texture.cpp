@@ -15,7 +15,11 @@ Texture::Texture(const Device &device,
                  std::optional<std::function<void()>> on_init,
                  std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_on_init(std::move(on_init)),
-      m_on_update(std::move(on_update)) {}
+      m_on_update(std::move(on_update)) {
+    if (m_name.empty()) {
+        throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
+    }
+}
 
 Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
     // TODO: FIX me!
@@ -56,6 +60,7 @@ void Texture::request_update(void *texture_src_data, const std::size_t src_textu
     // valid when the actual copy operation for the update is carried out!
     m_texture_data = texture_src_data;
     m_texture_data_size = src_texture_data_size;
+    m_update_requested = true;
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

@@ -13,11 +13,13 @@ namespace inexor::vulkan_renderer::render_graph {
 
 Shader::Shader(const Device &device, std::string name, const VkShaderStageFlagBits type, std::string file_name)
     : m_device(device), m_name(std::move(name)), m_shader_stage(type), m_file_name(file_name) {
-
+    if (m_name.empty()) {
+        throw std::runtime_error("[Shader::Shader] Error: Parameter 'name' is empty!");
+    }
     // Open the file stream at the end of the file to read file size
     std::ifstream shader_file(file_name.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
     if (!shader_file) {
-        throw std::runtime_error("Error: Could not open shader file " + file_name + "!");
+        throw std::runtime_error("[Shader::Shader] Error: Could not open shader file " + file_name + "!");
     }
 
     // Read the size of the file

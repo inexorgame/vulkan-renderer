@@ -457,7 +457,7 @@ void Application::setup_render_graph() {
             generate_octree_indices();
         }
         // Request update of the octree vertex buffer
-        m_vertex_buffer->request_update(m_octree_vertices.data(), sizeof(OctreeGpuVertex) * m_octree_vertices.size());
+        m_vertex_buffer->request_update(m_octree_vertices);
     });
 
     // TODO: How to prevent duplicate loading of shaders or how to deal with object lifetime?
@@ -469,22 +469,22 @@ void Application::setup_render_graph() {
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
     m_index_buffer = m_render_graph->add_buffer("Octree", INDEX_BUFFER, [&]() {
         // Request update of the octree index buffer
-        m_index_buffer->request_update(m_octree_indices.data(), sizeof(std::uint32_t) * m_octree_indices.size());
+        m_index_buffer->request_update(m_octree_indices);
     });
 
     // TODO: This must be in the init() method of some OctreeRenderer class in the future!
     /// Initialize octree vertices and indices here
     load_octree_geometry(false);
     generate_octree_indices();
-    m_vertex_buffer->request_update(m_octree_vertices.data(), sizeof(OctreeGpuVertex) * m_octree_vertices.size());
-    m_index_buffer->request_update(m_octree_indices.data(), sizeof(std::uint32_t) * m_octree_indices.size());
+    m_vertex_buffer->request_update(m_octree_vertices);
+    m_index_buffer->request_update(m_octree_indices);
 
     m_uniform_buffer = m_render_graph->add_buffer("Matrices", UNIFORM_BUFFER, [&]() {
         // TODO: Update model matrix if required
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
-        m_uniform_buffer->request_update(&m_mvp_matrices, sizeof(ModelViewPerspectiveMatrices));
+        m_uniform_buffer->request_update(m_mvp_matrices);
     });
 
     using wrapper::descriptors::DescriptorSetLayoutBuilder;

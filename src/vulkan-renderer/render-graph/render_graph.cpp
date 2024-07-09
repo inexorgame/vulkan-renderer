@@ -34,10 +34,6 @@ void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipel
 
 std::shared_ptr<Buffer>
 RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, std::function<void()> on_update) {
-    if (buffer_name.empty()) {
-        throw std::invalid_argument("[RenderGraph::add_buffer] Error: Parameter 'buffer_name' is an empty "
-                                    "std::string! You must give a name to every rendergraph resource!");
-    }
     m_buffers.emplace_back(
         std::make_shared<Buffer>(m_device, std::move(buffer_name), buffer_type, std::move(on_update)));
     return m_buffers.back();
@@ -45,10 +41,6 @@ RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, s
 
 std::shared_ptr<Shader>
 RenderGraph::add_shader(std::string shader_name, const VkShaderStageFlagBits shader_stage, std::string file_name) {
-    if (shader_name.empty()) {
-        throw std::invalid_argument("[RenderGraph::add_shader] Error: Parameter 'shader_name' is an empty std::string! "
-                                    "You must give a name to every rendergraph resource!");
-    }
     m_shaders.emplace_back(
         std::make_shared<Shader>(m_device, std::move(shader_name), shader_stage, std::move(file_name)));
     return m_shaders.back();
@@ -59,12 +51,6 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                   const VkFormat format,
                                                   std::optional<std::function<void()>> on_init,
                                                   std::optional<std::function<void()>> on_update) {
-    // TODO: Check for names being empty only in wrappers!
-    if (texture_name.empty()) {
-        throw std::invalid_argument(
-            "[RenderGraph::add_texture] Error: Parameter 'texture_name' ist an empty std::string! "
-            "You must give a name to every rendergraph resource!");
-    }
     m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format,
                                                       std::move(on_init), std::move(on_update)));
     return m_textures.back();
@@ -87,12 +73,10 @@ void RenderGraph::compile() {
 void RenderGraph::create_buffers() {
     m_device.execute("RenderGraph::create_buffers", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
-            // TODO: if(buffer->update_requested)
             buffer->m_on_update();
             buffer->create_buffer(cmd_buf);
         }
     });
-    // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
 }
 
 void RenderGraph::create_descriptor_sets() {
@@ -116,16 +100,17 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    for (const auto &texture : m_textures) {
-        if (texture->m_on_init) {
-            // TODO: if(texture->update_requested)...
-            // Call the initialization function of the texture (if specified)
-            std::invoke(texture->m_on_init.value());
+    m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
+        for (const auto &texture : m_textures) {
+            if (texture->m_on_init) {
+                // TODO: if(texture->update_requested)...
+                // Call the initialization function of the texture (if specified)
+                std::invoke(texture->m_on_init.value());
+            }
+            // TODO: Implement me!
+            // texture->create_texture();
         }
-        // TODO: Implement me!
-        // texture->create_texture();
-    }
-    // TODO: Batch all updates which require staging buffers into one pipeline barrier call!
+    });
 }
 
 void RenderGraph::determine_pass_order() {
@@ -249,7 +234,7 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
 }
 
 void RenderGraph::render() {
-    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render");
+    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render()");
     record_command_buffers(cmd_buf, m_swapchain.acquire_next_image_index());
 
     // TODO: Further abstract this away?
@@ -270,24 +255,24 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    // Simply destroy all buffers and recreate them directly in VMA
-    // TODO: This might not be the most optimal solution because it leads to memory fragmentation?
-    // TODO: Even worse, the performance of this will gretly depend on the gpu which is used!
     m_device.execute("RenderGraph::update_buffers", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
-            buffer->destroy_buffer();
-            buffer->m_on_update();
-            buffer->create_buffer(cmd_buf);
+            if (buffer->m_update_requested) {
+                buffer->destroy_buffer();
+                buffer->m_on_update();
+                buffer->create_buffer(cmd_buf);
+            }
         }
     });
-    // TODO: Batch barriers for updates which require staging buffer
 }
 
 void RenderGraph::update_textures() {
     for (const auto &texture : m_textures) {
         // If m_on_update is not std::nullopt, call the update function of the texture
         if (texture->m_on_update) {
-            std::invoke(texture->m_on_update.value());
+            if (texture->m_update_requested) {
+                std::invoke(texture->m_on_update.value());
+            }
         }
         // TODO: Update texture (Implement me!)
     }
@@ -307,12 +292,10 @@ void RenderGraph::update_descriptor_sets() {
 
 void RenderGraph::validate_render_graph() {
     if (m_graphics_pass_create_functions.empty()) {
-        throw std::runtime_error(
-            "[RenderGraph::validate_render_graph] Error: No graphics passes in rendergraph! Use add_graphics_pass!");
+        throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics passes in rendergraph!");
     }
     if (m_pipeline_create_functions.empty()) {
-        throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics pipelines in rendergraph! "
-                                 "Use add_graphics_pipeline!");
+        throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics pipelines in rendergraph!");
     }
     check_for_cycles();
 }

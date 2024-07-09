@@ -43,6 +43,8 @@ private:
 
     void *m_texture_data{nullptr};
     std::size_t m_texture_data_size{0};
+    bool m_update_requested{false};
+
     std::uint32_t m_width{0};
     std::uint32_t m_height{0};
     std::uint32_t m_channels{0};

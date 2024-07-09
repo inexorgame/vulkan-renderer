@@ -79,6 +79,7 @@ private:
     /// update_buffer() is called!
     void *m_src_data{nullptr};
     std::size_t m_src_data_size{0};
+    bool m_update_requested{false};
 
     /// The resources for actual memory management of the buffer
     VkBuffer m_buffer{VK_NULL_HANDLE};
@@ -119,17 +120,8 @@ public:
     /// @warning It is the responsibility of the programmer to make sure src_data still points to valid memory when
     /// update_buffer() is called!
     /// @param src_data_size The size of the data to copy
-    void request_update(void *src_data, const std::size_t src_data_size) {
-        if (src_data == nullptr) {
-            throw std::invalid_argument("Error: Update of buffer resource failed (data pointer is nullptr)!");
-        }
-        if (src_data_size == 0) {
-            throw std::invalid_argument("Error: Update of buffer resource failed (data size is 0)!");
-        }
-        m_src_data = src_data;
-        m_src_data_size = src_data_size;
-    }
-#if 0
+    void request_update(void *src_data, const std::size_t src_data_size);
+
     template <typename BufferDataType>
     void request_update(BufferDataType &data) {
         return request_update(std::addressof(data), sizeof(data));
@@ -137,9 +129,8 @@ public:
 
     template <typename BufferDataType>
     void request_update(std::vector<BufferDataType> &data) {
-        return request_update(data.data(), sizeof(data) * data.size());
+        return request_update(data.data(), sizeof(BufferDataType) * data.size());
     }
-#endif
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

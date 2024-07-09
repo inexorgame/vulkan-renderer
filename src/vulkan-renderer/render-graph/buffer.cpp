@@ -10,7 +10,11 @@
 namespace inexor::vulkan_renderer::render_graph {
 
 Buffer::Buffer(const Device &device, std::string buffer_name, BufferType buffer_type, std::function<void()> on_update)
-    : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)), m_buffer_type(buffer_type) {}
+    : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)), m_buffer_type(buffer_type) {
+    if (m_name.empty()) {
+        throw std::invalid_argument("[Buffer::Buffer] Error: Parameter 'name' is empty!");
+    }
+}
 
 Buffer::Buffer(Buffer &&other) noexcept : m_device(other.m_device) {
     m_name = std::move(other.m_name);
@@ -138,6 +142,18 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
 void Buffer::destroy_buffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_alloc);
     vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_alloc);
+}
+
+void Buffer::request_update(void *src_data, const std::size_t src_data_size) {
+    if (src_data == nullptr) {
+        throw std::invalid_argument("Error: Update of buffer resource failed (data pointer is nullptr)!");
+    }
+    if (src_data_size == 0) {
+        throw std::invalid_argument("Error: Update of buffer resource failed (data size is 0)!");
+    }
+    m_src_data = src_data;
+    m_src_data_size = src_data_size;
+    m_update_requested = true;
 }
 
 } // namespace inexor::vulkan_renderer::render_graph
