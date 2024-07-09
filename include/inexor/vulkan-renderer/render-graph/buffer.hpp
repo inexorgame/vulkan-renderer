@@ -115,18 +115,24 @@ public:
     Buffer &operator=(const Buffer &) = delete;
     Buffer &operator=(Buffer &&) = delete;
 
-    /// Update the buffer
+    /// Request a buffer update
     /// @param src_data A pointer to the data to copy the updated data from
     /// @warning It is the responsibility of the programmer to make sure src_data still points to valid memory when
     /// update_buffer() is called!
     /// @param src_data_size The size of the data to copy
     void request_update(void *src_data, const std::size_t src_data_size);
 
+    /// Request a buffer update
+    /// @tparam BufferDataType
+    /// @param data
     template <typename BufferDataType>
     void request_update(BufferDataType &data) {
         return request_update(std::addressof(data), sizeof(data));
     }
 
+    /// Request a buffer update
+    /// @tparam BufferDataType
+    /// @param data
     template <typename BufferDataType>
     void request_update(std::vector<BufferDataType> &data) {
         return request_update(data.data(), sizeof(BufferDataType) * data.size());

@@ -212,6 +212,7 @@ public:
     add_buffer(std::string buffer_name, BufferType buffer_type, std::function<void()> on_update);
 
     // TODO: Use a SPIR-V library like spirv-cross to deduce shader type from the SPIR-V file automatically!
+    // TODO: Shaders should not be part of rendergraph!
 
     /// Load a SPIR-V shader from a file
     /// @param name The internal debug name of the shader (not the file name)

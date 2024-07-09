@@ -31,6 +31,7 @@ RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, s
     return m_buffers.back();
 }
 
+// TODO: Shaders should not be part of rendergraph!
 std::shared_ptr<Shader>
 RenderGraph::add_shader(std::string shader_name, const VkShaderStageFlagBits shader_stage, std::string file_name) {
     m_shaders.emplace_back(
@@ -55,8 +56,11 @@ void RenderGraph::check_for_cycles() {
 void RenderGraph::compile() {
     validate_render_graph();
     determine_pass_order();
+
+    // TODO: Put it into one command buffer?
     create_buffers();
     create_textures();
+
     create_graphics_passes();
     create_descriptor_sets();
     create_graphics_pipelines();
@@ -95,12 +99,11 @@ void RenderGraph::create_textures() {
     m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             if (texture->m_on_init) {
-                // TODO: if(texture->update_requested)...
                 // Call the initialization function of the texture (if specified)
                 std::invoke(texture->m_on_init.value());
+                // TODO: What about depth and back buffer here?
+                // texture->create_texture();
             }
-            // TODO: Implement me!
-            // texture->create_texture();
         }
     });
 }

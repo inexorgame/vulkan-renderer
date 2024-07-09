@@ -25,6 +25,8 @@ Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
     // TODO: FIX me!
 }
 
+// TODO: Implement create_texture() for on_init based initialization
+
 void Texture::create_texture(const VkImageCreateInfo &img_ci,
                              const VkImageViewCreateInfo &img_view_ci,
                              const VmaAllocationCreateInfo &alloc_ci) {

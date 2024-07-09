@@ -28,6 +28,7 @@ Buffer::Buffer(Buffer &&other) noexcept : m_device(other.m_device) {
     m_staging_buffer = std::exchange(other.m_staging_buffer, VK_NULL_HANDLE);
     m_staging_alloc = std::exchange(other.m_staging_alloc, VK_NULL_HANDLE);
     m_staging_alloc_info = std::move(other.m_staging_alloc_info);
+    m_update_requested = other.m_update_requested;
 }
 
 Buffer::~Buffer() {

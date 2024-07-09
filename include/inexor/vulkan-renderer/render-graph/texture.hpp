@@ -26,15 +26,12 @@ enum class TextureUsage {
     NORMAL,
 };
 
-// Forward declaration
-class RenderGraph;
-
 using wrapper::Device;
 
 /// RAII wrapper for texture resources in the rendergraph
 class Texture {
 private:
-    friend RenderGraph;
+    friend class RenderGraph;
 
     const Device &m_device;
     std::string m_name;
