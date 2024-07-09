@@ -147,6 +147,7 @@ Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &availabl
         if (format != default_surface_format_priority_list.end()) {
             spdlog::trace("Selecting swapchain image format {}", vk_tools::as_string(*format));
             chosen_format = *format;
+            break;
         }
     }
     // This can be std::nullopt

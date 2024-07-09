@@ -237,16 +237,6 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
     return *this;
 }
 
-/*
-const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
-                                                         const VkDeviceSize data_size, // NOLINT
-                                                         const VkImage dst_img,
-                                                         const VkBufferImageCopy &copy_region,
-                                                         const std::string &name) const {
-    return copy_buffer_to_image(create_staging_buffer(data, data_size, name), dst_img, copy_region);
-}
-*/
-
 const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count,
                                          const std::uint32_t inst_count,
                                          const std::uint32_t first_vert,
@@ -297,6 +287,25 @@ CommandBuffer::pipeline_buffer_memory_barrier(const VkPipelineStageFlags src_sta
                                               const VkPipelineStageFlags dst_stage_flags,
                                               const VkBufferMemoryBarrier &buffer_mem_barrier) const {
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, {&buffer_mem_barrier, 1});
+}
+
+const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                                   VkPipelineStageFlags dst_stage_flags,
+                                                                   VkAccessFlags src_access_flags,
+                                                                   VkAccessFlags dst_access_flags,
+                                                                   VkBuffer buffer,
+                                                                   VkDeviceSize size,
+                                                                   VkDeviceSize offset) const {
+    return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_HOST_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+                                          wrapper::make_info<VkBufferMemoryBarrier>({
+                                              .srcAccessMask = src_stage_flags,
+                                              .dstAccessMask = dst_stage_flags,
+                                              .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                              .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                              .buffer = buffer,
+                                              .offset = offset,
+                                              .size = size,
+                                          }));
 }
 
 const CommandBuffer &

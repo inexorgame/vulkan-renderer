@@ -98,7 +98,7 @@ private:
     void destroy_buffer();
 
 public:
-    /// Constructor for uniform buffers
+    /// Default constructor
     /// @param device The device wrapper
     /// @param buffer_name The name of the buffer
     /// @param buffer_type The type of the buffer
@@ -129,7 +129,7 @@ public:
         m_src_data = src_data;
         m_src_data_size = src_data_size;
     }
-
+#if 0
     template <typename BufferDataType>
     void request_update(BufferDataType &data) {
         return request_update(std::addressof(data), sizeof(data));
@@ -139,6 +139,7 @@ public:
     void request_update(std::vector<BufferDataType> &data) {
         return request_update(data.data(), sizeof(data) * data.size());
     }
+#endif
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

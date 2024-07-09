@@ -17,6 +17,12 @@ VkBufferCreateInfo make_info(VkBufferCreateInfo info) {
 }
 
 template <>
+VkBufferMemoryBarrier make_info(VkBufferMemoryBarrier info) {
+    info.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    return info;
+}
+
+template <>
 VkCommandBufferAllocateInfo make_info(VkCommandBufferAllocateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     return info;

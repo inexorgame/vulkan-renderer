@@ -309,13 +309,30 @@ public:
                                           VkDependencyFlags dep_flags = 0) const;
 
     /// Call vkCmdPipelineBarrier
-    /// @param src_stage_flags The the source stage flags
+    /// @param src_stage_flags The source stage flags
     /// @param dst_stage_flags The destination stage flags
     /// @param buffer_mem_barrier The buffer memory barrier
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer &pipeline_buffer_memory_barrier(VkPipelineStageFlags src_stage_flags,
                                                         VkPipelineStageFlags dst_stage_flags,
                                                         const VkBufferMemoryBarrier &buffer_mem_barrier) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param src_access_flags The source access flags
+    /// @param dst_access_flags The destination access flags
+    /// @param buffer
+    /// @param size
+    /// @param offset
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                        VkPipelineStageFlags dst_stage_flags,
+                                                        VkAccessFlags src_access_flags,
+                                                        VkAccessFlags dst_access_flags,
+                                                        VkBuffer buffer,
+                                                        VkDeviceSize size = VK_WHOLE_SIZE,
+                                                        VkDeviceSize offset = 0) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags

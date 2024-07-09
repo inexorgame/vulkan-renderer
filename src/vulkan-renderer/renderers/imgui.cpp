@@ -72,8 +72,8 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
             }
         }
         // NOTE: The index buffer does not have a separate update code because it is updated here with the vertices
-        m_vertex_buffer->request_update(m_vertex_data);
-        m_index_buffer->request_update(m_index_data);
+        m_vertex_buffer->request_update(m_vertex_data.data(), sizeof(ImDrawVert) * m_vertex_data.size());
+        m_index_buffer->request_update(m_index_data.data(), sizeof(std::uint32_t) * m_index_data.size());
     });
 
     m_index_buffer = render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {

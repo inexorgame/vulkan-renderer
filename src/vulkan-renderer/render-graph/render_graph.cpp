@@ -59,6 +59,7 @@ std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                   const VkFormat format,
                                                   std::optional<std::function<void()>> on_init,
                                                   std::optional<std::function<void()>> on_update) {
+    // TODO: Check for names being empty only in wrappers!
     if (texture_name.empty()) {
         throw std::invalid_argument(
             "[RenderGraph::add_texture] Error: Parameter 'texture_name' ist an empty std::string! "
@@ -86,6 +87,7 @@ void RenderGraph::compile() {
 void RenderGraph::create_buffers() {
     m_device.execute("RenderGraph::create_buffers", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
+            // TODO: if(buffer->update_requested)
             buffer->m_on_update();
             buffer->create_buffer(cmd_buf);
         }
@@ -116,6 +118,7 @@ void RenderGraph::create_graphics_pipelines() {
 void RenderGraph::create_textures() {
     for (const auto &texture : m_textures) {
         if (texture->m_on_init) {
+            // TODO: if(texture->update_requested)...
             // Call the initialization function of the texture (if specified)
             std::invoke(texture->m_on_init.value());
         }
