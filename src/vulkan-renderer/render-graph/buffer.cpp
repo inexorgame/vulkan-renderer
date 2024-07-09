@@ -129,13 +129,12 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
 
         cmd_buf
             // TODO: Further abstraction! .pipeline_buffer_memory_barrier_before_copy_command and _after_copy_command
-            .pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_HOST_BIT, VK_ACCESS_HOST_WRITE_BIT,
-                                            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT,
-                                            m_staging_buffer)
+            .pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                            VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, m_staging_buffer)
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
-            .pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-                                            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-                                            m_buffer);
+            .pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                            VK_ACCESS_TRANSFER_WRITE_BIT,
+                                            VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, m_buffer);
     }
 }
 
