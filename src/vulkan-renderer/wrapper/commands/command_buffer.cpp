@@ -296,10 +296,10 @@ const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier(VkPipelineSta
                                                                    VkBuffer buffer,
                                                                    VkDeviceSize size,
                                                                    VkDeviceSize offset) const {
-    return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_HOST_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+    return pipeline_buffer_memory_barrier(src_stage_flags, dst_stage_flags,
                                           wrapper::make_info<VkBufferMemoryBarrier>({
-                                              .srcAccessMask = src_stage_flags,
-                                              .dstAccessMask = dst_stage_flags,
+                                              .srcAccessMask = src_access_flags,
+                                              .dstAccessMask = dst_access_flags,
                                               .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                                               .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                                               .buffer = buffer,
