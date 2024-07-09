@@ -87,8 +87,8 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
 
     using wrapper::descriptors::DescriptorSetLayoutBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
-    render_graph.add_graphics_pipeline("ImGui", [&](GraphicsPipelineBuilder &graphics_pipeline_builder,
-                                                    DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
+    render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
+                                           DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
         m_imgui_pipeline =
             // Use rendergraph's graphics pipeline builder
             graphics_pipeline_builder.add_default_color_blend_attachment()
@@ -118,7 +118,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
 
     using render_graph::GraphicsPassBuilder;
     using wrapper::commands::CommandBuffer;
-    render_graph.add_graphics_pass("ImGui", [&](GraphicsPassBuilder &graphics_pass_builder) {
+    render_graph.add_graphics_pass([&](GraphicsPassBuilder &graphics_pass_builder) {
         m_imgui_pass = graphics_pass_builder.reads_from_buffer(m_index_buffer)
                            .reads_from_buffer(m_vertex_buffer)
                            .reads_from_texture(m_imgui_texture, VK_SHADER_STAGE_FRAGMENT_BIT)

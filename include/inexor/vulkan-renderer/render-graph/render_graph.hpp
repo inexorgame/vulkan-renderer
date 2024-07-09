@@ -191,18 +191,16 @@ public:
     RenderGraph &operator=(RenderGraph &&) = delete;
 
     /// Add a new graphics pass to the rendergraph
-    /// @param name The name of the graphics pass
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     /// @note Move semantics is used to std::move on_pass_create
-    void add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create);
+    void add_graphics_pass(GraphicsPassCreateFunction on_pass_create);
 
     // TODO: One thread_local GraphicsPipelineBuilder? Once graphics pipelines will be created in parallel!
 
     /// Add a new graphics pipeline to the rendergraph
-    /// @param name The graphics pipeline name
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
     /// @note Move semantics is used to std::move on_pipeline_create
-    void add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create);
+    void add_graphics_pipeline(GraphicsPipelineCreateFunction on_pipeline_create);
 
     // TODO: Should those return a std::shared_ptr or a std::weak_ptr now? (Which memory ownership model?)
 

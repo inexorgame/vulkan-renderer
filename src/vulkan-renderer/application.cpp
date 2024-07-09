@@ -492,8 +492,8 @@ void Application::setup_render_graph() {
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
-    m_render_graph->add_graphics_pipeline("Octree", [&](GraphicsPipelineBuilder &graphics_pipeline_builder,
-                                                        DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
+    m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
+                                              DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
         m_octree_pipeline =
             graphics_pipeline_builder.add_default_color_blend_attachment()
                 .set_vertex_input_bindings({
@@ -517,7 +517,7 @@ void Application::setup_render_graph() {
 
     using render_graph::GraphicsPassBuilder;
     using wrapper::commands::CommandBuffer;
-    m_render_graph->add_graphics_pass("Octree", [&](GraphicsPassBuilder &graphics_pass_builder) {
+    m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &graphics_pass_builder) {
         m_octree_pass =
             graphics_pass_builder
                 .set_clear_value({

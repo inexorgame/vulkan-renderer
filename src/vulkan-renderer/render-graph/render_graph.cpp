@@ -16,19 +16,11 @@ RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device),
       m_descriptor_set_layout_cache(device), m_descriptor_set_layout_builder(device, m_descriptor_set_layout_cache) {}
 
-void RenderGraph::add_graphics_pass(std::string pass_name, GraphicsPassCreateFunction on_pass_create) {
-    if (pass_name.empty()) {
-        throw std::invalid_argument("[RenderGraph::add_graphics_pass] Error: Parameter 'on_pass_create' is an empty "
-                                    "std::string! You must give a name to every rendergraph resource!");
-    }
+void RenderGraph::add_graphics_pass(GraphicsPassCreateFunction on_pass_create) {
     m_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
 }
 
-void RenderGraph::add_graphics_pipeline(std::string pipeline_name, GraphicsPipelineCreateFunction on_pipeline_create) {
-    if (pipeline_name.empty()) {
-        throw std::invalid_argument("[RenderGraph::add_graphics_pipeline] Error: Parameter 'pipeline_name' is an "
-                                    "empty std::string! You must give a name to every rendergraph resource!");
-    }
+void RenderGraph::add_graphics_pipeline(GraphicsPipelineCreateFunction on_pipeline_create) {
     m_pipeline_create_functions.emplace_back(std::move(on_pipeline_create));
 }
 
@@ -71,7 +63,7 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_buffers() {
-    m_device.execute("RenderGraph::create_buffers", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_buffers]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             buffer->m_on_update();
             buffer->create_buffer(cmd_buf);
@@ -100,7 +92,7 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             if (texture->m_on_init) {
                 // TODO: if(texture->update_requested)...
@@ -234,7 +226,7 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
 }
 
 void RenderGraph::render() {
-    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render()");
+    const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render]");
     record_command_buffers(cmd_buf, m_swapchain.acquire_next_image_index());
 
     // TODO: Further abstract this away?
@@ -255,7 +247,7 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    m_device.execute("RenderGraph::update_buffers", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::update_buffers]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             if (buffer->m_update_requested) {
                 buffer->destroy_buffer();
