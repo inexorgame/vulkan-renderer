@@ -55,8 +55,10 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
         {BufferType::INDEX_BUFFER, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE},
     };
     const VmaAllocationCreateInfo alloc_ci{
-        // TODO: Fix this for uniform buffers?
-        .flags = 0,
+        .flags = (m_buffer_type == BufferType::UNIFORM_BUFFER)
+                     ? static_cast<VmaAllocationCreateFlags>(VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                                             VMA_ALLOCATION_CREATE_MAPPED_BIT)
+                     : 0,
         .usage = VMA_MEMORY_USAGE_AUTO,
     };
 
@@ -127,14 +129,9 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
             throw VulkanException("Error: vmaFlushAllocation failed for staging buffer " + m_name + " !", result);
         };
 
-        cmd_buf
-            // TODO: Further abstraction! .pipeline_buffer_memory_barrier_before_copy_command and _after_copy_command
-            .pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                            VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, m_staging_buffer)
+        cmd_buf.pipeline_buffer_memory_barrier_before_copy_buffer_command(m_staging_buffer)
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
-            .pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                                            VK_ACCESS_TRANSFER_WRITE_BIT,
-                                            VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, m_buffer);
+            .pipeline_buffer_memory_barrier_after_copy_buffer_command(m_buffer);
     }
 }
 

@@ -344,6 +344,16 @@ public:
                                     VkPipelineStageFlags dst_stage_flags,
                                     std::span<const VkBufferMemoryBarrier> buffer_mem_barriers) const;
 
+    /// Place a buffer memory pipeline barrier before a vkCmdCopyBuffer command
+    /// @param buffer The affected buffer
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier_before_copy_buffer_command(VkBuffer buffer) const;
+
+    /// Place a buffer memory pipeline barrier after a vkCmdCopyBuffer command
+    /// @param buffer The affected buffer
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier_after_copy_buffer_command(VkBuffer buffer) const;
+
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags

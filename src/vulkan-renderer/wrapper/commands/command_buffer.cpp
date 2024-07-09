@@ -315,6 +315,19 @@ CommandBuffer::pipeline_buffer_memory_barriers(const VkPipelineStageFlags src_st
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, buffer_mem_barriers);
 }
 
+const CommandBuffer &
+CommandBuffer::pipeline_buffer_memory_barrier_before_copy_buffer_command(const VkBuffer buffer) const {
+    return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                          VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, buffer);
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_buffer_memory_barrier_after_copy_buffer_command(const VkBuffer buffer) const {
+    return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                          VK_ACCESS_TRANSFER_WRITE_BIT,
+                                          VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, buffer);
+}
+
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipelineStageFlags src_stage_flags,
                                                                   const VkPipelineStageFlags dst_stage_flags,
                                                                   const VkImageMemoryBarrier &img_barrier) const {
