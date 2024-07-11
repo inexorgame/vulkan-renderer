@@ -25,7 +25,6 @@ enum class BufferType {
     VERTEX_BUFFER,
     INDEX_BUFFER,
     UNIFORM_BUFFER,
-    // TODO: Add more buffer types here and implement support for them
 };
 
 // Forward declaration
@@ -120,7 +119,7 @@ public:
     /// @warning It is the responsibility of the programmer to make sure src_data still points to valid memory when
     /// update_buffer() is called!
     /// @param src_data_size The size of the data to copy
-    void request_update(void *src_data, const std::size_t src_data_size);
+    void request_update(void *src_data, std::size_t src_data_size);
 
     /// Request a buffer update
     /// @tparam BufferDataType

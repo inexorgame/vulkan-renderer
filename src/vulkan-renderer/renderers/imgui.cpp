@@ -111,9 +111,40 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
         return m_imgui_pipeline;
     });
 
+    // TODO: Should we have on_init for buffers as well?
+
     using render_graph::TextureUsage;
-    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, [&]() {
-        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size);
+    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, [&]() {
+        const auto img_view = wrapper::make_info<VkImageCreateInfo>({
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .extent =
+                {
+                    .width = static_cast<std::uint32_t>(m_font_texture_width),
+                    .height = static_cast<std::uint32_t>(m_font_texture_height),
+                    .depth = 1,
+                },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        });
+        const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .subresourceRange =
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                },
+        });
+        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size, img_view, img_view_ci);
     });
 
     using render_graph::GraphicsPassBuilder;

@@ -128,6 +128,7 @@ private:
     void check_for_cycles();
 
     /// Create the buffers of every buffer resource in the rendergraph
+    /// @param cmd_buf The command buffer to record into
     void create_buffers();
 
     /// Descriptor management
@@ -223,16 +224,21 @@ public:
     [[nodiscard]] std::shared_ptr<Shader>
     add_shader(std::string shader_name, VkShaderStageFlagBits shader_stage, std::string file_name);
 
-    /// Add a texture to the rendergraph
-    /// @param name The name of the texture (must not be empty)
-    /// @param uage The texture usage inside of rendergraph
-    /// @param format The image format of the texture
-    /// @param on_init The initialization function of the texture (``std::nullopt`` by default)
-    /// @param on_update The update function of the texture (``std::nullopt`` by default)
-    /// @return A shared pointer to the texture that was created
+    /// Add a texture which will be initialized inside of rendergraph (not outside of it)
+    /// @param texture_name The name of the texture
+    /// @param usage
+    /// @param format
+    /// @return
+    [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string texture_name, TextureUsage usage, VkFormat format);
+
+    /// Add a texture which will be initialized externally (not inside of rendergraph)
+    /// @param texture_name The name of the texture
+    /// @param usage
+    /// @param on_init
+    /// @param on_update
+    /// @return
     [[nodiscard]] std::shared_ptr<Texture> add_texture(std::string texture_name,
                                                        TextureUsage usage,
-                                                       VkFormat format,
                                                        std::optional<std::function<void()>> on_init = std::nullopt,
                                                        std::optional<std::function<void()>> on_update = std::nullopt);
 

@@ -206,16 +206,6 @@ public:
     /// @param src_buf The source buffer
     /// @param dst_img The destination image
     /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL``
-    /// @param copy_regions A std::span of buffer image copy regions
-    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf,
-                                              VkImage dst_img, // NOLINT
-                                              std::span<const VkBufferImageCopy> copy_regions) const;
-
-    /// Call vkCmdCopyBufferToImage
-    /// @param src_buf The source buffer
-    /// @param dst_img The destination image
-    /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL``
     /// @param copy_region The buffer image copy region
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf,
@@ -228,30 +218,11 @@ public:
     /// @param dst_img The destination image (must not be ``VK_NULL_HANDLE``)
     /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`` for the
     /// copy operation
-    /// @param name The internal name of the staging buffer (must not be empty)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer &copy_buffer_to_image(const void *data,
                                               const VkDeviceSize data_size, // NOLINT
                                               VkImage dst_img,
-                                              const VkBufferImageCopy &copy_region,
-                                              const std::string &name) const;
-
-    /// Call vkCmdCopyBufferToImage
-    /// @param data A std::span of the source data
-    /// @note A staging buffer for the copy operation will be created automatically from ``data``
-    /// @param dst_img The destination image (must not be ``VK_NULL_HANDLE``)
-    /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`` for the
-    /// copy operation
-    /// @param name The internal name of the staging buffer (must not be empty)
-    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    template <typename DataType>
-    const CommandBuffer &copy_buffer_to_image(const std::span<const DataType> data, // NOLINT
-                                              VkImage dst_img,
-                                              const VkBufferImageCopy &copy_region,
-                                              const std::string &name) const {
-        return copy_buffer_to_image(create_staging_buffer<DataType>(data, name), dst_img,
-                                    static_cast<VkDeviceSize>(sizeof(data) * data.size()), copy_region, name);
-    }
+                                              const VkBufferImageCopy &copy_region) const;
 
     /// Call vkCmdDraw
     /// @param vert_count The number of vertices to draw
@@ -347,12 +318,12 @@ public:
     /// Place a buffer memory pipeline barrier before a vkCmdCopyBuffer command
     /// @param buffer The affected buffer
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &pipeline_buffer_memory_barrier_before_copy_buffer_command(VkBuffer buffer) const;
+    const CommandBuffer &pipeline_buffer_memory_barrier_before_copy_buffer(VkBuffer buffer) const;
 
     /// Place a buffer memory pipeline barrier after a vkCmdCopyBuffer command
     /// @param buffer The affected buffer
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &pipeline_buffer_memory_barrier_after_copy_buffer_command(VkBuffer buffer) const;
+    const CommandBuffer &pipeline_buffer_memory_barrier_after_copy_buffer(VkBuffer buffer) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
@@ -364,6 +335,22 @@ public:
                                                        const VkImageMemoryBarrier &barrier) const;
 
     /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags
+    /// @param dst_stage_flags
+    /// @param src_access_flags
+    /// @param dst_access_flags
+    /// @param old_img_layout
+    /// @param new_img_layout
+    /// @param img
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_image_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                       VkPipelineStageFlags dst_stage_flags,
+                                                       VkAccessFlags src_access_flags,
+                                                       VkAccessFlags dst_access_flags,
+                                                       VkImageLayout old_img_layout,
+                                                       VkImageLayout new_img_layout,
+                                                       VkImage img) const;
+    /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
     /// @param barriers The image memory barriers
@@ -371,6 +358,16 @@ public:
     const CommandBuffer &pipeline_image_memory_barriers(VkPipelineStageFlags src_stage_flags, // NOLINT
                                                         VkPipelineStageFlags dst_stage_flags,
                                                         std::span<const VkImageMemoryBarrier> barriers) const;
+
+    ///
+    /// @param img
+    /// @return
+    const CommandBuffer &pipeline_image_memory_barrier_after_copy_buffer_to_image(VkImage img) const;
+
+    ///
+    /// @param img
+    /// @return
+    const CommandBuffer &pipeline_image_memory_barrier_before_copy_buffer_to_image(VkImage img) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags

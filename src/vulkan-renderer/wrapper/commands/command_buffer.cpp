@@ -220,16 +220,6 @@ CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf, const
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
                                                          const VkImage dst_img,
-                                                         const std::span<const VkBufferImageCopy> copy_regions) const {
-    assert(src_buf);
-    assert(dst_img);
-    vkCmdCopyBufferToImage(m_cmd_buf, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                           static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
-    return *this;
-}
-
-const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
-                                                         const VkImage dst_img,
                                                          const VkBufferImageCopy &copy_region) const {
     assert(src_buf);
     assert(dst_img);
@@ -315,14 +305,12 @@ CommandBuffer::pipeline_buffer_memory_barriers(const VkPipelineStageFlags src_st
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, buffer_mem_barriers);
 }
 
-const CommandBuffer &
-CommandBuffer::pipeline_buffer_memory_barrier_before_copy_buffer_command(const VkBuffer buffer) const {
+const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier_before_copy_buffer(const VkBuffer buffer) const {
     return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                           VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, buffer);
 }
 
-const CommandBuffer &
-CommandBuffer::pipeline_buffer_memory_barrier_after_copy_buffer_command(const VkBuffer buffer) const {
+const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier_after_copy_buffer(const VkBuffer buffer) const {
     return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                                           VK_ACCESS_TRANSFER_WRITE_BIT,
                                           VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, buffer);
@@ -332,6 +320,56 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
                                                                   const VkPipelineStageFlags dst_stage_flags,
                                                                   const VkImageMemoryBarrier &img_barrier) const {
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {&img_barrier, 1});
+}
+
+const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipelineStageFlags src_stage_flags,
+                                                                  const VkPipelineStageFlags dst_stage_flags,
+                                                                  const VkAccessFlags src_access_flags,
+                                                                  const VkAccessFlags dst_access_flags,
+                                                                  const VkImageLayout old_img_layout,
+                                                                  const VkImageLayout new_img_layout,
+                                                                  const VkImage img) const {
+    assert(img);
+    return pipeline_image_memory_barrier(src_stage_flags, dst_stage_flags,
+                                         wrapper::make_info<VkImageMemoryBarrier>({
+                                             .srcAccessMask = src_access_flags,
+                                             .dstAccessMask = dst_access_flags,
+                                             .oldLayout = old_img_layout,
+                                             .newLayout = new_img_layout,
+                                             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                             .image = img,
+                                             .subresourceRange =
+                                                 {
+                                                     .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                                     .baseMipLevel = 0,
+                                                     .levelCount = 1,
+                                                     .baseArrayLayer = 0,
+                                                     .layerCount = 1,
+                                                 },
+                                         }));
+}
+
+const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image(const VkImage img) const {
+    assert(img);
+    return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT,           // src_stage_flags
+                                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // dst_stage_flags
+                                         VK_ACCESS_TRANSFER_WRITE_BIT,             // src_access_flags
+                                         VK_ACCESS_SHADER_READ_BIT,                // dst_access_flags
+                                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,     // old_img_layout
+                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, // new_img_layout
+                                         img);
+}
+
+const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image(const VkImage img) const {
+    assert(img);
+    return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    // src_stage_flags
+                                         VK_PIPELINE_STAGE_TRANSFER_BIT,       // dst_stage_flags
+                                         0,                                    // src_access_flags
+                                         VK_ACCESS_TRANSFER_WRITE_BIT,         // dst_access_flags
+                                         VK_IMAGE_LAYOUT_UNDEFINED,            // old_img_layout
+                                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // new_img_layout
+                                         img);
 }
 
 const CommandBuffer &

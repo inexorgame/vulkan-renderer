@@ -50,7 +50,6 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
     const auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
         .size = m_src_data_size,
         .usage = BUFFER_USAGE.at(m_buffer_type),
-        // We do not support VK_SHARING_MODE_CONCURRENT
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
     // This helps us to find the correct VmaMemoryUsage depending on the BufferType
@@ -134,9 +133,9 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
             throw VulkanException("Error: vmaFlushAllocation failed for staging buffer " + m_name + " !", result);
         };
 
-        cmd_buf.pipeline_buffer_memory_barrier_before_copy_buffer_command(m_staging_buffer)
+        cmd_buf.pipeline_buffer_memory_barrier_before_copy_buffer(m_staging_buffer)
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
-            .pipeline_buffer_memory_barrier_after_copy_buffer_command(m_buffer);
+            .pipeline_buffer_memory_barrier_after_copy_buffer(m_buffer);
     }
 }
 

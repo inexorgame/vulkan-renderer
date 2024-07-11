@@ -39,13 +39,18 @@ RenderGraph::add_shader(std::string shader_name, const VkShaderStageFlagBits sha
     return m_shaders.back();
 }
 
+std::shared_ptr<Texture>
+RenderGraph::add_texture(std::string texture_name, const TextureUsage usage, const VkFormat format) {
+    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format));
+    return m_textures.back();
+}
+
 std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                   const TextureUsage usage,
-                                                  const VkFormat format,
                                                   std::optional<std::function<void()>> on_init,
                                                   std::optional<std::function<void()>> on_update) {
-    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format,
-                                                      std::move(on_init), std::move(on_update)));
+    m_textures.emplace_back(
+        std::make_shared<Texture>(m_device, std::move(texture_name), usage, std::move(on_init), std::move(on_update)));
     return m_textures.back();
 }
 
@@ -56,11 +61,8 @@ void RenderGraph::check_for_cycles() {
 void RenderGraph::compile() {
     validate_render_graph();
     determine_pass_order();
-
-    // TODO: Put it into one command buffer?
     create_buffers();
     create_textures();
-
     create_graphics_passes();
     create_descriptor_sets();
     create_graphics_pipelines();
@@ -98,11 +100,60 @@ void RenderGraph::create_graphics_pipelines() {
 void RenderGraph::create_textures() {
     m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
-            if (texture->m_on_init) {
-                // Call the initialization function of the texture (if specified)
-                std::invoke(texture->m_on_init.value());
-                // TODO: What about depth and back buffer here?
-                // texture->create_texture();
+            switch (texture->m_usage) {
+            case TextureUsage::NORMAL: {
+                if (texture->m_on_init) {
+                    std::invoke(texture->m_on_init.value());
+                    texture->create_texture();
+                    texture->execute_update(cmd_buf);
+                }
+                break;
+            }
+            case TextureUsage::DEPTH_STENCIL_BUFFER:
+            case TextureUsage::BACK_BUFFER: {
+                texture->create_texture(
+                    wrapper::make_info<VkImageCreateInfo>({
+                        .imageType = VK_IMAGE_TYPE_2D,
+                        .format = texture->m_format,
+                        .extent =
+                            {
+                                .width = static_cast<std::uint32_t>(m_swapchain.extent().width),
+                                .height = static_cast<std::uint32_t>(m_swapchain.extent().height),
+                                .depth = 1,
+                            },
+                        .mipLevels = 1,
+                        .arrayLayers = 1,
+                        .samples = VK_SAMPLE_COUNT_1_BIT,
+                        .tiling = VK_IMAGE_TILING_OPTIMAL,
+                        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                    }),
+                    wrapper::make_info<VkImageViewCreateInfo>({
+                        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                        .format = texture->m_format,
+                        .subresourceRange =
+                            {
+                                // This is the only difference between creating depth stencil buffer and depth buffer
+                                .aspectMask = (texture->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER)
+                                                  ? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT |
+                                                                                    VK_IMAGE_ASPECT_STENCIL_BIT)
+                                                  : VK_IMAGE_ASPECT_COLOR_BIT,
+                                .baseMipLevel = 0,
+                                .levelCount = 1,
+                                .baseArrayLayer = 0,
+                                .layerCount = 1,
+                            },
+                    }));
+                break;
+            }
+            default: {
+                // TODO:
+                // MSAA_BACK_BUFFER
+                // MSAA_DEPTH_STENCIL_BUFFER
+                spdlog::warn("Unhandled switch case for creating texture {}", texture->m_name);
+                break;
+            }
             }
         }
     });
@@ -118,11 +169,11 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
                                                  const bool is_first_pass,
                                                  const bool is_last_pass,
                                                  const std::uint32_t img_index) {
-
     // TODO: Remove img_index and implement swapchain.get_current_image()
     // TODO: Or do we need the image index for buffers? (We want to automatically double or triple buffer them)
 
-    // Start a new debug label for this graphics pass (debug labels are visible in graphics debuggers like RenderDoc)
+    // Start a new debug label for this graphics pass (debug labels are visible in graphics debuggers like
+    // RenderDoc)
     // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
 
@@ -206,18 +257,20 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
-    // End the debug label for this graphics pass (debug labels are visible in graphics debuggers like RenderDoc)
+    // End the debug label for this graphics pass (debug labels are visible in graphics debuggers like
+    // RenderDoc)
     cmd_buf.end_debug_label_region();
 }
 
 void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std::uint32_t img_index) {
-    // TODO: Find the balance between recording all passes into one big command buffer vs. recording one command buffer
-    // per pass. Recording one command buffer per pass would allow us to do this in parallel using taskflow. Assuming
-    // the programmer takes responsibility for synchronization of all on_record functions he provides, there should be a
-    // performance benefit from recording command buffers in parallel. On the other hand, each command buffer introduces
-    // new overhead (maybe even when all command buffers are submitted in batch). Another solution would be to let the
-    // user request a command buffer manually and to let him specify which command buffer to use in which pass. Combined
-    // with the user-defined order of passes, this will give more flexibility.
+    // TODO: Find the balance between recording all passes into one big command buffer vs. recording one command
+    // buffer per pass. Recording one command buffer per pass would allow us to do this in parallel using
+    // taskflow. Assuming the programmer takes responsibility for synchronization of all on_record functions he
+    // provides, there should be a performance benefit from recording command buffers in parallel. On the other
+    // hand, each command buffer introduces new overhead (maybe even when all command buffers are submitted in
+    // batch). Another solution would be to let the user request a command buffer manually and to let him
+    // specify which command buffer to use in which pass. Combined with the user-defined order of passes, this
+    // will give more flexibility.
 
     // Loop through all graphics passes and record their command buffer
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
@@ -252,9 +305,11 @@ void RenderGraph::reset() {
 void RenderGraph::update_buffers() {
     m_device.execute("[RenderGraph::update_buffers]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
+            // Does this buffer need to be updated?
             if (buffer->m_update_requested) {
                 buffer->destroy_buffer();
-                buffer->m_on_update();
+                // Call the buffer update function
+                std::invoke(buffer->m_on_update);
                 buffer->create_buffer(cmd_buf);
             }
         }
@@ -262,24 +317,27 @@ void RenderGraph::update_buffers() {
 }
 
 void RenderGraph::update_textures() {
-    for (const auto &texture : m_textures) {
-        // If m_on_update is not std::nullopt, call the update function of the texture
-        if (texture->m_on_update) {
-            if (texture->m_update_requested) {
-                std::invoke(texture->m_on_update.value());
+    m_device.execute("[RenderGraph::update_textures]", [&](const CommandBuffer &cmd_buf) {
+        for (const auto &texture : m_textures) {
+            // Only for dynamic textures m_on_lambda which is not std::nullopt
+            if (texture->m_on_update) {
+                if (texture->m_update_requested) {
+                    texture->destroy_texture();
+                    std::invoke(texture->m_on_update.value());
+                    texture->create_texture();
+                    texture->execute_update(cmd_buf);
+                }
             }
         }
-        // TODO: Update texture (Implement me!)
-    }
-    // TODO: Batch barriers for updates which require staging buffer
+    });
 }
 
 void RenderGraph::update_descriptor_sets() {
-    // The problem is here that the binding is determined by the oder we call the add methods of the descriptor set
-    // layout builder, but that is determined by the order we iterate through buffer and texture reads. Those reads
-    // would either have to be in one struct or some other ordering must take place!!! If not, this will cause trouble
-    // if a pass reads from both let's say a uniform buffer and a texture, but the order specified in descriptor set
-    // layout builder results in a binding order that is incorrect!
+    // The problem is here that the binding is determined by the oder we call the add methods of the descriptor
+    // set layout builder, but that is determined by the order we iterate through buffer and texture reads.
+    // Those reads would either have to be in one struct or some other ordering must take place!!! If not, this
+    // will cause trouble if a pass reads from both let's say a uniform buffer and a texture, but the order
+    // specified in descriptor set layout builder results in a binding order that is incorrect!
 
     // TODO: Implement me!
     // TODO: Builder pattern for descriptor writes?
