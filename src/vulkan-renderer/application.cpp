@@ -507,8 +507,9 @@ void Application::setup_render_graph() {
                                         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                     },
                                 })
+                                .add_color_attachment(m_swapchain->image_format())
+                                .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
                                 .set_vertex_input_attributes(vert_input_attr_desc)
-                                // TODO: Default these (as in "viewport or scissor is restricted to ...")
                                 .set_viewport(m_swapchain->extent())
                                 .set_scissor(m_swapchain->extent())
                                 .set_descriptor_set_layout(m_descriptor_set_layout)

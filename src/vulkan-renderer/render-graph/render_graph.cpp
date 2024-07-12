@@ -101,14 +101,14 @@ void RenderGraph::create_textures() {
             case TextureUsage::NORMAL: {
                 if (texture->m_on_init) {
                     std::invoke(texture->m_on_init.value());
-                    texture->create_texture();
-                    texture->execute_update(cmd_buf);
+                    texture->create();
+                    texture->update(cmd_buf);
                 }
                 break;
             }
             case TextureUsage::DEPTH_STENCIL_BUFFER:
             case TextureUsage::BACK_BUFFER: {
-                texture->create_texture(
+                texture->create(
                     wrapper::make_info<VkImageCreateInfo>({
                         .imageType = VK_IMAGE_TYPE_2D,
                         .format = texture->m_format,
@@ -319,10 +319,10 @@ void RenderGraph::update_textures() {
             // Only for dynamic textures m_on_lambda which is not std::nullopt
             if (texture->m_on_update) {
                 if (texture->m_update_requested) {
-                    texture->destroy_texture();
+                    texture->destroy();
                     std::invoke(texture->m_on_update.value());
-                    texture->create_texture();
-                    texture->execute_update(cmd_buf);
+                    texture->create();
+                    texture->update(cmd_buf);
                 }
             }
         }

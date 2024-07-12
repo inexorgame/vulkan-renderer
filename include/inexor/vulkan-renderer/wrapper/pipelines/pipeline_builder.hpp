@@ -46,9 +46,10 @@ private:
     // allowing one instance of GraphicsPipelineBuilder to be reused
 
     /// This is used for dynamic rendering
-    VkFormat m_swapchain_img_format;
     VkFormat m_depth_attachment_format;
     VkFormat m_stencil_attachment_format;
+    std::vector<VkFormat> m_color_attachments;
+
     VkPipelineRenderingCreateInfo m_pipeline_rendering_ci;
 
     std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions;
@@ -131,6 +132,14 @@ public:
         return *this;
     }
 
+    /// Adds a color attachment
+    /// @param format The format of the color attachment
+    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
+    [[nodiscard]] auto &add_color_attachment(const VkFormat format) {
+        m_color_attachments.push_back(format);
+        return *this;
+    }
+
     /// Add a color blend attachment
     /// @param attachment The color blend attachment
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
@@ -206,12 +215,28 @@ public:
         return *this;
     }
 
+    /// Set the deptch attachment format
+    /// @param format The format of the depth attachment
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &set_depth_attachment_format(const VkFormat format) {
+        m_depth_attachment_format = format;
+        return *this;
+    }
+
     /// Set the depth stencil
     /// @warning Disabling culling can have performance impacts!
     /// @param depth_stencil The depth stencil
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] auto &set_depth_stencil(const VkPipelineDepthStencilStateCreateInfo &depth_stencil) {
         m_depth_stencil_sci = depth_stencil;
+        return *this;
+    }
+
+    /// Set the stencil attachment format
+    /// @param format The format of the stencil attachment
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &set_stencil_attachment_format(const VkFormat format) {
+        m_stencil_attachment_format = format;
         return *this;
     }
 

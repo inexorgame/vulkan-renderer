@@ -102,6 +102,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                        .offset = offsetof(ImDrawVert, col),
                                    },
                                })
+                               .add_color_attachment(swapchain.image_format())
+                               .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
                                .set_viewport(swapchain.extent())
                                .set_scissor(swapchain.extent())
                                .uses_shader(m_vertex_shader)

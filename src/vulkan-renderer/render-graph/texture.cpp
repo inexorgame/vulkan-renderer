@@ -34,10 +34,10 @@ Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
 }
 
 Texture::~Texture() {
-    destroy_texture();
+    destroy();
 }
 
-void Texture::create_texture() {
+void Texture::create() {
     if (const auto result =
             vmaCreateImage(m_device.allocator(), &m_img_ci, &m_alloc_ci, &m_img, &m_alloc, &m_alloc_info);
         result != VK_SUCCESS) {
@@ -58,19 +58,19 @@ void Texture::create_texture() {
     m_device.set_debug_name(m_img_view, m_name);
 }
 
-void Texture::create_texture(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) {
+void Texture::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) {
     m_img_ci = std::move(img_ci);
     m_img_view_ci = std::move(img_view_ci);
-    create_texture();
+    create();
 }
 
-void Texture::destroy_texture() {
+void Texture::destroy() {
     vkDestroyImageView(m_device.device(), m_img_view, nullptr);
     vmaDestroyImage(m_device.allocator(), m_img, m_alloc);
     vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
 }
 
-void Texture::execute_update(const CommandBuffer &cmd_buf) {
+void Texture::update(const CommandBuffer &cmd_buf) {
     if (m_img == VK_NULL_HANDLE) {
         throw std::runtime_error("[Texture::execute_update] Error: m_img is VK_NULL_HANDLE!");
     }
@@ -96,9 +96,9 @@ void Texture::execute_update(const CommandBuffer &cmd_buf) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
-    // TODO: Further abstract to copy_buffer_to_image(m_staging_buffer, m_img, extent); ?
-
-    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
+    cmd_buf
+        .pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
+        // TODO: Further abstract to copy_buffer_to_image(m_staging_buffer, m_img, extent); ?
         .copy_buffer_to_image(m_staging_buffer, m_img,
                               {
                                   .imageSubresource =

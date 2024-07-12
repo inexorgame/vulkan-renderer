@@ -13,7 +13,7 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_devic
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept : m_device(other.m_device) {
     m_depth_attachment_format = other.m_depth_attachment_format;
     m_stencil_attachment_format = other.m_stencil_attachment_format;
-    m_swapchain_img_format = other.m_swapchain_img_format;
+    m_color_attachments = std::move(other.m_color_attachments);
     m_pipeline_rendering_ci = std::move(other.m_pipeline_rendering_ci);
     m_vertex_input_sci = std::move(other.m_vertex_input_sci);
     m_input_assembly_sci = std::move(other.m_input_assembly_sci);
@@ -38,9 +38,9 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     if (name.empty()) {
         throw std::invalid_argument("Error: No name specified for graphics pipeline in GraphicsPipelineBuilder!");
     }
-
-    assert(!m_vertex_input_binding_descriptions.empty());
-    assert(!m_vertex_input_attribute_descriptions.empty());
+    // NOTE: Inside of GraphicsPipelineBuilder, we do almost no error checks when it comes to the data which is used to
+    // build the graphics pipeline. This is because validation of this data is job of the validation layers, and not the
+    // job of GraphicsPipelineBuilder. We don't need to mimic the behavious of validation layers in here.
 
     // We don't really need all the make_infos here, as we initialized it all in reset() already,
     // but it makes the code look cleaner and more consistent
@@ -51,9 +51,6 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pVertexAttributeDescriptions = m_vertex_input_attribute_descriptions.data(),
 
     });
-
-    assert(!m_viewports.empty());
-    assert(!m_scissors.empty());
 
     m_viewport_sci = make_info<VkPipelineViewportStateCreateInfo>({
         .viewportCount = static_cast<uint32_t>(m_viewports.size()),
@@ -70,47 +67,56 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     }
 
     m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
-        // The pNext chain ends here!
+        // NOTE: Because we pass m_pipeline_rendering_ci as pNext parameter
+        // in graphics_pipeline below, we need to end the pNext chain here!
         .pNext = nullptr,
-        // TODO: Implement more than one color attachment in the future if required
-        .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &m_swapchain_img_format,
+        .colorAttachmentCount = static_cast<std::uint32_t>(m_color_attachments.size()),
+        .pColorAttachmentFormats = m_color_attachments.data(),
         .depthAttachmentFormat = m_depth_attachment_format,
         .stencilAttachmentFormat = m_stencil_attachment_format,
     });
 
-    auto graphics_pipeline =
-        std::make_shared<GraphicsPipeline>(m_device, std::vector{m_descriptor_set_layout}, m_push_constant_ranges,
-                                           make_info<VkGraphicsPipelineCreateInfo>({
-                                               // This is one of those rare cases where pNext is actually not nullptr!
-                                               .pNext = &m_pipeline_rendering_ci, // We use dynamic rendering
-                                               .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
-                                               .pStages = m_shader_stages.data(),
-                                               .pVertexInputState = &m_vertex_input_sci,
-                                               .pInputAssemblyState = &m_input_assembly_sci,
-                                               .pTessellationState = &m_tesselation_sci,
-                                               .pViewportState = &m_viewport_sci,
-                                               .pRasterizationState = &m_rasterization_sci,
-                                               .pMultisampleState = &m_multisample_sci,
-                                               .pDepthStencilState = &m_depth_stencil_sci,
-                                               .pColorBlendState = &m_color_blend_sci,
-                                               .pDynamicState = &m_dynamic_states_sci,
-                                               .layout = m_pipeline_layout,
-                                               .renderPass = VK_NULL_HANDLE, // We use dynamic rendering
-                                           }),
-                                           std::move(name));
+    m_color_blend_sci = wrapper::make_info<VkPipelineColorBlendStateCreateInfo>({
+        .attachmentCount = static_cast<std::uint32_t>(m_color_blend_attachment_states.size()),
+        .pAttachments = m_color_blend_attachment_states.data(),
+    });
 
-    // Reset the builder's data after creating the graphics pipeline
+    auto graphics_pipeline = std::make_shared<GraphicsPipeline>(
+        m_device, std::vector{m_descriptor_set_layout}, m_push_constant_ranges,
+        make_info<VkGraphicsPipelineCreateInfo>({
+            // NOTE: This is one of those rare cases where pNext is actually not nullptr!
+            .pNext = &m_pipeline_rendering_ci,
+            .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
+            .pStages = m_shader_stages.data(),
+            .pVertexInputState = &m_vertex_input_sci,
+            .pInputAssemblyState = &m_input_assembly_sci,
+            .pTessellationState = &m_tesselation_sci,
+            .pViewportState = &m_viewport_sci,
+            .pRasterizationState = &m_rasterization_sci,
+            .pMultisampleState = &m_multisample_sci,
+            .pDepthStencilState = &m_depth_stencil_sci,
+            .pColorBlendState = &m_color_blend_sci,
+            .pDynamicState = &m_dynamic_states_sci,
+            .layout = m_pipeline_layout,
+            // NOTE: This is VK_NULL_HANDLE because we use dynamic rendering
+            .renderPass = VK_NULL_HANDLE,
+        }),
+        std::move(name));
+
+    // NOTE: The data of the builder can be reset now that the graphics pipeline was created
     reset();
+
     // Return the graphics pipeline we created
     return graphics_pipeline;
 }
 
 void GraphicsPipelineBuilder::reset() {
-    m_swapchain_img_format = VK_FORMAT_UNDEFINED;
+    m_color_attachments.clear();
     m_depth_attachment_format = VK_FORMAT_UNDEFINED;
     m_stencil_attachment_format = VK_FORMAT_UNDEFINED;
     m_pipeline_layout = VK_NULL_HANDLE;
+    m_color_blend_attachment_states.clear();
+    m_shader_stages.clear();
 
     m_vertex_input_binding_descriptions.clear();
     m_vertex_input_attribute_descriptions.clear();

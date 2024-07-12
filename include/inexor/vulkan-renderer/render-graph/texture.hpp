@@ -65,19 +65,19 @@ private:
     // TODO: Sampler here as well? Like create_sampler();
 
     /// Only RenderGraph is allowed to create the texture
-    void create_texture();
+    void create();
 
     /// Only RenderGraph is allowed to create the texture
     /// @param img_ci
     /// @param img_view_ci
-    void create_texture(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci);
+    void create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci);
 
     /// Call vkDestroyImageView and then vmaDestroyImage
-    void destroy_texture();
+    void destroy();
 
     /// Upload the data into the texture
     /// @param cmd_buf The command buffer to record into
-    void execute_update(const CommandBuffer &cmd_buf);
+    void update(const CommandBuffer &cmd_buf);
 
 public:
     /// Constructor for external textures (created outside of rendergraph)
