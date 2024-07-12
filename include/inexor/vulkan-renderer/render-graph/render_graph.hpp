@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
@@ -36,6 +37,7 @@ enum class BufferType;
 using wrapper::Device;
 using wrapper::Swapchain;
 using wrapper::commands::CommandBuffer;
+using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::DescriptorSetLayoutCache;
 using wrapper::pipelines::GraphicsPipeline;
@@ -85,13 +87,15 @@ private:
     /// reset descriptor set layout cache when calling reset method of the rendergraph!
     DescriptorSetLayoutCache m_descriptor_set_layout_cache;
     DescriptorSetLayoutBuilder m_descriptor_set_layout_builder;
+    DescriptorSetAllocator m_descriptor_set_allocator;
 
     // ---------------------------------------------------------------------------------------------------------
     //  PIPELINES
     // ---------------------------------------------------------------------------------------------------------
     /// The callables which create the graphics pipelines used in the rendergraph
-    using GraphicsPipelineCreateFunction =
-        std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &, DescriptorSetLayoutBuilder &)>;
+    using GraphicsPipelineCreateFunction = std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &,
+                                                                                           DescriptorSetLayoutBuilder &,
+                                                                                           DescriptorSetAllocator &)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;
@@ -130,10 +134,6 @@ private:
     /// Create the buffers of every buffer resource in the rendergraph
     /// @param cmd_buf The command buffer to record into
     void create_buffers();
-
-    /// Descriptor management
-    // TODO: better naming? create_descriptors?
-    void create_descriptor_sets();
 
     /// Create the graphics passes
     void create_graphics_passes();

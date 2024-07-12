@@ -23,7 +23,8 @@ DescriptorSetAllocator::DescriptorSetAllocator(DescriptorSetAllocator &&other) n
     m_current_pool = std::exchange(other.m_current_pool, VK_NULL_HANDLE);
 }
 
-VkDescriptorSet DescriptorSetAllocator::allocate_descriptor_set(const VkDescriptorSetLayout descriptor_set_layout) {
+VkDescriptorSet DescriptorSetAllocator::allocate(const VkDescriptorSetLayout descriptor_set_layout) {
+    assert(descriptor_set_layout);
     auto descriptor_set_ai = make_info<VkDescriptorSetAllocateInfo>({
         .descriptorPool = m_current_pool,
         .descriptorSetCount = 1,
@@ -45,21 +46,19 @@ VkDescriptorSet DescriptorSetAllocator::allocate_descriptor_set(const VkDescript
         // Try again with the new descriptor pool that was just created
         result = vkAllocateDescriptorSets(m_device.device(), &descriptor_set_ai, &new_descriptor_set);
     }
-
     if (result != VK_SUCCESS) {
         // All attempts failed, but it's not because we did run out of descriptor pool memory
         // If this happens, we have a huge problem and here's nothing we can do anymore
         // This is a hint that there is something fundamentally wrong with our descriptor management in the engine!
         throw VulkanException("Error: All attempts to call vkAllocateDescriptorSets failed!", result);
     }
-
     // At this point, the allocation did work successfully either because we had enough memory in the first attempt to
     // call vkAllocateDescriptorSets or it worked on the second attempt because we created a new descriptor pool
     return new_descriptor_set;
 }
 
 [[nodiscard]] std::vector<VkDescriptorSet>
-DescriptorSetAllocator::allocate_descriptor_sets(const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts) {
+DescriptorSetAllocator::allocate(const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts) {
     if (descriptor_set_layouts.empty()) {
         throw std::invalid_argument("Error: descriptor_set_layouts must not be an empty vector!");
     }
@@ -92,7 +91,7 @@ DescriptorSetAllocator::allocate_descriptor_sets(const std::vector<VkDescriptorS
 
         for (const auto &descriptor_set_layout : descriptor_set_layouts) {
             // Create each descriptor set separately and handle out of pool errors by allocating a new descriptor pool
-            new_descriptor_sets.push_back(allocate_descriptor_set(descriptor_set_layout));
+            new_descriptor_sets.push_back(allocate(descriptor_set_layout));
         }
     } else {
         // Something has gone horribly wrong!

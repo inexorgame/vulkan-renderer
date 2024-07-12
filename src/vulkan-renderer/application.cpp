@@ -487,31 +487,36 @@ void Application::setup_render_graph() {
         m_uniform_buffer->request_update(m_mvp_matrices);
     });
 
+    using wrapper::descriptors::DescriptorSetAllocator;
     using wrapper::descriptors::DescriptorSetLayoutBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);?
     m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
-                                              DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
-        m_octree_pipeline =
-            graphics_pipeline_builder.add_default_color_blend_attachment()
-                .set_vertex_input_bindings({
-                    {
-                        .binding = 0,
-                        .stride = sizeof(OctreeGpuVertex),
-                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                    },
-                })
-                .set_vertex_input_attributes(vert_input_attr_desc)
-                .set_viewport(m_swapchain->extent())
-                .set_scissor(m_swapchain->extent())
-                .set_descriptor_set_layout(
-                    // Use rendergraph's descriptor set layout builder
-                    descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree"))
-                .uses_shader(m_octree_vert)
-                .uses_shader(m_octree_frag)
-                .build("Octree");
+                                              DescriptorSetLayoutBuilder &descriptor_set_layout_builder,
+                                              DescriptorSetAllocator &descriptor_set_allocator) {
+        m_descriptor_set_layout =
+            descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree");
+
+        m_octree_pipeline = graphics_pipeline_builder.add_default_color_blend_attachment()
+                                .set_vertex_input_bindings({
+                                    {
+                                        .binding = 0,
+                                        .stride = sizeof(OctreeGpuVertex),
+                                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                    },
+                                })
+                                .set_vertex_input_attributes(vert_input_attr_desc)
+                                // TODO: Default these (as in "viewport or scissor is restricted to ...")
+                                .set_viewport(m_swapchain->extent())
+                                .set_scissor(m_swapchain->extent())
+                                .set_descriptor_set_layout(m_descriptor_set_layout)
+                                .uses_shader(m_octree_vert)
+                                .uses_shader(m_octree_frag)
+                                .build("Octree");
+
+        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
         return m_octree_pipeline;
     });
 

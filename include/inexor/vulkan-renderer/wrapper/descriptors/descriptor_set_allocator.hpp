@@ -42,14 +42,14 @@ public:
     /// to be allcoated in one vkAllocateDescriptorSets call. The problem is that batching could lead to running out of
     /// memory in the VkDescriptorPool, so a new descriptor pool would be created.
     /// @return The descriptor set which was allocated
-    [[nodiscard]] VkDescriptorSet allocate_descriptor_set(VkDescriptorSetLayout descriptor_set_layout);
+    [[nodiscard]] VkDescriptorSet allocate(VkDescriptorSetLayout descriptor_set_layout);
 
     /// Create multiple descriptor sets by attempting to batch calls to ``vkAllocateDescriptorSets``
-    /// @note If batching the call to ``vkAllocateDescriptorSets`` fails because 
+    /// @note If batching the call to ``vkAllocateDescriptorSets`` fails because
     /// @param descriptor_set_layouts The descriptor set layouts for the descriptor sets to create
     /// @return A vector of descriptor sets that have been created
     [[nodiscard]] std::vector<VkDescriptorSet>
-    allocate_descriptor_sets(const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts);
+    allocate(const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts);
 
     DescriptorSetAllocator(const DescriptorSetAllocator &) = delete;
     DescriptorSetAllocator(DescriptorSetAllocator &&) noexcept;

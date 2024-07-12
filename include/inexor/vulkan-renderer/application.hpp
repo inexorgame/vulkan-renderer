@@ -53,6 +53,9 @@ private:
     std::shared_ptr<render_graph::Shader> m_octree_vert;
     std::shared_ptr<render_graph::Shader> m_octree_frag;
 
+    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
+
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_octree_pipeline;
     std::shared_ptr<render_graph::GraphicsPass> m_octree_pass;
 

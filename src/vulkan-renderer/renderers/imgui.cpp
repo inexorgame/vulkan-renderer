@@ -85,29 +85,31 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
     m_vertex_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
     m_fragment_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
+    using wrapper::descriptors::DescriptorSetAllocator;
     using wrapper::descriptors::DescriptorSetLayoutBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
     render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
-                                           DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
-        m_imgui_pipeline =
-            // Use rendergraph's graphics pipeline builder
-            graphics_pipeline_builder.add_default_color_blend_attachment()
-                .set_vertex_input_bindings({
-                    {
-                        .binding = 0,
-                        .stride = sizeof(ImDrawVert),
-                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                    },
-                })
-                .set_vertex_input_attributes(vert_input_attr_descs)
-                .uses_shader(m_vertex_shader)
-                .uses_shader(m_fragment_shader)
-                .set_descriptor_set_layout(
-                    // Use rendergraph's descriptor set layout builder
-                    descriptor_set_layout_builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT)
-                        .build("ImGui"))
-                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                .build("ImGui");
+                                           DescriptorSetLayoutBuilder &descriptor_set_layout_builder,
+                                           DescriptorSetAllocator &descriptor_set_allocator) {
+        m_descriptor_set_layout =
+            descriptor_set_layout_builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
+
+        m_imgui_pipeline = graphics_pipeline_builder.add_default_color_blend_attachment()
+                               .set_vertex_input_bindings({
+                                   {
+                                       .binding = 0,
+                                       .stride = sizeof(ImDrawVert),
+                                       .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                   },
+                               })
+                               .set_vertex_input_attributes(vert_input_attr_descs)
+                               .uses_shader(m_vertex_shader)
+                               .uses_shader(m_fragment_shader)
+                               .set_descriptor_set_layout(m_descriptor_set_layout)
+                               .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                               .build("ImGui");
+
+        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
         return m_imgui_pipeline;
     });
 
