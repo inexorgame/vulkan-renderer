@@ -50,8 +50,8 @@ private:
     std::shared_ptr<render_graph::Buffer> m_index_buffer;
     std::shared_ptr<render_graph::Buffer> m_vertex_buffer;
     std::shared_ptr<render_graph::Buffer> m_uniform_buffer;
-    std::shared_ptr<render_graph::Shader> m_octree_vert;
-    std::shared_ptr<render_graph::Shader> m_octree_frag;
+    std::shared_ptr<wrapper::Shader> m_octree_vert;
+    std::shared_ptr<wrapper::Shader> m_octree_frag;
 
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};

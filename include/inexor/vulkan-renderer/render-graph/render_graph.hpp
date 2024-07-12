@@ -3,7 +3,6 @@
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
@@ -118,12 +117,6 @@ private:
     // Note that we must keep the data as std::vector of std::unique_ptr in order to keep entries consistent
     std::vector<std::shared_ptr<Buffer>> m_buffers;
 
-    // TODO: Shaders should not be in rendergraph! They should be part of the renderer which uses them!
-    // ---------------------------------------------------------------------------------------------------------
-    //  SHADERS
-    // ---------------------------------------------------------------------------------------------------------
-    std::vector<std::shared_ptr<Shader>> m_shaders;
-
     // ---------------------------------------------------------------------------------------------------------
     //  TEXTURES
     // ---------------------------------------------------------------------------------------------------------
@@ -217,18 +210,6 @@ public:
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_buffer(std::string buffer_name, BufferType buffer_type, std::function<void()> on_update);
-
-    // TODO: Use a SPIR-V library like spirv-cross to deduce shader type from the SPIR-V file automatically!
-    // TODO: Shaders should not be part of rendergraph!
-
-    /// Load a SPIR-V shader from a file
-    /// @param name The internal debug name of the shader (not the file name)
-    /// @param shader_stage The shader stage
-    /// @param file_name The shader file name
-    /// @note We do not check if ``file_name`` is empty because this is done in the Shader wrapper
-    /// @return A shared pointer to the shader that was loaded from the SPIR-V file
-    [[nodiscard]] std::shared_ptr<Shader>
-    add_shader(std::string shader_name, VkShaderStageFlagBits shader_stage, std::string file_name);
 
     /// Add a texture which will be initialized inside of rendergraph (not outside of it)
     /// @param texture_name The name of the texture

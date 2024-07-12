@@ -15,7 +15,7 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 class GraphicsPipelineBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::pipelines
 
-namespace inexor::vulkan_renderer::render_graph {
+namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
 class RenderGraph;
@@ -25,8 +25,6 @@ class RenderGraph;
 // We don't want to type that out all the time
 using inexor::vulkan_renderer::wrapper::Device;
 using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
-
-// TODO: This should not be in rendergraph!
 
 /// RAII wrapper class for VkShaderModule
 class Shader {
@@ -60,4 +58,4 @@ public:
     Shader &operator=(Shader &&) = delete;
 };
 
-} // namespace inexor::vulkan_renderer::render_graph
+} // namespace inexor::vulkan_renderer::wrapper

@@ -1,11 +1,9 @@
 #include "inexor/vulkan-renderer/renderers/imgui.hpp"
 
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
-#include "inexor/vulkan-renderer/render-graph/shader.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <cassert>
@@ -65,8 +63,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
 
     // TODO: Shaders should be part of the renderer, but not the rendergraph itself!
     // TODO: Implement a ShaderManager (ShaderCache?) inside of Device wrapper?
-    m_vertex_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
-    m_fragment_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
+    m_vertex_shader =
+        std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
+    m_fragment_shader =
+        std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
     using render_graph::TextureUsage;
     m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, [&]() {
@@ -153,7 +153,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                .set_descriptor_set_layout(m_descriptor_set_layout)
                                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                .build("ImGui");
-
         return m_imgui_pipeline;
     });
 

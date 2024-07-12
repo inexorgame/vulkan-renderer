@@ -435,21 +435,6 @@ void Application::setup_render_graph() {
     m_depth_buffer = m_render_graph->add_texture("Depth", DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
     m_msaa_depth = m_render_graph->add_texture("MSAA-Depth", MSAA_DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-    const std::vector<VkVertexInputAttributeDescription> vert_input_attr_desc{
-        {
-            .location = 0,
-            .binding = 0,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(OctreeGpuVertex, position),
-        },
-        {
-            .location = 1,
-            .binding = 0,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(OctreeGpuVertex, color),
-        },
-    };
-
     m_vertex_buffer = m_render_graph->add_buffer("Octree", VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
@@ -462,8 +447,10 @@ void Application::setup_render_graph() {
 
     // TODO: How to prevent duplicate loading of shaders or how to deal with object lifetime?
     // (std::unordered_map<std::string, std::shared_ptr<Shader>>)
-    m_octree_vert = m_render_graph->add_shader("Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
-    m_octree_frag = m_render_graph->add_shader("Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
+    m_octree_vert =
+        std::make_shared<wrapper::Shader>(*m_device, "Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
+    m_octree_frag =
+        std::make_shared<wrapper::Shader>(*m_device, "Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
@@ -517,14 +504,26 @@ void Application::setup_render_graph() {
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment(m_swapchain->image_format())
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
-                                .set_vertex_input_attributes(vert_input_attr_desc)
+                                .set_vertex_input_attributes({
+                                    {
+                                        .location = 0,
+                                        .binding = 0,
+                                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                        .offset = offsetof(OctreeGpuVertex, position),
+                                    },
+                                    {
+                                        .location = 1,
+                                        .binding = 0,
+                                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                        .offset = offsetof(OctreeGpuVertex, color),
+                                    },
+                                })
                                 .set_viewport(m_swapchain->extent())
                                 .set_scissor(m_swapchain->extent())
                                 .set_descriptor_set_layout(m_descriptor_set_layout)
                                 .uses_shader(m_octree_vert)
                                 .uses_shader(m_octree_frag)
                                 .build("Octree");
-
         return m_octree_pipeline;
     });
 

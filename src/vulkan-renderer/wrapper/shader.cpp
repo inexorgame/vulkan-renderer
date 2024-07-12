@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/render-graph/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer::render_graph {
+namespace inexor::vulkan_renderer::wrapper {
 
 Shader::Shader(const Device &device, std::string name, const VkShaderStageFlagBits type, std::string file_name)
     : m_device(device), m_name(std::move(name)), m_shader_stage(type), m_file_name(file_name) {
@@ -59,4 +59,4 @@ Shader::~Shader() {
     vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::render_graph
+} // namespace inexor::vulkan_renderer::wrapper

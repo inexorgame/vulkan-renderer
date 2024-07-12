@@ -32,14 +32,6 @@ RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, s
     return m_buffers.back();
 }
 
-// TODO: Shaders should not be part of rendergraph!
-std::shared_ptr<Shader>
-RenderGraph::add_shader(std::string shader_name, const VkShaderStageFlagBits shader_stage, std::string file_name) {
-    m_shaders.emplace_back(
-        std::make_shared<Shader>(m_device, std::move(shader_name), shader_stage, std::move(file_name)));
-    return m_shaders.back();
-}
-
 std::shared_ptr<Texture>
 RenderGraph::add_texture(std::string texture_name, const TextureUsage usage, const VkFormat format) {
     m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format));
@@ -169,8 +161,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
     // TODO: Remove img_index and implement swapchain.get_current_image()
     // TODO: Or do we need the image index for buffers? (We want to automatically double or triple buffer them)
 
-    // Start a new debug label for this graphics pass (debug labels are visible in graphics debuggers like
-    // RenderDoc)
+    // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
 
@@ -254,8 +245,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
-    // End the debug label for this graphics pass (debug labels are visible in graphics debuggers like
-    // RenderDoc)
+    // End the debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.end_debug_label_region();
 }
 

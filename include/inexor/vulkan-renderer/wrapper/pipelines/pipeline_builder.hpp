@@ -2,9 +2,9 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -122,10 +122,10 @@ public:
     /// Add a shader to the graphics pipeline
     /// @param shader The shader
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] auto &uses_shader(std::shared_ptr<render_graph::Shader> shader) {
+    [[nodiscard]] auto &uses_shader(std::weak_ptr<wrapper::Shader> shader) {
         m_shader_stages.push_back(make_info<VkPipelineShaderStageCreateInfo>({
-            .stage = shader->m_shader_stage,
-            .module = shader->m_shader_module,
+            .stage = shader.lock()->m_shader_stage,
+            .module = shader.lock()->m_shader_module,
             .pName = "main",
 
         }));
