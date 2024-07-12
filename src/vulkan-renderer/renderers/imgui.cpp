@@ -68,16 +68,57 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     m_vertex_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
     m_fragment_shader = render_graph.add_shader("ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
+    using render_graph::TextureUsage;
+    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, [&]() {
+        const auto img_ci = wrapper::make_info<VkImageCreateInfo>({
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .extent =
+                {
+                    .width = static_cast<std::uint32_t>(m_font_texture_width),
+                    .height = static_cast<std::uint32_t>(m_font_texture_height),
+                    .depth = 1,
+                },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        });
+        const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .subresourceRange =
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                },
+        });
+        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size, img_ci, img_view_ci);
+    });
+
     using wrapper::descriptors::DescriptorSetAllocator;
     using wrapper::descriptors::DescriptorSetLayoutBuilder;
+    using wrapper::descriptors::DescriptorSetUpdateBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
+
     render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
                                            DescriptorSetLayoutBuilder &descriptor_set_layout_builder,
-                                           DescriptorSetAllocator &descriptor_set_allocator) {
+                                           DescriptorSetAllocator &descriptor_set_allocator,
+                                           DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
         m_descriptor_set_layout =
             descriptor_set_layout_builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
 
-        m_imgui_pipeline = graphics_pipeline_builder.add_default_color_blend_attachment()
+        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
+
+        descriptor_set_update_builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
+
+        m_imgui_pipeline = graphics_pipeline_builder
                                .set_vertex_input_bindings({
                                    {
                                        .binding = 0,
@@ -102,6 +143,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                        .offset = offsetof(ImDrawVert, col),
                                    },
                                })
+                               .add_default_color_blend_attachment()
                                .add_color_attachment(swapchain.image_format())
                                .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
                                .set_viewport(swapchain.extent())
@@ -112,46 +154,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                .build("ImGui");
 
-        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
         return m_imgui_pipeline;
-    });
-
-    // TODO: Should we have on_init for buffers as well?
-
-    using render_graph::TextureUsage;
-    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, [&]() {
-        // The image create info
-        const auto img_ci = wrapper::make_info<VkImageCreateInfo>({
-            .imageType = VK_IMAGE_TYPE_2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
-            .extent =
-                {
-                    .width = static_cast<std::uint32_t>(m_font_texture_width),
-                    .height = static_cast<std::uint32_t>(m_font_texture_height),
-                    .depth = 1,
-                },
-            .mipLevels = 1,
-            .arrayLayers = 1,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        });
-        // The image view create info
-        const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
-            .subresourceRange =
-                {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = 1,
-                    .baseArrayLayer = 0,
-                    .layerCount = 1,
-                },
-        });
-        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size, img_ci, img_view_ci);
     });
 
     using render_graph::GraphicsPassBuilder;

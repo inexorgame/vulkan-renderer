@@ -8,6 +8,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
@@ -40,6 +41,7 @@ using wrapper::commands::CommandBuffer;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::DescriptorSetLayoutCache;
+using wrapper::descriptors::DescriptorSetUpdateBuilder;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineLayout;
@@ -87,15 +89,19 @@ private:
     /// reset descriptor set layout cache when calling reset method of the rendergraph!
     DescriptorSetLayoutCache m_descriptor_set_layout_cache;
     DescriptorSetLayoutBuilder m_descriptor_set_layout_builder;
+
     DescriptorSetAllocator m_descriptor_set_allocator;
+    DescriptorSetUpdateBuilder m_descriptor_set_update_builder;
 
     // ---------------------------------------------------------------------------------------------------------
     //  PIPELINES
     // ---------------------------------------------------------------------------------------------------------
     /// The callables which create the graphics pipelines used in the rendergraph
-    using GraphicsPipelineCreateFunction = std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &,
-                                                                                           DescriptorSetLayoutBuilder &,
-                                                                                           DescriptorSetAllocator &)>;
+    using GraphicsPipelineCreateFunction =
+        std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &,
+                                                        DescriptorSetLayoutBuilder &,
+                                                        DescriptorSetAllocator &,
+                                                        DescriptorSetUpdateBuilder &)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;

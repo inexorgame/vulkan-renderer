@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -32,10 +33,10 @@ Buffer::Buffer(Buffer &&other) noexcept : m_device(other.m_device) {
 }
 
 Buffer::~Buffer() {
-    destroy_buffer();
+    destroy();
 }
 
-void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
+void Buffer::create(const CommandBuffer &cmd_buf) {
     if (m_src_data_size == 0) {
         spdlog::warn("[Buffer::create_buffer] Warning: Can't create buffer of size 0!");
         return;
@@ -137,9 +138,16 @@ void Buffer::create_buffer(const CommandBuffer &cmd_buf) {
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
             .pipeline_buffer_memory_barrier_after_copy_buffer(m_buffer);
     }
+
+    // Update the descriptor buffer info
+    m_descriptor_buffer_info = VkDescriptorBufferInfo{
+        .buffer = m_buffer,
+        .offset = 0,
+        .range = m_alloc_info.size,
+    };
 }
 
-void Buffer::destroy_buffer() {
+void Buffer::destroy() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_alloc);
     vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_alloc);
 }

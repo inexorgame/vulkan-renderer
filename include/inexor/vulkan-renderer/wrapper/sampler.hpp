@@ -4,6 +4,13 @@
 
 #include <string>
 
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
+
+using inexor::vulkan_renderer::render_graph::Texture;
+
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
@@ -11,6 +18,8 @@ class Device;
 
 /// RAII wrapper class for VkSampler
 class Sampler {
+    friend class Texture;
+
 private:
     const Device &m_device;
     VkSampler m_sampler{VK_NULL_HANDLE};

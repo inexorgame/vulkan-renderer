@@ -15,7 +15,7 @@ namespace inexor::vulkan_renderer::render_graph {
 RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device),
       m_descriptor_set_layout_cache(device), m_descriptor_set_layout_builder(device, m_descriptor_set_layout_cache),
-      m_descriptor_set_allocator(m_device) {}
+      m_descriptor_set_allocator(m_device), m_descriptor_set_update_builder(m_device) {}
 
 void RenderGraph::add_graphics_pass(GraphicsPassCreateFunction on_pass_create) {
     m_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
@@ -72,7 +72,7 @@ void RenderGraph::create_buffers() {
     m_device.execute("[RenderGraph::create_buffers]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             buffer->m_on_update();
-            buffer->create_buffer(cmd_buf);
+            buffer->create(cmd_buf);
         }
     });
 }
@@ -89,8 +89,8 @@ void RenderGraph::create_graphics_pipelines() {
     m_graphics_pipelines.clear();
     m_graphics_pipelines.reserve(m_pipeline_create_functions.size());
     for (const auto &create_func : m_pipeline_create_functions) {
-        m_graphics_pipelines.emplace_back(
-            create_func(m_graphics_pipeline_builder, m_descriptor_set_layout_builder, m_descriptor_set_allocator));
+        m_graphics_pipelines.emplace_back(create_func(m_graphics_pipeline_builder, m_descriptor_set_layout_builder,
+                                                      m_descriptor_set_allocator, m_descriptor_set_update_builder));
     }
 }
 
@@ -304,10 +304,10 @@ void RenderGraph::update_buffers() {
         for (const auto &buffer : m_buffers) {
             // Does this buffer need to be updated?
             if (buffer->m_update_requested) {
-                buffer->destroy_buffer();
+                buffer->destroy();
                 // Call the buffer update function
                 std::invoke(buffer->m_on_update);
-                buffer->create_buffer(cmd_buf);
+                buffer->create(cmd_buf);
             }
         }
     });

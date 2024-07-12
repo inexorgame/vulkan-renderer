@@ -489,17 +489,24 @@ void Application::setup_render_graph() {
 
     using wrapper::descriptors::DescriptorSetAllocator;
     using wrapper::descriptors::DescriptorSetLayoutBuilder;
+    using wrapper::descriptors::DescriptorSetUpdateBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
+
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);?
     m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
                                               DescriptorSetLayoutBuilder &descriptor_set_layout_builder,
-                                              DescriptorSetAllocator &descriptor_set_allocator) {
+                                              DescriptorSetAllocator &descriptor_set_allocator,
+                                              DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
         m_descriptor_set_layout =
             descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree");
 
-        m_octree_pipeline = graphics_pipeline_builder.add_default_color_blend_attachment()
+        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
+
+        descriptor_set_update_builder.add_uniform_buffer_update(m_descriptor_set, m_uniform_buffer).update();
+
+        m_octree_pipeline = graphics_pipeline_builder
                                 .set_vertex_input_bindings({
                                     {
                                         .binding = 0,
@@ -507,6 +514,7 @@ void Application::setup_render_graph() {
                                         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                     },
                                 })
+                                .add_default_color_blend_attachment()
                                 .add_color_attachment(m_swapchain->image_format())
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
                                 .set_vertex_input_attributes(vert_input_attr_desc)
@@ -517,7 +525,6 @@ void Application::setup_render_graph() {
                                 .uses_shader(m_octree_frag)
                                 .build("Octree");
 
-        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
         return m_octree_pipeline;
     });
 

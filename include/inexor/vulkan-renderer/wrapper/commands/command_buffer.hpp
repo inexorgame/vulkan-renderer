@@ -213,16 +213,11 @@ public:
                                               const VkBufferImageCopy &copy_region) const;
 
     /// Call vkCmdCopyBufferToImage
-    /// @param data A raw pointer to the data to copy
-    /// @param data_size The size of the data to copy
-    /// @param dst_img The destination image (must not be ``VK_NULL_HANDLE``)
-    /// @note The destination image is always expected to be in layout ``VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`` for the
-    /// copy operation
+    /// @param src_buffer The source buffer
+    /// @param dst_img The image to copy the buffer into
+    /// @param extent The extent of the image
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
-    const CommandBuffer &copy_buffer_to_image(const void *data,
-                                              const VkDeviceSize data_size, // NOLINT
-                                              VkImage dst_img,
-                                              const VkBufferImageCopy &copy_region) const;
+    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buffer, VkImage dst_img, VkExtent3D extent) const;
 
     /// Call vkCmdDraw
     /// @param vert_count The number of vertices to draw

@@ -227,6 +227,24 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
     return *this;
 }
 
+const CommandBuffer &
+CommandBuffer::copy_buffer_to_image(const VkBuffer buffer, const VkImage img, const VkExtent3D extent) const {
+    return copy_buffer_to_image(buffer, img,
+                                {
+                                    .imageSubresource =
+                                        {
+                                            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                            .layerCount = 1,
+                                        },
+                                    .imageExtent =
+                                        {
+                                            .width = extent.width,
+                                            .height = extent.height,
+                                            .depth = 1,
+                                        },
+                                });
+}
+
 const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count,
                                          const std::uint32_t inst_count,
                                          const std::uint32_t first_vert,

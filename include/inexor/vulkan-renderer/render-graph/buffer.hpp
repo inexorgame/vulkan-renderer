@@ -18,6 +18,11 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
+namespace inexor::vulkan_renderer::wrapper::descriptors {
+/// Forward declaration
+class DescriptorSetUpdateBuilder;
+} // namespace inexor::vulkan_renderer::wrapper::descriptors
+
 namespace inexor::vulkan_renderer::render_graph {
 
 /// The buffer type describes the internal usage of the buffer resource inside of the rendergraph
@@ -30,8 +35,8 @@ enum class BufferType {
 // Forward declaration
 class GraphicsPass;
 
-using wrapper::Device;
-using wrapper::commands::CommandBuffer;
+using inexor::vulkan_renderer::wrapper::Device;
+using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
 
 // TODO: Store const reference to rendergraph and retrieve the swapchain image index for automatic buffer tripling
 
@@ -42,6 +47,7 @@ private:
     friend class RenderGraph;
     friend class GraphicsPass;
     friend class CommandBuffer;
+    friend class inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateBuilder;
 
     /// The device wrapper
     const Device &m_device;
@@ -85,6 +91,9 @@ private:
     VmaAllocation m_alloc{VK_NULL_HANDLE};
     VmaAllocationInfo m_alloc_info{};
 
+    /// The descriptor buffer info (required for uniform buffers)
+    VkDescriptorBufferInfo m_descriptor_buffer_info{};
+
     /// The staging buffer (if required)
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
     VmaAllocation m_staging_alloc{VK_NULL_HANDLE};
@@ -92,10 +101,10 @@ private:
 
     /// Create the buffer using Vulkan Memory Allocator (VMA) library
     /// @param cmd_buf The command buffer
-    void create_buffer(const CommandBuffer &cmd_buf);
+    void create(const CommandBuffer &cmd_buf);
 
     /// Call vmaDestroyBuffer
-    void destroy_buffer();
+    void destroy();
 
 public:
     /// Default constructor

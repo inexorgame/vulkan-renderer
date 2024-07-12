@@ -40,7 +40,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_set_updater.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_update_builder.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp

@@ -2,6 +2,8 @@
 
 #include <vk_mem_alloc.h>
 
+#include "inexor/vulkan-renderer/wrapper/sampler.hpp"
+
 #include <functional>
 #include <memory>
 #include <optional>
@@ -17,6 +19,11 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
+namespace inexor::vulkan_renderer::wrapper::descriptors {
+/// Forward declaration
+class DescriptorSetUpdateBuilder;
+} // namespace inexor::vulkan_renderer::wrapper::descriptors
+
 namespace inexor::vulkan_renderer::render_graph {
 
 /// Specifies the use of the texture inside of the rendergraph
@@ -31,11 +38,16 @@ enum class TextureUsage {
     NORMAL,
 };
 
+// Forward declaration
+class Texture;
+
 using wrapper::Device;
 using wrapper::commands::CommandBuffer;
 
 /// RAII wrapper for texture resources in the rendergraph
 class Texture {
+    friend class inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateBuilder;
+
 private:
     friend class RenderGraph;
 
@@ -62,7 +74,10 @@ private:
     VkImageView m_img_view{VK_NULL_HANDLE};
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
     VmaAllocation m_staging_buffer_alloc{VK_NULL_HANDLE};
-    // TODO: Sampler here as well? Like create_sampler();
+    std::unique_ptr<wrapper::Sampler> m_sampler;
+
+    /// The descriptor image info
+    VkDescriptorImageInfo m_descriptor_image_info{};
 
     /// Only RenderGraph is allowed to create the texture
     void create();

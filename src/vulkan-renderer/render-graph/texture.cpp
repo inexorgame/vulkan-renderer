@@ -56,6 +56,8 @@ void Texture::create() {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }
     m_device.set_debug_name(m_img_view, m_name);
+
+    m_sampler = std::make_unique<wrapper::Sampler>(m_device, m_name);
 }
 
 void Texture::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) {
@@ -96,24 +98,22 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
-    cmd_buf
-        .pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
-        // TODO: Further abstract to copy_buffer_to_image(m_staging_buffer, m_img, extent); ?
+    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
         .copy_buffer_to_image(m_staging_buffer, m_img,
                               {
-                                  .imageSubresource =
-                                      {
-                                          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                                          .layerCount = 1,
-                                      },
-                                  .imageExtent =
-                                      {
-                                          .width = m_img_ci.extent.width,
-                                          .height = m_img_ci.extent.height,
-                                          .depth = 1,
-                                      },
+                                  .width = m_img_ci.extent.width,
+                                  .height = m_img_ci.extent.height,
+                                  .depth = 1,
                               })
         .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img);
+
+    // TODO: Do we need to create sampler and image view here? or in create()?
+    // Update the descriptor image info
+    m_descriptor_image_info = VkDescriptorImageInfo{
+        .sampler = m_sampler->m_sampler,
+        .imageView = m_img_view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time execute_update is called

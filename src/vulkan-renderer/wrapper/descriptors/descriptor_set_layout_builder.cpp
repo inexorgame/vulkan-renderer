@@ -24,7 +24,7 @@ DescriptorSetLayoutBuilder &DescriptorSetLayoutBuilder::add_uniform_buffer(const
         .descriptorCount = count,
         .stageFlags = shader_stage,
     });
-    // Even if 'count' is larger than 1, the binding is incremented by only 1
+    // NOTE: Even if 'count' is larger than 1, the binding is incremented by only 1
     m_binding++;
     return *this;
 }
@@ -38,7 +38,7 @@ DescriptorSetLayoutBuilder::add_combined_image_sampler(const VkShaderStageFlags 
         .descriptorCount = count,
         .stageFlags = shader_stage,
     });
-    // Even if 'count' is larger than 1, the binding is incremented by only 1
+    // NOTE: Even if 'count' is larger than 1, the binding is incremented by only 1
     m_binding++;
     return *this;
 }
@@ -57,7 +57,7 @@ VkDescriptorSetLayout DescriptorSetLayoutBuilder::build(std::string name) {
     m_bindings.clear();
     m_binding = 0;
 
-    // Return the created descriptor set and the descriptor set layout as a pair
+    // Return the descriptor set layout that was created
     return descriptor_set_layout;
 }
 
