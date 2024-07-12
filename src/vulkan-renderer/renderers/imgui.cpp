@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/render-graph/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -13,7 +14,8 @@
 
 namespace inexor::vulkan_renderer::renderers {
 
-ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
+ImGuiRenderer::ImGuiRenderer(const Device &device,
+                             const Swapchain &swapchain,
                              render_graph::RenderGraph &render_graph,
                              const std::weak_ptr<render_graph::Texture> back_buffer,
                              const std::weak_ptr<render_graph::Texture> depth_buffer,
@@ -31,25 +33,6 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
 
     // TODO: Do we need this here?
     using render_graph::BufferType;
-
-    // This is required for both vertex buffer and the graphics pipeline
-    const std::vector<VkVertexInputAttributeDescription> vert_input_attr_descs{{
-        {
-            .location = 0,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(ImDrawVert, pos),
-        },
-        {
-            .location = 1,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(ImDrawVert, uv),
-        },
-        {
-            .location = 2,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
-            .offset = offsetof(ImDrawVert, col),
-        },
-    }};
 
     // TODO: Do we really need vert_input_attr_descs here?
     m_vertex_buffer = render_graph.add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
@@ -102,7 +85,25 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
                                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                    },
                                })
-                               .set_vertex_input_attributes(vert_input_attr_descs)
+                               .set_vertex_input_attributes({
+                                   {
+                                       .location = 0,
+                                       .format = VK_FORMAT_R32G32_SFLOAT,
+                                       .offset = offsetof(ImDrawVert, pos),
+                                   },
+                                   {
+                                       .location = 1,
+                                       .format = VK_FORMAT_R32G32_SFLOAT,
+                                       .offset = offsetof(ImDrawVert, uv),
+                                   },
+                                   {
+                                       .location = 2,
+                                       .format = VK_FORMAT_R8G8B8A8_UNORM,
+                                       .offset = offsetof(ImDrawVert, col),
+                                   },
+                               })
+                               .set_viewport(swapchain.extent())
+                               .set_scissor(swapchain.extent())
                                .uses_shader(m_vertex_shader)
                                .uses_shader(m_fragment_shader)
                                .set_descriptor_set_layout(m_descriptor_set_layout)

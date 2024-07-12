@@ -555,8 +555,8 @@ void Application::setup_render_graph() {
     });
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_render_graph.get(), m_back_buffer,
-                                                                 m_msaa_color, [&]() { update_imgui_overlay(); });
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(
+        *m_device, *m_swapchain, *m_render_graph.get(), m_back_buffer, m_msaa_color, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

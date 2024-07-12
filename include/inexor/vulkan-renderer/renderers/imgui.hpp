@@ -12,7 +12,11 @@
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declarations
 class Device;
+class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
+
+using inexor::vulkan_renderer::wrapper::Device;
+using inexor::vulkan_renderer::wrapper::Swapchain;
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
@@ -64,11 +68,13 @@ class ImGuiRenderer {
 public:
     /// Default constructor
     /// @param device A reference to the device wrapper
+    /// @param swapchain
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer The back buffer texture resource
     /// @param depth_buffer The depth buffer texture resource
     /// @param on_update_user_data The function in which the user's ImGui data is updated
-    ImGuiRenderer(const wrapper::Device &device,
+    ImGuiRenderer(const Device &device,
+                  const Swapchain &swapchain,
                   render_graph::RenderGraph &render_graph,
                   std::weak_ptr<render_graph::Texture> back_buffer,
                   std::weak_ptr<render_graph::Texture> depth_buffer,
