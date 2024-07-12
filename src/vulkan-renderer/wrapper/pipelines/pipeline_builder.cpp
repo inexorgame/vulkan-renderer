@@ -79,10 +79,8 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .stencilAttachmentFormat = m_stencil_attachment_format,
     });
 
-    assert(m_pipeline_layout);
-
     auto graphics_pipeline =
-        std::make_shared<GraphicsPipeline>(m_device,
+        std::make_shared<GraphicsPipeline>(m_device, std::vector{m_descriptor_set_layout}, m_push_constant_ranges,
                                            make_info<VkGraphicsPipelineCreateInfo>({
                                                // This is one of those rare cases where pNext is actually not nullptr!
                                                .pNext = &m_pipeline_rendering_ci, // We use dynamic rendering

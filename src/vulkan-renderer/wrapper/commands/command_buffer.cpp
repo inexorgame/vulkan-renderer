@@ -259,6 +259,8 @@ const CommandBuffer &CommandBuffer::end_rendering() const {
     return *this;
 }
 
+// TODO: Reduce number of methods which deal with barriers to only those which are really needed!
+
 const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags src_stage_flags,
                                                      const VkPipelineStageFlags dst_stage_flags,
                                                      const std::span<const VkImageMemoryBarrier> img_mem_barriers,

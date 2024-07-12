@@ -13,19 +13,11 @@ PipelineLayout::PipelineLayout(const Device &device,
                                const std::span<const VkPushConstantRange> push_constant_ranges,
                                std::string name)
     : m_device(device), m_name(std::move(name)) {
-
-    const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({
-        .setLayoutCount = static_cast<std::uint32_t>(desc_set_layouts.size()),
-        .pSetLayouts = desc_set_layouts.data(),
-        .pushConstantRangeCount = static_cast<std::uint32_t>(push_constant_ranges.size()),
-        .pPushConstantRanges = push_constant_ranges.data(),
-    });
-
-    if (const auto result = vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + m_name + "!", result);
+    if (m_name.empty()) {
+        throw std::invalid_argument("[PipelineLayout::PipelineLayout] Error: Parameter 'name' is emtpy!");
     }
-    m_device.set_debug_name(m_pipeline_layout, m_name);
+
+
 }
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept : m_device(other.m_device) {
@@ -34,7 +26,6 @@ PipelineLayout::PipelineLayout(PipelineLayout &&other) noexcept : m_device(other
 }
 
 PipelineLayout::~PipelineLayout() {
-    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

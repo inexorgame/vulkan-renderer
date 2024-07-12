@@ -115,7 +115,8 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
 
     using render_graph::TextureUsage;
     m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, [&]() {
-        const auto img_view = wrapper::make_info<VkImageCreateInfo>({
+        // The image create info
+        const auto img_ci = wrapper::make_info<VkImageCreateInfo>({
             .imageType = VK_IMAGE_TYPE_2D,
             .format = VK_FORMAT_R8G8B8A8_UNORM,
             .extent =
@@ -132,6 +133,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         });
+        // The image view create info
         const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .format = VK_FORMAT_R8G8B8A8_UNORM,
@@ -144,7 +146,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
                     .layerCount = 1,
                 },
         });
-        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size, img_view, img_view_ci);
+        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size, img_ci, img_view_ci);
     });
 
     using render_graph::GraphicsPassBuilder;
@@ -165,7 +167,7 @@ ImGuiRenderer::ImGuiRenderer(const wrapper::Device &device,
                                cmd_buf.bind_pipeline(m_imgui_pipeline);
                                // TODO: Bind descriptor set!
                                // cmd_buf.bind_descriptor_set();
-                               // TODO: Bind push constant!
+                               // TODO: Push constant!
                                // cmd_buf.push_constant();
 
                                ImDrawData *draw_data = ImGui::GetDrawData();

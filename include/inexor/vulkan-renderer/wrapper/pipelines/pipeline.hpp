@@ -33,14 +33,21 @@ private:
     std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
     std::vector<VkPushConstantRange> m_push_constant_ranges;
     VkPipeline m_pipeline{VK_NULL_HANDLE};
+    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
     std::string m_name;
 
 public:
     /// Default constructor is private so that only RenderGraph and CommandBuffer can access it
     /// @param device The device wrapper
+    /// @param descriptor_set_layouts The descriptor set layouts in the pipeline layout
+    /// @param push_constant_ranges The push constant ranges in the pipeline layout
     /// @param pipeline_ci The pipeline create info
     /// @param name The internal debug name of the graphics pipeline
-    GraphicsPipeline(const Device &device, const VkGraphicsPipelineCreateInfo &pipeline_ci, std::string name);
+    GraphicsPipeline(const Device &device,
+                     std::vector<VkDescriptorSetLayout> descriptor_set_layouts,
+                     std::vector<VkPushConstantRange> push_constant_ranges,
+                     VkGraphicsPipelineCreateInfo pipeline_ci,
+                     std::string name);
 
     GraphicsPipeline(const GraphicsPipeline &) = delete;
     GraphicsPipeline(GraphicsPipeline &&) noexcept;
@@ -50,6 +57,8 @@ public:
 
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
     GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
+
+    // TODO: Make private and use friend declaration only?
 
     [[nodiscard]] auto &descriptor_set_layouts() const {
         return m_descriptor_set_layouts;

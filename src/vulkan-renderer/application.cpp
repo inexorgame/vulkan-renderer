@@ -491,7 +491,7 @@ void Application::setup_render_graph() {
     using wrapper::pipelines::GraphicsPipelineBuilder;
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
-    // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);
+    // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);?
     m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
                                               DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
         m_octree_pipeline =
@@ -521,7 +521,7 @@ void Application::setup_render_graph() {
         m_octree_pass =
             graphics_pass_builder
                 .set_clear_value({
-                    // TODO: Define default color values for the engine
+                    // TODO: Define default color values for these, like COLOR::RED, COLOR::BLUE...
                     .color = {1.0f, 0.0f, 0.0f},
                 })
                 .set_depth_test(true)

@@ -96,9 +96,9 @@ void Texture::execute_update(const CommandBuffer &cmd_buf) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
-    cmd_buf
-        .pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
-        // TODO: Further abstract this as well?
+    // TODO: Further abstract to copy_buffer_to_image(m_staging_buffer, m_img, extent); ?
+
+    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
         .copy_buffer_to_image(m_staging_buffer, m_img,
                               {
                                   .imageSubresource =

@@ -100,6 +100,8 @@ private:
     /// The push constant ranges of the graphics pass
     std::vector<VkPushConstantRange> m_push_constant_ranges;
 
+    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+
     /// Reset all data in this class so the builder can be re-used
     /// @note This is called by the constructor
     void reset();
@@ -214,11 +216,14 @@ public:
     }
 
     // TODO: std::unordered_map<std::string, VkDescriptorSetLayout>?
+    // NOTE: Currently we restrict ourselves to one pipeline layout per pipeline
 
     /// Set the descriptor set layout
     /// @param descriptor_set_layout The descriptor set layout
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] auto &set_descriptor_set_layout(const VkDescriptorSetLayout descriptor_set_layout) {
+        assert(descriptor_set_layout);
+        m_descriptor_set_layout = descriptor_set_layout;
         return *this;
     }
 

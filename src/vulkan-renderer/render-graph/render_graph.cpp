@@ -134,7 +134,7 @@ void RenderGraph::create_textures() {
                         .format = texture->m_format,
                         .subresourceRange =
                             {
-                                // This is the only difference between creating depth stencil buffer and depth buffer
+                                // NOTE: This is the only difference between DEPTH_STENCIL_BUFFER and BACK_BUFFER
                                 .aspectMask = (texture->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER)
                                                   ? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT |
                                                                                     VK_IMAGE_ASPECT_STENCIL_BIT)
@@ -151,7 +151,7 @@ void RenderGraph::create_textures() {
                 // TODO:
                 // MSAA_BACK_BUFFER
                 // MSAA_DEPTH_STENCIL_BUFFER
-                spdlog::warn("Unhandled switch case for creating texture {}", texture->m_name);
+                m_log->warn("Unhandled switch case for creating texture {}", texture->m_name);
                 break;
             }
             }
@@ -160,7 +160,7 @@ void RenderGraph::create_textures() {
 }
 
 void RenderGraph::determine_pass_order() {
-    // TODO: Implement me!
+    m_log->warn("Implement determine_pass_order()");
     // TODO: The data structure to determine pass order should be created before rendergraph compilation!
 }
 
