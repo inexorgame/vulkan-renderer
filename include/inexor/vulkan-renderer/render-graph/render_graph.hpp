@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -96,11 +97,7 @@ private:
     //  PIPELINES
     // ---------------------------------------------------------------------------------------------------------
     /// The callables which create the graphics pipelines used in the rendergraph
-    using GraphicsPipelineCreateFunction =
-        std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &,
-                                                        DescriptorSetLayoutBuilder &,
-                                                        DescriptorSetAllocator &,
-                                                        DescriptorSetUpdateBuilder &)>;
+    using GraphicsPipelineCreateFunction = std::function<std::shared_ptr<GraphicsPipeline>(GraphicsPipelineBuilder &)>;
 
     /// The callables to create the graphics pipelines used in the rendergraph
     std::vector<GraphicsPipelineCreateFunction> m_pipeline_create_functions;
@@ -124,6 +121,15 @@ private:
     /// TODO: Explain how textures are treated equally here
     std::vector<std::shared_ptr<Texture>> m_textures;
 
+    // ---------------------------------------------------------------------------------------------------------
+    //  DESCRIPTORS
+    // ---------------------------------------------------------------------------------------------------------
+    // @note Descriptors are not associated with a pipeline or a pass inside of rendergraph
+    std::vector<std::tuple<std::function<void(DescriptorSetLayoutBuilder &)>,
+                           std::function<void(DescriptorSetAllocator &)>,
+                           std::function<void(DescriptorSetUpdateBuilder &)>>>
+        m_resource_descriptors;
+
     // TODO: Add @exception to documentation of other methods/code parts!
 
     /// The rendergraph must not have any cycles in it!
@@ -133,6 +139,8 @@ private:
     /// Create the buffers of every buffer resource in the rendergraph
     /// @param cmd_buf The command buffer to record into
     void create_buffers();
+
+    void create_descriptor_set_layouts();
 
     /// Create the graphics passes
     void create_graphics_passes();
@@ -210,6 +218,17 @@ public:
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_buffer(std::string buffer_name, BufferType buffer_type, std::function<void()> on_update);
+
+    ///
+    void allocate_descriptor_sets();
+
+    /// Add a descriptor to rendergraph
+    /// @param on_create_descriptor_set_layout
+    /// @param on_allocate_descriptor_set
+    /// @param on_update_descriptor_set
+    void add_resource_descriptor(std::function<void(DescriptorSetLayoutBuilder &)> on_create_descriptor_set_layout,
+                                 std::function<void(DescriptorSetAllocator &)> on_allocate_descriptor_set,
+                                 std::function<void(DescriptorSetUpdateBuilder &)> on_update_descriptor_set);
 
     /// Add a texture which will be initialized inside of rendergraph (not outside of it)
     /// @param texture_name The name of the texture

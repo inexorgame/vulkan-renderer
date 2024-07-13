@@ -479,20 +479,22 @@ void Application::setup_render_graph() {
     using wrapper::descriptors::DescriptorSetUpdateBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
 
+    m_render_graph->add_resource_descriptor(
+        [&](DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
+            m_descriptor_set_layout =
+                descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree");
+        },
+        [&](DescriptorSetAllocator &descriptor_set_allocator) {
+            m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
+        },
+        [&](DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
+            descriptor_set_update_builder.add_uniform_buffer_update(m_descriptor_set, m_uniform_buffer).update();
+        });
+
     // TODO: Move octree renderer out of here
     // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
     // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);?
-    m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
-                                              DescriptorSetLayoutBuilder &descriptor_set_layout_builder,
-                                              DescriptorSetAllocator &descriptor_set_allocator,
-                                              DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
-        m_descriptor_set_layout =
-            descriptor_set_layout_builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree");
-
-        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
-
-        descriptor_set_update_builder.add_uniform_buffer_update(m_descriptor_set, m_uniform_buffer).update();
-
+    m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder) {
         m_octree_pipeline = graphics_pipeline_builder
                                 .set_vertex_input_bindings({
                                     {

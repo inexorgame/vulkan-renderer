@@ -32,6 +32,22 @@ RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, s
     return m_buffers.back();
 }
 
+void RenderGraph::allocate_descriptor_sets() {
+    for (const auto &descriptor : m_resource_descriptors) {
+        // Call on_update_descriptor_set for each descriptor
+        std::invoke(std::get<1>(descriptor), m_descriptor_set_allocator);
+    }
+}
+
+void RenderGraph::add_resource_descriptor(
+    std::function<void(DescriptorSetLayoutBuilder &)> on_create_descriptor_set_layout,
+    std::function<void(DescriptorSetAllocator &)> on_allocate_descriptor_set,
+    std::function<void(DescriptorSetUpdateBuilder &)> on_update_descriptor_set) {
+    // NOTE: emplace_back directly constructs the tuple in place, no need for push_back and std::make_tuple
+    m_resource_descriptors.emplace_back(std::move(on_create_descriptor_set_layout),
+                                        std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
+}
+
 std::shared_ptr<Texture>
 RenderGraph::add_texture(std::string texture_name, const TextureUsage usage, const VkFormat format) {
     m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format));
@@ -56,6 +72,9 @@ void RenderGraph::compile() {
     determine_pass_order();
     create_buffers();
     create_textures();
+    create_descriptor_set_layouts();
+    allocate_descriptor_sets();
+    update_descriptor_sets();
     create_graphics_passes();
     create_graphics_pipelines();
 }
@@ -67,6 +86,13 @@ void RenderGraph::create_buffers() {
             buffer->create(cmd_buf);
         }
     });
+}
+
+void RenderGraph::create_descriptor_set_layouts() {
+    for (const auto &descriptor : m_resource_descriptors) {
+        // Call on_update_descriptor_set for each descriptor
+        std::invoke(std::get<0>(descriptor), m_descriptor_set_layout_builder);
+    }
 }
 
 void RenderGraph::create_graphics_passes() {
@@ -81,8 +107,7 @@ void RenderGraph::create_graphics_pipelines() {
     m_graphics_pipelines.clear();
     m_graphics_pipelines.reserve(m_pipeline_create_functions.size());
     for (const auto &create_func : m_pipeline_create_functions) {
-        m_graphics_pipelines.emplace_back(create_func(m_graphics_pipeline_builder, m_descriptor_set_layout_builder,
-                                                      m_descriptor_set_allocator, m_descriptor_set_update_builder));
+        m_graphics_pipelines.emplace_back(create_func(m_graphics_pipeline_builder));
     }
 }
 
@@ -158,6 +183,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
                                                  const bool is_first_pass,
                                                  const bool is_last_pass,
                                                  const std::uint32_t img_index) {
+    // TODO: Expose pass_index as parameter?
     // TODO: Remove img_index and implement swapchain.get_current_image()
     // TODO: Or do we need the image index for buffers? (We want to automatically double or triple buffer them)
 
@@ -303,6 +329,13 @@ void RenderGraph::update_buffers() {
     });
 }
 
+void RenderGraph::update_descriptor_sets() {
+    for (const auto &descriptor : m_resource_descriptors) {
+        // Call on_update_descriptor_set for each descriptor
+        std::invoke(std::get<2>(descriptor), m_descriptor_set_update_builder);
+    }
+}
+
 void RenderGraph::update_textures() {
     m_device.execute("[RenderGraph::update_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
@@ -317,17 +350,6 @@ void RenderGraph::update_textures() {
             }
         }
     });
-}
-
-void RenderGraph::update_descriptor_sets() {
-    // The problem is here that the binding is determined by the oder we call the add methods of the descriptor
-    // set layout builder, but that is determined by the order we iterate through buffer and texture reads.
-    // Those reads would either have to be in one struct or some other ordering must take place!!! If not, this
-    // will cause trouble if a pass reads from both let's say a uniform buffer and a texture, but the order
-    // specified in descriptor set layout builder results in a binding order that is incorrect!
-
-    // TODO: Implement me!
-    // TODO: Builder pattern for descriptor writes?
 }
 
 void RenderGraph::validate_render_graph() {

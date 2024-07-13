@@ -61,7 +61,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // Index buffer is already being updated in vertex buffer update lambda...
     });
 
-    // TODO: Shaders should be part of the renderer, but not the rendergraph itself!
     // TODO: Implement a ShaderManager (ShaderCache?) inside of Device wrapper?
     m_vertex_shader =
         std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
@@ -107,17 +106,19 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     using wrapper::descriptors::DescriptorSetUpdateBuilder;
     using wrapper::pipelines::GraphicsPipelineBuilder;
 
-    render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder,
-                                           DescriptorSetLayoutBuilder &descriptor_set_layout_builder,
-                                           DescriptorSetAllocator &descriptor_set_allocator,
-                                           DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
-        m_descriptor_set_layout =
-            descriptor_set_layout_builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
+    render_graph.add_resource_descriptor(
+        [&](DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
+            m_descriptor_set_layout =
+                descriptor_set_layout_builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
+        },
+        [&](DescriptorSetAllocator &descriptor_set_allocator) {
+            m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
+        },
+        [&](DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
+            descriptor_set_update_builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
+        });
 
-        m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
-
-        descriptor_set_update_builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
-
+    render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder) {
         m_imgui_pipeline = graphics_pipeline_builder
                                .set_vertex_input_bindings({
                                    {
