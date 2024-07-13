@@ -58,18 +58,8 @@ public:
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
     GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
 
-    // TODO: Make private and use friend declaration only?
-
-    [[nodiscard]] auto &descriptor_set_layouts() const {
-        return m_descriptor_set_layouts;
-    }
-
-    [[nodiscard]] auto &name() const {
-        return m_name;
-    }
-
-    [[nodiscard]] auto &push_constant_ranges() const {
-        return m_push_constant_ranges;
+    [[nodiscard]] auto pipeline_layout() const {
+        return m_pipeline_layout;
     }
 };
 

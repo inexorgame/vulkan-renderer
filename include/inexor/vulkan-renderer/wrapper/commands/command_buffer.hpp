@@ -85,7 +85,7 @@ public:
     /// @note ``begin_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
     /// @param rendering_info The info for dynamic rendering
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &begin_rendering(const VkRenderingInfo *rendering_info) const;
+    const CommandBuffer &begin_rendering(const VkRenderingInfo &rendering_info) const;
 
     /// Call vkCmdBindDescriptorSets
     /// @param desc_sets The descriptor set to bind

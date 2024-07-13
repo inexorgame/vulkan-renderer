@@ -7,12 +7,12 @@ GraphicsPassBuilder::GraphicsPassBuilder() {
 }
 
 void GraphicsPassBuilder::reset() {
-    m_clear_value = std::nullopt;
+    m_clear_value = {};
     m_on_record = [](auto &) {};
-    m_depth_test = false;
-    m_buffer_reads.clear();
-    m_texture_reads.clear();
-    m_texture_writes.clear();
+    m_enable_depth_test = false;
+    m_enable_msaa = false;
+    m_clear_color = false;
+    m_clear_stencil = false;
 }
 
 // TODO: Move stuff to .cpp file again. Header files should contain declarations, cpp files should contain definitions!

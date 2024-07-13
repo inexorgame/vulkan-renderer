@@ -15,10 +15,10 @@ namespace inexor::vulkan_renderer::renderers {
 ImGuiRenderer::ImGuiRenderer(const Device &device,
                              const Swapchain &swapchain,
                              render_graph::RenderGraph &render_graph,
-                             const std::weak_ptr<render_graph::Texture> back_buffer,
-                             const std::weak_ptr<render_graph::Texture> depth_buffer,
+                             std::weak_ptr<render_graph::Texture> color_attachment,
                              std::function<void()> on_update_user_data)
-    : m_device(device), m_on_update_user_data(std::move(on_update_user_data)) {
+    : m_device(device), m_on_update_user_data(std::move(on_update_user_data)),
+      m_color_attachment(std::move(color_attachment)) {
 
     spdlog::trace("Creating ImGui context");
     ImGui::CreateContext();
@@ -160,23 +160,21 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     using render_graph::GraphicsPassBuilder;
     using wrapper::commands::CommandBuffer;
     render_graph.add_graphics_pass([&](GraphicsPassBuilder &graphics_pass_builder) {
-        m_imgui_pass = graphics_pass_builder.reads_from_buffer(m_index_buffer)
-                           .reads_from_buffer(m_vertex_buffer)
-                           .reads_from_texture(m_imgui_texture, VK_SHADER_STAGE_FRAGMENT_BIT)
-                           .writes_to_texture(back_buffer)
-                           .writes_to_texture(depth_buffer)
-                           .writes_to_texture(back_buffer)
-                           .writes_to_texture(depth_buffer)
+        m_imgui_pass = graphics_pass_builder.add_color_attachment(m_color_attachment)
                            .set_on_record([&](const CommandBuffer &cmd_buf) {
-                               // Record the command buffer for rendering ImGui
+                               // NOTE: It's the responsibility of the programmer to bind pipelines, descriptor sets,
+                               // and buffers manually inside of this on_record lambda! It's also the responsibility of
+                               // the programmer to make sure that every variable captured by reference inside of this
+                               // lambda is still in a valid state at the time of execution of the lambda!
                                const ImGuiIO &io = ImGui::GetIO();
                                m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
-                               cmd_buf.bind_pipeline(m_imgui_pipeline);
-                               // TODO: Bind descriptor set!
-                               // cmd_buf.bind_descriptor_set();
-                               // TODO: Push constant!
-                               // cmd_buf.push_constant();
+                               cmd_buf.bind_pipeline(m_imgui_pipeline)
+                                   .bind_vertex_buffer(m_vertex_buffer)
+                                   .bind_index_buffer(m_index_buffer)
+                                   .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline->pipeline_layout())
+                                   .push_constant(m_imgui_pipeline->pipeline_layout(), m_push_const_block,
+                                                  VK_SHADER_STAGE_VERTEX_BIT);
 
                                ImDrawData *draw_data = ImGui::GetDrawData();
                                if (draw_data == nullptr) {

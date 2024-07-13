@@ -20,25 +20,25 @@ namespace inexor::vulkan_renderer::render_graph {
 /// @warning Make sure that the order or add calls for buffers and textures matches the binding order!
 class GraphicsPassBuilder {
 private:
-    /// Indicates if the screen is cleared at the beginning of this pass
-    std::optional<VkClearValue> m_clear_value;
     /// Add members which describe data related to graphics passes here
     std::function<void(const wrapper::commands::CommandBuffer &)> m_on_record;
     /// Depth testing
-    bool m_depth_test;
+    bool m_enable_depth_test{false};
+    /// Multisample anti-aliasing (MSAA)
+    bool m_enable_msaa{false};
+    /// Clear the color attachment
+    bool m_clear_color{false};
+    /// Clear the stencil attachment
+    bool m_clear_stencil{false};
+    /// Indicates if the screen is cleared at the beginning of the pass
+    VkClearValue m_clear_value{};
 
-    /// The buffers which are read by the graphics pass
-    /// If the buffer's ``BufferType`` is ``UNIFORM_BUFFER``, a value for the shader stage flag must be specified,
-    /// because uniform buffers can be read from vertex or fragment stage bit.
-    BufferReads m_buffer_reads;
-    /// The textures the graphics pass reads from
-    TextureReads m_texture_reads;
-    /// The textures the graphics pass writes to
-    TextureWrites m_texture_writes;
-
-    // TODO: Merge push constant ranges into one block and put it as member here?
-    // TODO: Copy all data into one piece of memory and call vkCmdPushConstants only once?
-    void compile_push_constants();
+    // TODO: Multiple color attachments!
+    std::weak_ptr<Texture> m_color_attachment;
+    std::weak_ptr<Texture> m_depth_attachment;
+    std::weak_ptr<Texture> m_stencil_attachment;
+    std::weak_ptr<Texture> m_msaa_color_attachment;
+    std::weak_ptr<Texture> m_msaa_depth_attachment;
 
     /// Reset all data of the graphics pass builder
     void reset();
@@ -53,69 +53,68 @@ public:
     GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
     GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) noexcept;
 
+    /// Add a color attachment to the pass
+    /// @param color_attachment The color attachment
+    /// @param clear_color The clear color for the color attachment
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &add_color_attachment(std::weak_ptr<Texture> color_attachment,
+                                             std::optional<VkClearColorValue> clear_color = std::nullopt) {
+        if (color_attachment.expired()) {
+            throw std::invalid_argument(
+                "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is nullptr!");
+        }
+        m_color_attachment = color_attachment;
+        if (clear_color) {
+            m_clear_color = true;
+            m_clear_value.color = clear_color.value();
+        }
+        return *this;
+    }
+
     /// Build the graphics pass
     /// @param name The name of the graphics pass
     /// @return The graphics pass that was just created
     [[nodiscard]] auto build(std::string name) {
-        auto graphics_pass = std::make_shared<GraphicsPass>(std::move(name), std::move(m_buffer_reads),
-                                                            std::move(m_texture_reads), std::move(m_texture_writes),
-                                                            std::move(m_on_record), std::move(m_clear_value));
-        // Don't forget to reset the builder automatically before returning the graphics pass that was just created
+        auto graphics_pass = std::make_shared<GraphicsPass>(
+            std::move(name), std::move(m_on_record), std::move(m_color_attachment), std::move(m_depth_attachment),
+            std::move(m_stencil_attachment), std::move(m_msaa_color_attachment), std::move(m_msaa_depth_attachment),
+            m_enable_msaa, m_clear_color, m_clear_stencil, std::move(m_clear_value));
+
+        // Reset the builder so the builder can be re-used
         reset();
         // Return the graphics pass that was created
         return graphics_pass;
     }
 
-    // TODO: We must specify buffer reads for vertex and index buffers, but bind manually... is that good?
-    // TODO: std::optional<VkShaderStageFlagBits> or better default VkShaderStageFlagBits to VK_SHADER_STAGE_VERTEX_BIT?
-
-    /// Specify that the pass reads from a buffer
-    /// @param buffer The buffer the pass reads from
-    /// @param shader_stage The shader stage the buffer is read from
+    /// Enable depth testing for the pass
+    /// @param depth_buffer
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &reads_from_buffer(std::weak_ptr<Buffer> buffer,
-                                          std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
-        if (buffer.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::reads_from_buffer] Error: buffer is nullptr!");
+    [[nodiscard]] auto &enable_depth_test(std::weak_ptr<Texture> depth_attachment) {
+        if (depth_attachment.expired()) {
+            throw std::invalid_argument("[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is nullptr!");
         }
-        m_buffer_reads.emplace_back(std::move(buffer), shader_stage);
+        m_enable_depth_test = true;
+        m_depth_attachment = depth_attachment;
         return *this;
     }
 
-    /// Specify that the pass reads from a texture
-    /// @param texture The texture the pass reads from
-    /// @param shader_stage The shader stage the texture is read from
+    /// Enable multisample anti-aliasing (MSAA) for the pass
+    /// @param sample_count The MSAA sample count
+    /// @param msaa_back_attachment The MSAA attachment
+    /// @param msaa_depth_attachment The MSAA depth attachment
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &reads_from_texture(std::weak_ptr<Texture> texture,
-                                           std::optional<VkShaderStageFlagBits> shader_stage = std::nullopt) {
-        if (texture.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::reads_from_texture] Error: texture is nullptr!");
+    [[nodiscard]] auto &enable_msaa(VkSampleCountFlagBits sample_count,
+                                    std::weak_ptr<Texture> msaa_back_attachment,
+                                    std::weak_ptr<Texture> msaa_depth_attachment) {
+        if (msaa_back_attachment.expired()) {
+            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_back_buffer' is nullptr!");
         }
-        m_texture_reads.emplace_back(std::move(texture), shader_stage);
-        return *this;
-    }
-
-    /// Specify that the pass writes to a texture
-    /// @param texture The texture the pass writes to
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &writes_to_texture(std::weak_ptr<Texture> texture) {
-        m_texture_writes.emplace_back(texture);
-        return *this;
-    }
-
-    /// Set the clear status for the pass
-    /// @param clear_value The clear value for color and depth
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &set_clear_value(VkClearValue clear_value) {
-        m_clear_value = clear_value;
-        return *this;
-    }
-
-    /// Enable or disable depth testing
-    /// @param depth_test ``true`` if depth testing is enabled for this pass
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &set_depth_test(bool depth_test) {
-        m_depth_test = depth_test;
+        if (msaa_depth_attachment.expired()) {
+            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_depth_buffer' is nullptr!");
+        }
+        m_enable_msaa = true;
+        m_msaa_color_attachment = msaa_back_attachment;
+        m_msaa_depth_attachment = msaa_depth_attachment;
         return *this;
     }
 

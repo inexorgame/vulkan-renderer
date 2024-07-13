@@ -112,60 +112,85 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
+    /// The following code should not be part of texture wrapper because its only purpose is to fill VkImageCreateInfo
+    /// and VkImageViewCreateInfo in the code below to make it shorter.
+    auto fill_image_ci = [&](const VkFormat format, const VkImageUsageFlags image_usage,
+                             const VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT) {
+        return wrapper::make_info<VkImageCreateInfo>({
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = format,
+            .extent =
+                {
+                    .width = static_cast<std::uint32_t>(m_swapchain.extent().width),
+                    .height = static_cast<std::uint32_t>(m_swapchain.extent().height),
+                    .depth = 1,
+                },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = sample_count,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = image_usage,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        });
+    };
+
+    auto fill_image_view_ci = [&](const VkFormat format, const VkImageAspectFlags aspect_flags) {
+        return wrapper::make_info<VkImageViewCreateInfo>({
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = format,
+            .subresourceRange =
+                {
+                    .aspectMask = aspect_flags,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                },
+        });
+    };
+
     m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             switch (texture->m_usage) {
             case TextureUsage::NORMAL: {
                 if (texture->m_on_init) {
                     std::invoke(texture->m_on_init.value());
+                    // TODO: How to unify ->create()?
                     texture->create();
                     texture->update(cmd_buf);
                 }
                 break;
             }
-            case TextureUsage::DEPTH_STENCIL_BUFFER:
-            case TextureUsage::BACK_BUFFER: {
+            case TextureUsage::DEPTH_STENCIL_BUFFER: {
                 texture->create(
-                    wrapper::make_info<VkImageCreateInfo>({
-                        .imageType = VK_IMAGE_TYPE_2D,
-                        .format = texture->m_format,
-                        .extent =
-                            {
-                                .width = static_cast<std::uint32_t>(m_swapchain.extent().width),
-                                .height = static_cast<std::uint32_t>(m_swapchain.extent().height),
-                                .depth = 1,
-                            },
-                        .mipLevels = 1,
-                        .arrayLayers = 1,
-                        .samples = VK_SAMPLE_COUNT_1_BIT,
-                        .tiling = VK_IMAGE_TILING_OPTIMAL,
-                        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-                        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                    }),
-                    wrapper::make_info<VkImageViewCreateInfo>({
-                        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                        .format = texture->m_format,
-                        .subresourceRange =
-                            {
-                                // NOTE: This is the only difference between DEPTH_STENCIL_BUFFER and BACK_BUFFER
-                                .aspectMask = (texture->m_usage == TextureUsage::DEPTH_STENCIL_BUFFER)
-                                                  ? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT |
-                                                                                    VK_IMAGE_ASPECT_STENCIL_BIT)
-                                                  : VK_IMAGE_ASPECT_COLOR_BIT,
-                                .baseMipLevel = 0,
-                                .levelCount = 1,
-                                .baseArrayLayer = 0,
-                                .layerCount = 1,
-                            },
-                    }));
+                    fill_image_ci(texture->m_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
+                    fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
+                break;
+            }
+            case TextureUsage::BACK_BUFFER: {
+                texture->create(fill_image_ci(texture->m_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+                                fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_COLOR_BIT));
+                break;
+            }
+            case TextureUsage::MSAA_BACK_BUFFER: {
+                texture->create(fill_image_ci(texture->m_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                                              // TODO: Expose this as a parameter
+                                              // NOTE: We use the highest available sample count for MSAA
+                                              m_device.get_max_usable_sample_count()),
+                                fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_COLOR_BIT));
+                break;
+            }
+            case TextureUsage::MSAA_DEPTH_STENCIL_BUFFER: {
+                texture->create(
+                    fill_image_ci(texture->m_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                  // TODO: Expose this as a parameter
+                                  // NOTE: We use the highest available sample count for MSAA
+                                  m_device.get_max_usable_sample_count()),
+                    fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
                 break;
             }
             default: {
-                // TODO:
-                // MSAA_BACK_BUFFER
-                // MSAA_DEPTH_STENCIL_BUFFER
-                m_log->warn("Unhandled switch case for creating texture {}", texture->m_name);
                 break;
             }
             }
@@ -188,106 +213,74 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
     // TODO: Or do we need the image index for buffers? (We want to automatically double or triple buffer them)
 
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
-    // TODO: Generate color gradient depending on the number of passes? (Interpolate e.g. in 12 steps for 12 passes)
+    // TODO: Generate color gradient?
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
 
-    // If this is the first graphics pass, we need to transform the swapchain image, which comes back in undefined
-    // layout after presenting
+    // If this is the first graphics pass, change the image layout of the swapchain image which comes back in undefined
+    // image layout after presenting
     if (is_first_pass) {
         cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_UNDEFINED,
                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     }
 
-    // TODO: We need a really clever way to make MSAA easy here
-
-    // TODO: FIX ME!
-    VkImageView resolve_color{VK_NULL_HANDLE};
-
     const auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        .imageView = resolve_color,
+        .imageView =
+            (pass.m_enable_msaa) ? pass.m_msaa_color_attachment.lock()->m_img_view : m_swapchain.image_view(img_index),
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
-        // TODO: Remove img_index and implement swapchain.get_current_image()
         .resolveImageView = m_swapchain.image_view(img_index),
         .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = pass.m_clear_values ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+        .loadOp = (pass.m_clear_color_attachment) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = pass.m_clear_values.value().color,
+        .clearValue = pass.m_clear_values.value(),
     });
 
-    // TODO: FIX ME!
-    VkImageView resolve_depth{VK_NULL_HANDLE};
-    VkImageView depth_buffer{depth_buffer};
-
-#if 0
     const auto depth_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        .imageView = resolve_depth,
+        .imageView =
+            (pass.m_enable_msaa) ? pass.m_msaa_depth_attachment.lock()->m_img_view : m_swapchain.image_view(img_index),
         .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         .resolveMode = VK_RESOLVE_MODE_MIN_BIT,
-        .resolveImageView = depth_buffer,
+        .resolveImageView = pass.m_depth_attachment.lock()->m_img_view,
         .resolveImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .loadOp = pass.m_clear_values ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+        .loadOp = (pass.m_clear_stencil_attachment) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = pass.m_clear_values.value().depthStencil,
+        .clearValue = pass.m_clear_values.value(),
     });
+
+    // TODO: Implement stencil attachment
 
     const auto rendering_info = wrapper::make_info<VkRenderingInfo>({
-        .renderingArea =
+        .renderArea =
             {
-                m_swapchain.extent(),
+                .extent = m_swapchain.extent(),
             },
         .layerCount = 1,
-        .colorAttachmentCount = 1,
+        .colorAttachmentCount = 1, // TODO: Implement multiple color attachments
         .pColorAttachments = &color_attachment,
-        // TODO: depth and stencil attachment
+        .pDepthAttachment = &depth_attachment,
+        // TODO: Implement stencil attachment
     });
 
-    // Start dynamic rendering (we are no longer using renderpasses)
-    cmd_buf.begin_rendering(&rendering_info);
+    // Start dynamic rendering
+    cmd_buf.begin_rendering(rendering_info);
 
-    // Bind the vertex buffers of the pass
-    // Note that vertex buffers are optional, meaning the user can either give vertex buffers
-    if (!pass.m_vertex_buffers.empty()) {
-        cmd_buf.bind_vertex_buffers(pass.m_vertex_buffers);
-    }
-
-    // Bind an index buffer if any is present
-    if (pass.has_index_buffer()) {
-        // Note that in Vulkan you can have a variable number of vertex buffers, but only one index buffer bound
-        cmd_buf.bind_index_buffer(pass.m_index_buffer);
-    }
-
-#endif
-
-    // Call the custom command buffer recording function of the graphics pass
+    // Call the command buffer recording function of the graphics pass
     std::invoke(pass.m_on_record, cmd_buf);
 
     // End dynamic rendering
     cmd_buf.end_rendering();
 
-    // If this is the last graphics pass, change the image layout of the back buffer for presenting
+    // If this is the last graphics pass, change the image layout of the swapchain image for presenting
     if (is_last_pass) {
         cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
-
-    // End the debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
+    // End the debug label for this graphics pass
     cmd_buf.end_debug_label_region();
 }
 
 void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std::uint32_t img_index) {
-    // TODO: Find the balance between recording all passes into one big command buffer vs. recording one command
-    // buffer per pass. Recording one command buffer per pass would allow us to do this in parallel using
-    // taskflow. Assuming the programmer takes responsibility for synchronization of all on_record functions he
-    // provides, there should be a performance benefit from recording command buffers in parallel. On the other
-    // hand, each command buffer introduces new overhead (maybe even when all command buffers are submitted in
-    // batch). Another solution would be to let the user request a command buffer manually and to let him
-    // specify which command buffer to use in which pass. Combined with the user-defined order of passes, this
-    // will give more flexibility.
-
-    // Loop through all graphics passes and record their command buffer
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
-        // This is important to know because of image layout transitions for back buffer for example
         const bool is_first_pass = (pass_index == 0);
         const bool is_last_pass = (pass_index == (m_graphics_passes.size() - 1));
         record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index], is_first_pass, is_last_pass, img_index);

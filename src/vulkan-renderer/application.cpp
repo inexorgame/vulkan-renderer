@@ -503,6 +503,7 @@ void Application::setup_render_graph() {
                                         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                     },
                                 })
+                                .set_multisampling(m_device->get_max_usable_sample_count(), 1.0f)
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment(m_swapchain->image_format())
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
@@ -533,16 +534,16 @@ void Application::setup_render_graph() {
     using wrapper::commands::CommandBuffer;
     m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &graphics_pass_builder) {
         m_octree_pass =
-            graphics_pass_builder
-                .set_clear_value({
-                    // TODO: Define default color values for these, like COLOR::RED, COLOR::BLUE...
-                    .color = {1.0f, 0.0f, 0.0f},
-                })
-                .set_depth_test(true)
+            graphics_pass_builder.add_color_attachment(m_back_buffer, VkClearColorValue{1.0f, 0.0f, 0.0f, 1.0f})
+                .enable_depth_test(m_depth_buffer)
+                .enable_msaa(m_device->get_max_usable_sample_count(), m_msaa_color, m_msaa_depth)
                 .set_on_record([&](const CommandBuffer &cmd_buf) {
-                    // Record the command buffer for rendering the octree
-                    cmd_buf
-                        .bind_pipeline(m_octree_pipeline)
+                    // NOTE: It's the responsibility of the programmer to bind pipelines, descriptor sets,
+                    // and buffers manually inside of this on_record lambda! It's also the responsibility of
+                    // the programmer to make sure that every variable captured by reference inside of this
+                    // lambda is still in a valid state at the time of execution of the lambda!
+                    cmd_buf.bind_pipeline(m_octree_pipeline)
+                        .bind_descriptor_set(m_descriptor_set, m_octree_pipeline->pipeline_layout())
                         // TODO: Binding vertex buffer must automatically respect current swapchain img index!
                         .bind_vertex_buffer(m_vertex_buffer)
                         // TODO: Binding index buffer must automatically respect current swapchain img index!
@@ -550,22 +551,13 @@ void Application::setup_render_graph() {
                         // TODO: Automatically respect current swapchain img index!
                         .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
                 })
-                // TOOD: Even simpler API like .reads_from() and .writes_to() without templates (just overloading)?
-                // TODO: Since we don't bind vertex or index buffers, do we even need these calls to reads_from_buffer?
-                // TODO: We could imagine some API where we have vertex_buffer.bind_me() in on_record and then check
-                // which ones were not bound
-                .reads_from_buffer(m_index_buffer)
-                .reads_from_buffer(m_vertex_buffer)
-                .reads_from_buffer(m_uniform_buffer, VK_SHADER_STAGE_VERTEX_BIT)
-                .writes_to_texture(m_back_buffer)
-                .writes_to_texture(m_depth_buffer)
                 .build("Octree");
         return m_octree_pass;
     });
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(
-        *m_device, *m_swapchain, *m_render_graph.get(), m_back_buffer, m_msaa_color, [&]() { update_imgui_overlay(); });
+    // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
+    //                                                             m_back_buffer, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

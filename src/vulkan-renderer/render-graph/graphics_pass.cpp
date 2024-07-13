@@ -6,40 +6,29 @@
 namespace inexor::vulkan_renderer::render_graph {
 
 GraphicsPass::GraphicsPass(std::string name,
-                           BufferReads buffer_reads,
-                           TextureReads texture_reads,
-                           TextureWrites texture_writes,
                            std::function<void(const CommandBuffer &)> on_record,
+                           std::weak_ptr<Texture> color_attachment,
+                           std::weak_ptr<Texture> depth_attachment,
+                           std::weak_ptr<Texture> stencil_attachment,
+                           std::weak_ptr<Texture> msaa_color_attachment,
+                           std::weak_ptr<Texture> msaa_depth_attachment,
+                           bool enable_msaa,
+                           bool clear_color_attachment,
+                           bool clear_stencil_attachment,
                            std::optional<VkClearValue> clear_values)
-    : m_name(std::move(name)), m_buffer_reads(std::move(buffer_reads)), m_texture_reads(std::move(texture_reads)),
-      m_texture_writes(std::move(texture_writes)), m_on_record(std::move(on_record)),
-      m_clear_values(std::move(clear_values)) {
-    // Make sure there is no more than one index buffer (or none)
-    bool index_buffer_present = false;
-    for (const auto buffer : m_buffer_reads) {
-        // Is this buffer resource an index buffer?
-        if (buffer.first.lock()->m_buffer_type == BufferType::INDEX_BUFFER) {
-            // Is an index buffer already specified?
-            if (index_buffer_present) {
-                throw std::runtime_error("Error: More than one index buffer in graphics pass " + m_name + "!");
-            }
-            // This was the first index buffer we found
-            index_buffer_present = true;
-        }
-    }
-}
+    : m_name(std::move(name)), m_on_record(std::move(on_record)), m_color_attachment(std::move(color_attachment)),
+      m_depth_attachment(std::move(depth_attachment)), m_stencil_attachment(std::move(stencil_attachment)),
+      m_msaa_color_attachment(std::move(msaa_color_attachment)), m_enable_msaa(enable_msaa),
+      m_msaa_depth_attachment(msaa_depth_attachment), m_clear_color_attachment(clear_color_attachment),
+      m_clear_stencil_attachment(clear_stencil_attachment), m_clear_values(std::move(clear_values)) {}
 
 GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_name = std::move(other.m_name);
     m_clear_values = other.m_clear_values;
     m_on_record = std::move(other.m_on_record);
-    m_buffer_reads = std::move(other.m_buffer_reads);
-    m_texture_reads = std::move(other.m_texture_reads);
-    m_texture_writes = std::move(other.m_texture_writes);
-    m_index_buffer = std::exchange(other.m_index_buffer, VK_NULL_HANDLE);
-    m_vertex_buffers = std::move(other.m_vertex_buffers);
     m_descriptor_set_layout = std::exchange(other.m_descriptor_set_layout, nullptr);
     m_descriptor_set = std::exchange(other.m_descriptor_set, VK_NULL_HANDLE);
+    m_enable_msaa = other.m_enable_msaa;
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

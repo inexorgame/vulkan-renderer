@@ -132,6 +132,9 @@ private:
 
     // TODO: Add @exception to documentation of other methods/code parts!
 
+    /// Allocate the descriptor sets
+    void allocate_descriptor_sets();
+
     /// The rendergraph must not have any cycles in it!
     /// @exception std::logic_error The rendergraph is not acyclic!
     void check_for_cycles();
@@ -140,6 +143,7 @@ private:
     /// @param cmd_buf The command buffer to record into
     void create_buffers();
 
+    /// Create the descriptor set layouts
     void create_descriptor_set_layouts();
 
     /// Create the graphics passes
@@ -175,11 +179,11 @@ private:
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
     void update_buffers();
 
-    /// Update dynamic textures
-    void update_textures();
-
     /// Update the descriptor sets
     void update_descriptor_sets();
+
+    /// Update dynamic textures
+    void update_textures();
 
     /// Make sure all required resources are specified so rendergraph is ready to be compiled
     void validate_render_graph();
@@ -218,9 +222,6 @@ public:
     /// @return A shared pointer to the buffer resource that was created
     [[nodiscard]] std::shared_ptr<Buffer>
     add_buffer(std::string buffer_name, BufferType buffer_type, std::function<void()> on_update);
-
-    ///
-    void allocate_descriptor_sets();
 
     /// Add a descriptor to rendergraph
     /// @param on_create_descriptor_set_layout

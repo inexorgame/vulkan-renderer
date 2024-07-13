@@ -59,9 +59,8 @@ const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, s
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo *rendering_info) const {
-    assert(rendering_info);
-    vkCmdBeginRendering(m_cmd_buf, rendering_info);
+const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rendering_info) const {
+    vkCmdBeginRendering(m_cmd_buf, &rendering_info);
     return *this;
 };
 
@@ -107,7 +106,7 @@ const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::shared_ptr<ren
         throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->m_name +
                                     " is not a vertex buffer!");
     }
-    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer->m_buffer, 0);
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer->m_buffer, std::vector<VkDeviceSize>(1, 0).data());
     return *this;
 }
 

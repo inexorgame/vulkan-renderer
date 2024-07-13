@@ -60,6 +60,8 @@ class ImGuiRenderer {
     /// It will be called at the beginning of set_on_update
     std::function<void()> m_on_update_user_data{[]() {}};
 
+    std::weak_ptr<render_graph::Texture> m_color_attachment;
+
     void load_font_data_from_file();
 
     /// Customize ImGui style like text color for example
@@ -76,8 +78,7 @@ public:
     ImGuiRenderer(const Device &device,
                   const Swapchain &swapchain,
                   render_graph::RenderGraph &render_graph,
-                  std::weak_ptr<render_graph::Texture> back_buffer,
-                  std::weak_ptr<render_graph::Texture> depth_buffer,
+                  std::weak_ptr<render_graph::Texture> color_attachment,
                   std::function<void()> on_update_user_data);
 
     ImGuiRenderer(const ImGuiRenderer &) = delete;
