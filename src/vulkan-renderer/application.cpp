@@ -445,8 +445,6 @@ void Application::setup_render_graph() {
         m_vertex_buffer->request_update(m_octree_vertices);
     });
 
-    // TODO: How to prevent duplicate loading of shaders or how to deal with object lifetime?
-    // (std::unordered_map<std::string, std::shared_ptr<Shader>>)
     m_octree_vert =
         std::make_shared<wrapper::Shader>(*m_device, "Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
     m_octree_frag =
@@ -467,7 +465,7 @@ void Application::setup_render_graph() {
     m_index_buffer->request_update(m_octree_indices);
 
     m_uniform_buffer = m_render_graph->add_buffer("Matrices", UNIFORM_BUFFER, [&]() {
-        // TODO: Update model matrix if required
+        // NOTE: Model matrix does not yet require updates
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
@@ -556,8 +554,8 @@ void Application::setup_render_graph() {
     });
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
-    // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
-    //                                                            m_back_buffer, [&]() { update_imgui_overlay(); });
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
+                                                                 m_back_buffer, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

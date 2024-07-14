@@ -284,7 +284,6 @@ public:
     [[nodiscard]] auto &set_multisampling(const VkSampleCountFlagBits sample_count,
                                           const std::optional<float> min_sample_shading) {
         m_multisample_sci.rasterizationSamples = sample_count;
-
         if (min_sample_shading) {
             m_multisample_sci.minSampleShading = min_sample_shading.value();
         }
@@ -305,12 +304,6 @@ public:
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] auto &set_primitive_topology(const VkPrimitiveTopology topology) {
         m_input_assembly_sci.topology = topology;
-        return *this;
-    }
-
-    ///
-    /// @return
-    [[nodiscard]] auto &set_push_constant_ranges() {
         return *this;
     }
 

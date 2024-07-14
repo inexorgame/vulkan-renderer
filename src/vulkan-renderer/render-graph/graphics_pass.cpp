@@ -1,6 +1,5 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 
-#include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::render_graph {

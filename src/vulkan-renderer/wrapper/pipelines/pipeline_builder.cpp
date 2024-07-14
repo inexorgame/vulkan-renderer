@@ -36,14 +36,12 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
 
 std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
     if (name.empty()) {
-        throw std::invalid_argument("Error: No name specified for graphics pipeline in GraphicsPipelineBuilder!");
+        throw std::invalid_argument("[GraphicsPipelineBuilder::build] Error: 'name' is empty!");
     }
-    // NOTE: Inside of GraphicsPipelineBuilder, we do almost no error checks when it comes to the data which is used to
+    // NOTE: Inside of GraphicsPipelineBuilder, we carry out no error checks when it comes to the data which is used to
     // build the graphics pipeline. This is because validation of this data is job of the validation layers, and not the
-    // job of GraphicsPipelineBuilder. We don't need to mimic the behavious of validation layers in here.
+    // job of GraphicsPipelineBuilder. We should not mimic the behavious of validation layers here.
 
-    // We don't really need all the make_infos here, as we initialized it all in reset() already,
-    // but it makes the code look cleaner and more consistent
     m_vertex_input_sci = make_info<VkPipelineVertexInputStateCreateInfo>({
         .vertexBindingDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_binding_descriptions.size()),
         .pVertexBindingDescriptions = m_vertex_input_binding_descriptions.data(),
@@ -59,17 +57,12 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pScissors = m_scissors.data(),
     });
 
-    if (!m_dynamic_states.empty()) {
-        m_dynamic_states_sci = make_info<VkPipelineDynamicStateCreateInfo>({
-            .dynamicStateCount = static_cast<std::uint32_t>(m_dynamic_states.size()),
-            .pDynamicStates = m_dynamic_states.data(),
-        });
-    }
+    m_dynamic_states_sci = make_info<VkPipelineDynamicStateCreateInfo>({
+        .dynamicStateCount = static_cast<std::uint32_t>(m_dynamic_states.size()),
+        .pDynamicStates = m_dynamic_states.data(),
+    });
 
     m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
-        // NOTE: Because we pass m_pipeline_rendering_ci as pNext parameter
-        // in graphics_pipeline below, we need to end the pNext chain here!
-        .pNext = nullptr,
         .colorAttachmentCount = static_cast<std::uint32_t>(m_color_attachments.size()),
         .pColorAttachmentFormats = m_color_attachments.data(),
         .depthAttachmentFormat = m_depth_attachment_format,
@@ -103,7 +96,7 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         }),
         std::move(name));
 
-    // NOTE: The data of the builder can be reset now that the graphics pipeline was created
+    // NOTE: We reset the data of the builder here so it can be re-used
     reset();
 
     // Return the graphics pipeline we created

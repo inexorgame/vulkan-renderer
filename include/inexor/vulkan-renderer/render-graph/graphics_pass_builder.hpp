@@ -16,12 +16,14 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::render_graph {
 
+using wrapper::commands::CommandBuffer;
+
 /// A builder class for graphics passes in the rendergraph
 /// @warning Make sure that the order or add calls for buffers and textures matches the binding order!
 class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
-    std::function<void(const wrapper::commands::CommandBuffer &)> m_on_record;
+    std::function<void(const CommandBuffer &)> m_on_record;
     /// Depth testing
     bool m_enable_depth_test{false};
     /// Multisample anti-aliasing (MSAA)
@@ -55,13 +57,13 @@ public:
 
     /// Add a color attachment to the pass
     /// @param color_attachment The color attachment
-    /// @param clear_color The clear color for the color attachment
+    /// @param clear_color The clear color for the color attachment (``std::nullopt`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &add_color_attachment(std::weak_ptr<Texture> color_attachment,
                                              std::optional<VkClearColorValue> clear_color = std::nullopt) {
         if (color_attachment.expired()) {
             throw std::invalid_argument(
-                "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is nullptr!");
+                "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is expired!");
         }
         m_color_attachment = color_attachment;
         if (clear_color) {
@@ -91,7 +93,7 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] auto &enable_depth_test(std::weak_ptr<Texture> depth_attachment) {
         if (depth_attachment.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is nullptr!");
+            throw std::invalid_argument("[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is expired!");
         }
         m_enable_depth_test = true;
         m_depth_attachment = depth_attachment;
@@ -107,10 +109,10 @@ public:
                                     std::weak_ptr<Texture> msaa_back_attachment,
                                     std::weak_ptr<Texture> msaa_depth_attachment) {
         if (msaa_back_attachment.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_back_buffer' is nullptr!");
+            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_back_buffer' is expired!");
         }
         if (msaa_depth_attachment.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_depth_buffer' is nullptr!");
+            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_depth_buffer' is expired!");
         }
         m_enable_msaa = true;
         m_msaa_color_attachment = msaa_back_attachment;
@@ -121,7 +123,7 @@ public:
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
     /// @param on_record The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &set_on_record(std::function<void(const wrapper::commands::CommandBuffer &)> on_record) {
+    [[nodiscard]] auto &set_on_record(std::function<void(const CommandBuffer &)> on_record) {
         m_on_record = std::move(on_record);
         return *this;
     }

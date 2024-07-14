@@ -55,6 +55,18 @@ private:
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
 public:
+    /// Default constructor
+    /// @param name The name of the graphics pass
+    /// @param on_record
+    /// @param m_color_attachment
+    /// @param m_depth_attachment
+    /// @param m_stencil_attachment
+    /// @param m_msaa_color_attachment
+    /// @param m_msaa_depth_attachment
+    /// @param enable_msaa
+    /// @param clear_color_attachment
+    /// @param clear_stencil_attachment
+    /// @param clear_values
     GraphicsPass(std::string name,
                  std::function<void(const CommandBuffer &)> on_record,
                  std::weak_ptr<Texture> m_color_attachment,

@@ -87,7 +87,7 @@ private:
     /// @param img_view_ci
     void create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci);
 
-    /// Call vkDestroyImageView and then vmaDestroyImage
+    /// Call vkDestroyImageView and vmaDestroyImage
     void destroy();
 
     /// Upload the data into the texture
@@ -115,6 +115,7 @@ public:
     Texture(const Device &device, std::string name, TextureUsage usage, VkFormat format);
 
     Texture(const Texture &) = delete;
+    // TODO: Implement!
     Texture(Texture &&other) noexcept;
     ~Texture();
 
