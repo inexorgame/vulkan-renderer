@@ -22,13 +22,14 @@ class RenderGraph;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-/// RAII wrapper for VkPipeline
-// TODO: Compute pipelines
+// TODO: Implement compute pipelines
+
+/// RAII wrapper for graphics pipelines
 class GraphicsPipeline {
-private:
     friend class commands::CommandBuffer;
     friend class render_graph::RenderGraph;
 
+private:
     const Device &m_device;
     std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
     std::vector<VkPushConstantRange> m_push_constant_ranges;
@@ -37,7 +38,7 @@ private:
     std::string m_name;
 
 public:
-    /// Default constructor is private so that only RenderGraph and CommandBuffer can access it
+    /// Default constructor
     /// @param device The device wrapper
     /// @param descriptor_set_layouts The descriptor set layouts in the pipeline layout
     /// @param push_constant_ranges The push constant ranges in the pipeline layout
@@ -57,10 +58,6 @@ public:
 
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
     GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
-
-    [[nodiscard]] auto pipeline_layout() const {
-        return m_pipeline_layout;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

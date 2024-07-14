@@ -95,7 +95,7 @@ public:
     /// @param dyn_offsets The dynamic offset values (empty by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set,
-                                             VkPipelineLayout layout,
+                                             std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
                                              VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
                                              std::uint32_t first_set = 0,
                                              std::span<const std::uint32_t> dyn_offsets = {}) const;
@@ -406,17 +406,17 @@ public:
 
     /// Call vkCmdPushConstants
     /// @tparam T the data type of the push constant
-    /// @param layout The pipeline layout
+    /// @param pipeline The graphics pipeline
     /// @param data A const reference to the data
     /// @param stage The shader stage that will be accepting the push constants
     /// @param offset The offset value (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename T>
-    const CommandBuffer &push_constant(const VkPipelineLayout layout,
+    const CommandBuffer &push_constant(const std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
                                        const T &data, // NOLINT
                                        const VkShaderStageFlags stage,
                                        const VkDeviceSize offset = 0) const {
-        return push_constants(layout, stage, sizeof(data), &data, offset);
+        return push_constants(pipeline.lock()->m_pipeline_layout, stage, sizeof(data), &data, offset);
     }
 
     // Graphics commands

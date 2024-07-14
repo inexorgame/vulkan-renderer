@@ -76,12 +76,14 @@ const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const V
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
-                                                        const VkPipelineLayout layout,
-                                                        const VkPipelineBindPoint bind_point,
-                                                        const std::uint32_t first_set,
-                                                        const std::span<const std::uint32_t> dyn_offsets) const {
-    return bind_descriptor_sets({&descriptor_set, 1}, layout, bind_point, first_set, dyn_offsets);
+const CommandBuffer &
+CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
+                                   const std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
+                                   const VkPipelineBindPoint bind_point,
+                                   const std::uint32_t first_set,
+                                   const std::span<const std::uint32_t> dyn_offsets) const {
+    return bind_descriptor_sets({&descriptor_set, 1}, pipeline.lock()->m_pipeline_layout, bind_point, first_set,
+                                dyn_offsets);
 }
 
 const CommandBuffer &CommandBuffer::bind_index_buffer(const std::shared_ptr<render_graph::Buffer> buffer,

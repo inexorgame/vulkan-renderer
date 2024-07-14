@@ -543,7 +543,7 @@ void Application::setup_render_graph() {
                     // the programmer to make sure that every variable captured by reference inside of this
                     // lambda is still in a valid state at the time of execution of the lambda!
                     cmd_buf.bind_pipeline(m_octree_pipeline)
-                        .bind_descriptor_set(m_descriptor_set, m_octree_pipeline->pipeline_layout())
+                        .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
                         // TODO: Binding vertex buffer must automatically respect current swapchain img index!
                         .bind_vertex_buffer(m_vertex_buffer)
                         // TODO: Binding index buffer must automatically respect current swapchain img index!
@@ -557,7 +557,7 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
-    //                                                             m_back_buffer, [&]() { update_imgui_overlay(); });
+    //                                                            m_back_buffer, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

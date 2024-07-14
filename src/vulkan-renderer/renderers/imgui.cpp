@@ -172,9 +172,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                cmd_buf.bind_pipeline(m_imgui_pipeline)
                                    .bind_vertex_buffer(m_vertex_buffer)
                                    .bind_index_buffer(m_index_buffer)
-                                   .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline->pipeline_layout())
-                                   .push_constant(m_imgui_pipeline->pipeline_layout(), m_push_const_block,
-                                                  VK_SHADER_STAGE_VERTEX_BIT);
+                                   .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
+                                   .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
 
                                ImDrawData *draw_data = ImGui::GetDrawData();
                                if (draw_data == nullptr) {

@@ -258,7 +258,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
         .colorAttachmentCount = 1, // TODO: Implement multiple color attachments
         .pColorAttachments = &color_attachment,
         .pDepthAttachment = &depth_attachment,
-        // TODO: Implement stencil attachment
+        .pStencilAttachment = nullptr, // TODO: Implement stencil attachment
     });
 
     // Start dynamic rendering
