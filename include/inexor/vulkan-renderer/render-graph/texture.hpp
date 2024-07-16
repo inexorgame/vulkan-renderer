@@ -76,6 +76,9 @@ private:
     /// By definition, if this is not std::nullopt, this is a dynamic texture
     std::optional<std::function<void()>> m_on_update{std::nullopt};
 
+    VmaAllocation m_alloc{};
+    VmaAllocationInfo m_alloc_info{};
+
     // The staging buffer for updating the texture data
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
     VmaAllocation m_staging_buffer_alloc{VK_NULL_HANDLE};
@@ -89,6 +92,9 @@ private:
 
     /// Destroy the texture (and the MSAA texture if specified)
     void destroy();
+
+    /// Destroy the staging buffer used for texture updates
+    void destroy_staging_buffer();
 
     /// Upload the data into the texture
     /// @param cmd_buf The command buffer to record the commands into
@@ -118,7 +124,7 @@ public:
     ~Texture();
 
     Texture &operator=(const Texture &) = delete;
-    Texture &operator=(Texture &&) noexcept;
+    Texture &operator=(Texture &&) = delete;
 
     /// Request rendergraph to update the texture
     /// @param src_texture_data A pointer to the source data

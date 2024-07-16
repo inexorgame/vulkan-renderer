@@ -1,15 +1,15 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(const Device &device) : m_device(device) {}
+DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(const Device &device)
+    : m_device(device), m_descriptor_set_layout_cache(device) {}
 
 DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(DescriptorSetLayoutBuilder &&other) noexcept
-    : m_device(other.m_device) {
+    : m_device(other.m_device), m_descriptor_set_layout_cache(std::move(other.m_descriptor_set_layout_cache)) {
     m_bindings = std::move(other.m_bindings);
     m_binding = other.m_binding;
 }

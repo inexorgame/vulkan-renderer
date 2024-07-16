@@ -58,7 +58,7 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
-    explicit DescriptorSetLayoutCache(const Device &device);
+    DescriptorSetLayoutCache(const Device &device);
     DescriptorSetLayoutCache(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache(DescriptorSetLayoutCache &&) noexcept;
     ~DescriptorSetLayoutCache() = default;

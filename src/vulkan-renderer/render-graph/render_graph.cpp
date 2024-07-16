@@ -167,28 +167,12 @@ void RenderGraph::create_rendering_infos() {
 void RenderGraph::create_textures() {
     m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
-            switch (texture->m_usage) {
-            case TextureUsage::NORMAL: {
-                if (texture->m_on_init) {
-                    std::invoke(texture->m_on_init.value());
-                    // TODO: Implement me!
-                    texture->create();
-                    texture->update(cmd_buf);
-                }
-                break;
+            // TODO: Check if this initializes all textures (internal ones from rendergraph and external like ImGui?)
+            if (texture->m_on_init) {
+                std::invoke(texture->m_on_init.value());
             }
-            case TextureUsage::DEPTH_STENCIL_BUFFER: {
-                // TODO: Implement me!
-                break;
-            }
-            case TextureUsage::BACK_BUFFER: {
-                // TODO: Implement me!
-                break;
-            }
-            default: {
-                break;
-            }
-            }
+            texture->create();
+            texture->update(cmd_buf);
         }
     });
 }
@@ -204,8 +188,12 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
     // Start dynamic rendering with the compiled rendering info
     cmd_buf.begin_rendering(pass.m_rendering_info);
-    // Call the command buffer recording function of this graphics pass
+
+    // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
+    // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
+    // does not bind any pipelines, descriptor sets, or buffers automatically!
     std::invoke(pass.m_on_record_cmd_buffer, cmd_buf);
+
     // End dynamic rendering
     cmd_buf.end_rendering();
     // End the debug label for this graphics pass

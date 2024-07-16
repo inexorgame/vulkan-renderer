@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
+
 #include <volk.h>
 
 #include <string>
@@ -18,9 +20,6 @@ class Device;
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-// Forward declarations
-class DescriptorSetLayoutCache;
-
 /// A builder for descriptors
 class DescriptorSetLayoutBuilder {
     friend class RenderGraph;
@@ -28,7 +27,7 @@ class DescriptorSetLayoutBuilder {
 private:
     const Device &m_device;
     /// All instances of DescriptorSetLayoutBuilder have the same DescriptorSetLayoutCache instance!
-    static DescriptorSetLayoutCache m_descriptor_set_layout_cache;
+    DescriptorSetLayoutCache m_descriptor_set_layout_cache;
     std::vector<VkDescriptorSetLayoutBinding> m_bindings;
     std::uint32_t m_binding{0};
 

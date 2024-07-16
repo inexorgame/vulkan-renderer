@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
 #include <stdexcept>
 #include <utility>
@@ -23,6 +24,10 @@ Texture::Texture(const Device &device,
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
+}
+
+Texture::~Texture() {
+    destroy();
 }
 
 void Texture::create() {
@@ -94,17 +99,21 @@ void Texture::destroy() {
     if (m_msaa_img) {
         m_msaa_img->destroy();
     }
+    // TODO: Destroy staging buffer and other buffers
+}
+
+void Texture::destroy_staging_buffer() {
+    vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
+    m_staging_buffer = VK_NULL_HANDLE;
+    m_staging_buffer_alloc = VK_NULL_HANDLE;
 }
 
 void Texture::update(const CommandBuffer &cmd_buf) {
-#if 0
     if (m_staging_buffer != VK_NULL_HANDLE) {
-        vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
-        m_staging_buffer = VK_NULL_HANDLE;
-        m_staging_buffer_alloc = VK_NULL_HANDLE;
+        destroy_staging_buffer();
     }
     const auto staging_buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
-        .size = m_texture_data_size,
+        .size = m_src_texture_data_size,
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
@@ -120,20 +129,20 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
-    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img)
-        .copy_buffer_to_image(m_staging_buffer, m_img,
+    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img->m_img)
+        .copy_buffer_to_image(m_staging_buffer, m_img->m_img,
                               {
-                                  .width = m_img_ci.extent.width,
-                                  .height = m_img_ci.extent.height,
+                                  .width = m_width,
+                                  .height = m_height,
                                   .depth = 1,
                               })
-        .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img);
+        .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img->m_img);
 
     // TODO: Do we need to create sampler and image view here? or in create()?
     // Update the descriptor image info
-    m_descriptor_image_info = VkDescriptorImageInfo{
-        .sampler = m_sampler->m_sampler,
-        .imageView = m_img_view,
+    m_descriptor_img_info = VkDescriptorImageInfo{
+        .sampler = m_img->m_sampler->m_sampler,
+        .imageView = m_img->m_img_view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
 
@@ -141,7 +150,6 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     // It will be destroyed either in the destructor or the next time execute_update is called
     // Another option would have been to wrap each call to execute_update() into its own single time
     // command buffer, which would increase the total number of command buffer submissions though
-#endif
 }
 
 void Texture::request_update(void *src_texture_data, const std::size_t src_texture_data_size) {

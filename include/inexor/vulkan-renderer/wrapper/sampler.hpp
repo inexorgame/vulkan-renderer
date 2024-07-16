@@ -8,6 +8,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
+class RenderGraph;
 class Texture;
 } // namespace inexor::vulkan_renderer::render_graph
 
@@ -17,10 +18,12 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 
 // Using declaration
+using render_graph::RenderGraph;
 using render_graph::Texture;
 
 /// RAII wrapper class for VkSampler
 class Sampler {
+    friend class RenderGraph;
     friend class Texture;
 
 private:
@@ -54,10 +57,9 @@ public:
                 .unnormalizedCoordinates = VK_FALSE,
             }));
 
-    ~Sampler();
-
     Sampler(const Sampler &) = delete;
     Sampler(Sampler &&) noexcept;
+    ~Sampler();
 
     Sampler &operator=(const Sampler &) = delete;
     Sampler &operator=(Sampler &&) = delete;
