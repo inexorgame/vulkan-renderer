@@ -37,6 +37,7 @@ class GraphicsPass;
 
 using inexor::vulkan_renderer::wrapper::Device;
 using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
+using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateBuilder;
 
 // TODO: Store const reference to rendergraph and retrieve the swapchain image index for automatic buffer tripling
 
@@ -47,7 +48,7 @@ private:
     friend class RenderGraph;
     friend class GraphicsPass;
     friend class CommandBuffer;
-    friend class inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateBuilder;
+    friend class DescriptorSetUpdateBuilder;
 
     /// The device wrapper
     const Device &m_device;

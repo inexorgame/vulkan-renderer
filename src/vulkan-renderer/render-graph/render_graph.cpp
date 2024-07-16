@@ -75,9 +75,11 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_buffers() {
-    m_device.execute("[RenderGraph::create_buffers]", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_buffers|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             buffer->m_on_update();
+            // Rename the command buffer before creating every buffer for fine-grained debugging
+            cmd_buf.set_suboperation_debug_name("Buffer:" + buffer->m_name + "]");
             buffer->create(cmd_buf);
         }
     });
@@ -180,19 +182,25 @@ void RenderGraph::create_rendering_infos() {
                 }
             };
 
+            bool msaa_enabled = (attach_ptr->m_msaa_img != nullptr);
+
             // This decides if MSAA is enabled on a per-texture basis
             return wrapper::make_info<VkRenderingAttachmentInfo>({
-                .imageView = attach_ptr->m_img->m_img_view,
+                .imageView = msaa_enabled ? attach_ptr->m_msaa_img->m_img_view : attach_ptr->m_img->m_img_view,
+                // The image layout is the same for m_img and m_msaa_img
                 .imageLayout = img_layout,
-                .resolveMode = (attach_ptr->m_sample_count > VK_SAMPLE_COUNT_1_BIT)
-                                   // The resolve mode must be chosen on whether it's an integer format
-                                   ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
-                                                                               : VK_RESOLVE_MODE_MIN_BIT)
-                                   : VK_RESOLVE_MODE_NONE,
-                .resolveImageView = attach_ptr->m_msaa_img ? attach_ptr->m_msaa_img->m_img_view : VK_NULL_HANDLE,
-                .resolveImageLayout = attach_ptr ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
+                // The resolve mode must be chosen on whether it's an integer format
+                .resolveMode = msaa_enabled ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
+                                                                                        : VK_RESOLVE_MODE_MIN_BIT)
+                                            : VK_RESOLVE_MODE_NONE, // No resolve if MSAA is disabled
+                .resolveImageView = msaa_enabled ? attach_ptr->m_img->m_img_view : VK_NULL_HANDLE,
+                // TODO: Is this correct layout?
+                .resolveImageLayout = msaa_enabled ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
+                // Does this pass require clearing this attachment?
                 .loadOp = attachment.second ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+                // The result will always be stored
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                // If clearing is enabled, specify the clear value
                 .clearValue = attachment.second ? attachment.second.value() : VkClearValue{},
             });
         };
@@ -233,14 +241,18 @@ void RenderGraph::create_rendering_infos() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_textures|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             // TODO: Check if this initializes all textures (internal ones from rendergraph and external like ImGui?)
             if (texture->m_on_init) {
                 std::invoke(texture->m_on_init.value());
             }
+            // Rename the command buffer before creating every texture for fine-grained debugging
+            cmd_buf.set_suboperation_debug_name("Texture-Create:" + texture->m_name + "]");
             texture->create();
             if (texture->m_usage == TextureUsage::NORMAL) {
+                // Rename the command buffer before creating every texture for fine-grained debugging
+                cmd_buf.set_suboperation_debug_name("Texture-Update:" + texture->m_name + "]");
                 // Only external textures are updated, not back or depth buffers used internally in rendergraph
                 texture->update(cmd_buf);
             }
@@ -254,6 +266,9 @@ void RenderGraph::determine_pass_order() {
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
+    // Rename the command buffer before creating every texture for fine-grained debugging
+    cmd_buf.set_suboperation_debug_name("Pass:" + pass.m_name + "]");
+
     // TODO: Define default color values for debug labels!
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
@@ -286,7 +301,10 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf) {
 }
 
 void RenderGraph::render() {
-    const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render]");
+    // Acquire the next swapchain image index
+    m_swapchain.acquire_next_image_index();
+
+    const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render|");
     // TODO: Record command buffers for passes in parallel!
     record_command_buffers(cmd_buf);
 
@@ -297,7 +315,7 @@ void RenderGraph::render() {
         .pWaitSemaphores = m_swapchain.image_available_semaphore(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
-        .pCommandBuffers = cmd_buf.ptr(),
+        .pCommandBuffers = &cmd_buf.m_cmd_buf,
     }));
     m_swapchain.present();
 }

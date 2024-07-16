@@ -38,7 +38,7 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_img_index = other.m_img_index;
 }
 
-std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
+void Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
     if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout,
                                                   *m_img_available->semaphore(), VK_NULL_HANDLE, &m_img_index);
         result != VK_SUCCESS) {
@@ -51,7 +51,6 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
     }
     m_current_img_view = m_img_views[m_img_index];
     m_current_img = m_imgs[m_img_index];
-    return m_img_index;
 }
 
 std::optional<VkCompositeAlphaFlagBitsKHR>
@@ -292,7 +291,6 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
             throw VulkanException("Error: vkCreateImageView failed for swapchain image view!", result);
         }
     }
-    acquire_next_image_index();
 }
 
 Swapchain::~Swapchain() {

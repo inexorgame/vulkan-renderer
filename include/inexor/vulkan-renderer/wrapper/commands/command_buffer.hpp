@@ -20,8 +20,9 @@ class GraphicsPipeline;
 } // namespace inexor::vulkan_renderer::wrapper::pipelines
 
 namespace inexor::vulkan_renderer::render_graph {
-// Forward declaration
+// Forward declarations
 class Buffer;
+class RenderGraph;
 } // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::commands {
@@ -29,22 +30,15 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 /// RAII wrapper class for VkCommandBuffer
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
+    friend class Device;
+    friend class render_graph::RenderGraph;
+    friend class CommandPool;
+
+private:
     VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
     const Device &m_device;
     std::string m_name;
     std::unique_ptr<synchronization::Fence> m_wait_fence;
-
-    // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
-    friend class Device;
-
-    /// The staging buffers which are maybe used in the command buffer
-    /// This vector of staging buffers will be cleared every time ``begin_command_buffer`` is called
-    /// @note We are not recycling staging buffers. Once they are used and the command buffer handle has reached the end
-    /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator (VMA) in managing the
-    /// memory for staging buffers.
-    mutable std::vector<render_graph::Buffer> m_staging_bufs;
-
-    friend class CommandPool;
 
     /// Call vkBeginCommandBuffer
     /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
@@ -154,7 +148,7 @@ public:
                         VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
 
     /// Call vkCmdPipelineBarrier
-    /// @param image The image
+    /// @param img The image
     /// @param old_layout The old layout of the image
     /// @param new_layout The new layout of the image
     /// @param mip_level_count The number of mip levels (The parameter in ``VkImageSubresourceRange``)
@@ -165,7 +159,7 @@ public:
     /// @param dst_mask The destination pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer & // NOLINT
-    change_image_layout(VkImage image,
+    change_image_layout(VkImage imgs,
                         VkImageLayout old_layout,
                         VkImageLayout new_layout,
                         std::uint32_t mip_level_count = 1,
@@ -419,23 +413,13 @@ public:
         return push_constants(pipeline.lock()->m_pipeline_layout, stage, sizeof(data), &data, offset);
     }
 
-    // Graphics commands
-    // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
-    [[nodiscard]] VkCommandBuffer get() const {
-        return m_cmd_buf;
-    }
-
-    [[nodiscard]] const synchronization::Fence &get_wait_fence() const {
-        return *m_wait_fence;
-    }
-
-    [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_cmd_buf;
-    }
-
     /// Call the reset method of the Fence member
     const CommandBuffer &reset_fence() const;
+
+    /// Set the name of a command buffer during recording of a specific command in the current command buffer
+    /// @param name The name of the suboperation
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &set_suboperation_debug_name(std::string name) const;
 
     /// Call vkQueueSubmit
     /// @param submit_infos The submit infos

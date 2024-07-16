@@ -513,25 +513,23 @@ void Application::setup_render_graph() {
         return m_octree_pipeline;
     });
 
-    auto on_record_cmd_buffer = [&](const wrapper::commands::CommandBuffer &cmd_buf) {
-        cmd_buf.bind_pipeline(m_octree_pipeline)
-            .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
-            .bind_vertex_buffer(m_vertex_buffer)
-            .bind_index_buffer(m_index_buffer)
-            .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-    };
-
     m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         m_octree_pass = builder.add_color_attachment(m_back_buffer, VkClearValue{1.0f, 0.0f, 0.0f, 1.0f})
                             .add_depth_attachment(m_depth_buffer)
-                            .set_on_record(std::move(on_record_cmd_buffer))
+                            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                                cmd_buf.bind_pipeline(m_octree_pipeline)
+                                    .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
+                                    .bind_vertex_buffer(m_vertex_buffer)
+                                    .bind_index_buffer(m_index_buffer)
+                                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+                            })
                             .build("Octree");
         return m_octree_pass;
     });
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
-                                                                 m_back_buffer, [&]() { update_imgui_overlay(); });
+    // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
+    //                                                              m_back_buffer, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

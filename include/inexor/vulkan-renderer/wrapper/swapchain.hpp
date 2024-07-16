@@ -66,9 +66,7 @@ public:
     /// Call vkAcquireNextImageKHR
     /// @param timeout (``std::numeric_limits<std::uint64_t>::max()`` by default)
     /// @exception VulkanException vkAcquireNextImageKHR call failed
-    /// @return The index of the next image
-    [[nodiscard]] std::uint32_t
-    acquire_next_image_index(std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
+    void acquire_next_image_index(std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
 
     /// Choose the composite alpha
     /// @param request_composite_alpha requested compositing flag

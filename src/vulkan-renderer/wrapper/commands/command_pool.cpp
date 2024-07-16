@@ -44,7 +44,7 @@ const commands::CommandBuffer &CommandPool::request_command_buffer(const std::st
             // Reset the command buffer's fence to make it usable again
             cmd_buf->reset_fence();
             cmd_buf->begin_command_buffer();
-            m_device.set_debug_name(cmd_buf->get(), name);
+            m_device.set_debug_name(cmd_buf->m_cmd_buf, name);
             return *cmd_buf;
         }
     }
@@ -57,7 +57,7 @@ const commands::CommandBuffer &CommandPool::request_command_buffer(const std::st
 
     auto &new_cmd_buf = *m_cmd_bufs.back();
     new_cmd_buf.begin_command_buffer();
-    m_device.set_debug_name(new_cmd_buf.get(), name);
+    m_device.set_debug_name(new_cmd_buf.m_cmd_buf, name);
     return new_cmd_buf;
 }
 

@@ -36,7 +36,6 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_
     m_cmd_buf = std::exchange(other.m_cmd_buf, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
     m_wait_fence = std::exchange(other.m_wait_fence, nullptr);
-    m_staging_bufs = std::move(other.m_staging_bufs);
 }
 
 const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
@@ -44,9 +43,6 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
         .flags = flags,
     });
     vkBeginCommandBuffer(m_cmd_buf, &begin_info);
-
-    // We must clear the staging buffers which could be left over from previous use of this command buffer
-    m_staging_bufs.clear();
     return *this;
 }
 
@@ -181,7 +177,7 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
     return pipeline_image_memory_barrier(src_mask, dst_mask, barrier);
 }
 
-const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
+const CommandBuffer &CommandBuffer::change_image_layout(const VkImage img,
                                                         const VkImageLayout old_layout,
                                                         const VkImageLayout new_layout,
                                                         const std::uint32_t mip_level_count,
@@ -190,8 +186,8 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
                                                         const std::uint32_t base_array_layer,
                                                         const VkPipelineStageFlags src_mask,
                                                         const VkPipelineStageFlags dst_mask) const {
-    assert(image);
-    return change_image_layout(image, old_layout, new_layout,
+    assert(img);
+    return change_image_layout(img, old_layout, new_layout,
                                {
                                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                                    .baseMipLevel = base_mip_level,
@@ -447,6 +443,11 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
 
 const CommandBuffer &CommandBuffer::reset_fence() const {
     m_wait_fence->reset();
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::set_suboperation_debug_name(std::string name) const {
+    m_device.set_debug_name(m_cmd_buf, m_name + name);
     return *this;
 }
 

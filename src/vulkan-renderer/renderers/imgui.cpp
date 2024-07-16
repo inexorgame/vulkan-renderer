@@ -120,37 +120,35 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         return m_imgui_pipeline;
     });
 
-    auto on_record_cmd_buffer = [&](const wrapper::commands::CommandBuffer &cmd_buf) {
-        const ImGuiIO &io = ImGui::GetIO();
-        m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-
-        cmd_buf.bind_pipeline(m_imgui_pipeline)
-            .bind_vertex_buffer(m_vertex_buffer)
-            .bind_index_buffer(m_index_buffer)
-            .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
-            .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
-
-        ImDrawData *draw_data = ImGui::GetDrawData();
-        if (draw_data == nullptr) {
-            return;
-        }
-        std::uint32_t index_offset = 0;
-        std::int32_t vertex_offset = 0;
-        for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = draw_data->CmdLists[i];
-            for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-                const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
-                index_offset += draw_cmd.ElemCount;
-            }
-            vertex_offset += cmd_list->VtxBuffer.Size;
-        }
-    };
-
     render_graph.add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         // TODO: builder.reads_from(octree_pass)..!
         m_imgui_pass = builder.add_color_attachment(m_color_attachment)
-                           .set_on_record(std::move(on_record_cmd_buffer))
+                           .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                               const ImGuiIO &io = ImGui::GetIO();
+                               m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+
+                               cmd_buf.bind_pipeline(m_imgui_pipeline)
+                                   .bind_vertex_buffer(m_vertex_buffer)
+                                   .bind_index_buffer(m_index_buffer)
+                                   .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
+                                   .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
+
+                               ImDrawData *draw_data = ImGui::GetDrawData();
+                               if (draw_data == nullptr) {
+                                   return;
+                               }
+                               std::uint32_t index_offset = 0;
+                               std::int32_t vertex_offset = 0;
+                               for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                                   const ImDrawList *cmd_list = draw_data->CmdLists[i];
+                                   for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                                       const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                                       cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                                       index_offset += draw_cmd.ElemCount;
+                                   }
+                                   vertex_offset += cmd_list->VtxBuffer.Size;
+                               }
+                           })
                            .build("ImGui");
         return m_imgui_pass;
     });
