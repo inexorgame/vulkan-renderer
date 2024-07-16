@@ -193,7 +193,8 @@ void RenderGraph::create_rendering_infos() {
                 .resolveMode = msaa_enabled ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
                                                                                         : VK_RESOLVE_MODE_MIN_BIT)
                                             : VK_RESOLVE_MODE_NONE, // No resolve if MSAA is disabled
-                .resolveImageView = msaa_enabled ? attach_ptr->m_img->m_img_view : VK_NULL_HANDLE,
+                // This will be filled during rendering!
+                .resolveImageView = VK_NULL_HANDLE,
                 // TODO: Is this correct layout?
                 .resolveImageLayout = msaa_enabled ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
                 // Does this pass require clearing this attachment?
@@ -216,6 +217,7 @@ void RenderGraph::create_rendering_infos() {
         const bool has_depth_attachment = !pass->m_depth_attachment.first.expired();
         if (has_depth_attachment) {
             pass->m_depth_attachment_info = fill_rendering_info(pass->m_depth_attachment);
+            pass->m_depth_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
         }
 
         // Fill the stencil attachment (if specified)
@@ -223,20 +225,6 @@ void RenderGraph::create_rendering_infos() {
         if (has_stencil_attachment) {
             pass->m_stencil_attachment_info = fill_rendering_info(pass->m_stencil_attachment);
         }
-
-        // We store all this data in the rendering info in the graphics pass itself
-        // The advantage of this is that we don't have to fill this during the actual rendering
-        pass->m_rendering_info = std::move(wrapper::make_info<VkRenderingInfo>({
-            .renderArea =
-                {
-                    .extent = m_swapchain.extent(),
-                },
-            .layerCount = 1,
-            .colorAttachmentCount = static_cast<std::uint32_t>(pass->m_color_attachment_infos.size()),
-            .pColorAttachments = pass->m_color_attachment_infos.data(),
-            .pDepthAttachment = has_depth_attachment ? &pass->m_depth_attachment_info : nullptr,
-            .pStencilAttachment = has_stencil_attachment ? &pass->m_stencil_attachment_info : nullptr,
-        }));
     }
 }
 
@@ -248,11 +236,11 @@ void RenderGraph::create_textures() {
                 std::invoke(texture->m_on_init.value());
             }
             // Rename the command buffer before creating every texture for fine-grained debugging
-            cmd_buf.set_suboperation_debug_name("Texture-Create:" + texture->m_name + "]");
+            cmd_buf.set_suboperation_debug_name("Texture|Create:" + texture->m_name + "]");
             texture->create();
             if (texture->m_usage == TextureUsage::NORMAL) {
                 // Rename the command buffer before creating every texture for fine-grained debugging
-                cmd_buf.set_suboperation_debug_name("Texture-Update:" + texture->m_name + "]");
+                cmd_buf.set_suboperation_debug_name("Texture|Update:" + texture->m_name + "]");
                 // Only external textures are updated, not back or depth buffers used internally in rendergraph
                 texture->update(cmd_buf);
             }
@@ -272,8 +260,23 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     // TODO: Define default color values for debug labels!
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
+
+    // TODO: Support multi-target rendering!
+    auto color_attachment_info = pass.m_color_attachment_infos;
+    color_attachment_info[0].resolveImageView = m_swapchain.m_current_img_view;
+
     // Start dynamic rendering with the compiled rendering info
-    cmd_buf.begin_rendering(pass.m_rendering_info);
+    cmd_buf.begin_rendering(wrapper::make_info<VkRenderingInfo>({
+        .renderArea =
+            {
+                .extent = m_swapchain.extent(),
+            },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &color_attachment_info[0],
+        .pDepthAttachment = (!pass.m_depth_attachment.first.expired()) ? &pass.m_depth_attachment_info : nullptr,
+        .pStencilAttachment = (!pass.m_stencil_attachment.first.expired()) ? &pass.m_stencil_attachment_info : nullptr,
+    }));
 
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
@@ -286,27 +289,24 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     cmd_buf.end_debug_label_region();
 }
 
-void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf) {
-    // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
-    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-    for (const auto &pass : m_graphics_passes) {
-        // TODO: Name command buffer on a per-pass basis like [RenderGraph::record_command_buffer|Pass:ImGui]
-        record_command_buffer_for_pass(cmd_buf, *pass);
-    }
-    // Change the layout of the swapchain image to make it ready for presenting
-    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-}
-
 void RenderGraph::render() {
     // Acquire the next swapchain image index
     m_swapchain.acquire_next_image_index();
 
+    // TODO: Refactor this into .exec();
     const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render|");
-    // TODO: Record command buffers for passes in parallel!
-    record_command_buffers(cmd_buf);
+
+    // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
+    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    for (auto &pass : m_graphics_passes) {
+        record_command_buffer_for_pass(cmd_buf, *pass);
+    }
+
+    // Change the layout of the swapchain image to make it ready for presenting
+    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     // TODO: Further abstract this away?
     const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};

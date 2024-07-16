@@ -237,10 +237,6 @@ private:
     /// @param pass The graphics pass to record the command buffer for
     void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass);
 
-    /// Record all command buffers required for the passes
-    /// @param cmd_buf The command buffer to record all passes with
-    void record_command_buffers(const CommandBuffer &cmd_buf);
-
     /// Update the vertex-, index-, and uniform-buffers
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
     void update_buffers();
