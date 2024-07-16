@@ -24,7 +24,7 @@ class RenderGraph;
 // Using declaration
 using wrapper::descriptors::DescriptorSetLayout;
 
-// This will make our life easier
+/// An attachment is just a texture paired with an optional clear value
 using Attachment = std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>;
 
 /// A wrapper for graphics passes inside of rendergraph
@@ -40,8 +40,11 @@ private:
     /// NOTE: We do not have members like m_has_depth_buffer or m_has_stencil_buffer because we can simply check if the
     /// std::weak_ptr<Texture> of the Attachment is expire() instead!
 
+    /// The color attachments of the graphics pass
     std::vector<Attachment> m_color_attachments{};
+    /// The depth attachment of the graphics pass
     Attachment m_depth_attachment{};
+    /// The stencil attachment of the graphics pass
     Attachment m_stencil_attachment{};
 
     /// The descriptor set layout of the pass (this will be created by rendergraph)
@@ -58,21 +61,23 @@ private:
 
     /// The color attachments inside of m_rendering_info
     std::vector<VkRenderingAttachmentInfo> m_color_attachment_infos{};
+    /// The depth attachment inside of m_rendering_info
     VkRenderingAttachmentInfo m_depth_attachment_info{};
+    /// The stencil attachment inside of m_rendering_info
     VkRenderingAttachmentInfo m_stencil_attachment_info{};
 
 public:
     /// Default constructor
     /// @param name The name of the graphics pass
     /// @param on_record_cmd_buffer The command buffer recording function of the graphics pass
-    /// @param m_color_attachment
-    /// @param m_depth_attachment The depth attachment of the graphics pass
-    /// @param m_stencil_attachment
+    /// @param color_attachments The color attachments of the graphics pass
+    /// @param depth_attachment The depth attachment of the graphics pass
+    /// @param stencil_attachment The stencil attachment of the graphics pass
     GraphicsPass(std::string name,
                  std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
-                 std::vector<Attachment> m_color_attachments,
-                 Attachment m_depth_attachment,
-                 Attachment m_stencil_attachment);
+                 std::vector<Attachment> color_attachments,
+                 Attachment depth_attachment,
+                 Attachment stencil_attachment);
 
     GraphicsPass(const GraphicsPass &) = delete;
     GraphicsPass(GraphicsPass &&other) noexcept;

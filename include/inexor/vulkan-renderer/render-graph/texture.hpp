@@ -49,11 +49,19 @@ private:
     /// The name of the texture
     std::string m_name;
     /// The usage of this texture
-    TextureUsage m_texture_usage;
+    TextureUsage m_usage;
     /// The format of the texture
     VkFormat m_format{VK_FORMAT_UNDEFINED};
+    /// The width of the texture
+    std::uint32_t m_width{0};
+    /// The height of the texture
+    std::uint32_t m_height{0};
+
     /// The image of the texture
     std::unique_ptr<Image> m_img;
+
+    /// The sample count of the MSAA image (if MSAA is enabled)
+    VkSampleCountFlagBits m_sample_count;
     /// This is only used internally inside of rendergraph in case this texture used as a back buffer, depth buffer, or
     /// stencil buffer and MSAA is enabled.
     std::unique_ptr<Image> m_msaa_img;
@@ -76,10 +84,10 @@ private:
     /// The descriptor image info required for descriptor updates
     VkDescriptorImageInfo m_descriptor_img_info{};
 
-    ///
+    /// Create the texture (and the MSAA texture if specified)
     void create();
 
-    ///
+    /// Destroy the texture (and the MSAA texture if specified)
     void destroy();
 
     /// Upload the data into the texture
@@ -92,12 +100,16 @@ public:
     /// @param name The internal debug name of the texture
     /// @param usage The usage of the texture inside of rendergraph
     /// @param format The format of the texture
+    /// @param width The width of the texture
+    /// @param height The height of the texture
     /// @param on_init The initialization function of the texture
     /// @param on_update The update function of the texture
     Texture(const Device &device,
             std::string name,
             TextureUsage usage,
             VkFormat format,
+            std::uint32_t width,
+            std::uint32_t height,
             std::optional<std::function<void()>> on_init = std::nullopt,
             std::optional<std::function<void()>> on_update = std::nullopt);
 
@@ -107,8 +119,6 @@ public:
 
     Texture &operator=(const Texture &) = delete;
     Texture &operator=(Texture &&) noexcept;
-
-    // TODO: request_update with other width x height so the texture is recreated??
 
     /// Request rendergraph to update the texture
     /// @param src_texture_data A pointer to the source data

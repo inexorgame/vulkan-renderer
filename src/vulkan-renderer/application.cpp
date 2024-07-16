@@ -536,8 +536,8 @@ void Application::setup_render_graph() {
 
     using render_graph::GraphicsPassBuilder;
     m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.add_color_attachment(m_back_buffer, VkClearColorValue{1.0f, 0.0f, 0.0f, 1.0f})
-            .enable_depth_test(m_depth_buffer)
+        return builder.add_color_attachment(m_back_buffer, VkClearValue{1.0f, 0.0f, 0.0f, 1.0f})
+            .add_depth_attachment(m_depth_buffer)
             .set_on_record(std::move(on_record_cmd_buffer))
             .build("Octree");
     });

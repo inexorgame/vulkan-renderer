@@ -24,13 +24,13 @@ using wrapper::commands::CommandBuffer;
 class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
-    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer;
+    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{};
     /// The color attachments of the graphics pass
-    std::vector<Attachment> m_color_attachments;
+    std::vector<Attachment> m_color_attachments{};
     /// The depth attachment of the graphics pass
-    Attachment m_depth_attachment;
+    Attachment m_depth_attachment{};
     /// The stencil attachment of the graphics pass
-    Attachment m_stencil_attachment;
+    Attachment m_stencil_attachment{};
 
     /// Reset all data of the graphics pass builder
     void reset();
@@ -42,64 +42,38 @@ public:
     ~GraphicsPassBuilder() = default;
 
     GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
-    GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) noexcept;
+    GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) = delete;
 
     /// Add a color attachment to the pass
     /// @param color_attachment The color attachment
-    /// @param clear_color The clear color for the color attachment (``std::nullopt`` by default)
+    /// @param clear_value The clear value for the color attachment (``std::nullopt`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &add_color_attachment(std::weak_ptr<Texture> color_attachment,
-                                             std::optional<VkClearColorValue> clear_color = std::nullopt) {
-        if (color_attachment.expired()) {
-            throw std::invalid_argument(
-                "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is expired!");
-        }
-        m_color_attachments.emplace_back(std::move(color_attachment), clear_color);
-        return *this;
-    }
+    [[nodiscard]] GraphicsPassBuilder &add_color_attachment(std::weak_ptr<Texture> color_attachment,
+                                                            std::optional<VkClearValue> clear_value = std::nullopt);
+
+    /// Enable depth testing for the pass
+    /// @param depth_attachment The depth attachment
+    /// @param clear_value The clear value for the depth attachment (``std::nullopt`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &add_depth_attachment(std::weak_ptr<Texture> depth_attachment,
+                                                            std::optional<VkClearValue> clear_value = std::nullopt);
 
     /// Add a stencil attachment to the pass
     /// @param stencil_attachment The stencil attachment
-    /// @param clear_color The clear color value for the stencil attachment (``std::nullopt`` by default)
+    /// @param clear_value The clear value for the stencil attachment (``std::nullopt`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &add_stencil_attachment(std::weak_ptr<Texture> stencil_attachment,
-                                               std::optional<VkClearColorValue> clear_color = std::nullopt) {
-        if (stencil_attachment.expired()) {
-            throw std::invalid_argument(
-                "[GraphicsPassBuilder::add_stencil_attachment] Error: 'stencil_attachment' is expired!");
-        }
-        return *this;
-    }
+    [[nodiscard]] GraphicsPassBuilder &add_stencil_attachment(std::weak_ptr<Texture> stencil_attachment,
+                                                              std::optional<VkClearValue> clear_value = std::nullopt);
 
     /// Build the graphics pass
     /// @param name The name of the graphics pass
     /// @return The graphics pass that was just created
-    [[nodiscard]] auto build(std::string name) {
-        auto graphics_pass =
-            GraphicsPass(std::move(name), std::move(m_on_record_cmd_buffer), std::move(m_color_attachments),
-                         std::move(m_depth_attachment), std::move(m_stencil_attachment));
-        reset();
-        return graphics_pass;
-    }
-
-    /// Enable depth testing for the pass
-    /// @param depth_buffer
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &enable_depth_test(std::weak_ptr<Texture> depth_attachment) {
-        if (depth_attachment.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is expired!");
-        }
-        m_depth_attachment = Attachment(std::move(depth_attachment), std::nullopt);
-        return *this;
-    }
+    [[nodiscard]] GraphicsPass build(std::string name);
 
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
     /// @param on_record_cmd_buffer The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer) {
-        on_record_cmd_buffer = std::move(on_record_cmd_buffer);
-        return *this;
-    }
+    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

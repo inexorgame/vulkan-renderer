@@ -181,6 +181,7 @@ private:
     DescriptorSetAllocator m_descriptor_set_allocator;
     /// The descriptor set update builder (a builder pattern for descriptor set updates)
     DescriptorSetUpdateBuilder m_descriptor_set_update_builder;
+
     /// A user-defined function which creates the descriptor set layout
     using OnBuildDescriptorSetLayout = std::function<void(DescriptorSetLayoutBuilder &)>;
     /// A user-defined function which allocates a descriptor set
@@ -272,12 +273,6 @@ public:
     /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
     /// @note Move semantics is used to std::move on_pass_create
     void add_graphics_pass(OnCreateGraphicsPass on_pass_create);
-
-    // TODO: One thread_local GraphicsPipelineBuilder? Once graphics pipelines will be created in parallel!
-
-    // TODO: The only reason we would need graphics pipelines create functions would be if during creation it would
-    // reference resources which would need to be set up by rendergraph before! DESCRIPTOR SET LAYOUT!!!!!!
-    // DESCRIPTOR SET LAYOUT!!!!!!!!
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder

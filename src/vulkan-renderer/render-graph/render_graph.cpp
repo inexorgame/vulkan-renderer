@@ -30,7 +30,7 @@ RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, s
 
 void RenderGraph::allocate_descriptor_sets() {
     for (const auto &descriptor : m_resource_descriptors) {
-        // Call on_update_descriptor_set for each descriptor
+        // Call the on_update_descriptor_set function of each resource descriptor
         std::invoke(std::get<1>(descriptor), m_descriptor_set_allocator);
     }
 }
@@ -39,9 +39,8 @@ void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_de
                                           OnAllocateDescriptorSet on_allocate_descriptor_set,
                                           OnUpdateDescriptorSet on_update_descriptor_set) {
     // NOTE: This only stores the functions and they will be called in the correct order during rendergraph compilation
-    m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout), // to build descriptor set layout
-                                        std::move(on_allocate_descriptor_set),     // to allocate the descriptor set
-                                        std::move(on_update_descriptor_set));      // to update the descriptor set
+    m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout),
+                                        std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
 }
 
 std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
@@ -51,7 +50,7 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                 const std::uint32_t height,
                                                 std::optional<std::function<void()>> on_init,
                                                 std::optional<std::function<void()>> on_update) {
-    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format,
+    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format, width, height,
                                                       std::move(on_init), std::move(on_update)));
     return m_textures.back();
 }
@@ -112,7 +111,7 @@ void RenderGraph::create_rendering_infos() {
         auto fill_rendering_info = [&](const Attachment &attachment) {
             const auto attach_ptr = attachment.first.lock();
             const auto img_layout = [&]() -> VkImageLayout {
-                switch (attach_ptr->m_texture_usage) {
+                switch (attach_ptr->m_usage) {
                 case TextureUsage::BACK_BUFFER:
                 case TextureUsage::DEPTH_STENCIL_BUFFER: {
                     return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -149,7 +148,6 @@ void RenderGraph::create_rendering_infos() {
         if (has_stencil_attachment) {
             pass.m_stencil_attachment_info = fill_rendering_info(pass.m_stencil_attachment);
         }
-
         // We store all this data in the rendering info in the graphics pass itself
         // The advantage of this is that we don't have to fill this during the actual rendering
         pass.m_rendering_info = std::move(wrapper::make_info<VkRenderingInfo>({
@@ -169,7 +167,7 @@ void RenderGraph::create_rendering_infos() {
 void RenderGraph::create_textures() {
     m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
-            switch (texture->m_texture_usage) {
+            switch (texture->m_usage) {
             case TextureUsage::NORMAL: {
                 if (texture->m_on_init) {
                     std::invoke(texture->m_on_init.value());
@@ -201,6 +199,7 @@ void RenderGraph::determine_pass_order() {
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
+    // TODO: Define default color values for debug labels!
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
     // Start dynamic rendering with the compiled rendering info
@@ -228,6 +227,7 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
 
 void RenderGraph::render() {
     const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render]");
+    // TODO: Record command buffers for passes in parallel!
     record_command_buffers(cmd_buf, m_swapchain.acquire_next_image_index());
 
     // TODO: Further abstract this away?
@@ -239,7 +239,6 @@ void RenderGraph::render() {
         .commandBufferCount = 1,
         .pCommandBuffers = cmd_buf.ptr(),
     }));
-
     m_swapchain.present();
 }
 

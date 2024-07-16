@@ -29,10 +29,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     spdlog::trace("Setting ImGui style");
     set_imgui_style();
 
-    // TODO: Do we need this here?
     using render_graph::BufferType;
-
-    // TODO: Do we really need vert_input_attr_descs here?
     m_vertex_buffer = render_graph.add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
         m_on_update_user_data();
         const ImDrawData *draw_data = ImGui::GetDrawData();
@@ -52,16 +49,15 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                 m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
             }
         }
-        // NOTE: The index buffer does not have a separate update code because it is updated here with the vertices
+        // Request rendergraph to do an update of the vertex buffer
         m_vertex_buffer.lock()->request_update(m_vertex_data);
-        m_index_buffer.lock()->request_update(m_index_data);
     });
 
     m_index_buffer = render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {
-        // Index buffer is already being updated in vertex buffer update lambda...
+        // Request rendergraph to do an update of the index buffer
+        m_index_buffer.lock()->request_update(m_index_data);
     });
 
-    // TODO: Implement a ShaderManager (ShaderCache?) inside of Device wrapper?
     m_vertex_shader =
         std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
     m_fragment_shader =

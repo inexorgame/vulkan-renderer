@@ -44,8 +44,6 @@ private:
     VmaAllocation m_alloc{VK_NULL_HANDLE};
     VmaAllocationInfo m_alloc_info{};
     VmaAllocationCreateInfo m_alloc_ci{};
-    VkImageCreateInfo m_img_ci{};
-    VkImageViewCreateInfo m_img_view_ci{};
 
     /// The combined image sampler for the texture
     /// This is only relevant if the texture is used as TextureUsage::NORMAL
@@ -68,7 +66,7 @@ public:
     ~Image();
 
     Image &operator=(const Image &other) = delete;
-    Image &operator=(Image &&other) noexcept;
+    Image &operator=(Image &&other) = delete;
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

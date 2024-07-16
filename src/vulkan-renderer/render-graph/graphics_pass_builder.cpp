@@ -6,10 +6,54 @@ GraphicsPassBuilder::GraphicsPassBuilder() {
     reset();
 }
 
-void GraphicsPassBuilder::reset() {
-    // TODO: Fix me!
+GraphicsPassBuilder &GraphicsPassBuilder::add_color_attachment(std::weak_ptr<Texture> color_attachment,
+                                                               std::optional<VkClearValue> clear_value) {
+    if (color_attachment.expired()) {
+        throw std::invalid_argument(
+            "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is expired!");
+    }
+    m_color_attachments.emplace_back(std::move(color_attachment), std::move(clear_value));
+    return *this;
 }
 
-// TODO: Move stuff to .cpp file again. Header files should contain declarations, cpp files should contain definitions!
+GraphicsPassBuilder &GraphicsPassBuilder::add_depth_attachment(std::weak_ptr<Texture> depth_attachment,
+                                                               std::optional<VkClearValue> clear_value) {
+    if (depth_attachment.expired()) {
+        throw std::invalid_argument("[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is expired!");
+    }
+    m_depth_attachment = Attachment(std::move(depth_attachment), std::move(clear_value));
+    return *this;
+}
+
+GraphicsPassBuilder &GraphicsPassBuilder::add_stencil_attachment(std::weak_ptr<Texture> stencil_attachment,
+                                                                 std::optional<VkClearValue> clear_value) {
+    if (stencil_attachment.expired()) {
+        throw std::invalid_argument(
+            "[GraphicsPassBuilder::add_stencil_attachment] Error: 'stencil_attachment' is expired!");
+    }
+    m_stencil_attachment = Attachment(std::move(stencil_attachment), std::move(clear_value));
+    return *this;
+}
+
+GraphicsPass GraphicsPassBuilder::build(std::string name) {
+    auto graphics_pass =
+        GraphicsPass(std::move(name), std::move(m_on_record_cmd_buffer), std::move(m_color_attachments),
+                     std::move(m_depth_attachment), std::move(m_stencil_attachment));
+    reset();
+    return graphics_pass;
+}
+
+void GraphicsPassBuilder::reset() {
+    m_on_record_cmd_buffer = {};
+    m_color_attachments = {};
+    m_depth_attachment = {};
+    m_stencil_attachment = {};
+}
+
+GraphicsPassBuilder &
+GraphicsPassBuilder::set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer) {
+    on_record_cmd_buffer = std::move(on_record_cmd_buffer);
+    return *this;
+}
 
 } // namespace inexor::vulkan_renderer::render_graph

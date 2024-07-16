@@ -14,23 +14,90 @@ Texture::Texture(const Device &device,
                  std::string name,
                  const TextureUsage usage,
                  const VkFormat format,
+                 const std::uint32_t width,
+                 const std::uint32_t height,
                  std::optional<std::function<void()>> on_init,
                  std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(name)), m_texture_usage(usage), m_format(format),
+    : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
       m_on_init(std::move(on_init)), m_on_update(std::move(on_update)) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
 }
 
+void Texture::create() {
+    auto img_ci = wrapper::make_info<VkImageCreateInfo>({
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = m_format,
+        .extent =
+            {
+                .width = m_width,
+                .height = m_height,
+                .depth = 1,
+            },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = [&]() -> VkImageUsageFlags {
+            switch (m_usage) {
+            case TextureUsage::NORMAL: {
+                return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            }
+            case TextureUsage::DEPTH_STENCIL_BUFFER:
+            case TextureUsage::BACK_BUFFER: {
+                return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+            }
+            }
+        }(),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    });
+
+    const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
+        // NOTE: .image will be filled by the Texture wrapper
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = m_format,
+        .subresourceRange =
+            {
+                .aspectMask = [&]() -> VkImageAspectFlags {
+                    switch (m_usage) {
+                    case TextureUsage::NORMAL: {
+                        return VK_IMAGE_ASPECT_COLOR_BIT;
+                    }
+                    case TextureUsage::DEPTH_STENCIL_BUFFER:
+                    case TextureUsage::BACK_BUFFER: {
+                        return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+                    }
+                    }
+                }(),
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            },
+    });
+
+    // Create the texture
+    m_img->create(img_ci, img_view_ci);
+
+    // If MSAA is enabled, create the MSAA texture as well
+    if (m_sample_count != VK_SAMPLE_COUNT_1_BIT) {
+        // Just overwrite the sample count and re-use the image create info
+        img_ci.samples = m_sample_count;
+        m_msaa_img->create(img_ci, img_view_ci);
+    }
+}
+
 void Texture::destroy() {
-    // TODO: Do we need this here?
     m_img->destroy();
+    if (m_msaa_img) {
+        m_msaa_img->destroy();
+    }
 }
 
 void Texture::update(const CommandBuffer &cmd_buf) {
 #if 0
-    // TODO: Validate parameters again before update!
     if (m_staging_buffer != VK_NULL_HANDLE) {
         vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
         m_staging_buffer = VK_NULL_HANDLE;
