@@ -425,7 +425,7 @@ const CommandBuffer &CommandBuffer::insert_debug_label(std::string name, std::ar
         .pLabelName = name.c_str(),
         .color = {color[0], color[1], color[2], color[3]},
     });
-    vkCmdBeginDebugUtilsLabelEXT(m_cmd_buf, &label);
+    vkCmdInsertDebugUtilsLabelEXT(m_cmd_buf, &label);
     return *this;
 }
 

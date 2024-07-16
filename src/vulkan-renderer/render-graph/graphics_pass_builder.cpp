@@ -38,10 +38,10 @@ GraphicsPassBuilder &GraphicsPassBuilder::add_stencil_attachment(std::weak_ptr<T
     return *this;
 }
 
-std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name) {
+std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const DebugLabelColor color) {
     auto graphics_pass = std::make_shared<GraphicsPass>(std::move(name), std::move(m_on_record_cmd_buffer),
                                                         std::move(m_color_attachments), std::move(m_depth_attachment),
-                                                        std::move(m_stencil_attachment));
+                                                        std::move(m_stencil_attachment), color);
     reset();
     return graphics_pass;
 }

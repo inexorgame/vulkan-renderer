@@ -72,8 +72,9 @@ public:
 
     /// Build the graphics pass
     /// @param name The name of the graphics pass
+    /// @param color The debug label color (debug labels are specified per pass and are visible in RenderDoc debugger)
     /// @return The graphics pass that was just created
-    [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name);
+    [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name, DebugLabelColor color);
 
     /// Specify that this graphics pass A reads from another graphics pass B, meaning B should be rendered before A
     /// @param graphics_pass The graphics pass which is read by this graphics pass

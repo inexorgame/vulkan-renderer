@@ -212,14 +212,12 @@ void RenderGraph::create_rendering_infos() {
         for (const auto &color_attachment : pass->m_color_attachments) {
             pass->m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
         }
-
         // Fill the color attachment (if specified)
         const bool has_depth_attachment = !pass->m_depth_attachment.first.expired();
         if (has_depth_attachment) {
             pass->m_depth_attachment_info = fill_rendering_info(pass->m_depth_attachment);
             pass->m_depth_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
         }
-
         // Fill the stencil attachment (if specified)
         const bool has_stencil_attachment = !pass->m_stencil_attachment.first.expired();
         if (has_stencil_attachment) {
@@ -229,18 +227,20 @@ void RenderGraph::create_rendering_infos() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("[RenderGraph::create_textures|", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             // TODO: Check if this initializes all textures (internal ones from rendergraph and external like ImGui?)
             if (texture->m_on_init) {
+                // Rename the command buffer before creating every texture for fine-grained debugging
+                cmd_buf.set_suboperation_debug_name("|Texture|Initialize:" + texture->m_name);
                 std::invoke(texture->m_on_init.value());
             }
             // Rename the command buffer before creating every texture for fine-grained debugging
-            cmd_buf.set_suboperation_debug_name("Texture|Create:" + texture->m_name + "]");
+            cmd_buf.set_suboperation_debug_name("|Texture|Create:" + texture->m_name);
             texture->create();
             if (texture->m_usage == TextureUsage::NORMAL) {
                 // Rename the command buffer before creating every texture for fine-grained debugging
-                cmd_buf.set_suboperation_debug_name("Texture|Update:" + texture->m_name + "]");
+                cmd_buf.set_suboperation_debug_name("|Texture|Update:" + texture->m_name);
                 // Only external textures are updated, not back or depth buffers used internally in rendergraph
                 texture->update(cmd_buf);
             }
@@ -255,11 +255,10 @@ void RenderGraph::determine_pass_order() {
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
     // Rename the command buffer before creating every texture for fine-grained debugging
-    cmd_buf.set_suboperation_debug_name("Pass:" + pass.m_name + "]");
+    cmd_buf.set_suboperation_debug_name("|Pass:" + pass.m_name);
 
-    // TODO: Define default color values for debug labels!
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
-    cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
+    cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
 
     // TODO: Support multi-target rendering!
     auto color_attachment_info = pass.m_color_attachment_infos;
@@ -294,7 +293,7 @@ void RenderGraph::render() {
     m_swapchain.acquire_next_image_index();
 
     // TODO: Refactor this into .exec();
-    const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render|");
+    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render");
 
     // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
     cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
@@ -325,7 +324,7 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    m_device.execute("[RenderGraph::update_buffers]", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::update_buffers", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             // Does this buffer need to be updated?
             if (buffer->m_update_requested) {
@@ -346,7 +345,7 @@ void RenderGraph::update_descriptor_sets() {
 }
 
 void RenderGraph::update_textures() {
-    m_device.execute("[RenderGraph::update_textures]", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::update_textures", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             // Only for dynamic textures m_on_lambda which is not std::nullopt
             if (texture->m_on_update) {

@@ -4,14 +4,56 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
+std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
+    switch (color) {
+    case DebugLabelColor::RED:
+        return {0.98f, 0.60f, 0.60f, 1.0f};
+    case DebugLabelColor::BLUE:
+        return {0.68f, 0.85f, 0.90f, 1.0f};
+    case DebugLabelColor::GREEN:
+        return {0.73f, 0.88f, 0.73f, 1.0f};
+    case DebugLabelColor::YELLOW:
+        return {0.98f, 0.98f, 0.70f, 1.0f};
+    case DebugLabelColor::PURPLE:
+        return {0.80f, 0.70f, 0.90f, 1.0f};
+    case DebugLabelColor::ORANGE:
+        return {0.98f, 0.75f, 0.53f, 1.0f};
+    case DebugLabelColor::MAGENTA:
+        return {0.96f, 0.60f, 0.76f, 1.0f};
+    case DebugLabelColor::CYAN:
+        return {0.70f, 0.98f, 0.98f, 1.0f};
+    case DebugLabelColor::BROWN:
+        return {0.82f, 0.70f, 0.55f, 1.0f};
+    case DebugLabelColor::PINK:
+        return {0.98f, 0.75f, 0.85f, 1.0f};
+    case DebugLabelColor::LIME:
+        return {0.80f, 0.98f, 0.60f, 1.0f};
+    case DebugLabelColor::TURQUOISE:
+        return {0.70f, 0.93f, 0.93f, 1.0f};
+    case DebugLabelColor::BEIGE:
+        return {0.96f, 0.96f, 0.86f, 1.0f};
+    case DebugLabelColor::MAROON:
+        return {0.76f, 0.50f, 0.50f, 1.0f};
+    case DebugLabelColor::OLIVE:
+        return {0.74f, 0.75f, 0.50f, 1.0f};
+    case DebugLabelColor::NAVY:
+        return {0.53f, 0.70f, 0.82f, 1.0f};
+    case DebugLabelColor::TEAL:
+        return {0.53f, 0.80f, 0.75f, 1.0f};
+    default:
+        return {0.0f, 0.0f, 0.0f, 1.0f}; // Default to opaque black if the color is not recognized
+    }
+}
+
 GraphicsPass::GraphicsPass(std::string name,
                            std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
                            std::vector<Attachment> color_attachments,
                            Attachment depth_attachment,
-                           Attachment stencil_attachment)
+                           Attachment stencil_attachment,
+                           const DebugLabelColor color)
     : m_name(std::move(name)), m_on_record_cmd_buffer(std::move(on_record_cmd_buffer)),
       m_color_attachments(std::move(color_attachments)), m_depth_attachment(std::move(depth_attachment)),
-      m_stencil_attachment(std::move(stencil_attachment)) {}
+      m_stencil_attachment(std::move(stencil_attachment)), m_debug_label_color(get_debug_label_color(color)) {}
 
 GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_name = std::move(other.m_name);
@@ -25,6 +67,7 @@ GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_color_attachment_infos = std::move(other.m_color_attachment_infos);
     m_depth_attachment_info = std::move(other.m_depth_attachment_info);
     m_stencil_attachment_info = std::move(other.m_stencil_attachment_info);
+    m_debug_label_color = other.m_debug_label_color;
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

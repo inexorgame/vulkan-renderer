@@ -523,13 +523,13 @@ void Application::setup_render_graph() {
                                     .bind_index_buffer(m_index_buffer)
                                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
                             })
-                            .build("Octree");
+                            .build("Octree", render_graph::DebugLabelColor::RED);
         return m_octree_pass;
     });
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, *m_render_graph.get(),
-    //                                                              m_back_buffer, [&]() { update_imgui_overlay(); });
+    //                                                               m_back_buffer, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

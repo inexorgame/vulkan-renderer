@@ -88,7 +88,8 @@ public:
     /// @param required_features The required device features
     /// @param required_extensions The required device extensions
     /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(const Instance &inst, VkSurfaceKHR surface,
+    static VkPhysicalDevice pick_best_physical_device(const Instance &inst,
+                                                      VkSurfaceKHR surface,
                                                       const VkPhysicalDeviceFeatures &required_features,
                                                       std::span<const char *> required_extensions);
 
@@ -106,9 +107,13 @@ public:
     /// @exception VulkanException vkCreateDevice call failed
     /// @exception VulkanException vmaCreateAllocator call failed
     /// @note The creation of the physical device will not fail if one of the optional device features is not available
-    Device(const Instance &inst, VkSurfaceKHR surface, bool prefer_distinct_transfer_queue,
-           VkPhysicalDevice physical_device, std::span<const char *> required_extensions,
-           const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features = {});
+    Device(const Instance &inst,
+           VkSurfaceKHR surface,
+           bool prefer_distinct_transfer_queue,
+           VkPhysicalDevice physical_device,
+           std::span<const char *> required_extensions,
+           const VkPhysicalDeviceFeatures &required_features,
+           const VkPhysicalDeviceFeatures &optional_features = {});
 
     Device(const Device &) = delete;
     Device(Device &&) = delete;

@@ -53,7 +53,7 @@ const commands::CommandBuffer &CommandPool::request_command_buffer(const std::st
 
     // No free command buffer was found so we need to create a new one
     // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
-    m_cmd_bufs.emplace_back(std::make_unique<commands::CommandBuffer>(m_device, m_cmd_pool, "command buffer"));
+    m_cmd_bufs.emplace_back(std::make_unique<commands::CommandBuffer>(m_device, m_cmd_pool, name));
 
     auto &new_cmd_buf = *m_cmd_bufs.back();
     new_cmd_buf.begin_command_buffer();

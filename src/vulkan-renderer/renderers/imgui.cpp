@@ -149,7 +149,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                    vertex_offset += cmd_list->VtxBuffer.Size;
                                }
                            })
-                           .build("ImGui");
+                           .build("ImGui", render_graph::DebugLabelColor::BLUE);
         return m_imgui_pass;
     });
 }

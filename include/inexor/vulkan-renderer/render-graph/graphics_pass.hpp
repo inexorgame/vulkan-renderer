@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
 
+#include <array>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -26,6 +27,32 @@ using wrapper::descriptors::DescriptorSetLayout;
 
 /// An attachment is just a texture paired with an optional clear value
 using Attachment = std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>;
+
+/// The debug label colors for vkCmdBeginDebugUtilsLabelEXT
+enum class DebugLabelColor {
+    RED,
+    BLUE,
+    GREEN,
+    YELLOW,
+    PURPLE,
+    ORANGE,
+    MAGENTA,
+    CYAN,
+    BROWN,
+    PINK,
+    LIME,
+    TURQUOISE,
+    BEIGE,
+    MAROON,
+    OLIVE,
+    NAVY,
+    TEAL,
+};
+
+/// Convert a DebugLabelColor to an array of RGBA float values to pass to vkCmdBeginDebugUtilsLabelEXT
+/// @param color The DebugLabelColor
+/// @return An array of RGBA float values to be passed into vkCmdBeginDebugUtilsLabelEXT
+[[nodiscard]] std::array<float, 4> get_debug_label_color(const DebugLabelColor color);
 
 /// A wrapper for graphics passes inside of rendergraph
 class GraphicsPass {
@@ -66,6 +93,9 @@ private:
     /// The stencil attachment inside of m_rendering_info
     VkRenderingAttachmentInfo m_stencil_attachment_info{};
 
+    /// The color of the debug label region (visible in graphics debuggers like RenderDoc)
+    std::array<float, 4> m_debug_label_color;
+
 public:
     /// Default constructor
     /// @param name The name of the graphics pass
@@ -77,7 +107,8 @@ public:
                  std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
                  std::vector<Attachment> color_attachments,
                  Attachment depth_attachment,
-                 Attachment stencil_attachment);
+                 Attachment stencil_attachment,
+                 DebugLabelColor color);
 
     GraphicsPass(const GraphicsPass &) = delete;
     GraphicsPass(GraphicsPass &&other) noexcept;
