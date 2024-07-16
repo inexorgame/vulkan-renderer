@@ -55,6 +55,7 @@ private:
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_octree_pipeline;
+    std::shared_ptr<render_graph::GraphicsPass> m_octree_pass;
 
     struct ModelViewPerspectiveMatrices {
         glm::mat4 model{1.0f};

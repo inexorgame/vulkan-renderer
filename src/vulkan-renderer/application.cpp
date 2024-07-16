@@ -419,23 +419,16 @@ void Application::run() {
 }
 
 void Application::setup_render_graph() {
-    // TODO: Move to OctreeRenderer and ImGuiRenderer!
-    // TODO: Move this to rendergraph header file? (Can we then use it here?)
-    using render_graph::BufferType;
-    using render_graph::BufferType::INDEX_BUFFER;
-    using render_graph::BufferType::UNIFORM_BUFFER;
-    using render_graph::BufferType::VERTEX_BUFFER;
-    using render_graph::TextureUsage::BACK_BUFFER;
-    using render_graph::TextureUsage::DEPTH_STENCIL_BUFFER;
-
     const auto swapchain_extent = m_swapchain->extent();
-    m_back_buffer = m_render_graph->add_texture("Color", BACK_BUFFER, m_swapchain->image_format(),
-                                                swapchain_extent.width, swapchain_extent.height);
+    m_back_buffer =
+        m_render_graph->add_texture("Color", render_graph::TextureUsage::BACK_BUFFER, m_swapchain->image_format(),
+                                    swapchain_extent.width, swapchain_extent.height);
 
-    m_depth_buffer = m_render_graph->add_texture("Depth", DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT,
-                                                 swapchain_extent.width, swapchain_extent.height);
+    m_depth_buffer =
+        m_render_graph->add_texture("Depth", render_graph::TextureUsage::DEPTH_STENCIL_BUFFER,
+                                    VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width, swapchain_extent.height);
 
-    m_vertex_buffer = m_render_graph->add_buffer("Octree", VERTEX_BUFFER, [&]() {
+    m_vertex_buffer = m_render_graph->add_buffer("Octree", render_graph::BufferType::VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
@@ -452,7 +445,7 @@ void Application::setup_render_graph() {
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
-    m_index_buffer = m_render_graph->add_buffer("Octree", INDEX_BUFFER, [&]() {
+    m_index_buffer = m_render_graph->add_buffer("Octree", render_graph::BufferType::INDEX_BUFFER, [&]() {
         // Request update of the octree index buffer
         m_index_buffer.lock()->request_update(m_octree_indices);
     });
@@ -464,32 +457,27 @@ void Application::setup_render_graph() {
     m_vertex_buffer.lock()->request_update(m_octree_vertices);
     m_index_buffer.lock()->request_update(m_octree_indices);
 
-    m_uniform_buffer = m_render_graph->add_buffer("Matrices", UNIFORM_BUFFER, [&]() {
+    m_uniform_buffer = m_render_graph->add_buffer("Matrices", render_graph::BufferType::UNIFORM_BUFFER, [&]() {
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
         m_uniform_buffer.lock()->request_update(m_mvp_matrices);
     });
 
-    using wrapper::descriptors::DescriptorSetAllocator;
-    using wrapper::descriptors::DescriptorSetLayoutBuilder;
-    using wrapper::descriptors::DescriptorSetUpdateBuilder;
     m_render_graph->add_resource_descriptor(
-        [&](DescriptorSetLayoutBuilder &builder) {
+        [&](wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {
             m_descriptor_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("Octree");
         },
-        [&](DescriptorSetAllocator &allocator) {
+        [&](wrapper::descriptors::DescriptorSetAllocator &allocator) {
             m_descriptor_set = allocator.allocate("Octree", m_descriptor_set_layout);
         },
-        [&](DescriptorSetUpdateBuilder &builder) {
+        [&](wrapper::descriptors::DescriptorSetUpdateBuilder &builder) {
             builder.add_uniform_buffer_update(m_descriptor_set, m_uniform_buffer).update();
         });
 
-    // TODO: Move octree renderer out of here
-    // TODO: How to associate data of rendergraph with renderers? Should renderers only do the setup?
-    // TODO: API style like m_render_graph->add_renderer(octree_renderer)->add_renderer(imgui_renderer);?
-    using wrapper::pipelines::GraphicsPipelineBuilder;
-    m_render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+    // TODO: Implement octree renderer
+
+    m_render_graph->add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
         m_octree_pipeline = builder
                                 .set_vertex_input_bindings({
                                     {
@@ -498,8 +486,7 @@ void Application::setup_render_graph() {
                                         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                     },
                                 })
-                                // TODO! Fix me!
-                                .set_multisampling(m_device->get_max_usable_sample_count(), 1.0f)
+                                .set_multisampling(m_device->get_max_usable_sample_count(), 0.25f)
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment(m_swapchain->image_format())
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
@@ -523,10 +510,10 @@ void Application::setup_render_graph() {
                                 .uses_shader(m_octree_vert)
                                 .uses_shader(m_octree_frag)
                                 .build("Octree");
+        return m_octree_pipeline;
     });
 
-    using wrapper::commands::CommandBuffer;
-    auto on_record_cmd_buffer = [&](const CommandBuffer &cmd_buf) {
+    auto on_record_cmd_buffer = [&](const wrapper::commands::CommandBuffer &cmd_buf) {
         cmd_buf.bind_pipeline(m_octree_pipeline)
             .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
             .bind_vertex_buffer(m_vertex_buffer)
@@ -534,12 +521,12 @@ void Application::setup_render_graph() {
             .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
     };
 
-    using render_graph::GraphicsPassBuilder;
-    m_render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.add_color_attachment(m_back_buffer, VkClearValue{1.0f, 0.0f, 0.0f, 1.0f})
-            .add_depth_attachment(m_depth_buffer)
-            .set_on_record(std::move(on_record_cmd_buffer))
-            .build("Octree");
+    m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
+        m_octree_pass = builder.add_color_attachment(m_back_buffer, VkClearValue{1.0f, 0.0f, 0.0f, 1.0f})
+                            .add_depth_attachment(m_depth_buffer)
+                            .set_on_record(std::move(on_record_cmd_buffer))
+                            .build("Octree");
+        return m_octree_pass;
     });
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?

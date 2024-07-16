@@ -25,12 +25,17 @@ class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
     std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{};
+
     /// The color attachments of the graphics pass
     std::vector<Attachment> m_color_attachments{};
     /// The depth attachment of the graphics pass
     Attachment m_depth_attachment{};
     /// The stencil attachment of the graphics pass
     Attachment m_stencil_attachment{};
+
+    /// The graphics passes which are read by this graphics pass. Based on this, rendergraph can automatically determine
+    /// the correct pass order based on depth first search algorithm (DFS)
+    std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads{};
 
     /// Reset all data of the graphics pass builder
     void reset();
@@ -68,7 +73,12 @@ public:
     /// Build the graphics pass
     /// @param name The name of the graphics pass
     /// @return The graphics pass that was just created
-    [[nodiscard]] GraphicsPass build(std::string name);
+    [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name);
+
+    /// Specify that this graphics pass A reads from another graphics pass B, meaning B should be rendered before A
+    /// @param graphics_pass The graphics pass which is read by this graphics pass
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &reads_from(std::weak_ptr<GraphicsPass> graphics_pass);
 
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
     /// @param on_record_cmd_buffer The command buffer recording function

@@ -134,32 +134,32 @@ void RenderGraph::create_rendering_infos() {
             });
         };
         // Fill the color attachments
-        pass.m_color_attachment_infos.reserve(pass.m_color_attachments.size());
-        for (const auto &color_attachment : pass.m_color_attachments) {
-            pass.m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
+        pass->m_color_attachment_infos.reserve(pass->m_color_attachments.size());
+        for (const auto &color_attachment : pass->m_color_attachments) {
+            pass->m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
         }
         // Fill the color attachment (if specified)
-        const bool has_depth_attachment = !pass.m_depth_attachment.first.expired();
+        const bool has_depth_attachment = !pass->m_depth_attachment.first.expired();
         if (has_depth_attachment) {
-            pass.m_depth_attachment_info = fill_rendering_info(pass.m_depth_attachment);
+            pass->m_depth_attachment_info = fill_rendering_info(pass->m_depth_attachment);
         }
         // Fill the stencil attachment (if specified)
-        const bool has_stencil_attachment = !pass.m_stencil_attachment.first.expired();
+        const bool has_stencil_attachment = !pass->m_stencil_attachment.first.expired();
         if (has_stencil_attachment) {
-            pass.m_stencil_attachment_info = fill_rendering_info(pass.m_stencil_attachment);
+            pass->m_stencil_attachment_info = fill_rendering_info(pass->m_stencil_attachment);
         }
         // We store all this data in the rendering info in the graphics pass itself
         // The advantage of this is that we don't have to fill this during the actual rendering
-        pass.m_rendering_info = std::move(wrapper::make_info<VkRenderingInfo>({
+        pass->m_rendering_info = std::move(wrapper::make_info<VkRenderingInfo>({
             .renderArea =
                 {
                     .extent = m_swapchain.extent(),
                 },
             .layerCount = 1,
-            .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachment_infos.size()),
-            .pColorAttachments = pass.m_color_attachment_infos.data(),
-            .pDepthAttachment = has_depth_attachment ? &pass.m_depth_attachment_info : nullptr,
-            .pStencilAttachment = has_stencil_attachment ? &pass.m_stencil_attachment_info : nullptr,
+            .colorAttachmentCount = static_cast<std::uint32_t>(pass->m_color_attachment_infos.size()),
+            .pColorAttachments = pass->m_color_attachment_infos.data(),
+            .pDepthAttachment = has_depth_attachment ? &pass->m_depth_attachment_info : nullptr,
+            .pStencilAttachment = has_stencil_attachment ? &pass->m_stencil_attachment_info : nullptr,
         }));
     }
 }
@@ -218,7 +218,7 @@ void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std
                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     for (const auto &pass : m_graphics_passes) {
-        record_command_buffer_for_pass(cmd_buf, pass);
+        record_command_buffer_for_pass(cmd_buf, *pass);
     }
     // Change the layout of the swapchain image to make it ready for presenting
     cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,

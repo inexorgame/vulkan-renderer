@@ -63,30 +63,25 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     m_fragment_shader =
         std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
-    using render_graph::TextureUsage;
-    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM,
-                                               m_font_texture_width, m_font_texture_width, [&]() {
-                                                   // Initialize the ImGui font texture
-                                                   m_imgui_texture.lock()->request_update(m_font_texture_data,
-                                                                                          m_font_texture_data_size);
-                                               });
+    m_imgui_texture = render_graph.add_texture(
+        "ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, m_font_texture_width,
+        m_font_texture_width, [&]() {
+            // Initialize the ImGui font texture
+            m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
+        });
 
-    using wrapper::descriptors::DescriptorSetAllocator;
-    using wrapper::descriptors::DescriptorSetLayoutBuilder;
-    using wrapper::descriptors::DescriptorSetUpdateBuilder;
     render_graph.add_resource_descriptor(
-        [&](DescriptorSetLayoutBuilder &builder) {
+        [&](wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {
             m_descriptor_set_layout = builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
         },
-        [&](DescriptorSetAllocator &allocator) {
+        [&](wrapper::descriptors::DescriptorSetAllocator &allocator) {
             m_descriptor_set = allocator.allocate("ImGui", m_descriptor_set_layout);
         },
-        [&](DescriptorSetUpdateBuilder &builder) {
+        [&](wrapper::descriptors::DescriptorSetUpdateBuilder &builder) {
             builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
         });
 
-    using wrapper::pipelines::GraphicsPipelineBuilder;
-    render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+    render_graph.add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
         m_imgui_pipeline = builder
                                .set_vertex_input_bindings({
                                    {
@@ -122,10 +117,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                .set_descriptor_set_layout(m_descriptor_set_layout)
                                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                .build("ImGui");
+        return m_imgui_pipeline;
     });
 
-    using wrapper::commands::CommandBuffer;
-    auto on_record_cmd_buffer = [&](const CommandBuffer &cmd_buf) {
+    auto on_record_cmd_buffer = [&](const wrapper::commands::CommandBuffer &cmd_buf) {
         const ImGuiIO &io = ImGui::GetIO();
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
@@ -152,11 +147,12 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         }
     };
 
-    using render_graph::GraphicsPassBuilder;
-    render_graph.add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.add_color_attachment(m_color_attachment)
-            .set_on_record(std::move(on_record_cmd_buffer))
-            .build("ImGui");
+    render_graph.add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
+        // TODO: builder.reads_from(octree_pass)..!
+        m_imgui_pass = builder.add_color_attachment(m_color_attachment)
+                           .set_on_record(std::move(on_record_cmd_buffer))
+                           .build("ImGui");
+        return m_imgui_pass;
     });
 }
 

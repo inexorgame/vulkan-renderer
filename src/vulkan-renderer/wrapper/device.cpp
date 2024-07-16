@@ -399,9 +399,10 @@ Device::Device(const Instance &inst,
         const auto sample_count =
             m_properties.limits.framebufferColorSampleCounts & m_properties.limits.framebufferDepthSampleCounts;
 
-        const std::array<VkSampleCountFlagBits, 6> sample_count_flag_bits{
+        const VkSampleCountFlagBits sample_count_flag_bits[] = {
             VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_16_BIT,
-            VK_SAMPLE_COUNT_8_BIT,  VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT};
+            VK_SAMPLE_COUNT_8_BIT,  VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT,
+        };
 
         for (const auto &sample_count_flag_bit : sample_count_flag_bits) {
             if (sample_count & sample_count_flag_bit) {

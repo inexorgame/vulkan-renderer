@@ -75,11 +75,11 @@ private:
     /// The graphics pass builder of the rendergraph
     GraphicsPassBuilder m_graphics_pass_builder{};
     /// In these callback functions, the graphics passes will be created
-    using OnCreateGraphicsPass = std::function<GraphicsPass(GraphicsPassBuilder &)>;
+    using OnCreateGraphicsPass = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
     /// The graphics pass create functions
     std::vector<OnCreateGraphicsPass> m_graphics_pass_create_functions;
     /// The graphics passes used in the rendergraph
-    std::vector<GraphicsPass> m_graphics_passes;
+    std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
     /// -----------------------------------------------------------------------------------------------------------------
     ///  GRAPHICS PIPELINES
