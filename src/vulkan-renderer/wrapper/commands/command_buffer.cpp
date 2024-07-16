@@ -86,14 +86,14 @@ CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
                                 dyn_offsets);
 }
 
-const CommandBuffer &CommandBuffer::bind_index_buffer(const std::shared_ptr<render_graph::Buffer> buffer,
+const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::Buffer> buffer,
                                                       const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
-    if (buffer->m_buffer_type != render_graph::BufferType::INDEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->m_name +
+    if (buffer.lock()->m_buffer_type != render_graph::BufferType::INDEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
                                     " is not an index buffer!");
     }
-    vkCmdBindIndexBuffer(m_cmd_buf, buffer->m_buffer, offset, index_type);
+    vkCmdBindIndexBuffer(m_cmd_buf, buffer.lock()->m_buffer, offset, index_type);
     return *this;
 }
 
@@ -103,12 +103,12 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<pipelines:
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::shared_ptr<render_graph::Buffer> buffer) const {
-    if (buffer->m_buffer_type != render_graph::BufferType::VERTEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer->m_name +
+const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<render_graph::Buffer> buffer) const {
+    if (buffer.lock()->m_buffer_type != render_graph::BufferType::VERTEX_BUFFER) {
+        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
                                     " is not a vertex buffer!");
     }
-    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer->m_buffer, std::vector<VkDeviceSize>(1, 0).data());
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->m_buffer, std::vector<VkDeviceSize>(1, 0).data());
     return *this;
 }
 

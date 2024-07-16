@@ -7,16 +7,17 @@
 
 namespace inexor::vulkan_renderer {
 
-/// @brief A custom base class for exceptions
+/// A custom base class for exceptions
 class InexorException : public std::runtime_error {
 public:
     // No need to define own constructors.
     using std::runtime_error::runtime_error;
 };
 
-/// @brief InexorException for Vulkan specific things.
+/// InexorException for Vulkan specific things.
 class VulkanException final : public InexorException {
 public:
+    /// Default constructor
     /// @param message The exception message.
     /// @param result The VkResult value of the Vulkan API call which failed.
     VulkanException(std::string message, VkResult result);

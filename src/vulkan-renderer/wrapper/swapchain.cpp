@@ -49,6 +49,7 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
             throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
         }
     }
+    m_current_img_view = m_img_views[m_img_index];
     return m_img_index;
 }
 

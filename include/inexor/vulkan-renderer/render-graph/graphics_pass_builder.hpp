@@ -16,6 +16,7 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::render_graph {
 
+// Using declaration
 using wrapper::commands::CommandBuffer;
 
 /// A builder class for graphics passes in the rendergraph
@@ -23,24 +24,13 @@ using wrapper::commands::CommandBuffer;
 class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
-    std::function<void(const CommandBuffer &)> m_on_record;
-    /// Depth testing
-    bool m_enable_depth_test{false};
-    /// Multisample anti-aliasing (MSAA)
-    bool m_enable_msaa{false};
-    /// Clear the color attachment
-    bool m_clear_color{false};
-    /// Clear the stencil attachment
-    bool m_clear_stencil{false};
-    /// Indicates if the screen is cleared at the beginning of the pass
-    VkClearValue m_clear_value{};
-
-    // TODO: Multiple color attachments!
-    std::weak_ptr<Texture> m_color_attachment;
-    std::weak_ptr<Texture> m_depth_attachment;
-    std::weak_ptr<Texture> m_stencil_attachment;
-    std::weak_ptr<Texture> m_msaa_color_attachment;
-    std::weak_ptr<Texture> m_msaa_depth_attachment;
+    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer;
+    /// The color attachments of the graphics pass
+    std::vector<Attachment> m_color_attachments;
+    /// The depth attachment of the graphics pass
+    Attachment m_depth_attachment;
+    /// The stencil attachment of the graphics pass
+    Attachment m_stencil_attachment;
 
     /// Reset all data of the graphics pass builder
     void reset();
@@ -48,7 +38,6 @@ private:
 public:
     GraphicsPassBuilder();
     GraphicsPassBuilder(const GraphicsPassBuilder &) = delete;
-    // TODO: Implement me!
     GraphicsPassBuilder(GraphicsPassBuilder &&) noexcept;
     ~GraphicsPassBuilder() = default;
 
@@ -65,10 +54,19 @@ public:
             throw std::invalid_argument(
                 "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is expired!");
         }
-        m_color_attachment = color_attachment;
-        if (clear_color) {
-            m_clear_color = true;
-            m_clear_value.color = clear_color.value();
+        m_color_attachments.emplace_back(std::move(color_attachment), clear_color);
+        return *this;
+    }
+
+    /// Add a stencil attachment to the pass
+    /// @param stencil_attachment The stencil attachment
+    /// @param clear_color The clear color value for the stencil attachment (``std::nullopt`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] auto &add_stencil_attachment(std::weak_ptr<Texture> stencil_attachment,
+                                               std::optional<VkClearColorValue> clear_color = std::nullopt) {
+        if (stencil_attachment.expired()) {
+            throw std::invalid_argument(
+                "[GraphicsPassBuilder::add_stencil_attachment] Error: 'stencil_attachment' is expired!");
         }
         return *this;
     }
@@ -77,14 +75,10 @@ public:
     /// @param name The name of the graphics pass
     /// @return The graphics pass that was just created
     [[nodiscard]] auto build(std::string name) {
-        auto graphics_pass = std::make_shared<GraphicsPass>(
-            std::move(name), std::move(m_on_record), std::move(m_color_attachment), std::move(m_depth_attachment),
-            std::move(m_stencil_attachment), std::move(m_msaa_color_attachment), std::move(m_msaa_depth_attachment),
-            m_enable_msaa, m_clear_color, m_clear_stencil, std::move(m_clear_value));
-
-        // Reset the builder so the builder can be re-used
+        auto graphics_pass =
+            GraphicsPass(std::move(name), std::move(m_on_record_cmd_buffer), std::move(m_color_attachments),
+                         std::move(m_depth_attachment), std::move(m_stencil_attachment));
         reset();
-        // Return the graphics pass that was created
         return graphics_pass;
     }
 
@@ -95,36 +89,15 @@ public:
         if (depth_attachment.expired()) {
             throw std::invalid_argument("[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is expired!");
         }
-        m_enable_depth_test = true;
-        m_depth_attachment = depth_attachment;
-        return *this;
-    }
-
-    /// Enable multisample anti-aliasing (MSAA) for the pass
-    /// @param sample_count The MSAA sample count
-    /// @param msaa_back_attachment The MSAA attachment
-    /// @param msaa_depth_attachment The MSAA depth attachment
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &enable_msaa(VkSampleCountFlagBits sample_count,
-                                    std::weak_ptr<Texture> msaa_back_attachment,
-                                    std::weak_ptr<Texture> msaa_depth_attachment) {
-        if (msaa_back_attachment.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_back_buffer' is expired!");
-        }
-        if (msaa_depth_attachment.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::enable_msaa] Error: 'msaa_depth_buffer' is expired!");
-        }
-        m_enable_msaa = true;
-        m_msaa_color_attachment = msaa_back_attachment;
-        m_msaa_depth_attachment = msaa_depth_attachment;
+        m_depth_attachment = Attachment(std::move(depth_attachment), std::nullopt);
         return *this;
     }
 
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
-    /// @param on_record The command buffer recording function
+    /// @param on_record_cmd_buffer The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] auto &set_on_record(std::function<void(const CommandBuffer &)> on_record) {
-        m_on_record = std::move(on_record);
+    [[nodiscard]] auto &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer) {
+        on_record_cmd_buffer = std::move(on_record_cmd_buffer);
         return *this;
     }
 };

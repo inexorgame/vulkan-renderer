@@ -114,11 +114,11 @@ public:
                                               std::span<const std::uint32_t> dyn_offsets = {}) const;
 
     /// Call vkCmdBindIndexBuffer
-    /// @param buf The index buffer to bind
+    /// @param buffer The index buffer to bind
     /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
     /// @param offset The offset (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_index_buffer(std::shared_ptr<render_graph::Buffer> buf,
+    const CommandBuffer &bind_index_buffer(std::weak_ptr<render_graph::Buffer> buffer,
                                            VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
                                            VkDeviceSize offset = 0) const;
 
@@ -132,9 +132,9 @@ public:
     /// Call vkCmdBindVertexBuffers
     /// @note When binding only a single vertex buffer, the parameters ``firstBinding`` and ``bindingCount`` in
     /// ``pOffsets`` in ``vkCmdBindVertexBuffers`` do not need to be exposed.
-    /// @param buf The vertex buffer to bind
+    /// @param buffer The vertex buffer to bind
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_vertex_buffer(std::shared_ptr<render_graph::Buffer> buf) const;
+    const CommandBuffer &bind_vertex_buffer(std::weak_ptr<render_graph::Buffer> buffer) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param image The image

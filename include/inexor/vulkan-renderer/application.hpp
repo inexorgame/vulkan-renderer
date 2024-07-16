@@ -43,13 +43,11 @@ private:
     std::vector<std::uint32_t> m_octree_indices;
 
     std::unique_ptr<render_graph::RenderGraph> m_render_graph;
-    std::shared_ptr<render_graph::Texture> m_back_buffer;
-    std::shared_ptr<render_graph::Texture> m_depth_buffer;
-    std::shared_ptr<render_graph::Texture> m_msaa_depth;
-    std::shared_ptr<render_graph::Texture> m_msaa_color;
-    std::shared_ptr<render_graph::Buffer> m_index_buffer;
-    std::shared_ptr<render_graph::Buffer> m_vertex_buffer;
-    std::shared_ptr<render_graph::Buffer> m_uniform_buffer;
+    std::weak_ptr<render_graph::Texture> m_back_buffer;
+    std::weak_ptr<render_graph::Texture> m_depth_buffer;
+    std::weak_ptr<render_graph::Buffer> m_index_buffer;
+    std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
+    std::weak_ptr<render_graph::Buffer> m_uniform_buffer;
     std::shared_ptr<wrapper::Shader> m_octree_vert;
     std::shared_ptr<wrapper::Shader> m_octree_frag;
 
@@ -57,7 +55,6 @@ private:
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_octree_pipeline;
-    std::shared_ptr<render_graph::GraphicsPass> m_octree_pass;
 
     struct ModelViewPerspectiveMatrices {
         glm::mat4 model{1.0f};

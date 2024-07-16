@@ -2,7 +2,7 @@
 
 #include <vk_mem_alloc.h>
 
-#include "inexor/vulkan-renderer/wrapper/sampler.hpp"
+#include "inexor/vulkan-renderer/render-graph/image.hpp"
 
 #include <functional>
 #include <memory>
@@ -26,111 +26,96 @@ class DescriptorSetUpdateBuilder;
 
 namespace inexor::vulkan_renderer::render_graph {
 
-/// Specifies the use of the texture inside of the rendergraph
+/// Specifies the use of the texture
+/// NOTE: All usages which are not TextureUsage::NORMAL are for internal usage inside of rendergraph only
 enum class TextureUsage {
-    /// Specifies that this texture is the output of the render graph
-    BACK_BUFFER,
-    MSAA_BACK_BUFFER,
-    /// Specifies that this texture is a combined depth/stencil buffer
-    DEPTH_STENCIL_BUFFER,
-    MSAA_DEPTH_STENCIL_BUFFER,
-    /// Specifies that this texture isn't used for any special purpose
     NORMAL,
+    BACK_BUFFER,
+    DEPTH_STENCIL_BUFFER,
 };
 
-// Forward declaration
-class Texture;
-
+// Using declarations
 using wrapper::Device;
 using wrapper::commands::CommandBuffer;
+using wrapper::descriptors::DescriptorSetUpdateBuilder;
 
-/// RAII wrapper for texture resources in the rendergraph
+/// RAII wrapper for texture resources
 class Texture {
-    friend class inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateBuilder;
-
-private:
+    friend class DescriptorSetUpdateBuilder;
     friend class RenderGraph;
 
+private:
     const Device &m_device;
+    /// The name of the texture
     std::string m_name;
-    TextureUsage m_usage;
-    VmaAllocation m_alloc{VK_NULL_HANDLE};
-    VmaAllocationInfo m_alloc_info{};
-    VkImageCreateInfo m_img_ci{};
-    VkImageViewCreateInfo m_img_view_ci{};
+    /// The usage of this texture
+    TextureUsage m_texture_usage;
+    /// The format of the texture
     VkFormat m_format{VK_FORMAT_UNDEFINED};
+    /// The image of the texture
+    std::unique_ptr<Image> m_img;
+    /// This is only used internally inside of rendergraph in case this texture used as a back buffer, depth buffer, or
+    /// stencil buffer and MSAA is enabled.
+    std::unique_ptr<Image> m_msaa_img;
 
-    VmaAllocationCreateInfo m_alloc_ci{
-        .usage = VMA_MEMORY_USAGE_AUTO,
-    };
-
-    std::optional<std::function<void()>> m_on_init;
-    std::optional<std::function<void()>> m_on_update;
-
-    void *m_texture_data{nullptr};
-    std::size_t m_texture_data_size{0};
+    // This is used for initializing textures and for updating dynamic textures
     bool m_update_requested{false};
-    VkImage m_img{VK_NULL_HANDLE};
-    VkImageView m_img_view{VK_NULL_HANDLE};
+    void *m_src_texture_data{nullptr};
+    std::size_t m_src_texture_data_size{0};
+
+    /// This is for initialization of textures which are of TextureUsage::NORMAL
+    std::optional<std::function<void()>> m_on_init{std::nullopt};
+    /// By definition, if this is not std::nullopt, this is a dynamic texture
+    std::optional<std::function<void()>> m_on_update{std::nullopt};
+
+    // The staging buffer for updating the texture data
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
     VmaAllocation m_staging_buffer_alloc{VK_NULL_HANDLE};
-    std::unique_ptr<wrapper::Sampler> m_sampler;
 
-    /// The descriptor image info
-    VkDescriptorImageInfo m_descriptor_image_info{};
+    /// This part of the image wrapper is for external use outside of rendergraph
+    /// The descriptor image info required for descriptor updates
+    VkDescriptorImageInfo m_descriptor_img_info{};
 
-    /// Only RenderGraph is allowed to create the texture
+    ///
     void create();
 
-    /// Only RenderGraph is allowed to create the texture
-    /// @param img_ci
-    /// @param img_view_ci
-    void create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci);
-
-    /// Call vkDestroyImageView and vmaDestroyImage
+    ///
     void destroy();
 
     /// Upload the data into the texture
-    /// @param cmd_buf The command buffer to record into
+    /// @param cmd_buf The command buffer to record the commands into
     void update(const CommandBuffer &cmd_buf);
 
 public:
-    /// Constructor for external textures (created outside of rendergraph)
+    /// Default constructor
     /// @param device The device wrapper
-    /// @param name The internal debug name of the texture inside of the rendergraph (must not be empty!)
-    /// @param usage The internal usage of the texture inside of the rendergraph
-    /// @param on_init The init function of the texture (``std::nullopt`` by default)
-    /// @param on_update An optional update function of the texture (``std::nullopt`` by default)
+    /// @param name The internal debug name of the texture
+    /// @param usage The usage of the texture inside of rendergraph
+    /// @param format The format of the texture
+    /// @param on_init The initialization function of the texture
+    /// @param on_update The update function of the texture
     Texture(const Device &device,
             std::string name,
             TextureUsage usage,
+            VkFormat format,
             std::optional<std::function<void()>> on_init = std::nullopt,
             std::optional<std::function<void()>> on_update = std::nullopt);
 
-    /// Constructor for internal textures (created inside of rendergraph)
-    /// @param device The device wrapper
-    /// @param name The internal debug name of the texture inside of the rendergraph (must not be empty!)
-    /// @param usage The internal usage of the texture inside of the rendergraph
-    /// @param format The texture format
-    Texture(const Device &device, std::string name, TextureUsage usage, VkFormat format);
-
     Texture(const Texture &) = delete;
-    // TODO: Implement!
     Texture(Texture &&other) noexcept;
     ~Texture();
 
     Texture &operator=(const Texture &) = delete;
-    Texture &operator=(Texture &&) = delete;
+    Texture &operator=(Texture &&) noexcept;
+
+    // TODO: request_update with other width x height so the texture is recreated??
 
     /// Request rendergraph to update the texture
-    /// @param src_texture_data A pointer to the texture data
-    /// @param src_texture_data_size The size of the texture data to which ``texture_src_data`` points to
-    /// @param img_ci The image create info
-    /// @param img_view_ci The image view create info
-    void request_update(void *src_texture_data,
-                        std::size_t src_texture_data_size,
-                        VkImageCreateInfo img_ci,
-                        VkImageViewCreateInfo img_view_ci);
+    /// @param src_texture_data A pointer to the source data
+    /// @param src_texture_data_size The size of the source data
+    /// @note It is the responsibility of the programmer to make sure the memory the pointer points to is still valid
+    /// when rendergraph is carrying out the update!
+    void request_update(void *src_texture_data, std::size_t src_texture_data_size);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

@@ -9,13 +9,16 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
+    vulkan-renderer/io/io_exception.cpp
     vulkan-renderer/io/nxoc_parser.cpp
+    vulkan-renderer/io/octree_parser.cpp
 
     vulkan-renderer/renderers/imgui.cpp
 
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp
     vulkan-renderer/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/render-graph/image.cpp
     vulkan-renderer/render-graph/render_graph.cpp
     vulkan-renderer/render-graph/texture.cpp
 

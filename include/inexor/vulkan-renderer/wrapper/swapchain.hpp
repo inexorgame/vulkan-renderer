@@ -13,6 +13,14 @@ namespace inexor::vulkan_renderer::wrapper::synchronization {
 class Semaphore;
 } // namespace inexor::vulkan_renderer::wrapper::synchronization
 
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class RenderGraph;
+} // namespace inexor::vulkan_renderer::render_graph
+
+// Using declaration
+using inexor::vulkan_renderer::render_graph::RenderGraph;
+
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
@@ -20,6 +28,8 @@ class Device;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
+    friend class RenderGraph;
+
 private:
     Device &m_device;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
@@ -31,6 +41,7 @@ private:
     std::unique_ptr<synchronization::Semaphore> m_img_available;
     bool m_vsync_enabled{false};
     std::uint32_t m_img_index;
+    VkImageView m_current_img_view{VK_NULL_HANDLE};
 
     /// Call vkGetSwapchainImagesKHR
     /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
@@ -77,7 +88,8 @@ public:
     /// @param current_extent The current extent
     /// @return The chosen swapchain image extent
     [[nodiscard]] static VkExtent2D choose_image_extent(const VkExtent2D &requested_extent,
-                                                        const VkExtent2D &min_extent, const VkExtent2D &max_extent,
+                                                        const VkExtent2D &min_extent,
+                                                        const VkExtent2D &max_extent,
                                                         const VkExtent2D &current_extent);
 
     /// Choose the present mode
@@ -89,7 +101,8 @@ public:
     /// @note If none of the ``present_mode_priority_list`` are supported, ``VK_PRESENT_MODE_FIFO_KHR`` will be returned
     [[nodiscard]] static VkPresentModeKHR
     choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                        const std::vector<VkPresentModeKHR> &present_mode_priority_list, bool vsync_enabled);
+                        const std::vector<VkPresentModeKHR> &present_mode_priority_list,
+                        bool vsync_enabled);
 
     /// Choose a surface format
     /// @param available_formats The available surface formats
@@ -99,6 +112,8 @@ public:
     [[nodiscard]] static std::optional<VkSurfaceFormatKHR>
     choose_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats,
                           const std::vector<VkSurfaceFormatKHR> &format_prioriy_list = {});
+
+    // TODO: Which ones should be expose in public?
 
     [[nodiscard]] VkExtent2D extent() const {
         return m_extent;

@@ -13,69 +13,24 @@ namespace inexor::vulkan_renderer::render_graph {
 Texture::Texture(const Device &device,
                  std::string name,
                  const TextureUsage usage,
+                 const VkFormat format,
                  std::optional<std::function<void()>> on_init,
                  std::optional<std::function<void()>> on_update)
-    : m_device(device), m_name(std::move(name)), m_usage(usage), m_on_init(std::move(on_init)),
-      m_on_update(std::move(on_update)) {
+    : m_device(device), m_name(std::move(name)), m_texture_usage(usage), m_format(format),
+      m_on_init(std::move(on_init)), m_on_update(std::move(on_update)) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
-}
-
-Texture::Texture(const Device &device, std::string name, const TextureUsage usage, const VkFormat format)
-    : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format) {
-    if (m_name.empty()) {
-        throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
-    }
-}
-
-Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
-    // TODO: FIX me!
-}
-
-Texture::~Texture() {
-    destroy();
-}
-
-void Texture::create() {
-    if (const auto result =
-            vmaCreateImage(m_device.allocator(), &m_img_ci, &m_alloc_ci, &m_img, &m_alloc, &m_alloc_info);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
-    }
-    // Assign an internal debug name to this image in Vulkan Memory Allocator (VMA)
-    vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
-    // Set the textures's internal debug name through Vulkan debug utils
-    m_device.set_debug_name(m_img, m_name);
-
-    // Set the image in the VkImageViewCreateInfo
-    m_img_view_ci.image = m_img;
-
-    if (const auto result = vkCreateImageView(m_device.device(), &m_img_view_ci, nullptr, &m_img_view);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
-    }
-    m_device.set_debug_name(m_img_view, m_name);
-
-    m_sampler = std::make_unique<wrapper::Sampler>(m_device, m_name);
-}
-
-void Texture::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) {
-    m_img_ci = std::move(img_ci);
-    m_img_view_ci = std::move(img_view_ci);
-    create();
 }
 
 void Texture::destroy() {
-    vkDestroyImageView(m_device.device(), m_img_view, nullptr);
-    vmaDestroyImage(m_device.allocator(), m_img, m_alloc);
-    vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
+    // TODO: Do we need this here?
+    m_img->destroy();
 }
 
 void Texture::update(const CommandBuffer &cmd_buf) {
-    if (m_img == VK_NULL_HANDLE) {
-        throw std::runtime_error("[Texture::execute_update] Error: m_img is VK_NULL_HANDLE!");
-    }
+#if 0
+    // TODO: Validate parameters again before update!
     if (m_staging_buffer != VK_NULL_HANDLE) {
         vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
         m_staging_buffer = VK_NULL_HANDLE;
@@ -119,25 +74,19 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     // It will be destroyed either in the destructor or the next time execute_update is called
     // Another option would have been to wrap each call to execute_update() into its own single time
     // command buffer, which would increase the total number of command buffer submissions though
+#endif
 }
 
-void Texture::request_update(void *src_texture_data,
-                             const std::size_t src_texture_data_size,
-                             VkImageCreateInfo img_ci,
-                             VkImageViewCreateInfo img_view_ci) {
+void Texture::request_update(void *src_texture_data, const std::size_t src_texture_data_size) {
     if (src_texture_data == nullptr) {
         throw std::invalid_argument("[Texture::request_update] Error: Parameter 'texture_src_data' is nullptr!");
     }
     if (src_texture_data_size == 0) {
         throw std::invalid_argument("[Texture::request_update] Error: Parameter 'src_texture_data_size' is 0!");
     }
-    // NOTE: It is the responsibility of the programmer to make sure the memory this pointer points to is still
-    // valid when the actual copy operation for the update is carried out!
-    m_texture_data = src_texture_data;
-    m_texture_data_size = src_texture_data_size;
-    m_img_ci = std::move(img_ci);
-    m_img_view_ci = std::move(img_view_ci);
     m_update_requested = true;
+    m_src_texture_data = src_texture_data;
+    m_src_texture_data_size = src_texture_data_size;
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

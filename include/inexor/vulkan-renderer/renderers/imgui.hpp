@@ -29,13 +29,12 @@ namespace inexor::vulkan_renderer::renderers {
 /// A wrapper for an ImGui implementation
 class ImGuiRenderer {
     const wrapper::Device &m_device;
-    std::shared_ptr<render_graph::Buffer> m_index_buffer;
-    std::shared_ptr<render_graph::Buffer> m_vertex_buffer;
-    std::shared_ptr<render_graph::Texture> m_imgui_texture;
+    std::weak_ptr<render_graph::Buffer> m_index_buffer;
+    std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
+    std::weak_ptr<render_graph::Texture> m_imgui_texture;
     std::shared_ptr<wrapper::Shader> m_vertex_shader;
     std::shared_ptr<wrapper::Shader> m_fragment_shader;
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_imgui_pipeline;
-    std::shared_ptr<render_graph::GraphicsPass> m_imgui_pass;
 
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};

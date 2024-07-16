@@ -6,12 +6,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(const Device &device,
-                                                       DescriptorSetLayoutCache &descriptor_set_layout_cache)
-    : m_device(device), m_descriptor_set_layout_cache(descriptor_set_layout_cache) {}
+DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(const Device &device) : m_device(device) {}
 
 DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(DescriptorSetLayoutBuilder &&other) noexcept
-    : m_device(other.m_device), m_descriptor_set_layout_cache(other.m_descriptor_set_layout_cache) {
+    : m_device(other.m_device) {
     m_bindings = std::move(other.m_bindings);
     m_binding = other.m_binding;
 }

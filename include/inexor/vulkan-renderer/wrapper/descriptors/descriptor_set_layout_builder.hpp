@@ -23,19 +23,19 @@ class DescriptorSetLayoutCache;
 
 /// A builder for descriptors
 class DescriptorSetLayoutBuilder {
-    friend RenderGraph;
+    friend class RenderGraph;
 
 private:
     const Device &m_device;
-    DescriptorSetLayoutCache &m_descriptor_set_layout_cache;
+    /// All instances of DescriptorSetLayoutBuilder have the same DescriptorSetLayoutCache instance!
+    static DescriptorSetLayoutCache m_descriptor_set_layout_cache;
     std::vector<VkDescriptorSetLayoutBinding> m_bindings;
     std::uint32_t m_binding{0};
 
 public:
     /// Default constructor
     /// @param device The device wrapper
-    /// @param descriptor_set_layout_cache The descriptor set layout cache
-    DescriptorSetLayoutBuilder(const Device &device, DescriptorSetLayoutCache &descriptor_set_layout_cache);
+    DescriptorSetLayoutBuilder(const Device &device);
 
     DescriptorSetLayoutBuilder(const DescriptorSetLayoutBuilder &) = delete;
     DescriptorSetLayoutBuilder(DescriptorSetLayoutBuilder &&) noexcept;

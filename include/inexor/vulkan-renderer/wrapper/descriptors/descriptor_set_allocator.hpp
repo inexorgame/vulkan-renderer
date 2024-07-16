@@ -21,7 +21,7 @@ class DescriptorBuilder;
 /// It is also responsible for caching VkDescriptorSetLayouts, meaning we do not create duplicates
 /// For internal use inside of rendergraph only!
 class DescriptorSetAllocator {
-    friend DescriptorBuilder;
+    friend class DescriptorBuilder;
 
 private:
     /// The device wrapper
@@ -41,15 +41,10 @@ public:
     /// @note We are currently not batching calls vkAllocateDescriptorSets, which would allow multiple descriptor sets
     /// to be allcoated in one vkAllocateDescriptorSets call. The problem is that batching could lead to running out of
     /// memory in the VkDescriptorPool, so a new descriptor pool would be created.
+    /// @param name The name of the descriptor set layout
+    /// @param descriptor_set_layout The descriptor set layout to allocate the descriptor set with
     /// @return The descriptor set which was allocated
-    [[nodiscard]] VkDescriptorSet allocate(VkDescriptorSetLayout descriptor_set_layout);
-
-    /// Create multiple descriptor sets by attempting to batch calls to ``vkAllocateDescriptorSets``
-    /// @note If batching the call to ``vkAllocateDescriptorSets`` fails because
-    /// @param descriptor_set_layouts The descriptor set layouts for the descriptor sets to create
-    /// @return A vector of descriptor sets that have been created
-    [[nodiscard]] std::vector<VkDescriptorSet>
-    allocate(const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts);
+    [[nodiscard]] VkDescriptorSet allocate(const std::string &name, VkDescriptorSetLayout descriptor_set_layout);
 
     DescriptorSetAllocator(const DescriptorSetAllocator &) = delete;
     DescriptorSetAllocator(DescriptorSetAllocator &&) noexcept;

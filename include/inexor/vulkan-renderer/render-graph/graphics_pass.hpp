@@ -21,66 +21,60 @@ namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
 
+// Using declaration
 using wrapper::descriptors::DescriptorSetLayout;
+
+// This will make our life easier
+using Attachment = std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>;
 
 /// A wrapper for graphics passes inside of rendergraph
 class GraphicsPass {
-    friend RenderGraph;
+    friend class RenderGraph;
 
 private:
     /// The name of the graphics pass
     std::string m_name;
-    /// An optional clear value
-    std::optional<VkClearValue> m_clear_values{std::nullopt};
     /// Add members which describe data related to graphics passes here
-    std::function<void(const CommandBuffer &)> m_on_record{[](auto &) {}};
+    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{[](auto &) {}};
 
-    /// Enable MSAA for this pass
-    bool m_enable_msaa{false};
-    /// Clear the color attachment
-    bool m_clear_color_attachment{false};
-    /// Clear the stencil attachment
-    bool m_clear_stencil_attachment{false};
+    /// NOTE: We do not have members like m_has_depth_buffer or m_has_stencil_buffer because we can simply check if the
+    /// std::weak_ptr<Texture> of the Attachment is expire() instead!
 
-    std::weak_ptr<Texture> m_color_attachment;
-    std::weak_ptr<Texture> m_depth_attachment;
-    std::weak_ptr<Texture> m_stencil_attachment;
-    std::weak_ptr<Texture> m_msaa_color_attachment;
-    std::weak_ptr<Texture> m_msaa_depth_attachment;
+    std::vector<Attachment> m_color_attachments{};
+    Attachment m_depth_attachment{};
+    Attachment m_stencil_attachment{};
 
-    /// The descriptor set layout of the pass (will be created by rendergraph)
+    /// The descriptor set layout of the pass (this will be created by rendergraph)
     std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
-
-    /// The descriptor set of the pass (will be created by rendergraph)
+    /// The descriptor set of the pass (this will be created by rendergraph)
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
+
+    /// The rendering info will be filled during rendergraph compilation so we don't have to do this while rendering
+    VkRenderingInfo m_rendering_info{};
+
+    // NOTE: The rendering info will be filled during rendergraph compilation with pointers to the members below. This
+    // means we must make sure that the memory of the attachment infos below is still valid during rendering, which is
+    // why we store them as members here.
+
+    /// The color attachments inside of m_rendering_info
+    std::vector<VkRenderingAttachmentInfo> m_color_attachment_infos{};
+    VkRenderingAttachmentInfo m_depth_attachment_info{};
+    VkRenderingAttachmentInfo m_stencil_attachment_info{};
 
 public:
     /// Default constructor
     /// @param name The name of the graphics pass
-    /// @param on_record
+    /// @param on_record_cmd_buffer The command buffer recording function of the graphics pass
     /// @param m_color_attachment
-    /// @param m_depth_attachment
+    /// @param m_depth_attachment The depth attachment of the graphics pass
     /// @param m_stencil_attachment
-    /// @param m_msaa_color_attachment
-    /// @param m_msaa_depth_attachment
-    /// @param enable_msaa
-    /// @param clear_color_attachment
-    /// @param clear_stencil_attachment
-    /// @param clear_values
     GraphicsPass(std::string name,
-                 std::function<void(const CommandBuffer &)> on_record,
-                 std::weak_ptr<Texture> m_color_attachment,
-                 std::weak_ptr<Texture> m_depth_attachment,
-                 std::weak_ptr<Texture> m_stencil_attachment,
-                 std::weak_ptr<Texture> m_msaa_color_attachment,
-                 std::weak_ptr<Texture> m_msaa_depth_attachment,
-                 bool enable_msaa,
-                 bool clear_color_attachment,
-                 bool clear_stencil_attachment,
-                 std::optional<VkClearValue> clear_values);
+                 std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
+                 std::vector<Attachment> m_color_attachments,
+                 Attachment m_depth_attachment,
+                 Attachment m_stencil_attachment);
 
     GraphicsPass(const GraphicsPass &) = delete;
-    // TODO: Fix me!
     GraphicsPass(GraphicsPass &&other) noexcept;
     ~GraphicsPass() = default;
 

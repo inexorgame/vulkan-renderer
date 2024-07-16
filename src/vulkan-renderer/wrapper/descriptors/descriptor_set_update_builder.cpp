@@ -44,7 +44,7 @@ DescriptorSetUpdateBuilder::add_combined_image_sampler_update(const VkDescriptor
         .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = &texture.lock()->m_descriptor_image_info,
+        .pImageInfo = &texture.lock()->m_descriptor_img_info,
     }));
 
     m_binding++;

@@ -1,31 +1,27 @@
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
-#include <unordered_map>
-
 namespace inexor::vulkan_renderer::render_graph {
 
 RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
     : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device),
-      m_descriptor_set_layout_cache(device), m_descriptor_set_layout_builder(device, m_descriptor_set_layout_cache),
-      m_descriptor_set_allocator(m_device), m_descriptor_set_update_builder(m_device) {}
+      m_descriptor_set_layout_builder(device), m_descriptor_set_allocator(m_device),
+      m_descriptor_set_update_builder(m_device) {}
 
-void RenderGraph::add_graphics_pass(GraphicsPassCreateFunction on_pass_create) {
+void RenderGraph::add_graphics_pass(OnCreateGraphicsPass on_pass_create) {
     m_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
 }
 
-void RenderGraph::add_graphics_pipeline(GraphicsPipelineCreateFunction on_pipeline_create) {
+void RenderGraph::add_graphics_pipeline(OnCreateGraphicsPipeline on_pipeline_create) {
     m_pipeline_create_functions.emplace_back(std::move(on_pipeline_create));
 }
 
-std::shared_ptr<Buffer>
+std::weak_ptr<Buffer>
 RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, std::function<void()> on_update) {
     m_buffers.emplace_back(
         std::make_shared<Buffer>(m_device, std::move(buffer_name), buffer_type, std::move(on_update)));
@@ -39,27 +35,24 @@ void RenderGraph::allocate_descriptor_sets() {
     }
 }
 
-void RenderGraph::add_resource_descriptor(
-    std::function<void(DescriptorSetLayoutBuilder &)> on_create_descriptor_set_layout,
-    std::function<void(DescriptorSetAllocator &)> on_allocate_descriptor_set,
-    std::function<void(DescriptorSetUpdateBuilder &)> on_update_descriptor_set) {
-    // NOTE: emplace_back directly constructs the tuple in place, no need for push_back and std::make_tuple
-    m_resource_descriptors.emplace_back(std::move(on_create_descriptor_set_layout),
-                                        std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
+void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
+                                          OnAllocateDescriptorSet on_allocate_descriptor_set,
+                                          OnUpdateDescriptorSet on_update_descriptor_set) {
+    // NOTE: This only stores the functions and they will be called in the correct order during rendergraph compilation
+    m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout), // to build descriptor set layout
+                                        std::move(on_allocate_descriptor_set),     // to allocate the descriptor set
+                                        std::move(on_update_descriptor_set));      // to update the descriptor set
 }
 
-std::shared_ptr<Texture>
-RenderGraph::add_texture(std::string texture_name, const TextureUsage usage, const VkFormat format) {
-    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format));
-    return m_textures.back();
-}
-
-std::shared_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
-                                                  const TextureUsage usage,
-                                                  std::optional<std::function<void()>> on_init,
-                                                  std::optional<std::function<void()>> on_update) {
-    m_textures.emplace_back(
-        std::make_shared<Texture>(m_device, std::move(texture_name), usage, std::move(on_init), std::move(on_update)));
+std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
+                                                const TextureUsage usage,
+                                                const VkFormat format,
+                                                const std::uint32_t width,
+                                                const std::uint32_t height,
+                                                std::optional<std::function<void()>> on_init,
+                                                std::optional<std::function<void()>> on_update) {
+    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format,
+                                                      std::move(on_init), std::move(on_update)));
     return m_textures.back();
 }
 
@@ -68,6 +61,7 @@ void RenderGraph::check_for_cycles() {
 }
 
 void RenderGraph::compile() {
+    // TODO: What needs to be re-done when swapchain is recreated?
     validate_render_graph();
     determine_pass_order();
     create_buffers();
@@ -77,6 +71,7 @@ void RenderGraph::compile() {
     update_descriptor_sets();
     create_graphics_passes();
     create_graphics_pipelines();
+    create_rendering_infos();
 }
 
 void RenderGraph::create_buffers() {
@@ -104,90 +99,92 @@ void RenderGraph::create_graphics_passes() {
 }
 
 void RenderGraph::create_graphics_pipelines() {
-    m_graphics_pipelines.clear();
-    m_graphics_pipelines.reserve(m_pipeline_create_functions.size());
     for (const auto &create_func : m_pipeline_create_functions) {
-        m_graphics_pipelines.emplace_back(create_func(m_graphics_pipeline_builder));
+        create_func(m_graphics_pipeline_builder);
+    }
+}
+
+void RenderGraph::create_rendering_infos() {
+    for (auto &pass : m_graphics_passes) {
+        /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
+        /// @param attachment The attachment (color, depth, or stencil)
+        /// @reutrn VkRenderingAttachmentInfo  The filled rendering info struct
+        auto fill_rendering_info = [&](const Attachment &attachment) {
+            const auto attach_ptr = attachment.first.lock();
+            const auto img_layout = [&]() -> VkImageLayout {
+                switch (attach_ptr->m_texture_usage) {
+                case TextureUsage::BACK_BUFFER:
+                case TextureUsage::DEPTH_STENCIL_BUFFER: {
+                    return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                }
+                default:
+                    return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                }
+            }(); // Invoke the lambda, not just define it!
+
+            // This decides if MSAA is enabled on a per-texture basis
+            return wrapper::make_info<VkRenderingAttachmentInfo>({
+                .imageView = attach_ptr->m_img->m_img_view,
+                .imageLayout = img_layout,
+                .resolveMode = attach_ptr ? VK_RESOLVE_MODE_MIN_BIT : VK_RESOLVE_MODE_NONE,
+                .resolveImageView = attach_ptr ? attach_ptr->m_msaa_img->m_img_view : VK_NULL_HANDLE,
+                .resolveImageLayout = attach_ptr ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = attachment.second ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                .clearValue = attachment.second.value_or(VkClearValue{}),
+            });
+        };
+        // Fill the color attachments
+        pass.m_color_attachment_infos.reserve(pass.m_color_attachments.size());
+        for (const auto &color_attachment : pass.m_color_attachments) {
+            pass.m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
+        }
+        // Fill the color attachment (if specified)
+        const bool has_depth_attachment = !pass.m_depth_attachment.first.expired();
+        if (has_depth_attachment) {
+            pass.m_depth_attachment_info = fill_rendering_info(pass.m_depth_attachment);
+        }
+        // Fill the stencil attachment (if specified)
+        const bool has_stencil_attachment = !pass.m_stencil_attachment.first.expired();
+        if (has_stencil_attachment) {
+            pass.m_stencil_attachment_info = fill_rendering_info(pass.m_stencil_attachment);
+        }
+
+        // We store all this data in the rendering info in the graphics pass itself
+        // The advantage of this is that we don't have to fill this during the actual rendering
+        pass.m_rendering_info = std::move(wrapper::make_info<VkRenderingInfo>({
+            .renderArea =
+                {
+                    .extent = m_swapchain.extent(),
+                },
+            .layerCount = 1,
+            .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachment_infos.size()),
+            .pColorAttachments = pass.m_color_attachment_infos.data(),
+            .pDepthAttachment = has_depth_attachment ? &pass.m_depth_attachment_info : nullptr,
+            .pStencilAttachment = has_stencil_attachment ? &pass.m_stencil_attachment_info : nullptr,
+        }));
     }
 }
 
 void RenderGraph::create_textures() {
-    /// The following code should not be part of texture wrapper because its only purpose is to fill VkImageCreateInfo
-    /// and VkImageViewCreateInfo in the code below to make it shorter.
-    auto fill_image_ci = [&](const VkFormat format, const VkImageUsageFlags image_usage,
-                             const VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT) {
-        return wrapper::make_info<VkImageCreateInfo>({
-            .imageType = VK_IMAGE_TYPE_2D,
-            .format = format,
-            .extent =
-                {
-                    .width = static_cast<std::uint32_t>(m_swapchain.extent().width),
-                    .height = static_cast<std::uint32_t>(m_swapchain.extent().height),
-                    .depth = 1,
-                },
-            .mipLevels = 1,
-            .arrayLayers = 1,
-            .samples = sample_count,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = image_usage,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        });
-    };
-
-    auto fill_image_view_ci = [&](const VkFormat format, const VkImageAspectFlags aspect_flags) {
-        return wrapper::make_info<VkImageViewCreateInfo>({
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = format,
-            .subresourceRange =
-                {
-                    .aspectMask = aspect_flags,
-                    .baseMipLevel = 0,
-                    .levelCount = 1,
-                    .baseArrayLayer = 0,
-                    .layerCount = 1,
-                },
-        });
-    };
-
     m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
-            switch (texture->m_usage) {
+            switch (texture->m_texture_usage) {
             case TextureUsage::NORMAL: {
                 if (texture->m_on_init) {
                     std::invoke(texture->m_on_init.value());
-                    // TODO: How to unify ->create()?
+                    // TODO: Implement me!
                     texture->create();
                     texture->update(cmd_buf);
                 }
                 break;
             }
             case TextureUsage::DEPTH_STENCIL_BUFFER: {
-                texture->create(
-                    fill_image_ci(texture->m_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
-                    fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
+                // TODO: Implement me!
                 break;
             }
             case TextureUsage::BACK_BUFFER: {
-                texture->create(fill_image_ci(texture->m_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
-                                fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_COLOR_BIT));
-                break;
-            }
-            case TextureUsage::MSAA_BACK_BUFFER: {
-                texture->create(fill_image_ci(texture->m_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                              // TODO: Expose this as a parameter
-                                              // NOTE: We use the highest available sample count for MSAA
-                                              m_device.get_max_usable_sample_count()),
-                                fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_COLOR_BIT));
-                break;
-            }
-            case TextureUsage::MSAA_DEPTH_STENCIL_BUFFER: {
-                texture->create(
-                    fill_image_ci(texture->m_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                  // TODO: Expose this as a parameter
-                                  // NOTE: We use the highest available sample count for MSAA
-                                  m_device.get_max_usable_sample_count()),
-                    fill_image_view_ci(texture->m_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
+                // TODO: Implement me!
                 break;
             }
             default: {
@@ -203,88 +200,30 @@ void RenderGraph::determine_pass_order() {
     // TODO: The data structure to determine pass order should be created before rendergraph compilation!
 }
 
-void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf,
-                                                 const GraphicsPass &pass,
-                                                 const bool is_first_pass,
-                                                 const bool is_last_pass,
-                                                 const std::uint32_t img_index) {
-    // TODO: Expose pass_index as parameter?
-    // TODO: Remove img_index and implement swapchain.get_current_image()
-    // TODO: Or do we need the image index for buffers? (We want to automatically double or triple buffer them)
-
+void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
-    // TODO: Generate color gradient?
     cmd_buf.begin_debug_label_region(pass.m_name, {1.0f, 0.0f, 0.0f, 1.0f});
-
-    // If this is the first graphics pass, change the image layout of the swapchain image which comes back in undefined
-    // image layout after presenting
-    if (is_first_pass) {
-        cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_UNDEFINED,
-                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    }
-
-    const auto color_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        .imageView =
-            (pass.m_enable_msaa) ? pass.m_msaa_color_attachment.lock()->m_img_view : m_swapchain.image_view(img_index),
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
-        .resolveImageView = m_swapchain.image_view(img_index),
-        .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = (pass.m_clear_color_attachment) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = pass.m_clear_values.value(),
-    });
-
-    const auto depth_attachment = wrapper::make_info<VkRenderingAttachmentInfo>({
-        .imageView =
-            (pass.m_enable_msaa) ? pass.m_msaa_depth_attachment.lock()->m_img_view : m_swapchain.image_view(img_index),
-        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .resolveMode = VK_RESOLVE_MODE_MIN_BIT,
-        .resolveImageView = pass.m_depth_attachment.lock()->m_img_view,
-        .resolveImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .loadOp = (pass.m_clear_stencil_attachment) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = pass.m_clear_values.value(),
-    });
-
-    // TODO: Implement stencil attachment
-
-    const auto rendering_info = wrapper::make_info<VkRenderingInfo>({
-        .renderArea =
-            {
-                .extent = m_swapchain.extent(),
-            },
-        .layerCount = 1,
-        .colorAttachmentCount = 1, // TODO: Implement multiple color attachments
-        .pColorAttachments = &color_attachment,
-        .pDepthAttachment = &depth_attachment,
-        .pStencilAttachment = nullptr, // TODO: Implement stencil attachment
-    });
-
-    // Start dynamic rendering
-    cmd_buf.begin_rendering(rendering_info);
-
-    // Call the command buffer recording function of the graphics pass
-    std::invoke(pass.m_on_record, cmd_buf);
-
+    // Start dynamic rendering with the compiled rendering info
+    cmd_buf.begin_rendering(pass.m_rendering_info);
+    // Call the command buffer recording function of this graphics pass
+    std::invoke(pass.m_on_record_cmd_buffer, cmd_buf);
     // End dynamic rendering
     cmd_buf.end_rendering();
-
-    // If this is the last graphics pass, change the image layout of the swapchain image for presenting
-    if (is_last_pass) {
-        cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-    }
     // End the debug label for this graphics pass
     cmd_buf.end_debug_label_region();
 }
 
 void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std::uint32_t img_index) {
-    for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); pass_index++) {
-        const bool is_first_pass = (pass_index == 0);
-        const bool is_last_pass = (pass_index == (m_graphics_passes.size() - 1));
-        record_command_buffer_for_pass(cmd_buf, *m_graphics_passes[pass_index], is_first_pass, is_last_pass, img_index);
+    // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
+    cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    for (const auto &pass : m_graphics_passes) {
+        record_command_buffer_for_pass(cmd_buf, pass);
     }
+    // Change the layout of the swapchain image to make it ready for presenting
+    cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
 void RenderGraph::render() {

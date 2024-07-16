@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/io/nxoc_parser.hpp"
 
 #include "inexor/vulkan-renderer/io/byte_stream.hpp"
-#include "inexor/vulkan-renderer/io/exception.hpp"
+#include "inexor/vulkan-renderer/io/io_exception.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 
 #include <fstream>

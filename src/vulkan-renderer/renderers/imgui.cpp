@@ -53,8 +53,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
             }
         }
         // NOTE: The index buffer does not have a separate update code because it is updated here with the vertices
-        m_vertex_buffer->request_update(m_vertex_data);
-        m_index_buffer->request_update(m_index_data);
+        m_vertex_buffer.lock()->request_update(m_vertex_data);
+        m_index_buffer.lock()->request_update(m_index_data);
     });
 
     m_index_buffer = render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {
@@ -68,58 +68,30 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
     using render_graph::TextureUsage;
-    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, [&]() {
-        const auto img_ci = wrapper::make_info<VkImageCreateInfo>({
-            .imageType = VK_IMAGE_TYPE_2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
-            .extent =
-                {
-                    .width = static_cast<std::uint32_t>(m_font_texture_width),
-                    .height = static_cast<std::uint32_t>(m_font_texture_height),
-                    .depth = 1,
-                },
-            .mipLevels = 1,
-            .arrayLayers = 1,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        });
-        const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
-            .subresourceRange =
-                {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = 1,
-                    .baseArrayLayer = 0,
-                    .layerCount = 1,
-                },
-        });
-        m_imgui_texture->request_update(m_font_texture_data, m_font_texture_data_size, img_ci, img_view_ci);
-    });
+    m_imgui_texture = render_graph.add_texture("ImGui-Font", TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM,
+                                               m_font_texture_width, m_font_texture_width, [&]() {
+                                                   // Initialize the ImGui font texture
+                                                   m_imgui_texture.lock()->request_update(m_font_texture_data,
+                                                                                          m_font_texture_data_size);
+                                               });
 
     using wrapper::descriptors::DescriptorSetAllocator;
     using wrapper::descriptors::DescriptorSetLayoutBuilder;
     using wrapper::descriptors::DescriptorSetUpdateBuilder;
-    using wrapper::pipelines::GraphicsPipelineBuilder;
-
     render_graph.add_resource_descriptor(
-        [&](DescriptorSetLayoutBuilder &descriptor_set_layout_builder) {
-            m_descriptor_set_layout =
-                descriptor_set_layout_builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
+        [&](DescriptorSetLayoutBuilder &builder) {
+            m_descriptor_set_layout = builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
         },
-        [&](DescriptorSetAllocator &descriptor_set_allocator) {
-            m_descriptor_set = descriptor_set_allocator.allocate(m_descriptor_set_layout);
+        [&](DescriptorSetAllocator &allocator) {
+            m_descriptor_set = allocator.allocate("ImGui", m_descriptor_set_layout);
         },
-        [&](DescriptorSetUpdateBuilder &descriptor_set_update_builder) {
-            descriptor_set_update_builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
+        [&](DescriptorSetUpdateBuilder &builder) {
+            builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
         });
 
-    render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &graphics_pipeline_builder) {
-        m_imgui_pipeline = graphics_pipeline_builder
+    using wrapper::pipelines::GraphicsPipelineBuilder;
+    render_graph.add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+        m_imgui_pipeline = builder
                                .set_vertex_input_bindings({
                                    {
                                        .binding = 0,
@@ -154,45 +126,41 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                .set_descriptor_set_layout(m_descriptor_set_layout)
                                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                .build("ImGui");
-        return m_imgui_pipeline;
     });
 
-    using render_graph::GraphicsPassBuilder;
     using wrapper::commands::CommandBuffer;
-    render_graph.add_graphics_pass([&](GraphicsPassBuilder &graphics_pass_builder) {
-        m_imgui_pass = graphics_pass_builder.add_color_attachment(m_color_attachment)
-                           .set_on_record([&](const CommandBuffer &cmd_buf) {
-                               // NOTE: It's the responsibility of the programmer to bind pipelines, descriptor sets,
-                               // and buffers manually inside of this on_record lambda! It's also the responsibility of
-                               // the programmer to make sure that every variable captured by reference inside of this
-                               // lambda is still in a valid state at the time of execution of the lambda!
-                               const ImGuiIO &io = ImGui::GetIO();
-                               m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+    auto on_record_cmd_buffer = [&](const CommandBuffer &cmd_buf) {
+        const ImGuiIO &io = ImGui::GetIO();
+        m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
-                               cmd_buf.bind_pipeline(m_imgui_pipeline)
-                                   .bind_vertex_buffer(m_vertex_buffer)
-                                   .bind_index_buffer(m_index_buffer)
-                                   .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
-                                   .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
+        cmd_buf.bind_pipeline(m_imgui_pipeline)
+            .bind_vertex_buffer(m_vertex_buffer)
+            .bind_index_buffer(m_index_buffer)
+            .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
+            .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
 
-                               ImDrawData *draw_data = ImGui::GetDrawData();
-                               if (draw_data == nullptr) {
-                                   return;
-                               }
-                               std::uint32_t index_offset = 0;
-                               std::int32_t vertex_offset = 0;
-                               for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                                   const ImDrawList *cmd_list = draw_data->CmdLists[i];
-                                   for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-                                       const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                                       cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
-                                       index_offset += draw_cmd.ElemCount;
-                                   }
-                                   vertex_offset += cmd_list->VtxBuffer.Size;
-                               }
-                           })
-                           .build("ImGui");
-        return m_imgui_pass;
+        ImDrawData *draw_data = ImGui::GetDrawData();
+        if (draw_data == nullptr) {
+            return;
+        }
+        std::uint32_t index_offset = 0;
+        std::int32_t vertex_offset = 0;
+        for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+            const ImDrawList *cmd_list = draw_data->CmdLists[i];
+            for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                index_offset += draw_cmd.ElemCount;
+            }
+            vertex_offset += cmd_list->VtxBuffer.Size;
+        }
+    };
+
+    using render_graph::GraphicsPassBuilder;
+    render_graph.add_graphics_pass([&](GraphicsPassBuilder &builder) {
+        return builder.add_color_attachment(m_color_attachment)
+            .set_on_record(std::move(on_record_cmd_buffer))
+            .build("ImGui");
     });
 }
 
