@@ -47,20 +47,43 @@ std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
 
 GraphicsPass::GraphicsPass(std::string name,
                            std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
-                           std::vector<Attachment> color_attachments,
-                           Attachment depth_attachment,
-                           Attachment stencil_attachment,
-                           const DebugLabelColor color)
-    : m_name(std::move(name)), m_on_record_cmd_buffer(std::move(on_record_cmd_buffer)),
-      m_color_attachments(std::move(color_attachments)), m_depth_attachment(std::move(depth_attachment)),
-      m_stencil_attachment(std::move(stencil_attachment)), m_debug_label_color(get_debug_label_color(color)) {}
+                           std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
+                           std::vector<RenderingAttachment> write_attachments,
+                           const DebugLabelColor color) {
+    m_name = std::move(name);
+    m_on_record_cmd_buffer = std::move(on_record_cmd_buffer);
+    m_debug_label_color = get_debug_label_color(color);
+
+    // As internal validation, we check if each graphics pass has only one depth attachment at maximum and only one
+    // stencil attachment at maximum. Note that the graphcis pass is allowed to have as many color attachments as it
+    // wants to.
+    bool depth_attachment_found{false};
+
+    // Sort the attachment writes by type and make sure depth buffer is not specified more than once at maximum
+    for (auto &write_attachment : write_attachments) {
+        switch (write_attachment.first.lock()->m_usage) {
+        case TextureUsage::NORMAL:
+        case TextureUsage::BACK_BUFFER: {
+            m_color_attachments.emplace_back(std::move(write_attachment));
+            break;
+        }
+        case TextureUsage::DEPTH_STENCIL_BUFFER: {
+            if (depth_attachment_found) {
+                throw std::runtime_error(
+                    "[GraphicsPass::GraphicsPass] Error: Duplicate depth stencil buffer specified!");
+            }
+            depth_attachment_found = true;
+            m_depth_attachment = std::move(write_attachment);
+            break;
+        }
+        }
+    }
+    // TODO: Support for stencil buffers
+}
 
 GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_name = std::move(other.m_name);
     m_on_record_cmd_buffer = std::move(other.m_on_record_cmd_buffer);
-    m_color_attachments = std::move(other.m_color_attachments);
-    m_depth_attachment = std::move(other.m_depth_attachment);
-    m_stencil_attachment = std::move(other.m_stencil_attachment);
     m_descriptor_set_layout = std::exchange(other.m_descriptor_set_layout, nullptr);
     m_descriptor_set = std::exchange(other.m_descriptor_set, VK_NULL_HANDLE);
     m_rendering_info = std::move(other.m_rendering_info);

@@ -15,10 +15,11 @@ namespace inexor::vulkan_renderer::renderers {
 ImGuiRenderer::ImGuiRenderer(const Device &device,
                              const Swapchain &swapchain,
                              render_graph::RenderGraph &render_graph,
+                             std::weak_ptr<render_graph::GraphicsPass> previous_pass,
                              std::weak_ptr<render_graph::Texture> color_attachment,
                              std::function<void()> on_update_user_data)
     : m_device(device), m_on_update_user_data(std::move(on_update_user_data)),
-      m_color_attachment(std::move(color_attachment)) {
+      m_previous_pass(std::move(previous_pass)), m_color_attachment(std::move(color_attachment)) {
 
     spdlog::trace("Creating ImGui context");
     ImGui::CreateContext();
@@ -121,36 +122,38 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     });
 
     render_graph.add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
-        // TODO: builder.reads_from(octree_pass)..!
-        m_imgui_pass = builder.add_color_attachment(m_color_attachment)
-                           .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
-                               const ImGuiIO &io = ImGui::GetIO();
-                               m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+        // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
+        // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
+        // now) and there is no reads_from function which would need it.
+        return builder.reads_from(previous_pass)
+            .writes_to(m_color_attachment)
+            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                const ImGuiIO &io = ImGui::GetIO();
+                m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
-                               cmd_buf.bind_pipeline(m_imgui_pipeline)
-                                   .bind_vertex_buffer(m_vertex_buffer)
-                                   .bind_index_buffer(m_index_buffer)
-                                   .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
-                                   .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
+                cmd_buf.bind_pipeline(m_imgui_pipeline)
+                    .bind_vertex_buffer(m_vertex_buffer)
+                    .bind_index_buffer(m_index_buffer)
+                    .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
+                    .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
 
-                               ImDrawData *draw_data = ImGui::GetDrawData();
-                               if (draw_data == nullptr) {
-                                   return;
-                               }
-                               std::uint32_t index_offset = 0;
-                               std::int32_t vertex_offset = 0;
-                               for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
-                                   const ImDrawList *cmd_list = draw_data->CmdLists[i];
-                                   for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-                                       const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                                       cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
-                                       index_offset += draw_cmd.ElemCount;
-                                   }
-                                   vertex_offset += cmd_list->VtxBuffer.Size;
-                               }
-                           })
-                           .build("ImGui", render_graph::DebugLabelColor::BLUE);
-        return m_imgui_pass;
+                ImDrawData *draw_data = ImGui::GetDrawData();
+                if (draw_data == nullptr) {
+                    return;
+                }
+                std::uint32_t index_offset = 0;
+                std::int32_t vertex_offset = 0;
+                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                    const ImDrawList *cmd_list = draw_data->CmdLists[i];
+                    for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                        const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                        cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                        index_offset += draw_cmd.ElemCount;
+                    }
+                    vertex_offset += cmd_list->VtxBuffer.Size;
+                }
+            })
+            .build("ImGui", render_graph::DebugLabelColor::BLUE);
     });
 }
 

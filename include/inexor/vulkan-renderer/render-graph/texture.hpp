@@ -34,6 +34,9 @@ enum class TextureUsage {
     DEPTH_STENCIL_BUFFER,
 };
 
+// Forward declaration
+class GraphicsPass;
+
 // Using declarations
 using wrapper::Device;
 using wrapper::commands::CommandBuffer;
@@ -42,6 +45,7 @@ using wrapper::descriptors::DescriptorSetUpdateBuilder;
 /// RAII wrapper for texture resources
 class Texture {
     friend class DescriptorSetUpdateBuilder;
+    friend class GraphicsPass;
     friend class RenderGraph;
 
 private:

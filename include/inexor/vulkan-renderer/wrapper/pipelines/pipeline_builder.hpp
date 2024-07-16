@@ -240,9 +240,6 @@ public:
         return *this;
     }
 
-    // TODO: std::unordered_map<std::string, VkDescriptorSetLayout>?
-    // NOTE: Currently we restrict ourselves to one pipeline layout per pipeline
-
     /// Set the descriptor set layout
     /// @param descriptor_set_layout The descriptor set layout
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)

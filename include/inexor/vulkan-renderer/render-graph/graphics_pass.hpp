@@ -25,8 +25,8 @@ class RenderGraph;
 // Using declaration
 using wrapper::descriptors::DescriptorSetLayout;
 
-/// An attachment is just a texture paired with an optional clear value
-using Attachment = std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>;
+/// A rendering attachment is just a texture paired with an optional clear value
+using RenderingAttachment = std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>;
 
 /// The debug label colors for vkCmdBeginDebugUtilsLabelEXT
 enum class DebugLabelColor {
@@ -64,16 +64,6 @@ private:
     /// Add members which describe data related to graphics passes here
     std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{[](auto &) {}};
 
-    /// NOTE: We do not have members like m_has_depth_buffer or m_has_stencil_buffer because we can simply check if the
-    /// std::weak_ptr<Texture> of the Attachment is expire() instead!
-
-    /// The color attachments of the graphics pass
-    std::vector<Attachment> m_color_attachments{};
-    /// The depth attachment of the graphics pass
-    Attachment m_depth_attachment{};
-    /// The stencil attachment of the graphics pass
-    Attachment m_stencil_attachment{};
-
     /// The descriptor set layout of the pass (this will be created by rendergraph)
     std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
     /// The descriptor set of the pass (this will be created by rendergraph)
@@ -85,6 +75,13 @@ private:
     // NOTE: The rendering info will be filled during rendergraph compilation with pointers to the members below. This
     // means we must make sure that the memory of the attachment infos below is still valid during rendering, which is
     // why we store them as members here.
+
+    /// The color attachments
+    std::vector<RenderingAttachment> m_color_attachments{};
+    /// The depth attachment (only one at maximum)
+    RenderingAttachment m_depth_attachment{};
+    /// The stencil attachment (only one at maximum)
+    RenderingAttachment m_stencil_attachment{};
 
     /// The color attachments inside of m_rendering_info
     std::vector<VkRenderingAttachmentInfo> m_color_attachment_infos{};
@@ -100,14 +97,13 @@ public:
     /// Default constructor
     /// @param name The name of the graphics pass
     /// @param on_record_cmd_buffer The command buffer recording function of the graphics pass
-    /// @param color_attachments The color attachments of the graphics pass
-    /// @param depth_attachment The depth attachment of the graphics pass
-    /// @param stencil_attachment The stencil attachment of the graphics pass
+    /// @param graphics_pass_reads The graphics passes this graphics pass reads from
+    /// @param write_attachments The attachment this graphics pass writes to
+    /// @param color The debug label (visible in graphics debuggers like RenderDoc)
     GraphicsPass(std::string name,
                  std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
-                 std::vector<Attachment> color_attachments,
-                 Attachment depth_attachment,
-                 Attachment stencil_attachment,
+                 std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
+                 std::vector<RenderingAttachment> write_attachments,
                  DebugLabelColor color);
 
     GraphicsPass(const GraphicsPass &) = delete;

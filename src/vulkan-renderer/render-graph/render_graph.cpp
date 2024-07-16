@@ -30,7 +30,7 @@ RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, s
 
 void RenderGraph::allocate_descriptor_sets() {
     for (const auto &descriptor : m_resource_descriptors) {
-        // Call the on_update_descriptor_set function of each resource descriptor
+        // Call descriptor set allocation function of each resource descriptor
         std::invoke(std::get<1>(descriptor), m_descriptor_set_allocator);
     }
 }
@@ -38,7 +38,6 @@ void RenderGraph::allocate_descriptor_sets() {
 void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
                                           OnAllocateDescriptorSet on_allocate_descriptor_set,
                                           OnUpdateDescriptorSet on_update_descriptor_set) {
-    // NOTE: This only stores the functions and they will be called in the correct order during rendergraph compilation
     m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout),
                                         std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
 }
@@ -78,8 +77,7 @@ void RenderGraph::create_buffers() {
     m_device.execute("[RenderGraph::create_buffers|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             buffer->m_on_update();
-            // Rename the command buffer before creating every buffer for fine-grained debugging
-            cmd_buf.set_suboperation_debug_name("Buffer:" + buffer->m_name + "]");
+            cmd_buf.set_suboperation_debug_name("Buffer:" + buffer->m_name);
             buffer->create(cmd_buf);
         }
     });
@@ -87,7 +85,7 @@ void RenderGraph::create_buffers() {
 
 void RenderGraph::create_descriptor_set_layouts() {
     for (const auto &descriptor : m_resource_descriptors) {
-        // Call on_update_descriptor_set for each descriptor
+        // Call descriptor set layout create function for each descriptor
         std::invoke(std::get<0>(descriptor), m_descriptor_set_layout_builder);
     }
 }
@@ -107,10 +105,11 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_rendering_infos() {
+#if 0
     for (auto &pass : m_graphics_passes) {
         /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
         /// @param attachment The attachment (color, depth, or stencil)
-        /// @reutrn VkRenderingAttachmentInfo  The filled rendering info struct
+        /// @return VkRenderingAttachmentInfo  The filled rendering info struct
         auto fill_rendering_info = [&](const Attachment &attachment) {
             const auto attach_ptr = attachment.first.lock();
             const auto img_layout = [&]() -> VkImageLayout {
@@ -224,22 +223,19 @@ void RenderGraph::create_rendering_infos() {
             pass->m_stencil_attachment_info = fill_rendering_info(pass->m_stencil_attachment);
         }
     }
+#endif
 }
 
 void RenderGraph::create_textures() {
     m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
-            // TODO: Check if this initializes all textures (internal ones from rendergraph and external like ImGui?)
             if (texture->m_on_init) {
-                // Rename the command buffer before creating every texture for fine-grained debugging
                 cmd_buf.set_suboperation_debug_name("|Texture|Initialize:" + texture->m_name);
                 std::invoke(texture->m_on_init.value());
             }
-            // Rename the command buffer before creating every texture for fine-grained debugging
             cmd_buf.set_suboperation_debug_name("|Texture|Create:" + texture->m_name);
             texture->create();
             if (texture->m_usage == TextureUsage::NORMAL) {
-                // Rename the command buffer before creating every texture for fine-grained debugging
                 cmd_buf.set_suboperation_debug_name("|Texture|Update:" + texture->m_name);
                 // Only external textures are updated, not back or depth buffers used internally in rendergraph
                 texture->update(cmd_buf);
@@ -254,7 +250,6 @@ void RenderGraph::determine_pass_order() {
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
-    // Rename the command buffer before creating every texture for fine-grained debugging
     cmd_buf.set_suboperation_debug_name("|Pass:" + pass.m_name);
 
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
@@ -326,11 +321,12 @@ void RenderGraph::reset() {
 void RenderGraph::update_buffers() {
     m_device.execute("RenderGraph::update_buffers", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
-            // Does this buffer need to be updated?
             if (buffer->m_update_requested) {
+                cmd_buf.set_suboperation_debug_name("|Buffer|Destroy:" + buffer->m_name);
                 buffer->destroy();
-                // Call the buffer update function
+                cmd_buf.set_suboperation_debug_name("|Buffer|Update:" + buffer->m_name);
                 std::invoke(buffer->m_on_update);
+                cmd_buf.set_suboperation_debug_name("|Buffer|Create:" + buffer->m_name);
                 buffer->create(cmd_buf);
             }
         }
@@ -339,7 +335,7 @@ void RenderGraph::update_buffers() {
 
 void RenderGraph::update_descriptor_sets() {
     for (const auto &descriptor : m_resource_descriptors) {
-        // Call on_update_descriptor_set for each descriptor
+        // Call descriptor set builder function for each descriptor
         std::invoke(std::get<2>(descriptor), m_descriptor_set_update_builder);
     }
 }
@@ -350,10 +346,12 @@ void RenderGraph::update_textures() {
             // Only for dynamic textures m_on_lambda which is not std::nullopt
             if (texture->m_on_update) {
                 if (texture->m_update_requested) {
+                    cmd_buf.set_suboperation_debug_name("|Texture|Destroy:" + texture->m_name);
                     texture->destroy();
+                    cmd_buf.set_suboperation_debug_name("|Texture|Update:" + texture->m_name);
                     std::invoke(texture->m_on_update.value());
+                    cmd_buf.set_suboperation_debug_name("|Texture|Create:" + texture->m_name);
                     texture->create();
-                    texture->update(cmd_buf);
                 }
             }
         }

@@ -26,12 +26,8 @@ private:
     /// Add members which describe data related to graphics passes here
     std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{};
 
-    /// The color attachments of the graphics pass
-    std::vector<Attachment> m_color_attachments{};
-    /// The depth attachment of the graphics pass
-    Attachment m_depth_attachment{};
-    /// The stencil attachment of the graphics pass
-    Attachment m_stencil_attachment{};
+    /// The texture resources this graphics pass writes to
+    std::vector<RenderingAttachment> m_write_attachments{};
 
     /// The graphics passes which are read by this graphics pass. Based on this, rendergraph can automatically determine
     /// the correct pass order based on depth first search algorithm (DFS)
@@ -49,27 +45,6 @@ public:
     GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
     GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) = delete;
 
-    /// Add a color attachment to the pass
-    /// @param color_attachment The color attachment
-    /// @param clear_value The clear value for the color attachment (``std::nullopt`` by default)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &add_color_attachment(std::weak_ptr<Texture> color_attachment,
-                                                            std::optional<VkClearValue> clear_value = std::nullopt);
-
-    /// Enable depth testing for the pass
-    /// @param depth_attachment The depth attachment
-    /// @param clear_value The clear value for the depth attachment (``std::nullopt`` by default)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &add_depth_attachment(std::weak_ptr<Texture> depth_attachment,
-                                                            std::optional<VkClearValue> clear_value = std::nullopt);
-
-    /// Add a stencil attachment to the pass
-    /// @param stencil_attachment The stencil attachment
-    /// @param clear_value The clear value for the stencil attachment (``std::nullopt`` by default)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &add_stencil_attachment(std::weak_ptr<Texture> stencil_attachment,
-                                                              std::optional<VkClearValue> clear_value = std::nullopt);
-
     /// Build the graphics pass
     /// @param name The name of the graphics pass
     /// @param color The debug label color (debug labels are specified per pass and are visible in RenderDoc debugger)
@@ -85,6 +60,13 @@ public:
     /// @param on_record_cmd_buffer The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer);
+
+    ///
+    /// @param color_attachment
+    /// @param clear_value
+    /// @return
+    [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Texture> color_attachment,
+                                                 std::optional<VkClearValue> clear_value = std::nullopt);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

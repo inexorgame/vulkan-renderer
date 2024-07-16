@@ -33,7 +33,11 @@ class ImGuiRenderer {
     std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
     std::weak_ptr<render_graph::Texture> m_imgui_texture;
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_imgui_pipeline;
-    std::shared_ptr<render_graph::GraphicsPass> m_imgui_pass;
+
+    // This is the color attachment we will write to
+    std::weak_ptr<render_graph::Texture> m_color_attachment;
+    // This is the previous pass we read from
+    std::weak_ptr<render_graph::GraphicsPass> m_previous_pass;
 
     std::shared_ptr<wrapper::Shader> m_vertex_shader;
     std::shared_ptr<wrapper::Shader> m_fragment_shader;
@@ -61,8 +65,6 @@ class ImGuiRenderer {
     /// It will be called at the beginning of set_on_update
     std::function<void()> m_on_update_user_data{[]() {}};
 
-    std::weak_ptr<render_graph::Texture> m_color_attachment;
-
     void load_font_data_from_file();
 
     /// Customize ImGui style like text color for example
@@ -70,15 +72,16 @@ class ImGuiRenderer {
 
 public:
     /// Default constructor
-    /// @param device A reference to the device wrapper
+    /// @param device The device wrapper
     /// @param swapchain
-    /// @param render_graph A pointer to the render graph
-    /// @param back_buffer The back buffer texture resource
-    /// @param depth_buffer The depth buffer texture resource
-    /// @param on_update_user_data The function in which the user's ImGui data is updated
+    /// @param render_graph
+    /// @param previous_pass
+    /// @param color_attachment
+    /// @param on_update_user_data
     ImGuiRenderer(const Device &device,
                   const Swapchain &swapchain,
                   render_graph::RenderGraph &render_graph,
+                  std::weak_ptr<render_graph::GraphicsPass> previous_pass,
                   std::weak_ptr<render_graph::Texture> color_attachment,
                   std::function<void()> on_update_user_data);
 

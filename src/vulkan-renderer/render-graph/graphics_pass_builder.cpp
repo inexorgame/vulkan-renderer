@@ -8,40 +8,16 @@ GraphicsPassBuilder::GraphicsPassBuilder() {
     reset();
 }
 
-GraphicsPassBuilder &GraphicsPassBuilder::add_color_attachment(std::weak_ptr<Texture> color_attachment,
-                                                               std::optional<VkClearValue> clear_value) {
-    if (color_attachment.expired()) {
-        throw std::invalid_argument(
-            "[GraphicsPassBuilder::add_color_attachment] Error: 'color_attachment' is an invalid pointer!");
-    }
-    m_color_attachments.emplace_back(std::move(color_attachment), std::move(clear_value));
-    return *this;
-}
-
-GraphicsPassBuilder &GraphicsPassBuilder::add_depth_attachment(std::weak_ptr<Texture> depth_attachment,
-                                                               std::optional<VkClearValue> clear_value) {
-    if (depth_attachment.expired()) {
-        throw std::invalid_argument(
-            "[GraphicsPassBuilder::enable_depth_test] Error: 'depth_buffer' is an invalid pointer!");
-    }
-    m_depth_attachment = Attachment(std::move(depth_attachment), std::move(clear_value));
-    return *this;
-}
-
-GraphicsPassBuilder &GraphicsPassBuilder::add_stencil_attachment(std::weak_ptr<Texture> stencil_attachment,
-                                                                 std::optional<VkClearValue> clear_value) {
-    if (stencil_attachment.expired()) {
-        throw std::invalid_argument(
-            "[GraphicsPassBuilder::add_stencil_attachment] Error: 'stencil_attachment' is an invalid pointer!");
-    }
-    m_stencil_attachment = Attachment(std::move(stencil_attachment), std::move(clear_value));
-    return *this;
+GraphicsPassBuilder::GraphicsPassBuilder(GraphicsPassBuilder &&other) noexcept {
+    m_on_record_cmd_buffer = std::move(other.m_on_record_cmd_buffer);
+    m_write_attachments = std::move(other.m_write_attachments);
+    m_graphics_pass_reads = std::move(other.m_graphics_pass_reads);
 }
 
 std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const DebugLabelColor color) {
-    auto graphics_pass = std::make_shared<GraphicsPass>(std::move(name), std::move(m_on_record_cmd_buffer),
-                                                        std::move(m_color_attachments), std::move(m_depth_attachment),
-                                                        std::move(m_stencil_attachment), color);
+    auto graphics_pass =
+        std::make_shared<GraphicsPass>(std::move(name), std::move(m_on_record_cmd_buffer),
+                                       std::move(m_graphics_pass_reads), std::move(m_write_attachments), color);
     reset();
     return graphics_pass;
 }
@@ -56,15 +32,22 @@ GraphicsPassBuilder &GraphicsPassBuilder::reads_from(std::weak_ptr<GraphicsPass>
 
 void GraphicsPassBuilder::reset() {
     m_on_record_cmd_buffer = {};
-    m_color_attachments = {};
-    m_depth_attachment = {};
-    m_stencil_attachment = {};
+    m_write_attachments.clear();
     m_graphics_pass_reads.clear();
 }
 
 GraphicsPassBuilder &
 GraphicsPassBuilder::set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer) {
     m_on_record_cmd_buffer = std::move(on_record_cmd_buffer);
+    return *this;
+}
+
+GraphicsPassBuilder &GraphicsPassBuilder::writes_to(std::weak_ptr<Texture> attachment,
+                                                    std::optional<VkClearValue> clear_value) {
+    if (attachment.expired()) {
+        throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: 'attachment' is an invalid pointer!");
+    }
+    m_write_attachments.emplace_back(std::move(attachment), std::move(clear_value));
     return *this;
 }
 
