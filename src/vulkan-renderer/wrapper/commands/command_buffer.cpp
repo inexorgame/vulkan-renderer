@@ -190,12 +190,15 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
                                                         const std::uint32_t base_array_layer,
                                                         const VkPipelineStageFlags src_mask,
                                                         const VkPipelineStageFlags dst_mask) const {
+    assert(image);
     return change_image_layout(image, old_layout, new_layout,
-                               {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                                .baseMipLevel = base_mip_level,
-                                .levelCount = mip_level_count,
-                                .baseArrayLayer = base_array_layer,
-                                .layerCount = array_layer_count},
+                               {
+                                   .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                   .baseMipLevel = base_mip_level,
+                                   .levelCount = mip_level_count,
+                                   .baseArrayLayer = base_array_layer,
+                                   .layerCount = array_layer_count,
+                               },
                                src_mask, dst_mask);
 }
 

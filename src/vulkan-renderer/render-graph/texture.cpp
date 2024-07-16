@@ -17,12 +17,18 @@ Texture::Texture(const Device &device,
                  const VkFormat format,
                  const std::uint32_t width,
                  const std::uint32_t height,
+                 const VkSampleCountFlagBits sample_count,
                  std::optional<std::function<void()>> on_init,
                  std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
-      m_on_init(std::move(on_init)), m_on_update(std::move(on_update)) {
+      m_sample_count(sample_count), m_on_init(std::move(on_init)), m_on_update(std::move(on_update)) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
+    }
+    m_img = std::make_unique<Image>(m_device, m_name);
+
+    if (sample_count > VK_SAMPLE_COUNT_1_BIT) {
+        m_msaa_img = std::make_unique<Image>(m_device, m_name);
     }
 }
 
@@ -47,10 +53,14 @@ void Texture::create() {
         .usage = [&]() -> VkImageUsageFlags {
             switch (m_usage) {
             case TextureUsage::NORMAL: {
+                return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                       VK_IMAGE_USAGE_SAMPLED_BIT;
+            }
+            case TextureUsage::BACK_BUFFER: {
                 return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
             }
-            case TextureUsage::DEPTH_STENCIL_BUFFER:
-            case TextureUsage::BACK_BUFFER: {
+            default: {
+                // TextureUsage::DEPTH_STENCIL_BUFFER
                 return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
             }
             }
@@ -67,12 +77,12 @@ void Texture::create() {
             {
                 .aspectMask = [&]() -> VkImageAspectFlags {
                     switch (m_usage) {
-                    case TextureUsage::NORMAL: {
-                        return VK_IMAGE_ASPECT_COLOR_BIT;
-                    }
-                    case TextureUsage::DEPTH_STENCIL_BUFFER:
-                    case TextureUsage::BACK_BUFFER: {
+                    case TextureUsage::DEPTH_STENCIL_BUFFER: {
                         return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+                    }
+                    default: {
+                        // TextureUsage::NORMAL and TextureUsage::BACK_BUFFER
+                        return VK_IMAGE_ASPECT_COLOR_BIT;
                     }
                     }
                 }(),
@@ -87,7 +97,7 @@ void Texture::create() {
     m_img->create(img_ci, img_view_ci);
 
     // If MSAA is enabled, create the MSAA texture as well
-    if (m_sample_count != VK_SAMPLE_COUNT_1_BIT) {
+    if (m_sample_count > VK_SAMPLE_COUNT_1_BIT) {
         // Just overwrite the sample count and re-use the image create info
         img_ci.samples = m_sample_count;
         m_msaa_img->create(img_ci, img_view_ci);
@@ -109,11 +119,16 @@ void Texture::destroy_staging_buffer() {
 }
 
 void Texture::update(const CommandBuffer &cmd_buf) {
+    if (m_src_texture_data_size == 0) {
+        // We can't create buffers of size 0!
+        return;
+    }
     if (m_staging_buffer != VK_NULL_HANDLE) {
         destroy_staging_buffer();
     }
     const auto staging_buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
-        .size = m_src_texture_data_size,
+        // TODO: How to deduce channel count? By format?
+        .size = m_width * m_height * 4, // 4 channels
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
@@ -129,6 +144,12 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
+    const std::string staging_buf_name = "staging:" + m_name;
+    // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
+    vmaSetAllocationName(m_device.allocator(), m_alloc, staging_buf_name.c_str());
+    // Set the buffer's internal debug name through Vulkan debug utils
+    m_device.set_debug_name(m_staging_buffer, staging_buf_name);
+
     cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img->m_img)
         .copy_buffer_to_image(m_staging_buffer, m_img->m_img,
                               {
@@ -138,13 +159,15 @@ void Texture::update(const CommandBuffer &cmd_buf) {
                               })
         .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img->m_img);
 
-    // TODO: Do we need to create sampler and image view here? or in create()?
-    // Update the descriptor image info
-    m_descriptor_img_info = VkDescriptorImageInfo{
-        .sampler = m_img->m_sampler->m_sampler,
-        .imageView = m_img->m_img_view,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    };
+    // This is necessary for external textures only, not depth or back buffers used internally in rendergraph
+    if (m_usage == TextureUsage::NORMAL) {
+        // Update the descriptor image info
+        m_descriptor_img_info = VkDescriptorImageInfo{
+            .sampler = m_img->m_sampler->m_sampler,
+            .imageView = m_img->m_img_view,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        };
+    }
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time execute_update is called

@@ -18,9 +18,6 @@ namespace inexor::vulkan_renderer::render_graph {
 class RenderGraph;
 } // namespace inexor::vulkan_renderer::render_graph
 
-// Using declaration
-using inexor::vulkan_renderer::render_graph::RenderGraph;
-
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
@@ -28,7 +25,7 @@ class Device;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
-    friend class RenderGraph;
+    friend class render_graph::RenderGraph;
 
 private:
     Device &m_device;
@@ -41,6 +38,7 @@ private:
     std::unique_ptr<synchronization::Semaphore> m_img_available;
     bool m_vsync_enabled{false};
     std::uint32_t m_img_index;
+    VkImage m_current_img{VK_NULL_HANDLE};
     VkImageView m_current_img_view{VK_NULL_HANDLE};
 
     /// Call vkGetSwapchainImagesKHR

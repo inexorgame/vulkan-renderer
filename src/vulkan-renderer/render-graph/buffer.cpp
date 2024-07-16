@@ -121,10 +121,11 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
             throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + " !", result);
         }
 
+        const std::string staging_buf_name = "staging:" + m_name;
         // Set the staging buffer's internal debug name in Vulkan Memory Allocator (VMA)
-        vmaSetAllocationName(m_device.allocator(), m_staging_alloc, m_name.c_str());
+        vmaSetAllocationName(m_device.allocator(), m_staging_alloc, staging_buf_name.c_str());
         // Set the staging buffer's internal debug name through Vulkan debug utils
-        m_device.set_debug_name(m_staging_buffer, m_name);
+        m_device.set_debug_name(m_staging_buffer, staging_buf_name);
 
         // Copy the memory into the staging buffer
         std::memcpy(m_staging_alloc_info.pMappedData, m_src_data, m_src_data_size);
@@ -153,11 +154,8 @@ void Buffer::destroy() {
 }
 
 void Buffer::request_update(void *src_data, const std::size_t src_data_size) {
-    if (src_data == nullptr) {
-        throw std::invalid_argument("Error: Update of buffer resource failed (data pointer is nullptr)!");
-    }
-    if (src_data_size == 0) {
-        throw std::invalid_argument("Error: Update of buffer resource failed (data size is 0)!");
+    if (src_data == nullptr || src_data_size == 0) {
+        return;
     }
     m_src_data = src_data;
     m_src_data_size = src_data_size;

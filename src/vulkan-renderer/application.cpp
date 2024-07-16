@@ -420,13 +420,13 @@ void Application::run() {
 
 void Application::setup_render_graph() {
     const auto swapchain_extent = m_swapchain->extent();
-    m_back_buffer =
-        m_render_graph->add_texture("Color", render_graph::TextureUsage::BACK_BUFFER, m_swapchain->image_format(),
-                                    swapchain_extent.width, swapchain_extent.height);
+    m_back_buffer = m_render_graph->add_texture("Color", render_graph::TextureUsage::BACK_BUFFER,
+                                                m_swapchain->image_format(), swapchain_extent.width,
+                                                swapchain_extent.height, m_device->get_max_usable_sample_count());
 
-    m_depth_buffer =
-        m_render_graph->add_texture("Depth", render_graph::TextureUsage::DEPTH_STENCIL_BUFFER,
-                                    VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width, swapchain_extent.height);
+    m_depth_buffer = m_render_graph->add_texture("Depth", render_graph::TextureUsage::DEPTH_STENCIL_BUFFER,
+                                                 VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width,
+                                                 swapchain_extent.height, m_device->get_max_usable_sample_count());
 
     m_vertex_buffer = m_render_graph->add_buffer("Octree", render_graph::BufferType::VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree

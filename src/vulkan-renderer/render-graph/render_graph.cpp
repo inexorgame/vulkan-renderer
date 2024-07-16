@@ -48,10 +48,11 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                 const VkFormat format,
                                                 const std::uint32_t width,
                                                 const std::uint32_t height,
+                                                const VkSampleCountFlagBits sample_count,
                                                 std::optional<std::function<void()>> on_init,
                                                 std::optional<std::function<void()>> on_update) {
     m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format, width, height,
-                                                      std::move(on_init), std::move(on_update)));
+                                                      sample_count, std::move(on_init), std::move(on_update)));
     return m_textures.back();
 }
 
@@ -113,41 +114,108 @@ void RenderGraph::create_rendering_infos() {
             const auto img_layout = [&]() -> VkImageLayout {
                 switch (attach_ptr->m_usage) {
                 case TextureUsage::BACK_BUFFER:
+                case TextureUsage::NORMAL: {
+                    return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                }
                 case TextureUsage::DEPTH_STENCIL_BUFFER: {
                     return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 }
                 default:
-                    return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    return VK_IMAGE_LAYOUT_UNDEFINED;
                 }
             }(); // Invoke the lambda, not just define it!
+
+            auto is_integer_format = [](const VkFormat format) {
+                switch (format) {
+                // 8-bit integer formats
+                case VK_FORMAT_R8_UINT:
+                case VK_FORMAT_R8_SINT:
+                case VK_FORMAT_R8G8_UINT:
+                case VK_FORMAT_R8G8_SINT:
+                case VK_FORMAT_R8G8B8_UINT:
+                case VK_FORMAT_R8G8B8_SINT:
+                case VK_FORMAT_B8G8R8_UINT:
+                case VK_FORMAT_B8G8R8_SINT:
+                case VK_FORMAT_R8G8B8A8_UINT:
+                case VK_FORMAT_R8G8B8A8_SINT:
+                case VK_FORMAT_B8G8R8A8_UINT:
+                case VK_FORMAT_B8G8R8A8_SINT:
+                case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+                case VK_FORMAT_A2B10G10R10_UINT_PACK32:
+
+                // 16-bit integer formats
+                case VK_FORMAT_R16_UINT:
+                case VK_FORMAT_R16_SINT:
+                case VK_FORMAT_R16G16_UINT:
+                case VK_FORMAT_R16G16_SINT:
+                case VK_FORMAT_R16G16B16_UINT:
+                case VK_FORMAT_R16G16B16_SINT:
+                case VK_FORMAT_R16G16B16A16_UINT:
+                case VK_FORMAT_R16G16B16A16_SINT:
+
+                // 32-bit integer formats
+                case VK_FORMAT_R32_UINT:
+                case VK_FORMAT_R32_SINT:
+                case VK_FORMAT_R32G32_UINT:
+                case VK_FORMAT_R32G32_SINT:
+                case VK_FORMAT_R32G32B32_UINT:
+                case VK_FORMAT_R32G32B32_SINT:
+                case VK_FORMAT_R32G32B32A32_UINT:
+                case VK_FORMAT_R32G32B32A32_SINT:
+
+                // 64-bit integer formats
+                case VK_FORMAT_R64_UINT:
+                case VK_FORMAT_R64_SINT:
+                case VK_FORMAT_R64G64_UINT:
+                case VK_FORMAT_R64G64_SINT:
+                case VK_FORMAT_R64G64B64_UINT:
+                case VK_FORMAT_R64G64B64_SINT:
+                case VK_FORMAT_R64G64B64A64_UINT:
+                case VK_FORMAT_R64G64B64A64_SINT:
+                    return true;
+
+                // Non-integer formats
+                default:
+                    return false;
+                }
+            };
 
             // This decides if MSAA is enabled on a per-texture basis
             return wrapper::make_info<VkRenderingAttachmentInfo>({
                 .imageView = attach_ptr->m_img->m_img_view,
                 .imageLayout = img_layout,
-                .resolveMode = attach_ptr ? VK_RESOLVE_MODE_MIN_BIT : VK_RESOLVE_MODE_NONE,
-                .resolveImageView = attach_ptr ? attach_ptr->m_msaa_img->m_img_view : VK_NULL_HANDLE,
+                .resolveMode = (attach_ptr->m_sample_count > VK_SAMPLE_COUNT_1_BIT)
+                                   // The resolve mode must be chosen on whether it's an integer format
+                                   ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
+                                                                               : VK_RESOLVE_MODE_MIN_BIT)
+                                   : VK_RESOLVE_MODE_NONE,
+                .resolveImageView = attach_ptr->m_msaa_img ? attach_ptr->m_msaa_img->m_img_view : VK_NULL_HANDLE,
                 .resolveImageLayout = attach_ptr ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
                 .loadOp = attachment.second ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue = attachment.second.value_or(VkClearValue{}),
+                .clearValue = attachment.second ? attachment.second.value() : VkClearValue{},
             });
         };
-        // Fill the color attachments
+
+        // Reserve memory for the color attachments
         pass->m_color_attachment_infos.reserve(pass->m_color_attachments.size());
+        // Fill the color attachments
         for (const auto &color_attachment : pass->m_color_attachments) {
             pass->m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
         }
+
         // Fill the color attachment (if specified)
         const bool has_depth_attachment = !pass->m_depth_attachment.first.expired();
         if (has_depth_attachment) {
             pass->m_depth_attachment_info = fill_rendering_info(pass->m_depth_attachment);
         }
+
         // Fill the stencil attachment (if specified)
         const bool has_stencil_attachment = !pass->m_stencil_attachment.first.expired();
         if (has_stencil_attachment) {
             pass->m_stencil_attachment_info = fill_rendering_info(pass->m_stencil_attachment);
         }
+
         // We store all this data in the rendering info in the graphics pass itself
         // The advantage of this is that we don't have to fill this during the actual rendering
         pass->m_rendering_info = std::move(wrapper::make_info<VkRenderingInfo>({
@@ -172,7 +240,10 @@ void RenderGraph::create_textures() {
                 std::invoke(texture->m_on_init.value());
             }
             texture->create();
-            texture->update(cmd_buf);
+            if (texture->m_usage == TextureUsage::NORMAL) {
+                // Only external textures are updated, not back or depth buffers used internally in rendergraph
+                texture->update(cmd_buf);
+            }
         }
     });
 }
@@ -200,23 +271,24 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     cmd_buf.end_debug_label_region();
 }
 
-void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf, const std::uint32_t img_index) {
+void RenderGraph::record_command_buffers(const CommandBuffer &cmd_buf) {
     // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
-    cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_UNDEFINED,
+    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     for (const auto &pass : m_graphics_passes) {
+        // TODO: Name command buffer on a per-pass basis like [RenderGraph::record_command_buffer|Pass:ImGui]
         record_command_buffer_for_pass(cmd_buf, *pass);
     }
     // Change the layout of the swapchain image to make it ready for presenting
-    cmd_buf.change_image_layout(m_swapchain.image(img_index), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
 void RenderGraph::render() {
     const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render]");
     // TODO: Record command buffers for passes in parallel!
-    record_command_buffers(cmd_buf, m_swapchain.acquire_next_image_index());
+    record_command_buffers(cmd_buf);
 
     // TODO: Further abstract this away?
     const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};

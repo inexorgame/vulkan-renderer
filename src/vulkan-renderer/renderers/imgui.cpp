@@ -65,7 +65,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
 
     m_imgui_texture = render_graph.add_texture(
         "ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, m_font_texture_width,
-        m_font_texture_width, [&]() {
+        m_font_texture_width, VK_SAMPLE_COUNT_1_BIT, [&]() {
             // Initialize the ImGui font texture
             m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
         });

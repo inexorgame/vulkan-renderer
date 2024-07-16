@@ -239,8 +239,7 @@ private:
 
     /// Record all command buffers required for the passes
     /// @param cmd_buf The command buffer to record all passes with
-    /// @param img_index The swapchain image index
-    void record_command_buffers(const CommandBuffer &cmd_buf, std::uint32_t img_index);
+    void record_command_buffers(const CommandBuffer &cmd_buf);
 
     /// Update the vertex-, index-, and uniform-buffers
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
@@ -304,6 +303,7 @@ public:
     /// @param texture_name The name of the texture
     /// @param usage The usage of the texture inside of rendergraph
     /// @param format The format of the texture
+    /// @param sample_count The sample count of the texture
     /// @param on_init The texture initialization function
     /// @param on_update The texture update function
     /// @return A weak pointer to the texture that was created
@@ -312,6 +312,7 @@ public:
                                                      VkFormat format,
                                                      std::uint32_t width,
                                                      std::uint32_t height,
+                                                     VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
                                                      std::optional<std::function<void()>> on_init = std::nullopt,
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 

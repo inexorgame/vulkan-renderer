@@ -50,6 +50,7 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
         }
     }
     m_current_img_view = m_img_views[m_img_index];
+    m_current_img = m_imgs[m_img_index];
     return m_img_index;
 }
 
@@ -291,6 +292,7 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
             throw VulkanException("Error: vkCreateImageView failed for swapchain image view!", result);
         }
     }
+    acquire_next_image_index();
 }
 
 Swapchain::~Swapchain() {

@@ -42,8 +42,12 @@ private:
     VkImage m_img{VK_NULL_HANDLE};
     VkImageView m_img_view{VK_NULL_HANDLE};
     VmaAllocation m_alloc{VK_NULL_HANDLE};
+
     VmaAllocationInfo m_alloc_info{};
-    VmaAllocationCreateInfo m_alloc_ci{};
+
+    const VmaAllocationCreateInfo m_alloc_ci{
+        .usage = VMA_MEMORY_USAGE_AUTO,
+    };
 
     /// The combined image sampler for the texture
     /// This is only relevant if the texture is used as TextureUsage::NORMAL
@@ -60,7 +64,9 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
-    Image(const Device &device);
+    /// @param name The name of the Image
+    Image(const Device &device, std::string name);
+
     Image(const Image &) = delete;
     Image(Image &&) noexcept;
     ~Image();

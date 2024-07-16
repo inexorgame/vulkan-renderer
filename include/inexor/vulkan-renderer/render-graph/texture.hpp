@@ -108,6 +108,7 @@ public:
     /// @param format The format of the texture
     /// @param width The width of the texture
     /// @param height The height of the texture
+    /// @param sample_count The sample count of the texture
     /// @param on_init The initialization function of the texture
     /// @param on_update The update function of the texture
     Texture(const Device &device,
@@ -116,6 +117,7 @@ public:
             VkFormat format,
             std::uint32_t width,
             std::uint32_t height,
+            VkSampleCountFlagBits sample_count,
             std::optional<std::function<void()>> on_init = std::nullopt,
             std::optional<std::function<void()>> on_update = std::nullopt);
 

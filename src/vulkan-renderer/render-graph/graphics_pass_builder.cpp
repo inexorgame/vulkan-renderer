@@ -64,7 +64,7 @@ void GraphicsPassBuilder::reset() {
 
 GraphicsPassBuilder &
 GraphicsPassBuilder::set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer) {
-    on_record_cmd_buffer = std::move(on_record_cmd_buffer);
+    m_on_record_cmd_buffer = std::move(on_record_cmd_buffer);
     return *this;
 }
 

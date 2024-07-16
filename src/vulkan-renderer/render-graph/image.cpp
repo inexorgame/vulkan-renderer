@@ -6,10 +6,15 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Image::Image(const Device &device) : m_device(device) {}
+Image::Image(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {}
 
-Image::Image(Image &&other) noexcept : m_device(other.m_device) {
-    // TODO: Fix me!
+Image::Image(Image &&other) noexcept : m_device(other.m_device), m_alloc_ci(other.m_alloc_ci) {
+    other.m_name = std::move(other.m_name);
+    m_img = std::exchange(other.m_img, VK_NULL_HANDLE);
+    m_img_view = std::exchange(other.m_img_view, VK_NULL_HANDLE);
+    m_alloc = std::exchange(other.m_alloc, VK_NULL_HANDLE);
+    m_alloc_info = other.m_alloc_info;
+    m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
 Image::~Image() {
