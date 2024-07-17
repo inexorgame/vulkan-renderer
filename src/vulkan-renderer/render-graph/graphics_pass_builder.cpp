@@ -22,6 +22,14 @@ std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const
     return graphics_pass;
 }
 
+GraphicsPassBuilder &GraphicsPassBuilder::conditionally_reads_from(std::weak_ptr<GraphicsPass> graphics_pass) {
+    if (!graphics_pass.expired()) {
+        m_graphics_pass_reads.push_back(std::move(graphics_pass));
+    }
+    // NOTE: It's ok it graphics pass is expired, so no exception is thrown
+    return *this;
+}
+
 GraphicsPassBuilder &GraphicsPassBuilder::reads_from(std::weak_ptr<GraphicsPass> graphics_pass) {
     if (graphics_pass.expired()) {
         throw std::invalid_argument("[GraphicsPassBuilder::reads_from] Error: 'graphics_pass' is an invalid pointer!");

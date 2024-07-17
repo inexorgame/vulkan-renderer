@@ -134,128 +134,6 @@ void RenderGraph::create_graphics_pipelines() {
     }
 }
 
-#if 0
-void RenderGraph::create_rendering_infos() {
-    for (auto &pass : m_graphics_passes) {
-        /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
-        /// @param attachment The attachment (color, depth, or stencil)
-        /// @return VkRenderingAttachmentInfo  The filled rendering info struct
-        auto fill_rendering_info = [&](const Attachment &attachment) {
-            const auto attach_ptr = attachment.first.lock();
-            const auto img_layout = [&]() -> VkImageLayout {
-                switch (attach_ptr->m_usage) {
-                case TextureUsage::BACK_BUFFER:
-                case TextureUsage::NORMAL: {
-                    return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                }
-                case TextureUsage::DEPTH_STENCIL_BUFFER: {
-                    return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                }
-                default:
-                    return VK_IMAGE_LAYOUT_UNDEFINED;
-                }
-            }(); // Invoke the lambda, not just define it!
-
-            auto is_integer_format = [](const VkFormat format) {
-                switch (format) {
-                // 8-bit integer formats
-                case VK_FORMAT_R8_UINT:
-                case VK_FORMAT_R8_SINT:
-                case VK_FORMAT_R8G8_UINT:
-                case VK_FORMAT_R8G8_SINT:
-                case VK_FORMAT_R8G8B8_UINT:
-                case VK_FORMAT_R8G8B8_SINT:
-                case VK_FORMAT_B8G8R8_UINT:
-                case VK_FORMAT_B8G8R8_SINT:
-                case VK_FORMAT_R8G8B8A8_UINT:
-                case VK_FORMAT_R8G8B8A8_SINT:
-                case VK_FORMAT_B8G8R8A8_UINT:
-                case VK_FORMAT_B8G8R8A8_SINT:
-                case VK_FORMAT_A2R10G10B10_UINT_PACK32:
-                case VK_FORMAT_A2B10G10R10_UINT_PACK32:
-
-                // 16-bit integer formats
-                case VK_FORMAT_R16_UINT:
-                case VK_FORMAT_R16_SINT:
-                case VK_FORMAT_R16G16_UINT:
-                case VK_FORMAT_R16G16_SINT:
-                case VK_FORMAT_R16G16B16_UINT:
-                case VK_FORMAT_R16G16B16_SINT:
-                case VK_FORMAT_R16G16B16A16_UINT:
-                case VK_FORMAT_R16G16B16A16_SINT:
-
-                // 32-bit integer formats
-                case VK_FORMAT_R32_UINT:
-                case VK_FORMAT_R32_SINT:
-                case VK_FORMAT_R32G32_UINT:
-                case VK_FORMAT_R32G32_SINT:
-                case VK_FORMAT_R32G32B32_UINT:
-                case VK_FORMAT_R32G32B32_SINT:
-                case VK_FORMAT_R32G32B32A32_UINT:
-                case VK_FORMAT_R32G32B32A32_SINT:
-
-                // 64-bit integer formats
-                case VK_FORMAT_R64_UINT:
-                case VK_FORMAT_R64_SINT:
-                case VK_FORMAT_R64G64_UINT:
-                case VK_FORMAT_R64G64_SINT:
-                case VK_FORMAT_R64G64B64_UINT:
-                case VK_FORMAT_R64G64B64_SINT:
-                case VK_FORMAT_R64G64B64A64_UINT:
-                case VK_FORMAT_R64G64B64A64_SINT:
-                    return true;
-
-                // Non-integer formats
-                default:
-                    return false;
-                }
-            };
-
-            bool msaa_enabled = (attach_ptr->m_msaa_img != nullptr);
-
-            // This decides if MSAA is enabled on a per-texture basis
-            return wrapper::make_info<VkRenderingAttachmentInfo>({
-                .imageView = msaa_enabled ? attach_ptr->m_msaa_img->m_img_view : attach_ptr->m_img->m_img_view,
-                // The image layout is the same for m_img and m_msaa_img
-                .imageLayout = img_layout,
-                // The resolve mode must be chosen on whether it's an integer format
-                .resolveMode = msaa_enabled ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
-                                                                                        : VK_RESOLVE_MODE_MIN_BIT)
-                                            : VK_RESOLVE_MODE_NONE, // No resolve if MSAA is disabled
-                // This will be filled during rendering!
-                .resolveImageView = VK_NULL_HANDLE,
-                // TODO: Is this correct layout?
-                .resolveImageLayout = msaa_enabled ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
-                // Does this pass require clearing this attachment?
-                .loadOp = attachment.second ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
-                // The result will always be stored
-                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                // If clearing is enabled, specify the clear value
-                .clearValue = attachment.second ? attachment.second.value() : VkClearValue{},
-            });
-        };
-
-        // Reserve memory for the color attachments
-        pass->m_color_attachment_infos.reserve(pass->m_color_attachments.size());
-        // Fill the color attachments
-        for (const auto &color_attachment : pass->m_color_attachments) {
-            pass->m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
-        }
-        // Fill the color attachment (if specified)
-        const bool has_depth_attachment = !pass->m_depth_attachment.first.expired();
-        if (has_depth_attachment) {
-            pass->m_depth_attachment_info = fill_rendering_info(pass->m_depth_attachment);
-            pass->m_depth_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
-        }
-        // Fill the stencil attachment (if specified)
-        const bool has_stencil_attachment = !pass->m_stencil_attachment.first.expired();
-        if (has_stencil_attachment) {
-            pass->m_stencil_attachment_info = fill_rendering_info(pass->m_stencil_attachment);
-        }
-    }
-}
-#endif
-
 void RenderGraph::create_textures() {
     m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
@@ -279,18 +157,156 @@ void RenderGraph::determine_pass_order() {
     // TODO: The data structure to determine pass order should be created before rendergraph compilation!
 }
 
-void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
+void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
+    /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
+    /// @param attachment The attachment (color, depth, or stencil)
+    /// @return VkRenderingAttachmentInfo  The filled rendering info struct
+    auto fill_rendering_info = [&](const RenderingAttachment &attachment) {
+        const auto attach_ptr = attachment.first.lock();
+        const auto img_layout = [&]() -> VkImageLayout {
+            switch (attach_ptr->m_usage) {
+            case TextureUsage::BACK_BUFFER:
+            case TextureUsage::NORMAL: {
+                return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            }
+            case TextureUsage::DEPTH_STENCIL_BUFFER: {
+                return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            }
+            default:
+                return VK_IMAGE_LAYOUT_UNDEFINED;
+            }
+        }(); // Invoke the lambda, not just define it!
+
+        auto is_integer_format = [](const VkFormat format) {
+            switch (format) {
+            // 8-bit integer formats
+            case VK_FORMAT_R8_UINT:
+            case VK_FORMAT_R8_SINT:
+            case VK_FORMAT_R8G8_UINT:
+            case VK_FORMAT_R8G8_SINT:
+            case VK_FORMAT_R8G8B8_UINT:
+            case VK_FORMAT_R8G8B8_SINT:
+            case VK_FORMAT_B8G8R8_UINT:
+            case VK_FORMAT_B8G8R8_SINT:
+            case VK_FORMAT_R8G8B8A8_UINT:
+            case VK_FORMAT_R8G8B8A8_SINT:
+            case VK_FORMAT_B8G8R8A8_UINT:
+            case VK_FORMAT_B8G8R8A8_SINT:
+            case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+            case VK_FORMAT_A2B10G10R10_UINT_PACK32:
+
+            // 16-bit integer formats
+            case VK_FORMAT_R16_UINT:
+            case VK_FORMAT_R16_SINT:
+            case VK_FORMAT_R16G16_UINT:
+            case VK_FORMAT_R16G16_SINT:
+            case VK_FORMAT_R16G16B16_UINT:
+            case VK_FORMAT_R16G16B16_SINT:
+            case VK_FORMAT_R16G16B16A16_UINT:
+            case VK_FORMAT_R16G16B16A16_SINT:
+
+            // 32-bit integer formats
+            case VK_FORMAT_R32_UINT:
+            case VK_FORMAT_R32_SINT:
+            case VK_FORMAT_R32G32_UINT:
+            case VK_FORMAT_R32G32_SINT:
+            case VK_FORMAT_R32G32B32_UINT:
+            case VK_FORMAT_R32G32B32_SINT:
+            case VK_FORMAT_R32G32B32A32_UINT:
+            case VK_FORMAT_R32G32B32A32_SINT:
+
+            // 64-bit integer formats
+            case VK_FORMAT_R64_UINT:
+            case VK_FORMAT_R64_SINT:
+            case VK_FORMAT_R64G64_UINT:
+            case VK_FORMAT_R64G64_SINT:
+            case VK_FORMAT_R64G64B64_UINT:
+            case VK_FORMAT_R64G64B64_SINT:
+            case VK_FORMAT_R64G64B64A64_UINT:
+            case VK_FORMAT_R64G64B64A64_SINT:
+                return true;
+
+            // Non-integer formats
+            default:
+                return false;
+            }
+        };
+
+        bool msaa_enabled = (attach_ptr->m_msaa_img != nullptr);
+
+        // This decides if MSAA is enabled on a per-texture basis
+        return wrapper::make_info<VkRenderingAttachmentInfo>({
+            .imageView = msaa_enabled ? attach_ptr->m_msaa_img->m_img_view : attach_ptr->m_img->m_img_view,
+            // The image layout is the same for m_img and m_msaa_img
+            .imageLayout = img_layout,
+            // The resolve mode must be chosen on whether it's an integer format
+            .resolveMode = msaa_enabled ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
+                                                                                    : VK_RESOLVE_MODE_MIN_BIT)
+                                        : VK_RESOLVE_MODE_NONE, // No resolve if MSAA is disabled
+            // This will be filled during rendering!
+            .resolveImageView = m_swapchain.m_current_img_view,
+            // TODO: Is this correct layout?
+            .resolveImageLayout = msaa_enabled ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
+            // Does this pass require clearing this attachment?
+            .loadOp = attachment.second ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+            // The result will always be stored
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            // If clearing is enabled, specify the clear value
+            .clearValue = attachment.second ? attachment.second.value() : VkClearValue{},
+        });
+    };
+
+    // Reserve memory for the color attachments
+    pass.m_color_attachment_infos.reserve(pass.m_color_attachments.size());
+
+    // Fill the color attachments
+    const bool has_any_color_attachment = pass.m_color_attachments.size() > 0;
+    for (const auto &color_attachment : pass.m_color_attachments) {
+        pass.m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
+    }
+    // Fill the color attachment (if specified)
+    const bool has_depth_attachment = !pass.m_depth_attachment.first.expired();
+    if (has_depth_attachment) {
+        pass.m_depth_attachment_info = fill_rendering_info(pass.m_depth_attachment);
+        pass.m_depth_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
+    }
+    // Fill the stencil attachment (if specified)
+    const bool has_stencil_attachment = !pass.m_stencil_attachment.first.expired();
+    if (has_stencil_attachment) {
+        pass.m_stencil_attachment_info = fill_rendering_info(pass.m_stencil_attachment);
+    }
+
+    // Fill the rendering info of the pass
+    pass.m_rendering_info = wrapper::make_info<VkRenderingInfo>({
+        .renderArea =
+            {
+                .extent = m_swapchain.extent(),
+            },
+        .layerCount = 1,
+        .viewMask = 0,
+        .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachments.size()),
+        .pColorAttachments = has_any_color_attachment ? pass.m_color_attachment_infos.data() : nullptr,
+        .pDepthAttachment = has_depth_attachment ? &pass.m_depth_attachment_info : nullptr,
+        .pStencilAttachment = has_stencil_attachment ? &pass.m_stencil_attachment_info : nullptr,
+    });
+}
+
+void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
     cmd_buf.set_suboperation_debug_name("|Pass:" + pass.m_name);
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
 
+    // Fill the VKRenderingInfo of the graphics pass
+    fill_graphics_pass_rendering_info(pass);
+
     // Start dynamic rendering with the compiled rendering info
-    cmd_buf.begin_rendering(wrapper::make_info<VkRenderingInfo>({/*TODO: FILL ME*/}));
+    cmd_buf.begin_rendering(pass.m_rendering_info);
 
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
     // does not bind any pipelines, descriptor sets, or buffers automatically!
     std::invoke(pass.m_on_record_cmd_buffer, cmd_buf);
+
     // End dynamic rendering
     cmd_buf.end_rendering();
     // End the debug label for this graphics pass
@@ -311,7 +327,7 @@ void RenderGraph::render() {
                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     // Call the command buffer recording function of every pass
-    for (const auto &pass : m_graphics_passes) {
+    for (auto &pass : m_graphics_passes) {
         record_command_buffer_for_pass(cmd_buf, *pass);
     }
 

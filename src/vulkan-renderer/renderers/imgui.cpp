@@ -21,6 +21,16 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
       m_color_attachment(std::move(color_attachment)) {
 
+    if (render_graph.expired()) {
+        throw std::invalid_argument(
+            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'render_graph' is an invalid pointer!");
+    }
+    if (m_color_attachment.expired()) {
+        throw std::invalid_argument(
+            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'color_attachment' is an invalid pointer!");
+    }
+    // NOTE: As we check below, previous_pass is allowed to be an invalid pointer (so there is no previous pass!)
+
     spdlog::trace("Creating ImGui context");
     ImGui::CreateContext();
 
@@ -127,8 +137,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
-        return builder.reads_from(previous_pass)
-            .writes_to(m_color_attachment)
+        return builder.writes_to(m_color_attachment)
+            .conditionally_reads_from(m_previous_pass)
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 const ImGuiIO &io = ImGui::GetIO();
                 m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);

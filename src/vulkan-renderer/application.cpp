@@ -421,13 +421,13 @@ void Application::run() {
 void Application::setup_render_graph() {
     const auto swapchain_extent = m_swapchain->extent();
 
-    m_color_attachment = m_render_graph->add_texture("Color", render_graph::TextureUsage::BACK_BUFFER,
-                                                     m_swapchain->image_format(), swapchain_extent.width,
-                                                     swapchain_extent.height, m_device->get_max_usable_sample_count());
+    m_color_attachment = m_render_graph->add_texture(
+        "Color", render_graph::TextureUsage::BACK_BUFFER, m_swapchain->image_format(), swapchain_extent.width,
+        swapchain_extent.height /*, m_device->get_max_usable_sample_count() */);
 
-    m_depth_attachment = m_render_graph->add_texture("Depth", render_graph::TextureUsage::DEPTH_STENCIL_BUFFER,
-                                                     VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width,
-                                                     swapchain_extent.height, m_device->get_max_usable_sample_count());
+    m_depth_attachment = m_render_graph->add_texture(
+        "Depth", render_graph::TextureUsage::DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width,
+        swapchain_extent.height /*, m_device->get_max_usable_sample_count()*/);
 
     m_vertex_buffer = m_render_graph->add_buffer("Octree", render_graph::BufferType::VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree
@@ -485,7 +485,8 @@ void Application::setup_render_graph() {
                                         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                     },
                                 })
-                                .set_multisampling(m_device->get_max_usable_sample_count(), 0.25f)
+                                // TODO: Fix me!
+                                //.set_multisampling(m_device->get_max_usable_sample_count(), 0.25f)
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment(m_swapchain->image_format())
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
@@ -533,8 +534,10 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, m_render_graph, m_octree_pass,
-                                                                 m_color_attachment, [&]() { update_imgui_overlay(); });
+    // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, m_render_graph,
+    // m_octree_pass,
+    //                                                             m_color_attachment, [&]() { update_imgui_overlay();
+    //                                                             });
 
     m_render_graph->compile();
 }

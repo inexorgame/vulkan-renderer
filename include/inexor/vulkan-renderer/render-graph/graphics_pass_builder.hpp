@@ -47,6 +47,13 @@ public:
     /// @return The graphics pass that was just created
     [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name, DebugLabelColor color);
 
+    /// Specify that this graphics pass A reads from another graphics pass B (if the weak_ptr to B is not expired),
+    /// meaning B should be rendered before A. It is perfect valid for 'graphics_pass' to be an invalid pointer, in
+    /// which case the read is not added.
+    /// @param graphics_pass The graphics pass (can be an invalid pointer)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &conditionally_reads_from(std::weak_ptr<GraphicsPass> graphics_pass);
+
     /// Specify that this graphics pass A reads from another graphics pass B, meaning B should be rendered before A
     /// @param graphics_pass The graphics pass which is read by this graphics pass
     /// @return A const reference to the this pointer (allowing method calls to be chained)

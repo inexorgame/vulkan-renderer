@@ -248,6 +248,10 @@ private:
     /// Determine the order of execution of the graphics passes by using depth first search (DFS) algorithm
     void determine_pass_order();
 
+    /// Fill the VkRenderingInfo for a graphics pass
+    /// @param pass The graphics pass
+    void fill_graphics_pass_rendering_info(GraphicsPass &pass);
+
     /// Record the command buffer of a pass. After a lot of discussions about the API design of rendergraph, we came to
     /// the conclusion that it's the full responsibility of the programmer to manually bind pipelines, descriptors sets,
     /// and buffers inside of the on_record function instead of attempting to abstract all of this in rendergraph. This
@@ -261,7 +265,7 @@ private:
     /// inside of the on_record function.
     /// @param cmd_buf The command buffer to record the pass into
     /// @param pass The graphics pass to record the command buffer for
-    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass);
+    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass);
 
     /// Update the vertex-, index-, and uniform-buffers
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
