@@ -82,8 +82,8 @@ void RenderGraph::check_for_cycles() {
 
     for (const auto &pass : m_graphics_passes) {
         if (dfs_detect_cycle(pass)) {
-            throw std::runtime_error("[RenderGraph::check_for_cycles] Error: Rendergraph is not acyclic! A cycle was "
-                                     "detected for graphics pass " +
+            throw std::runtime_error("[RenderGraph::check_for_cycles] Error: Rendergraph is not acyclic! "
+                                     "A cycle was detected for graphics pass " +
                                      pass->m_name + "!");
         }
     }
@@ -91,7 +91,6 @@ void RenderGraph::check_for_cycles() {
 
 void RenderGraph::compile() {
     // TODO: What needs to be re-done when swapchain is recreated?
-    // TODO: Can we move check_for_cycles into validate_render_graph before graphics pipelines are created?
     validate_render_graph();
     determine_pass_order();
     create_buffers();
@@ -101,11 +100,7 @@ void RenderGraph::compile() {
     update_descriptor_sets();
     create_graphics_passes();
     create_graphics_pipelines();
-    // Only after graphics pipelines are created, we can check for cycles! The way rendergraph is set up, it should be
-    // extremely hard to make a cycle possible because of the order of construction of the graphics pipelines from the
-    // graphics pipeline create functions.
     check_for_cycles();
-    // create_rendering_infos();
 }
 
 void RenderGraph::create_buffers() {

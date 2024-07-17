@@ -42,7 +42,7 @@ private:
     std::vector<OctreeGpuVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
-    std::unique_ptr<render_graph::RenderGraph> m_render_graph;
+    std::shared_ptr<render_graph::RenderGraph> m_render_graph;
     std::weak_ptr<render_graph::Texture> m_color_attachment;
     std::weak_ptr<render_graph::Texture> m_depth_attachment;
     std::weak_ptr<render_graph::Buffer> m_index_buffer;

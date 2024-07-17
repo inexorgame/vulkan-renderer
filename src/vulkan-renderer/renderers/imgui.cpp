@@ -14,12 +14,12 @@ namespace inexor::vulkan_renderer::renderers {
 
 ImGuiRenderer::ImGuiRenderer(const Device &device,
                              const Swapchain &swapchain,
-                             render_graph::RenderGraph &render_graph,
+                             std::weak_ptr<render_graph::RenderGraph> render_graph,
                              std::weak_ptr<render_graph::GraphicsPass> previous_pass,
                              std::weak_ptr<render_graph::Texture> color_attachment,
                              std::function<void()> on_update_user_data)
-    : m_device(device), m_on_update_user_data(std::move(on_update_user_data)),
-      m_previous_pass(std::move(previous_pass)), m_color_attachment(std::move(color_attachment)) {
+    : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
+      m_color_attachment(std::move(color_attachment)) {
 
     spdlog::trace("Creating ImGui context");
     ImGui::CreateContext();
@@ -30,8 +30,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     spdlog::trace("Setting ImGui style");
     set_imgui_style();
 
+    auto graph = render_graph.lock();
+
     using render_graph::BufferType;
-    m_vertex_buffer = render_graph.add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
+    m_vertex_buffer = graph->add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
         m_on_update_user_data();
         const ImDrawData *draw_data = ImGui::GetDrawData();
         if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
@@ -54,24 +56,24 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         m_vertex_buffer.lock()->request_update(m_vertex_data);
     });
 
-    m_index_buffer = render_graph.add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {
+    m_index_buffer = graph->add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {
         // Request rendergraph to do an update of the index buffer
         m_index_buffer.lock()->request_update(m_index_data);
     });
 
     m_vertex_shader =
-        std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
+        std::make_shared<wrapper::Shader>(device, "ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
     m_fragment_shader =
-        std::make_shared<wrapper::Shader>(m_device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
+        std::make_shared<wrapper::Shader>(device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
-    m_imgui_texture = render_graph.add_texture(
-        "ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM, m_font_texture_width,
-        m_font_texture_width, VK_SAMPLE_COUNT_1_BIT, [&]() {
-            // Initialize the ImGui font texture
-            m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
-        });
+    m_imgui_texture =
+        graph->add_texture("ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM,
+                           m_font_texture_width, m_font_texture_width, VK_SAMPLE_COUNT_1_BIT, [&]() {
+                               // Initialize the ImGui font texture
+                               m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
+                           });
 
-    render_graph.add_resource_descriptor(
+    graph->add_resource_descriptor(
         [&](wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {
             m_descriptor_set_layout = builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui");
         },
@@ -82,7 +84,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
             builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
         });
 
-    render_graph.add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
+    graph->add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
         m_imgui_pipeline = builder
                                .set_vertex_input_bindings({
                                    {
@@ -121,7 +123,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         return m_imgui_pipeline;
     });
 
-    render_graph.add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
+    graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
@@ -155,6 +157,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
             })
             .build("ImGui", render_graph::DebugLabelColor::BLUE);
     });
+}
+
+ImGuiRenderer::ImGuiRenderer(ImGuiRenderer &&other) noexcept {
+    // TODO: Implement me!
 }
 
 ImGuiRenderer::~ImGuiRenderer() {

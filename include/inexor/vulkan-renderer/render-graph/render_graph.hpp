@@ -41,7 +41,7 @@ using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineLayout;
 
-/// A rendergraph is a generic solution for rendering architecture
+/// A rendergraph is a generic solution for rendering architecture.
 ///
 ///
 ///
@@ -114,15 +114,15 @@ private:
     /// required for the pipeline layout.
     /// -----------------------------------------------------------------------------------------------------------------
 
+    // TODO: Support compute pipelines
+    // TODO: Use pipeline cache and write pipeline cache to file, and support loading them
+
     /// The graphics pipeline builder of the rendergraph
     GraphicsPipelineBuilder m_graphics_pipeline_builder;
     /// In these callback functions, the graphics pipelines will be created
     using OnCreateGraphicsPipeline = std::function<void(GraphicsPipelineBuilder &)>;
     /// The graphics pipeline create functions
     std::vector<OnCreateGraphicsPipeline> m_pipeline_create_functions;
-
-    // TODO: Support compute pipelines
-    // TODO: Use pipeline cache
 
     /// -----------------------------------------------------------------------------------------------------------------
     ///  BUFFERS
@@ -152,30 +152,23 @@ private:
     /// -----------------------------------------------------------------------------------------------------------------
     ///  TEXTURES
     /// -----------------------------------------------------------------------------------------------------------------
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
+    /// Like buffers, textures are created by rendergraph and stored in the rendergraph in a shared_ptr. This means just
+    /// like buffers, the rendergraph owns the underlying memory, and all external code must use std::weak_ptr to it.
+    /// There are different types of textures, which are listed in TextureUsage. In principle, the Texture wrapper
+    /// allows each texture to have an on_init and an on_update function. Depending on the texture usage, textures can
+    /// be created in two different ways: Textures which are used as color attachment (back buffer) or depth attachment
+    /// (depth buffer) are created inside of rendergraph only. This means code outside of rendergraph is not allowed to
+    /// modify the data in the texture directly, but instead the external code must specify which attachment is written
+    /// to by which pass. Rendergraph will then write to the attachments automatically. This means for texture which are
+    /// of TextureUsage COLOR_ATTACHMENT or DEPTH_ATTACHMENT, both on_init and on_update are std::nullopt (Rendergraph
+    /// initializes these textures directly rather than specifying an unnecessary on_init function which is then called
+    /// directly). The other type of texture is TextureUsage::NORMAL, which means this texture is used in for example in
+    /// combined image samplers. This could be the font texture of ImGui for example. Because the data to fill this
+    /// texture is loaded from a file by the ImGui wrapper, we must specify an on_init function to rendergraph which
+    /// copies the font texture data into the texture wrapper. TextureUsage NORMAL is the only texture type which is
+    /// allowed to have an on_update function. The on_update function is called per-frame (if it's not std::nullopt).
+    /// The on_update function allows for dynamic textures which are updated every frame. Note that so far, our code
+    /// base does not use this feature yet.
     std::vector<std::shared_ptr<Texture>> m_textures;
 
     /// -----------------------------------------------------------------------------------------------------------------
@@ -223,8 +216,8 @@ private:
     using OnUpdateDescriptorSet = std::function<void(DescriptorSetUpdateBuilder &)>;
     /// Resource descriptors are managed by specifying those three functions to the rendergraph
     /// Rendergraph will then call those function in the correct order during rendergraph compilation
-    std::vector<std::tuple<OnBuildDescriptorSetLayout, OnAllocateDescriptorSet, OnUpdateDescriptorSet>>
-        m_resource_descriptors;
+    using ResourceDescriptor = std::tuple<OnBuildDescriptorSetLayout, OnAllocateDescriptorSet, OnUpdateDescriptorSet>;
+    std::vector<ResourceDescriptor> m_resource_descriptors;
 
     /// Allocate the descriptor sets
     void allocate_descriptor_sets();
@@ -345,7 +338,6 @@ public:
                                                      std::optional<std::function<void()>> on_init = std::nullopt,
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
-    // TODO: Keep track of internal state? What happens when calling render() before compiler()?
     /// Compile the rendergraph
     void compile();
 
@@ -354,9 +346,6 @@ public:
 
     /// Reset the entire RenderGraph
     void reset();
-
-    /// Update rendering data like buffers or textures
-    void update_data();
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

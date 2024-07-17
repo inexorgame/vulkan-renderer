@@ -28,7 +28,6 @@ namespace inexor::vulkan_renderer::renderers {
 
 /// A wrapper for an ImGui implementation
 class ImGuiRenderer {
-    const wrapper::Device &m_device;
     std::weak_ptr<render_graph::Buffer> m_index_buffer;
     std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
     std::weak_ptr<render_graph::Texture> m_imgui_texture;
@@ -80,13 +79,13 @@ public:
     /// @param on_update_user_data
     ImGuiRenderer(const Device &device,
                   const Swapchain &swapchain,
-                  render_graph::RenderGraph &render_graph,
+                  std::weak_ptr<render_graph::RenderGraph> render_graph,
                   std::weak_ptr<render_graph::GraphicsPass> previous_pass,
                   std::weak_ptr<render_graph::Texture> color_attachment,
                   std::function<void()> on_update_user_data);
 
     ImGuiRenderer(const ImGuiRenderer &) = delete;
-    ImGuiRenderer(ImGuiRenderer &&) = delete;
+    ImGuiRenderer(ImGuiRenderer &&) noexcept;
 
     /// Call ImGui::DestroyContext
     ~ImGuiRenderer();
