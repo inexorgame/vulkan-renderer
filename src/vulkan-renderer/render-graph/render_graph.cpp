@@ -74,7 +74,7 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_buffers() {
-    m_device.execute("[RenderGraph::create_buffers|", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::create_buffers|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
             buffer->m_on_update();
             cmd_buf.set_suboperation_debug_name("Buffer:" + buffer->m_name);
@@ -255,22 +255,8 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, c
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
 
-    // TODO: Support multi-target rendering!
-    auto color_attachment_info = pass.m_color_attachment_infos;
-    color_attachment_info[0].resolveImageView = m_swapchain.m_current_img_view;
-
     // Start dynamic rendering with the compiled rendering info
-    cmd_buf.begin_rendering(wrapper::make_info<VkRenderingInfo>({
-        .renderArea =
-            {
-                .extent = m_swapchain.extent(),
-            },
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_attachment_info[0],
-        .pDepthAttachment = (!pass.m_depth_attachment.first.expired()) ? &pass.m_depth_attachment_info : nullptr,
-        .pStencilAttachment = (!pass.m_stencil_attachment.first.expired()) ? &pass.m_stencil_attachment_info : nullptr,
-    }));
+    cmd_buf.begin_rendering(wrapper::make_info<VkRenderingInfo>({/*FILL ME*/}));
 
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph

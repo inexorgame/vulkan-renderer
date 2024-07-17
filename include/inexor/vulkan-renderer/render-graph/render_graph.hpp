@@ -67,10 +67,16 @@ private:
     /// Graphics passes are build inside of graphics pass create functions. Those functions are given to the
     /// rendergraph, and they are all called sequentially during rendergraph compilation. Inside of the graphics pass
     /// create function, the GraphicsPassBuilder can be used to build the graphics pass. The graphics pass which is
-    /// created is stored internally inside of the rendergraph.
-    ///
-    /// TODO: There should be a reads_from API? This means we need to expose a std::weak_ptr<GraphicsPass>! Just like
-    /// for buffers e.g.
+    /// created is stored internally inside of the rendergraph. Each graphics pass specifies to which attachments
+    /// (color, depth, stencil) it writes by using the writes_to method of the GraphicsPassBuilder. The attachments will
+    /// be used by rendergraph in the VkRenderingInfo in dynamic rendering. Each pass must also specify from which other
+    /// passes it reads. For example if we specify B.reads_from(A), it means that graphics pass B is reading from
+    /// graphics pass A. Rendergraph can then automatically determine the oder of all passes during rendergraph
+    /// compilation using depth first search (DFS) algorithm. Rendergraph also makes sure that the graph is acyclic, so
+    /// there must not be any cycles in it! Note that graphics passes only specify reads_from for previous passes and
+    /// writes_to for attachments, as a graphics pass does not directly write into another graphics pass, but only into
+    /// attachments.
+    /// -----------------------------------------------------------------------------------------------------------------
 
     /// The graphics pass builder of the rendergraph
     GraphicsPassBuilder m_graphics_pass_builder{};
@@ -110,7 +116,7 @@ private:
     /// The graphics pipeline create functions
     std::vector<OnCreateGraphicsPipeline> m_pipeline_create_functions;
 
-    // TODO: Support compute pipelines as well
+    // TODO: Support compute pipelines
     // TODO: Use pipeline cache
 
     /// -----------------------------------------------------------------------------------------------------------------

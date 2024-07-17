@@ -43,8 +43,8 @@ private:
     std::vector<std::uint32_t> m_octree_indices;
 
     std::unique_ptr<render_graph::RenderGraph> m_render_graph;
-    std::weak_ptr<render_graph::Texture> m_back_buffer;
-    std::weak_ptr<render_graph::Texture> m_depth_buffer;
+    std::weak_ptr<render_graph::Texture> m_color_attachment;
+    std::weak_ptr<render_graph::Texture> m_depth_attachment;
     std::weak_ptr<render_graph::Buffer> m_index_buffer;
     std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
     std::weak_ptr<render_graph::Buffer> m_uniform_buffer;
