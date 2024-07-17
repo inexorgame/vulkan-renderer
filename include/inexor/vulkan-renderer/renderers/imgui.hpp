@@ -64,6 +64,8 @@ class ImGuiRenderer {
     /// It will be called at the beginning of set_on_update
     std::function<void()> m_on_update_user_data{[]() {}};
 
+    ImGuiContext *m_imgui_context{nullptr};
+
     void load_font_data_from_file();
 
     /// Customize ImGui style like text color for example

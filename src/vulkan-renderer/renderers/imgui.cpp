@@ -32,7 +32,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     // NOTE: As we check below, previous_pass is allowed to be an invalid pointer (so there is no previous pass!)
 
     spdlog::trace("Creating ImGui context");
-    ImGui::CreateContext();
+    m_imgui_context = ImGui::CreateContext();
+    ImGui::SetCurrentContext(m_imgui_context);
 
     spdlog::trace("Loading ImGui font texture");
     load_font_data_from_file();
@@ -44,7 +45,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
 
     using render_graph::BufferType;
     m_vertex_buffer = graph->add_buffer("ImGui", BufferType::VERTEX_BUFFER, [&]() {
-        m_on_update_user_data();
         const ImDrawData *draw_data = ImGui::GetDrawData();
         if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
             return;
@@ -62,13 +62,17 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                 m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
             }
         }
-        // Request rendergraph to do an update of the vertex buffer
-        m_vertex_buffer.lock()->request_update(m_vertex_data);
+        if (m_vertex_data.size() > 0) {
+            // Request rendergraph to do an update of the vertex buffer
+            m_vertex_buffer.lock()->request_update(m_vertex_data);
+        }
     });
 
     m_index_buffer = graph->add_buffer("ImGui", BufferType::INDEX_BUFFER, [&]() {
-        // Request rendergraph to do an update of the index buffer
-        m_index_buffer.lock()->request_update(m_index_data);
+        if (m_index_data.size() > 0) {
+            // Request rendergraph to do an update of the index buffer
+            m_index_buffer.lock()->request_update(m_index_data);
+        }
     });
 
     m_vertex_shader =
@@ -140,6 +144,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         return builder.writes_to(m_color_attachment)
             .conditionally_reads_from(m_previous_pass)
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                ImDrawData *draw_data = ImGui::GetDrawData();
+                if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
+                    return;
+                }
                 const ImGuiIO &io = ImGui::GetIO();
                 m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
@@ -149,10 +157,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                     .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
                     .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
 
-                ImDrawData *draw_data = ImGui::GetDrawData();
-                if (draw_data == nullptr) {
-                    return;
-                }
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
                 for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
@@ -174,7 +178,7 @@ ImGuiRenderer::ImGuiRenderer(ImGuiRenderer &&other) noexcept {
 }
 
 ImGuiRenderer::~ImGuiRenderer() {
-    ImGui::DestroyContext();
+    ImGui::DestroyContext(m_imgui_context);
 }
 
 void ImGuiRenderer::load_font_data_from_file() {

@@ -518,7 +518,7 @@ void Application::setup_render_graph() {
         m_octree_pass = builder
                             .writes_to(m_color_attachment,
                                        VkClearValue{
-                                           .color = {1.0f, 0.0f, 0.0f, 1.0f},
+                                           .color = {1.0f, 1.0f, 1.0f, 1.0f},
                                        })
                             .writes_to(m_depth_attachment)
                             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
@@ -534,10 +534,8 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
-    // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, m_render_graph,
-    // m_octree_pass,
-    //                                                             m_color_attachment, [&]() { update_imgui_overlay();
-    //                                                             });
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, m_render_graph, m_octree_pass,
+                                                                 m_color_attachment, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }
@@ -641,8 +639,9 @@ void Application::update_imgui_overlay() {
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
     ImGui::PushItemWidth(150.0f);
     ImGui::PopItemWidth();
-    ImGui::End();
     ImGui::PopStyleVar();
+    ImGui::End();
+    ImGui::EndFrame();
     ImGui::Render();
 }
 

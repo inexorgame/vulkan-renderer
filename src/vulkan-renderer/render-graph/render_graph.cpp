@@ -314,6 +314,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 }
 
 void RenderGraph::render() {
+    update_buffers();
     // Acquire the next swapchain image index
     m_swapchain.acquire_next_image_index();
 

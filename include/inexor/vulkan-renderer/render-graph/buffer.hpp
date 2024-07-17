@@ -97,15 +97,18 @@ private:
 
     /// The staging buffer (if required)
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
-    VmaAllocation m_staging_alloc{VK_NULL_HANDLE};
-    VmaAllocationInfo m_staging_alloc_info{};
+    VmaAllocation m_staging_buffer_alloc{VK_NULL_HANDLE};
+    VmaAllocationInfo m_staging_buffer_alloc_info{};
 
     /// Create the buffer using Vulkan Memory Allocator (VMA) library
     /// @param cmd_buf The command buffer
     void create(const CommandBuffer &cmd_buf);
 
-    /// Call vmaDestroyBuffer
+    /// Call vmaDestroyBuffer for the actual buffer
     void destroy();
+
+    /// Call vmaDestroyBuffer for the staging bufffer
+    void destroy_staging_buffer();
 
 public:
     /// Default constructor

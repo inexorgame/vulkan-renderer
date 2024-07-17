@@ -27,8 +27,8 @@ Buffer::Buffer(Buffer &&other) noexcept : m_device(other.m_device) {
     m_src_data = std::exchange(other.m_src_data, m_src_data);
     m_src_data_size = other.m_src_data_size;
     m_staging_buffer = std::exchange(other.m_staging_buffer, VK_NULL_HANDLE);
-    m_staging_alloc = std::exchange(other.m_staging_alloc, VK_NULL_HANDLE);
-    m_staging_alloc_info = std::move(other.m_staging_alloc_info);
+    m_staging_buffer_alloc = std::exchange(other.m_staging_buffer_alloc, VK_NULL_HANDLE);
+    m_staging_buffer_alloc_info = std::move(other.m_staging_buffer_alloc_info);
     m_update_requested = other.m_update_requested;
 }
 
@@ -100,8 +100,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
     } else {
         // Make sure to destroy the previous staging buffer
         if (m_staging_buffer != VK_NULL_HANDLE) {
-            vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_alloc);
-            m_staging_buffer = VK_NULL_HANDLE;
+            destroy_staging_buffer();
         }
         // The allocation ended up in non-mappable memory and we need a staging buffer and a copy command to upload data
         const auto staging_buf_ci = wrapper::make_info<VkBufferCreateInfo>({
@@ -115,22 +114,23 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
             .usage = VMA_MEMORY_USAGE_AUTO,
         };
         // Create the staging buffer which is used for the transfer of data into the actual buffer
-        if (const auto result = vmaCreateBuffer(m_device.allocator(), &staging_buf_ci, &staging_buf_alloc_ci,
-                                                &m_staging_buffer, &m_staging_alloc, &m_staging_alloc_info);
+        if (const auto result =
+                vmaCreateBuffer(m_device.allocator(), &staging_buf_ci, &staging_buf_alloc_ci, &m_staging_buffer,
+                                &m_staging_buffer_alloc, &m_staging_buffer_alloc_info);
             result != VK_SUCCESS) {
             throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + " !", result);
         }
 
         const std::string staging_buf_name = "staging:" + m_name;
         // Set the staging buffer's internal debug name in Vulkan Memory Allocator (VMA)
-        vmaSetAllocationName(m_device.allocator(), m_staging_alloc, staging_buf_name.c_str());
+        vmaSetAllocationName(m_device.allocator(), m_staging_buffer_alloc, staging_buf_name.c_str());
         // Set the staging buffer's internal debug name through Vulkan debug utils
         m_device.set_debug_name(m_staging_buffer, staging_buf_name);
 
         // Copy the memory into the staging buffer
-        std::memcpy(m_staging_alloc_info.pMappedData, m_src_data, m_src_data_size);
+        std::memcpy(m_staging_buffer_alloc_info.pMappedData, m_src_data, m_src_data_size);
 
-        if (const auto result = vmaFlushAllocation(m_device.allocator(), m_staging_alloc, 0, VK_WHOLE_SIZE);
+        if (const auto result = vmaFlushAllocation(m_device.allocator(), m_staging_buffer_alloc, 0, VK_WHOLE_SIZE);
             result != VK_SUCCESS) {
             throw VulkanException("Error: vmaFlushAllocation failed for staging buffer " + m_name + " !", result);
         };
@@ -139,18 +139,27 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
             .pipeline_buffer_memory_barrier_after_copy_buffer(m_buffer);
     }
-
     // Update the descriptor buffer info
     m_descriptor_buffer_info = VkDescriptorBufferInfo{
         .buffer = m_buffer,
         .offset = 0,
         .range = m_alloc_info.size,
     };
+    // The update is finished
+    m_update_requested = false;
 }
 
 void Buffer::destroy() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_alloc);
-    vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_alloc);
+    m_buffer = VK_NULL_HANDLE;
+    m_alloc = VK_NULL_HANDLE;
+    destroy_staging_buffer();
+}
+
+void Buffer::destroy_staging_buffer() {
+    vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
+    m_staging_buffer = VK_NULL_HANDLE;
+    m_staging_buffer_alloc = VK_NULL_HANDLE;
 }
 
 void Buffer::request_update(void *src_data, const std::size_t src_data_size) {

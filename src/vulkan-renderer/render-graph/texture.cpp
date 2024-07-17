@@ -109,7 +109,7 @@ void Texture::destroy() {
     if (m_msaa_img) {
         m_msaa_img->destroy();
     }
-    // TODO: Destroy staging buffer and other buffers
+    destroy_staging_buffer();
 }
 
 void Texture::destroy_staging_buffer() {
@@ -139,14 +139,14 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
     // Create a staging buffer for uploading the texture data
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &staging_buffer_ci, &staging_buffer_alloc_ci,
-                                            &m_staging_buffer, &m_alloc, &m_alloc_info);
+                                            &m_staging_buffer, &m_staging_buffer_alloc, &m_staging_buffer_alloc_info);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
     const std::string staging_buf_name = "staging:" + m_name;
     // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
-    vmaSetAllocationName(m_device.allocator(), m_alloc, staging_buf_name.c_str());
+    vmaSetAllocationName(m_device.allocator(), m_staging_buffer_alloc, staging_buf_name.c_str());
     // Set the buffer's internal debug name through Vulkan debug utils
     m_device.set_debug_name(m_staging_buffer, staging_buf_name);
 
@@ -168,6 +168,9 @@ void Texture::update(const CommandBuffer &cmd_buf) {
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         };
     }
+
+    // The update is finished
+    m_update_requested = false;
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time execute_update is called

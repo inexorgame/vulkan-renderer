@@ -80,12 +80,10 @@ private:
     /// By definition, if this is not std::nullopt, this is a dynamic texture
     std::optional<std::function<void()>> m_on_update{std::nullopt};
 
-    VmaAllocation m_alloc{};
-    VmaAllocationInfo m_alloc_info{};
-
     // The staging buffer for updating the texture data
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
     VmaAllocation m_staging_buffer_alloc{VK_NULL_HANDLE};
+    VmaAllocationInfo m_staging_buffer_alloc_info{};
 
     /// This part of the image wrapper is for external use outside of rendergraph
     /// The descriptor image info required for descriptor updates
