@@ -135,16 +135,16 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::create_textures|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             if (texture->m_on_init) {
-                cmd_buf.set_suboperation_debug_name("|Texture|Initialize:" + texture->m_name);
+                cmd_buf.set_suboperation_debug_name("Texture|Initialize:" + texture->m_name);
                 std::invoke(texture->m_on_init.value());
             }
-            cmd_buf.set_suboperation_debug_name("|Texture|Create:" + texture->m_name);
+            cmd_buf.set_suboperation_debug_name("Texture|Create:" + texture->m_name);
             texture->create();
             if (texture->m_usage == TextureUsage::NORMAL) {
-                cmd_buf.set_suboperation_debug_name("|Texture|Update:" + texture->m_name);
+                cmd_buf.set_suboperation_debug_name("Texture|Update:" + texture->m_name);
                 // Only external textures are updated, not back or depth buffers used internally in rendergraph
                 texture->update(cmd_buf);
             }
@@ -292,7 +292,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
-    cmd_buf.set_suboperation_debug_name("|Pass:" + pass.m_name);
+    cmd_buf.set_suboperation_debug_name("Pass:" + pass.m_name);
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
 
@@ -315,11 +315,13 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 
 void RenderGraph::render() {
     update_buffers();
+    update_descriptor_sets();
+
     // Acquire the next swapchain image index
     m_swapchain.acquire_next_image_index();
 
     // TODO: Refactor this into .exec();
-    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render");
+    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render|");
 
     // TODO: Is this correct?
     //
@@ -355,14 +357,14 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    m_device.execute("RenderGraph::update_buffers", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::update_buffers|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
+            std::invoke(buffer->m_on_update);
             if (buffer->m_update_requested) {
-                cmd_buf.set_suboperation_debug_name("|Buffer|Destroy:" + buffer->m_name);
+                cmd_buf.set_suboperation_debug_name("Buffer|Destroy:" + buffer->m_name);
                 buffer->destroy();
-                cmd_buf.set_suboperation_debug_name("|Buffer|Update:" + buffer->m_name);
-                std::invoke(buffer->m_on_update);
-                cmd_buf.set_suboperation_debug_name("|Buffer|Create:" + buffer->m_name);
+                cmd_buf.set_suboperation_debug_name("Buffer|Update:" + buffer->m_name);
+                cmd_buf.set_suboperation_debug_name("Buffer|Create:" + buffer->m_name);
                 buffer->create(cmd_buf);
             }
         }
@@ -377,16 +379,16 @@ void RenderGraph::update_descriptor_sets() {
 }
 
 void RenderGraph::update_textures() {
-    m_device.execute("RenderGraph::update_textures", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("RenderGraph::update_textures|", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             // Only for dynamic textures m_on_lambda which is not std::nullopt
             if (texture->m_on_update) {
                 if (texture->m_update_requested) {
-                    cmd_buf.set_suboperation_debug_name("|Texture|Destroy:" + texture->m_name);
+                    cmd_buf.set_suboperation_debug_name("Texture|Destroy:" + texture->m_name);
                     texture->destroy();
-                    cmd_buf.set_suboperation_debug_name("|Texture|Update:" + texture->m_name);
+                    cmd_buf.set_suboperation_debug_name("Texture|Update:" + texture->m_name);
                     std::invoke(texture->m_on_update.value());
-                    cmd_buf.set_suboperation_debug_name("|Texture|Create:" + texture->m_name);
+                    cmd_buf.set_suboperation_debug_name("Texture|Create:" + texture->m_name);
                     texture->create();
                 }
             }

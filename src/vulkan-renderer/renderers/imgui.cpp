@@ -144,6 +144,11 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
                 if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
+                    m_on_update_user_data();
+                    return;
+                }
+                if (m_vertex_buffer.lock()->m_buffer == VK_NULL_HANDLE ||
+                    m_index_buffer.lock()->m_buffer == VK_NULL_HANDLE) {
                     return;
                 }
                 const ImGuiIO &io = ImGui::GetIO();
