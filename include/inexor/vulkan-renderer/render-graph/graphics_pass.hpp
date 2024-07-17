@@ -76,6 +76,8 @@ private:
     // means we must make sure that the memory of the attachment infos below is still valid during rendering, which is
     // why we store them as members here.
 
+    std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads;
+
     /// The color attachments
     std::vector<RenderingAttachment> m_color_attachments{};
     /// The depth attachment (only one at maximum)
@@ -94,6 +96,8 @@ private:
     std::array<float, 4> m_debug_label_color;
 
 public:
+    GraphicsPass(std::string name) : m_name(name) {}
+
     /// Default constructor
     /// @param name The name of the graphics pass
     /// @param on_record_cmd_buffer The command buffer recording function of the graphics pass

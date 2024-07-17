@@ -485,7 +485,6 @@ void Application::setup_render_graph() {
                                         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                                     },
                                 })
-                                // TODO: Fix me!
                                 .set_multisampling(m_device->get_max_usable_sample_count(), 0.25f)
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment(m_swapchain->image_format())
@@ -515,7 +514,11 @@ void Application::setup_render_graph() {
 
     m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         // NOTE: Octree pass is the first pass, so it does not declare any reads_from()
-        m_octree_pass = builder.writes_to(m_color_attachment, VkClearValue{1.0f, 0.0f, 0.0f, 1.0f})
+        m_octree_pass = builder
+                            .writes_to(m_color_attachment,
+                                       VkClearValue{
+                                           .color = {1.0f, 0.0f, 0.0f, 1.0f},
+                                       })
                             .writes_to(m_depth_attachment)
                             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                                 cmd_buf.bind_pipeline(m_octree_pipeline)

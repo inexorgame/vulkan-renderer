@@ -53,6 +53,7 @@ GraphicsPass::GraphicsPass(std::string name,
     m_name = std::move(name);
     m_on_record_cmd_buffer = std::move(on_record_cmd_buffer);
     m_debug_label_color = get_debug_label_color(color);
+    m_graphics_pass_reads = std::move(graphics_pass_reads);
 
     // As internal validation, we check if each graphics pass has only one depth attachment at maximum and only one
     // stencil attachment at maximum. Note that the graphcis pass is allowed to have as many color attachments as it
@@ -90,6 +91,7 @@ GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_color_attachment_infos = std::move(other.m_color_attachment_infos);
     m_depth_attachment_info = std::move(other.m_depth_attachment_info);
     m_stencil_attachment_info = std::move(other.m_stencil_attachment_info);
+    m_graphics_pass_reads = std::move(other.m_graphics_pass_reads);
     m_debug_label_color = other.m_debug_label_color;
 }
 

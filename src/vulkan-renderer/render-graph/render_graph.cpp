@@ -6,6 +6,8 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
+#include <unordered_set>
+
 namespace inexor::vulkan_renderer::render_graph {
 
 RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
@@ -56,11 +58,40 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
 }
 
 void RenderGraph::check_for_cycles() {
-    // TODO: Implement me!
+    std::unordered_set<std::shared_ptr<GraphicsPass>> visited;
+    std::unordered_set<std::shared_ptr<GraphicsPass>> recursion_stack;
+
+    std::function<bool(const std::shared_ptr<GraphicsPass> &)> dfs_detect_cycle =
+        [&](const std::shared_ptr<GraphicsPass> &pass) {
+            if (recursion_stack.find(pass) != recursion_stack.end()) {
+                return true; // Cycle detected
+            }
+            if (visited.find(pass) != visited.end()) {
+                return false; // Already visited, no cycle
+            }
+            visited.insert(pass);
+            recursion_stack.insert(pass);
+            for (const auto &parent : pass->m_graphics_pass_reads) {
+                if (dfs_detect_cycle(parent.lock())) {
+                    return true; // Cycle detected in one of the parents
+                }
+            }
+            recursion_stack.erase(pass);
+            return false; // No cycle found for this pass
+        };
+
+    for (const auto &pass : m_graphics_passes) {
+        if (dfs_detect_cycle(pass)) {
+            throw std::runtime_error("[RenderGraph::check_for_cycles] Error: Rendergraph is not acyclic! A cycle was "
+                                     "detected for graphics pass " +
+                                     pass->m_name + "!");
+        }
+    }
 }
 
 void RenderGraph::compile() {
     // TODO: What needs to be re-done when swapchain is recreated?
+    // TODO: Can we move check_for_cycles into validate_render_graph before graphics pipelines are created?
     validate_render_graph();
     determine_pass_order();
     create_buffers();
@@ -70,7 +101,11 @@ void RenderGraph::compile() {
     update_descriptor_sets();
     create_graphics_passes();
     create_graphics_pipelines();
-    create_rendering_infos();
+    // Only after graphics pipelines are created, we can check for cycles! The way rendergraph is set up, it should be
+    // extremely hard to make a cycle possible because of the order of construction of the graphics pipelines from the
+    // graphics pipeline create functions.
+    check_for_cycles();
+    // create_rendering_infos();
 }
 
 void RenderGraph::create_buffers() {
@@ -104,8 +139,8 @@ void RenderGraph::create_graphics_pipelines() {
     }
 }
 
-void RenderGraph::create_rendering_infos() {
 #if 0
+void RenderGraph::create_rendering_infos() {
     for (auto &pass : m_graphics_passes) {
         /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
         /// @param attachment The attachment (color, depth, or stencil)
@@ -223,8 +258,8 @@ void RenderGraph::create_rendering_infos() {
             pass->m_stencil_attachment_info = fill_rendering_info(pass->m_stencil_attachment);
         }
     }
-#endif
 }
+#endif
 
 void RenderGraph::create_textures() {
     m_device.execute("RenderGraph::create_textures", [&](const CommandBuffer &cmd_buf) {
@@ -251,18 +286,16 @@ void RenderGraph::determine_pass_order() {
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
     cmd_buf.set_suboperation_debug_name("|Pass:" + pass.m_name);
-
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
 
     // Start dynamic rendering with the compiled rendering info
-    cmd_buf.begin_rendering(wrapper::make_info<VkRenderingInfo>({/*FILL ME*/}));
+    cmd_buf.begin_rendering(wrapper::make_info<VkRenderingInfo>({/*TODO: FILL ME*/}));
 
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
     // does not bind any pipelines, descriptor sets, or buffers automatically!
     std::invoke(pass.m_on_record_cmd_buffer, cmd_buf);
-
     // End dynamic rendering
     cmd_buf.end_rendering();
     // End the debug label for this graphics pass
@@ -276,14 +309,19 @@ void RenderGraph::render() {
     // TODO: Refactor this into .exec();
     const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render");
 
+    // TODO: Is this correct?
+    //
     // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
     cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-    for (auto &pass : m_graphics_passes) {
+    // Call the command buffer recording function of every pass
+    for (const auto &pass : m_graphics_passes) {
         record_command_buffer_for_pass(cmd_buf, *pass);
     }
 
+    // TODO: Is this correct?
+    //
     // Change the layout of the swapchain image to make it ready for presenting
     cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
@@ -351,7 +389,6 @@ void RenderGraph::validate_render_graph() {
     if (m_pipeline_create_functions.empty()) {
         throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics pipelines in rendergraph!");
     }
-    check_for_cycles();
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

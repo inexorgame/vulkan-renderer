@@ -30,9 +30,6 @@ class Swapchain;
 
 namespace inexor::vulkan_renderer::render_graph {
 
-// Forward declarations
-enum class BufferType;
-
 using wrapper::Device;
 using wrapper::Swapchain;
 using wrapper::commands::CommandBuffer;
@@ -75,7 +72,15 @@ private:
     /// compilation using depth first search (DFS) algorithm. Rendergraph also makes sure that the graph is acyclic, so
     /// there must not be any cycles in it! Note that graphics passes only specify reads_from for previous passes and
     /// writes_to for attachments, as a graphics pass does not directly write into another graphics pass, but only into
-    /// attachments.
+    /// attachments. Why can rendergraph only reason about cycles after creating the graphics passes, at the and of
+    /// compilation? To check for cycles, we would need to reason about the reads of each graphics pass before the
+    /// passes have been created. The problem here is that we can't reference a piece of memory unless it as been
+    /// created, meaning we can't read_from a pass unless its shared_ptr has been allocated. A workaround would be to
+    /// have a default constructor which already creates the object before rendergraph could call another constructor
+    /// which actually creates the pass. This is however much more complex than the current solution, and from what we
+    /// understand it's the fact that we can't reference a piece of memory unless it has been created that makes it very
+    /// hard to actually make cycles in rendergraph passes! You can only call reads_from for passes which came before
+    /// the pass you are currently creating, you can't call reads_from for passes which come later.
     /// -----------------------------------------------------------------------------------------------------------------
 
     /// The graphics pass builder of the rendergraph
@@ -134,12 +139,11 @@ private:
     /// we could improve rendergraph so it automatically double or triple buffers all resources (buffers, textures..),
     /// so it can use one index for rendering, while update on the next index is already being carried out. This will
     /// parallelization using taskflow and proper synchronization must be used. While this would increase memory
-    /// consumption, it would improve rendering performance by reducing cpu and gpu stalls.
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// Every buffer must have an update function. If a vertex buffer and an index buffer is updated, each buffer should
-    /// be updated in their own update function rather than updating the index buffer in the vertex buffer as well.
-    /// While this is technically also correct, it makes no sense to do it this way because vertex buffer and index
-    /// buffer are updated on a per-frame basis coherently anyways. So it doesn't really matter.
+    /// consumption, it would improve rendering performance by reducing cpu and gpu stalls. Every buffer must have an
+    /// update function. If a vertex buffer and an index buffer is updated, each buffer should be updated in their own
+    /// update function rather than updating the index buffer in the vertex buffer as well. While this is technically
+    /// also correct, it makes no sense to do it this way because vertex buffer and index buffer are updated on a
+    /// per-frame basis coherently anyways. So it doesn't really matter.
     /// -----------------------------------------------------------------------------------------------------------------
 
     /// The vertex-, index-, and uniform buffers
@@ -148,7 +152,30 @@ private:
     /// -----------------------------------------------------------------------------------------------------------------
     ///  TEXTURES
     /// -----------------------------------------------------------------------------------------------------------------
-    /// TODO: Describe textures here...
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
+    ///
     std::vector<std::shared_ptr<Texture>> m_textures;
 
     /// -----------------------------------------------------------------------------------------------------------------
@@ -220,7 +247,7 @@ private:
     void create_graphics_pipelines();
 
     /// Fill the VkRenderingInfo of each graphics pass
-    void create_rendering_infos();
+    //  void create_rendering_infos();
 
     /// Create the textures
     void create_textures();
