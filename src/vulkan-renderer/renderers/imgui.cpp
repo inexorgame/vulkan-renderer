@@ -147,10 +147,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                     m_on_update_user_data();
                     return;
                 }
-                if (m_vertex_buffer.lock()->m_buffer == VK_NULL_HANDLE ||
-                    m_index_buffer.lock()->m_buffer == VK_NULL_HANDLE) {
-                    return;
-                }
                 const ImGuiIO &io = ImGui::GetIO();
                 m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
