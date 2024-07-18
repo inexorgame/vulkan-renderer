@@ -493,10 +493,6 @@ commands::CommandPool &Device::thread_graphics_pool() const {
     return *thread_graphics_pool;
 }
 
-const commands::CommandBuffer &Device::request_command_buffer(const std::string &name) {
-    return thread_graphics_pool().request_command_buffer(name);
-}
-
 void Device::set_debug_utils_object_name(const VkObjectType obj_type,
                                          const std::uint64_t obj_handle,
                                          const std::string &name) const {

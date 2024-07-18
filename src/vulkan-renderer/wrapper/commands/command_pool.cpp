@@ -40,9 +40,9 @@ CommandPool::~CommandPool() {
 const commands::CommandBuffer &CommandPool::request_command_buffer(const std::string &name) {
     // Try to find a command buffer which is currently not used
     for (const auto &cmd_buf : m_cmd_bufs) {
-        if (cmd_buf->fence_status() == VK_SUCCESS) {
+        if (cmd_buf->m_cmd_buf_execution_completed->status() == VK_SUCCESS) {
             // Reset the command buffer's fence to make it usable again
-            cmd_buf->reset_fence();
+            cmd_buf->m_cmd_buf_execution_completed->reset_fence();
             cmd_buf->begin_command_buffer();
             m_device.set_debug_name(cmd_buf->m_cmd_buf, name);
             return *cmd_buf;

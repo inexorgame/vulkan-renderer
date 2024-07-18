@@ -28,14 +28,13 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool 
     }
 
     m_device.set_debug_name(m_cmd_buf, m_name);
-
-    m_wait_fence = std::make_unique<synchronization::Fence>(m_device, m_name, false);
+    m_cmd_buf_execution_completed = std::make_unique<synchronization::Fence>(m_device, m_name, false);
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
     m_cmd_buf = std::exchange(other.m_cmd_buf, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
-    m_wait_fence = std::exchange(other.m_wait_fence, nullptr);
+    m_cmd_buf_execution_completed = std::exchange(other.m_cmd_buf_execution_completed, nullptr);
 }
 
 const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUsageFlags flags) const {
@@ -60,26 +59,12 @@ const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rende
     return *this;
 };
 
-const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const VkDescriptorSet> desc_sets,
-                                                         const VkPipelineLayout layout,
-                                                         const VkPipelineBindPoint bind_point,
-                                                         const std::uint32_t first_set,
-                                                         const std::span<const std::uint32_t> dyn_offsets) const {
-    assert(layout);
-    assert(!desc_sets.empty());
-    vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, first_set, static_cast<std::uint32_t>(desc_sets.size()),
-                            desc_sets.data(), static_cast<std::uint32_t>(dyn_offsets.size()), dyn_offsets.data());
+const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
+                                                        const std::weak_ptr<GraphicsPipeline> pipeline) const {
+    assert(descriptor_set);
+    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.lock()->m_pipeline_layout, 0, 1,
+                            &descriptor_set, 0, nullptr);
     return *this;
-}
-
-const CommandBuffer &
-CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
-                                   const std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
-                                   const VkPipelineBindPoint bind_point,
-                                   const std::uint32_t first_set,
-                                   const std::span<const std::uint32_t> dyn_offsets) const {
-    return bind_descriptor_sets({&descriptor_set, 1}, pipeline.lock()->m_pipeline_layout, bind_point, first_set,
-                                dyn_offsets);
 }
 
 const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::Buffer> buffer,
@@ -93,7 +78,7 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<pipelines::GraphicsPipeline> pipeline,
+const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<GraphicsPipeline> pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
     vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.lock()->m_pipeline);
     return *this;
@@ -441,53 +426,23 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::reset_fence() const {
-    m_wait_fence->reset();
-    return *this;
-}
-
 const CommandBuffer &CommandBuffer::set_suboperation_debug_name(std::string name) const {
     m_device.set_debug_name(m_cmd_buf, m_name + name);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::submit(const std::span<const VkSubmitInfo> submit_infos) const {
-    assert(!submit_infos.empty());
+void CommandBuffer::submit_and_wait() const {
     end_command_buffer();
 
-    if (const auto result = vkQueueSubmit(m_device.graphics_queue(), static_cast<std::uint32_t>(submit_infos.size()),
-                                          submit_infos.data(), m_wait_fence->get())) {
-        throw VulkanException("Error: vkQueueSubmit failed!", result);
+    const auto submit_info = make_info<VkSubmitInfo>({
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_cmd_buf,
+    });
+    if (const auto result =
+            vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, m_cmd_buf_execution_completed->m_fence)) {
+        throw VulkanException("[CommandBuffer::submit] Error: vkQueueSubmit failed!", result);
     }
-    return *this;
-}
-
-const CommandBuffer &CommandBuffer::submit(const VkSubmitInfo submit_info) const {
-    return submit({&submit_info, 1});
-}
-
-const CommandBuffer &CommandBuffer::submit() const {
-    return submit(make_info<VkSubmitInfo>({
-        .commandBufferCount = 1,
-        .pCommandBuffers = &m_cmd_buf,
-    }));
-}
-
-const CommandBuffer &CommandBuffer::submit_and_wait(const std::span<const VkSubmitInfo> submit_infos) const {
-    submit(submit_infos);
-    m_wait_fence->block();
-    return *this;
-}
-
-const CommandBuffer &CommandBuffer::submit_and_wait(const VkSubmitInfo submit_info) const {
-    return submit_and_wait({&submit_info, 1});
-}
-
-const CommandBuffer &CommandBuffer::submit_and_wait() const {
-    return submit_and_wait(make_info<VkSubmitInfo>({
-        .commandBufferCount = 1,
-        .pCommandBuffers = &m_cmd_buf,
-    }));
+    m_cmd_buf_execution_completed->wait();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

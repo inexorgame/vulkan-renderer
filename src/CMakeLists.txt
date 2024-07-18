@@ -50,6 +50,7 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/pipelines/pipeline.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp

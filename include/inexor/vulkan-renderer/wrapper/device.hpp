@@ -208,11 +208,10 @@ public:
         return m_transfer_queue_family_index;
     }
 
-    /// Request a command buffer from the thread_local command pool
-    /// @param name The name which will be assigned to the command buffer
-    /// @return A command buffer from the thread_local command pool
-    [[nodiscard]] const commands::CommandBuffer &request_command_buffer(const std::string &name);
-
+    /// Set the internal debug name of a Vulkan object
+    /// @tparam VulkanObjectType
+    /// @param vk_object
+    /// @param name
     template <typename VulkanObjectType>
     void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
         // The get_vulkan_object_type template allows us to turn the template parameter into a VK_OBJECT_TYPE

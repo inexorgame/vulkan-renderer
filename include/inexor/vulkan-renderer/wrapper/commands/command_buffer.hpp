@@ -14,31 +14,41 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::wrapper::pipelines {
-// Forward declaration
-class GraphicsPipeline;
-} // namespace inexor::vulkan_renderer::wrapper::pipelines
-
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 class Buffer;
 class RenderGraph;
 } // namespace inexor::vulkan_renderer::render_graph
 
+namespace inexor::vulkan_renderer::wrapper::pipelines {
+// Forward declaration
+class GraphicsPipeline;
+} // namespace inexor::vulkan_renderer::wrapper::pipelines
+
+namespace inexor::vulkan_renderer::wrapper::synchronization {
+// Forward declaration
+class Fence;
+} // namespace inexor::vulkan_renderer::wrapper::synchronization
+
 namespace inexor::vulkan_renderer::wrapper::commands {
+
+// Using declaration
+using render_graph::RenderGraph;
+using wrapper::pipelines::GraphicsPipeline;
+using wrapper::synchronization::Fence;
 
 /// RAII wrapper class for VkCommandBuffer
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
     friend class Device;
-    friend class render_graph::RenderGraph;
+    friend class RenderGraph;
     friend class CommandPool;
 
 private:
     VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
     const Device &m_device;
     std::string m_name;
-    std::unique_ptr<synchronization::Fence> m_wait_fence;
+    std::unique_ptr<Fence> m_cmd_buf_execution_completed;
 
     /// Call vkBeginCommandBuffer
     /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
@@ -50,6 +60,9 @@ private:
     /// Call vkEndCommandBuffer
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_command_buffer() const; // NOLINT
+
+    /// Call vkQueueSubmit
+    void submit_and_wait() const;
 
 public:
     /// Default constructor
@@ -81,31 +94,17 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &begin_rendering(const VkRenderingInfo &rendering_info) const;
 
-    /// Call vkCmdBindDescriptorSets
-    /// @param desc_sets The descriptor set to bind
-    /// @param layout The pipeline layout
-    /// @param bind_point the pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
-    /// @param first_set The first descriptor set (``0`` by default)
-    /// @param dyn_offsets The dynamic offset values (empty by default)
+    /// Call vkCmdBindDescriptorSets to bind one single descriptor set
+    /// @note Binding multiple descriptor sets would require implementing bind_descriptor_sets, which is not required
+    /// for now.
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set,
-                                             std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
-                                             VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                             std::uint32_t first_set = 0,
-                                             std::span<const std::uint32_t> dyn_offsets = {}) const;
+    /// @param descriptor_set The descriptor set to bind
+    /// @param pipeline The graphics pipeline whose pipeline layout will be used
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set, std::weak_ptr<GraphicsPipeline> pipeline) const;
 
-    /// Call vkCmdBindDescriptorSets
-    /// @param desc_sets The descriptor sets to bind
-    /// @param layout The pipeline layout
-    /// @param bind_point the pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
-    /// @param first_set The first descriptor set (``0`` by default)
-    /// @param dyn_offsets The dynamic offset values (empty by default)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_descriptor_sets(std::span<const VkDescriptorSet> desc_sets, // NOLINT
-                                              VkPipelineLayout layout,
-                                              VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                              std::uint32_t first_set = 0,
-                                              std::span<const std::uint32_t> dyn_offsets = {}) const;
+    // TODO: Implement more parameters of vkCmdBindDescriptorSets in bind_descriptor_set if necessary
+    // TODO: Implement bind_descriptor_sets if binding multiple descriptor sets is necessary
 
     /// Call vkCmdBindIndexBuffer
     /// @param buffer The index buffer to bind
@@ -120,7 +119,7 @@ public:
     /// @param pipeline The graphics pipeline to bind
     /// @param bind_point The pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_pipeline(std::weak_ptr<pipelines::GraphicsPipeline> pipeline, // NOLINT
+    const CommandBuffer &bind_pipeline(std::weak_ptr<GraphicsPipeline> pipeline, // NOLINT
                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// Call vkCmdBindVertexBuffers
@@ -247,10 +246,6 @@ public:
     /// @note ``end_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_rendering() const;
-
-    [[nodiscard]] VkResult fence_status() const {
-        return m_wait_fence->status();
-    }
 
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
@@ -413,35 +408,10 @@ public:
         return push_constants(pipeline.lock()->m_pipeline_layout, stage, sizeof(data), &data, offset);
     }
 
-    /// Call the reset method of the Fence member
-    const CommandBuffer &reset_fence() const;
-
     /// Set the name of a command buffer during recording of a specific command in the current command buffer
     /// @param name The name of the suboperation
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &set_suboperation_debug_name(std::string name) const;
-
-    /// Call vkQueueSubmit
-    /// @param submit_infos The submit infos
-    const CommandBuffer &submit(std::span<const VkSubmitInfo> submit_infos) const; // NOLINT
-
-    /// Call vkQueueSubmit
-    /// @param submit_info The submit info
-    const CommandBuffer &submit(VkSubmitInfo submit_infos) const; // NOLINT
-
-    /// Call vkQueueSubmit
-    const CommandBuffer &submit() const; // NOLINT
-
-    /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
-    /// @param submit_infos The submit infos
-    const CommandBuffer &submit_and_wait(std::span<const VkSubmitInfo> submit_infos) const; // NOLINT
-
-    /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
-    /// @param submit_info The submit info
-    const CommandBuffer &submit_and_wait(VkSubmitInfo submit_info) const; // NOLINT
-
-    /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
-    const CommandBuffer &submit_and_wait() const; // NOLINT
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

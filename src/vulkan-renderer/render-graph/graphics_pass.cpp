@@ -47,7 +47,7 @@ std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
 }
 
 GraphicsPass::GraphicsPass(std::string name,
-                           std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
+                           OnRecordCommandBufferForPass on_record_cmd_buffer,
                            std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
                            std::vector<std::weak_ptr<Texture>> write_attachments,
                            std::vector<std::weak_ptr<Swapchain>> write_swapchains,

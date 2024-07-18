@@ -322,29 +322,26 @@ void RenderGraph::render() {
     update_buffers();
     update_textures();
     update_descriptor_sets();
+    // NOTE: We don't need to update the write descriptor sets per frame!
 
     // TODO: Acquire next image for each swapchain used by rendergraph
     // m_swapchain.acquire_next_image_index();
 
-    // TODO: Refactor this into .exec();
-    const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render]");
+    m_device.execute("[RenderGraph::render]", [&](const CommandBuffer &cmd_buf) {
+        // Call the command buffer recording function of every graphics pass
+        for (auto &pass : m_graphics_passes) {
+            record_command_buffer_for_pass(cmd_buf, *pass);
+        }
+        // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains semaphore!
 
-    // TODO: Is this correct?
-    // TODO: No, this should only be done for that one pass which writes to swapchain!
-    // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
-    // cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
-    //                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        // TODO: Accumulate all image available semaphores of swapchains that were used in this graphics pass!
+        // TODO: Change image layouts for swapchain write attachments
 
-    // Call the command buffer recording function of every pass
-    for (auto &pass : m_graphics_passes) {
-        record_command_buffer_for_pass(cmd_buf, *pass);
-    }
+        // TODO: We are calling submit manually here, why though?
+        // TODO: Expose submit parameters to execute()
 
-    // TODO: Is this correct?
-    //
-    // Change the layout of the swapchain image to make it ready for presenting
-    // cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    //                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        //cmd_buf.submit_and_wait();
+    });
 
 #if 0
     // TODO: Further abstract this away?
@@ -381,16 +378,13 @@ void RenderGraph::update_buffers() {
 }
 
 void RenderGraph::update_descriptor_sets() {
-    // TODO: Return std::vector<VkWriteDescriptorSet> from build() and have only one call to vkUpdateDescriptorSets!
-    // TODO: We only need to call DescriptorSetUpdateBuilder once really during rendergraph compilation!
-
+    // TODO: We should only need to call DescriptorSetUpdateBuilder once really during rendergraph compilation!
     // TODO: Reserve? When to clear?
     m_write_descriptor_sets.clear();
-
     for (const auto &descriptor : m_resource_descriptors) {
         // Call descriptor set builder function for each descriptor
         auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
-        // Store the results
+        // Store the results of the function that was called
         std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),
                   std::back_inserter(m_write_descriptor_sets));
     }

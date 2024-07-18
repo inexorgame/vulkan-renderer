@@ -11,11 +11,14 @@ class RenderGraph;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
+// Using declaration
+using render_graph::RenderGraph;
+
 /// RAII wrapper class for VkPipelineLayout
 class PipelineLayout {
 private:
     // Rendergraph needs to read from m_pipeline_layout
-    friend render_graph::RenderGraph;
+    friend RenderGraph;
 
     const Device &m_device;
     std::string m_name;
@@ -29,8 +32,10 @@ private:
     /// @param desc_set_layouts The descriptor set layouts of the pipeline layout
     /// @param push_constant_ranges The push constant ranges of the pipeline layout
     /// @param name The name of the pipeline layout
-    PipelineLayout(const Device &device, std::span<const VkDescriptorSetLayout> desc_set_layouts,
-                   std::span<const VkPushConstantRange> push_constant_ranges, std::string name);
+    PipelineLayout(const Device &device,
+                   std::span<const VkDescriptorSetLayout> desc_set_layouts,
+                   std::span<const VkPushConstantRange> push_constant_ranges,
+                   std::string name);
 
 public:
     PipelineLayout(const PipelineLayout &) = delete;
