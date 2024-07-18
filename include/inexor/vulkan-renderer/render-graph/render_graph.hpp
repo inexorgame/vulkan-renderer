@@ -7,7 +7,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
@@ -30,13 +30,14 @@ class Swapchain;
 
 namespace inexor::vulkan_renderer::render_graph {
 
+// Using declarations
 using wrapper::Device;
 using wrapper::Swapchain;
 using wrapper::commands::CommandBuffer;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::DescriptorSetLayoutCache;
-using wrapper::descriptors::DescriptorSetUpdateBuilder;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineLayout;
@@ -52,8 +53,6 @@ class RenderGraph {
 private:
     /// The device wrapper
     Device &m_device;
-    /// The swapchain wrapper
-    Swapchain &m_swapchain;
 
     // The rendergraph has its own logger
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
@@ -91,6 +90,13 @@ private:
     std::vector<OnCreateGraphicsPass> m_graphics_pass_create_functions;
     /// The graphics passes used in the rendergraph
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
+
+    /// -----------------------------------------------------------------------------------------------------------------
+    ///  SWAPCHAINS
+    /// -----------------------------------------------------------------------------------------------------------------
+
+    // TODO
+    std::vector<std::weak_ptr<Swapchain>> m_swapchains;
 
     /// -----------------------------------------------------------------------------------------------------------------
     ///  GRAPHICS PIPELINES
@@ -199,25 +205,32 @@ private:
     /// valid memory when it is used in the on_record function! The descriptor sets are allocated by rendergraph via
     /// OnAllocateDescriptorSet functions using the DescriptorSetAllocator of the rendergraph. Descriptor sets are
     /// updated in the OnUpdateDescriptorSet functions using the DescriptorSetUpdateBuilder of the rendergraph.
+    ///
+    /// TODO: Mention batching to vkUpdateDescriptorSets...
     /// -----------------------------------------------------------------------------------------------------------------
 
     /// The descriptor set layout builder (a builder pattern for descriptor set layouts)
     DescriptorSetLayoutBuilder m_descriptor_set_layout_builder;
     /// The descriptor set allocator
     DescriptorSetAllocator m_descriptor_set_allocator;
-    /// The descriptor set update builder (a builder pattern for descriptor set updates)
-    DescriptorSetUpdateBuilder m_descriptor_set_update_builder;
+    /// The write descriptor set builder (a builder pattern for write descriptor sets)
+    WriteDescriptorSetBuilder m_write_descriptor_set_builder;
 
     /// A user-defined function which creates the descriptor set layout
     using OnBuildDescriptorSetLayout = std::function<void(DescriptorSetLayoutBuilder &)>;
     /// A user-defined function which allocates a descriptor set
     using OnAllocateDescriptorSet = std::function<void(DescriptorSetAllocator &)>;
-    /// A user-defined function which updates a descriptor set
-    using OnUpdateDescriptorSet = std::function<void(DescriptorSetUpdateBuilder &)>;
+    /// A user-defined function which builds the descriptor set write for the pass
+    using OnBuildWriteDescriptorSets = std::function<std::vector<VkWriteDescriptorSet>(WriteDescriptorSetBuilder &)>;
+
     /// Resource descriptors are managed by specifying those three functions to the rendergraph
     /// Rendergraph will then call those function in the correct order during rendergraph compilation
-    using ResourceDescriptor = std::tuple<OnBuildDescriptorSetLayout, OnAllocateDescriptorSet, OnUpdateDescriptorSet>;
+    using ResourceDescriptor =
+        std::tuple<OnBuildDescriptorSetLayout, OnAllocateDescriptorSet, OnBuildWriteDescriptorSets>;
+    /// The resource descriptors of the rendergraph
     std::vector<ResourceDescriptor> m_resource_descriptors;
+    /// All write descriptor sets will be stored in here so we can have one batched call to vkUpdateDescriptorSets
+    std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
 
     /// Allocate the descriptor sets
     void allocate_descriptor_sets();
@@ -238,9 +251,6 @@ private:
 
     /// Create the graphics pipelines
     void create_graphics_pipelines();
-
-    /// Fill the VkRenderingInfo of each graphics pass
-    //  void create_rendering_infos();
 
     /// Create the textures
     void create_textures();
@@ -284,10 +294,10 @@ public:
     /// Default constructor
     /// @note device and swapchain are not taken as a const reference because rendergraph needs to modify both
     /// @param device The device wrapper
-    /// @param swapchain The swapchain wrapper
-    RenderGraph(Device &device, Swapchain &swapchain);
+    RenderGraph(Device &device);
 
     RenderGraph(const RenderGraph &) = delete;
+    // TODO: Implement me!
     RenderGraph(RenderGraph &&) noexcept;
     ~RenderGraph() = default;
 
@@ -323,7 +333,7 @@ public:
     /// @param on_update_descriptor_set The descriptor set update function
     void add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
                                  OnAllocateDescriptorSet on_allocate_descriptor_set,
-                                 OnUpdateDescriptorSet on_update_descriptor_set);
+                                 OnBuildWriteDescriptorSets on_update_descriptor_set);
 
     /// Add a texture which will be initialized externally (not inside of rendergraph)
     /// @param texture_name The name of the texture

@@ -20,7 +20,7 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 /// Forward declaration
-class DescriptorSetUpdateBuilder;
+class WriteDescriptorSetBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
 namespace inexor::vulkan_renderer::render_graph {
@@ -35,21 +35,23 @@ enum class BufferType {
 // Forward declaration
 class GraphicsPass;
 
-using inexor::vulkan_renderer::wrapper::Device;
-using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
-using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetUpdateBuilder;
+// Using declarations
+using wrapper::Device;
+using wrapper::commands::CommandBuffer;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 // TODO: Store const reference to rendergraph and retrieve the swapchain image index for automatic buffer tripling
 
 /// RAII wrapper for buffer resources inside of the rendergraph
 /// A buffer resource can be a vertex buffer, index buffer, or uniform buffer
 class Buffer {
-private:
+    //
     friend class RenderGraph;
     friend class GraphicsPass;
     friend class CommandBuffer;
-    friend class DescriptorSetUpdateBuilder;
+    friend class WriteDescriptorSetBuilder;
 
+private:
     /// The device wrapper
     const Device &m_device;
     /// The internal debug name of the buffer resource
@@ -77,7 +79,7 @@ private:
     /// simplicity however, we made the update function not std::optional.
 
     // TODO: Rewrite description
-    std::function<void()> m_on_update;
+    std::function<void()> m_on_check_for_update;
 
     /// TODO: Is this is relevant for uniform buffers only?
     /// TODO: Maybe buffer updates should be done immediately, and no m_src_data should be stored!
@@ -104,8 +106,11 @@ private:
     /// @param cmd_buf The command buffer
     void create(const CommandBuffer &cmd_buf);
 
+    /// Call destroy_buffer and destroy_staging_buffer
+    void destroy_all();
+
     /// Call vmaDestroyBuffer for the actual buffer
-    void destroy();
+    void destroy_buffer();
 
     /// Call vmaDestroyBuffer for the staging bufffer
     void destroy_staging_buffer();

@@ -12,19 +12,21 @@
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declarations
 class Device;
+class Shader;
 class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
-
-using inexor::vulkan_renderer::wrapper::Device;
-using inexor::vulkan_renderer::wrapper::Swapchain;
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
-class Shader;
 } // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::renderers {
+
+// Using declarations
+using wrapper::Device;
+using wrapper::Shader;
+using wrapper::Swapchain;
 
 /// A wrapper for an ImGui implementation
 class ImGuiRenderer {
@@ -34,12 +36,12 @@ class ImGuiRenderer {
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_imgui_pipeline;
 
     // This is the color attachment we will write to
-    std::weak_ptr<render_graph::Texture> m_color_attachment;
+    std::weak_ptr<Swapchain> m_swapchain;
     // This is the previous pass we read from
     std::weak_ptr<render_graph::GraphicsPass> m_previous_pass;
 
-    std::shared_ptr<wrapper::Shader> m_vertex_shader;
-    std::shared_ptr<wrapper::Shader> m_fragment_shader;
+    std::shared_ptr<Shader> m_vertex_shader;
+    std::shared_ptr<Shader> m_fragment_shader;
 
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
@@ -64,8 +66,6 @@ class ImGuiRenderer {
     /// It will be called at the beginning of set_on_update
     std::function<void()> m_on_update_user_data{[]() {}};
 
-    ImDrawData *m_draw_data{nullptr};
-
     void load_font_data_from_file();
 
     /// Customize ImGui style like text color for example
@@ -74,13 +74,13 @@ class ImGuiRenderer {
 public:
     /// Default constructor
     /// @param device The device wrapper
-    /// @param swapchain The swapchain wrapper
+    /// @param swapchain The swapchain to render to
     /// @param render_graph The rendergraph
     /// @param previous_pass The previous pass
     /// @param color_attachment The color attachment
     /// @param on_update_user_data The user-specified ImGui update function
     ImGuiRenderer(const Device &device,
-                  const Swapchain &swapchain,
+                  std::weak_ptr<Swapchain> swapchain,
                   std::weak_ptr<render_graph::RenderGraph> render_graph,
                   std::weak_ptr<render_graph::GraphicsPass> previous_pass,
                   std::weak_ptr<render_graph::Texture> color_attachment,

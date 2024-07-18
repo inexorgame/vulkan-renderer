@@ -9,7 +9,6 @@
 #include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_update_frequency.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
@@ -385,7 +384,7 @@ void Application::recreate_swapchain() {
 
     // TODO: Unified API style like this: m_device->create_rendergraph(m_swapchain);
     // TODO: Maybe make RenderGraph constructor (and others) private and only allow device wrapper to call it?
-    m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device, *m_swapchain);
+    m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device);
 
     setup_render_graph();
 }
@@ -472,8 +471,8 @@ void Application::setup_render_graph() {
         [&](wrapper::descriptors::DescriptorSetAllocator &allocator) {
             m_descriptor_set = allocator.allocate("Octree", m_descriptor_set_layout);
         },
-        [&](wrapper::descriptors::DescriptorSetUpdateBuilder &builder) {
-            builder.add_uniform_buffer_update(m_descriptor_set, m_uniform_buffer).update();
+        [&](wrapper::descriptors::WriteDescriptorSetBuilder &builder) {
+            return builder.add_uniform_buffer_update(m_descriptor_set, m_uniform_buffer).build();
         });
 
     m_render_graph->add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
@@ -534,7 +533,7 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, *m_swapchain, m_render_graph, m_octree_pass,
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph, m_octree_pass,
                                                                  m_color_attachment, [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();

@@ -16,6 +16,7 @@ class Semaphore;
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
+class GraphicsPassBuilder;
 } // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -23,9 +24,15 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
 
+// Using declarations
+using render_graph::GraphicsPassBuilder;
+using render_graph::RenderGraph;
+
 /// RAII wrapper class for swapchains
 class Swapchain {
-    friend class render_graph::RenderGraph;
+    //
+    friend class RenderGraph;
+    friend class GraphicsPassBuilder;
 
 private:
     Device &m_device;

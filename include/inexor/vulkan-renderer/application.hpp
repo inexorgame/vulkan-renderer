@@ -36,7 +36,7 @@ private:
     std::unique_ptr<wrapper::Instance> m_instance;
     std::unique_ptr<wrapper::Device> m_device;
     std::unique_ptr<wrapper::WindowSurface> m_surface;
-    std::unique_ptr<wrapper::Swapchain> m_swapchain;
+    std::shared_ptr<wrapper::Swapchain> m_swapchain;
     std::unique_ptr<renderers::ImGuiRenderer> m_imgui_overlay;
 
     std::vector<OctreeGpuVertex> m_octree_vertices;

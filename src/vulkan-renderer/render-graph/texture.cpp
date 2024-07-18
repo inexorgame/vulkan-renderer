@@ -19,9 +19,10 @@ Texture::Texture(const Device &device,
                  const std::uint32_t height,
                  const VkSampleCountFlagBits sample_count,
                  std::optional<std::function<void()>> on_init,
-                 std::optional<std::function<void()>> on_update)
+                 std::optional<std::function<void()>> on_check_for_updates)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
-      m_sample_count(sample_count), m_on_init(std::move(on_init)), m_on_update(std::move(on_update)) {
+      m_sample_count(sample_count), m_on_init(std::move(on_init)),
+      m_on_check_for_updates(std::move(on_check_for_updates)) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
@@ -30,6 +31,10 @@ Texture::Texture(const Device &device,
     if (sample_count > VK_SAMPLE_COUNT_1_BIT) {
         m_msaa_img = std::make_unique<Image>(m_device, m_name);
     }
+}
+
+Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
+    // TODO: Implement me!
 }
 
 Texture::~Texture() {
@@ -127,8 +132,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         destroy_staging_buffer();
     }
     const auto staging_buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
-        // TODO: How to deduce channel count? By format?
-        .size = m_width * m_height * 4, // 4 channels
+        .size = m_width * m_height * m_channels,
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
@@ -168,14 +172,14 @@ void Texture::update(const CommandBuffer &cmd_buf) {
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         };
     }
-
     // The update is finished
     m_update_requested = false;
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
-    // It will be destroyed either in the destructor or the next time execute_update is called
-    // Another option would have been to wrap each call to execute_update() into its own single time
-    // command buffer, which would increase the total number of command buffer submissions though
+    // It will be destroyed either in the destructor or the next time execute_update is called.
+
+    // NOTE: Another option would have been to wrap each call to execute_update() into its own single time
+    // command buffer, which would increase the total number of command buffer submissions though.
 }
 
 void Texture::request_update(void *src_texture_data, const std::size_t src_texture_data_size) {

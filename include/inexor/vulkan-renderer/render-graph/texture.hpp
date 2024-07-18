@@ -21,7 +21,7 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 /// Forward declaration
-class DescriptorSetUpdateBuilder;
+class WriteDescriptorSetBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
 namespace inexor::vulkan_renderer::render_graph {
@@ -40,15 +40,17 @@ class GraphicsPass;
 // Using declarations
 using wrapper::Device;
 using wrapper::commands::CommandBuffer;
-using wrapper::descriptors::DescriptorSetUpdateBuilder;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 /// RAII wrapper for texture resources
 class Texture {
-    friend class DescriptorSetUpdateBuilder;
+    // These friend classes are allowed to access the private data of Texture
+    friend class WriteDescriptorSetBuilder;
     friend class GraphicsPass;
     friend class RenderGraph;
 
 private:
+    /// The device wrapper
     const Device &m_device;
     /// The name of the texture
     std::string m_name;
@@ -60,12 +62,15 @@ private:
     std::uint32_t m_width{0};
     /// The height of the texture
     std::uint32_t m_height{0};
+    /// The channel count of the texture (4 by default)
+    // TODO: Can we determine the number of channels based on the given format?
+    std::uint32_t m_channels{4};
+    /// The sample count of the MSAA image (if MSAA is enabled)
+    VkSampleCountFlagBits m_sample_count;
 
     /// The image of the texture
     std::unique_ptr<Image> m_img;
 
-    /// The sample count of the MSAA image (if MSAA is enabled)
-    VkSampleCountFlagBits m_sample_count;
     /// This is only used internally inside of rendergraph in case this texture used as a back buffer, depth buffer, or
     /// stencil buffer and MSAA is enabled.
     std::unique_ptr<Image> m_msaa_img;
@@ -78,7 +83,7 @@ private:
     /// This is for initialization of textures which are of TextureUsage::NORMAL
     std::optional<std::function<void()>> m_on_init{std::nullopt};
     /// By definition, if this is not std::nullopt, this is a dynamic texture
-    std::optional<std::function<void()>> m_on_update{std::nullopt};
+    std::optional<std::function<void()>> m_on_check_for_updates{std::nullopt};
 
     // The staging buffer for updating the texture data
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
@@ -112,16 +117,18 @@ public:
     /// @param height The height of the texture
     /// @param sample_count The sample count of the texture
     /// @param on_init The initialization function of the texture
-    /// @param on_update The update function of the texture
+    /// @note If ``on_init`` is ``std::nullopt``, it means the texture will be initialized internally in rendergraph.
+    /// @param on_check_for_updates The update function of the texture
+    /// @note If ``on_check_for_updates`` is ``std::nullopt``, the texture will not be updated at all!
     Texture(const Device &device,
             std::string name,
             TextureUsage usage,
             VkFormat format,
             std::uint32_t width,
             std::uint32_t height,
-            VkSampleCountFlagBits sample_count,
+            VkSampleCountFlagBits sample_count, // TODO: Channel count as well?
             std::optional<std::function<void()>> on_init = std::nullopt,
-            std::optional<std::function<void()>> on_update = std::nullopt);
+            std::optional<std::function<void()>> on_check_for_updates = std::nullopt);
 
     Texture(const Texture &) = delete;
     Texture(Texture &&other) noexcept;

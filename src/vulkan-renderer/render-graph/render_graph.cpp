@@ -10,10 +10,9 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-RenderGraph::RenderGraph(Device &device, Swapchain &swapchain)
-    : m_device(device), m_swapchain(swapchain), m_graphics_pipeline_builder(device),
-      m_descriptor_set_layout_builder(device), m_descriptor_set_allocator(m_device),
-      m_descriptor_set_update_builder(m_device) {}
+RenderGraph::RenderGraph(Device &device)
+    : m_device(device), m_graphics_pipeline_builder(device), m_descriptor_set_layout_builder(device),
+      m_descriptor_set_allocator(m_device), m_write_descriptor_set_builder(m_device) {}
 
 void RenderGraph::add_graphics_pass(OnCreateGraphicsPass on_pass_create) {
     m_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
@@ -39,7 +38,7 @@ void RenderGraph::allocate_descriptor_sets() {
 
 void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
                                           OnAllocateDescriptorSet on_allocate_descriptor_set,
-                                          OnUpdateDescriptorSet on_update_descriptor_set) {
+                                          OnBuildWriteDescriptorSets on_update_descriptor_set) {
     m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout),
                                         std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
 }
@@ -104,10 +103,10 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_buffers() {
-    m_device.execute("RenderGraph::create_buffers|", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_buffers]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
-            buffer->m_on_update();
-            cmd_buf.set_suboperation_debug_name("Buffer:" + buffer->m_name);
+            buffer->m_on_check_for_update();
+            cmd_buf.set_suboperation_debug_name("[Buffer:" + buffer->m_name + "]");
             buffer->create(cmd_buf);
         }
     });
@@ -135,16 +134,16 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("RenderGraph::create_textures|", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             if (texture->m_on_init) {
-                cmd_buf.set_suboperation_debug_name("Texture|Initialize:" + texture->m_name);
+                cmd_buf.set_suboperation_debug_name("[Texture|Initialize]:" + texture->m_name + "]");
                 std::invoke(texture->m_on_init.value());
             }
-            cmd_buf.set_suboperation_debug_name("Texture|Create:" + texture->m_name);
+            cmd_buf.set_suboperation_debug_name("[Texture|Create]:" + texture->m_name + "]");
             texture->create();
             if (texture->m_usage == TextureUsage::NORMAL) {
-                cmd_buf.set_suboperation_debug_name("Texture|Update:" + texture->m_name);
+                cmd_buf.set_suboperation_debug_name("[Texture|Update]:" + texture->m_name + "]");
                 // Only external textures are updated, not back or depth buffers used internally in rendergraph
                 texture->update(cmd_buf);
             }
@@ -158,6 +157,7 @@ void RenderGraph::determine_pass_order() {
 }
 
 void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
+#if 0
     /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
     /// @param attachment The attachment (color, depth, or stencil)
     /// @return VkRenderingAttachmentInfo  The filled rendering info struct
@@ -177,6 +177,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
             }
         }(); // Invoke the lambda, not just define it!
 
+        // TODO: Is there no easier way to determine this?
         auto is_integer_format = [](const VkFormat format) {
             switch (format) {
             // 8-bit integer formats
@@ -257,42 +258,46 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
     };
 
     // Reserve memory for the color attachments
-    pass.m_color_attachment_infos.reserve(pass.m_color_attachments.size());
+    pass.m_color_attachment_infos.reserve(pass.m_write_color_attachments.size());
 
     // Fill the color attachments
-    const bool has_any_color_attachment = pass.m_color_attachments.size() > 0;
-    for (const auto &color_attachment : pass.m_color_attachments) {
+    const bool has_any_color_attachment = pass.m_write_color_attachments.size() > 0;
+    for (const auto &color_attachment : pass.m_write_color_attachments) {
         pass.m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
     }
     // Fill the color attachment (if specified)
-    const bool has_depth_attachment = !pass.m_depth_attachment.first.expired();
+    const bool has_depth_attachment = !pass.m_write_depth_attachment.first.expired();
     if (has_depth_attachment) {
-        pass.m_depth_attachment_info = fill_rendering_info(pass.m_depth_attachment);
+        pass.m_depth_attachment_info = fill_rendering_info(pass.m_write_depth_attachment);
         pass.m_depth_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
     }
     // Fill the stencil attachment (if specified)
-    const bool has_stencil_attachment = !pass.m_stencil_attachment.first.expired();
+    const bool has_stencil_attachment = !pass.m_write_stencil_attachment.first.expired();
     if (has_stencil_attachment) {
-        pass.m_stencil_attachment_info = fill_rendering_info(pass.m_stencil_attachment);
+        pass.m_stencil_attachment_info = fill_rendering_info(pass.m_write_stencil_attachment);
     }
+
+    // TODO: If a pass has multiple color attachments those are multiple swapchains, does that mean we must group
+    // rendering by swapchains because there is no guarantee that they all have the same swapchain extent?
 
     // Fill the rendering info of the pass
     pass.m_rendering_info = wrapper::make_info<VkRenderingInfo>({
         .renderArea =
             {
-                .extent = m_swapchain.extent(),
+                // TODO: Fix me!
+                //.extent = m_swapchain.extent(),
             },
         .layerCount = 1,
-        .viewMask = 0,
-        .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachments.size()),
+        .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachment_infos.size()),
         .pColorAttachments = has_any_color_attachment ? pass.m_color_attachment_infos.data() : nullptr,
         .pDepthAttachment = has_depth_attachment ? &pass.m_depth_attachment_info : nullptr,
         .pStencilAttachment = has_stencil_attachment ? &pass.m_stencil_attachment_info : nullptr,
     });
+#endif
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
-    cmd_buf.set_suboperation_debug_name("Pass:" + pass.m_name);
+    cmd_buf.set_suboperation_debug_name("[Pass:" + pass.m_name + "]");
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
 
@@ -315,19 +320,20 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 
 void RenderGraph::render() {
     update_buffers();
+    update_textures();
     update_descriptor_sets();
 
-    // Acquire the next swapchain image index
-    m_swapchain.acquire_next_image_index();
+    // TODO: Acquire next image for each swapchain used by rendergraph
+    // m_swapchain.acquire_next_image_index();
 
     // TODO: Refactor this into .exec();
-    const auto &cmd_buf = m_device.request_command_buffer("RenderGraph::render|");
+    const auto &cmd_buf = m_device.request_command_buffer("[RenderGraph::render]");
 
     // TODO: Is this correct?
-    //
+    // TODO: No, this should only be done for that one pass which writes to swapchain!
     // Transform the image layout of the swapchain (it comes in undefined layout after presenting)
-    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    // cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
+    //                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     // Call the command buffer recording function of every pass
     for (auto &pass : m_graphics_passes) {
@@ -337,9 +343,10 @@ void RenderGraph::render() {
     // TODO: Is this correct?
     //
     // Change the layout of the swapchain image to make it ready for presenting
-    cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    // cmd_buf.change_image_layout(m_swapchain.m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    //                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
+#if 0
     // TODO: Further abstract this away?
     const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
@@ -349,7 +356,10 @@ void RenderGraph::render() {
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd_buf.m_cmd_buf,
     }));
-    m_swapchain.present();
+#endif
+
+    // TODO: Call present for each swapchain!
+    // m_swapchain.present();
 }
 
 void RenderGraph::reset() {
@@ -357,14 +367,13 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    m_device.execute("RenderGraph::update_buffers|", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::update_buffers]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &buffer : m_buffers) {
-            std::invoke(buffer->m_on_update);
+            std::invoke(buffer->m_on_check_for_update);
             if (buffer->m_update_requested) {
-                cmd_buf.set_suboperation_debug_name("Buffer|Destroy:" + buffer->m_name);
-                buffer->destroy();
-                cmd_buf.set_suboperation_debug_name("Buffer|Update:" + buffer->m_name);
-                cmd_buf.set_suboperation_debug_name("Buffer|Create:" + buffer->m_name);
+                cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->m_name + "]");
+                buffer->destroy_all();
+                cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->m_name + "]");
                 buffer->create(cmd_buf);
             }
         }
@@ -372,23 +381,35 @@ void RenderGraph::update_buffers() {
 }
 
 void RenderGraph::update_descriptor_sets() {
+    // TODO: Return std::vector<VkWriteDescriptorSet> from build() and have only one call to vkUpdateDescriptorSets!
+    // TODO: We only need to call DescriptorSetUpdateBuilder once really during rendergraph compilation!
+
+    // TODO: Reserve? When to clear?
+    m_write_descriptor_sets.clear();
+
     for (const auto &descriptor : m_resource_descriptors) {
         // Call descriptor set builder function for each descriptor
-        std::invoke(std::get<2>(descriptor), m_descriptor_set_update_builder);
+        auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
+        // Store the results
+        std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),
+                  std::back_inserter(m_write_descriptor_sets));
     }
+    // NOTE: We batch all descriptor set updates into one function call for performance
+    vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_write_descriptor_sets.size()),
+                           m_write_descriptor_sets.data(), 0, nullptr);
 }
 
 void RenderGraph::update_textures() {
-    m_device.execute("RenderGraph::update_textures|", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::update_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             // Only for dynamic textures m_on_lambda which is not std::nullopt
-            if (texture->m_on_update) {
+            if (texture->m_on_check_for_updates) {
                 if (texture->m_update_requested) {
-                    cmd_buf.set_suboperation_debug_name("Texture|Destroy:" + texture->m_name);
+                    cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
                     texture->destroy();
-                    cmd_buf.set_suboperation_debug_name("Texture|Update:" + texture->m_name);
-                    std::invoke(texture->m_on_update.value());
-                    cmd_buf.set_suboperation_debug_name("Texture|Create:" + texture->m_name);
+                    cmd_buf.set_suboperation_debug_name("[Texture|Update:" + texture->m_name + "]");
+                    std::invoke(texture->m_on_check_for_updates.value());
+                    cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
                     texture->create();
                 }
             }

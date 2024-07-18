@@ -39,7 +39,7 @@ public:
     Sampler(const Device &device,
             std::string name,
             const VkSamplerCreateInfo &sampler_ci = make_info<VkSamplerCreateInfo>({
-                // These are the default sampler settings
+                // NOTE: These are the default sampler settings
                 .magFilter = VK_FILTER_LINEAR,
                 .minFilter = VK_FILTER_LINEAR,
                 .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,

@@ -11,16 +11,18 @@
 namespace inexor::vulkan_renderer::render_graph {
 
 Buffer::Buffer(const Device &device, std::string buffer_name, BufferType buffer_type, std::function<void()> on_update)
-    : m_device(device), m_name(std::move(buffer_name)), m_on_update(std::move(on_update)), m_buffer_type(buffer_type) {
+    : m_device(device), m_name(std::move(buffer_name)), m_on_check_for_update(std::move(on_update)),
+      m_buffer_type(buffer_type) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Buffer::Buffer] Error: Parameter 'name' is empty!");
     }
 }
 
 Buffer::Buffer(Buffer &&other) noexcept : m_device(other.m_device) {
+    // TODO: Check me!
     m_name = std::move(other.m_name);
     m_buffer_type = other.m_buffer_type;
-    m_on_update = std::move(other.m_on_update);
+    m_on_check_for_update = std::move(other.m_on_check_for_update);
     m_buffer = std::exchange(other.m_buffer, VK_NULL_HANDLE);
     m_alloc = std::exchange(other.m_alloc, VK_NULL_HANDLE);
     m_alloc_info = other.m_alloc_info;
@@ -33,7 +35,7 @@ Buffer::Buffer(Buffer &&other) noexcept : m_device(other.m_device) {
 }
 
 Buffer::~Buffer() {
-    destroy();
+    destroy_all();
 }
 
 void Buffer::create(const CommandBuffer &cmd_buf) {
@@ -147,13 +149,22 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
     };
     // The update is finished
     m_update_requested = false;
+
+    // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
+    // It will be destroyed either in the destructor or the next time create is called.
+
+    // NOTE: Another option would have been to wrap each call to create() into its own single time command buffer, which
+    // would increase the total number of command buffer submissions though.
 }
 
-void Buffer::destroy() {
+void Buffer::destroy_all() {
+    destroy_staging_buffer();
+}
+
+void Buffer::destroy_buffer() {
     vmaDestroyBuffer(m_device.allocator(), m_buffer, m_alloc);
     m_buffer = VK_NULL_HANDLE;
     m_alloc = VK_NULL_HANDLE;
-    destroy_staging_buffer();
 }
 
 void Buffer::destroy_staging_buffer() {

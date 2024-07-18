@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <functional>
 #include <memory>
@@ -17,6 +18,7 @@ class CommandBuffer;
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
+using wrapper::Swapchain;
 using wrapper::commands::CommandBuffer;
 
 /// A builder class for graphics passes in the rendergraph
@@ -24,12 +26,14 @@ class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
     std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{};
-    /// The texture resources this graphics pass writes to
-    std::vector<RenderingAttachment> m_write_attachments{};
     /// The graphics passes which are read by this graphics pass
     std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads{};
+    /// The texture resources this graphics pass writes to
+    std::vector<std::weak_ptr<Texture>> m_write_attachments{};
+    /// The swapchain this graphics pass writes to
+    std::vector<std::weak_ptr<Swapchain>> m_write_swapchains{};
 
-    /// Reset all data of the graphics pass builder
+    /// Reset the data of the graphics pass builder
     void reset();
 
 public:
@@ -50,9 +54,11 @@ public:
     /// Specify that this graphics pass A reads from another graphics pass B (if the weak_ptr to B is not expired),
     /// meaning B should be rendered before A. It is perfect valid for 'graphics_pass' to be an invalid pointer, in
     /// which case the read is not added.
+    /// @param condition The condition under which the pass is read from
     /// @param graphics_pass The graphics pass (can be an invalid pointer)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &conditionally_reads_from(std::weak_ptr<GraphicsPass> graphics_pass);
+    [[nodiscard]] GraphicsPassBuilder &conditionally_reads_from(std::weak_ptr<GraphicsPass> graphics_pass,
+                                                                bool condition);
 
     /// Specify that this graphics pass A reads from another graphics pass B, meaning B should be rendered before A
     /// @param graphics_pass The graphics pass which is read by this graphics pass
@@ -70,6 +76,13 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Texture> color_attachment,
                                                  std::optional<VkClearValue> clear_value = std::nullopt);
+
+    // TODO: Swapchain clear values?
+
+    /// Specify that this graphics pass writes to a swapchain
+    /// @param swapchain The swapchain this pass writes to
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Swapchain> swapchain);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

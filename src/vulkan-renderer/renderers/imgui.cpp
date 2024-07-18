@@ -13,23 +13,23 @@
 namespace inexor::vulkan_renderer::renderers {
 
 ImGuiRenderer::ImGuiRenderer(const Device &device,
-                             const Swapchain &swapchain,
+                             std::weak_ptr<Swapchain> swapchain,
                              std::weak_ptr<render_graph::RenderGraph> render_graph,
                              std::weak_ptr<render_graph::GraphicsPass> previous_pass,
                              std::weak_ptr<render_graph::Texture> color_attachment,
                              std::function<void()> on_update_user_data)
     : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
-      m_color_attachment(std::move(color_attachment)) {
+      m_swapchain(std::move(swapchain)) {
 
     if (render_graph.expired()) {
         throw std::invalid_argument(
             "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'render_graph' is an invalid pointer!");
     }
-    if (m_color_attachment.expired()) {
+    if (m_swapchain.expired()) {
         throw std::invalid_argument(
-            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'color_attachment' is an invalid pointer!");
+            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'm_swapchain' is an invalid pointer!");
     }
-    // NOTE: As we check below, previous_pass is allowed to be an invalid pointer (so there is no previous pass!)
+    // NOTE: It's valid for previous_pass to be an invalid pointer (in that case there is no previous pass!)
 
     spdlog::trace("Creating ImGui context");
     ImGui::CreateContext();
@@ -41,6 +41,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     set_imgui_style();
 
     auto graph = render_graph.lock();
+    auto target_swapchain = m_swapchain.lock();
 
     using render_graph::BufferType;
     m_vertex_buffer = graph->add_buffer("ImGui|Vertex", BufferType::VERTEX_BUFFER, [&]() {
@@ -92,8 +93,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         [&](wrapper::descriptors::DescriptorSetAllocator &allocator) {
             m_descriptor_set = allocator.allocate("ImGui", m_descriptor_set_layout);
         },
-        [&](wrapper::descriptors::DescriptorSetUpdateBuilder &builder) {
-            builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).update();
+        [&](wrapper::descriptors::WriteDescriptorSetBuilder &builder) -> std::vector<VkWriteDescriptorSet> {
+            return builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).build();
         });
 
     graph->add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
@@ -123,10 +124,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                    },
                                })
                                .add_default_color_blend_attachment()
-                               .add_color_attachment(swapchain.image_format())
+                               .add_color_attachment(swapchain.lock()->image_format())
                                .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
-                               .set_viewport(swapchain.extent())
-                               .set_scissor(swapchain.extent())
+                               .set_viewport(swapchain.lock()->extent())
+                               .set_scissor(swapchain.lock()->extent())
                                .uses_shader(m_vertex_shader)
                                .uses_shader(m_fragment_shader)
                                .set_descriptor_set_layout(m_descriptor_set_layout)
@@ -139,8 +140,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
-        return builder.writes_to(m_color_attachment)
-            .conditionally_reads_from(m_previous_pass)
+        return builder.writes_to(swapchain)
+            .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
                 if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
@@ -155,6 +156,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                     .bind_index_buffer(m_index_buffer)
                     .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
                     .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
+
+                // TODO: Crop to ImGui viewport and scissor for improved performance
 
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
