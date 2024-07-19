@@ -61,7 +61,7 @@ void Texture::create() {
                 return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                        VK_IMAGE_USAGE_SAMPLED_BIT;
             }
-            case TextureUsage::BACK_BUFFER: {
+            case TextureUsage::COLOR_ATTACHMENT: {
                 return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
             }
             default: {
@@ -82,7 +82,7 @@ void Texture::create() {
             {
                 .aspectMask = [&]() -> VkImageAspectFlags {
                     switch (m_usage) {
-                    case TextureUsage::DEPTH_STENCIL_BUFFER: {
+                    case TextureUsage::DEPTH_ATTACHMENT: {
                         return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
                     }
                     default: {

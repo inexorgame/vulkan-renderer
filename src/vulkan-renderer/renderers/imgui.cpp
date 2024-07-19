@@ -124,12 +124,12 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                    },
                                })
                                .add_default_color_blend_attachment()
-                               .add_color_attachment(swapchain.lock()->image_format())
+                               .add_color_attachment(m_swapchain.lock()->image_format())
                                .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
-                               .set_viewport(swapchain.lock()->extent())
-                               .set_scissor(swapchain.lock()->extent())
-                               .uses_shader(m_vertex_shader)
-                               .uses_shader(m_fragment_shader)
+                               .set_viewport(m_swapchain.lock()->extent())
+                               .set_scissor(m_swapchain.lock()->extent())
+                               .add_shader(m_vertex_shader)
+                               .add_shader(m_fragment_shader)
                                .set_descriptor_set_layout(m_descriptor_set_layout)
                                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                .build("ImGui");
@@ -140,7 +140,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
-        return builder.writes_to(swapchain)
+        return builder.writes_to(m_swapchain)
             .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();

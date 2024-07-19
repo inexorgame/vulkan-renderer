@@ -16,6 +16,7 @@ class Semaphore;
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
+class GraphicsPass;
 class GraphicsPassBuilder;
 } // namespace inexor::vulkan_renderer::render_graph
 
@@ -25,6 +26,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 
 // Using declarations
+using render_graph::GraphicsPass;
 using render_graph::GraphicsPassBuilder;
 using render_graph::RenderGraph;
 
@@ -33,9 +35,11 @@ class Swapchain {
     //
     friend class RenderGraph;
     friend class GraphicsPassBuilder;
+    friend class GraphicsPass;
 
 private:
     Device &m_device;
+    std::string m_name;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     std::optional<VkSurfaceFormatKHR> m_surface_format{};
@@ -56,11 +60,17 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
+    /// @param name The name of the swapchain
     /// @param surface The surface
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync_enabled);
+    Swapchain(Device &device,
+              std::string name,
+              VkSurfaceKHR surface,
+              std::uint32_t width,
+              std::uint32_t height,
+              bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
@@ -122,28 +132,12 @@ public:
         return m_extent;
     }
 
-    [[nodiscard]] const VkSemaphore *image_available_semaphore() const {
-        return m_img_available->semaphore();
-    }
-
-    [[nodiscard]] VkImage image(const std::size_t img_index) const {
-        return m_imgs.at(img_index);
-    }
-
     [[nodiscard]] std::uint32_t image_count() const {
         return static_cast<std::uint32_t>(m_imgs.size());
     }
 
     [[nodiscard]] VkFormat image_format() const {
         return m_surface_format.value().format;
-    }
-
-    [[nodiscard]] const std::vector<VkImageView> &image_views() const {
-        return m_img_views;
-    }
-
-    [[nodiscard]] VkImageView image_view(const std::size_t img_index) const {
-        return m_img_views.at(img_index);
     }
 
     /// Call vkQueuePresentKHR with the current image index
@@ -157,10 +151,6 @@ public:
     /// @exception VulkanException vkCreateSwapchainKHR call failed
     /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
     void setup(std::uint32_t width, std::uint32_t height, bool vsync_enabled);
-
-    [[nodiscard]] const VkSwapchainKHR *swapchain() const {
-        return &m_swapchain;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

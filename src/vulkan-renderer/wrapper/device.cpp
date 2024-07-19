@@ -464,11 +464,13 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 }
 
 void Device::execute(const std::string &name,
-                     const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_lambda) const {
+                     const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
+                     const std::span<const VkSemaphore> wait_semaphores,
+                     const std::span<const VkSemaphore> signal_semaphores) const {
     // TODO: Support other queues, not just graphics queue
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
-    cmd_lambda(cmd_buf);
-    cmd_buf.submit_and_wait();
+    std::invoke(cmd_buf_recording_func, cmd_buf);
+    cmd_buf.submit_and_wait(wait_semaphores, signal_semaphores);
 }
 
 std::optional<std::uint32_t> Device::find_queue_family_index_if(

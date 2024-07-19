@@ -62,8 +62,8 @@ const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rende
 const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
                                                         const std::weak_ptr<GraphicsPipeline> pipeline) const {
     assert(descriptor_set);
-    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.lock()->m_pipeline_layout, 0, 1,
-                            &descriptor_set, 0, nullptr);
+    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            pipeline.lock()->m_pipeline_layout->m_pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
     return *this;
 }
 
@@ -431,13 +431,22 @@ const CommandBuffer &CommandBuffer::set_suboperation_debug_name(std::string name
     return *this;
 }
 
-void CommandBuffer::submit_and_wait() const {
+void CommandBuffer::submit_and_wait(const std::span<const VkSemaphore> wait_semaphores,
+                                    const std::span<const VkSemaphore> signal_semaphores) const {
     end_command_buffer();
 
+    const VkPipelineStageFlags wait_dst_stage_mask[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
     const auto submit_info = make_info<VkSubmitInfo>({
+        .waitSemaphoreCount = static_cast<std::uint32_t>(wait_semaphores.size()),
+        .pWaitSemaphores = wait_semaphores.data(),
+        .pWaitDstStageMask = wait_dst_stage_mask,
         .commandBufferCount = 1,
         .pCommandBuffers = &m_cmd_buf,
+        .signalSemaphoreCount = static_cast<std::uint32_t>(signal_semaphores.size()),
+        .pSignalSemaphores = signal_semaphores.data(),
     });
+
     if (const auto result =
             vkQueueSubmit(m_device.graphics_queue(), 1, &submit_info, m_cmd_buf_execution_completed->m_fence)) {
         throw VulkanException("[CommandBuffer::submit] Error: vkQueueSubmit failed!", result);

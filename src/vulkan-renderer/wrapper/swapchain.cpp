@@ -17,16 +17,19 @@
 namespace inexor::vulkan_renderer::wrapper {
 
 Swapchain::Swapchain(Device &device,
+                     std::string name,
                      const VkSurfaceKHR surface,
                      const std::uint32_t width,
                      const std::uint32_t height,
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
+    m_name = std::move(name);
     m_img_available = std::make_unique<synchronization::Semaphore>(m_device, "m_img_available");
     setup(width, height, vsync_enabled);
 }
 
 Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
+    // TODO: Check me!
     m_swapchain = std::exchange(other.m_swapchain, VK_NULL_HANDLE);
     m_surface = std::exchange(other.m_surface, VK_NULL_HANDLE);
     m_surface_format = other.m_surface_format;
@@ -36,11 +39,12 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_img_available = std::exchange(other.m_img_available, nullptr);
     m_vsync_enabled = other.m_vsync_enabled;
     m_img_index = other.m_img_index;
+    m_name = std::move(other.m_name);
 }
 
 void Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
     if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout,
-                                                  *m_img_available->semaphore(), VK_NULL_HANDLE, &m_img_index);
+                                                  m_img_available->m_semaphore, VK_NULL_HANDLE, &m_img_index);
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain

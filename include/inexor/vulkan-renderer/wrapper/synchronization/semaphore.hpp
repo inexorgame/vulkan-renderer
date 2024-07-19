@@ -7,12 +7,26 @@
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
+class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class RenderGraph;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 
+// Using declaration
+using render_graph::RenderGraph;
+using wrapper::Swapchain;
+
 /// RAII wrapper class for VkSemaphore
 class Semaphore {
+    friend class RenderGraph;
+    friend class Swapchain;
+
+private:
     const Device &m_device;
     VkSemaphore m_semaphore{VK_NULL_HANDLE};
     std::string m_name;
@@ -28,12 +42,6 @@ public:
 
     Semaphore &operator=(const Semaphore &) = delete;
     Semaphore &operator=(Semaphore &&) = delete;
-
-    // TOOD: Either rename to get() or remove so only friend class can access?
-    // Probably not going to work because semaphores need to be accessed in any part of the program
-    [[nodiscard]] const VkSemaphore *semaphore() const {
-        return &m_semaphore;
-    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::synchronization

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
+
 #include <volk.h>
 
 #include <string>
@@ -31,10 +33,8 @@ class GraphicsPipeline {
 
 private:
     const Device &m_device;
-    std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
-    std::vector<VkPushConstantRange> m_push_constant_ranges;
+    std::unique_ptr<PipelineLayout> m_pipeline_layout{nullptr};
     VkPipeline m_pipeline{VK_NULL_HANDLE};
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
     std::string m_name;
 
 public:

@@ -96,7 +96,7 @@ private:
     /// -----------------------------------------------------------------------------------------------------------------
 
     // TODO
-    std::vector<std::weak_ptr<Swapchain>> m_swapchains;
+    std::vector<VkSemaphore> m_swapchains_imgs_available;
 
     /// -----------------------------------------------------------------------------------------------------------------
     ///  GRAPHICS PIPELINES
@@ -239,9 +239,8 @@ private:
     /// @exception std::logic_error The rendergraph is not acyclic!
     void check_for_cycles();
 
-    /// Create the buffers of every buffer resource in the rendergraph
-    /// @param cmd_buf The command buffer to record into
-    void create_buffers();
+    /// Collect all image available semaphores of all swapchains which are used into one std::vector<VkSemaphore>
+    void collect_swapchain_image_available_semaphores();
 
     /// Create the descriptor set layouts
     void create_descriptor_set_layouts();
@@ -281,8 +280,9 @@ private:
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
     void update_buffers();
 
-    /// Update the descriptor sets
-    void update_descriptor_sets();
+    /// Update the write descriptor sets
+    /// @note This function must only be called once during rendergraph compilation, not for every frame!
+    void update_write_descriptor_sets();
 
     /// Update dynamic textures
     void update_textures();

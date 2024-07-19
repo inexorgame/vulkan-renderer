@@ -33,15 +33,14 @@ private:
 
 public:
     /// Default constructor
-    /// @param device The const reference to a device RAII wrapper instance.
-    /// @param name The internal debug marker name of the VkFence.
-    /// @param in_signaled_state True if the VkFence will be constructed in signaled state, false otherwise.
-    /// @warning Make sure to specify in_signaled_state correctly as needed, otherwise synchronization problems occur.
+    /// @param device The device wrapper
+    /// @param name The internal debug name of the Vulkan object
+    /// @param in_signaled_state ``true`` if the VkFence will be constructed in signaled state
+    /// @warning Make sure to specify in_signaled_state correctly as needed to avoid synchronization problems!
     Fence(const Device &device, const std::string &name, bool in_signaled_state);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;
-
     ~Fence();
 
     Fence &operator=(const Fence &) = delete;
@@ -52,8 +51,8 @@ public:
     void wait(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
 
     /// Call vkResetFences
-    /// @note This is deliberately called reset_fences and not reset because it is easy to confuse this with the reset
-    /// method of smart pointers, which could end up in a lot of bugs.
+    /// @note This is deliberately called ``reset_fences`` and not ``reset`` because ``reset`` is very easy to confuse
+    /// this with the reset method a smart pointer itself, which could end up in horrible bugs.
     void reset_fence() const;
 
     /// Call vkGetFenceStatus

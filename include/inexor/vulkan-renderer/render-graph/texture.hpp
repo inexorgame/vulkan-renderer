@@ -30,8 +30,9 @@ namespace inexor::vulkan_renderer::render_graph {
 /// NOTE: All usages which are not TextureUsage::NORMAL are for internal usage inside of rendergraph only
 enum class TextureUsage {
     NORMAL,
-    BACK_BUFFER,
-    DEPTH_STENCIL_BUFFER,
+    COLOR_ATTACHMENT,
+    DEPTH_ATTACHMENT,
+    STENCIL_ATTACHMENT,
 };
 
 // Forward declaration

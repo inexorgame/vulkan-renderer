@@ -150,9 +150,13 @@ public:
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
-    /// @param cmd_lambda The command lambda to execute
+    /// @param cmd_lambda The command buffer recording function to execute
+    /// @param wait_semaphores
+    /// @param signal_semaphores
     void execute(const std::string &name,
-                 const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_lambda) const;
+                 const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
+                 std::span<const VkSemaphore> wait_semaphores = {},
+                 std::span<const VkSemaphore> signal_semaphores = {}) const;
 
     /// Find a queue family index that suits a specific criteria
     /// @param criteria_lambda The lambda to sort out unsuitable queue families

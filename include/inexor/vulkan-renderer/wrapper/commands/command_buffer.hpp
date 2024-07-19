@@ -62,7 +62,10 @@ private:
     const CommandBuffer &end_command_buffer() const; // NOLINT
 
     /// Call vkQueueSubmit
-    void submit_and_wait() const;
+    /// @param wait_semaphores The semaphores to wait for
+    /// @param signal_semaphores The semaphores to signal
+    void submit_and_wait(std::span<const VkSemaphore> wait_semaphores = {},
+                         std::span<const VkSemaphore> signal_semaphores = {}) const;
 
 public:
     /// Default constructor
@@ -405,7 +408,8 @@ public:
                                        const T &data, // NOLINT
                                        const VkShaderStageFlags stage,
                                        const VkDeviceSize offset = 0) const {
-        return push_constants(pipeline.lock()->m_pipeline_layout, stage, sizeof(data), &data, offset);
+        return push_constants(pipeline.lock()->m_pipeline_layout->m_pipeline_layout, stage, sizeof(data), &data,
+                              offset);
     }
 
     /// Set the name of a command buffer during recording of a specific command in the current command buffer

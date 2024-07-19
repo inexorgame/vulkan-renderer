@@ -25,13 +25,13 @@ using wrapper::commands::CommandBuffer;
 class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
-    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{};
+    OnRecordCommandBufferForPass m_on_record_cmd_buffer{};
     /// The graphics passes which are read by this graphics pass
     std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads{};
     /// The texture resources this graphics pass writes to
-    std::vector<std::weak_ptr<Texture>> m_write_attachments{};
+    std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> m_write_attachments{};
     /// The swapchain this graphics pass writes to
-    std::vector<std::weak_ptr<Swapchain>> m_write_swapchains{};
+    std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> m_write_swapchains{};
 
     /// Reset the data of the graphics pass builder
     void reset();
@@ -68,7 +68,7 @@ public:
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
     /// @param on_record_cmd_buffer The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer);
+    [[nodiscard]] GraphicsPassBuilder &set_on_record(OnRecordCommandBufferForPass on_record_cmd_buffer);
 
     /// Specify that this graphics pass writes to an attachment
     /// @param attachment The attachment
@@ -81,8 +81,10 @@ public:
 
     /// Specify that this graphics pass writes to a swapchain
     /// @param swapchain The swapchain this pass writes to
+    /// @param clear_value The optional clear value of the swapchain (``std::nullopt`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Swapchain> swapchain);
+    [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Swapchain> swapchain,
+                                                 std::optional<VkClearValue> clear_value = std::nullopt);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

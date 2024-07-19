@@ -158,6 +158,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
 }
 
 void Buffer::destroy_all() {
+    destroy_buffer();
     destroy_staging_buffer();
 }
 

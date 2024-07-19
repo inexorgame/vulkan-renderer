@@ -163,7 +163,7 @@ Application::Application(int argc, char **argv) {
 
     // TODO: Replace ->get() methods with private fields and friend class declaration!
     // TODO: API style like this: m_swapchain = m_device->create_swapchain(m_surface, m_window, m_vsync_enabled);
-    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
+    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, "Default", m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
     load_octree_geometry(true);
@@ -395,7 +395,12 @@ void Application::render_frame() {
         recreate_swapchain();
         return;
     }
+
+    m_swapchain->acquire_next_image_index();
+
     m_render_graph->render();
+
+    m_swapchain->present();
 
     if (auto fps_value = m_fps_counter.update()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
@@ -421,14 +426,14 @@ void Application::setup_render_graph() {
     const auto swapchain_extent = m_swapchain->extent();
 
     m_color_attachment = m_render_graph->add_texture(
-        "Color", render_graph::TextureUsage::BACK_BUFFER, m_swapchain->image_format(), swapchain_extent.width,
+        "Color", render_graph::TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(), swapchain_extent.width,
         swapchain_extent.height /*, m_device->get_max_usable_sample_count() */);
 
     m_depth_attachment = m_render_graph->add_texture(
-        "Depth", render_graph::TextureUsage::DEPTH_STENCIL_BUFFER, VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width,
+        "Depth", render_graph::TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width,
         swapchain_extent.height /*, m_device->get_max_usable_sample_count()*/);
 
-    m_vertex_buffer = m_render_graph->add_buffer("Octree", render_graph::BufferType::VERTEX_BUFFER, [&]() {
+    m_vertex_buffer = m_render_graph->add_buffer("Octree|Vertex", render_graph::BufferType::VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree
         if (m_input_data->was_key_pressed_once(GLFW_KEY_N)) {
             load_octree_geometry(false);
@@ -438,14 +443,14 @@ void Application::setup_render_graph() {
         m_vertex_buffer.lock()->request_update(m_octree_vertices);
     });
 
-    m_octree_vert =
-        std::make_shared<wrapper::Shader>(*m_device, "Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
-    m_octree_frag =
-        std::make_shared<wrapper::Shader>(*m_device, "Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
+    m_octree_vert = std::make_shared<wrapper::Shader>(*m_device, "Octree|Vert", VK_SHADER_STAGE_VERTEX_BIT,
+                                                      "shaders/main.vert.spv");
+    m_octree_frag = std::make_shared<wrapper::Shader>(*m_device, "Octree|Frag", VK_SHADER_STAGE_FRAGMENT_BIT,
+                                                      "shaders/main.frag.spv");
 
     // Note that the index buffer is updated together with the vertex buffer to keep data consistent
     // This means for m_index_buffer, on_init and on_update are defaulted to std::nullopt here!
-    m_index_buffer = m_render_graph->add_buffer("Octree", render_graph::BufferType::INDEX_BUFFER, [&]() {
+    m_index_buffer = m_render_graph->add_buffer("Octree|Index", render_graph::BufferType::INDEX_BUFFER, [&]() {
         // Request update of the octree index buffer
         m_index_buffer.lock()->request_update(m_octree_indices);
     });
@@ -457,7 +462,7 @@ void Application::setup_render_graph() {
     m_vertex_buffer.lock()->request_update(m_octree_vertices);
     m_index_buffer.lock()->request_update(m_octree_indices);
 
-    m_uniform_buffer = m_render_graph->add_buffer("Matrices", render_graph::BufferType::UNIFORM_BUFFER, [&]() {
+    m_uniform_buffer = m_render_graph->add_buffer("Octree|Uniform", render_graph::BufferType::UNIFORM_BUFFER, [&]() {
         m_mvp_matrices.view = m_camera->view_matrix();
         m_mvp_matrices.proj = m_camera->perspective_matrix();
         m_mvp_matrices.proj[1][1] *= -1;
@@ -506,8 +511,8 @@ void Application::setup_render_graph() {
                                 .set_viewport(m_swapchain->extent())
                                 .set_scissor(m_swapchain->extent())
                                 .set_descriptor_set_layout(m_descriptor_set_layout)
-                                .uses_shader(m_octree_vert)
-                                .uses_shader(m_octree_frag)
+                                .add_shader(m_octree_vert)
+                                .add_shader(m_octree_frag)
                                 .build("Octree");
         return m_octree_pipeline;
     });

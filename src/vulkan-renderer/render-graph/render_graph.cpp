@@ -88,28 +88,28 @@ void RenderGraph::check_for_cycles() {
     }
 }
 
+void RenderGraph::collect_swapchain_image_available_semaphores() {
+    m_swapchains_imgs_available.clear();
+    for (const auto &pass : m_graphics_passes) {
+        for (const auto &swapchain : pass->m_write_swapchains) {
+            m_swapchains_imgs_available.push_back(swapchain.first.lock()->m_img_available->m_semaphore);
+        }
+    }
+}
+
 void RenderGraph::compile() {
     // TODO: What needs to be re-done when swapchain is recreated?
     validate_render_graph();
     determine_pass_order();
-    create_buffers();
+    update_buffers();
     create_textures();
     create_descriptor_set_layouts();
     allocate_descriptor_sets();
-    update_descriptor_sets();
+    update_write_descriptor_sets();
     create_graphics_passes();
     create_graphics_pipelines();
+    collect_swapchain_image_available_semaphores();
     check_for_cycles();
-}
-
-void RenderGraph::create_buffers() {
-    m_device.execute("[RenderGraph::create_buffers]", [&](const CommandBuffer &cmd_buf) {
-        for (const auto &buffer : m_buffers) {
-            buffer->m_on_check_for_update();
-            cmd_buf.set_suboperation_debug_name("[Buffer:" + buffer->m_name + "]");
-            buffer->create(cmd_buf);
-        }
-    });
 }
 
 void RenderGraph::create_descriptor_set_layouts() {
@@ -157,143 +157,107 @@ void RenderGraph::determine_pass_order() {
 }
 
 void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
-#if 0
-    /// Fill VkRenderingAttachmentInfo for a given render_graph::Attachment
-    /// @param attachment The attachment (color, depth, or stencil)
-    /// @return VkRenderingAttachmentInfo  The filled rendering info struct
-    auto fill_rendering_info = [&](const RenderingAttachment &attachment) {
-        const auto attach_ptr = attachment.first.lock();
-        const auto img_layout = [&]() -> VkImageLayout {
-            switch (attach_ptr->m_usage) {
-            case TextureUsage::BACK_BUFFER:
+    pass.reset_rendering_info();
+
+    ///
+    ///
+    ///
+    auto fill_rendering_info_for_attachment = [&](const std::weak_ptr<Texture> &write_attachment,
+                                                  const std::optional<VkClearValue> &clear_value) {
+        const auto &attachment = write_attachment.lock();
+        auto get_image_layout = [&]() {
+            switch (attachment->m_usage) {
+            case TextureUsage::COLOR_ATTACHMENT:
             case TextureUsage::NORMAL: {
                 return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             }
-            case TextureUsage::DEPTH_STENCIL_BUFFER: {
+            case TextureUsage::DEPTH_ATTACHMENT:
+            case TextureUsage::STENCIL_ATTACHMENT: {
                 return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             }
             default:
                 return VK_IMAGE_LAYOUT_UNDEFINED;
             }
-        }(); // Invoke the lambda, not just define it!
-
-        // TODO: Is there no easier way to determine this?
-        auto is_integer_format = [](const VkFormat format) {
-            switch (format) {
-            // 8-bit integer formats
-            case VK_FORMAT_R8_UINT:
-            case VK_FORMAT_R8_SINT:
-            case VK_FORMAT_R8G8_UINT:
-            case VK_FORMAT_R8G8_SINT:
-            case VK_FORMAT_R8G8B8_UINT:
-            case VK_FORMAT_R8G8B8_SINT:
-            case VK_FORMAT_B8G8R8_UINT:
-            case VK_FORMAT_B8G8R8_SINT:
-            case VK_FORMAT_R8G8B8A8_UINT:
-            case VK_FORMAT_R8G8B8A8_SINT:
-            case VK_FORMAT_B8G8R8A8_UINT:
-            case VK_FORMAT_B8G8R8A8_SINT:
-            case VK_FORMAT_A2R10G10B10_UINT_PACK32:
-            case VK_FORMAT_A2B10G10R10_UINT_PACK32:
-
-            // 16-bit integer formats
-            case VK_FORMAT_R16_UINT:
-            case VK_FORMAT_R16_SINT:
-            case VK_FORMAT_R16G16_UINT:
-            case VK_FORMAT_R16G16_SINT:
-            case VK_FORMAT_R16G16B16_UINT:
-            case VK_FORMAT_R16G16B16_SINT:
-            case VK_FORMAT_R16G16B16A16_UINT:
-            case VK_FORMAT_R16G16B16A16_SINT:
-
-            // 32-bit integer formats
-            case VK_FORMAT_R32_UINT:
-            case VK_FORMAT_R32_SINT:
-            case VK_FORMAT_R32G32_UINT:
-            case VK_FORMAT_R32G32_SINT:
-            case VK_FORMAT_R32G32B32_UINT:
-            case VK_FORMAT_R32G32B32_SINT:
-            case VK_FORMAT_R32G32B32A32_UINT:
-            case VK_FORMAT_R32G32B32A32_SINT:
-
-            // 64-bit integer formats
-            case VK_FORMAT_R64_UINT:
-            case VK_FORMAT_R64_SINT:
-            case VK_FORMAT_R64G64_UINT:
-            case VK_FORMAT_R64G64_SINT:
-            case VK_FORMAT_R64G64B64_UINT:
-            case VK_FORMAT_R64G64B64_SINT:
-            case VK_FORMAT_R64G64B64A64_UINT:
-            case VK_FORMAT_R64G64B64A64_SINT:
-                return true;
-
-            // Non-integer formats
-            default:
-                return false;
-            }
         };
 
-        bool msaa_enabled = (attach_ptr->m_msaa_img != nullptr);
-
-        // This decides if MSAA is enabled on a per-texture basis
+        // TODO: Support MSAA again!
         return wrapper::make_info<VkRenderingAttachmentInfo>({
-            .imageView = msaa_enabled ? attach_ptr->m_msaa_img->m_img_view : attach_ptr->m_img->m_img_view,
-            // The image layout is the same for m_img and m_msaa_img
-            .imageLayout = img_layout,
-            // The resolve mode must be chosen on whether it's an integer format
-            .resolveMode = msaa_enabled ? (!is_integer_format(attach_ptr->m_format) ? VK_RESOLVE_MODE_AVERAGE_BIT
-                                                                                    : VK_RESOLVE_MODE_MIN_BIT)
-                                        : VK_RESOLVE_MODE_NONE, // No resolve if MSAA is disabled
-            // This will be filled during rendering!
-            .resolveImageView = m_swapchain.m_current_img_view,
-            // TODO: Is this correct layout?
-            .resolveImageLayout = msaa_enabled ? img_layout : VK_IMAGE_LAYOUT_UNDEFINED,
-            // Does this pass require clearing this attachment?
-            .loadOp = attachment.second ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
-            // The result will always be stored
+            .imageView = attachment->m_img->m_img_view,
+            .imageLayout = get_image_layout(),
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = nullptr,
+            .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            // If clearing is enabled, specify the clear value
-            .clearValue = attachment.second ? attachment.second.value() : VkClearValue{},
+            .clearValue = clear_value ? clear_value.value() : VkClearValue{},
         });
     };
 
-    // Reserve memory for the color attachments
-    pass.m_color_attachment_infos.reserve(pass.m_write_color_attachments.size());
+    // Step 1: Process all write attachments (color, depth, stencil) of the graphics pass into VkRenderingInfo
+    for (const auto &write_attachment : pass.m_write_attachments) {
+        // What type of attachment is this?
+        const auto &attachment = write_attachment.first;
+        const auto &clear_value = write_attachment.second;
 
-    // Fill the color attachments
-    const bool has_any_color_attachment = pass.m_write_color_attachments.size() > 0;
-    for (const auto &color_attachment : pass.m_write_color_attachments) {
-        pass.m_color_attachment_infos.push_back(fill_rendering_info(color_attachment));
+        switch (attachment.lock()->m_usage) {
+        case TextureUsage::COLOR_ATTACHMENT:
+        case TextureUsage::NORMAL: {
+            pass.m_color_attachments.push_back(fill_rendering_info_for_attachment(attachment, clear_value));
+            break;
+        }
+        case TextureUsage::DEPTH_ATTACHMENT: {
+            pass.m_depth_attachment = fill_rendering_info_for_attachment(attachment, clear_value);
+            pass.m_has_depth_attachment = true;
+            break;
+        }
+        case TextureUsage::STENCIL_ATTACHMENT: {
+            pass.m_stencil_attachment = fill_rendering_info_for_attachment(attachment, clear_value);
+            pass.m_has_stencil_attachment = true;
+            break;
+        }
+        default:
+            continue;
+        }
     }
-    // Fill the color attachment (if specified)
-    const bool has_depth_attachment = !pass.m_write_depth_attachment.first.expired();
-    if (has_depth_attachment) {
-        pass.m_depth_attachment_info = fill_rendering_info(pass.m_write_depth_attachment);
-        pass.m_depth_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
-    }
-    // Fill the stencil attachment (if specified)
-    const bool has_stencil_attachment = !pass.m_write_stencil_attachment.first.expired();
-    if (has_stencil_attachment) {
-        pass.m_stencil_attachment_info = fill_rendering_info(pass.m_write_stencil_attachment);
+
+    ///
+    ///
+    ///
+    auto fill_write_info_for_swapchain = [&](const std::weak_ptr<Swapchain> &write_swapchain,
+                                             const std::optional<VkClearValue> &clear_value) {
+        // TODO: Support MSAA again!
+        return wrapper::make_info<VkRenderingAttachmentInfo>({
+            .imageView = write_swapchain.lock()->m_current_img_view,
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = nullptr,
+            .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clear_value ? clear_value.value() : VkClearValue{},
+        });
+    };
+
+    // TODO: Step 2: Process all swapchain writes of the graphics pass into VkRenderingInfo
+    for (const auto &write_swapchain : pass.m_write_swapchains) {
+        const auto &swapchain = write_swapchain.first.lock();
+        const auto &clear_value = write_swapchain.second;
+        pass.m_color_attachments.push_back(fill_write_info_for_swapchain(swapchain, clear_value));
     }
 
     // TODO: If a pass has multiple color attachments those are multiple swapchains, does that mean we must group
     // rendering by swapchains because there is no guarantee that they all have the same swapchain extent?
 
-    // Fill the rendering info of the pass
+    // Step 3: Fill the rendering info
     pass.m_rendering_info = wrapper::make_info<VkRenderingInfo>({
         .renderArea =
             {
-                // TODO: Fix me!
-                //.extent = m_swapchain.extent(),
+                .extent = pass.m_extent,
             },
         .layerCount = 1,
-        .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachment_infos.size()),
-        .pColorAttachments = has_any_color_attachment ? pass.m_color_attachment_infos.data() : nullptr,
-        .pDepthAttachment = has_depth_attachment ? &pass.m_depth_attachment_info : nullptr,
-        .pStencilAttachment = has_stencil_attachment ? &pass.m_stencil_attachment_info : nullptr,
+        .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_color_attachments.size()),
+        .pColorAttachments = (pass.m_color_attachments.size() > 0) ? pass.m_color_attachments.data() : nullptr,
+        .pDepthAttachment = pass.m_has_depth_attachment ? &pass.m_depth_attachment : nullptr,
+        .pStencilAttachment = pass.m_has_stencil_attachment ? &pass.m_stencil_attachment : nullptr,
     });
-#endif
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
@@ -304,16 +268,34 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
     // Fill the VKRenderingInfo of the graphics pass
     fill_graphics_pass_rendering_info(pass);
 
+    // If there are writes to swapchains, the image layout of the swapchain must be changed because it comes back in
+    // undefined layout after presenting
+    for (const auto &swapchain : pass.m_write_swapchains) {
+        cmd_buf.insert_debug_label("Changing Swapchain image layout", get_debug_label_color(DebugLabelColor::GREEN));
+        cmd_buf.change_image_layout(swapchain.first.lock()->m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
+                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
+
+    // NOTE: Pipeline barriers must not be placed inside of dynamic rendering instances, which means we must change the
+    // image layout of all swapchains we write to before we call begin_rendering and then again after we call
+    // end_rendering.
+    // ----------------------------------------------------------------------------------------------------------------
     // Start dynamic rendering with the compiled rendering info
     cmd_buf.begin_rendering(pass.m_rendering_info);
-
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
     // does not bind any pipelines, descriptor sets, or buffers automatically!
     std::invoke(pass.m_on_record_cmd_buffer, cmd_buf);
-
     // End dynamic rendering
     cmd_buf.end_rendering();
+    // ----------------------------------------------------------------------------------------------------------------
+
+    // Change the swapchain image layouts to prepare the swapchains for presenting
+    for (const auto &swapchain : pass.m_write_swapchains) {
+        cmd_buf.insert_debug_label("Changing Swapchain image layout", get_debug_label_color(DebugLabelColor::GREEN));
+        cmd_buf.change_image_layout(swapchain.first.lock()->m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    }
     // End the debug label for this graphics pass
     cmd_buf.end_debug_label_region();
 }
@@ -321,42 +303,20 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 void RenderGraph::render() {
     update_buffers();
     update_textures();
-    update_descriptor_sets();
-    // NOTE: We don't need to update the write descriptor sets per frame!
+    update_write_descriptor_sets();
+    // NOTE: We only need to call update_write_descriptor_sets() once in rendergraph compilation, not every frame!
 
-    // TODO: Acquire next image for each swapchain used by rendergraph
-    // m_swapchain.acquire_next_image_index();
-
-    m_device.execute("[RenderGraph::render]", [&](const CommandBuffer &cmd_buf) {
-        // Call the command buffer recording function of every graphics pass
-        for (auto &pass : m_graphics_passes) {
-            record_command_buffer_for_pass(cmd_buf, *pass);
-        }
-        // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains semaphore!
-
-        // TODO: Accumulate all image available semaphores of swapchains that were used in this graphics pass!
-        // TODO: Change image layouts for swapchain write attachments
-
-        // TODO: We are calling submit manually here, why though?
-        // TODO: Expose submit parameters to execute()
-
-        //cmd_buf.submit_and_wait();
-    });
-
-#if 0
-    // TODO: Further abstract this away?
-    const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = m_swapchain.image_available_semaphore(),
-        .pWaitDstStageMask = stage_mask.data(),
-        .commandBufferCount = 1,
-        .pCommandBuffers = &cmd_buf.m_cmd_buf,
-    }));
-#endif
-
-    // TODO: Call present for each swapchain!
-    // m_swapchain.present();
+    // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains
+    // semaphore!
+    m_device.execute(
+        "[RenderGraph::render]",
+        [&](const CommandBuffer &cmd_buf) {
+            // Call the command buffer recording function of every graphics pass
+            for (auto &pass : m_graphics_passes) {
+                record_command_buffer_for_pass(cmd_buf, *pass);
+            }
+        },
+        m_swapchains_imgs_available);
 }
 
 void RenderGraph::reset() {
@@ -377,22 +337,6 @@ void RenderGraph::update_buffers() {
     });
 }
 
-void RenderGraph::update_descriptor_sets() {
-    // TODO: We should only need to call DescriptorSetUpdateBuilder once really during rendergraph compilation!
-    // TODO: Reserve? When to clear?
-    m_write_descriptor_sets.clear();
-    for (const auto &descriptor : m_resource_descriptors) {
-        // Call descriptor set builder function for each descriptor
-        auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
-        // Store the results of the function that was called
-        std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),
-                  std::back_inserter(m_write_descriptor_sets));
-    }
-    // NOTE: We batch all descriptor set updates into one function call for performance
-    vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_write_descriptor_sets.size()),
-                           m_write_descriptor_sets.data(), 0, nullptr);
-}
-
 void RenderGraph::update_textures() {
     m_device.execute("[RenderGraph::update_textures]", [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
@@ -409,6 +353,22 @@ void RenderGraph::update_textures() {
             }
         }
     });
+}
+
+void RenderGraph::update_write_descriptor_sets() {
+    m_write_descriptor_sets.clear();
+    // NOTE: We don't reserve memory for the vector because we don't know how many write descriptor sets will exist in
+    // total. Because we call update_descriptor_sets() only once during rendergraph compilation, this is not a problem.
+    for (const auto &descriptor : m_resource_descriptors) {
+        // Call descriptor set builder function for each descriptor
+        auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
+        // Store the results of the function that was called
+        std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),
+                  std::back_inserter(m_write_descriptor_sets));
+    }
+    // NOTE: We batch all descriptor set updates into one function call for optimal performance
+    vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_write_descriptor_sets.size()),
+                           m_write_descriptor_sets.data(), 0, nullptr);
 }
 
 void RenderGraph::validate_render_graph() {
