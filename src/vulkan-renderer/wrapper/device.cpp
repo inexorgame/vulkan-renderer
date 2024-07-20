@@ -30,6 +30,8 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// TODO: Refactor to use VkClearColor to have a general color palette
+// TODO: Use std::unordered_map instead!
 std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
     switch (color) {
     case DebugLabelColor::RED:
@@ -389,6 +391,7 @@ Device::Device(const Instance &inst,
         "Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
     volkLoadDevice(m_device);
 
+    // TODO: Refactor: Compute queue but no graphics queue? (Refactor selection)
     auto compute_queue_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
             return (queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT) != 0u;
@@ -398,17 +401,21 @@ Device::Device(const Instance &inst,
         throw std::runtime_error("Error: Could not find a compute queue!");
     }
 
+    m_compute_queue_family_index = compute_queue_candidate.value();
+
     spdlog::trace("Queue family indices:");
     spdlog::trace("   - Graphics: {}", m_graphics_queue_family_index);
     spdlog::trace("   - Present: {}", m_present_queue_family_index);
     spdlog::trace("   - Transfer: {}", m_transfer_queue_family_index);
     spdlog::trace("   - Compute: {}", m_compute_queue_family_index);
 
-    // Setup the queues for presentation and graphics.
-    // Since we only have one queue per queue family, we acquire index 0.
+    // Setup the queues for presentation and graphics
+    // Since we only have one queue per queue family, we acquire queue index 0
     vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
     vkGetDeviceQueue(m_device, m_compute_queue_family_index, 0, &m_compute_queue);
+
+    // TODO: Combine names: "Graphics and Compute Queue" if they are the same!
 
     // Set an internal debug name to the queues using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_name(m_graphics_queue, "Graphics Queue");
@@ -441,6 +448,8 @@ Device::Device(const Instance &inst,
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
+
+    // TODO: Separte constructor setup into smaller methods again!
 
     // Store the properties of this physical device
     vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);

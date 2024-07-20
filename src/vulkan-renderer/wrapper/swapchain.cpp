@@ -43,8 +43,8 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
 }
 
 void Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
-    if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout,
-                                                  m_img_available->m_semaphore, VK_NULL_HANDLE, &m_img_index);
+    if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout, m_img_available->m_semaphore,
+                                                  VK_NULL_HANDLE, &m_img_index);
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain
@@ -53,8 +53,10 @@ void Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
             throw VulkanException("Error: vkAcquireNextImageKHR failed!", result);
         }
     }
-    m_current_img_view = m_img_views[m_img_index];
-    m_current_img = m_imgs[m_img_index];
+    m_current_swapchain_img_view = m_img_views[m_img_index];
+    m_device.set_debug_name(m_current_swapchain_img_view, "m_current_swapchain_img_view");
+    m_current_swapchain_img = m_imgs[m_img_index];
+    m_device.set_debug_name(m_current_swapchain_img, "m_current_swapchain_img");
 }
 
 std::optional<VkCompositeAlphaFlagBitsKHR>
@@ -171,6 +173,35 @@ std::vector<VkImage> Swapchain::get_swapchain_images() {
         throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
     return imgs;
+}
+
+void Swapchain::change_image_layout_to_prepare_for_rendering(const CommandBuffer &cmd_buf) {
+    if (m_prepared_for_rendering) {
+        // The image layout has already been changed
+        return;
+    }
+    cmd_buf.insert_debug_label("Swapchain: VK_IMAGE_LAYOUT_UNDEFINED -> VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL",
+                               get_debug_label_color(DebugLabelColor::GREEN));
+    // Prepare the swapchain image for rendering by changing the image layout from undefined layout (which is the layout
+    // it has after presenting) to color attachment optimal.
+    cmd_buf.change_image_layout(m_current_swapchain_img, VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    m_prepared_for_rendering = true;
+}
+
+void Swapchain::change_image_layout_to_prepare_for_presenting(const CommandBuffer &cmd_buf) {
+    if (!m_prepared_for_rendering) {
+        spdlog::warn("[Swapchain::change_image_layout_to_prepare_for_present] Warning: Swapchain image was not "
+                     "prepared for rendering. Did you call this function without calling "
+                     "change_image_layout_to_prepare_for_rendering?");
+        return;
+    }
+    cmd_buf.insert_debug_label("Swapchain: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL -> VK_IMAGE_LAYOUT_PRESENT_SRC_KHR",
+                               get_debug_label_color(DebugLabelColor::GREEN));
+    // Prepare the swapchain image for presenting
+    cmd_buf.change_image_layout(m_current_swapchain_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    m_prepared_for_rendering = false;
 }
 
 void Swapchain::present() {

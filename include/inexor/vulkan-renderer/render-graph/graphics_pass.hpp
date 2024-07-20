@@ -54,6 +54,8 @@ private:
     VkExtent2D m_extent{0, 0};
     /// The graphics passes this pass reads from
     std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads;
+    /// A weak pointer to the next graphics pass
+    std::weak_ptr<GraphicsPass> m_next_pass{};
 
     /// The texture attachments of this pass (unified means color, depth, stencil attachment or a swapchain)
     std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> m_write_attachments{};

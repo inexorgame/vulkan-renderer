@@ -90,11 +90,15 @@ void RenderGraph::check_for_cycles() {
 
 void RenderGraph::collect_swapchain_image_available_semaphores() {
     m_swapchains_imgs_available.clear();
+    // Use an std::unordered_set to make sure every swapchain image available semaphore is in there only once!
+    std::unordered_set<VkSemaphore> unique_semaphores;
     for (const auto &pass : m_graphics_passes) {
         for (const auto &swapchain : pass->m_write_swapchains) {
-            m_swapchains_imgs_available.push_back(swapchain.first.lock()->m_img_available->m_semaphore);
+            unique_semaphores.emplace(swapchain.first.lock()->m_img_available->m_semaphore);
         }
     }
+    // Convert the unordered_set into the std::vector so we can pass it in command buffer submission
+    m_swapchains_imgs_available = std::vector<VkSemaphore>(unique_semaphores.begin(), unique_semaphores.end());
 }
 
 void RenderGraph::compile() {
@@ -124,6 +128,10 @@ void RenderGraph::create_graphics_passes() {
     m_graphics_passes.reserve(m_graphics_pass_create_functions.size());
     for (const auto &create_func : m_graphics_pass_create_functions) {
         m_graphics_passes.emplace_back(create_func(m_graphics_pass_builder));
+    }
+    // Let each graphics pass know aout its next pass, except the last one which has none
+    for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size() - 1; pass_index++) {
+        m_graphics_passes[pass_index]->m_next_pass = m_graphics_passes[pass_index + 1];
     }
 }
 
@@ -190,7 +198,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
             .resolveImageView = nullptr,
             .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .clearValue = clear_value ? clear_value.value() : VkClearValue{},
+            .clearValue = clear_value.value_or(VkClearValue{}),
         });
     };
 
@@ -228,13 +236,13 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
                                              const std::optional<VkClearValue> &clear_value) {
         // TODO: Support MSAA again!
         return wrapper::make_info<VkRenderingAttachmentInfo>({
-            .imageView = write_swapchain.lock()->m_current_img_view,
+            .imageView = write_swapchain.lock()->m_current_swapchain_img_view,
             .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .resolveMode = VK_RESOLVE_MODE_NONE,
             .resolveImageView = nullptr,
             .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .clearValue = clear_value ? clear_value.value() : VkClearValue{},
+            .clearValue = clear_value.value_or(VkClearValue{}),
         });
     };
 
@@ -270,22 +278,19 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
     // Fill the VKRenderingInfo of the graphics pass
     fill_graphics_pass_rendering_info(pass);
 
-    // TODO: Only change image layout of swapchain if previous pass did not already do this!
-
     // If there are writes to swapchains, the image layout of the swapchain must be changed because it comes back in
     // undefined layout after presenting
     for (const auto &swapchain : pass.m_write_swapchains) {
-        cmd_buf.insert_debug_label("Changing Swapchain image layout", get_debug_label_color(DebugLabelColor::GREEN));
-        cmd_buf.change_image_layout(swapchain.first.lock()->m_current_img, VK_IMAGE_LAYOUT_UNDEFINED,
-                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        // NOTE: We don't need to check if the previous pass wrote to this swapchain because we already check in the
+        // code below if the next pass (if any) will write to this swapchain again, so if the last pass already wrote to
+        // this swapchain, calling change_image_layout_to_prepare_for_rendering will not do anything.
+        swapchain.first.lock()->change_image_layout_to_prepare_for_rendering(cmd_buf);
     }
-
-    // NOTE: Pipeline barriers must not be placed inside of dynamic rendering instances, which means we must change the
-    // image layout of all swapchains we write to before we call begin_rendering and then again after we call
-    // end_rendering.
 
     // Start dynamic rendering with the compiled rendering info
     cmd_buf.begin_rendering(pass.m_rendering_info);
+
+    // NOTE: Pipeline barriers must not be placed inside of dynamic rendering instances!
 
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
@@ -295,13 +300,25 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
     // End dynamic rendering
     cmd_buf.end_rendering();
 
-    // TODO: Only change image layout of swapchain if previous pass did not already do this!
-
     // Change the swapchain image layouts to prepare the swapchains for presenting
     for (const auto &swapchain : pass.m_write_swapchains) {
-        cmd_buf.insert_debug_label("Changing Swapchain image layout", get_debug_label_color(DebugLabelColor::GREEN));
-        cmd_buf.change_image_layout(swapchain.first.lock()->m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        // TODO: Check if next pass (if any) writes to that swapchain as well!
+        bool next_pass_writes_to_this_swapchain = false;
+        if (!pass.m_next_pass.expired()) {
+            const auto &next_pass = pass.m_next_pass.lock();
+            for (const auto &next_pass_write_swapchain : next_pass->m_write_swapchains) {
+                const auto swapchain_1 = next_pass_write_swapchain.first;
+                const auto swapchain_2 = swapchain.first;
+                if (swapchain_1.lock() == swapchain_2.lock()) {
+                    next_pass_writes_to_this_swapchain = true;
+                }
+            }
+        }
+        // NOTE: If the next pass writes to this swapchain as well, we can keep it in the current image layout.
+        // Only otherwise, we change the image layout to prepare the swapchain image for presenting.
+        if (!next_pass_writes_to_this_swapchain) {
+            swapchain.first.lock()->change_image_layout_to_prepare_for_presenting(cmd_buf);
+        }
     }
 
     // End the debug label for this graphics pass
@@ -313,6 +330,8 @@ void RenderGraph::render() {
     update_textures();
     update_write_descriptor_sets();
     // NOTE: We only need to call update_write_descriptor_sets() once in rendergraph compilation, not every frame!
+
+    // TODO: Only wait for img_available on first use of a swapchain!
 
     // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains
     // semaphore!
@@ -354,7 +373,8 @@ void RenderGraph::update_buffers() {
                              }
                          });
     }
-    // NOTE: We can't insert a debug label "no buffer updates required" because it requires a recording command buffer
+    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
+    // required because that command itself would require a command buffer to be in recording state
 }
 
 void RenderGraph::update_textures() {
@@ -385,7 +405,8 @@ void RenderGraph::update_textures() {
                              }
                          });
     }
-    // NOTE: We can't insert a debug label "no texture updates required" because it requires a recording command buffer
+    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
+    // required because that command itself would require a command buffer to be in recording state
 }
 
 void RenderGraph::update_write_descriptor_sets() {

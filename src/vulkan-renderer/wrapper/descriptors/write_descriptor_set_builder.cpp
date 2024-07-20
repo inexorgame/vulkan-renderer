@@ -17,7 +17,7 @@ WriteDescriptorSetBuilder::WriteDescriptorSetBuilder(WriteDescriptorSetBuilder &
 }
 
 WriteDescriptorSetBuilder &WriteDescriptorSetBuilder::add_uniform_buffer_update(const VkDescriptorSet descriptor_set,
-                                                                                std::weak_ptr<Buffer> buffer) {
+                                                                                const std::weak_ptr<Buffer> buffer) {
     assert(descriptor_set);
     if (buffer.lock()->m_buffer_type != BufferType::UNIFORM_BUFFER) {
         throw std::invalid_argument("[DescriptorSetUpdateBuilder::add_uniform_buffer_update] Error: Buffer " +
@@ -37,7 +37,7 @@ WriteDescriptorSetBuilder &WriteDescriptorSetBuilder::add_uniform_buffer_update(
 
 WriteDescriptorSetBuilder &
 WriteDescriptorSetBuilder::add_combined_image_sampler_update(const VkDescriptorSet descriptor_set,
-                                                             std::weak_ptr<Texture> texture) {
+                                                             const std::weak_ptr<Texture> texture) {
     assert(descriptor_set);
     m_write_descriptor_sets.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
         .dstSet = descriptor_set,

@@ -436,12 +436,16 @@ void CommandBuffer::submit_and_wait(const VkQueueFlagBits queue_type,
                                     const std::span<const VkSemaphore> signal_semaphores) const {
     end_command_buffer();
 
-    VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    // TODO: What to do here with graphics queue?
+
+    // NOTE: We must specify as many pipeline stage flags as there are wait semaphores!
+    std::vector<VkPipelineStageFlags> wait_stages(wait_semaphores.size(),
+                                                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
     const auto submit_info = make_info<VkSubmitInfo>({
         .waitSemaphoreCount = static_cast<std::uint32_t>(wait_semaphores.size()),
         .pWaitSemaphores = wait_semaphores.data(),
-        .pWaitDstStageMask = wait_stages,
+        .pWaitDstStageMask = wait_stages.data(),
         .commandBufferCount = 1,
         .pCommandBuffers = &m_cmd_buf,
         .signalSemaphoreCount = static_cast<std::uint32_t>(signal_semaphores.size()),

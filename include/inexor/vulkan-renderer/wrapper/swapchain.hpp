@@ -20,12 +20,18 @@ class GraphicsPass;
 class GraphicsPassBuilder;
 } // namespace inexor::vulkan_renderer::render_graph
 
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
+
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
 class Device;
 
 // Using declarations
+using commands::CommandBuffer;
 using render_graph::GraphicsPass;
 using render_graph::GraphicsPassBuilder;
 using render_graph::RenderGraph;
@@ -49,8 +55,9 @@ private:
     std::unique_ptr<synchronization::Semaphore> m_img_available;
     bool m_vsync_enabled{false};
     std::uint32_t m_img_index;
-    VkImage m_current_img{VK_NULL_HANDLE};
-    VkImageView m_current_img_view{VK_NULL_HANDLE};
+    VkImage m_current_swapchain_img{VK_NULL_HANDLE};
+    VkImageView m_current_swapchain_img_view{VK_NULL_HANDLE};
+    bool m_prepared_for_rendering{false};
 
     /// Call vkGetSwapchainImagesKHR
     /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
@@ -126,8 +133,6 @@ public:
     choose_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats,
                           const std::vector<VkSurfaceFormatKHR> &format_prioriy_list = {});
 
-    // TODO: Which ones should be expose in public?
-
     [[nodiscard]] VkExtent2D extent() const {
         return m_extent;
     }
@@ -139,6 +144,14 @@ public:
     [[nodiscard]] VkFormat image_format() const {
         return m_surface_format.value().format;
     }
+
+    /// Change the image layout with a pipeline barrier to prepare for rendering
+    /// @param cmd_buf The command buffer used for recording
+    void change_image_layout_to_prepare_for_rendering(const CommandBuffer &cmd_buf);
+
+    /// Change the image layout with a pipeline barrier to prepare to call vkQueuePresentKHR
+    /// @param cmd_buf The command buffer used for recording
+    void change_image_layout_to_prepare_for_presenting(const CommandBuffer &cmd_buf);
 
     /// Call vkQueuePresentKHR with the current image index
     /// @exception VulkanException vkQueuePresentKHR call failed

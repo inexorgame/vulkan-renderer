@@ -122,7 +122,15 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                        .offset = offsetof(ImDrawVert, col),
                                    },
                                })
-                               .add_default_color_blend_attachment()
+                               .add_color_blend_attachment({
+                                   .blendEnable = VK_TRUE,
+                                   .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+                                   .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                                   .colorBlendOp = VK_BLEND_OP_ADD,
+                                   .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+                                   .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+                                   .alphaBlendOp = VK_BLEND_OP_ADD,
+                               })
                                .add_color_attachment_format(m_swapchain.lock()->image_format())
                                .set_viewport(m_swapchain.lock()->extent())
                                .set_scissor(m_swapchain.lock()->extent())
