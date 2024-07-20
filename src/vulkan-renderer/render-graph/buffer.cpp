@@ -149,6 +149,8 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
     };
     // The update is finished
     m_update_requested = false;
+    m_src_data = nullptr;
+    m_src_data_size = 0;
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time create is called.

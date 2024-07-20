@@ -251,15 +251,15 @@ private:
     /// Create the graphics pipelines
     void create_graphics_pipelines();
 
-    /// Create the textures
-    void create_textures();
-
     /// Determine the order of execution of the graphics passes by using depth first search (DFS) algorithm
     void determine_pass_order();
 
     /// Fill the VkRenderingInfo for a graphics pass
     /// @param pass The graphics pass
     void fill_graphics_pass_rendering_info(GraphicsPass &pass);
+
+    /// Call m_on_initialize for every texture
+    void initialize_textures();
 
     /// Record the command buffer of a pass. After a lot of discussions about the API design of rendergraph, we came to
     /// the conclusion that it's the full responsibility of the programmer to manually bind pipelines, descriptors sets,
@@ -280,12 +280,12 @@ private:
     /// @note If a uniform buffer has been updated, an update of the associated descriptor set will be performed
     void update_buffers();
 
+    /// Update dynamic textures
+    void update_textures();
+
     /// Update the write descriptor sets
     /// @note This function must only be called once during rendergraph compilation, not for every frame!
     void update_write_descriptor_sets();
-
-    /// Update dynamic textures
-    void update_textures();
 
     /// Make sure all required resources are specified so rendergraph is ready to be compiled
     void validate_render_graph();

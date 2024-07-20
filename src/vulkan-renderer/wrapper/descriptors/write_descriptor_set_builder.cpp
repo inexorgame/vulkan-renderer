@@ -16,12 +16,23 @@ WriteDescriptorSetBuilder::WriteDescriptorSetBuilder(WriteDescriptorSetBuilder &
     // TODO: Implement me!
 }
 
-WriteDescriptorSetBuilder &WriteDescriptorSetBuilder::add_uniform_buffer_update(const VkDescriptorSet descriptor_set,
-                                                                                const std::weak_ptr<Buffer> buffer) {
-    assert(descriptor_set);
-    if (buffer.lock()->m_buffer_type != BufferType::UNIFORM_BUFFER) {
+WriteDescriptorSetBuilder &
+WriteDescriptorSetBuilder::add_uniform_buffer_update(const VkDescriptorSet descriptor_set,
+                                                     const std::weak_ptr<Buffer> uniform_buffer) {
+
+    if (!descriptor_set) {
+        throw std::invalid_argument("[WriteDescriptorSetBuilder::add_uniform_buffer_update] Error: Parameter "
+                                    "'descriptor_set' is invalid!");
+    }
+    if (uniform_buffer.lock()->m_buffer_type != BufferType::UNIFORM_BUFFER) {
         throw std::invalid_argument("[DescriptorSetUpdateBuilder::add_uniform_buffer_update] Error: Buffer " +
-                                    buffer.lock()->m_name + " is not a uniform buffer!");
+                                    uniform_buffer.lock()->m_name + " is not a uniform buffer!");
+    }
+    const auto &buffer = uniform_buffer.lock();
+    if (!buffer->m_descriptor_buffer_info.buffer) {
+        throw std::invalid_argument("[WriteDescriptorSetBuilder::add_uniform_buffer_update] Error: "
+                                    "Buffer::m_descriptor_buffer_info.buffer' of uniform buffer '" +
+                                    buffer->m_name + "' is invalid!");
     }
     m_write_descriptor_sets.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
         .dstSet = descriptor_set,
@@ -29,24 +40,45 @@ WriteDescriptorSetBuilder &WriteDescriptorSetBuilder::add_uniform_buffer_update(
         .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = &buffer.lock()->m_descriptor_buffer_info,
+        .pBufferInfo = &buffer->m_descriptor_buffer_info,
     }));
+
     m_binding++;
     return *this;
 }
 
 WriteDescriptorSetBuilder &
 WriteDescriptorSetBuilder::add_combined_image_sampler_update(const VkDescriptorSet descriptor_set,
-                                                             const std::weak_ptr<Texture> texture) {
-    assert(descriptor_set);
+                                                             const std::weak_ptr<Texture> image_texture) {
+    if (!descriptor_set) {
+        throw std::invalid_argument("[WriteDescriptorSetBuilder::add_combined_image_sampler_update] Error: Parameter "
+                                    "'descriptor_set' is invalid!");
+    }
+    if (image_texture.expired()) {
+        throw std::invalid_argument(
+            "[WriteDescriptorSetBuilder::add_combined_image_sampler_update] Error: Parameter 'texture' is invalid!");
+    }
+
+    const auto &texture = image_texture.lock();
+    if (!texture->m_descriptor_img_info.imageView) {
+        throw std::invalid_argument("[WriteDescriptorSetBuilder::add_combined_image_sampler_update] Error: "
+                                    "'Texture::m_descriptor_img_info.imageView' of texture '" +
+                                    texture->m_name + "' is invalid!");
+    }
+    if (!texture->m_descriptor_img_info.sampler) {
+        throw std::invalid_argument("[WriteDescriptorSetBuilder::add_combined_image_sampler_update] Error: "
+                                    "'Texture::m_descriptor_img_info.sampler' of texture '" +
+                                    texture->m_name + "' is invalid!");
+    }
     m_write_descriptor_sets.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
         .dstSet = descriptor_set,
         .dstBinding = m_binding,
         .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = &texture.lock()->m_descriptor_img_info,
+        .pImageInfo = &texture->m_descriptor_img_info,
     }));
+
     m_binding++;
     return *this;
 }

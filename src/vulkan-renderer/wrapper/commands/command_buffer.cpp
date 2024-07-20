@@ -356,7 +356,10 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
 }
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image(const VkImage img) const {
-    assert(img);
+    if (!img) {
+        throw std::invalid_argument("[CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image] Error: "
+                                    "Parameter 'img' is an invalid pointer!");
+    }
     return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT,           // src_stage_flags
                                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // dst_stage_flags
                                          VK_ACCESS_TRANSFER_WRITE_BIT,             // src_access_flags
@@ -367,7 +370,10 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buf
 }
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image(const VkImage img) const {
-    assert(img);
+    if (!img) {
+        throw std::invalid_argument("[CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image] Error: "
+                                    "Parameter 'img' is an invalid pointer!");
+    }
     return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    // src_stage_flags
                                          VK_PIPELINE_STAGE_TRANSFER_BIT,       // dst_stage_flags
                                          0,                                    // src_access_flags

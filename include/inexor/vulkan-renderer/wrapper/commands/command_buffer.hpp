@@ -224,7 +224,7 @@ public:
     /// @param first_inst The instance ID of the first instance to draw (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &draw(std::uint32_t vert_count,
-                              std::uint32_t inst_count = 1, // NOLINT
+                              std::uint32_t inst_count = 1,
                               std::uint32_t first_vert = 0,
                               std::uint32_t first_inst = 0) const;
 
@@ -237,7 +237,7 @@ public:
     /// @param index_count The number of indices to draw
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &draw_indexed(std::uint32_t index_count,
-                                      std::uint32_t inst_count = 1, // NOLINT
+                                      std::uint32_t inst_count = 1,
                                       std::uint32_t first_index = 0,
                                       std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;

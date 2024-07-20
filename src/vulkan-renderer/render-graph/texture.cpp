@@ -148,12 +148,17 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
     }
 
+    // Copy the texture data into the staging buffer
+    std::memcpy(m_staging_buffer_alloc_info.pMappedData, m_src_texture_data, m_src_texture_data_size);
+
     const std::string staging_buf_name = "staging:" + m_name;
     // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_staging_buffer_alloc, staging_buf_name.c_str());
     // Set the buffer's internal debug name through Vulkan debug utils
     m_device.set_debug_name(m_staging_buffer, staging_buf_name);
 
+    cmd_buf.insert_debug_label("[Texture::update|" + m_name + "]",
+                               wrapper::get_debug_label_color(wrapper::DebugLabelColor::ORANGE));
     cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img->m_img)
         .copy_buffer_to_image(m_staging_buffer, m_img->m_img,
                               {
@@ -172,6 +177,8 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
     // The update is finished
     m_update_requested = false;
+    m_src_texture_data = nullptr;
+    m_src_texture_data_size = 0;
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time execute_update is called.

@@ -48,16 +48,17 @@ public:
 
     /// Add a write descriptor set for a uniform buffer
     /// @param descriptor_set The destination descriptor set
-    /// @param buffer The rendergraph uniform buffer
+    /// @param uniform_buffer The rendergraph uniform buffer
     /// @return A reference to the dereferenced ``this`` pointer
-    WriteDescriptorSetBuilder &add_uniform_buffer_update(VkDescriptorSet descriptor_set, std::weak_ptr<Buffer> buffer);
+    WriteDescriptorSetBuilder &add_uniform_buffer_update(VkDescriptorSet descriptor_set,
+                                                         std::weak_ptr<Buffer> uniform_buffer);
 
     /// Add a write descriptor set for a combined image sampler
     /// @param descriptor_set The destination descriptor set
-    /// @param texture The rendergraph texture
+    /// @param texture_image The rendergraph texture
     /// @return A reference to the dereferenced ``this`` pointer
     WriteDescriptorSetBuilder &add_combined_image_sampler_update(VkDescriptorSet descriptor_set,
-                                                                 std::weak_ptr<Texture> texture);
+                                                                 std::weak_ptr<Texture> texture_image);
     /// Return the write descriptor sets and reset the builder
     /// @return A std::vector of VkWriteDescriptorSet
     [[nodiscard]] std::vector<VkWriteDescriptorSet> build();

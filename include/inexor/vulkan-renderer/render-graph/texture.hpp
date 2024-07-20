@@ -138,6 +138,17 @@ public:
     Texture &operator=(const Texture &) = delete;
     Texture &operator=(Texture &&) = delete;
 
+    [[nodiscard]] VkFormat format() const {
+        return m_format;
+    }
+
+    [[nodiscard]] VkExtent2D extent() const {
+        return {
+            .width = m_width,
+            .height = m_height,
+        };
+    }
+
     /// Request rendergraph to update the texture
     /// @param src_texture_data A pointer to the source data
     /// @param src_texture_data_size The size of the source data

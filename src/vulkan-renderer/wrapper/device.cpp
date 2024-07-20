@@ -85,6 +85,7 @@ std::uint32_t device_type_rating(const DeviceInfo &info) {
     case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
         return 1;
     default:
+        // This means we ignore any other gpu types by default
         return 0;
     }
 }

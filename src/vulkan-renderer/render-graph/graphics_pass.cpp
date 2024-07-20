@@ -55,10 +55,10 @@ GraphicsPass::GraphicsPass(
             .height = attachment->m_height,
         };
     } else if (!write_swapchains.empty()) {
+        // No color attachments, so pick the extent from any of the swapchains specified
         const auto &swapchain = write_swapchains[0].first.lock();
         m_extent = swapchain->m_extent;
     }
-
     // Check if either width or height is 0
     if (m_extent.width == 0) {
         throw std::runtime_error("[GraphicsPass::GraphicsPass] Error: m_extent.width is 0!");

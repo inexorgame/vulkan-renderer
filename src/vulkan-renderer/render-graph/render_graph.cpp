@@ -106,10 +106,10 @@ void RenderGraph::compile() {
     validate_render_graph();
     determine_pass_order();
     update_buffers();
-    create_textures();
+    initialize_textures();
+    update_textures();
     create_descriptor_set_layouts();
     allocate_descriptor_sets();
-    update_write_descriptor_sets();
     create_graphics_passes();
     create_graphics_pipelines();
     collect_swapchain_image_available_semaphores();
@@ -139,26 +139,6 @@ void RenderGraph::create_graphics_pipelines() {
     for (const auto &create_func : m_pipeline_create_functions) {
         create_func(m_graphics_pipeline_builder);
     }
-}
-
-void RenderGraph::create_textures() {
-    m_device.execute("[RenderGraph::create_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::BLUE,
-                     [&](const CommandBuffer &cmd_buf) {
-                         for (const auto &texture : m_textures) {
-                             if (texture->m_on_init) {
-                                 cmd_buf.set_suboperation_debug_name("[Texture|Initialize]:" + texture->m_name + "]");
-                                 std::invoke(texture->m_on_init.value());
-                             }
-                             cmd_buf.set_suboperation_debug_name("[Texture|Create]:" + texture->m_name + "]");
-                             texture->create();
-                             if (texture->m_usage == TextureUsage::NORMAL) {
-                                 cmd_buf.set_suboperation_debug_name("[Texture|Update]:" + texture->m_name + "]");
-                                 // Only external textures are updated, not back or depth buffers used internally in
-                                 // rendergraph
-                                 texture->update(cmd_buf);
-                             }
-                         }
-                     });
 }
 
 void RenderGraph::determine_pass_order() {
@@ -270,6 +250,37 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
     });
 }
 
+// TODO: Consistent naming: create, initialize, update=create for static textures...?
+
+void RenderGraph::initialize_textures() {
+    // Check if there is any update required
+    bool any_update_required = false;
+    for (const auto &texture : m_textures) {
+        // NOTE: For textures which are created internally by rendergraph, m_on_init is std::nullopt
+        if (texture->m_on_init) {
+            std::invoke(texture->m_on_init.value());
+            if (texture->m_update_requested) {
+                any_update_required = true;
+            }
+        }
+    }
+    // Only start recording and submitting a command buffer on transfer queue if any update is required
+    if (any_update_required) {
+        m_device.execute("[RenderGraph::initialize_textures]", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::LIME,
+                         [&](const CommandBuffer &cmd_buf) {
+                             for (const auto &texture : m_textures) {
+                                 if (texture->m_update_requested) {
+                                     cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
+                                     texture->create();
+                                     texture->update(cmd_buf);
+                                 }
+                             }
+                         });
+    }
+    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
+    // required because that command itself would require a command buffer to be in recording state
+}
+
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
     cmd_buf.set_suboperation_debug_name("[Pass:" + pass.m_name + "]");
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
@@ -307,9 +318,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
         if (!pass.m_next_pass.expired()) {
             const auto &next_pass = pass.m_next_pass.lock();
             for (const auto &next_pass_write_swapchain : next_pass->m_write_swapchains) {
-                const auto swapchain_1 = next_pass_write_swapchain.first;
-                const auto swapchain_2 = swapchain.first;
-                if (swapchain_1.lock() == swapchain_2.lock()) {
+                if (next_pass_write_swapchain.first.lock() == swapchain.first.lock()) {
                     next_pass_writes_to_this_swapchain = true;
                 }
             }
@@ -329,12 +338,7 @@ void RenderGraph::render() {
     update_buffers();
     update_textures();
     update_write_descriptor_sets();
-    // NOTE: We only need to call update_write_descriptor_sets() once in rendergraph compilation, not every frame!
 
-    // TODO: Only wait for img_available on first use of a swapchain!
-
-    // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains
-    // semaphore!
     m_device.execute(
         "[RenderGraph::render]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
         [&](const CommandBuffer &cmd_buf) {
