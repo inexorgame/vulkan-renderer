@@ -29,6 +29,48 @@ constexpr float DEFAULT_QUEUE_PRIORITY = 1.0f;
 } // namespace
 
 namespace inexor::vulkan_renderer::wrapper {
+
+std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
+    switch (color) {
+    case DebugLabelColor::RED:
+        return {0.98f, 0.60f, 0.60f, 1.0f};
+    case DebugLabelColor::BLUE:
+        return {0.68f, 0.85f, 0.90f, 1.0f};
+    case DebugLabelColor::GREEN:
+        return {0.73f, 0.88f, 0.73f, 1.0f};
+    case DebugLabelColor::YELLOW:
+        return {0.98f, 0.98f, 0.70f, 1.0f};
+    case DebugLabelColor::PURPLE:
+        return {0.80f, 0.70f, 0.90f, 1.0f};
+    case DebugLabelColor::ORANGE:
+        return {0.98f, 0.75f, 0.53f, 1.0f};
+    case DebugLabelColor::MAGENTA:
+        return {0.96f, 0.60f, 0.76f, 1.0f};
+    case DebugLabelColor::CYAN:
+        return {0.70f, 0.98f, 0.98f, 1.0f};
+    case DebugLabelColor::BROWN:
+        return {0.82f, 0.70f, 0.55f, 1.0f};
+    case DebugLabelColor::PINK:
+        return {0.98f, 0.75f, 0.85f, 1.0f};
+    case DebugLabelColor::LIME:
+        return {0.80f, 0.98f, 0.60f, 1.0f};
+    case DebugLabelColor::TURQUOISE:
+        return {0.70f, 0.93f, 0.93f, 1.0f};
+    case DebugLabelColor::BEIGE:
+        return {0.96f, 0.96f, 0.86f, 1.0f};
+    case DebugLabelColor::MAROON:
+        return {0.76f, 0.50f, 0.50f, 1.0f};
+    case DebugLabelColor::OLIVE:
+        return {0.74f, 0.75f, 0.50f, 1.0f};
+    case DebugLabelColor::NAVY:
+        return {0.53f, 0.70f, 0.82f, 1.0f};
+    case DebugLabelColor::TEAL:
+        return {0.53f, 0.80f, 0.75f, 1.0f};
+    default:
+        return {0.0f, 0.0f, 0.0f, 1.0f}; // Default to opaque black if the color is not recognized
+    }
+}
+
 namespace {
 
 /// A function for rating physical devices by type
@@ -464,12 +506,15 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 }
 
 void Device::execute(const std::string &name,
+                     const DebugLabelColor dbg_label_color,
                      const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
                      const std::span<const VkSemaphore> wait_semaphores,
                      const std::span<const VkSemaphore> signal_semaphores) const {
     // TODO: Support other queues, not just graphics queue
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
+    cmd_buf.begin_debug_label_region(name, get_debug_label_color(dbg_label_color));
     std::invoke(cmd_buf_recording_func, cmd_buf);
+    cmd_buf.end_debug_label_region();
     cmd_buf.submit_and_wait(wait_semaphores, signal_semaphores);
 }
 

@@ -16,6 +16,32 @@ class CommandPool;
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// The debug label colors for vkCmdBeginDebugUtilsLabelEXT
+enum class DebugLabelColor {
+    RED,
+    BLUE,
+    GREEN,
+    YELLOW,
+    PURPLE,
+    ORANGE,
+    MAGENTA,
+    CYAN,
+    BROWN,
+    PINK,
+    LIME,
+    TURQUOISE,
+    BEIGE,
+    MAROON,
+    OLIVE,
+    NAVY,
+    TEAL,
+};
+
+/// Convert a DebugLabelColor to an array of RGBA float values to pass to vkCmdBeginDebugUtilsLabelEXT
+/// @param color The DebugLabelColor
+/// @return An array of RGBA float values to be passed into vkCmdBeginDebugUtilsLabelEXT
+[[nodiscard]] std::array<float, 4> get_debug_label_color(const DebugLabelColor color);
+
 // Forward declaration
 class Instance;
 
@@ -150,10 +176,12 @@ public:
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
-    /// @param cmd_lambda The command buffer recording function to execute
+    /// @param dbg_label_color The debug label color to use for calling ``begin_debug_label_region``
+    /// @param cmd_buf_recording_func The command buffer recording function to execute
     /// @param wait_semaphores
     /// @param signal_semaphores
     void execute(const std::string &name,
+                 DebugLabelColor dbg_label_color,
                  const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
                  std::span<const VkSemaphore> wait_semaphores = {},
                  std::span<const VkSemaphore> signal_semaphores = {}) const;

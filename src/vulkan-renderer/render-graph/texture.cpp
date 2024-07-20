@@ -163,15 +163,13 @@ void Texture::update(const CommandBuffer &cmd_buf) {
                               })
         .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img->m_img);
 
-    // This is necessary for external textures only, not depth or back buffers used internally in rendergraph
-    if (m_usage == TextureUsage::NORMAL) {
-        // Update the descriptor image info
-        m_descriptor_img_info = VkDescriptorImageInfo{
-            .sampler = m_img->m_sampler->m_sampler,
-            .imageView = m_img->m_img_view,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        };
-    }
+    // Update the descriptor image info
+    m_descriptor_img_info = VkDescriptorImageInfo{
+        .sampler = m_img->m_sampler->m_sampler,
+        .imageView = m_img->m_img_view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+
     // The update is finished
     m_update_requested = false;
 

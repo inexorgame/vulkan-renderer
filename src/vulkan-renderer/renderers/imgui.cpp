@@ -14,12 +14,12 @@ namespace inexor::vulkan_renderer::renderers {
 
 ImGuiRenderer::ImGuiRenderer(const Device &device,
                              std::weak_ptr<Swapchain> swapchain,
-                             std::weak_ptr<render_graph::RenderGraph> render_graph,
-                             std::weak_ptr<render_graph::GraphicsPass> previous_pass,
-                             std::weak_ptr<render_graph::Texture> color_attachment,
+                             std::weak_ptr<RenderGraph> render_graph,
+                             std::weak_ptr<GraphicsPass> previous_pass,
+                             //  std::weak_ptr<Texture> color_attachment,
                              std::function<void()> on_update_user_data)
     : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
-      m_swapchain(std::move(swapchain)) {
+      m_swapchain(std::move(swapchain)) /*, m_color_attachment(std::move(color_attachment))*/ {
 
     if (render_graph.expired()) {
         throw std::invalid_argument(
@@ -124,8 +124,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                    },
                                })
                                .add_default_color_blend_attachment()
-                               .add_color_attachment(m_swapchain.lock()->image_format())
-                               .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
+                               .add_color_attachment_format(m_swapchain.lock()->image_format())
                                .set_viewport(m_swapchain.lock()->extent())
                                .set_scissor(m_swapchain.lock()->extent())
                                .add_shader(m_vertex_shader)
@@ -140,8 +139,12 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
-        return builder.writes_to(m_swapchain)
-            .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
+        return builder
+            .writes_to(m_swapchain,
+                       VkClearValue{
+                           .color = {1.0f, 1.0f, 1.0f, 1.0f},
+                       })
+            //.conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
                 if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {

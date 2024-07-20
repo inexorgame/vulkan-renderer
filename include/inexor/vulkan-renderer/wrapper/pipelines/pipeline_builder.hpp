@@ -125,7 +125,7 @@ public:
     /// Adds a color attachment
     /// @param format The format of the color attachment
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &add_color_attachment(VkFormat format);
+    [[nodiscard]] GraphicsPipelineBuilder &add_color_attachment_format(VkFormat format);
 
     /// Add a color blend attachment
     /// @param attachment The color blend attachment

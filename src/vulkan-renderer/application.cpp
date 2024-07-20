@@ -492,8 +492,14 @@ void Application::setup_render_graph() {
                                 // TODO: Fix me!
                                 //.set_multisampling(m_device->get_max_usable_sample_count(), 0.25f)
                                 .add_default_color_blend_attachment()
-                                .add_color_attachment(m_swapchain->image_format())
+                                .add_color_attachment_format(m_swapchain->image_format())
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
+                                .set_depth_stencil({.depthTestEnable = VK_TRUE,
+                                                    .depthWriteEnable = VK_TRUE,
+                                                    .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+                                                    .back{
+                                                        .compareOp = VK_COMPARE_OP_ALWAYS,
+                                                    }})
                                 .set_vertex_input_attributes({
                                     {
                                         .location = 0,
@@ -520,11 +526,19 @@ void Application::setup_render_graph() {
     m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
         // NOTE: Octree pass is the first pass, so it does not declare any reads_from()
         m_octree_pass = builder
-                            .writes_to(m_color_attachment,
+                            // TODO: Helper function for clear values
+                            .writes_to(m_swapchain,
                                        VkClearValue{
                                            .color = {1.0f, 1.0f, 1.0f, 1.0f},
                                        })
-                            .writes_to(m_depth_attachment)
+                            // TODO: Helper function for clear values
+                            .writes_to(m_depth_attachment,
+                                       VkClearValue{
+                                           .depthStencil =
+                                               VkClearDepthStencilValue{
+                                                   .depth = 1.0f,
+                                               },
+                                       })
                             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                                 cmd_buf.bind_pipeline(m_octree_pipeline)
                                     .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
@@ -538,8 +552,9 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph, m_octree_pass,
-                                                                 m_color_attachment, [&]() { update_imgui_overlay(); });
+    //   m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph,
+    //   m_octree_pass,
+    //                                                              [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

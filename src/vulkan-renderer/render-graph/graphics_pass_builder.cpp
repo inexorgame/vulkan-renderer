@@ -32,7 +32,7 @@ GraphicsPassBuilder &GraphicsPassBuilder::conditionally_reads_from(std::weak_ptr
     return *this;
 }
 
-GraphicsPassBuilder &GraphicsPassBuilder::reads_from(const std::weak_ptr<GraphicsPass> graphics_pass) {
+GraphicsPassBuilder &GraphicsPassBuilder::reads_from(std::weak_ptr<GraphicsPass> graphics_pass) {
     if (graphics_pass.expired()) {
         throw std::invalid_argument("[GraphicsPassBuilder::reads_from] Error: 'graphics_pass' is an invalid pointer!");
     }
@@ -51,8 +51,8 @@ GraphicsPassBuilder &GraphicsPassBuilder::set_on_record(OnRecordCommandBufferFor
     return *this;
 }
 
-GraphicsPassBuilder &GraphicsPassBuilder::writes_to(const std::weak_ptr<Texture> attachment,
-                                                    const std::optional<VkClearValue> clear_value) {
+GraphicsPassBuilder &GraphicsPassBuilder::writes_to(std::weak_ptr<Texture> attachment,
+                                                    std::optional<VkClearValue> clear_value) {
     if (attachment.expired()) {
         throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: 'attachment' is an invalid pointer!");
     }
@@ -60,8 +60,8 @@ GraphicsPassBuilder &GraphicsPassBuilder::writes_to(const std::weak_ptr<Texture>
     return *this;
 }
 
-GraphicsPassBuilder &GraphicsPassBuilder::writes_to(const std::weak_ptr<Swapchain> swapchain,
-                                                    const std::optional<VkClearValue> clear_value) {
+GraphicsPassBuilder &GraphicsPassBuilder::writes_to(std::weak_ptr<Swapchain> swapchain,
+                                                    std::optional<VkClearValue> clear_value) {
     if (swapchain.expired()) {
         throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: 'swapchain' is an invalid pointer!");
     }

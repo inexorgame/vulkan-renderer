@@ -150,7 +150,7 @@ void GraphicsPipelineBuilder::reset() {
     m_color_blend_attachment_states.clear();
 }
 
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_color_attachment(const VkFormat format) {
+GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_color_attachment_format(const VkFormat format) {
     m_color_attachments.push_back(format);
     return *this;
 }

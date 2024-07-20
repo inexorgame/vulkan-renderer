@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <array>
@@ -26,34 +27,6 @@ class RenderGraph;
 // Using declarations
 using wrapper::Swapchain;
 using wrapper::descriptors::DescriptorSetLayout;
-
-// TODO: Move this to device wrapper(?)
-
-/// The debug label colors for vkCmdBeginDebugUtilsLabelEXT
-enum class DebugLabelColor {
-    RED,
-    BLUE,
-    GREEN,
-    YELLOW,
-    PURPLE,
-    ORANGE,
-    MAGENTA,
-    CYAN,
-    BROWN,
-    PINK,
-    LIME,
-    TURQUOISE,
-    BEIGE,
-    MAROON,
-    OLIVE,
-    NAVY,
-    TEAL,
-};
-
-/// Convert a DebugLabelColor to an array of RGBA float values to pass to vkCmdBeginDebugUtilsLabelEXT
-/// @param color The DebugLabelColor
-/// @return An array of RGBA float values to be passed into vkCmdBeginDebugUtilsLabelEXT
-[[nodiscard]] std::array<float, 4> get_debug_label_color(const DebugLabelColor color);
 
 /// Using declaration
 using OnRecordCommandBufferForPass = std::function<void(const CommandBuffer &)>;
@@ -120,7 +93,7 @@ public:
                  std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
                  std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> write_attachments,
                  std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> write_swapchains,
-                 DebugLabelColor pass_debug_label_color);
+                 wrapper::DebugLabelColor pass_debug_label_color);
 
     GraphicsPass(const GraphicsPass &) = delete;
     GraphicsPass(GraphicsPass &&other) noexcept;

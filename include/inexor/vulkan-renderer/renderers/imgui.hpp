@@ -16,29 +16,42 @@ class Shader;
 class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::render_graph {
+namespace inexor::vulkan_renderer::pipelines {
 // Forward declaration
+class GraphicsPipeline;
+} // namespace inexor::vulkan_renderer::pipelines
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declarations
+class Buffer;
 class RenderGraph;
+class GraphicsPass;
 } // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::renderers {
 
 // Using declarations
+using render_graph::Buffer;
+using render_graph::GraphicsPass;
+using render_graph::RenderGraph;
+using render_graph::Texture;
 using wrapper::Device;
 using wrapper::Shader;
 using wrapper::Swapchain;
+using wrapper::pipelines::GraphicsPipeline;
 
 /// A wrapper for an ImGui implementation
 class ImGuiRenderer {
-    std::weak_ptr<render_graph::Buffer> m_index_buffer;
-    std::weak_ptr<render_graph::Buffer> m_vertex_buffer;
-    std::weak_ptr<render_graph::Texture> m_imgui_texture;
+    std::weak_ptr<Buffer> m_index_buffer;
+    std::weak_ptr<Buffer> m_vertex_buffer;
+    std::weak_ptr<Texture> m_imgui_texture;
     std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_imgui_pipeline;
 
     // This is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
+    std::weak_ptr<Texture> m_color_attachment;
     // This is the previous pass we read from
-    std::weak_ptr<render_graph::GraphicsPass> m_previous_pass;
+    std::weak_ptr<GraphicsPass> m_previous_pass;
 
     std::shared_ptr<Shader> m_vertex_shader;
     std::shared_ptr<Shader> m_fragment_shader;
@@ -81,9 +94,9 @@ public:
     /// @param on_update_user_data The user-specified ImGui update function
     ImGuiRenderer(const Device &device,
                   std::weak_ptr<Swapchain> swapchain,
-                  std::weak_ptr<render_graph::RenderGraph> render_graph,
-                  std::weak_ptr<render_graph::GraphicsPass> previous_pass,
-                  std::weak_ptr<render_graph::Texture> color_attachment,
+                  std::weak_ptr<RenderGraph> render_graph,
+                  std::weak_ptr<GraphicsPass> previous_pass,
+                  //std::weak_ptr<Texture> color_attachment,
                   std::function<void()> on_update_user_data);
 
     ImGuiRenderer(const ImGuiRenderer &) = delete;

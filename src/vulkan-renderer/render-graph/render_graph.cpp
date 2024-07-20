@@ -134,7 +134,7 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("[RenderGraph::create_textures]", [&](const CommandBuffer &cmd_buf) {
+    m_device.execute("[RenderGraph::create_textures]", DebugLabelColor::BLUE, [&](const CommandBuffer &cmd_buf) {
         for (const auto &texture : m_textures) {
             if (texture->m_on_init) {
                 cmd_buf.set_suboperation_debug_name("[Texture|Initialize]:" + texture->m_name + "]");
@@ -186,7 +186,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
             .imageLayout = get_image_layout(),
             .resolveMode = VK_RESOLVE_MODE_NONE,
             .resolveImageView = nullptr,
-            .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clear_value ? clear_value.value() : VkClearValue{},
         });
@@ -230,7 +230,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
             .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .resolveMode = VK_RESOLVE_MODE_NONE,
             .resolveImageView = nullptr,
-            .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clear_value ? clear_value.value() : VkClearValue{},
         });
@@ -268,6 +268,8 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
     // Fill the VKRenderingInfo of the graphics pass
     fill_graphics_pass_rendering_info(pass);
 
+    // TODO: Only change image layout of swapchain if previous pass did not already do this!
+
     // If there are writes to swapchains, the image layout of the swapchain must be changed because it comes back in
     // undefined layout after presenting
     for (const auto &swapchain : pass.m_write_swapchains) {
@@ -290,12 +292,15 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
     cmd_buf.end_rendering();
     // ----------------------------------------------------------------------------------------------------------------
 
+    // TODO: Only change image layout of swapchain if previous pass did not already do this!
+
     // Change the swapchain image layouts to prepare the swapchains for presenting
     for (const auto &swapchain : pass.m_write_swapchains) {
         cmd_buf.insert_debug_label("Changing Swapchain image layout", get_debug_label_color(DebugLabelColor::GREEN));
         cmd_buf.change_image_layout(swapchain.first.lock()->m_current_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
+
     // End the debug label for this graphics pass
     cmd_buf.end_debug_label_region();
 }
@@ -309,7 +314,7 @@ void RenderGraph::render() {
     // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains
     // semaphore!
     m_device.execute(
-        "[RenderGraph::render]",
+        "[RenderGraph::render]", DebugLabelColor::CYAN,
         [&](const CommandBuffer &cmd_buf) {
             // Call the command buffer recording function of every graphics pass
             for (auto &pass : m_graphics_passes) {
@@ -324,24 +329,46 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    m_device.execute("[RenderGraph::update_buffers]", [&](const CommandBuffer &cmd_buf) {
-        for (const auto &buffer : m_buffers) {
-            std::invoke(buffer->m_on_check_for_update);
-            if (buffer->m_update_requested) {
-                cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->m_name + "]");
-                buffer->destroy_all();
-                cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->m_name + "]");
-                buffer->create(cmd_buf);
-            }
+    // Check if there is any update required
+    bool any_update_required = false;
+    for (const auto &buffer : m_buffers) {
+        std::invoke(buffer->m_on_check_for_update);
+        if (buffer->m_update_requested) {
+            any_update_required = true;
         }
-    });
+    }
+    // Only start recording and submitting a command buffer if any update is required
+    if (any_update_required) {
+        m_device.execute("[RenderGraph::update_buffers]", DebugLabelColor::MAGENTA, [&](const CommandBuffer &cmd_buf) {
+            for (const auto &buffer : m_buffers) {
+                if (buffer->m_update_requested) {
+                    cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->m_name + "]");
+                    buffer->destroy_all();
+                    cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->m_name + "]");
+                    buffer->create(cmd_buf);
+                }
+            }
+        });
+    }
 }
 
 void RenderGraph::update_textures() {
-    m_device.execute("[RenderGraph::update_textures]", [&](const CommandBuffer &cmd_buf) {
-        for (const auto &texture : m_textures) {
-            // Only for dynamic textures m_on_lambda which is not std::nullopt
-            if (texture->m_on_check_for_updates) {
+    // Check if there is any update required
+    bool any_update_required = false;
+    for (const auto &texture : m_textures) {
+        // Only for dynamic textures m_on_lambda which is not std::nullopt
+        if (texture->m_on_check_for_updates) {
+            std::invoke(texture->m_on_check_for_updates.value());
+            if (texture->m_update_requested) {
+                any_update_required = true;
+            }
+        }
+    }
+    // Only start recording and submitting a command buffer if any update is required
+    if (any_update_required) {
+        m_device.execute("[RenderGraph::update_textures]", DebugLabelColor::LIME, [&](const CommandBuffer &cmd_buf) {
+            for (const auto &texture : m_textures) {
+                // Only for dynamic textures m_on_lambda which is not std::nullopt
                 if (texture->m_update_requested) {
                     cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
                     texture->destroy();
@@ -351,8 +378,8 @@ void RenderGraph::update_textures() {
                     texture->create();
                 }
             }
-        }
-    });
+        });
+    }
 }
 
 void RenderGraph::update_write_descriptor_sets() {
